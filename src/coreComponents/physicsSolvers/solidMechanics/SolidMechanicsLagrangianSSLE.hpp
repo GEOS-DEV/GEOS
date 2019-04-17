@@ -70,16 +70,18 @@ public:
      * @param dt The timestep
      * @return The achieved timestep.
      */
-    template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+    template< localIndex NUM_NODES_PER_ELEM,
+              localIndex NUM_QUADRATURE_POINTS,
+              typename CONSTITUTIVE_TYPE >
     static real64
-    Launch( set<localIndex> const & elementList,
+    Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+            set<localIndex> const & elementList,
             arrayView2d<localIndex const> const & elemsToNodes,
             arrayView3d< R1Tensor const> const & dNdX,
             arrayView2d<real64 const> const & detJ,
             arrayView1d<R1Tensor const> const & u,
             arrayView1d<R1Tensor const> const & vel,
             arrayView1d<R1Tensor> const & acc,
-            constitutive::ConstitutiveBase * const constitutiveRelation,
             arrayView2d<real64> const & meanStress,
             arrayView2d<R2SymTensor> const & devStress,
             real64 const dt );
@@ -121,14 +123,16 @@ public:
      * @param globalResidual Pointer to the parallel vector containing the global residual.
      * @return The maximum nodal force contribution from all elements.
      */
-    template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+    template< localIndex NUM_NODES_PER_ELEM,
+              localIndex NUM_QUADRATURE_POINTS,
+              typename CONSTITUTIVE_TYPE >
     static real64
-    Launch( localIndex const numElems,
+    Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+            localIndex const numElems,
             real64 const dt,
             arrayView3d<R1Tensor const> const & dNdX,
             arrayView2d<real64 const > const& detJ,
             FiniteElementBase const * const fe,
-            constitutive::ConstitutiveBase const * const constitutiveRelation,
             arrayView1d< integer const > const & elemGhostRank,
             arrayView2d< localIndex const > const & elemsToNodes,
             arrayView1d< globalIndex const > const & globalDofNumber,
@@ -152,25 +156,23 @@ public:
 
 
 
-template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+template< localIndex NUM_NODES_PER_ELEM,
+          localIndex NUM_QUADRATURE_POINTS,
+          typename CONSTITUTIVE_TYPE >
 real64
 SolidMechanicsLagrangianSSLE::ExplicitElementKernelWrapper::
-Launch( set<localIndex> const & elementList,
+Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+        set<localIndex> const & elementList,
         arrayView2d<localIndex const> const & elemsToNodes,
         arrayView3d< R1Tensor const> const & dNdX,
         arrayView2d<real64 const> const & detJ,
         arrayView1d<R1Tensor const> const & u,
         arrayView1d<R1Tensor const> const & vel,
         arrayView1d<R1Tensor> const & acc,
-        constitutive::ConstitutiveBase * const constitutiveRelation,
         arrayView2d<real64> const & meanStress,
         arrayView2d<R2SymTensor> const & devStress,
         real64 const dt )
 {
-
-  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelation->GetStateUpdateFunctionPointer();
-  void * data = nullptr;
-  constitutiveRelation->SetParamStatePointers( data );
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex const k)
@@ -180,7 +182,7 @@ Launch( set<localIndex> const & elementList,
     R1Tensor f_local[ NUM_NODES_PER_ELEM ];
 
     real64 c[6][6];
-    constitutiveRelation->GetStiffness( c );
+    constitutiveRelation->GetStiffness( k, c );
 
 
     CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
@@ -254,33 +256,36 @@ Launch( set<localIndex> const & elementList,
   return dt;
 }
 
-template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+template< localIndex NUM_NODES_PER_ELEM,
+          localIndex NUM_QUADRATURE_POINTS,
+          typename CONSTITUTIVE_TYPE >
 real64
 SolidMechanicsLagrangianSSLE::
-ImplicitElementKernelWrapper::Launch( localIndex const numElems,
-                             real64 const dt,
-                             arrayView3d<R1Tensor const> const & dNdX,
-                             arrayView2d<real64 const > const& detJ,
-                             FiniteElementBase const * const fe,
-                             constitutive::ConstitutiveBase const * const constitutiveRelation,
-                             arrayView1d< integer const > const & elemGhostRank,
-                             arrayView2d< localIndex const > const & elemsToNodes,
-                             arrayView1d< globalIndex const > const & globalDofNumber,
-                             arrayView1d< R1Tensor const > const & disp,
-                             arrayView1d< R1Tensor const > const & uhat,
-                             arrayView1d< R1Tensor const > const & vtilde,
-                             arrayView1d< R1Tensor const > const & uhattilde,
-                             arrayView1d< real64 const > const & density,
-                             arrayView1d< real64 const > const & fluidPressure,
-                             arrayView1d< real64 const > const & deltaFluidPressure,
-                             arrayView1d< real64 const > const & biotCoefficient,
-                             timeIntegrationOption const tiOption,
-                             real64 const stiffnessDamping,
-                             real64 const massDamping,
-                             real64 const newmarkBeta,
-                             real64 const newmarkGamma,
-                             Epetra_FECrsMatrix * const globaldRdU,
-                             Epetra_FEVector * const globalResidual )
+ImplicitElementKernelWrapper::Launch(
+    CONSTITUTIVE_TYPE * const constitutiveRelation,
+    localIndex const numElems,
+    real64 const dt,
+    arrayView3d<R1Tensor const> const & dNdX,
+    arrayView2d<real64 const > const& detJ,
+    FiniteElementBase const * const fe,
+    arrayView1d< integer const > const & elemGhostRank,
+    arrayView2d< localIndex const > const & elemsToNodes,
+    arrayView1d< globalIndex const > const & globalDofNumber,
+    arrayView1d< R1Tensor const > const & disp,
+    arrayView1d< R1Tensor const > const & uhat,
+    arrayView1d< R1Tensor const > const & vtilde,
+    arrayView1d< R1Tensor const > const & uhattilde,
+    arrayView1d< real64 const > const & density,
+    arrayView1d< real64 const > const & fluidPressure,
+    arrayView1d< real64 const > const & deltaFluidPressure,
+    arrayView1d< real64 const > const & biotCoefficient,
+    timeIntegrationOption const tiOption,
+    real64 const stiffnessDamping,
+    real64 const massDamping,
+    real64 const newmarkBeta,
+    real64 const newmarkGamma,
+    Epetra_FECrsMatrix * const globaldRdU,
+    Epetra_FEVector * const globalResidual )
 {
   constexpr int dim = 3;
   Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(NUM_NODES_PER_ELEM));
@@ -313,7 +318,7 @@ ImplicitElementKernelWrapper::Launch( localIndex const numElems,
     R_StiffnessDamping.Scale(0);
 
     real64 c[6][6];
-    constitutiveRelation->GetStiffness( c );
+    constitutiveRelation->GetStiffness( k, c );
 
     if(elemGhostRank[k] < 0)
     {
