@@ -31,9 +31,6 @@
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 #include "DofManager.hpp"
-#include "DofManager.hpp"
-
-// Just to print the matrix
 #include "TrilinosInterface.hpp"
 
 struct stabledt
@@ -151,123 +148,6 @@ public:
                                   ParallelVector & rhs );
 
   /////////////////////////////////////////////////////////////////////////////////////////
-  void ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
-                                       string const & functionName,
-                                       set<localIndex> const & targetSet,
-                                       real64 const time,
-                                       dataRepository::ManagedGroup * dataGroup,
-                                       string const & fieldName,
-                                       string const & dofMapName,
-                                       integer const & dofDim,
-                                       integer const & component,
-                                       real64 const & scale,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs );
-
-  template< typename LAMBDA >
-  void ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
-                                       string const & functionName,
-                                       set<localIndex> const & targetSet,
-                                       real64 const time,
-                                       dataRepository::ManagedGroup * dataGroup,
-                                       arrayView1d<globalIndex const> const & dofMap,
-                                       integer const & dofDim,
-                                       integer const & component,
-                                       real64 const & scale,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       LAMBDA && lambda )
-  {
-    NewFunctionManager * functionManager = NewFunctionManager::Instance();
-
-    globalIndex_array dof( targetSet.size() );
-    real64_array rhsContribution( targetSet.size() );
-
-    if( functionName.empty() )
-    {
-
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofDim*dofMap[a]+component;
-        SpecifyFieldValue( dof( counter ),
-                           matrix,
-                           rhsContribution( counter ),
-                           scale,
-                           lambda( a ) );
-
-        ++counter;
-      }
-      ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-    else
-    {
-      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-      GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-      if( function->isFunctionOfTime()==2 )
-      {
-        real64 value = scale * function->Evaluate( &time );
-        integer counter=0;
-        for( auto a : targetSet )
-        {
-          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-          SpecifyFieldValue( dof( counter ),
-                             matrix,
-                             rhsContribution( counter ),
-                             value,
-                             lambda( a ) );
-          ++counter;
-        }
-        ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-      }
-      else
-      {
-        real64_array result;
-        result.resize( integer_conversion<localIndex>( targetSet.size()));
-        function->Evaluate( dataGroup, time, targetSet, result );
-        integer counter=0;
-        for( auto a : targetSet )
-        {
-          dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-          SpecifyFieldValue( dof( counter ),
-                             matrix,
-                             rhsContribution( counter ),
-                             scale*result[counter],
-                             lambda( a ) );
-          ++counter;
-        }
-        ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-      }
-    }
-  }
-
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        ParallelMatrix & matrix,
-                                        real64 & rhs,
-                                        real64 const & bcValue,
-                                        real64 const fieldValue )
-  {
-    if( matrix.getLocalRowID( dof ) >= 0 )
-    {
-      matrix.clearRow( dof, 1.0 );
-      rhs = bcValue;
-    }
-    else
-    {
-      rhs = 0.0;
-    }
-  }
-
-  static inline void ReplaceGlobalValues( ParallelVector & rhs,
-                                          localIndex const num,
-                                          globalIndex const * const dof,
-                                          real64 const * const values )
-  {
-    rhs.set( dof, values, num );
-  }
-
   void solve( ParallelMatrix & matrix,
               ParallelVector & rhs,
               ParallelVector & solution,

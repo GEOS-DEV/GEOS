@@ -534,140 +534,18 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     ManagedGroup * const targetGroup,
                     string const fieldName )->void
   {
-    integer const component = bc->GetComponent();
-    real64 const scale = bc->GetScale();
-    string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString );
-    ApplyBoundaryConditionToSystem( *fsManager,
-                                    functionName,
-                                    targetSet,
-                                    time,
-                                    targetGroup,
-                                    m_fieldName,
-                                    dofManager.getKey( m_fieldName ),
-                                    1,
-                                    component,
-                                    scale,
-                                    matrix,
-                                    rhs );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
+                                                                 time,
+                                                                 targetGroup,
+                                                                 m_fieldName,
+                                                                 dofManager.getKey( m_fieldName ),
+                                                                 1,
+                                                                 matrix,
+                                                                 rhs );
   });
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-void LaplaceFEM::ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
-                                                 string const & functionName,
-                                                 set<localIndex> const & targetSet,
-                                                 real64 const time,
-                                                 dataRepository::ManagedGroup * dataGroup,
-                                                 string const & fieldName,
-                                                 string const & dofMapName,
-                                                 integer const & dofDim,
-                                                 integer const & component,
-                                                 real64 const & scale,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs )
-{
-  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
-  arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
-
-  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-    [&]( auto type ) -> void
-    {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      fieldType & field = view.reference();
-
-      ApplyBoundaryConditionToSystem( fsManager, functionName, targetSet, time, dataGroup, dofMap, dofDim, component, scale, matrix, rhs,
-        [&]( localIndex const a )->real64
-        {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
-        }
-      );
-    }
-  );
-}
-
-/*
-template< typename LAMBDA >
-void LaplaceFEM::ApplyBoundaryConditionToSystem( FieldSpecificationManager const & fsManager,
-                                                 string const & functionName,
-                                                 set<localIndex> const & targetSet,
-                                                 real64 const time,
-                                                 dataRepository::ManagedGroup * dataGroup,
-                                                 arrayView1d<globalIndex const> const & dofMap,
-                                                 integer const & dofDim,
-                                                 integer const & component,
-                                                 real64 const & scale,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs,
-                                                 LAMBDA && lambda )
-{
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-
-  globalIndex_array dof( targetSet.size() );
-  real64_array rhsContribution( targetSet.size() );
-
-  if( functionName.empty() )
-  {
-
-    integer counter=0;
-    for( auto a : targetSet )
-    {
-      dof( counter ) = dofDim*dofMap[a]+component;
-      SpecifyFieldValue( dof( counter ),
-                         matrix,
-                         rhsContribution( counter ),
-                         scale,
-                         lambda( a ) );
-
-      ++counter;
-    }
-    ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-  }
-  else
-  {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-    if( function->isFunctionOfTime()==2 )
-    {
-      real64 value = scale * function->Evaluate( &time );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        SpecifyFieldValue( dof( counter ),
-                           matrix,
-                           rhsContribution( counter ),
-                           value,
-                           lambda( a ) );
-        ++counter;
-      }
-      ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-    else
-    {
-      real64_array result;
-      result.resize( integer_conversion<localIndex>( targetSet.size()));
-      function->Evaluate( dataGroup, time, targetSet, result );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        SpecifyFieldValue( dof( counter ),
-                           matrix,
-                           rhsContribution( counter ),
-                           scale*result[counter],
-                           lambda( a ) );
-        ++counter;
-      }
-      ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-  }
-}
-*/
-
 void LaplaceFEM::solve( ParallelMatrix & matrix,
                         ParallelVector & rhs,
                         ParallelVector & solution,
@@ -690,7 +568,6 @@ void LaplaceFEM::solve( ParallelMatrix & matrix,
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
