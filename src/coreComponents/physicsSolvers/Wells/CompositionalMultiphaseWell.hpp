@@ -323,7 +323,7 @@ public:
     // mixture density
     static constexpr auto mixtureDensityString = "segmentMixtureDensity";
     static constexpr auto dMixtureDensity_dPressureString = "dSegmentMixtureDensity_dPres";
-    static constexpr auto dMixtureDensity_dCompString = "dSegmentMixtureDensity_dComp";
+    static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dSegmentMixtureDensity_dComp";
 
     // intermediate values for constitutive model input
     static constexpr auto globalCompFractionString                     = "segmentGlobalComponentFraction";

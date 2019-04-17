@@ -58,7 +58,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   :
   WellSolverBase( name, parent ),
   m_numPhases( 0 ),
-  m_numComponents( 0 ),
+  m_numComponents( 0 )
 {
   this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -327,6 +327,10 @@ void CompositionalMultiphaseWell::UpdateMixtureDensity( Well * well )
 {
   WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
+  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  localIndex const NC = m_numComponents;
+  localIndex const NP = m_numPhases;
+
   // get well secondary variables on well elements
   arrayView1d<real64> const & wellElemMixtureDensity =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::mixtureDensityString );
@@ -346,6 +350,9 @@ void CompositionalMultiphaseWell::UpdateMixtureDensity( Well * well )
   arrayView3d<real64 const> const & dWellElemPhaseVolFrac_dComp =
     wellElementSubRegion->getReference<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
+  arrayView3d<real64 const> const & dWellElemCompFrac_dCompDens =
+    wellElementSubRegion->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+
   // get constitutive data
   MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( wellElementSubRegion, m_fluidName );
    
@@ -357,6 +364,8 @@ void CompositionalMultiphaseWell::UpdateMixtureDensity( Well * well )
 
   arrayView4d<real64 const> const & dWellElemPhaseDens_dComp =
     fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
+
+  stackArray1d<real64, maxNumComp> dDens_dC( NC );
 
   for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
   {
@@ -374,7 +383,9 @@ void CompositionalMultiphaseWell::UpdateMixtureDensity( Well * well )
       wellElemMixtureDensity[iwelem] += wellElemPhaseVolFrac[iwelem][ip] * wellElemPhaseDens[iwelem][0][ip];      
       dWellElemMixtureDensity_dPres[iwelem] += dWellElemPhaseVolFrac_dPres[iwelem][ip] * wellElemPhaseDens[iwelem][0][ip]
                                              + wellElemPhaseVolFrac[iwelem][ip] * dWellElemPhaseDens_dPres[iwelem][0][ip];
-      
+  
+      dDens_dC = 0.0;
+    
       applyChainRule( NC, dWellElemCompFrac_dCompDens[iwelem], dWellElemPhaseDens_dComp[iwelem][0][ip], dDens_dC );
       for (localIndex ic = 0; ic < NC; ++ic)
       {
@@ -2144,6 +2155,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
   });  
 }
 
+
 void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 {
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS; 
@@ -2159,9 +2171,9 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & resPressure  = m_resPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dResPressure = m_deltaResPressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & resGravDepth = m_resGravDepth;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & phaseMob = m_phaseMob;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseMob_dPres = m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseMob_dComp = m_dPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & resPhaseMob = m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dResPhaseMob_dPres = m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dResPhaseMob_dComp = m_dResPhaseMob_dCompDens;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dResPhaseVolFrac_dPres = m_dResPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dResPhaseVolFrac_dComp = m_dResPhaseVolFrac_dCompDens;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dResCompFrac_dCompDens = m_dResCompFrac_dCompDens;
@@ -2199,10 +2211,10 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   arrayView1d<real64> const & wellElemMixtureDensity =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::mixtureDensityString );
   
-  arrayView1d<real64> const & dWellElemMixtureDensity_dPressure =
+  arrayView1d<real64> const & dWellElemMixtureDensity_dPres =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::dMixtureDensity_dPressureString );
 
-  arrayView2d<real64> const & dWellElemPhaseVolFrac_dComp =
+  arrayView2d<real64> const & dWellElemMixtureDensity_dComp =
     wellElementSubRegion->getReference<array2d<real64>>( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
   arrayView2d<real64> const & wellElemCompFrac =
@@ -2250,6 +2262,9 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   stackArray1d<real64, 2>              dFlux_dP( 2 );
   stackArray2d<real64, 2 * maxNumComp> dFlux_dC( 2, NC );
 
+  stackArray1d<real64, 2>              dMult_dP( 2 );
+  stackArray2d<real64, 2 * maxNumComp> dMult_dC( 2, NC );
+
   stackArray1d<real64, maxNumComp> dMixtureDensity_dC( NC );
   stackArray1d<real64, maxNumComp> dResTotalMobility_dC( NC );
 
@@ -2257,6 +2272,9 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   stackArray2d<real64, 2 * maxNumComp>              dPhaseCompFrac_dP( 2, NC );
   stackArray3d<real64, 2 * maxNumComp * maxNumComp> dPhaseCompFrac_dC( 2, NC, NC );
     
+  stackArray1d<real64, maxNumComp> dVisc_dC( NC );
+  stackArray1d<real64, maxNumComp> dRelPerm_dC( NC );
+
   stackArray1d<real64, 2>              dPotDiff_dP( 2 );
   stackArray2d<real64, 2 * maxNumComp> dPotDiff_dC( 2, NC );
 
@@ -2310,10 +2328,10 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
     {
       real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
       pressure[SubRegionTag::WELL]  += wellElemMixtureDensity[iwelem] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dP[iwelem] * gravD;
+      dPressure_dP[SubRegionTag::WELL] += dWellElemMixtureDensity_dPres[iwelem] * gravD;
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dC[iwelem][ic] * gravD;
+        dPressure_dC[SubRegionTag::WELL][ic] += dWellElemMixtureDensity_dComp[iwelem][ic] * gravD;
       }
     }
 
@@ -2363,11 +2381,11 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
                                      + resPhaseMob[er][esr][ei][ip]        * dPotDiff_dP[SubRegionTag::RES];
         dFlux_dP[SubRegionTag::WELL] = resPhaseMob[er][esr][ei][ip]        * dPotDiff_dP[SubRegionTag::WELL];
 
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for (localIndex ic = 0; ic < NC; ++ic)
         {
-          dPhaseFlux_dC[SubRegionTag::RES][ic]  = dResPhaseMob_dComp[er][esr][ei][ip][jc] * potDiff 
-                                                + resPhaseMob[er][esr][ei][ip]            * dPotDiff_dC[SubRegionTag::RES][jc];
-          dPhaseFlux_dC[SubRegionTag::WELL][ic] = resPhaseMob[er][esr][ei][ip]            * dPotDiff_dC[SubRegionTag::RES][jc];
+          dFlux_dC[SubRegionTag::RES][ic]  = dResPhaseMob_dComp[er][esr][ei][ip][ic] * potDiff 
+                                                + resPhaseMob[er][esr][ei][ip]            * dPotDiff_dC[SubRegionTag::RES][ic];
+          dFlux_dC[SubRegionTag::WELL][ic] = resPhaseMob[er][esr][ei][ip]            * dPotDiff_dC[SubRegionTag::RES][ic];
         }
         
         // increment component fluxes
@@ -2377,21 +2395,21 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
         
           dCompPerfRate_dPres[iperf][SubRegionTag::RES][ic]  += resPhaseCompFrac[er][esr][m_resFluidIndex][ei][0][ip][ic]
                                                               * dFlux_dP[SubRegionTag::RES];
-          dCompPerfRate_dPres[iperf][SubRegionTag::RES][ic]  += dResPhaseCompFrac_dP[er][esr][m_resFluidIndex][ei][0][ip][ic]
+          dCompPerfRate_dPres[iperf][SubRegionTag::RES][ic]  += dResPhaseCompFrac_dPres[er][esr][m_resFluidIndex][ei][0][ip][ic]
                                                               * flux;
           dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] += resPhaseCompFrac[er][esr][m_resFluidIndex][ei][0][ip][ic]
-                                                              * dFlux_dP[SubRegionTag::WELL] 
+                                                              * dFlux_dP[SubRegionTag::WELL];
 
           applyChainRule( NC, 
                           dResCompFrac_dCompDens[er][esr][ei], 
-                          dResPhaseCompFrac_dC[er][esr][m_resFluidIndex][ei][0][ip][ic], 
+                          dResPhaseCompFrac_dComp[er][esr][m_resFluidIndex][ei][0][ip][ic], 
                           dPhaseCompFrac_dCompDens );
            
           for (localIndex jc = 0; jc < NC; ++jc)
           {
             dCompPerfRate_dComp[iperf][SubRegionTag::RES][ic][jc]  += dFlux_dC[SubRegionTag::RES][jc] 
                                                                     * resPhaseCompFrac[er][esr][m_resFluidIndex][ei][0][ip][ic];
-            dCompPerfRate_dComp[iperf][SubRegionTag::RES][ic][jc]  += flux[SubRegionTag::RES][jc] 
+            dCompPerfRate_dComp[iperf][SubRegionTag::RES][ic][jc]  += flux 
                                                                     * dPhaseCompFrac_dCompDens[jc];
             dCompPerfRate_dComp[iperf][SubRegionTag::WELL][ic][jc] += dFlux_dC[SubRegionTag::WELL][jc] 
                                                                     * resPhaseCompFrac[er][esr][m_resFluidIndex][ei][0][ip][ic];
@@ -2444,12 +2462,12 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 
       // compute a potdiff multiplier = wellElemMixtureDensity * resTotalMobility 
       real64 const mult = wellElemMixtureDensity[iwelem] * resTotalMobility;
-      dMult_dP[SubRegionTag::RES]  = wellElemMixtureDensity[iwelem] * dResTotalMobility_dPres;
+      dMult_dP[SubRegionTag::RES]  = wellElemMixtureDensity[iwelem] * dResTotalMobility_dP;
       dMult_dP[SubRegionTag::WELL] = dWellElemMixtureDensity_dPres[iwelem] * resTotalMobility;
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for (localIndex ic = 0; ic < NC; ++ic)
       {
-        dMult_dC[SubRegionTag::RES][jc]  = wellElemMixtureDensity[iwelem] * dResTotalMobility_dC[jc];
-        dMult_dC[SubRegionTag::WELL][jc] = dWellElemMixtureDensity_dComp[iwelem][jc] * resTotalMobility;
+        dMult_dC[SubRegionTag::RES][ic]  = wellElemMixtureDensity[iwelem] * dResTotalMobility_dC[ic];
+        dMult_dC[SubRegionTag::WELL][ic] = dWellElemMixtureDensity_dComp[iwelem][ic] * resTotalMobility;
       }
 
       // compute the volumetric flux and derivatives using upstream cell mobility
@@ -2459,12 +2477,12 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
       dFlux_dP[SubRegionTag::WELL] =  dMult_dP[SubRegionTag::WELL] * potDiff 
                                    +  mult * dPotDiff_dP[SubRegionTag::WELL];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for (localIndex ic = 0; ic < NC; ++ic)
       {
-        dFlux_dP[SubRegionTag::RES][ic]  = dMult_dC[SubRegionTag::RES][jc] * potDiff 
-                                         + mult * dPotDiff_dC[SubRegionTag::RES][jc];
-        dFlux_dP[SubRegionTag::WELL][ic] = dMult_dC[SubRegionTag::WELL][jc] * potDiff 
-                                         + mult * dPotDiff_dC[SubRegionTag::RES][jc];
+        dFlux_dC[SubRegionTag::RES][ic]  = dMult_dC[SubRegionTag::RES][ic] * potDiff 
+                                         + mult * dPotDiff_dC[SubRegionTag::RES][ic];
+        dFlux_dC[SubRegionTag::WELL][ic] = dMult_dC[SubRegionTag::WELL][ic] * potDiff 
+                                         + mult * dPotDiff_dC[SubRegionTag::RES][ic];
       }
       
       // compute component fluxes
@@ -2476,8 +2494,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
                                                           * dFlux_dP[SubRegionTag::RES];
         dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] = wellElemCompFrac[iwelem][ic]
                                                            * dFlux_dP[SubRegionTag::WELL];
-        dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] = dWellElemCompFrac_dP[iwelem][ic]
-                                                           * flux;
+//        dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] = dWellElemCompFrac_dP[iwelem][ic]
+//                                                           * flux;
            
         for (localIndex jc = 0; jc < NC; ++jc)
         {
@@ -2485,8 +2503,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
                                                                   * dFlux_dC[SubRegionTag::RES][jc]; 
           dCompPerfRate_dComp[iperf][SubRegionTag::WELL][ic][jc] += wellElemCompFrac[iwelem][ic]
                                                                   * dFlux_dC[SubRegionTag::WELL][jc]; 
-          dCompPerfRate_dComp[iperf][SubRegionTag::WELL][ic][jc] += dWellElemCompFrac_dC[iwelem][ic][jc]
-                                                                  * flux[SubRegionTag::RES][jc];
+          dCompPerfRate_dComp[iperf][SubRegionTag::WELL][ic][jc] += dWellElemCompFrac_dCompDens[iwelem][ic][jc]
+                                                                  * flux;
         }
       }
     }      
