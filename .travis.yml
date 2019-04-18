@@ -74,8 +74,8 @@ script:
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/dd7hvw2hfmws5ax/tpl-osx-clang10-20190416.tar.gz;
-      tar -xf tpl-osx-clang10-20190416.tar.gz;;
+      wget https://www.dropbox.com/s/erttwgj8yclo9gx/tpl-osx-clang10-20190416.tar.gz;
+      tar -xf tpl-osx-clang10-20190416.tar.gz;
       cd ../GEOSX;
       bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
     else
