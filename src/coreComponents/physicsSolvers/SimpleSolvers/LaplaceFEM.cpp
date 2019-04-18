@@ -534,14 +534,14 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     ManagedGroup * const targetGroup,
                     string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                                 time,
-                                                                 targetGroup,
-                                                                 m_fieldName,
-                                                                 dofManager.getKey( m_fieldName ),
-                                                                 1,
-                                                                 matrix,
-                                                                 rhs );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, TrilinosInterface>( targetSet,
+                                                                                    time,
+                                                                                    targetGroup,
+                                                                                    m_fieldName,
+                                                                                    dofManager.getKey( m_fieldName ),
+                                                                                    1,
+                                                                                    matrix,
+                                                                                    rhs );
   });
 }
 
