@@ -174,6 +174,7 @@ public:
               LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
+    // loop over all FieldSpecificationBase objects
     for( auto & subGroup : this->GetSubGroups() )
     {
       FieldSpecificationBase const * fs = subGroup.second->group_cast<FieldSpecificationBase const *>();
@@ -197,14 +198,33 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
+            dataRepository::ManagedGroup * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+            if( elemRegionSubGroup!=nullptr )
             {
-              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+              targetGroup = elemRegionSubGroup;
             }
-            if( targetPath[pathLevel] == dataRepository::keys::elementRegions )
+
+            dataRepository::ManagedGroup * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+            if( elemSubRegionSubGroup!=nullptr )
+            {
+              targetGroup = elemSubRegionSubGroup;
+            }
+
+//            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
+//            {
+//              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+//            }
+//            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
+//            {
+//              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+//            }
+
+            if( targetPath[pathLevel] == dataRepository::keys::elementRegions ||
+                targetPath[pathLevel] == ElementRegion::viewKeyStruct::elementSubRegions )
             {
               continue;
             }
+
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
