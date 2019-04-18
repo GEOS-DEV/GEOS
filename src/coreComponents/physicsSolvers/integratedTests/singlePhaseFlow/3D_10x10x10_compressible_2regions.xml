@@ -136,7 +136,7 @@
                setNames="source"/>
 
     <FieldSpecification name="sinkTerm1"
-               objectPath="ElementRegions/Region1/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region1/cb1"
                fieldName="pressure"
                scale="0.0"
                setNames="sink"/>
@@ -156,7 +156,7 @@
                scale="5e6"/>
 
     <FieldSpecification name="sinkTerm2"
-               objectPath="ElementRegions/Region2/elementSubRegions/cb2"
+               objectPath="ElementRegions/Region2/cb2"
                fieldName="pressure"
                scale="0.0"
                setNames="sink"/>
