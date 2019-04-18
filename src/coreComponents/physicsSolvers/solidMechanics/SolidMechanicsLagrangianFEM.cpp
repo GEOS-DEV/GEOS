@@ -33,7 +33,6 @@
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -471,6 +470,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -478,7 +478,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt );
@@ -526,6 +525,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -533,7 +533,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt);
@@ -1083,12 +1082,12 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
       int dim = 3;
       m_maxForce = ImplicitElementKernelLaunchSelector( numNodesPerElement,
                                                         fe->n_quadrature_points(),
+                                                        constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                                         elementSubRegion->size(),
                                                         dt,
                                                         dNdX,
                                                         detJ,
                                                         fe.get(),
-                                                        constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                                         elementSubRegion->m_ghostRank,
                                                         elemsToNodes,
                                                         trilinos_index,

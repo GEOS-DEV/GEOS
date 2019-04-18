@@ -34,7 +34,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/LinearElasticIsotropic.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
