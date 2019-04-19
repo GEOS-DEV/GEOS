@@ -598,7 +598,6 @@ if( ENABLE_LAPACK_SUITE )
   if(NOT EXISTS ${LAPACK_SUITE_DIR})
       message( INFO ": setting up LAPACK_SUITE" )
       set(LAPACK_SUITE_DIR ${GEOSX_TPL_DIR}/lapack_suite)
-      message( "LAPACK_SUITE_DIR = ${LAPACK_SUITE_DIR}" )
   endif()
   
   include(${LAPACK_SUITE_DIR}/lib/cmake/cblas-3.8.0/cblas-config.cmake)
@@ -606,11 +605,11 @@ if( ENABLE_LAPACK_SUITE )
   include(${LAPACK_SUITE_DIR}/lib/cmake/lapacke-3.8.0/lapacke-config.cmake)
 
   blt_register_library( NAME lapack_suite
-                        INCLUDES ${LAPACKE_INCLUDE_DIRS} 
+                        INCLUDES ${LAPACKE_INCLUDE_DIRS} ${CBLAS_LIBRARIES}
                         LIBRARIES ${LAPACKE_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
   message( "LAPACK_SUITE_INCLUDE_DIRS = ${LAPACKE_INCLUDE_DIRS}" )
-  message( "LAPACK_SUITE_LIBRARIES = ${LAPACKE_LIBRARIES}" )
+  message( "LAPACK_SUITE_LIBRARIES = ${LAPACKE_LIBRARIES} ${CBLAS_LIBRARIES}" )
   set( thirdPartyLibs ${thirdPartyLibs} lapack_suite )
 
 endif()
