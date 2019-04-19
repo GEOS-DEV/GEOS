@@ -605,8 +605,8 @@ if( ENABLE_LAPACK_SUITE )
   include(${LAPACK_SUITE_DIR}/lib/cmake/lapacke-3.8.0/lapacke-config.cmake)
 
   blt_register_library( NAME lapack_suite
-                        INCLUDES ${LAPACKE_INCLUDE_DIRS} ${CBLAS_LIBRARIES}
-                        LIBRARIES ${LAPACKE_LIBRARIES}
+                        INCLUDES ${LAPACKE_INCLUDE_DIRS}
+                        LIBRARIES ${LAPACKE_LIBRARIES} ${CBLAS_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
   message( "LAPACK_SUITE_INCLUDE_DIRS = ${LAPACKE_INCLUDE_DIRS}" )
   message( "LAPACK_SUITE_LIBRARIES = ${LAPACKE_LIBRARIES} ${CBLAS_LIBRARIES}" )
