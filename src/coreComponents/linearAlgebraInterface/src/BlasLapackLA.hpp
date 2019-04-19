@@ -12,7 +12,14 @@
 #include "Logger.hpp"
 
 #include "cblas.h"
+//#include "lapacke.h"
+#define __cplusplus_temp __cplusplus
+#undef __cplusplus
+#define __cplusplus 199711L
 #include "lapacke.h"
+#undef __cplusplus
+#define __cplusplus __cplusplus_temp
+#undef __cplusplus_temp
 
 namespace geosx
 {

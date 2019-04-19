@@ -33,9 +33,9 @@
 
 #include "common/DataTypes.hpp"
 
-#include <BlasLapackLA.hpp>
-
 #include <random>
+
+#include <BlasLapackLA.hpp>
 
 /**
  * \file testDenseLAOperations.cpp
@@ -616,7 +616,7 @@ void testArray2dInverseLA()
         {
           E( i, i ) = 2;
         }
-        else if( abs( i - j ) == 1 )
+        else if( std::abs( i - j ) == 1 )
         {
           E( i, j ) = -1;
         }

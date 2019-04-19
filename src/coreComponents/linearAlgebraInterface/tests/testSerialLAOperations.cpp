@@ -524,7 +524,7 @@ void testSerialMatrixInverse()
       {
         if( i == j )
           E( i, i ) = 2;
-        else if( abs( i - j ) == 1 )
+        else if( std::abs( i - j ) == 1 )
           E( i, j ) = -1;
       }
 
