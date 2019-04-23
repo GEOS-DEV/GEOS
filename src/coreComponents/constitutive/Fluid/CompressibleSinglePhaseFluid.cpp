@@ -101,9 +101,10 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Man
   m_viscosity = m_referenceViscosity;
 }
 
-std::unique_ptr<ConstitutiveBase>
+void
 CompressibleSinglePhaseFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent ) const
+                                            ManagedGroup * const parent,
+                                            std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr<CompressibleSinglePhaseFluid> newFluid =
     std::make_unique<CompressibleSinglePhaseFluid>( name, parent );
@@ -118,7 +119,7 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   newFluid->m_densityModelType     = this->m_densityModelType;
   newFluid->m_viscosityModelType   = this->m_viscosityModelType;
 
-  return std::move(newFluid);
+  clone = std::move(newFluid);
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()
