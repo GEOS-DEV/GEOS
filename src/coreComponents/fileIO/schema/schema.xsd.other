@@ -693,9 +693,9 @@
 			<xsd:element name="BoundarySetData" type="BoundarySetDataType" />
 		</xsd:choice>
 		<!--cellStencil = (no description available)-->
-		<xsd:attribute name="cellStencil" type="geosx::StencilCollection&lt;geosx::CellDescriptor, double&gt;" />
+		<xsd:attribute name="cellStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
 		<!--fractureStencil = (no description available)-->
-		<xsd:attribute name="fractureStencil" type="geosx::StencilCollection&lt;geosx::CellDescriptor, double&gt;" />
+		<xsd:attribute name="fractureStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="BoundarySetDataType" />
 	<xsd:complexType name="GeometryType">
