@@ -442,24 +442,30 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  constexpr localIndex numElems = 2;
-  globalIndex_array elementLocalDofIndexRow(numElems);
-  globalIndex_array elementLocalDofIndexCol(numElems);
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
-  {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
-    {
-      stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
-      {
-        elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      });
+  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-      localIndex const stencilSize = stencil.size();
-      elementLocalDofIndexCol.resize(stencilSize);
-      stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  {
+    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    {
+      localIndex const stencilSize = connections.size( iconn );
+      stackArray1d<globalIndex, numElems> elementLocalDofIndexRow( numElems );
+      stackArray1d<globalIndex, maxStencil> elementLocalDofIndexCol( stencilSize );
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        CellDescriptor const & cell = connections( iconn, i ).index;
+        elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+      }
+
+      for (localIndex i = 0; i < stencilSize; ++i)
+      {
+        CellDescriptor const & cell = connections( iconn, i ).index;
         elementLocalDofIndexCol[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      });
+      }
 
       sparsity->InsertGlobalIndices(integer_conversion<int>(numElems),
                                     elementLocalDofIndexRow.data(),
@@ -476,41 +482,48 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   {
     if (elemGhostRank[er][esr][k] < 0)
     {
-      elementLocalDofIndexRow[0] = dofNumber[er][esr][k];
+      globalIndex const elementLocalDofIndexRow = dofNumber[er][esr][k];
 
       sparsity->InsertGlobalIndices( 1,
-                                     elementLocalDofIndexRow.data(),
+                                     &elementLocalDofIndexRow,
                                      1,
-                                     elementLocalDofIndexRow.data());
+                                     &elementLocalDofIndexRow);
     }
   });
 
   // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils( [&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection)
+  fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
   {
-    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      elementLocalDofIndexRow.resize(1);
-      stencil.forConnected( [&] ( PointDescriptor const & point, localIndex const i )
+      localIndex const stencilSize = connections.size( iconn );
+      stackArray1d<globalIndex, numElems> elementLocalDofIndexRow( numElems );
+      stackArray1d<globalIndex, maxStencil> elementLocalDofIndexCol( stencilSize );
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        PointDescriptor const & point = connections( iconn, i ).index;
+
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & c = point.cellIndex;
           elementLocalDofIndexRow[0] = dofNumber[c.region][c.subRegion][c.index];
         }
-      });
+      }
 
-      localIndex const stencilSize = stencil.size();
-      elementLocalDofIndexCol.resize(stencilSize);
       integer counter = 0;
-      stencil.forAll( [&] ( PointDescriptor const & point, real64 w, localIndex i )
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
+        PointDescriptor const & point = connections( iconn, i ).index;
+
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & c = point.cellIndex;
           elementLocalDofIndexCol[counter++] = dofNumber[c.region][c.subRegion][c.index];
         }
-      });
+      }
 
       sparsity->InsertGlobalIndices(1,
                                     elementLocalDofIndexRow.data(),
@@ -700,14 +713,16 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
 
-  constexpr localIndex numElems = 2;
-  constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
   {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = stencil.size();
+      localIndex const stencilSize = connections.size(iconn);
 
       // working arrays
       stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
@@ -731,8 +746,10 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
       // calculate quantities on primary connected cells
       real64 densMean = 0.0;
-      stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        CellDescriptor const & cell = connections(iconn, i).index;
+
         localIndex const er  = cell.region;
         localIndex const esr = cell.subRegion;
         localIndex const ei  = cell.index;
@@ -754,17 +771,21 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         // average density
         densMean += densWeight[i] * density;
         dDensMean_dP[i] = densWeight[i] * dDens_dP;
-      });
+      }
 
       //***** calculation of flux *****
 
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
-      stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
+        FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+
+        localIndex const er  = entry.index.region;
+        localIndex const esr = entry.index.subRegion;
+        localIndex const ei  = entry.index.index;
+
+        real64 const weight = entry.weight;
 
         dofColIndices[i] = dofNumber[er][esr][ei];
 
@@ -772,9 +793,9 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
         real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-        dFlux_dP[i] = w * (1.0 - dGrav_dP);
-      });
+        potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+        dFlux_dP[i] = weight * (1.0 - dGrav_dP);
+      }
 
       // upwinding of fluid properties (make this an option?)
       localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -971,8 +992,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // *** assembly loop ***
 
-  constexpr localIndex numElems = 2;
-  constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
@@ -989,11 +1010,12 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;
 
-    FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
+    FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil(setName);
+    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
 
-    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = stencil.size();
+      localIndex const stencilSize = connections.size(iconn);
 
       stackArray1d<globalIndex, maxStencilSize> dofColIndices( stencilSize );
 
@@ -1010,8 +1032,11 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       real64 densMean = 0.0;
       globalIndex eqnRowIndex = -1;
       localIndex cell_order = -1;
-      stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        PointDescriptor const & point = connections(iconn, i).index;
+
         real64 density = 0, dDens_dP = 0;
         real64 viscosity = 0, dVisc_dP = 0;
         switch (point.tag)
@@ -1056,15 +1081,18 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
         // average density
         densMean += densWeight[i] * density;
         dDensMean_dP[i] = densWeight[i] * dDens_dP;
-      });
+      }
 
       //***** calculation of flux *****
 
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
       dofColIndices = -1;
-      stencil.forAll([&] (PointDescriptor point, real64 w, localIndex i) -> void
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
+        FluxApproximationBase::BoundaryStencil::Entry const & entry = connections(iconn, i);
+        PointDescriptor const & point = entry.index;
+
         real64 pressure = 0.0, gravD = 0.0;
         switch (point.tag)
         {
@@ -1096,9 +1124,9 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
         real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-        potDif += w * (pressure + gravTerm);
-        dFlux_dP[i] = w * (1.0 + dGrav_dP);
-      });
+        potDif += entry.weight * (pressure + gravTerm);
+        dFlux_dP[i] = entry.weight * (1.0 + dGrav_dP);
+      }
 
       // upwinding of fluid properties (make this an option?)
       localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -1133,8 +1161,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                     localFluxJacobian.data());
 
       residual->SumIntoGlobalValues(1, &eqnRowIndex, &localFlux);
-    });
-  });
+    } );
+  } );
 }
 
 real64
