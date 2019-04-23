@@ -26,6 +26,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/Solid/solidSelector.hpp"
 #include "finiteElement/Kinematics.h"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
@@ -195,8 +196,9 @@ public:
   template< typename KERNELWRAPPER, typename ... PARAMS >
   real64
   ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
-                                localIndex NUM_QUADRATURE_POINTS,
-                                PARAMS&&... params );
+                               localIndex NUM_QUADRATURE_POINTS,
+                               constitutive::ConstitutiveBase * const constitutiveRelation,
+                               PARAMS&&... params );
 
 /**
  * @param WRAPPER The class/struct that contains the Launch() function that launches the kernel
@@ -213,6 +215,7 @@ public:
     ExplicitElementKernelLaunch(\
         localIndex NUM_NODES_PER_ELEM,\
         localIndex NUM_QUADRATURE_POINTS,\
+        constitutive::ConstitutiveBase * const constitutiveRelation, \
         set<localIndex> const & elementList,\
         arrayView2d<localIndex const> const & elemsToNodes,\
         arrayView3d< R1Tensor const> const & dNdX,\
@@ -220,24 +223,23 @@ public:
         arrayView1d<R1Tensor const> const & u,\
         arrayView1d<R1Tensor const> const & vel,\
         arrayView1d<R1Tensor> const & acc,\
-        constitutive::ConstitutiveBase * const constitutiveRelation, \
         arrayView2d<real64> const & meanStress, \
         arrayView2d<R2SymTensor> const & devStress, \
         real64 const dt ) OVERRIDE\
     {\
       return ElementKernelLaunchSelector<WRAPPER>( NUM_NODES_PER_ELEM,\
-                                                             NUM_QUADRATURE_POINTS,\
-                                                             elementList,\
-                                                             elemsToNodes,\
-                                                             dNdX,\
-                                                             detJ,\
-                                                             u,\
-                                                             vel,\
-                                                             acc,\
-                                                             constitutiveRelation,\
-                                                             meanStress,\
-                                                             devStress,\
-                                                             dt );\
+                                                   NUM_QUADRATURE_POINTS,\
+                                                   constitutiveRelation,\
+                                                   elementList,\
+                                                   elemsToNodes,\
+                                                   dNdX,\
+                                                   detJ,\
+                                                   u,\
+                                                   vel,\
+                                                   acc,\
+                                                   meanStress,\
+                                                   devStress,\
+                                                   dt );\
     }
 
   EXPLICIT_ELEMENT_KERNEL_LAUNCH(SolidMechanicsLagrangianFEM::ExplicitElementKernelWrapper,)
@@ -258,12 +260,12 @@ public:
   ImplicitElementKernelLaunchSelector(\
       localIndex NUM_NODES_PER_ELEM,\
       localIndex NUM_QUADRATURE_POINTS,\
+      constitutive::ConstitutiveBase * const constitutiveRelation,\
       localIndex const numElems,\
       real64 const dt,\
       arrayView3d<R1Tensor const> const & dNdX,\
       arrayView2d<real64 const > const& detJ,\
       FiniteElementBase const * const fe,\
-      constitutive::ConstitutiveBase const * const constitutiveRelation,\
       arrayView1d< integer const > const & elemGhostRank,\
       arrayView2d< localIndex const > const & elemsToNodes,\
       arrayView1d< globalIndex const > const & globalDofNumber,\
@@ -286,12 +288,12 @@ public:
     return\
     ElementKernelLaunchSelector<WRAPPER>( NUM_NODES_PER_ELEM,\
                                            NUM_QUADRATURE_POINTS,\
+                                           constitutiveRelation,\
                                            numElems,\
                                            dt,\
                                            dNdX,\
                                            detJ,\
                                            fe,\
-                                           constitutiveRelation,\
                                            elemGhostRank,\
                                            elemsToNodes,\
                                            globalDofNumber,\
@@ -336,16 +338,18 @@ public:
      * @param dt The timestep
      * @return The achieved timestep.
      */
-    template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+    template< localIndex NUM_NODES_PER_ELEM,
+              localIndex NUM_QUADRATURE_POINTS,
+              typename CONSTITUTIVE_TYPE >
     static real64
-    Launch( set<localIndex> const & elementList,
+    Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+            set<localIndex> const & elementList,
             arrayView2d<localIndex const> const & elemsToNodes,
             arrayView3d< R1Tensor const> const & dNdX,
             arrayView2d<real64 const> const & detJ,
             arrayView1d<R1Tensor const> const & u,
             arrayView1d<R1Tensor const> const & vel,
             arrayView1d<R1Tensor> const & acc,
-            constitutive::ConstitutiveBase * const constitutiveRelation,
             arrayView2d<real64> const & meanStress,
             arrayView2d<R2SymTensor> const & devStress,
             real64 const dt );
@@ -386,14 +390,16 @@ public:
      * @param globalResidual Pointer to the parallel vector containing the global residual.
      * @return The maximum nodal force contribution from all elements.
      */
-    template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+    template< localIndex NUM_NODES_PER_ELEM,
+              localIndex NUM_QUADRATURE_POINTS,
+              typename CONSTITUTIVE_TYPE >
     static real64
-    Launch( localIndex const numElems,
+    Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+            localIndex const numElems,
             real64 const dt,
             arrayView3d<R1Tensor const> const & dNdX,
             arrayView2d<real64 const > const& detJ,
             FiniteElementBase const * const fe,
-            constitutive::ConstitutiveBase const * const constitutiveRelation,
             arrayView1d< integer const > const & elemGhostRank,
             arrayView2d< localIndex const > const & elemsToNodes,
             arrayView1d< globalIndex const > const & globalDofNumber,
@@ -529,7 +535,7 @@ void Integrate( const R2SymTensor& fieldvar,
                 real64 const& detJ,
                 real64 const& detF,
                 const R2Tensor& Finv,
-                arraySlice1d<R1Tensor> & result)
+                R1Tensor * restrict const result)
 {
   real64 const integrationFactor = detJ * detF;
 
@@ -550,51 +556,54 @@ void Integrate( const R2SymTensor& fieldvar,
 template< typename KERNELWRAPPER, typename ... PARAMS>
 real64 SolidMechanicsLagrangianFEM::
 ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
-                              localIndex NUM_QUADRATURE_POINTS,
-                              PARAMS&& ... params)
+                             localIndex NUM_QUADRATURE_POINTS,
+                             constitutive::ConstitutiveBase * const constitutiveRelation,
+                             PARAMS&& ... params)
 {
   real64 rval = 0;
 
-  if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
+  constitutive::constitutiveUpdatePassThru( constitutiveRelation, [&]( auto & constitutive )
   {
-    rval = KERNELWRAPPER::template Launch<8,8>( std::forward<PARAMS>(params)...);
-  }
-  else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
-  {
-    rval = KERNELWRAPPER::template Launch<4,1>( std::forward<PARAMS>(params)...);
-  }
-
+    using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
+    if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
+    {
+      rval = KERNELWRAPPER::template Launch<8,8, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...);
+    }
+    else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
+    {
+      rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...);
+    }
+  });
   return rval;
 }
 
 
-template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+template< localIndex NUM_NODES_PER_ELEM,
+          localIndex NUM_QUADRATURE_POINTS,
+          typename CONSTITUTIVE_TYPE >
 real64 SolidMechanicsLagrangianFEM::ExplicitElementKernelWrapper::
-Launch( set<localIndex> const & elementList,
+Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+        set<localIndex> const & elementList,
         arrayView2d<localIndex const> const & elemsToNodes,
         arrayView3d< R1Tensor const> const & dNdX,
         arrayView2d<real64 const> const & detJ,
         arrayView1d<R1Tensor const> const & u,
         arrayView1d<R1Tensor const> const & vel,
         arrayView1d<R1Tensor> const & acc,
-        constitutive::ConstitutiveBase * const constitutiveRelation,
         arrayView2d<real64> const & meanStress,
         arrayView2d<R2SymTensor> const & devStress,
         real64 const dt )
 {
 
-  constitutive::ConstitutiveBase::UpdateFunctionPointer update = constitutiveRelation->GetStateUpdateFunctionPointer();
-  void * data = nullptr;
-  constitutiveRelation->SetParamStatePointers( data );
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
                              GEOSX_LAMBDA ( localIndex k) mutable
   {
-    r1_array v_local( NUM_NODES_PER_ELEM );
-    r1_array u_local( NUM_NODES_PER_ELEM );
-    r1_array f_local( NUM_NODES_PER_ELEM );
+    R1Tensor v_local[NUM_NODES_PER_ELEM];
+    R1Tensor u_local[NUM_NODES_PER_ELEM];
+    R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-    CopyGlobalToLocal<R1Tensor,NUM_NODES_PER_ELEM>( elemsToNodes[k],
+    CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
                                                     u, vel,
                                                     u_local, v_local );
 
@@ -630,7 +639,7 @@ Launch( set<localIndex> const & elementList,
       R2SymTensor Dadt;
       HughesWinget(Rot, Dadt, Ldt);
 
-      constitutiveRelation->StateUpdatePoint( Dadt, Rot, k, q, 0);
+      constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
 
       R2SymTensor TotalStress;
       TotalStress = devStress[k][q];
@@ -640,40 +649,43 @@ Launch( set<localIndex> const & elementList,
     }//quadrature loop
 
 
-    AddLocalToGlobal( elemsToNodes[k], f_local, acc, NUM_NODES_PER_ELEM );
+    AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
   });
 
   return dt;
 }
 
 
-template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+template< localIndex NUM_NODES_PER_ELEM,
+          localIndex NUM_QUADRATURE_POINTS,
+          typename CONSTITUTIVE_TYPE >
 real64
 SolidMechanicsLagrangianFEM::
-ImplicitElementKernelWrapper::Launch( localIndex const numElems,
-                             real64 const dt,
-                             arrayView3d<R1Tensor const> const & dNdX,
-                             arrayView2d<real64 const > const& detJ,
-                             FiniteElementBase const * const fe,
-                             constitutive::ConstitutiveBase const * const constitutiveRelation,
-                             arrayView1d< integer const > const & elemGhostRank,
-                             arrayView2d< localIndex const > const & elemsToNodes,
-                             arrayView1d< globalIndex const > const & globalDofNumber,
-                             arrayView1d< R1Tensor const > const & disp,
-                             arrayView1d< R1Tensor const > const & uhat,
-                             arrayView1d< R1Tensor const > const & vtilde,
-                             arrayView1d< R1Tensor const > const & uhattilde,
-                             arrayView1d< real64 const > const & density,
-                             arrayView1d< real64 const > const & fluidPressure,
-                             arrayView1d< real64 const > const & deltaFluidPressure,
-                             arrayView1d< real64 const > const & biotCoefficient,
-                             timeIntegrationOption const tiOption,
-                             real64 const stiffnessDamping,
-                             real64 const massDamping,
-                             real64 const newmarkBeta,
-                             real64 const newmarkGamma,
-                             Epetra_FECrsMatrix * const matrix,
-                             Epetra_FEVector * const rhs )
+ImplicitElementKernelWrapper::
+Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+        localIndex const numElems,
+        real64 const dt,
+        arrayView3d<R1Tensor const> const & dNdX,
+        arrayView2d<real64 const > const& detJ,
+        FiniteElementBase const * const fe,
+        arrayView1d< integer const > const & elemGhostRank,
+        arrayView2d< localIndex const > const & elemsToNodes,
+        arrayView1d< globalIndex const > const & globalDofNumber,
+        arrayView1d< R1Tensor const > const & disp,
+        arrayView1d< R1Tensor const > const & uhat,
+        arrayView1d< R1Tensor const > const & vtilde,
+        arrayView1d< R1Tensor const > const & uhattilde,
+        arrayView1d< real64 const > const & density,
+        arrayView1d< real64 const > const & fluidPressure,
+        arrayView1d< real64 const > const & deltaFluidPressure,
+        arrayView1d< real64 const > const & biotCoefficient,
+        timeIntegrationOption const tiOption,
+        real64 const stiffnessDamping,
+        real64 const massDamping,
+        real64 const newmarkBeta,
+        real64 const newmarkGamma,
+        Epetra_FECrsMatrix * const matrix,
+        Epetra_FEVector * const rhs )
 {
   GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
 return 0;
