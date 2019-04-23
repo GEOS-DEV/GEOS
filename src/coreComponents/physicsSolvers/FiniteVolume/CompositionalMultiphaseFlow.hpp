@@ -485,6 +485,13 @@ private:
                                       real64 const time, real64 const dt,
                                       systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
+
+  void ApplyComponentFluxBC_implicit( DomainPartition * const domain,
+                                  real64 const time, real64 const dt,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
+
+
   /// the max number of fluid phases
   localIndex m_numPhases;
 

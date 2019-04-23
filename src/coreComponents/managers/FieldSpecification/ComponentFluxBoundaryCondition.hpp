@@ -17,32 +17,30 @@
  */
 
 /*
- * DirichletBoundaryCondition.hpp
+ * ComponentFluxBoundaryCondition.hpp
  *
- *  Created on: Jun 2, 2017
- *      Author: rrsettgast
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_COMPONENTFLUXBOUNDARYCONDITION_HPP_
+#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_COMPONENTFLUXBOUNDARYCONDITION_HPP_
 
 #include "FieldSpecificationBase.hpp"
 
 namespace geosx
 {
 
-class DirichletBoundaryCondition : public FieldSpecificationBase
+class ComponentFluxBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
-  DirichletBoundaryCondition() = delete;
-  virtual ~DirichletBoundaryCondition();
+  ComponentFluxBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
+  ComponentFluxBoundaryCondition() = delete;
+  virtual ~ComponentFluxBoundaryCondition();
 
-  static string CatalogName() { return "Dirichlet"; }
+  static string CatalogName() { return "ComponentFlux"; }
 
   virtual const string getCatalogName() const 
   {
-    return DirichletBoundaryCondition::CatalogName();
+    return ComponentFluxBoundaryCondition::CatalogName();
   }
 
 };
@@ -52,5 +50,5 @@ public:
 } /* namespace geosx */
 
 #endif /*
-          SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_
+          SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_COMPONENTFLUXBOUNDARYCONDITION_HPP_
         */

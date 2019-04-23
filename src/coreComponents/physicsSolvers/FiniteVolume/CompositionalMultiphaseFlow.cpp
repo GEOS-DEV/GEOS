@@ -1561,6 +1561,9 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * con
   ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
+  // apply component flux boundary conditions.
+  ApplyComponentFluxBC_implicit(domain, time_n, dt, blockSystem);
+  
   jacobian->GlobalAssemble();
   residual->GlobalAssemble();
 
@@ -1592,6 +1595,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                     ManagedGroup * subRegion,
                     string const & )
   {
+
+    if(!(fs->getCatalogName() == "Dirichlet" || fs->getCatalogName() == "FieldSpecification"))
+      return;
+    
     // 1.0. Check whether pressure has already been applied to this set
     GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
     bcStatusMap[setName].resize( m_numComponents );
@@ -1615,6 +1622,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                     ManagedGroup * subRegion,
                     string const & )
   {
+
+    if(!(fs->getCatalogName() == "Dirichlet" || fs->getCatalogName() == "FieldSpecification"))    
+      return;
+    
     // 2.0. Check pressure and record composition bc application
     localIndex const comp = fs->GetComponent();
     GEOS_ERROR_IF( bcStatusMap.count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
@@ -1652,6 +1663,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                     ManagedGroup * subRegion,
                     string const & )
   {
+
+    if(!(bc->getCatalogName() == "Dirichlet" || bc->getCatalogName() == "FieldSpecification"))
+      return;
+    
     MultiFluidBase * const fluid = GetFluidModel(subRegion );
 
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference<array1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
@@ -1662,7 +1677,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
     arrayView2d<real64 const> const & compFrac  = subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
     arrayView2d<real64 const> const & compDens  = subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
     arrayView2d<real64 const> const & dCompDens = subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
-
+  
     arrayView2d<real64> const & totalDens = fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
 
     Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
@@ -1709,8 +1724,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
       FieldSpecificationEqual::ReplaceGlobalValues( rhs,
                                                     counter,
                                                     dof.data(),
-                                                    rhsContribution.data() );
+						    rhsContribution.data() );
+
     }
+
   });
 
 }
@@ -1720,6 +1737,69 @@ CompositionalMultiphaseFlow::ApplyFaceDirichletBC_implicit( DomainPartition * co
                                                             real64 const time_n, real64 const dt,
                                                             EpetraBlockSystem * const blockSystem )
 {
+
+}
+
+void
+CompositionalMultiphaseFlow::ApplyComponentFluxBC_implicit( DomainPartition * const domain,
+						   real64 const time_n, real64 const dt,
+						   EpetraBlockSystem * const blockSystem )
+{
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
+
+ std::unordered_map<std::type_index, std::string> type_names;
+  
+  fsManager->Apply( time_n + dt,
+                    domain,
+                    "ElementRegions",
+                    viewKeyStruct::globalCompFractionString,
+                    [&] ( FieldSpecificationBase const * const fs,
+                    string const & setName,
+                    set<localIndex> const & targetSet,
+                    ManagedGroup * subRegion,
+                    string const & fieldName)
+  {
+
+    if(fs->getCatalogName() == "ComponentFlux")
+      {
+
+	if(bcStatusMap.count( setName ) == 0)
+	  {
+	    bcStatusMap[setName].resize( m_numComponents );
+	    bcStatusMap[setName] = false;	
+	  }
+	    
+	localIndex const comp = fs->GetComponent();
+	GEOS_ERROR_IF( bcStatusMap[setName][comp], "Conflicting component[" << comp << "] flux boundary conditions on set '" << setName << "'" );
+	bcStatusMap[setName][comp] = true;
+
+	fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+								   time_n + dt,
+								   subRegion,
+								   fieldName,							       
+								   viewKeyStruct::blockLocalDofNumberString,
+								   int(m_numDofPerCell),
+								   blockSystem,
+								   BlockIDs::compositionalBlock);							       
+
+      }
+	
+  });
+
+
+  bool bcConsistent = true;
+  for (auto const & bcEntry : bcStatusMap)
+  {
+    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    {
+      bcConsistent &= bcEntry.second[ic];
+      GEOS_WARNING_IF( !bcConsistent, "Component flux boundary condition not applied to component "
+                                      << ic << " on set '" << bcEntry.first << "'" );
+    }
+  }
+  GEOS_ERROR_IF( !bcConsistent, "Inconsistent component flux boundary conditions" );
 
 }
 
@@ -1790,6 +1870,7 @@ void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSy
   {
     GEOS_LOG_RANK("\nSolution:\n" << *solution);
   }
+
 }
 
 bool

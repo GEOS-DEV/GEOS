@@ -417,6 +417,11 @@ public:
 
   static string CatalogName() { return "FieldSpecification"; }
 
+  virtual const string getCatalogName() const 
+  {
+    return FieldSpecificationBase::CatalogName();
+  }
+  
   /**
    * @}
    */
