@@ -25,7 +25,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "finiteVolume/StencilCollection.hpp"
+#include "finiteVolume/FluxStencil.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -86,8 +86,8 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil     = StencilCollection<CellDescriptor, real64>;
-  using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
+  using CellStencil     = FluxStencil<CellDescriptor, real64>;
+  using BoundaryStencil = FluxStencil<PointDescriptor, real64>;
 
   FluxApproximationBase() = delete;
 
