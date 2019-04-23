@@ -133,7 +133,7 @@ public:
     static constexpr auto gravityDepthString = "gravityDepth";
 
     // misc inputs
-    static constexpr auto fluidNameString  = "fluidName";
+    static constexpr auto fluidNameString  = "segmentFluidName";
     static constexpr auto resFluidIndexString  = "resFluidIndex";
 
     using ViewKey = dataRepository::ViewKey;

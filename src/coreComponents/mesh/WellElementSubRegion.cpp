@@ -30,8 +30,10 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
 {
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
+
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
-  RegisterViewWrapper( viewKeyStruct::wellElementVolumeString, &m_wellElementVolume, false );
+  RegisterViewWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
+  RegisterViewWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
 }
 
 
@@ -60,35 +62,40 @@ WellElement * WellElementSubRegion::getWellElement( localIndex iwelem )
 
 void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  // todo later: MPI partitioning
-  // @Francois: do not resize here!!!! otherwise you resize phaseNames, etc
-  
+  // TODO: MPI partitioning
+    
   // dummy map from local to global
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
   {
     m_wellElementIndex[iwelem] = iwelem;
+
+    // TODO: rewrite this entirely
     if (iwelem == 0)
     {
       m_nextWellElementIndex[iwelem] = -1;
     }
     else
     {
-      m_nextWellElementIndex[iwelem] = iwelem - 1;
+      string const nextWellElementName = getWellElement( iwelem )->getNextWellElementName();
+      // this is a temporary hack
+      for (localIndex iwelemNext = 0; iwelemNext < size(); ++iwelemNext)
+      {
+        if (getWellElement( iwelemNext )->getName() == nextWellElementName)
+        {
+          m_nextWellElementIndex[iwelem] = iwelemNext;
+          break;
+        }
+      }
     }
-    m_wellElementVolume[iwelem] = 1.;
+
+
+    m_elementVolume[iwelem] = 1.;
+    m_elementCenter[iwelem] = getWellElement( iwelem )->getLocation();
   }
 }
 
 void WellElementSubRegion::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
-  R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
-  arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
-
-  for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
-  {
-    WellElement const * wellElement = getWellElement( iwelem );
-    gravDepth[iwelem] = Dot( wellElement->getLocation(), gravity );
-  }
 }
   
 }

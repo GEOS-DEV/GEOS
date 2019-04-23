@@ -43,6 +43,9 @@ public:
   R1Tensor const & getLocation() const
   { return m_location; }
   
+  string const & getNextWellElementName() const 
+  { return m_nextWellElementName; }
+
   struct viewKeyStruct
   {
     static constexpr auto locationString = "location";

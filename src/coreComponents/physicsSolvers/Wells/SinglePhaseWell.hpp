@@ -164,20 +164,6 @@ public:
   void UpdateStateAll( DomainPartition * domain );
 
   /**
-   * @brief assembles the accumulation terms for all well elements
-   * @param domain the physical domain object
-   * @param jacobian the entire jacobian matrix of the system
-   * @param residual the entire residual of the system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleAccumulationTerms( DomainPartition * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
-
-  /**
    * @brief assembles the flux terms for all connections between well elements
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
@@ -200,11 +186,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleSourceTerms( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual,
-                            real64 const time_n,
-                            real64 const dt );
+  void AssemblePerforationTerms( DomainPartition * const domain,
+                                 Epetra_FECrsMatrix * const jacobian,
+                                 Epetra_FEVector * const residual,
+                                 real64 const time_n,
+                                 real64 const dt );
   
   /**
    * @brief assembles the momentum at all connections except the first global connection
@@ -267,7 +253,6 @@ public:
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
-    static constexpr auto sumPerforationRateString     = "sumCompPerforationRate";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -283,7 +268,6 @@ public:
     // perforation rates
     ViewKey perforationRate        = { perforationRateString };
     ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
-    ViewKey sumPerforationRate     = { sumPerforationRateString };
     
   } viewKeysSinglePhaseWell;
 
@@ -299,20 +283,6 @@ protected:
 
 private:
 
-  /**
-   * @brief Extract the fluid model used by this solver from a group
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::SingleFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the fluid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. wellElementSubRegion)
-   * @return
-   */
-  constitutive::SingleFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
-  
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    * @param domain the domain containing the well manager to access individual wells

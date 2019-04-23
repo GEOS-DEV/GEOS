@@ -509,7 +509,7 @@ ProblemManager ReservoirWellsSystemSolverTest::problemManager("Problem", nullptr
 ReservoirWellsSystemSolver * ReservoirWellsSystemSolverTest::solver = nullptr;
 
 
-TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
+TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Perforation)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-1; // 10% error margin
@@ -531,7 +531,7 @@ TEST_F(ReservoirWellsSystemSolverTest, jacobianNumericalCheck_Source)
                                Epetra_FECrsMatrix * const targetJacobian,
                                Epetra_FEVector * const targetResidual ) -> void
                          {
-                           targetSolver->AssembleSourceTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+                           targetSolver->AssemblePerforationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
                          });
   
 }

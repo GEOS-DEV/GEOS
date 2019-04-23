@@ -55,7 +55,7 @@ public:
   WellElement *       getWellElement( localIndex iwelem );
 
   localIndex getReferenceElem() const
-  { return 0; } // TODO: this is a hack for single-segmented well
+  { return 0; } 
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    const NodeManager& nodeManager,
@@ -96,13 +96,11 @@ public:
     static constexpr auto wellElementIndexString = "wellElementIndex";
     static constexpr auto nextWellElementIndexString = "nextWellElementIndex";
     static constexpr auto gravityDepthString = "gravityDepth";
-    static constexpr auto wellElementVolumeString = "wellElementVolume";
     
     dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
     dataRepository::ViewKey nextWellElementIndex = { nextWellElementIndexString };
     dataRepository::ViewKey gravityDepth = { gravityDepthString };
-    dataRepository::ViewKey wellElementVolume = { wellElementVolumeString };
-    
+
   } viewKeysWellElementData;
   
 protected:
@@ -118,7 +116,6 @@ private:
   array1d<localIndex> m_wellElementIndex;
   array1d<localIndex> m_nextWellElementIndex;
 
-  array1d<real64> m_wellElementVolume; // TODO: this is redundant. use m_elementVolume instead
   array1d<real64> m_gravityDepth;
 };
 

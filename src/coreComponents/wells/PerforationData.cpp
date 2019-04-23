@@ -39,8 +39,11 @@ PerforationData::PerforationData(string const & name, ManagedGroup * const paren
   RegisterViewWrapper( viewKeyStruct::reservoirElementRegionString, &m_reservoirElementRegion, false );
   RegisterViewWrapper( viewKeyStruct::reservoirElementSubregionString, &m_reservoirElementSubregion, false );
   RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString, &m_reservoirElementIndex, false );
+
   RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::perforationIndexString, &m_perforationIndex, false );
+
+  RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false );
   RegisterViewWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
 }
@@ -97,14 +100,6 @@ localIndex PerforationData::numPerforationsGlobal() const
   
 void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
-  R1Tensor const & gravity = getParent()->group_cast<Well *>()->getGravityVector();
-  arrayView1d<real64> & gravDepth = getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
-
-  for (localIndex iperf = 0; iperf < size(); ++iperf)
-  {
-    Perforation const * perforation = getPerforation( iperf );
-    gravDepth[iperf] = Dot( perforation->getLocation(), gravity );
-  }
 }
 
 void PerforationData::ConnectToCells( MeshLevel const * mesh )
@@ -165,13 +160,16 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
       }
     }
     if (m_wellElementIndex[num_conn_local] == -1)
+    {
       GEOS_ERROR("Invalid well element name: " << wellElementName);
-    
+    }    
+
     std::cout << "I match perforation " << perforation->getName()
 	      << " with segment " << wellElementManager->getWellElement( m_wellElementIndex[num_conn_local] )->getName()
 	      << std::endl;
     
     m_perforationIndex[num_conn_local] = num_conn_global++;
+    m_location[num_conn_local]         = perforation->getLocation();
     m_transmissibility[num_conn_local] = perforation->getTransmissibility();
     
     num_conn_local++;

@@ -91,7 +91,7 @@
   </ElementRegions>
 
   <Wells name="wellGroup"
-         materialList="relperm fluid1">
+         materialList="fluid1">
 
     <Well name="prod0"
           type="producer"
@@ -124,7 +124,6 @@
       </Perforations> 
     </Well>
 
-
     <Well name="inj0"
           type="injector"
           control="liquidRate"
@@ -151,7 +150,7 @@
 
   </Wells>
 
-  
+ 
   <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"
                                   phaseNames="oil gas"
@@ -209,7 +208,7 @@
                         setNames="all"
                         objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                         fieldName="referencePorosity"
-                        scale="0.05"/>
+                        scale="0.2"/>
 
     <!-- Initial pressure: ~5 bar -->
 
@@ -218,7 +217,7 @@
                         setNames="all"
                         objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                         fieldName="pressure"
-                        scale="5e6"/>
+                        scale="5e5"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
 

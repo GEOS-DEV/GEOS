@@ -282,7 +282,6 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       pres[ei] += dPres[ei];
-      std::cout << "Pressure in Element #" << ei << " is equal to " << pres[ei] << std::endl;
       vol[ei] += dVol[ei];
     } );
   } );

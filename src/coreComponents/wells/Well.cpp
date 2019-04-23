@@ -134,15 +134,24 @@ void Well::PostProcessInput()
     GEOS_ERROR("Invalid initial well control: " << m_controlString);
   }
 
-  // debug:
-  for (int ic = 0; ic < m_injectionStream.size(); ++ic)
-    std::cout << "ic = " << ic << " injectionStream[" << ic << "]= "
-              << m_injectionStream[ic] << std::endl;
-  
   // this is temporary
   m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );
   
 }
+
+void Well::setControl( Control control, real64 const & val )
+{ 
+  m_currentControl = control; 
+  if (control == Control::BHP)
+  {
+    m_targetBHP = val;
+  }
+  else 
+  {
+    m_targetRate = val;
+  }
+}
+
 
 R1Tensor const & Well::getGravityVector() const
 {

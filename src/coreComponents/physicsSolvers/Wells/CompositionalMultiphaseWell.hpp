@@ -192,20 +192,6 @@ public:
   localIndex numFluidPhases() const;
 
   /**
-   * @brief assembles the accumulation terms for all well elements
-   * @param domain the physical domain object
-   * @param jacobian the entire jacobian matrix of the system
-   * @param residual the entire residual of the system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  void AssembleAccumulationTerms( DomainPartition * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
-
-  /**
    * @brief assembles the flux terms for all connections between well elements
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
@@ -213,6 +199,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
+
   void AssembleFluxTerms( DomainPartition * const domain,
                           Epetra_FECrsMatrix * const jacobian,
                           Epetra_FEVector * const residual,
@@ -228,11 +215,11 @@ public:
    * @param dt time step
    */
 
-  void AssembleSourceTerms( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual,
-                            real64 const time_n,
-                            real64 const dt );
+  void AssemblePerforationTerms( DomainPartition * const domain,
+                                 Epetra_FECrsMatrix * const jacobian,
+                                 Epetra_FEVector * const residual,
+                                 real64 const time_n,
+                                 real64 const dt );
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -304,16 +291,16 @@ public:
     static constexpr auto temperatureString = "segmentTemperature";
     static constexpr auto useMassFlagString = "useMass";
 
-    static constexpr auto relPermNameString  = "segmentRelPermName";
-    static constexpr auto resRelPermIndexString  = "elementRelPermIndex";
+    static constexpr auto resRelPermNameString = "segmentRelPermName";
+    static constexpr auto resRelPermIndexString = "elementRelPermIndex";
     
     // primary solution field
-    static constexpr auto pressureString               = "segmentPressure";
-    static constexpr auto deltaPressureString          = "deltaSegmentPressure";
-    static constexpr auto globalCompDensityString      = "segmentGlobalCompDensity";
+    static constexpr auto pressureString = "segmentPressure";
+    static constexpr auto deltaPressureString = "deltaSegmentPressure";
+    static constexpr auto globalCompDensityString = "segmentGlobalCompDensity";
     static constexpr auto deltaGlobalCompDensityString = "deltaSegmentGlobalCompDensity";
-    static constexpr auto mixtureConnRateString        = "segmentMixtureConnectionRate";
-    static constexpr auto deltaMixtureConnRateString   = "deltaSegmentMixtureConnectionRate";
+    static constexpr auto mixtureConnRateString = "segmentMixtureConnectionRate";
+    static constexpr auto deltaMixtureConnRateString = "deltaSegmentMixtureConnectionRate";
 
     // saturations
     static constexpr auto phaseVolumeFractionString = "segmentPhaseVolumeFraction";
@@ -326,14 +313,13 @@ public:
     static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dSegmentMixtureDensity_dComp";
 
     // intermediate values for constitutive model input
-    static constexpr auto globalCompFractionString                     = "segmentGlobalComponentFraction";
+    static constexpr auto globalCompFractionString = "segmentGlobalComponentFraction";
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dSegmentGlobalComponentFraction_dGlobalCompDensity";
     
     // perforation rates and derivatives
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
-    static constexpr auto sumCompPerforationRateString = "sumCompPerforationRate";
     
     using ViewKey = dataRepository::ViewKey;
 
@@ -344,7 +330,7 @@ public:
     ViewKey temperature = { temperatureString };
     ViewKey useMassFlag = { useMassFlagString };
 
-    ViewKey relPermName  = { relPermNameString };
+    ViewKey resRelPermName  = { resRelPermNameString };
     ViewKey resRelPermIndex = { resRelPermIndexString };
     
     // primary solution field
@@ -373,7 +359,6 @@ public:
     ViewKey compPerforationRate        = { compPerforationRateString };
     ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
     ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
-    ViewKey sumCompPerforationRate     = { sumCompPerforationRateString };
     
   } viewKeysCompMultiphaseWell;
 
@@ -431,7 +416,7 @@ private:
   integer m_useMass;
 
   /// name of the rel perm constitutive model
-  string m_relPermName;
+  string m_resRelPermName;
 
   /// index of the rel perm constitutive model in the flow solver
   localIndex m_resRelPermIndex;

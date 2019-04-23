@@ -24,6 +24,10 @@
 
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/WellElementSubRegion.hpp"
+#include "wells/WellManager.hpp"
+#include "wells/Well.hpp"
+#include "wells/PerforationData.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 namespace geosx
@@ -91,8 +95,6 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
-  std::cout << "WellSolverBase: InitializePostInitialConditions_PreSubGroups" << std::endl;
-  
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   
   // bind the stored reservoir views to the current domain
@@ -104,6 +106,45 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
 
 void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
+  R1Tensor const & gravityVector = getGravityVector();
+
+  // set the gravity vector for the well manager
+  WellManager * const wellManager = domain->getWellManager();
+  wellManager->setGravityVector(gravityVector, m_gravityFlag);
+   
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    // 1) precompute the depth of the well elements
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
+    PerforationData const * const perforationData = well->getPerforations();
+
+    arrayView1d<R1Tensor const> const & wellElemLocation = 
+      wellElementSubRegion->getReference<array1d<R1Tensor>>( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+
+    arrayView1d<real64> const & wellElemGravDepth = 
+      wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
+
+    arrayView1d<R1Tensor const> const & perfLocation = 
+      perforationData->getReference<array1d<R1Tensor>>( PerforationData::viewKeyStruct::locationString );
+
+    arrayView1d<real64> const & perfGravDepth = 
+      perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
+
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+      wellElemGravDepth[iwelem] = Dot( wellElemLocation[iwelem], gravityVector );
+      std::cout << "wellElemGravDepth[" << iwelem << "] = " 
+                << wellElemGravDepth[iwelem] << std::endl;
+    }
+
+    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+    {
+      perfGravDepth[iperf] = Dot( perfLocation[iperf], gravityVector );
+      std::cout << "perfGravDepth[" << iperf << "] = " 
+                << perfGravDepth[iperf] << std::endl;
+
+    }
+  });
 }
 
 void WellSolverBase::ResetViews( DomainPartition * const domain )

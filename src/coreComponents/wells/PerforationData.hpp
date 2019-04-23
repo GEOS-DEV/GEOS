@@ -70,16 +70,22 @@ public:
     static constexpr auto reservoirElementRegionString    = "reservoirElementRegion";
     static constexpr auto reservoirElementSubregionString = "reservoirElementSubregion";
     static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
+
     static constexpr auto wellElementIndexString          = "wellElementIndex";
     static constexpr auto perforationIndexString          = "perforationIndex";
+
+    static constexpr auto locationString                  = "location";
     static constexpr auto transmissibilityString          = "transmissibility";
     static constexpr auto gravityDepthString              = "gravityDepth";
 
     dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString };
     dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString };
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString };
+
     dataRepository::ViewKey wellElementIndex          = { wellElementIndexString };
     dataRepository::ViewKey perforationIndex          = { perforationIndexString };
+
+    dataRepository::ViewKey location                  = { locationString };
     dataRepository::ViewKey transmissibility          = { transmissibilityString };
     dataRepository::ViewKey gravityDepth              = { gravityDepthString };
 
@@ -102,8 +108,11 @@ private:
   array1d<localIndex> m_reservoirElementRegion;
   array1d<localIndex> m_reservoirElementSubregion;
   array1d<localIndex> m_reservoirElementIndex;
+
   array1d<localIndex> m_wellElementIndex;
   array1d<localIndex> m_perforationIndex;
+
+  array1d<R1Tensor> m_location;
   array1d<real64> m_transmissibility;
   array1d<real64> m_gravityDepth;
 

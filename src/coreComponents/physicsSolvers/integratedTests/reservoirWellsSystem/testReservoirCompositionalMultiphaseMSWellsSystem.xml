@@ -26,20 +26,16 @@
                                  relPermName="relperm"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters useDirectSolver="1"
-                              ilut_fill="0"
-                              ilut_drop="0"/>
     </CompositionalMultiphaseFlow>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  verboseLevel="1"
                                  gravityFlag="1"
                                  targetRegions="Region2"
-                                 fluidName="fluid1"
+                                 segmentFluidName="fluid1"
                                  segmentRelPermName="relperm"
                                  segmentTemperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters useDirectSolver="" /> 
     </CompositionalMultiphaseWell>
 
     
@@ -57,14 +53,14 @@
                   cellBlockNames="cb1"/>
   </Mesh>
 
-  <Events maxTime="1e5">
+  <Events maxTime="1e6">
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e4"
+                   forceDt="2.5e3"
                    target="/Solvers/reservoirWellsSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="2.5e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
@@ -92,24 +88,24 @@
     <Well name="prod0"
           type="producer"
           control="BHP"
-          targetBHP="4e6"
-          targetRate="1e10"
+          targetBHP="3e6"
+          targetRate="-1e-2"
           referenceDepth="0.5">
       <Segments>
         <Segment name="prod0_segtop"
                  nextSegmentName=""
-                 location="4 2.5 20.5"/>
+                 location="4 0.5 2.5"/>
         <Segment name="prod0_seg0b0"
                  nextSegmentName="prod0_segtop"
-                 location="4.5 1.5 10.5"/>
+                 location="4.5 0.5 1.5"/> 
         <Segment name="prod0_seg1b0"
-                 nextSegmentName="prod0_seg0b0"
+                 nextSegmentName="prod0_seg0b0" 
                  location="4.5 0.5 0.5"/>
         <Segment name="prod0_seg0b1"
                  nextSegmentName="prod0_segtop"
-                 location="3.5 1.5 10.5"/> 
+                 location="3.5 0.5 1.5"/> 
         <Segment name="prod0_seg1b1"
-                 nextSegmentName="prod0_seg0_b1"
+                 nextSegmentName="prod0_seg0b1"
                  location="3.5 0.5 0.5"/> 
       </Segments> 
       <Perforations>
@@ -128,22 +124,22 @@
           type="injector"
 	  control="liquidRate"
 	  targetBHP="6e6"
-	  targetRate="1e-8"
+	  targetRate="1e-3"
           referenceDepth="0.5"
 	  injectionStream="0.1 0.1 0.1 0.7">
       <Segments>
         <Segment name="inj0_segtop"
                  nextSegmentName=""
-                 location="1 2.5 2.5"/>
+                 location="1 0.5 2.5"/>
         <Segment name="inj0_seg0b0"
                  nextSegmentName="inj0_segtop"
-                 location="0.5 1.5 1.5"/>
+                 location="0.5 0.5 1.5"/> 
         <Segment name="inj0_seg1b0"
                  nextSegmentName="inj0_seg0b0"
                  location="0.5 0.5 0.5"/>
         <Segment name="inj0_seg0b1"
                  nextSegmentName="inj0_segtop"
-                 location="1.5 1.5 1.5"/>
+                 location="1.5 0.5 1.5"/>
         <Segment name="inj0_seg1b1"
                  nextSegmentName="inj0_seg0b1"
                  location="1.5 0.5 0.5"/> 
@@ -152,18 +148,18 @@
         <Perforation name="inj0_p0"
                      location="0.5 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="inj0_seg0b0" />
+                     segmentName="inj0_seg1b0" />
         <Perforation name="inj0_p1"
                      location="1.25 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="inj0_seg0b1" />
+                     segmentName="inj0_seg1b1" />
         <Perforation name="inj0_p2"
                      location="0.75 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="inj0_seg0b1" /> 
+                     segmentName="inj0_seg1b1" /> 
       </Perforations> 
     </Well>   
- 
+
   </Wells>
   
   <Constitutive>

@@ -22,15 +22,12 @@
 
 #include "SinglePhaseWell.hpp"
 
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -76,7 +73,6 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::connRateString );
     wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaConnRateString );
-    wellElementSubRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::sumPerforationRateString );
     
     PerforationData * const perforationData = well->getPerforations();
     perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
@@ -151,8 +147,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
-    arrayView1d<real64> const & wellElemSumPerfRates =
-      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::sumPerforationRateString );
 
     // get well primary variables on well elements
     arrayView1d<real64> const & wellElemPressure =
@@ -177,15 +171,9 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 
     arrayView1d<localIndex const> const & resElementIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
-
-    // get constitutive data
-    SingleFluidBase const * const fluid = GetConstitutiveModel<SingleFluidBase>( wellElementSubRegion, m_fluidName );
-    
-    arrayView2d<real64> const & wellElemDensity =
-      fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
     
     // TODO: fix this in the case of multiple MPI ranks working on the same well
-    // In particular, steps 1), 3) and 7) will need to be rewritten
+    // In particular, steps 1), 3) will need to be rewritten
  
    /*
     * The methodology used here is based on Yifan Zhou's PhD dissertation, Stanford University
@@ -206,8 +194,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     // TODO: communicate avgDens
     // TODO: collect individual dens and then communicate
     
-    globalIndex const numPerforationsGlobal = perforationData->numPerforationsGlobal();
-    avgDensity /= numPerforationsGlobal;
+    avgDensity /= perforationData->numPerforationsGlobal();
 
     // get the reference data for this well
     localIndex const iwelemRef = 0; // here, we assume that the first well element is on this MPI rank, which will NOT be the case in general
@@ -253,29 +240,21 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     // 4) Recompute the pressure-dependent properties
     UpdateState( well );
 
-    // 5) Compute the perforation rates
-    ComputeAllPerforationRates( well );
-    
-    // 6) Collect all the perforation rates
-    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
-      wellElemSumPerfRates[iwelem] = 0.0; // TODO: ask for a better way to do that!
-    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
-    {  
-      localIndex const iwelem = perfWellElemIndex[iperf];
-      wellElemSumPerfRates[iwelem] += perfRate[iperf];
-    }
-
-    // 7) Estimate the connection rates between well elements
-    // Currently this assumes that the well elements are ordered
-    // TODO: implement this in parallel with the communication of wellElemSumPerfRates
-    real64 prevConnRate = 0;
-    for (localIndex iwelem = wellElementSubRegion->numWellElementsLocal()-1; 
-         iwelem >= 0; --iwelem)
+    // 5) Estimate the connection rates based on the min/max pressure
+    for  (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
-      connRate[iwelem] = prevConnRate
-                       - wellElemSumPerfRates[iwelem] / wellElemDensity[iwelem][0];
-      prevConnRate = connRate[iwelem];
-    }
+      real64 const targetRate = well->getTargetRate();
+      if (well->getControl() == Well::Control::BHP)
+      {
+        connRate[iwelem] = (well->getType() == Well::Type::PRODUCER)
+                         ? 0.9 * targetRate 
+                         : 1.1 * targetRate; 
+      }
+      else
+      {
+        connRate[iwelem] = targetRate;
+      }
+    } 
   });
 }
 
@@ -332,7 +311,9 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
   {
     numGlobalRows += gather[p];
     if(p<thisMpiProcess)
+    {
       firstLocalRow += gather[p];
+    }
   }
 
   // TODO: double check this for multiple MPI processes
@@ -408,7 +389,8 @@ void SinglePhaseWell::SetSparsityPattern( DomainPartition const * const domain,
 
     arrayView1d<localIndex const> const & nextWellElemIndex =
       wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );        
-    // get the well element indices corresponding to each perforation
+  
+  // get the well element indices corresponding to each perforation
     arrayView1d<localIndex const> const & perfWellElemIndex =
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );    
     
@@ -512,8 +494,7 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
   CheckWellControlSwitch( domain );
 
   // then assemble the mass balance equations
-  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
-  AssembleSourceTerms( domain, jacobian, residual, time_n, dt );
+  AssemblePerforationTerms( domain, jacobian, residual, time_n, dt );
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
 
   // then assemble the pressure relations
@@ -528,15 +509,6 @@ void SinglePhaseWell::AssembleSystem( DomainPartition * const domain,
     GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
     GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
-}
-
-void SinglePhaseWell::AssembleAccumulationTerms( DomainPartition * const domain,
-                                                 Epetra_FECrsMatrix * const jacobian,
-                                                 Epetra_FEVector * const residual,
-                                                 real64 const time_n,
-                                                 real64 const dt )
-{
-  // will not be implemented
 }
 
 void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
@@ -569,22 +541,11 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
     arrayView1d<real64 const> const & dConnRate =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
 
-    // get well constitutive data
-    SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( wellElementSubRegion, m_fluidName );
-
-    arrayView2d<real64> const & wellElemDensity =
-      fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
-
-    arrayView2d<real64> const & dWellElemDensity_dPres =
-      fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
-
     // local working variables and arrays
     stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
-    stackArray1d<globalIndex, 2> dofColIndices_dPres( 2 );
           
     stackArray1d<real64, 2> localFlux( 2 );
     stackArray1d<real64, 2> localFluxJacobian_dRate( 2 );
-    stackArray2d<real64, 4> localFluxJacobian_dPres( 2, 2);
 
     // loop over the well elements to compute the fluxes between elements
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
@@ -593,59 +554,35 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
       
       // 1) Compute the flux and its derivatives
 
-      real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
-      real64 const volFlux = dt * currentConnRate;
-      real64 const dVolFlux_dRate = dt;
-
-      real64 densityUp = 0.0;
-      real64 dDensityUp_dPresNext    = 0.0;
-      real64 dDensityUp_dPresCurrent = 0.0;
-
       /*  currentConnRate < 0 flow from iwelem to iwelemNext
        *  currentConnRate > 0 flow from iwelemNext to iwelem
        *  With this convention, currentConnRate < 0 at the last connection for a producer
        *                        currentConnRate > 0 at the last connection for a injector
        */
         
-      if (iwelemNext < 0 ||    // exit connection
-          currentConnRate < 0) // iwelem is upstream
-      {       
-        densityUp = wellElemDensity[iwelem][0];
-        dDensityUp_dPresCurrent = dWellElemDensity_dPres[iwelem][0];
-      }
-      else // iwelemNext is upstream
-      {
-        densityUp = wellElemDensity[iwelemNext][0];
-        dDensityUp_dPresNext = dWellElemDensity_dPres[iwelemNext][0];
-      }
-
-      real64 const flux = densityUp * volFlux;
-      real64 const dFlux_dRate = densityUp * dVolFlux_dRate;
-      real64 const dFlux_dPresCurrent = dDensityUp_dPresCurrent * volFlux;
-      real64 const dFlux_dPresNext = dDensityUp_dPresNext * volFlux;
+      // there is nothing to upwind for single-phase flow
+ 
+      real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
+      real64 const flux = dt * currentConnRate;
+      real64 const dFlux_dRate = dt; 
 
       // 2) Assemble the flux into residual and Jacobian
 
       // TODO: check for ghost well elements
                          
-      if ( iwelemNext < 0) // exit connection
+      if ( iwelemNext < 0 ) // exit connection
       {
         // flux terms
         real64 const oneSidedLocalFlux = - flux;
         real64 const oneSidedLocalFluxJacobian_dRate = - dFlux_dRate;
-        real64 const oneSidedLocalFluxJacobian_dPres = - dFlux_dPresCurrent;
 
         // jacobian indices
         globalIndex const offset = getElementOffset( wellElemDofNumber[iwelem] );
         globalIndex const oneSidedEqnRowIndex = offset + RowOffset::MASSBAL;
-        globalIndex const oneSidedDofColIndex_dPres = offset + ColOffset::DPRES;
         globalIndex const oneSidedDofColIndex_dRate = offset + ColOffset::DRATE;
 
         // add contribution to global residual and jacobian
         residual->SumIntoGlobalValues( 1, &oneSidedEqnRowIndex, &oneSidedLocalFlux );
-        jacobian->SumIntoGlobalValues( 1, &oneSidedEqnRowIndex,
-                                       1, &oneSidedDofColIndex_dPres,
-                                       &oneSidedLocalFluxJacobian_dPres );
         jacobian->SumIntoGlobalValues( 1, &oneSidedEqnRowIndex,
                                        1, &oneSidedDofColIndex_dRate,
                                        &oneSidedLocalFluxJacobian_dRate );
@@ -653,14 +590,6 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
       }
       else // not an exit connection
       {
-        // local working variables and arrays
-        eqnRowIndices = -1;
-        dofColIndices_dPres = -1;
-          
-        localFlux = 0.0;
-        localFluxJacobian_dRate = 0.0;
-        localFluxJacobian_dPres = 0.0;
-
         // flux terms   
         localFlux[ElemTag::NEXT]    =   flux;
         localFlux[ElemTag::CURRENT] = - flux;
@@ -668,19 +597,12 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
         localFluxJacobian_dRate[ElemTag::NEXT]    =   dFlux_dRate;
         localFluxJacobian_dRate[ElemTag::CURRENT] = - dFlux_dRate;
 
-        localFluxJacobian_dPres[ElemTag::NEXT][ElemTag::NEXT]       =   dFlux_dPresNext;
-        localFluxJacobian_dPres[ElemTag::NEXT][ElemTag::CURRENT]    =   dFlux_dPresCurrent;
-        localFluxJacobian_dPres[ElemTag::CURRENT][ElemTag::NEXT]    = - dFlux_dPresNext;
-        localFluxJacobian_dPres[ElemTag::CURRENT][ElemTag::CURRENT] = - dFlux_dPresCurrent;
-
         // indices
         globalIndex const offsetCurrent = getElementOffset( wellElemDofNumber[iwelem] );
         globalIndex const offsetNext    = getElementOffset( wellElemDofNumber[iwelemNext] );
-        eqnRowIndices[ElemTag::NEXT]    = offsetNext + RowOffset::MASSBAL;
         eqnRowIndices[ElemTag::CURRENT] = offsetCurrent + RowOffset::MASSBAL;
-        dofColIndices_dPres[ElemTag::NEXT]    = offsetNext + ColOffset::DPRES;
-        dofColIndices_dPres[ElemTag::CURRENT] = offsetCurrent + ColOffset::DPRES;
-        globalIndex const dofColIndex_dRate   = offsetCurrent + ColOffset::DRATE; 
+        eqnRowIndices[ElemTag::NEXT]    = offsetNext + RowOffset::MASSBAL;
+        globalIndex const dofColIndex_dRate = offsetCurrent + ColOffset::DRATE; 
 
         // Add to global residual/jacobian
         residual->SumIntoGlobalValues( integer_conversion<int>( 2 ),
@@ -693,22 +615,16 @@ void SinglePhaseWell::AssembleFluxTerms( DomainPartition * const domain,
                                        &dofColIndex_dRate,
                                        localFluxJacobian_dRate.data(),
                                        Epetra_FECrsMatrix::ROW_MAJOR);                                         
-        jacobian->SumIntoGlobalValues( integer_conversion<int>( 2 ),
-                                       eqnRowIndices.data(),
-                                       integer_conversion<int>( 2 ),
-                                       dofColIndices_dPres.data(),
-                                       localFluxJacobian_dPres.data(),
-                                       Epetra_FECrsMatrix::ROW_MAJOR);
       }
     }
   });
 }
 
-void SinglePhaseWell::AssembleSourceTerms( DomainPartition * const domain,
-                                           Epetra_FECrsMatrix * const jacobian,
-                                           Epetra_FEVector * const residual,
-                                           real64 const time_n,
-                                           real64 const dt )
+void SinglePhaseWell::AssemblePerforationTerms( DomainPartition * const domain,
+                                                Epetra_FECrsMatrix * const jacobian,
+                                                Epetra_FEVector * const residual,
+                                                real64 const time_n,
+                                                real64 const dt )
 {
   WellManager * const wellManager = domain->getWellManager();
 
@@ -829,6 +745,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition * const domain,
     
     arrayView1d<localIndex const> const & nextWellElemIndex =
       wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
+
     // get primary variables on well elements
     arrayView1d<real64 const> const & wellElemPressure =
       wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
@@ -910,7 +827,22 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
   WellManager * const wellManager = domain->getWellManager();
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
-  {    
+  { 
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
+
+    // get the primary variables
+    arrayView1d<real64 const> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    arrayView1d<real64 const> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+    arrayView1d<real64 const> const & connRate  =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::connRateString );
+
+    arrayView1d<real64 const> const & dConnRate =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
+   
     // if isViable is true at the end of the following checks, no need to switch
     bool controlIsViable = false;
 
@@ -918,52 +850,42 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
     Well::Control const currentControl = well->getControl();
     Well::Type const type = well->getType();
     
+    // again we assume here that the first well element is on this MPI rank
+    localIndex const iwelemRef = 0;
+
+    real64 const refRate = connRate[iwelemRef] + dConnRate[iwelemRef];
+    real64 const refPressure = wellElemPressure[iwelemRef] + dWellElemPressure[iwelemRef];
+
     // BHP control
     if (currentControl == Well::Control::BHP)
     {
-      PerforationData * const perforationData = well->getPerforations();
-
-      arrayView1d<real64 const> const & perfRate =
-        perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
-
-      // compute the local rates for this well
-      // TODO: this is a waste of computations, we only need to know the sign of the potential difference
-      ComputeAllPerforationRates( well );
-
-      // the control is viable if at least one of the  perforations can inject / produce without cross flow
-      // TODO: this loop will require communication
-      for (localIndex iperf = 0; !controlIsViable && iperf < perforationData->numPerforationsLocal(); ++iperf)
-      { 
-        // producer should have positive difference; injector should have negative difference
-        controlIsViable = ( ( type == Well::Type::PRODUCER && perfRate[iperf] > 0 ) ||
-                            ( type == Well::Type::INJECTOR && perfRate[iperf] < 0 ) );          
+      // the control is viable if the reference rate is below/above the max/min rate
+      if ( type == Well::Type::PRODUCER )
+      {
+        // targetRate specifies a max rate here
+        real64 const maxRate = well->getTargetRate(); 
+        controlIsViable = ( fabs(refRate) <= fabs(maxRate) );
+      }
+      else
+      {
+        // targetRate specifies a min rate here
+        real64 const minRate = well->getTargetRate(); 
+        controlIsViable = ( fabs(refRate) >= fabs(minRate) );
       }
     }
     else // rate control
-    {
-      WellElementSubRegion * wellElementSubRegion = well->getWellElements();
-      
-      // get pressure data
-      arrayView1d<real64 const> const & wellElemPressure =
-        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-
-      arrayView1d<real64 const> const & dWellElemPressure =
-        wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-
-      // again we assume here that the first well element is on this MPI rank
-      localIndex const iwelemRef = 0;
-      
+    {      
       // the control is viable if the reference pressure is below/above the max/min pressure
-      real64 const refPressure = wellElemPressure[iwelemRef] + dWellElemPressure[iwelemRef];
-
       if ( type == Well::Type::PRODUCER )
       {
-        real64 const minPressure = well->getTargetBHP(); // targetBHP specifies a min pressure here
+        // targetBHP specifies a min pressure here
+        real64 const minPressure = well->getTargetBHP(); 
         controlIsViable = ( refPressure >= minPressure );
       }
       else
       {
-        real64 const maxPressure = well->getTargetBHP(); // targetBHP specifies a max pressure here
+        // targetBHP specifies a max pressure here
+        real64 const maxPressure = well->getTargetBHP(); 
         controlIsViable = ( refPressure <= maxPressure );
       }
     }
@@ -972,7 +894,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
     {
       if ( currentControl == Well::Control::BHP )
       {
-        well->setControl( Well::Control::LIQUIDRATE );
+        well->setControl( Well::Control::LIQUIDRATE, refRate );
         if ( m_verboseLevel >= 1 )
         {
           GEOS_LOG_RANK_0( "Control switch for well " << well->getName()
@@ -981,7 +903,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
       }
       else // rate control
       {
-        well->setControl( Well::Control::BHP );
+        well->setControl( Well::Control::BHP, refRate );
         if ( m_verboseLevel >= 1 )
         {
           GEOS_LOG_RANK_0( "Control switch for well " << well->getName()
@@ -1055,9 +977,58 @@ SinglePhaseWell::CheckSystemSolution( EpetraBlockSystem const * const blockSyste
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  // not implemented yet
+  WellManager * const wellManager = domain->getWellManager();
 
-  return true;
+  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
+  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
+
+  // get the update
+  int dummy;
+  double* local_solution = nullptr;
+  solution->ExtractView(&local_solution,&dummy);
+
+  bool isValid = true;
+
+  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  {
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
+
+    // get the degree of freedom numbers on well elements and ghosting info
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
+      wellElementSubRegion->getReference<array1d<globalIndex>>( viewKeyStruct::dofNumberString );
+
+    arrayView1d<integer const> const & wellElemGhostRank =
+      wellElementSubRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    
+    // get a reference to the primary variables on well elements
+    arrayView1d<real64 const> const & wellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+
+    arrayView1d<real64 const> const & dWellElemPressure =
+      wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    
+    for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
+    {
+
+      if (wellElemGhostRank[iwelem] < 0)
+      {
+        // extract solution and apply to dP
+        globalIndex const elemOffset = getElementOffset( wellElemDofNumber[iwelem] );
+
+        // pressure 
+        int lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DPRES) );
+        real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
+                             + scalingFactor * local_solution[lid];
+
+        if (newPres < 0.0)
+        {
+          isValid = false;
+        }
+      }
+    }
+  });  
+
+  return isValid;
 }
 
 void
@@ -1077,7 +1048,7 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degree of freedom numbers on well elements and ghosting info
     arrayView1d<globalIndex const> const & wellElemDofNumber =
@@ -1202,8 +1173,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dResVisc_dPres;
 
   // get the well data
-  PerforationData * perforationData = well->getPerforations();
-  WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+  PerforationData * const perforationData = well->getPerforations();
+  WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
   // get the degrees of freedom and depth
   arrayView1d<globalIndex const> const & wellElemDofNumber =
@@ -1213,29 +1184,29 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
     wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
 
   // get well primary variables on well elements
-  arrayView1d<real64> const & wellElemPressure =
+  arrayView1d<real64 const> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-  arrayView1d<real64> const & dWellElemPressure =
+  arrayView1d<real64 const> const & dWellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
   
   // get well constitutive data
   SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( wellElementSubRegion, m_fluidName );
 
-  arrayView2d<real64> const & wellElemDensity =
+  arrayView2d<real64 const> const & wellElemDensity =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
 
-  arrayView2d<real64> const & dWellElemDensity_dPres =
+  arrayView2d<real64 const> const & dWellElemDensity_dPres =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
-  arrayView2d<real64> const & wellElemViscosity =
+  arrayView2d<real64 const> const & wellElemViscosity =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString );
 
-  arrayView2d<real64> const & dWellElemViscosity_dPres =
+  arrayView2d<real64 const> const & dWellElemViscosity_dPres =
     fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   // get well variables on perforations
-  arrayView1d<real64> const & perfGravDepth =
+  arrayView1d<real64 const> const & perfGravDepth =
     perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
 
   arrayView1d<localIndex const> const & perfWellElemIndex =
@@ -1373,7 +1344,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition * const domain,
   
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   {
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
 
     // get the degrees of freedom 
     arrayView1d<globalIndex const> const & wellElemDofNumber =
@@ -1468,7 +1439,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
 
   wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
   { 
-    WellElementSubRegion * wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
     
     // get a reference to the primary variables on well elements
     arrayView1d<real64> const & wellElemPressure  =
@@ -1500,13 +1471,17 @@ void SinglePhaseWell::RecordWellData( Well * well )
   // This function is for debug and will go away
 
   WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
-  PerforationData const * perforationData = well->getPerforations();
+  PerforationData const * const perforationData = well->getPerforations();
 
   arrayView1d<real64 const> const & wellElemPressure =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
   arrayView1d<real64 const> const & connRate =
     wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::connRateString );
+
+  arrayView1d<real64 const> const & gravDepth = 
+    wellElementSubRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+
 
   arrayView1d<real64 const> const & perfRate =
     perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
@@ -1566,9 +1541,13 @@ void SinglePhaseWell::RecordWellData( Well * well )
   for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
   {
     if (well->getControl() == Well::Control::BHP)
-      std::cout << "Volumetric rate at connection #" << iwelem << ": " << connRate[iwelem] << std::endl;
+      std::cout << "Mass rate at connection #" 
+                << iwelem 
+                << ": " 
+                << connRate[iwelem]
+                << std::endl;
     else
-      std::cout << "Volumetric rate at connection #" << iwelem << ": " << connRate[iwelem]
+      std::cout << "Mass rate at connection #" << iwelem << ": " << connRate[iwelem]
                 << ", target rate : " << well->getTargetRate() << std::endl;
   }
 
