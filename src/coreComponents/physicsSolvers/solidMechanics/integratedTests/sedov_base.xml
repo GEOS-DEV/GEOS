@@ -74,10 +74,11 @@
     <FieldSpecification name="source"  
                initialCondition="1"  
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions"
                fieldName="shale_MeanStress"
                component="-1"
                scale="-1.0e6"/>
+               <!--objectPath="ElementRegions/Region2/cb1" -->
 
     <FieldSpecification name="xconstraint" 
                objectPath="nodeManager"

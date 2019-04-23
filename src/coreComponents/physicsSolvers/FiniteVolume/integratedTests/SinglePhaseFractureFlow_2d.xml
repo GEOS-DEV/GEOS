@@ -148,19 +148,19 @@
     <FieldSpecification name="referencePorosityF"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
+               objectPath="ElementRegions/Fracture/fracture"
                fieldName="referencePorosity"
                scale="0.05"/>
                
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="0.0"/>
 
     <FieldSpecification name="source"
-               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
+               objectPath="ElementRegions/Fracture/fracture"
                fieldName="pressure"
                scale="1.0e7"
                setNames="source"/>
