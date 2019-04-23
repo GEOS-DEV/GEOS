@@ -10,20 +10,19 @@
                                  verboseLevel="1"
                                  gravityFlag="1"
                                  discretization="fluidTPFA"
+                                 targetRegions="Region2"
                                  fluidName="fluid1"
                                  solidName="rock"
                                  relPermName="relperm"
                                  temperature="300"
-                                 useMass="0"
-                                 targetRegions="Region2">
+                                 useMass="0">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-10"
                               maxIterNewton="15"
                               useDirectSolver="1"
                               solverType="Klu"
                               maxTimeStepCuts="2"
-                              maxLineSearchCuts="2"
-                              allowNonConverged="1"/>
+                              maxLineSearchCuts="2"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
@@ -45,7 +44,7 @@
   </Geometry>
 
 
-  <Events maxTime="1e8">
+  <Events maxTime="1e7">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
@@ -95,7 +94,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -103,7 +102,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -111,14 +110,14 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
@@ -127,7 +126,7 @@
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="5e6"/>
 
@@ -136,7 +135,7 @@
     <FieldSpecification name="initialComposition_oil"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.6"/>
@@ -144,7 +143,7 @@
     <FieldSpecification name="initialComposition_gas"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.399"/>
@@ -152,7 +151,7 @@
     <FieldSpecification name="initialComposition_water"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.001"/>
@@ -160,7 +159,7 @@
     <!-- Injection pressure: ~10 bar -->
 
     <FieldSpecification name="sourceTermPressure"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="1e7"
                setNames="source"/>
@@ -169,21 +168,21 @@
 
     <FieldSpecification name="sourceTermComposition_oil"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_gas"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.1"/>
 
     <FieldSpecification name="sourceTermComposition_water"
                setNames="source"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.8"/>
@@ -191,7 +190,7 @@
     <!-- Production pressure: ~2 bar, -->
 
     <FieldSpecification name="sinkTerm"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="2e5"
                setNames="sink"/>
@@ -200,21 +199,21 @@
 
     <FieldSpecification name="sinkTermComposition_oil"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.6"/>
 
     <FieldSpecification name="sinkTermComposition_gas"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.399"/>
 
     <FieldSpecification name="sinkTermComposition_water"
                setNames="sink"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.001"/>

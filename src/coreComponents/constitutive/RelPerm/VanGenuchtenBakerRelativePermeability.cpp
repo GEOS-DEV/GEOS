@@ -72,27 +72,28 @@ VanGenuchtenBakerRelativePermeability::~VanGenuchtenBakerRelativePermeability()
 
 }
 
-std::unique_ptr<ConstitutiveBase>
-VanGenuchtenBakerRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
+void
+VanGenuchtenBakerRelativePermeability::DeliverClone( string const & name, 
+                                                     ManagedGroup * const parent,
+                                                     std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< VanGenuchtenBakerRelativePermeability > clone = std::make_unique<VanGenuchtenBakerRelativePermeability>( name, parent );
+  std::unique_ptr< VanGenuchtenBakerRelativePermeability > newModel = std::make_unique<VanGenuchtenBakerRelativePermeability>( name, parent );
 
-  clone->m_phaseNames = this->m_phaseNames;
-  clone->m_phaseTypes = this->m_phaseTypes;
-  clone->m_phaseOrder = this->m_phaseOrder;
+  newModel->m_phaseNames = this->m_phaseNames;
+  newModel->m_phaseTypes = this->m_phaseTypes;
+  newModel->m_phaseOrder = this->m_phaseOrder;
 
-  clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
+  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
 
-  clone->m_waterOilRelPermExponentInv = this->m_waterOilRelPermExponentInv;
-  clone->m_waterOilRelPermMaxValue    = this->m_waterOilRelPermMaxValue;
+  newModel->m_waterOilRelPermExponentInv = this->m_waterOilRelPermExponentInv;
+  newModel->m_waterOilRelPermMaxValue    = this->m_waterOilRelPermMaxValue;
 
-  clone->m_gasOilRelPermExponentInv = this->m_gasOilRelPermExponentInv;
-  clone->m_gasOilRelPermMaxValue    = this->m_gasOilRelPermMaxValue;
+  newModel->m_gasOilRelPermExponentInv = this->m_gasOilRelPermExponentInv;
+  newModel->m_gasOilRelPermMaxValue    = this->m_gasOilRelPermMaxValue;
 
-  clone->m_volFracScale = this->m_volFracScale;
+  newModel->m_volFracScale = this->m_volFracScale;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  clone = std::move( newModel );
 }
 
 
@@ -161,7 +162,7 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
   if (m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0)
   {
     real64 const mean = 0.5 * ( m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]
-			      + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
+                              + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
     m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]     = mean;
     m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] = mean;
   }

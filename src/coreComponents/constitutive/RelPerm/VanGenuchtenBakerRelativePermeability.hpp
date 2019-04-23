@@ -47,8 +47,9 @@ public:
 
   virtual ~VanGenuchtenBakerRelativePermeability() override;
 
-  std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                  ManagedGroup * const parent ) const override;
+  void DeliverClone( string const & name,
+                     ManagedGroup * const parent,
+                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::vanGenuchtenBakerRelativePermeability; }
 
@@ -310,14 +311,14 @@ VanGenuchtenBakerRelativePermeability::Compute( localIndex const NP,
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - phaseMinVolumeFraction[ip_water]);
 
     InterpolateTwoPhaseRelPerms( shiftedWaterVolFrac,
-				 phaseVolFraction[ip_gas],
-				 relPerm[ip_oil],
-				 dRelPerm_dVolFrac[ip_oil],
-				 phaseOrder,
-				 oilRelPerm_wo,
-				 dOilRelPerm_wo_dOilVolFrac,
-				 oilRelPerm_go,
-				 dOilRelPerm_go_dOilVolFrac );
+                                 phaseVolFraction[ip_gas],
+                                 relPerm[ip_oil],
+                                 dRelPerm_dVolFrac[ip_oil],
+                                 phaseOrder,
+                                 oilRelPerm_wo,
+                                 dOilRelPerm_wo_dOilVolFrac,
+                                 oilRelPerm_go,
+                                 dOilRelPerm_go_dOilVolFrac );
   }
 }
 
@@ -387,7 +388,7 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
   else
   {
     real64 const sumRelPerm = (shiftedWaterVolFrac * relPerm_wo
-			     + gasVolFrac   * relPerm_go);
+                             + gasVolFrac   * relPerm_go);
     real64 const dSumRelPerm_dWaterVolFrac = relPerm_wo;
     real64 const dSumRelPerm_dOilVolFrac   = shiftedWaterVolFrac * dRelPerm_wo_dOilVolFrac
                                            + gasVolFrac   * dRelPerm_go_dOilVolFrac;
@@ -404,7 +405,7 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
                                           + sumRelPerm                * dSumVolFracInv_dWaterVolFrac;
     dThreePhaseRelPerm_dVolFrac[ip_oil]   = dSumRelPerm_dOilVolFrac   * sumVolFracInv; // derivative w.r.t. So
     dThreePhaseRelPerm_dVolFrac[ip_gas]   = dSumRelPerm_dGasVolFrac   * sumVolFracInv  // derivative w.r.t. Sg
-				          + sumRelPerm                * dSumVolFracInv_dGasVolFrac;
+                                          + sumRelPerm                * dSumVolFracInv_dGasVolFrac;
   }
 }
 

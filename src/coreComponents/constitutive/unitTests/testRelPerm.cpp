@@ -211,8 +211,6 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyRelativePermeability>( name );
 
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
-
   auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
@@ -236,8 +234,6 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, ManagedGroup * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
-
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
 
   auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -263,8 +259,6 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
-
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
 
   auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -298,8 +292,6 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
 
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
-
   auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; 
@@ -324,8 +316,6 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
-
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
 
   auto & phaseNames = relPerm->getReference<string_array>( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -419,7 +409,6 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
   real64 const dS = 1e-1;
@@ -451,7 +440,6 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
   real64 const dS = 1e-1;
@@ -480,7 +468,6 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  // TODO test over a range of values
   real64 const start_sat = 0.3;
   real64 const end_sat   = 0.7;
   real64 const dS = 1e-1;

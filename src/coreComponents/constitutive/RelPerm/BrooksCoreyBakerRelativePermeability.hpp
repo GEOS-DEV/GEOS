@@ -47,8 +47,9 @@ public:
 
   virtual ~BrooksCoreyBakerRelativePermeability() override;
 
-  std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                  ManagedGroup * const parent ) const override;
+  void DeliverClone( string const & name,
+                     ManagedGroup * const parent,
+                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::brooksCoreyBakerRelativePermeability; }
 
@@ -373,7 +374,7 @@ BrooksCoreyBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const 
   else
   {
     real64 const sumRelPerm = (shiftedWaterVolFrac * relPerm_wo
-			     + gasVolFrac   * relPerm_go);
+                             + gasVolFrac   * relPerm_go);
     real64 const dSumRelPerm_dWaterVolFrac = relPerm_wo;
     real64 const dSumRelPerm_dOilVolFrac   = shiftedWaterVolFrac * dRelPerm_wo_dOilVolFrac
                                            + gasVolFrac   * dRelPerm_go_dOilVolFrac;

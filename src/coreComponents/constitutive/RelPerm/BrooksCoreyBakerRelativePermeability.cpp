@@ -72,27 +72,28 @@ BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 
 }
 
-std::unique_ptr<ConstitutiveBase>
-BrooksCoreyBakerRelativePermeability::DeliverClone(string const & name, ManagedGroup * const parent) const
+void
+BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name, 
+                                                    ManagedGroup * const parent, 
+                                                    std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< BrooksCoreyBakerRelativePermeability > clone = std::make_unique<BrooksCoreyBakerRelativePermeability>( name, parent );
+  std::unique_ptr< BrooksCoreyBakerRelativePermeability > newModel = std::make_unique<BrooksCoreyBakerRelativePermeability>( name, parent );
 
-  clone->m_phaseNames = this->m_phaseNames;
-  clone->m_phaseTypes = this->m_phaseTypes;
-  clone->m_phaseOrder = this->m_phaseOrder;
+  newModel->m_phaseNames = this->m_phaseNames;
+  newModel->m_phaseTypes = this->m_phaseTypes;
+  newModel->m_phaseOrder = this->m_phaseOrder;
 
-  clone->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
+  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
 
-  clone->m_waterOilRelPermExponent = this->m_waterOilRelPermExponent;
-  clone->m_waterOilRelPermMaxValue = this->m_waterOilRelPermMaxValue;
+  newModel->m_waterOilRelPermExponent = this->m_waterOilRelPermExponent;
+  newModel->m_waterOilRelPermMaxValue = this->m_waterOilRelPermMaxValue;
 
-  clone->m_gasOilRelPermExponent   = this->m_gasOilRelPermExponent;
-  clone->m_gasOilRelPermMaxValue   = this->m_gasOilRelPermMaxValue;
+  newModel->m_gasOilRelPermExponent   = this->m_gasOilRelPermExponent;
+  newModel->m_gasOilRelPermMaxValue   = this->m_gasOilRelPermMaxValue;
 
-  clone->m_volFracScale = this->m_volFracScale;
+  newModel->m_volFracScale = this->m_volFracScale;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  clone = std::move( newModel );
 }
 
 
