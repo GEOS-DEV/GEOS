@@ -794,14 +794,14 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition * const domain,
       real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
 
       // compute a coefficient to normalize the momentum equation
-      real64 normalizer = (pressureNext > pressureCurrent)
-                        ? pressureNext 
-                        : pressureCurrent;
-      normalizer = 1. / normalizer;
+      real64 const targetBHP  = well->getTargetBHP();
+      real64 const normalizer = targetBHP > std::numeric_limits<real64>::epsilon()
+                              ? 1.0 / targetBHP
+                              : 1.0;
         
       // compute momentum flux and derivatives
       real64 const localFlux = ( pressureNext - pressureCurrent - avgDensity * gravD ) * normalizer;
-      localFluxJacobian[ElemTag::NEXT]    = ( 1 - dAvgDensity_dPresNext * gravD )    * normalizer;
+      localFluxJacobian[ElemTag::NEXT]    = ( 1 - dAvgDensity_dPresNext * gravD ) * normalizer;
       localFluxJacobian[ElemTag::CURRENT] = (-1 - dAvgDensity_dPresCurrent * gravD ) * normalizer;
 
       // TODO: add friction and acceleration terms
@@ -1074,12 +1074,12 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
         // pressure 
         int lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DPRES) );
-        std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
+        //std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
 
         // rate
         lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DRATE ) );
-        std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
+        //std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
         dConnRate[iwelem] += scalingFactor * local_solution[lid];
       }
     }

@@ -7,12 +7,12 @@
     gravityVector="0.0, 0.0, -9.81">
 
     <ReservoirWellsSystem name="reservoirWellsSystem"
-                          flowSolverName="compositionalMultiphaseFlow"
+		          flowSolverName="compositionalMultiphaseFlow"
                           wellSolverName="compositionalMultiphaseWell"
                           verboseLevel="1"
                           targetRegions="Region2">
       <SystemSolverParameters useDirectSolver="1"
-                              maxIterNewton="40"
+	                      maxIterNewton="40"
                               verbosityFlag="2"/>
     </ReservoirWellsSystem>
     
@@ -26,23 +26,16 @@
                                  relPermName="relperm"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters useDirectSolver="1"
-                              ilut_fill="0"
-                              ilut_drop="0"/>
     </CompositionalMultiphaseFlow>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  verboseLevel="1"
                                  gravityFlag="1"
                                  targetRegions="Region2"
-                                 fluidName="fluid1"
+                                 segmentFluidName="fluid1"
                                  segmentRelPermName="relperm"
                                  segmentTemperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters useDirectSolver="1"
-                              solverType="Klu"
-                              ilut_fill="0"
-                              ilut_drop="0"/>
     </CompositionalMultiphaseWell>
 
     
@@ -51,23 +44,23 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="0, 10"
+                  xCoords="0, 5"
                   yCoords="0, 1"
                   zCoords="0, 1"
-                  nx="10"
+                  nx="5"
                   ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
 
-  <Events maxTime="1e5">
+  <Events maxTime="5e4">
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e4"
+                   forceDt="2.5e3"
                    target="/Solvers/reservoirWellsSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="2.5e3"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
@@ -92,65 +85,83 @@
 
   <Wells name="wellGroup"
          materialList="fluid1">
-
     <Well name="prod0"
           type="producer"
           control="BHP"
-          targetBHP="1e6"
-          targetRate="-1e-6"
+          targetBHP="3e6"
+          targetRate="-1e-2"
           referenceDepth="0.5">
       <Segments>
-        <Segment name="prod0_unique_seg"
+        <Segment name="prod0_segtop"
                  nextSegmentName=""
-                 location="5 0.5 0.5"/>
+                 location="4 0.5 2.5"/>
+        <Segment name="prod0_seg0b0"
+                 nextSegmentName="prod0_segtop"
+                 location="4.5 0.5 1.5"/> 
+        <Segment name="prod0_seg1b0"
+                 nextSegmentName="prod0_seg0b0" 
+                 location="4.5 0.5 0.5"/>
+        <Segment name="prod0_seg0b1"
+                 nextSegmentName="prod0_segtop"
+                 location="3.5 0.5 1.5"/> 
+        <Segment name="prod0_seg1b1"
+                 nextSegmentName="prod0_seg0b1"
+                 location="3.5 0.5 0.5"/> 
       </Segments> 
       <Perforations>
         <Perforation name="prod0_p0"
-                     location="3.5 0.5 0.5"
-                     transmissibility="1e-12"
-                     segmentName="prod0_unique_seg" />
-        <Perforation name="prod0_p1"
                      location="4.5 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="prod0_unique_seg" />
-        <Perforation name="prod0_p2"
+                     segmentName="prod0_seg1b0" /> 
+        <Perforation name="prod0_p1"
                      location="3.5 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="prod0_unique_seg" />
-        <Perforation name="prod0_p3"
-                     location="6.5 0.5 0.5"
-                     transmissibility="1e-12"
-                     segmentName="prod0_unique_seg" /> 
+                     segmentName="prod0_seg1b1" /> 
       </Perforations> 
-    </Well>
+    </Well> 
 
     <Well name="inj0"
           type="injector"
-          control="liquidRate"
-          targetBHP="1e7"
-          targetRate="1e-8"
+	  control="liquidRate"
+	  targetBHP="6e6"
+	  targetRate="1e-3"
           referenceDepth="0.5"
-          injectionStream="0.1 0.1 0.1 0.7">
+	  injectionStream="0.1 0.1 0.1 0.7">
       <Segments>
-        <Segment name="inj0_unique_seg"
+        <Segment name="inj0_segtop"
                  nextSegmentName=""
-                 location="1 0.5 0.5"/>
+                 location="1 0.5 2.5"/>
+        <Segment name="inj0_seg0b0"
+                 nextSegmentName="inj0_segtop"
+                 location="0.5 0.5 1.5"/> 
+        <Segment name="inj0_seg1b0"
+                 nextSegmentName="inj0_seg0b0"
+                 location="0.5 0.5 0.5"/>
+        <Segment name="inj0_seg0b1"
+                 nextSegmentName="inj0_segtop"
+                 location="1.5 0.5 1.5"/>
+        <Segment name="inj0_seg1b1"
+                 nextSegmentName="inj0_seg0b1"
+                 location="1.5 0.5 0.5"/> 
       </Segments> 
       <Perforations>
         <Perforation name="inj0_p0"
                      location="0.5 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="inj0_unique_seg" />
+                     segmentName="inj0_seg1b0" />
         <Perforation name="inj0_p1"
-                     location="1.5 0.5 0.5"
+                     location="1.25 0.5 0.5"
                      transmissibility="1e-12"
-                     segmentName="inj0_unique_seg" /> 
+                     segmentName="inj0_seg1b1" />
+        <Perforation name="inj0_p2"
+                     location="0.75 0.5 0.5"
+                     transmissibility="1e-12"
+                     segmentName="inj0_seg1b1" /> 
       </Perforations> 
-    </Well>
+    </Well>   
 
   </Wells>
-
- 
+  
   <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"
                                   phaseNames="oil gas"
@@ -180,78 +191,78 @@
   
   <FieldSpecifications>
     <FieldSpecification name="permx"
-                        component="0"
-                        initialCondition="1"  
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="permeability"
-                        scale="2.0e-16"/>
+               component="0"
+               initialCondition="1"  
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
 
     <FieldSpecification name="permy"
-                        component="1"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="permeability"
-                        scale="2.0e-16"/>
+               component="1"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
 
     <FieldSpecification name="permz"
-                        component="2"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="permeability"
-                        scale="2.0e-16"/>
+               component="2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="permeability"
+               scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="referencePorosity"
-                        scale="0.2"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="referencePorosity"
+               scale="0.05"/>
 
     <!-- Initial pressure: ~5 bar -->
 
     <FieldSpecification name="initialPressure"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="pressure"
-                        scale="5e5"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="pressure"
+               scale="5e6"/>
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
 
     <FieldSpecification name="initialComposition_N2"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="globalCompFraction"
-                        component="0"
-                        scale="0.099"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="globalCompFraction"
+               component="0"
+               scale="0.099"/>
 
     <FieldSpecification name="initialComposition_C10"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="globalCompFraction"
-                        component="1"
-                        scale="0.3"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="globalCompFraction"
+               component="1"
+               scale="0.3"/>
 
     <FieldSpecification name="initialComposition_C20"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="globalCompFraction"
-                        component="2"
-                        scale="0.6"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="globalCompFraction"
+               component="2"
+               scale="0.6"/>
 
     <FieldSpecification name="initialComposition_H20"
-                        initialCondition="1"
-                        setNames="all"
-                        objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
-                        fieldName="globalCompFraction"
-                        component="3"
-                        scale="0.001"/>
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               fieldName="globalCompFraction"
+               component="3"
+               scale="0.001"/>
 
   </FieldSpecifications>
 

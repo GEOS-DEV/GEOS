@@ -1597,20 +1597,20 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
         // pressure
         int lid = rowMap->LID( integer_conversion<int>( elemOffset ) );
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
-        std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
+        //std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
         
         // comp densities
         for (localIndex ic = 0; ic < m_numComponents; ++ic)
         {
           lid = rowMap->LID( integer_conversion<int>( elemOffset + ic + 1 ) );
           dWellElemGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
-          std::cout << "compDens #" << ic << ": local_solution " << local_solution[lid] << std::endl;
+          //std::cout << "compDens #" << ic << ": local_solution " << local_solution[lid] << std::endl;
         }
 
         // conn rate
         lid = rowMap->LID( integer_conversion<int>( elemOffset + m_numComponents + 1 ) );
         dConnRate[iwelem] += scalingFactor * local_solution[lid];
-        std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
+        //std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
 
       }
     }
@@ -1849,10 +1849,10 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition * const
       real64 const pressureCurrent = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
 
       // compute a coefficient to normalize the momentum equation
-      real64 normalizer = (pressureNext > pressureCurrent)
-                        ? pressureNext 
-                        : pressureCurrent;
-      normalizer = 1. / normalizer;
+      real64 const targetBHP  = well->getTargetBHP();
+      real64 const normalizer = targetBHP > std::numeric_limits<real64>::epsilon()
+                              ? 1.0 / targetBHP
+                              : 1.0;
 
       // compute momentum flux and derivatives
       localIndex const localDofIndexPresNext    = ElemTag::NEXT * resNDOF;

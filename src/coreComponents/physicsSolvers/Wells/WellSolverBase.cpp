@@ -88,7 +88,7 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   ConstitutiveBase const * fluid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
 
-  m_resFluidIndex = fluid->getIndexInParent(); // WARNING: assume same index, not sure it is true
+  m_resFluidIndex = fluid->getIndexInParent(); 
 }
   
 void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)

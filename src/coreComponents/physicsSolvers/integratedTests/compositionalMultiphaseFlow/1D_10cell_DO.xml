@@ -45,7 +45,7 @@
   </Geometry>
 
 
-  <Events maxTime="1e8">
+  <Events maxTime="1e6">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="1e5"
