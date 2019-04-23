@@ -165,6 +165,11 @@ public:
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
+  void AddCellBlockName( string const & cellBlockName )
+  {
+    m_cellBlockNames.push_back( cellBlockName );
+  }
+
 
   template< typename LAMBDA >
   static bool applyLambdaToCellBlocks( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )

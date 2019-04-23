@@ -7,14 +7,14 @@
     gravityVector="0.0, 0.0, -9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="1"
+                     verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
-                     targetRegions="Region2"
                      fluidName="water"
-                     solidName="rock">
-      <SystemSolverParameters krylovTol="1.0e-12"
-                              newtonTol="1.0e-8"
+                     solidName="rock"
+                     targetRegions="Region1 Region2">
+      <SystemSolverParameters krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
   </Solvers>
@@ -24,33 +24,31 @@
                   elementTypes="C3D8" 
                   xCoords="0, 10"
                   yCoords="0, 10"
-                  zCoords="0, 1"
-                  nx="100"
-                  ny="100"
-                  nz="1"
-                  cellBlockNames="cb1"/>
+                  zCoords="0, 5, 10"
+                  nx="10"
+                  ny="10"
+                  nz="5 , 10"
+                  cellBlockNames="cb1 cb2"/>
   </Mesh>
 
   <Geometry>
-    <Box name="left"   xMin="-0.01, -0.01, -0.01" xMax="0.11, 10.01, 1.01"/>
-    <Box name="right"  xMin="9.89, -0.01, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="10.01, 0.11, 1.01"/>
-    <Box name="top"    xMin="-0.01, 9.89, -0.01" xMax="10.01, 10.01, 1.01"/>
+    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax="1.01, 1.01, 1.01"/>
+    <Box name="sink"   xMin="8.99, 8.99, 8.99" xMax="10.01, 10.01, 10.01"/>
   </Geometry>
 
 
-  <Events maxTime="1.0">
+  <Events maxTime="5000.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
+                   forceDt="20.0"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   cycleFrequency="1"
+                   timeFrequency="100.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
@@ -61,6 +59,7 @@
                    endTime="-1" />
   </Events>
 
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
@@ -70,8 +69,11 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2"
+    <ElementRegion name="Region1"
                    cellBlocks="cb1"
+                   materialList="water rock"/>
+    <ElementRegion name="Region2"
+                   cellBlocks="cb2"
                    materialList="water rock"/>
   </ElementRegions>
 
@@ -79,72 +81,89 @@
     <CompressibleSinglePhaseFluid name="water"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="0.0"
+                                  compressibility="5e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
-                                 compressibility="0.0"/>
+                                 compressibility="1e-9"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="permx"
+    <FieldSpecification name="permx1"
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Region2/cb1"
+               objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <FieldSpecification name="permy"
+    <FieldSpecification name="permy1"
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Region2/cb1"
+               objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <FieldSpecification name="permz"
+    <FieldSpecification name="permz1"
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Region2/cb1"
+               objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
 
-    <FieldSpecification name="referencePorosity"
+    <FieldSpecification name="referencePorosity1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Region2/cb1"
+               objectPath="ElementRegions/Region1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
-    <FieldSpecification name="initialPressure"
+    <FieldSpecification name="initialPressure1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Region2/cb1"
+               objectPath="ElementRegions/Region1/elementSubRegions/cb1"
                fieldName="pressure"
-               scale="0.0"/>
+               scale="5e6"/>
 
-    <FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/Region2/cb1"
+    <FieldSpecification name="sourceTerm1"
+               objectPath="ElementRegions"
                fieldName="pressure"
-               functionName="boundaryPressureFunc"
-               scale="1.0e7"
-               setNames="left right"/>
+               scale="1e7"
+               setNames="source"/>
+
+    <FieldSpecification name="sinkTerm1"
+               objectPath="ElementRegions/Region1/cb1"
+               fieldName="pressure"
+               scale="0.0"
+               setNames="sink"/>
+
+    <FieldSpecification name="referencePorosity2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/Region2"
+               fieldName="referencePorosity"
+               scale="0.07"/>
+
+    <FieldSpecification name="initialPressure2"
+               initialCondition="1"
+               setNames="all"
+               objectPath="ElementRegions/Region2"
+               fieldName="pressure"
+               scale="5e6"/>
+
+    <FieldSpecification name="sinkTerm2"
+               objectPath="ElementRegions/Region2/cb2"
+               fieldName="pressure"
+               scale="0.0"
+               setNames="sink"/>
   </FieldSpecifications>
 
   <Functions>
-    <SymbolicFunction name="boundaryPressureFunc"
-                      inputVarNames="elementCenter"
-                      variableNames="x y z"
-                      expression="(10-x)/10"/>
 
-    <SymbolicFunction name="solutionFunction"
-                      inputVarNames="elementCenter"
-                      variableNames="x y z"
-                      expression="1e7*(10-x)/10"/>
   </Functions>
 
   <!-- <Partition>
@@ -155,6 +174,4 @@
       <Silo name="siloOutput"/>
       <Restart name="sidreRestart"/>
   </Outputs>
-
-
 </Problem>
