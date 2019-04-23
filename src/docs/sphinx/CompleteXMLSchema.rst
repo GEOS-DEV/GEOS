@@ -343,46 +343,11 @@ Element: Constitutive
 .. include:: ../../coreComponents/fileIO/schema/docs/Constitutive.rst
 
 
-.. _XML_VanGenuchtenCapillaryPressure:
-
-Element: VanGenuchtenCapillaryPressure
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
-
-
 .. _XML_BlackOilFluid:
 
 Element: BlackOilFluid
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
-
-
-.. _XML_BrooksCoreyCapillaryPressure:
-
-Element: BrooksCoreyCapillaryPressure
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure.rst
-
-
-.. _XML_BrooksCoreyRelativePermeability:
-
-Element: BrooksCoreyRelativePermeability
-========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
-
-
-.. _XML_CompositionalMultiphaseFluid:
-
-Element: CompositionalMultiphaseFluid
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
-
-
-.. _XML_PoreVolumeCompressibleSolid:
-
-Element: PoreVolumeCompressibleSolid
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -392,11 +357,67 @@ Element: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid.rst
 
 
+.. _XML_LinearElasticAnisotropic:
+
+Element: LinearElasticAnisotropic
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic.rst
+
+
 .. _XML_LinearElasticIsotropic:
 
 Element: LinearElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
+
+
+.. _XML_PoroLinearElasticAnisotropic:
+
+Element: PoroLinearElasticAnisotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic.rst
+
+
+.. _XML_BrooksCoreyRelativePermeability:
+
+Element: BrooksCoreyRelativePermeability
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
+
+
+.. _XML_PoroLinearElasticIsotropic:
+
+Element: PoroLinearElasticIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
+
+
+.. _XML_BrooksCoreyCapillaryPressure:
+
+Element: BrooksCoreyCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure.rst
+
+
+.. _XML_PoreVolumeCompressibleSolid:
+
+Element: PoreVolumeCompressibleSolid
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
+
+
+.. _XML_CompositionalMultiphaseFluid:
+
+Element: CompositionalMultiphaseFluid
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_VanGenuchtenCapillaryPressure:
+
+Element: VanGenuchtenCapillaryPressure
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
 .. _XML_ElementRegions:
@@ -561,46 +582,11 @@ Datastructure: Constitutive
 .. include:: ../../coreComponents/fileIO/schema/docs/Constitutive_other.rst
 
 
-.. _DATASTRUCTURE_VanGenuchtenCapillaryPressure:
-
-Datastructure: VanGenuchtenCapillaryPressure
-============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure_other.rst
-
-
 .. _DATASTRUCTURE_BlackOilFluid:
 
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
-
-
-.. _DATASTRUCTURE_BrooksCoreyCapillaryPressure:
-
-Datastructure: BrooksCoreyCapillaryPressure
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure_other.rst
-
-
-.. _DATASTRUCTURE_BrooksCoreyRelativePermeability:
-
-Datastructure: BrooksCoreyRelativePermeability
-==============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseFluid:
-
-Datastructure: CompositionalMultiphaseFluid
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
-
-
-.. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
-
-Datastructure: PoreVolumeCompressibleSolid
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
@@ -610,11 +596,67 @@ Datastructure: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid_other.rst
 
 
+.. _DATASTRUCTURE_LinearElasticAnisotropic:
+
+Datastructure: LinearElasticAnisotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic_other.rst
+
+
 .. _DATASTRUCTURE_LinearElasticIsotropic:
 
 Datastructure: LinearElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroLinearElasticAnisotropic:
+
+Datastructure: PoroLinearElasticAnisotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic_other.rst
+
+
+.. _DATASTRUCTURE_BrooksCoreyRelativePermeability:
+
+Datastructure: BrooksCoreyRelativePermeability
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_PoroLinearElasticIsotropic:
+
+Datastructure: PoroLinearElasticIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_BrooksCoreyCapillaryPressure:
+
+Datastructure: BrooksCoreyCapillaryPressure
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
+
+Datastructure: PoreVolumeCompressibleSolid
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseFluid:
+
+Datastructure: CompositionalMultiphaseFluid
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_VanGenuchtenCapillaryPressure:
+
+Datastructure: VanGenuchtenCapillaryPressure
+============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_cellManager:
