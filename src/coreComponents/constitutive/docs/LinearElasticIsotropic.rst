@@ -7,8 +7,24 @@ Linear elastic isotropic solid model
 Overview
 =========================
 
-This model represents a linear elastic isotropic solid.
+This model may be used to represents a solid material with a linear elastic isotropic response to loading.
+The relationhip between stress and strain is typically represented by Hooke's Law, 
+which for the case of linear elasticity, may be expressed as:
 
+.. math::
+   \sigma_{ij} + \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
+   
+where :math:`sigma_{ij}` is the :math:`ij` component of the cauchy stress tensor, 
+:math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,
+:math:`\lambda` is the Lames elastic constant,
+and :math:`\mu` is the elastic shear modulus.
+
+Hooke's Law may also be expressed using Voigt notation for the stress and strain tensors as:
+
+.. math::
+   \tensor{\sigma} = \tensor{C} \dot \tensor{\epsilon}
+   
+   
 Usage
 =========================
 
@@ -23,10 +39,7 @@ Input example
 
   <Constitutive>
     <LinearElasticIsotropic name="shale"
-                            density0="2700"
-                            BulkModulus0="61.9e6"
-                            ShearModulus0="28.57e6"
-                            BiotCoefficient="1"
-                            referencePressure="2.125e6"
-                            compressibility="3e-10"/>
+                            defaultDensity="2700"
+                            defaultBulkModulus="61.9e6"
+                            defaultShearModulus="28.57e6"
   </Constitutive>
