@@ -62,14 +62,14 @@ WellElement * WellElementSubRegion::getWellElement( localIndex iwelem )
 
 void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  // TODO: MPI partitioning
+  // TODO: make this work in parallel
+  // TODO: this function is temporary and will be rewritten entirely
     
   // dummy map from local to global
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
   {
     m_wellElementIndex[iwelem] = iwelem;
 
-    // TODO: rewrite this entirely
     if (iwelem == 0)
     {
       m_nextWellElementIndex[iwelem] = -1;

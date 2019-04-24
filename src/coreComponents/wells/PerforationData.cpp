@@ -87,6 +87,8 @@ void PerforationData::InitializePreSubGroups( ManagedGroup * const problemManage
   DomainPartition const * domain
     = problemManager->GetGroup<DomainPartition>( keys::domain );
   MeshLevel const * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  
+  // TODO: trace the reservoir cells that are traversed by the well
   ConnectToCells( mesh );
 }
 
@@ -110,6 +112,9 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor const>>( ElementSubRegionBase::
                                                                                         viewKeyStruct::
                                                                                         elementCenterString );
+
+  // TODO: trace the reservoir cells that are traversed by the well
+  // TODO: rewrite this function entirely
 
   // initially allocate enough memory for all (global) perforations
   PerforationManager const * perforationManager
@@ -148,7 +153,6 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
 
     string const wellElementName = perforation->getWellElementName();
 
-    // TODO: rewrite this entirely
     m_wellElementIndex[num_conn_local] = -1;
     for (localIndex iwelem = 0; iwelem < wellElementManager->numWellElementsGlobal(); ++iwelem)
     {
@@ -163,10 +167,6 @@ void PerforationData::ConnectToCells( MeshLevel const * mesh )
     {
       GEOS_ERROR("Invalid well element name: " << wellElementName);
     }    
-
-    std::cout << "I match perforation " << perforation->getName()
-	      << " with segment " << wellElementManager->getWellElement( m_wellElementIndex[num_conn_local] )->getName()
-	      << std::endl;
     
     m_perforationIndex[num_conn_local] = num_conn_global++;
     m_location[num_conn_local]         = perforation->getLocation();

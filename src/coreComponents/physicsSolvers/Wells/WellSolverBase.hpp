@@ -53,7 +53,7 @@ public:
     static constexpr integer WELL = 1;
   };
 
-  // tag to access the next and previous well elements of a connection
+  // tag to access the next and current well elements of a connection 
   struct ElemTag
   {
     static constexpr integer CURRENT = 0;

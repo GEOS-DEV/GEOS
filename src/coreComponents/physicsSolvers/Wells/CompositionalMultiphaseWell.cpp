@@ -483,7 +483,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
     
     // TODO: fix this in the case of multiple MPI ranks working on the same well
-    // In particular, steps 1), 3) and 7) will need to be rewritten
+    // In particular, steps 1), 3) will need to be rewritten
     
    /*
     * The methodology used here is based on Yifan Zhou's PhD dissertation at SU
@@ -578,11 +578,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
                                   : 0.9 * targetBHP; 
     }
 
-    // TODO: communicate ref pressure
-    // TODO: communicate avgDens
-    
     // 3) Estimate the pressures in the well elements using this avgDensity
-    // TODO: implement this in parallel with the communication of the pressures
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       if (iwelem != iwelemRef)
@@ -1353,6 +1349,8 @@ void CompositionalMultiphaseWell::AssemblePerforationTerms( DomainPartition * co
     stackArray1d<double, 2 * maxNumComp>                 localFlux( 2 * NC );
     stackArray2d<double, 2 * maxNumComp * 2 * maxNumDof> localFluxJacobian( 2 * NC, 2 * resNDOF );
 
+    // TODO: make this work if the wellElement and the reservoir element are on different ranks
+
     // loop over the perforations and add the rates to the residual and jacobian
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {
@@ -1597,20 +1595,17 @@ CompositionalMultiphaseWell::ApplySystemSolution( EpetraBlockSystem const * cons
         // pressure
         int lid = rowMap->LID( integer_conversion<int>( elemOffset ) );
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
-        //std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
         
         // comp densities
         for (localIndex ic = 0; ic < m_numComponents; ++ic)
         {
           lid = rowMap->LID( integer_conversion<int>( elemOffset + ic + 1 ) );
           dWellElemGlobalCompDensity[iwelem][ic] += scalingFactor * local_solution[lid];
-          //std::cout << "compDens #" << ic << ": local_solution " << local_solution[lid] << std::endl;
         }
 
         // conn rate
         lid = rowMap->LID( integer_conversion<int>( elemOffset + m_numComponents + 1 ) );
         dConnRate[iwelem] += scalingFactor * local_solution[lid];
-        //std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
 
       }
     }
@@ -2168,6 +2163,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
   dCompPerfRate_dPres = 0.0;
   dCompPerfRate_dComp = 0.0;
 
+  // TODO: make this work if the wellElement and the reservoir element are on different ranks
+
   // loop over the perforations to compute the perforation rates
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
   {     
@@ -2370,8 +2367,6 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
                                                           * dFlux_dP[SubRegionTag::RES];
         dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] = wellElemCompFrac[iwelem][ic]
                                                            * dFlux_dP[SubRegionTag::WELL];
-//        dCompPerfRate_dPres[iperf][SubRegionTag::WELL][ic] = dWellElemCompFrac_dP[iwelem][ic]
-//                                                           * flux;
            
         for (localIndex jc = 0; jc < NC; ++jc)
         {
@@ -2389,6 +2384,8 @@ void CompositionalMultiphaseWell::ComputeAllPerforationRates( Well * well )
 
 void CompositionalMultiphaseWell::RecordWellData( Well * well )
 {
+  // note: this function is for debug and will go away
+
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
 
   localIndex const NP = m_numPhases;

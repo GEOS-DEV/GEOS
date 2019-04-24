@@ -91,7 +91,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   WellManager * const wellManager = domain->getWellManager();
   
-  // for this solver, the dof are on the cell center, and the row corrosponds to an element
+  // for this solver, the dof are on the cell center, and the row corresponds to an element
   localIndex  numResGhostRows   = 0;
   localIndex  numWellGhostRows  = 0;
   localIndex  numResLocalRows   = 0;
@@ -311,7 +311,6 @@ void ReservoirWellsSystemSolver::InitializePostInitialConditions_PreSubGroups(Ma
 
 ReservoirWellsSystemSolver::~ReservoirWellsSystemSolver()
 {
-  // TODO Auto-generated destructor stub
 }
 
 real64 ReservoirWellsSystemSolver::SolverStep( real64 const & time_n,

@@ -156,15 +156,16 @@ public:
   void UpdatePhaseVolumeFraction( Well * well );
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Recompute mixture densities using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateFluidModel( Well * well );
+  void UpdateMixtureDensity( Well * well );
+
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateMixtureDensity( Well * well );
+  void UpdateFluidModel( Well * well );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -199,7 +200,6 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-
   void AssembleFluxTerms( DomainPartition * const domain,
                           Epetra_FECrsMatrix * const jacobian,
                           Epetra_FEVector * const residual,
@@ -214,7 +214,6 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-
   void AssemblePerforationTerms( DomainPartition * const domain,
                                  Epetra_FECrsMatrix * const jacobian,
                                  Epetra_FEVector * const residual,
@@ -236,7 +235,7 @@ public:
                                    real64 const dt );
 
   /**
-   * @brief assembles the momentum at all connections except the first global connection
+   * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
@@ -246,7 +245,7 @@ public:
                               Epetra_FEVector * const residual );
 
   /**
-   * @brief assembles the control equation for the first global connection
+   * @brief assembles the control equation for the first connection
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
@@ -312,7 +311,7 @@ public:
     static constexpr auto dMixtureDensity_dPressureString = "dSegmentMixtureDensity_dPres";
     static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dSegmentMixtureDensity_dComp";
 
-    // intermediate values for constitutive model input
+    // global component fractions
     static constexpr auto globalCompFractionString = "segmentGlobalComponentFraction";
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = "dSegmentGlobalComponentFraction_dGlobalCompDensity";
     
@@ -351,7 +350,7 @@ public:
     ViewKey dMixtureDensity_dPres = { dMixtureDensity_dPressureString };
     ViewKey dMixtureDensity_dComp = { dMixtureDensity_dGlobalCompDensityString };
 
-    // global composition to input injection stream
+    // global component fractions
     ViewKey globalComponentFrac        = { globalCompFractionString };
     ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };
 

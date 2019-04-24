@@ -190,9 +190,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       
       avgDensity += resDensity[er][esr][m_resFluidIndex][ei][0];
     }
-
-    // TODO: communicate avgDens
-    // TODO: collect individual dens and then communicate
     
     avgDensity /= perforationData->numPerforationsGlobal();
 
@@ -212,7 +209,6 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       real64 resPres = well->getTargetBHP();
       if (perforationData->numPerforationsLocal() > 0)
       {
-        // TODO: again, this will need to be improved
         // we have to make sure that iperf = 0 is the first perforation
         localIndex const er  = resElementRegion[0];
         localIndex const esr = resElementSubRegion[0];
@@ -225,11 +221,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
                                   : 1.1 * resPres;
     }
 
-    // TODO: communicate ref pressure
-    // TODO: communicate avgDens
-    
     // 3) Estimate the pressures in the well elements using this avgDensity
-    // TODO: implement this in parallel with the communication of the pressures
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
       if (iwelem != iwelemRef)
@@ -316,8 +308,6 @@ void SinglePhaseWell::SetNumRowsAndTrilinosIndices( DomainPartition const * cons
     }
   }
 
-  // TODO: double check this for multiple MPI processes
-  
   // get the well information
   WellManager const * const wellManager = domain->getWellManager();
 
@@ -668,6 +658,8 @@ void SinglePhaseWell::AssemblePerforationTerms( DomainPartition * const domain,
 
     stackArray1d<real64, 2> localFlux( 2 );
     stackArray2d<real64, 4> localFluxJacobian(2, 2);
+
+    // TODO: make this work if the wellElement and the reservoir element are on different ranks
 
     // loop over the perforations and add the rates to the residual and jacobian
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
@@ -1074,12 +1066,10 @@ SinglePhaseWell::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
 
         // pressure 
         int lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DPRES) );
-        //std::cout << "pressure: local_solution " << local_solution[lid] << std::endl;
         dWellElemPressure[iwelem] += scalingFactor * local_solution[lid];
 
         // rate
         lid = rowMap->LID( integer_conversion<int>( elemOffset + ColOffset::DRATE ) );
-        //std::cout << "rate: local_solution " << local_solution[lid] << std::endl;
         dConnRate[iwelem] += scalingFactor * local_solution[lid];
       }
     }
@@ -1239,6 +1229,8 @@ void SinglePhaseWell::ComputeAllPerforationRates( Well * well )
   stackArray1d<real64, 2> dPressure_dP( 2 );
 
   stackArray1d<localIndex, 2> multiplier( 2 );
+
+  // TODO: make this work if the wellElement and the reservoir element are on different ranks
 
   // loop over the perforations to compute the perforation rates 
   for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
@@ -1468,7 +1460,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
 
 void SinglePhaseWell::RecordWellData( Well * well )
 {
-  // This function is for debug and will go away
+  // Note: this function is for debug and will go away
 
   WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
   PerforationData const * const perforationData = well->getPerforations();
@@ -1509,7 +1501,7 @@ void SinglePhaseWell::RecordWellData( Well * well )
   }
 
   // output the reference pressure
-  localIndex const iwelemRef = 0; // be careful here for the parallel case
+  localIndex const iwelemRef = 0; 
   real64 const pressure = wellElemPressure[iwelemRef];
   real64 const targetPressure = well->getTargetBHP();
 

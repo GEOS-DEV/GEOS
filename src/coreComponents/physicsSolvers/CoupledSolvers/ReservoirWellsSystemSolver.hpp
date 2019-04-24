@@ -32,9 +32,19 @@ namespace geosx
 class ReservoirWellsSystemSolver : public SolverBase
 {
 public:
+
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */
   ReservoirWellsSystemSolver( const std::string& name,
                               ManagedGroup * const parent );
-  ~ReservoirWellsSystemSolver() override;
+
+  /**
+   * @brief default destructor
+   */
+  virtual ~ReservoirWellsSystemSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -95,16 +105,19 @@ public:
   
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+
     // solver that assembles the reservoir equations
     constexpr static auto flowSolverNameString = "flowSolverName";
+
     // solver that assembles the well
     constexpr static auto wellSolverNameString = "wellSolverName";
+
   } reservoirWellsSystemSolverViewKeys;
 
 
 protected:
+  
   virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
-
 
 private:
   
@@ -118,6 +131,7 @@ private:
 
   // solver that assembles the reservoir equations
   string m_flowSolverName;
+
   // solver that assembles the well equations and compute perforation rates
   string m_wellSolverName;
 

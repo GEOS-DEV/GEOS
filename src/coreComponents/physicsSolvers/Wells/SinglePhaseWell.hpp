@@ -56,12 +56,14 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
+  // define the column offset of the derivatives
   struct ColOffset
   {
     static constexpr integer DPRES = 0;
     static constexpr integer DRATE = 1;
   };
 
+  // define the row offset of the residual equations
   struct RowOffset
   {
     static constexpr integer CONTROL = 0;
@@ -193,7 +195,7 @@ public:
                                  real64 const dt );
   
   /**
-   * @brief assembles the momentum at all connections except the first global connection
+   * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
@@ -203,7 +205,7 @@ public:
                               Epetra_FEVector * const residual );
 
   /**
-   * @brief assembles the control equation for the first global connection
+   * @brief assembles the control equation for the well head (first connection)
    * @param domain the physical domain object
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
@@ -290,7 +292,7 @@ private:
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
-   * @brief Compute the perforation rates for this well
+   * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
   void ComputeAllPerforationRates( Well * well );

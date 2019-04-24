@@ -37,11 +37,13 @@ class Well : public ObjectManagerBase
 {
 public:
 
+  // define the type of well (producer or injector)
   enum class Type {
                     PRODUCER,
                     INJECTOR
                   };
 
+  // define the well control
   enum class Control {
                        BHP,
                        GASRATE,
@@ -50,13 +52,33 @@ public:
                        LIQUIDRATE
                      };
   
-  
-  explicit Well( string const & name, dataRepository::ManagedGroup * const parent );
-  ~Well() override;
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */  
+  explicit Well( string const & name, 
+                 dataRepository::ManagedGroup * const parent );
 
+  /**
+   * @brief default destructor
+   */
+  virtual ~Well() override;
+
+  /// deleted default constructor
   Well() = delete;
+
+  /// deleted copy constructor
   Well( Well const & ) = delete;
+
+  /// deleted move constructor
   Well( Well && ) = delete;
+
+  /// deleted assignment operator
+  Well & operator=( Well const & ) = delete;
+
+  /// deleted move operator
+  Well & operator=( Well && ) = delete;
 
   /// Catalog name interface
   static string CatalogName() { return "Well"; }

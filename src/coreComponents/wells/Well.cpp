@@ -52,7 +52,7 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
 
-  // TODO: here, double-check what should be REQUIRED/OPTIONAL
+  // TODO: here, revisit what should be REQUIRED/OPTIONAL
   
   RegisterViewWrapper( viewKeyStruct::referenceDepthString, &m_referenceDepth, false )->
     setDefaultValue(0.0)->
@@ -134,7 +134,7 @@ void Well::PostProcessInput()
     GEOS_ERROR("Invalid initial well control: " << m_controlString);
   }
 
-  // this is temporary
+  // TODO: this is temporary, wellElemSubRegion should have the size of the number of well elements on this rank
   m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );
   
 }
