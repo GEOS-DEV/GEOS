@@ -171,7 +171,8 @@ void testNumericalDerivatives( CapillaryPressureBase * capPressure,
   auto const & phases = capPressure->getReference<string_array>( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the capillary pressure to run updates on
-  auto capPressureCopyPtr = capPressure->DeliverClone( "fluidCopy", nullptr );
+  std::unique_ptr<ConstitutiveBase> capPressureCopyPtr ;
+  capPressure->DeliverClone( "fluidCopy", nullptr, capPressureCopyPtr );
   auto capPressureCopy = capPressureCopyPtr->group_cast<CapillaryPressureBase *>();
 
   capPressure->AllocateConstitutiveData( capPressure->getParent(), 1 );
