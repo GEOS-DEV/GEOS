@@ -17,9 +17,9 @@ set( linearAlgebraInterface_headers
      HypreInterface.hpp 
      LinearSolverParameters.hpp
      LapackSuiteInterface.hpp
-     BlasMatrix.hpp
-     BlasVector.hpp
      BlasLapackLA.hpp)
+     #BlasMatrix.hpp
+     #BlasVector.hpp   
 
 #
 # Specify all sources
@@ -33,9 +33,9 @@ set( linearAlgebraInterface_sources
      TrilinosSolver.cpp
      BlockVectorView.cpp
      BlockMatrixView.cpp
-     BlasMatrix.cpp
-     BlasVector.cpp
      BlasLapackLA.cpp)
+     #BlasMatrix.cpp
+     #BlasVector.cpp
 
 set( dependencyList common trilinos hypre lapack_suite raja hdf5 pugixml mpi )
 
