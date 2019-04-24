@@ -749,6 +749,8 @@
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--relPermName = Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
+		<!--capPressureName = Name of the capillary pressure constitutive model to use-->
+		<xsd:attribute name="capPressureName" type="string" default="" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -875,29 +877,18 @@
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
-			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
-			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
-			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
-			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
+			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
+			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
-		<!--phaseNames = List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
-		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
-		<!--phaseCapPressureExponentInv = Inverse of capillary power law exponent for each phase-->
-		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="0.5" />
-		<!--phaseCapPressureMultiplier = Entry pressure value for each phase-->
-		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="1" />
-		<!--capPressureEpsilon = Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1-->
-		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
-		<!--name = A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--componentNames = List of component names-->
@@ -915,6 +906,232 @@
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="CompressibleSinglePhaseFluidType">
+		<!--compressibility = Fluid compressibility-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--viscosibility = Fluid viscosity exponential coefficient-->
+		<xsd:attribute name="viscosibility" type="real64" default="0" />
+		<!--referencePressure = Reference pressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--referenceDensity = Reference fluid density-->
+		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
+		<!--referenceViscosity = Reference fluid viscosity-->
+		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--densityModel = Type of density model (linear, quadratic, exponential)-->
+		<xsd:attribute name="densityModel" type="string" default="linear" />
+		<!--viscosityModel = Type of viscosity model (linear, quadratic, exponential)-->
+		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticAnisotropicType">
+		<!--defaultDensity = Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--c11 = Default for the 11 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c11" type="real64" use="required" />
+		<!--c12 = Default for the 12 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c12" type="real64" use="required" />
+		<!--c13 = Default for the 13 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c13" type="real64" use="required" />
+		<!--c14 = Default for the 14 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c14" type="real64" use="required" />
+		<!--c15 = Default for the 15 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c15" type="real64" use="required" />
+		<!--c16 = Default for the 16 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c16" type="real64" use="required" />
+		<!--c21 = Default for the 21 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c21" type="real64" use="required" />
+		<!--c22 = Default for the 22 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c22" type="real64" use="required" />
+		<!--c23 = Default for the 23 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c23" type="real64" use="required" />
+		<!--c24 = Default for the 24 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c24" type="real64" use="required" />
+		<!--c25 = Default for the 25 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c25" type="real64" use="required" />
+		<!--c26 = Default for the 26 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c26" type="real64" use="required" />
+		<!--c31 = Default for the 31 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c31" type="real64" use="required" />
+		<!--c32 = Default for the 32 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c32" type="real64" use="required" />
+		<!--c33 = Default for the 33 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c33" type="real64" use="required" />
+		<!--c34 = Default for the 34 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c34" type="real64" use="required" />
+		<!--c35 = Default for the 35 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c35" type="real64" use="required" />
+		<!--c36 = Default for the 36 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c36" type="real64" use="required" />
+		<!--c41 = Default for the 41 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c41" type="real64" use="required" />
+		<!--c42 = Default for the 42 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c42" type="real64" use="required" />
+		<!--c43 = Default for the 43 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c43" type="real64" use="required" />
+		<!--c44 = Default for the 44 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c44" type="real64" use="required" />
+		<!--c45 = Default for the 45 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c45" type="real64" use="required" />
+		<!--c46 = Default for the 46 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c46" type="real64" use="required" />
+		<!--c51 = Default for the 51 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c51" type="real64" use="required" />
+		<!--c52 = Default for the 52 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c52" type="real64" use="required" />
+		<!--c53 = Default for the 53 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c53" type="real64" use="required" />
+		<!--c54 = Default for the 54 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c54" type="real64" use="required" />
+		<!--c55 = Default for the 55 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c55" type="real64" use="required" />
+		<!--c56 = Default for the 56 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c56" type="real64" use="required" />
+		<!--c61 = Default for the 61 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c61" type="real64" use="required" />
+		<!--c62 = Default for the 62 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c62" type="real64" use="required" />
+		<!--c63 = Default for the 63 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c63" type="real64" use="required" />
+		<!--c64 = Default for the 64 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c64" type="real64" use="required" />
+		<!--c65 = Default for the 65 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c65" type="real64" use="required" />
+		<!--c66 = Default for the 66 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c66" type="real64" use="required" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticIsotropicType">
+		<!--defaultDensity = Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultBulkModulus = Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultShearModulus = Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus = Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultPoissonRatio = Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticAnisotropicType">
+		<!--defaultDensity = Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--c11 = Default for the 11 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c11" type="real64" use="required" />
+		<!--c12 = Default for the 12 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c12" type="real64" use="required" />
+		<!--c13 = Default for the 13 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c13" type="real64" use="required" />
+		<!--c14 = Default for the 14 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c14" type="real64" use="required" />
+		<!--c15 = Default for the 15 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c15" type="real64" use="required" />
+		<!--c16 = Default for the 16 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c16" type="real64" use="required" />
+		<!--c21 = Default for the 21 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c21" type="real64" use="required" />
+		<!--c22 = Default for the 22 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c22" type="real64" use="required" />
+		<!--c23 = Default for the 23 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c23" type="real64" use="required" />
+		<!--c24 = Default for the 24 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c24" type="real64" use="required" />
+		<!--c25 = Default for the 25 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c25" type="real64" use="required" />
+		<!--c26 = Default for the 26 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c26" type="real64" use="required" />
+		<!--c31 = Default for the 31 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c31" type="real64" use="required" />
+		<!--c32 = Default for the 32 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c32" type="real64" use="required" />
+		<!--c33 = Default for the 33 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c33" type="real64" use="required" />
+		<!--c34 = Default for the 34 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c34" type="real64" use="required" />
+		<!--c35 = Default for the 35 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c35" type="real64" use="required" />
+		<!--c36 = Default for the 36 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c36" type="real64" use="required" />
+		<!--c41 = Default for the 41 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c41" type="real64" use="required" />
+		<!--c42 = Default for the 42 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c42" type="real64" use="required" />
+		<!--c43 = Default for the 43 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c43" type="real64" use="required" />
+		<!--c44 = Default for the 44 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c44" type="real64" use="required" />
+		<!--c45 = Default for the 45 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c45" type="real64" use="required" />
+		<!--c46 = Default for the 46 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c46" type="real64" use="required" />
+		<!--c51 = Default for the 51 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c51" type="real64" use="required" />
+		<!--c52 = Default for the 52 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c52" type="real64" use="required" />
+		<!--c53 = Default for the 53 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c53" type="real64" use="required" />
+		<!--c54 = Default for the 54 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c54" type="real64" use="required" />
+		<!--c55 = Default for the 55 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c55" type="real64" use="required" />
+		<!--c56 = Default for the 56 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c56" type="real64" use="required" />
+		<!--c61 = Default for the 61 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c61" type="real64" use="required" />
+		<!--c62 = Default for the 62 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c62" type="real64" use="required" />
+		<!--c63 = Default for the 63 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c63" type="real64" use="required" />
+		<!--c64 = Default for the 64 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c64" type="real64" use="required" />
+		<!--c65 = Default for the 65 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c65" type="real64" use="required" />
+		<!--c66 = Default for the 66 component of the Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="c66" type="real64" use="required" />
+		<!--BiotCoefficient = Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility = Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<!--referencePressure = ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
+		<!--phaseRelPermExponent = MinimumRel perm power law exponent for each phase-->
+		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="1" />
+		<!--phaseRelPermMaxValue = Maximum rel perm value for each phase-->
+		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticIsotropicType">
+		<!--defaultDensity = Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultBulkModulus = Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultShearModulus = Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus = Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultPoissonRatio = Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--BiotCoefficient = Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
+		<!--compressibility = Fluid Compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="-1" />
+		<!--referencePressure = ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--phaseNames = List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
@@ -929,15 +1146,11 @@
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
-		<!--phaseNames = List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
-		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
-		<!--phaseRelPermExponent = MinimumRel perm power law exponent for each phase-->
-		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="1" />
-		<!--phaseRelPermMaxValue = Maximum rel perm value for each phase-->
-		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="0" />
+	<xsd:complexType name="PoreVolumeCompressibleSolidType">
+		<!--compressibility = Solid compressibility-->
+		<xsd:attribute name="compressibility" type="real64" use="required" />
+		<!--referencePressure = Reference pressure for fluid compressibility-->
+		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -963,49 +1176,17 @@
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PoreVolumeCompressibleSolidType">
-		<!--compressibility = Solid compressibility-->
-		<xsd:attribute name="compressibility" type="real64" use="required" />
-		<!--referencePressure = Reference pressure for fluid compressibility-->
-		<xsd:attribute name="referencePressure" type="real64" use="required" />
-		<!--name = A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--compressibility = Fluid compressibility-->
-		<xsd:attribute name="compressibility" type="real64" default="0" />
-		<!--viscosibility = Fluid viscosity exponential coefficient-->
-		<xsd:attribute name="viscosibility" type="real64" default="0" />
-		<!--referencePressure = Reference pressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--referenceDensity = Reference fluid density-->
-		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
-		<!--referenceViscosity = Reference fluid viscosity-->
-		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-		<!--densityModel = Type of density model (linear, quadratic, exponential)-->
-		<xsd:attribute name="densityModel" type="string" default="linear" />
-		<!--viscosityModel = Type of viscosity model (linear, quadratic, exponential)-->
-		<xsd:attribute name="viscosityModel" type="string" default="linear" />
-		<!--name = A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="LinearElasticIsotropicType">
-		<!--density0 = Reference Material Density-->
-		<xsd:attribute name="density0" type="real64" use="required" />
-		<!--BulkModulus0 = Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="BulkModulus0" type="real64" default="-1" />
-		<!--ShearModulus0 = Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="ShearModulus0" type="real64" default="-1" />
-		<!--YoungsModulus = Elastic Young's Modulus.-->
-		<xsd:attribute name="YoungsModulus" type="real64" default="-1" />
-		<!--PoissonRatio = Poisson's ratio-->
-		<xsd:attribute name="PoissonRatio" type="real64" default="-1" />
-		<!--BiotCoefficient = Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="0" />
-		<!--compressibility = Fluid Compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="-1" />
-		<!--referencePressure = ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
+	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
+		<!--phaseNames = List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseMinVolumeFraction = Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="0" />
+		<!--phaseCapPressureExponentInv = Inverse of capillary power law exponent for each phase-->
+		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="0.5" />
+		<!--phaseCapPressureMultiplier = Entry pressure value for each phase-->
+		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="1" />
+		<!--capPressureEpsilon = Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1-->
+		<xsd:attribute name="capPressureEpsilon" type="real64" default="1e-06" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1022,6 +1203,8 @@
 		<xsd:attribute name="cellBlocks" type="string_array" default="" />
 		<!--fractureSet = (no description available)-->
 		<xsd:attribute name="fractureSet" type="string_array" default="" />
+		<!--coarseningRatio = (no description available)-->
+		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--name = A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -8,6 +8,7 @@ maxStableDt            real64     Value of the Maximum Stable Timestep for this 
 fluidIndex             localIndex (no description available)                            
 solidIndex             localIndex (no description available)                            
 relPermIndex           localIndex (no description available)                            
+capPressureIndex       localIndex (no description available)                            
 SystemSolverParameters node       :ref:`DATASTRUCTURE_SystemSolverParameters`           
 ====================== ========== ===================================================== 
 
