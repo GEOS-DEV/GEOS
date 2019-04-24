@@ -133,7 +133,8 @@ ManagedGroup * EventBase::CreateChild( string const & childKey, string const & c
 
 
 void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent)
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType)
 {
   // Create a choice node if necessary
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
@@ -147,7 +148,7 @@ void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   // Enable recursion in the schema
   this->getParent()->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
   {
-    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode);
+    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
   });
 }
 
@@ -227,11 +228,11 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
-void EventBase::Execute(real64 const& time_n,
-                        real64 const& dt,
+void EventBase::Execute(real64 const time_n,
+                        real64 const dt,
                         const integer cycleNumber,
-                        integer const ,
-                        real64 const & ,
+                        integer const,
+                        real64 const,
                         ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
@@ -262,7 +263,13 @@ void EventBase::Execute(real64 const& time_n,
     Step(time_n, dt, cycleNumber, domain);
   }
 
-  lastTime = time_n;
+  // In some cases, a periodic event controlled by a time-frequency may trigger on a zero-dt step.
+  // This leads to ambiguity as to which cycle the event should execute on.
+  // To resolve this, only increment lastTime if dt=0, and cause the event to trigger on both.
+  if (dt > 0.0)
+  {
+    lastTime = time_n;
+  }
   lastCycle = cycleNumber;
 }
 
@@ -359,10 +366,10 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 }
 
 
-void EventBase::Cleanup(real64 const& time_n,
+void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)

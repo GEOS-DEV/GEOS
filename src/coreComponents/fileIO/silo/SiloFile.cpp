@@ -1157,7 +1157,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array3d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView3d<real64> > const field =
-        elementManager->ConstructMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( fieldName.first,
+        elementManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( fieldName.first,
                                                                                               constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
@@ -1166,7 +1166,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     if (fieldName.second->get_typeid() == typeid( array4d<real64>))
     {
       ElementRegionManager::MaterialViewAccessor<arrayView4d<real64> > const field =
-        elementManager->ConstructMaterialViewAccessor<array4d<real64>, arrayView4d<real64> >( fieldName.first,
+        elementManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64> >( fieldName.first,
                                                                                               constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
@@ -1795,7 +1795,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         integer_array const & elemGhostRank = elementSubRegion->GhostRank();
 
 
-        string elementType = elementSubRegion -> GetElementType();
+        string elementType = elementSubRegion -> GetElementTypeString();
         integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
         for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
         {

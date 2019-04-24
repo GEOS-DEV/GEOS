@@ -8,7 +8,9 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   cflFactor="0.25"
                                   discretization="FE1"
-                                  targetRegions="Region2"/>
+                                  targetRegions="Region2"
+                                  solidMaterialName="shale"
+                                  />
   </Solvers>
 
   
@@ -58,9 +60,9 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"/>
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
   </Constitutive>
 
 

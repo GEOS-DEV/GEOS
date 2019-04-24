@@ -9,6 +9,7 @@
                                   timeIntegrationOption="QuasiStatic"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="shale"
                                   >
       <SystemSolverParameters useMLPrecond="1"
                               scalingOption="0"
@@ -77,13 +78,13 @@
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"/>
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
       <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="5.5556e9"
-                              ShearModulus0="4.16667e9"/>
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
   </Constitutive>
 
 

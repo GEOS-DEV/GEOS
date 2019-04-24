@@ -23,6 +23,7 @@
                                   verboseLevel="1"
                                   discretization="FE1"
                                   targetRegions="Region2"
+                                  solidMaterialName="shale"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
@@ -118,13 +119,13 @@
 
   <Constitutive>
   
-      <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="61.9e6"
-                              ShearModulus0="28.57e6"
+      <PoroLinearElasticIsotropic name="shale"
+                              defaultDensity="2700"
+                              defaultBulkModulus="61.9e6"
+                              defaultShearModulus="28.57e6"
                               BiotCoefficient="1"
+                              compressibility="1.6155088853e-08"
                               referencePressure="2.125e6"
-                              compressibility="3e-10"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
@@ -143,7 +144,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
@@ -151,7 +152,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
@@ -159,21 +160,21 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="referencePorosity"
                scale="0.3"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="2.125e6"/>
   
@@ -207,7 +208,7 @@
                functionName="timeFunction"/>
 
     <FieldSpecification name="boundaryPressure"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="2.125e6"
                setNames="boundaryBot boundaryTop"/>  

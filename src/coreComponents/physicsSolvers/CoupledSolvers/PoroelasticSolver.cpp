@@ -230,14 +230,14 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> dVol =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const bulkModulus = 
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( "BulkModulus", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
+    elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > const pvmult =
-    elemManager->ConstructMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString, 
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
                                                                                         constitutiveManager );
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
-    elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
   localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
 
@@ -270,9 +270,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
           volumetricStrain += dUdX.Trace();
         }
         volumetricStrain /= numQuadraturePoints;
-        totalMeanStress[er][esr][ei] = volumetricStrain * bulkModulus[er][esr][solidIndex][ei][0] - biotCoefficient[er][esr][solidIndex] * (pres[er][esr][ei] + dPres[er][esr][ei]);
+        totalMeanStress[er][esr][ei] = volumetricStrain * bulkModulus[er][esr][solidIndex][ei] - biotCoefficient[er][esr][solidIndex] * (pres[er][esr][ei] + dPres[er][esr][ei]);
 
-        poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei][0]
+        poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
                                                  * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
 
         // update element volume

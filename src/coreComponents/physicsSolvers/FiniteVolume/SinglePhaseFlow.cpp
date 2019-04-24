@@ -98,50 +98,51 @@ void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
-void SinglePhaseFlow::UpdateConstitutiveModels(DomainPartition * const domain)
+void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup)
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  GEOSX_MARK_FUNCTION;
 
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+  SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                            ElementRegion * const region,
-                                            ElementSubRegionBase * const subRegion )
+  // TODO replace with batch update (need up-to-date pressure and temperature fields)
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
-    arrayView1d<real64 const> const & pres  = m_pressure[er][esr];
-    arrayView1d<real64 const> const & dPres = m_deltaPressure[er][esr];
+    fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
+  });
+  //fluid->BatchUpdate( pres, temp, compFrac );
+}
 
-    SingleFluidBase * const fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
-    ConstitutiveBase * const solid = constitutiveRelations[er][esr][m_solidIndex];
+void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup)
+{
+  GEOSX_MARK_FUNCTION;
 
-    if( solid!=nullptr )
-    {
-      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-        real64 const presNew = pres[ei] + dPres[ei];
-        fluid->PointUpdate( presNew, ei, 0 ); // fluid
-        constitutiveRelations[er][esr][m_solidIndex]->StateUpdatePointPressure( presNew, ei, 0 ); // solid
-      } );
-    }
-    else
-    {
-      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-      {
-        real64 const presNew = pres[ei] + dPres[ei];
-        fluid->PointUpdate( presNew, ei, 0 ); // fluid
-      } );
-    }
-  } );
+  ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( dataGroup, m_solidName );
+
+  arrayView1d<real64 const> const & pres  = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+
+  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  {
+    solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
+  });
 }
 
 
+void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup )
+{
+  GEOSX_MARK_FUNCTION;
+
+  UpdateFluidModel( dataGroup );
+  UpdateSolidModel( dataGroup );
+}
+
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
+  GEOSX_MARK_FUNCTION;
+
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
@@ -154,7 +155,11 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
   ResetViews( domain );
-  UpdateConstitutiveModels( domain );
+
+  applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateState( subRegion );
+  } );
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
@@ -199,6 +204,8 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
                                     const int cycleNumber,
                                     DomainPartition * domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   real64 dt_return = dt;
 
   ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
@@ -215,6 +222,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
   return dt_return;
 }
+
 
 void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
                                          real64 const& dt,
@@ -251,11 +259,11 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
   SetupSystem( domain, blockSystem );
 }
 
-
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
                                             DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -277,6 +285,8 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
     } );
   } );
 }
+
+
 
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     localIndex & numLocalRows,
@@ -341,8 +351,6 @@ void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
 
   GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
 }
-
-
 
 void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
                                          EpetraBlockSystem * const blockSystem )
@@ -434,24 +442,30 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation(m_discretizationName);
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  constexpr localIndex numElems = 2;
-  globalIndex_array elementLocalDofIndexRow(numElems);
-  globalIndex_array elementLocalDofIndexCol(numElems);
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
-  {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
-    {
-      stencil.forConnected([&] (CellDescriptor const & cell, localIndex const i) -> void
-      {
-        elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      });
+  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-      localIndex const stencilSize = stencil.size();
-      elementLocalDofIndexCol.resize(stencilSize);
-      stencil.forAll([&] (CellDescriptor const & cell, real64 w, localIndex const i) -> void
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  {
+    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    {
+      localIndex const stencilSize = connections.size( iconn );
+      stackArray1d<globalIndex, numElems> elementLocalDofIndexRow( numElems );
+      stackArray1d<globalIndex, maxStencil> elementLocalDofIndexCol( stencilSize );
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        CellDescriptor const & cell = connections( iconn, i ).index;
+        elementLocalDofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+      }
+
+      for (localIndex i = 0; i < stencilSize; ++i)
+      {
+        CellDescriptor const & cell = connections( iconn, i ).index;
         elementLocalDofIndexCol[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      });
+      }
 
       sparsity->InsertGlobalIndices(integer_conversion<int>(numElems),
                                     elementLocalDofIndexRow.data(),
@@ -468,41 +482,48 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   {
     if (elemGhostRank[er][esr][k] < 0)
     {
-      elementLocalDofIndexRow[0] = dofNumber[er][esr][k];
+      globalIndex const elementLocalDofIndexRow = dofNumber[er][esr][k];
 
       sparsity->InsertGlobalIndices( 1,
-                                     elementLocalDofIndexRow.data(),
+                                     &elementLocalDofIndexRow,
                                      1,
-                                     elementLocalDofIndexRow.data());
+                                     &elementLocalDofIndexRow);
     }
   });
 
   // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils( [&] (FluxApproximationBase::BoundaryStencil const & boundaryStencilCollection)
+  fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
   {
-    boundaryStencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      elementLocalDofIndexRow.resize(1);
-      stencil.forConnected( [&] ( PointDescriptor const & point, localIndex const i )
+      localIndex const stencilSize = connections.size( iconn );
+      stackArray1d<globalIndex, numElems> elementLocalDofIndexRow( numElems );
+      stackArray1d<globalIndex, maxStencil> elementLocalDofIndexCol( stencilSize );
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        PointDescriptor const & point = connections( iconn, i ).index;
+
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & c = point.cellIndex;
           elementLocalDofIndexRow[0] = dofNumber[c.region][c.subRegion][c.index];
         }
-      });
+      }
 
-      localIndex const stencilSize = stencil.size();
-      elementLocalDofIndexCol.resize(stencilSize);
       integer counter = 0;
-      stencil.forAll( [&] ( PointDescriptor const & point, real64 w, localIndex i )
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
+        PointDescriptor const & point = connections( iconn, i ).index;
+
         if (point.tag == PointDescriptor::Tag::CELL)
         {
           CellDescriptor const & c = point.cellIndex;
           elementLocalDofIndexCol[counter++] = dofNumber[c.region][c.subRegion][c.index];
         }
-      });
+      }
 
       sparsity->InsertGlobalIndices(1,
                                     elementLocalDofIndexRow.data(),
@@ -517,6 +538,8 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
                                       real64 const time_n,
                                       real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock, BlockIDs::fluidPressureBlock );
   Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
 
@@ -531,6 +554,7 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   {
     AssembleAccumulationTerms<false>( domain, jacobian, residual, time_n, dt );
   }
+
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
 
   jacobian->GlobalAssemble(true);
@@ -587,6 +611,7 @@ struct AssembleAccumulationTermsHelper<false>
   }
 };
 
+
 template< bool ISPORO >
 void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
                                                  Epetra_FECrsMatrix * const jacobian,
@@ -594,6 +619,8 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                                  real64 const time_n,
                                                  real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
@@ -618,7 +645,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
     arrayView1d<real64 const> const & dPres              = m_poroElasticFlag ? m_deltaPressure[er][esr]             : poroOld;
     arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
     arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
-    arrayView2d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : dPVMult_dPres;
+    arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
     real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
@@ -633,7 +660,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
         AssembleAccumulationTermsHelper<ISPORO>::porosityUpdate( poro[ei], dPoro_dPres,
                                                                  biotCoefficient,
                                                                  poroOld[ei],
-                                                                 bulkModulus[ei][0],
+                                                                 bulkModulus[ei],
                                                                  totalMeanStress[ei],
                                                                  oldTotalMeanStress[ei],
                                                                  dPres[ei],
@@ -666,6 +693,8 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
                                          real64 const time_n,
                                          real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -684,14 +713,16 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
 
-  constexpr localIndex numElems = 2;
-  constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencilCollection )
+  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
   {
-    stencilCollection.forAll( [&] ( StencilCollection<CellDescriptor, real64>::Accessor stencil )
+    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = stencil.size();
+      localIndex const stencilSize = connections.size(iconn);
 
       // working arrays
       stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
@@ -715,8 +746,10 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
       // calculate quantities on primary connected cells
       real64 densMean = 0.0;
-      stencil.forConnected( [&] ( CellDescriptor const & cell, localIndex i )
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        CellDescriptor const & cell = connections(iconn, i).index;
+
         localIndex const er  = cell.region;
         localIndex const esr = cell.subRegion;
         localIndex const ei  = cell.index;
@@ -738,17 +771,21 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         // average density
         densMean += densWeight[i] * density;
         dDensMean_dP[i] = densWeight[i] * dDens_dP;
-      });
+      }
 
       //***** calculation of flux *****
 
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
-      stencil.forAll( [&] ( CellDescriptor const & cell, real64 w, localIndex i )
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
+        FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+
+        localIndex const er  = entry.index.region;
+        localIndex const esr = entry.index.subRegion;
+        localIndex const ei  = entry.index.index;
+
+        real64 const weight = entry.weight;
 
         dofColIndices[i] = dofNumber[er][esr][ei];
 
@@ -756,9 +793,9 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
         real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-        potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-        dFlux_dP[i] = w * (1.0 - dGrav_dP);
-      });
+        potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+        dFlux_dP[i] = weight * (1.0 - dGrav_dP);
+      }
 
       // upwinding of fluid properties (make this an option?)
       localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -796,12 +833,13 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   });
 }
 
-
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
                                                EpetraBlockSystem * const blockSystem,
                                                real64 const time_n,
                                                real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
+
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
@@ -898,7 +936,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // use ArrayView to make capture by value easy in lambdas
   arrayView1d<real64> & presFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::facePressureString );
@@ -954,8 +992,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // *** assembly loop ***
 
-  constexpr localIndex numElems = 2;
-  constexpr localIndex maxStencilSize = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
+  constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
@@ -972,11 +1010,12 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
       return;
 
-    FluxApproximationBase::BoundaryStencil const & stencilCollection = fluxApprox->getBoundaryStencil(setName);
+    FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil(setName);
+    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
 
-    stencilCollection.forAll( GEOSX_LAMBDA ( StencilCollection<PointDescriptor, real64>::Accessor stencil )
+    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = stencil.size();
+      localIndex const stencilSize = connections.size(iconn);
 
       stackArray1d<globalIndex, maxStencilSize> dofColIndices( stencilSize );
 
@@ -993,8 +1032,11 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       real64 densMean = 0.0;
       globalIndex eqnRowIndex = -1;
       localIndex cell_order = -1;
-      stencil.forConnected([&] (PointDescriptor const & point, localIndex i) -> void
+
+      for (localIndex i = 0; i < numElems; ++i)
       {
+        PointDescriptor const & point = connections(iconn, i).index;
+
         real64 density = 0, dDens_dP = 0;
         real64 viscosity = 0, dVisc_dP = 0;
         switch (point.tag)
@@ -1039,15 +1081,18 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
         // average density
         densMean += densWeight[i] * density;
         dDensMean_dP[i] = densWeight[i] * dDens_dP;
-      });
+      }
 
       //***** calculation of flux *****
 
       // compute potential difference MPFA-style
       real64 potDif = 0.0;
       dofColIndices = -1;
-      stencil.forAll([&] (PointDescriptor point, real64 w, localIndex i) -> void
+      for (localIndex i = 0; i < stencilSize; ++i)
       {
+        FluxApproximationBase::BoundaryStencil::Entry const & entry = connections(iconn, i);
+        PointDescriptor const & point = entry.index;
+
         real64 pressure = 0.0, gravD = 0.0;
         switch (point.tag)
         {
@@ -1079,9 +1124,9 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
         real64 const gravTerm = m_gravityFlag ? densMean * gravD : 0.0;
         real64 const dGrav_dP = m_gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
 
-        potDif += w * (pressure + gravTerm);
-        dFlux_dP[i] = w * (1.0 + dGrav_dP);
-      });
+        potDif += entry.weight * (pressure + gravTerm);
+        dFlux_dP[i] = entry.weight * (1.0 + dGrav_dP);
+      }
 
       // upwinding of fluid properties (make this an option?)
       localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -1116,8 +1161,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
                                     localFluxJacobian.data());
 
       residual->SumIntoGlobalValues(1, &eqnRowIndex, &localFlux);
-    });
-  });
+    } );
+  } );
 }
 
 real64
@@ -1166,19 +1211,16 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
                                            real64 const scalingFactor,
                                            DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::fluidPressureBlock );
   Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
   int dummy;
   double* local_solution = nullptr;
-  solution->ExtractView(&local_solution,&dummy);
+  solution->ExtractView( &local_solution, &dummy );
 
-  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                            ElementRegion * const region,
-                                            ElementSubRegionBase * const subRegion )
+  applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
+                                   ElementRegion * const region,
+                                   ElementSubRegionBase * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1200,15 +1242,20 @@ void SinglePhaseFlow::ApplySystemSolution( EpetraBlockSystem const * const block
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   CommunicationTools::SynchronizeFields(fieldNames,
-                              mesh,
+                              domain->getMeshBody(0)->getMeshLevel(0),
                               domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
-  UpdateConstitutiveModels( domain );
+  applyToSubRegions( domain, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateState( subRegion );
+  } );
 }
 
 void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                        SystemSolverParameters const * const params )
+                                   SystemSolverParameters const * const params )
 {
+  GEOSX_MARK_FUNCTION;
+
   Epetra_FEVector * const
   solution = blockSystem->GetSolutionVector( BlockIDs::fluidPressureBlock );
 
@@ -1231,12 +1278,9 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                            ElementRegion * const region,
-                                            ElementSubRegionBase * const subRegion )
+  applyToSubRegions( domain, [&] ( localIndex er, localIndex esr,
+                                   ElementRegion * const region,
+                                   ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
@@ -1244,9 +1288,9 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
     {
       dPres[ei] = 0.0;
     } );
-  } );
 
-  UpdateConstitutiveModels( domain );
+    UpdateState( subRegion );
+  } );
 }
 
 void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
@@ -1272,26 +1316,26 @@ void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::densityString );
 
   m_pvMult =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+                                                                                           constitutiveManager );
   m_dPvMult_dPres =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
+                                                                                           constitutiveManager );
   m_porosity =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::porosityString );
 
   m_density =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::densityString,
+                                                                                           constitutiveManager );
   m_dDens_dPres =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                                           constitutiveManager );
   m_viscosity =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString,
+                                                                                           constitutiveManager );
   m_dVisc_dPres =
-    elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                      constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                                           constitutiveManager );
 
   if (m_poroElasticFlag)
   {
@@ -1299,9 +1343,9 @@ void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
     m_totalMeanStressOld = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "oldTotalMeanStress" );
     m_totalMeanStress    = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "totalMeanStress" );
 
-    m_bulkModulus = elemManager->ConstructMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( "BulkModulus",
+    m_bulkModulus = elemManager->ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "BulkModulus",
                                                                                                        constitutiveManager );
-    m_biotCoefficient = elemManager->ConstructMaterialViewAccessor<real64>( "BiotCoefficient",
+    m_biotCoefficient = elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient",
                                                                             constitutiveManager );
   }
 }

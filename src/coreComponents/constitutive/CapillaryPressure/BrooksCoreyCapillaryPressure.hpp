@@ -44,12 +44,13 @@ class BrooksCoreyCapillaryPressure : public CapillaryPressureBase
 public:
   
   BrooksCoreyCapillaryPressure( std::string const & name,
-				dataRepository::ManagedGroup * const parent );
+                                dataRepository::ManagedGroup * const parent );
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
-  std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                  ManagedGroup * const parent ) const override;
+  void DeliverClone( string const & name,
+                     ManagedGroup * const parent,
+                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::brooksCoreyCapillaryPressure; }
 
@@ -167,10 +168,10 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
   {  
     real64 const volFracScaled = (phaseVolFraction[ip_gas] - phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const exponentInv   = phaseCapPressureExponentInv[ip_gas];
-    real64 const entryPressure = phaseEntryPressure[ip_gas];
+    real64 const entryPressure = -phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the VG function
 
-    real64 const wettingVolFracScaled           = volFracScaled;
-    real64 const dWettingVolFracScaled_dVolFrac = volFracScaleInv;
+    real64 const wettingVolFracScaled           = 1-volFracScaled;
+    real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;
 	
     EvaluateBrooksCoreyFunction( wettingVolFracScaled,
                                  dWettingVolFracScaled_dVolFrac,
@@ -199,19 +200,19 @@ BrooksCoreyCapillaryPressure::EvaluateBrooksCoreyFunction( real64 const & scaled
   dPhaseCapPressure_dVolFrac = 0.0;
 
   if (scaledWettingVolFrac >= eps && scaledWettingVolFrac < 1.0)
-    {
-      // intermediate value
-      real64 const  val = entryPressure / std::pow( scaledWettingVolFrac, exponent + 1);
+  {
+    // intermediate value
+    real64 const  val = entryPressure / std::pow( scaledWettingVolFrac, exponent + 1);
 
-      phaseCapPressure           = val * scaledWettingVolFrac; // entryPressure * (S_w)^( - 1 / exponentInv )
-      dPhaseCapPressure_dVolFrac = - dScaledWettingPhaseVolFrac_dVolFrac * val * exponent;
-    }
+    phaseCapPressure           = val * scaledWettingVolFrac; // entryPressure * (S_w)^( - 1 / exponentInv )
+    dPhaseCapPressure_dVolFrac = - dScaledWettingPhaseVolFrac_dVolFrac * val * exponent;
+  }
   else // enforce a constant and bounded capillary pressure
-    {
-      phaseCapPressure = (scaledWettingVolFrac < eps)
-                  ? entryPressure / std::pow( eps, exponent ) // div by 0 taken care of by initialization check
-                  : entryPressure;
-    }
+  {
+    phaseCapPressure = (scaledWettingVolFrac < eps)
+                     ? entryPressure / std::pow( eps, exponent ) // div by 0 taken care of by initialization check
+                     : entryPressure;
+  }
 
 }
 

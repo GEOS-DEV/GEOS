@@ -49,7 +49,9 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+  ManagedGroup( name, parent ),
+  m_numQuadraturePoints(1),
+  m_constitutiveDataGroup(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
@@ -66,25 +68,32 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
 }
 
 void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                 localIndex const )
+                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
   m_constitutiveDataGroup = parent;
 
   for( auto & group : this->GetSubGroups() )
   {
     for( auto & wrapper : group.second->wrappers() )
     {
-      string const wrapperName = wrapper.first;
-      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+      if( wrapper.second->sizedFromParent() )
+      {
+        string const wrapperName = wrapper.first;
+        std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+        parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+      }
     }
   }
 
   for( auto & wrapper : this->wrappers() )
   {
-    string const wrapperName = wrapper.first;
-    std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-    parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+    if( wrapper.second->sizedFromParent() )
+    {
+      string const wrapperName = wrapper.first;
+      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+      parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+    }
   }
 
 }

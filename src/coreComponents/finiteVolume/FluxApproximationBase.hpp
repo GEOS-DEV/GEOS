@@ -25,7 +25,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "finiteVolume/StencilCollection.hpp"
+#include "finiteVolume/FluxStencil.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -86,8 +86,8 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil     = StencilCollection<CellDescriptor, real64>;
-  using BoundaryStencil = StencilCollection<PointDescriptor, real64>;
+  using CellStencil     = FluxStencil<CellDescriptor, real64>;
+  using BoundaryStencil = FluxStencil<PointDescriptor, real64>;
 
   FluxApproximationBase() = delete;
 
@@ -122,12 +122,13 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto fieldNameString          = "fieldName";
-    static constexpr auto boundaryFieldNameString  = "boundaryFieldName";
-    static constexpr auto coeffNameString          = "coefficientName";
-    static constexpr auto cellStencilString        = "cellStencil";
-    static constexpr auto fratureRegionNameString = "fractureRegions";
-    static constexpr auto fratureStencilString     = "fractureStencil";
+    static constexpr auto fieldNameString             = "fieldName";
+    static constexpr auto boundaryFieldNameString     = "boundaryFieldName";
+    static constexpr auto coeffNameString             = "coefficientName";
+    static constexpr auto cellStencilString           = "cellStencil";
+    static constexpr auto fratureRegionNameString     = "fractureRegions";
+    static constexpr auto fratureStencilString        = "fractureStencil";
+    static constexpr auto areaRelativeToleranceString = "areaRelTol";
   };
 
   struct groupKeyStruct
@@ -162,6 +163,10 @@ protected:
 
   /// names of the fracture regions
   string m_fractureRegionName;
+
+  /// relative tolerance
+  real64 m_areaRelTol;
+
 };
 
 template<typename LAMBDA>

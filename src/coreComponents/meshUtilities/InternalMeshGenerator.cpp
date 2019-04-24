@@ -312,7 +312,7 @@ ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, stri
  * @param partition
  * @param domain
  */
-void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
@@ -366,7 +366,10 @@ void InternalMeshGenerator::GenerateMesh( dataRepository::ManagedGroup * const d
 
     R1Tensor temp1( m_min );
     R1Tensor temp2( m_max );
+
     partition.setSizes( temp1, temp2 );
+    temp2 -= temp1;
+    meshBody->setGlobalLengthScale( std::fabs( temp2.L2_Norm() ) );
   }
 
   // find elemCenters for even uniform element sizes

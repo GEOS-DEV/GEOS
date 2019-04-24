@@ -56,7 +56,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
                               const localIndex localFaceIndex,
                               localIndex_array& nodeIndicies) const
 {
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     nodeIndicies.resize(4);
 
@@ -104,7 +104,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     }
 
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     if (localFaceIndex == 0)
     {
@@ -145,7 +145,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     nodeIndicies.resize(3);
 
@@ -174,7 +174,7 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
     }
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     if (localFaceIndex == 0)
     {
@@ -332,27 +332,27 @@ R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
 
 void CellBlock::SetElementType( string const & elementType)
 {
-  m_elementType = elementType;
+  m_elementTypeString = elementType;
 
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     m_toNodesRelation.resize(0,8);
     m_toEdgesRelation.resize(0,12);
     m_toFacesRelation.resize(0,6);
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     m_toNodesRelation.resize(0,4);
     m_toEdgesRelation.resize(0,6);
     m_toFacesRelation.resize(0,4);
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     m_toNodesRelation.resize(0,6);
     m_toEdgesRelation.resize(0,9);
     m_toFacesRelation.resize(0,5);
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     m_toNodesRelation.resize(0,5);
     m_toEdgesRelation.resize(0,8);
@@ -363,22 +363,22 @@ void CellBlock::SetElementType( string const & elementType)
     GEOS_ERROR("Error.  Don't know what kind of element this is.");
   }
 
-  if (!m_elementType.compare(0, 4, "C3D8"))
+  if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     this->numNodesPerElement() = 8;
     this->numFacesPerElement() = 6;
   }
-  else if (!m_elementType.compare(0, 4, "C3D4"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     this->numNodesPerElement() = 4;
     this->numFacesPerElement() = 4;
   }
-  else if (!m_elementType.compare(0, 4, "C3D6"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     this->numNodesPerElement() = 6;
     this->numFacesPerElement() = 5;
   }
-  else if (!m_elementType.compare(0, 4, "C3D5"))
+  else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     this->numNodesPerElement() = 5;
     this->numFacesPerElement() = 5;

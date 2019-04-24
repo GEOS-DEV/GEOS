@@ -63,6 +63,9 @@ typedef RAJA::seq_reduce reducePolicy;
 
 typedef RAJA::loop_exec parallelHostPolicy;
 
+typedef RAJA::loop_exec materialUpdatePolicy;
+
+
 #endif
 
 #if defined(RAJA_ENABLE_CUDA)
