@@ -58,12 +58,41 @@ public:
 
   // RelPerm-specific interface
 
+  /**
+   * @brief Function to update state of a single material point.
+   * @param[in] phaseVolFraction input phase volume fraction
+   * @param[in] k the first index of the storage arrays (elem index)
+   * @param[in] q the secound index of the storage arrays (quadrature index)
+   *
+   * @note This function performs a point update, but should not be called
+   *       within a kernel since it is virtual, and the required data is not
+   *       guaranteed to be in the target memory space.
+   */
   virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
                             localIndex const k,
                             localIndex const q ) override;
 
+   /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] phaseVolFraction input phase volume fraction
+   */
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) override;
 
+    /**
+   * @brief Computes the phase relative permeabilities using the Brooks method
+   * @param NP phase index
+   * @param[in] phaseVolumeFraction for all phases
+   * @param[out] phaseRelPerm the computed relative permeability value vector for all phases
+   * @param[out] dPhaseRelPerm_dPhaseVolFrac the computed partial derivative of the relative wrt to the volume fraction of the phases
+   * @param[in] phaseOrder vector of phase orders
+   * @param[in] phaseMinVolumeFraction vector of minimum phase volume fractions
+   * @param[in] phaseRelPermExponentInv vector of exponents used in the computation of the relative permeabilities
+   * @param[in] phaseRelPermMaxValue vector of permeability curve end-point values 
+   * @param[in] volFracScale scaling factor to apply to the entire relative permeability curve
+   * @return (void)
+   *
+   * This function computes the relative permeabilities for all phases based on the Brooks-Corey method
+   */
   inline static void Compute( localIndex const NP,
                               arraySlice1d<real64 const> const & phaseVolFraction,
                               arraySlice1d<real64> const & phaseRelPerm,
