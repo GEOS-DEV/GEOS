@@ -23,7 +23,7 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LINEARSOLVERPARAMETERS_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_LINEARSOLVERPARAMETERS_HPP_
 
-#include "../../common/DataTypes.hpp"
+// #include "../../common/DataTypes.hpp"
 
 namespace geosx
 {

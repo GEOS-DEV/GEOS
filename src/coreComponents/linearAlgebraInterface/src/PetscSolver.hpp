@@ -59,10 +59,10 @@ public:
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
    *
-   * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
+   * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
    */
 
-  void solve( PetscMatrix &mat,
+  void solve( PetscSparseMatrix &mat,
               PetscVector &sol,
               PetscVector &rhs );
 
@@ -70,11 +70,11 @@ private:
 
   LinearSolverParameters const & m_parameters;
 
-  void solve_direct( PetscMatrix &mat,
+  void solve_direct( PetscSparseMatrix &mat,
                      PetscVector &sol,
                      PetscVector &rhs );
 
-  void solve_krylov( PetscMatrix &mat,
+  void solve_krylov( PetscSparseMatrix &mat,
                      PetscVector &sol,
                      PetscVector &rhs );
 

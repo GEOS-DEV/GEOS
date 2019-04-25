@@ -17,18 +17,16 @@
  */
 
 /**
- * @file EpetraVector.hpp
- *  Created on: Jan 28, 2019
- *  Author: Hannah Morgan
- *
+ * @file PetscVector.hpp
  */
 
-#ifndef PETSCVECTOR_HPP_
-#define PETSCVECTOR_HPP_
+#ifndef LAI_PETSCVECTOR_HPP_
+#define LAI_PETSCVECTOR_HPP_
 
 #include "InterfaceTypes.hpp"
 #include <petscvec.h>
-// #include "common/DataTypes.hpp"
+
+#include "common/DataTypes.hpp"
 
 namespace geosx
 {
@@ -55,7 +53,7 @@ class PetscVector
     /**
    * @brief Copy constructor.
    *
-   * \param vector Vector to be copied.
+   * \param vec Vector to be copied.
    *
    */
   PetscVector(PetscVector const & vec);

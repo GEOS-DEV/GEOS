@@ -55,7 +55,7 @@ PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
 // ----------------------------
 // We switch between different solverTypes here
 
-void PetscSolver::solve( PetscMatrix &mat,
+void PetscSolver::solve( PetscSparseMatrix &mat,
                          PetscVector &sol,
                          PetscVector &rhs )
 {
@@ -70,7 +70,7 @@ void PetscSolver::solve( PetscMatrix &mat,
 // ----------------------------
 
 void PetscSolver::solve_direct( MPI_Comm const comm,
-                                PetscMatrix &mat,
+                                PetscSparseMatrix &mat,
                                 PetscVector &sol,
                                 PetscVector &rhs )
 {
@@ -98,7 +98,7 @@ void PetscSolver::solve_direct( MPI_Comm const comm,
 // ----------------------------
 
 void PetscSolver::solve_krylov( MPI_Comm const comm,
-                                PetscMatrix &mat,
+                                PetscSparseMatrix &mat,
                                 PetscVector &sol,
                                 PetscVector &rhs )
 {

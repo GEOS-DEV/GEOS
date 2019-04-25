@@ -4,12 +4,12 @@
 // to compile: make all (check makefile)
 // to run: mpiexec -n 2 ./testPetsc
 
-void test_PETScVector(int rank)
+void test_PetscVector(int rank)
 {
-  // TESTING PETScVector
+  // TESTING geosx::PetscVector
 
-  // make a PETScVector
-  PETScVector vec1;
+  // make a geosx::PetscVector
+  geosx::PetscVector vec1;
 
   // test create from array
   if (rank == 0) printf("create a vector:\n");
@@ -20,7 +20,7 @@ void test_PETScVector(int rank)
   std::vector<double> vec (4, 100);
   printf("size: %lu\n", vec.size());
 
-  PETScVector vec4;
+  geosx::PetscVector vec4;
   vec4.create(vec);
   
   // test print
@@ -29,8 +29,8 @@ void test_PETScVector(int rank)
 
   // test copy
   if (rank == 0) printf("copy a vector:\n");
-  PETScVector vec2;
-  vec2 = PETScVector(vec1);
+  geosx::PetscVector vec2;
+  vec2 = geosx::PetscVector(vec1);
   vec2.print();
 
   // test set
@@ -49,7 +49,7 @@ void test_PETScVector(int rank)
   vec1.print();
 
   // test dot
-  PETScVector vec3;
+  geosx::PetscVector vec3;
   double values2[5] = {1, 2, 3, 1, 2};
   vec3.create(5, values2);
 
@@ -109,19 +109,19 @@ void test_PETScVector(int rank)
   return;
 }
 
-void test_PETScSparseMatrix(int rank)
+void test_PetscSparseMatrix(int rank)
 {
-  // TESTING PETScSparseMatrix
+  // TESTING geosx::PetscSparseMatrix
   printf("\n\n\n");
 
   // make vector
-  PETScVector vec3;
+  geosx::PetscVector vec3;
   double values2[5] = {1, 2, 3, 1, 2};
   vec3.create(5, values2);
 
   // test create
   if (rank == 0) printf("create a square matrix:\n");
-  PETScSparseMatrix mat1;
+  geosx::PetscSparseMatrix mat1;
   // 5 rows with 3 nonzeros per row
   mat1.create(PETSC_COMM_WORLD, 5, 3);
   mat1.print();
@@ -138,19 +138,19 @@ void test_PETScSparseMatrix(int rank)
 
   // test constructor
   if (rank == 0) printf("copy a matrix:\n");
-  PETScSparseMatrix mat2(mat1);
+  geosx::PetscSparseMatrix mat2(mat1);
   mat2.print();
 
   // test create
   if (rank == 0) printf("create a rectangular matrix:\n");
-  PETScSparseMatrix mat3;
+  geosx::PetscSparseMatrix mat3;
   // 4 rows, 3 columns with 3 nonzeros per row
   mat3.create(PETSC_COMM_WORLD, 5, 3, 3);
   mat3.print();
 
   // test create
   if (rank == 0) printf("copy a matrix:\n");
-  PETScSparseMatrix mat4;
+  geosx::PetscSparseMatrix mat4;
   mat4.create(mat3);
   mat4.print();
 
@@ -192,26 +192,26 @@ void test_PETScSparseMatrix(int rank)
 
   // test multiply
   if (rank == 0) printf("multiply a matrix and vector:\n");
-  PETScVector vec4(vec3);
+  geosx::PetscVector vec4(vec3);
   mat1.multiply(vec3, vec4);
   vec4.print();
 
   // make new vectors and stuff
-  PETScVector vec5;
+  geosx::PetscVector vec5;
   double values5[3] = {1, 0, 2};
   vec5.create(3, values5);
   vec5.print();
 
-  PETScVector vec6;
+  geosx::PetscVector vec6;
   double values6[3] = {2, 4.5, 2};
   vec6.create(3, values6);
   vec6.print();
 
-  PETScVector vec7;
-  vec7 = PETScVector(vec6);
+  geosx::PetscVector vec7;
+  vec7 = geosx::PetscVector(vec6);
   vec7.print();
 
-  PETScSparseMatrix mat5;
+  geosx::PetscSparseMatrix mat5;
   mat5.create(PETSC_COMM_WORLD, 3, 3, 3);
   int cols_[3] = {0, 1, 2};
   double row1[3] = {2, 1, 0};
@@ -234,19 +234,19 @@ void test_PETScSparseMatrix(int rank)
 
   // test leftScale
   if (rank == 0) printf("left scale a matrix:\n");
-  PETScSparseMatrix mat6(mat5);
+  geosx::PetscSparseMatrix mat6(mat5);
   mat6.leftScale(vec5);
   mat6.print();
 
   // test rightScale
   if (rank == 0) printf("right scale a matrix:\n");
-  PETScSparseMatrix mat7(mat5);
+  geosx::PetscSparseMatrix mat7(mat5);
   mat7.rightScale(vec5);
   mat7.print();
 
   // test leftRightScale
   if (rank == 0) printf("left and right scale a matrix:\n");
-  PETScSparseMatrix mat8(mat5);
+  geosx::PetscSparseMatrix mat8(mat5);
   mat8.leftRightScale(vec5, vec7);
   mat8.print();
 
@@ -361,11 +361,11 @@ void test_PETScSparseMatrix(int rank)
 }
 
 // compute identity matrix
-PETScSparseMatrix computeIdentity(int N, int rank)
+geosx::PetscSparseMatrix computeIdentity(int N, int rank)
 {
 
   // make a matrix
-  PETScSparseMatrix I;
+  geosx::PetscSparseMatrix I;
   I.create(PETSC_COMM_WORLD, N, 1);
 
   // check bounds
@@ -388,10 +388,10 @@ PETScSparseMatrix computeIdentity(int N, int rank)
 }
 
 // compute 2D Laplace operator
-PETScSparseMatrix compute2DLaplaceOperator(int N, int rank)
+geosx::PetscSparseMatrix compute2DLaplaceOperator(int N, int rank)
 {
   // make a matrix
-  PETScSparseMatrix laplace2D;
+  geosx::PetscSparseMatrix laplace2D;
   laplace2D.create(PETSC_COMM_WORLD, N, 5);
 
   // size of dummy mesh
@@ -462,8 +462,8 @@ void testNativeSolvers(int rank, int size)
   int n = size;
   int N = n*n; // mat size
 
-  PETScSparseMatrix testMatrix = compute2DLaplaceOperator(N, rank);
-  PETScSparseMatrix preconditioner = computeIdentity(N, rank);
+  geosx::PetscSparseMatrix testMatrix = compute2DLaplaceOperator(N, rank);
+  geosx::PetscSparseMatrix preconditioner = computeIdentity(N, rank);
 
   // check the matrix was populated correctly
   int row0, row1, rown; // number of entires
@@ -518,7 +518,7 @@ void testNativeSolvers(int rank, int size)
   }
 
   // make PETSc vectors
-  PETScVector x, b, x0;
+  geosx::PetscVector x, b, x0;
   b.create(ones);
   x.create(random1);
   x0.create(random2); // initial guess
@@ -552,16 +552,16 @@ void testNativeSolvers(int rank, int size)
   testMatrix.multiply(x, b);
 
   // compute residual
-  PETScVector r(b);
+  geosx::PetscVector r(b);
   testMatrix.residual(x, b, r);
   double normRes;
   r.normInf(normRes);
   if (rank == 0) printf("Inf-norm of f (should be %d): %f\n", 0, normRes);
 
   // make objects
-  PETScVector solIterative(x0);
-  PETScVector solDirect(x0);
-  PETScVector solML(x0);
+  geosx::PetscVector solIterative(x0);
+  geosx::PetscVector solDirect(x0);
+  geosx::PetscVector solML(x0);
   PETScSolver solver = PETScSolver();
 
   // test iterative solver
@@ -618,8 +618,8 @@ int main()
   MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 
   // run tests
-  test_PETScVector(rank);
-  test_PETScSparseMatrix(rank);
+  test_PetscVector(rank);
+  test_PetscSparseMatrix(rank);
 
   // testNativeSolvers
   // testNativeSolvers(rank, 10);
