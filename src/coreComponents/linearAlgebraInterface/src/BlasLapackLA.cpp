@@ -175,8 +175,7 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
 
 real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
 {
-  // Computed as one-norm of the transpose matrix, i.e. assuming
-  // column major ordering
+  // Computed as one-norm of the transpose matrix
   static char NORM = '1';
   int M = integer_conversion<int>( A.size(0) );
   int N = integer_conversion<int>( A.size(1) );
@@ -191,8 +190,7 @@ real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
 
 real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A ) const
 {
-  // Computed as infinity-norm of the transpose matrix, i.e. assuming
-  // column major ordering
+  // Computed as infinity-norm of the transpose matrix
   static char NORM = 'I';
   int M = integer_conversion<int>( A.size(0) );
   int N = integer_conversion<int>( A.size(1) );
@@ -207,7 +205,7 @@ real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A ) const
 
 real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A ) const
 {
-  // Computed using the transpose matrix, i.e. assuming column major ordering
+  // Computed using the transpose matrix
   static char NORM = 'F';
   int M = integer_conversion<int>( A.size(0) );
   int N = integer_conversion<int>( A.size(1) );

@@ -66,7 +66,7 @@ public:
    * @note
    * This function is hardcoded for square matrices up to order four.
    * For dimensions larger than four, the determinant is computed using
-   * lapacke function LAPACKE_dgetrf. To avoid matrix transposition/copy
+   * LAPACK's function DGETRF. To avoid matrix transposition/copy
    * due to the row major ordering used in GEOSX for array2d, the determinant
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
@@ -367,8 +367,8 @@ public:
    * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
    *
    * @note This function is hardcoded for matrices up to order three.
-   * For dimensions larger than three, the function calls lapacke
-   * functions LAPACKE_dgetrf and LAPACKE_dgetri. Because of the row major
+   * For dimensions larger than three, the function calls LAPACK
+   * functions DGETRF and DGETRI. Because of the row major
    * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
    * computed as the transpose matrix of the transpose matrix inverse using
    * lapack operation based on column-major ordering. This removes the need
@@ -390,12 +390,15 @@ public:
    * \param INOUT
    * <tt>Ainv</tt> - GEOSX array2d.
    *
+   * \param INOUT
+   * <tt>detA</tt> - Determinant of input matrix <tt>A</tt>
+   *
    * @warning
    * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
    *
    * @note This function is hardcoded for matrices up to order three.
-   * For dimensions larger than three, the function calls lapacke
-   * functions LAPACKE_dgetrf and LAPACKE_dgetri. Because of the row major
+   * For dimensions larger than three, the function calls LAPACK
+   * functions DGETRF and DGETRI. Because of the row major
    * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
    * computed as the transpose matrix of the transpose matrix inverse using
    * lapack operation based on column-major ordering. This removes the need
