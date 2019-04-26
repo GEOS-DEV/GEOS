@@ -76,6 +76,17 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        dataRepository::ManagedGroup * domain ) override
+  {
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+  }
+
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
