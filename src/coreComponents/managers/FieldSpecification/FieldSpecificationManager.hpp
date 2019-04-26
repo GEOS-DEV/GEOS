@@ -136,6 +136,15 @@ public:
                                       string const & fieldName,
                                       LAMBDA && lambda ) const;
 
+  template< typename PRELAMBDA, typename POSTLAMBDA >
+  void ApplyFieldValue( real64 const time,
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        PRELAMBDA && preLambda,
+                        POSTLAMBDA && postLambda ) const;
+
+
   /**
    * @brief function to apply initial conditions
    * @param domain the DomainParition object
@@ -303,10 +312,30 @@ ApplyFieldValue( real64 const time,
       fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
       lambda( fs, targetSet );
     } );
-
-
 }
 
+template< typename PRELAMBDA, typename POSTLAMBDA >
+void
+FieldSpecificationManager::
+ApplyFieldValue( real64 const time,
+                 dataRepository::ManagedGroup * domain,
+                 string const & fieldPath,
+                 string const & fieldName,
+                 PRELAMBDA && preLambda,
+                 POSTLAMBDA && postLambda ) const
+{
+  Apply( time, domain, fieldPath, fieldName,
+        [&]( FieldSpecificationBase const * const fs,
+        string const &,
+        set<localIndex> const & targetSet,
+        ManagedGroup * const targetGroup,
+        string const & targetField )
+    {
+      preLambda( fs, targetSet );
+      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+      postLambda( fs, targetSet );
+    } );
+}
 
 } /* namespace geosx */
 
