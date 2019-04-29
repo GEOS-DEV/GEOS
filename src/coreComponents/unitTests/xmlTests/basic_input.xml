@@ -29,7 +29,7 @@
 
   <Events maxTime="1.0e-3">
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-3"
+                   maxEventDt="1.0e-3"
                    target="/Solvers/lagsolve" />
 
     <PeriodicEvent name="outputs"
