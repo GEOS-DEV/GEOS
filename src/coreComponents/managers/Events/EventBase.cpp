@@ -35,10 +35,13 @@ using namespace dataRepository;
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ExecutableGroup(name, parent),
+  m_lastTime(1e100),
+  m_lastCycle(0),
   m_eventTarget(""),
   m_beginTime(0.0),
   m_endTime(1e100),
   m_forceDt(-1.0),
+  m_maxEventDt(-1.0),
   m_allowSuperstep(0),
   m_allowSubstep(0),
   m_substepFactor(1),
@@ -50,8 +53,6 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
-  m_lastTime(1e100),
-  m_lastCycle(0),
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
@@ -71,6 +72,11 @@ EventBase::EventBase( const std::string& name,
     setDescription("End time of this event");
 
   RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Forced timestep for this event");
+
+  RegisterViewWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Forced timestep for this event");
@@ -168,11 +174,8 @@ void EventBase::CheckEvents(real64 const time,
                             integer const cycle,
                             ManagedGroup * domain)
 {
-  real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
-  real64 const endTime = this->getReference<real64>(viewKeys.endTime);
-  
   // Check event status
-  if (time < beginTime)
+  if (time < m_beginTime)
   {
     if (dt <= 0)
     {
@@ -180,10 +183,10 @@ void EventBase::CheckEvents(real64 const time,
     }
     else
     {
-      m_eventForecast = int((beginTime - time) / dt);
+      m_eventForecast = int((m_beginTime - time) / dt);
     }
   }
-  else if (time >= endTime)
+  else if (time >= m_endTime)
   {
     m_eventForecast = std::numeric_limits<integer>::max();
   }
@@ -228,23 +231,18 @@ void EventBase::Execute(real64 const time_n,
                         ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
-  real64& lastTime = this->getReference<real64>(viewKeys.lastTime);
-  integer& lastCycle = this->getReference<integer>(viewKeys.lastCycle);
-  integer const allowSuperstep = this->getReference<integer>(viewKeys.allowSuperstep);
-  integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
-  integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
-
-  if (allowSuperstep > 0)
+  
+  if (m_allowSuperstep > 0)
   {
-    real64 actualDt = dt + time_n - lastTime;
-    Step(lastTime, actualDt, cycleNumber, domain);     // Should we use the lastTime or time here?
+    real64 actualDt = dt + time_n - m_lastTime;
+    Step(m_lastTime, actualDt, cycleNumber, domain);     // Should we use the lastTime or time here?
   }
-  else if (allowSubstep > 0)
+  else if (m_allowSubstep > 0)
   {
-    real64 actualDt = dt / substepFactor;
+    real64 actualDt = dt / m_substepFactor;
     real64 actualTime = time_n;
 
-    for (integer ii=0; ii<substepFactor; ii++)
+    for (integer ii=0; ii<m_substepFactor; ii++)
     {
       Step(actualTime, actualDt, cycleNumber, domain);
       actualTime += actualDt;
@@ -257,12 +255,12 @@ void EventBase::Execute(real64 const time_n,
 
   // In some cases, a periodic event controlled by a time-frequency may trigger on a zero-dt step.
   // This leads to ambiguity as to which cycle the event should execute on.
-  // To resolve this, only increment lastTime if dt=0, and cause the event to trigger on both.
+  // To resolve this, only increment lastTime if dt>0, and cause the event to trigger on both.
   if (dt > 0.0)
   {
-    lastTime = time_n;
+    m_lastTime = time_n;
   }
-  lastCycle = cycleNumber;
+  m_lastCycle = cycleNumber;
 }
 
 
@@ -272,23 +270,21 @@ void EventBase::Step(real64 const time,
                      dataRepository::ManagedGroup * domain )
 {
   GEOSX_MARK_FUNCTION;
-  // currentSubEvent indicates which child event was active when the restart was written
-  // isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
-  integer& currentSubEvent = this->getReference<integer>(viewKeys.currentSubEvent);
-  integer& isTargetExecuting = this->getReference<integer>(viewKeys.isTargetExecuting);
-
-  if ((m_target != nullptr) && (isTargetExecuting == 0))
+  // m_currentSubEvent indicates which child event was active when the restart was written
+  // m_isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
+  
+  if ((m_target != nullptr) && (m_isTargetExecuting == 0))
   {
-    isTargetExecuting = 1;
+    m_isTargetExecuting = 1;
     m_target->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
   }
-  isTargetExecuting = 0;
+  m_isTargetExecuting = 0;
 
   // Iterage using the managed integer currentSubEvent, which will
   // allow restart runs to pick up where they left off.
-  for ( ; currentSubEvent<this->numSubGroups(); ++currentSubEvent)
+  for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
   {
-    EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[currentSubEvent] );
+    EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
 
     if (subEvent->GetForecast() <= 0)
     {
@@ -296,7 +292,7 @@ void EventBase::Step(real64 const time,
     }
   }
 
-  currentSubEvent = 0;
+  m_currentSubEvent = 0;
 }
 
 
@@ -304,20 +300,14 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 {
   real64 nextDt = std::numeric_limits<integer>::max();
   real64 requestedDt = std::numeric_limits<integer>::max();
-  real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
-  real64 const endTime = this->getReference<real64>(viewKeys.endTime);
-  real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
-  integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
-  integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
-  integer const targetExactStartStop = this->getReference<integer>(viewKeys.targetExactStartStop);
-
-  if (time >= endTime)
+  
+  if (time >= m_endTime)
   {
     // This is the final timestep for this event, don't include it in the calculation
   }
-  else if (forceDt > 0)
+  else if (m_forceDt > 0)
   {
-    nextDt = forceDt;
+    nextDt = m_forceDt;
   }
   else
   {
@@ -336,21 +326,26 @@ real64 EventBase::GetTimestepRequest(real64 const time)
       }
     });
 
-    if (allowSubstep > 0)
+    if (m_maxEventDt > 0)
     {
-      nextDt *= substepFactor;
+      nextDt = std::min(m_maxEventDt, nextDt);
+    }
+
+    if (m_allowSubstep > 0)
+    {
+      nextDt *= m_substepFactor;
     }
   }
 
-  if (targetExactStartStop == 1)
+  if (m_targetExactStartStop == 1)
   {
-    if (time < beginTime)
+    if (time < m_beginTime)
     {
-      nextDt = std::min(beginTime - time, nextDt);
+      nextDt = std::min(m_beginTime - time, nextDt);
     }
-    else if (time < endTime)
+    else if (time < m_endTime)
     {
-      nextDt = std::min(endTime - time, nextDt);
+      nextDt = std::min(m_endTime - time, nextDt);
     }
   }
 
