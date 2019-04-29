@@ -136,24 +136,28 @@ void SolverBase::Execute( real64 const time_n,
                           real64 const eventProgress,
                           ManagedGroup * domain )
 {
-  real64 dtLeft = dt;
-  real64 time = time_n;
-  integer subStep = 0;
+  real64 dtRemaining = dt;
 
-  while( dtLeft > 0 )
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+  integer const maxSubSteps = solverParams->maxSubSteps();
+
+  for (integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep)
   {
-    real64 const dtAccepted = SolverStep( time, dtLeft, cycleNumber, domain->group_cast<DomainPartition*>());
-    dtLeft -= dtAccepted;
-    time += dtAccepted;
+    real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
+                                          dtRemaining,
+                                          cycleNumber,
+                                          domain->group_cast<DomainPartition *>() );
+    dtRemaining -= dtAccepted;
 
-    if (m_verboseLevel >= 1 && dtLeft > 0)
+    if (m_verboseLevel >= 1 && dtRemaining > 0.0)
     {
       GEOS_LOG_RANK_0( getName() << ": sub-step = " << subStep
                        << ", accepted dt = " << dtAccepted
-                       << ", remaining dt = " << dtLeft );
+                       << ", remaining dt = " << dtRemaining );
     }
-    ++subStep;
   }
+
+  GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 }
 
 
