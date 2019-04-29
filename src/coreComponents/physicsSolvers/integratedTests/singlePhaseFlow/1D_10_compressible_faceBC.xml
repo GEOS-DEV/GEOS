@@ -41,7 +41,7 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="20.0"
+                   maxEventDt="20.0"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep

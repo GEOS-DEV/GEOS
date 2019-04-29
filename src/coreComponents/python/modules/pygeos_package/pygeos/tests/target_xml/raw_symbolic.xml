@@ -28,7 +28,7 @@
   </Solvers>
   <Mesh elementType="C3D6" xcoords="2000.0 2250.0 2404.1 3595.9 3750.0 4000.0" ycoords="-1000.0 -750.0 -500 500 750.0 1000.0" zcoords="-1000.0 -750.0 -500 500 750.0 1000.0" nx="1 2 20 2 1 " ny="1 2 20 2 1" nz="1 2 20 2 1" regionNames="Region" trianglePattern="0"/>
   <Events maxTime="1e4">
-    <PeriodicEvent name="init_solvers" forceDt="0.25" beginTime="0" endTime="5.0">
+    <PeriodicEvent name="init_solvers" maxEventDt="0.25" beginTime="0" endTime="5.0">
       <PeriodicEvent name="solver_a" target="/Solvers/implag3"/>
       <PeriodicEvent name="solver_b" target="/Solvers/ppsolve"/>
     </PeriodicEvent>

@@ -84,7 +84,7 @@
 
   <Events maxTime="4.0">
     <PeriodicEvent name="solverApplications"
-                   forceDt="0.002"
+                   maxEventDt="0.002"
                    target="/Solvers/solver1" />
 
     <PeriodicEvent name="outputs"
