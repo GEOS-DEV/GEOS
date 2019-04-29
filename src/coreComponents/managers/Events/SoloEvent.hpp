@@ -63,10 +63,18 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr auto targetTimeString = "targetTime";
+    static constexpr auto targetCycleString = "targetCycle";
+    static constexpr auto targetExactTimestepString = "targetExactTimestep";
+
     dataRepository::ViewKey targetTime = { "targetTime" };
     dataRepository::ViewKey targetCycle = { "targetCycle" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
   } SoloEventViewKeys;
+
+  real64 m_targetTime;
+  integer m_targetCycle;
+  integer m_targetExactTimestep;
 
 };
 

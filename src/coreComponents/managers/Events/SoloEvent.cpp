@@ -30,23 +30,25 @@ using namespace dataRepository;
 
 SoloEvent::SoloEvent( const std::string& name,
                               ManagedGroup * const parent ):
-  EventBase(name,parent)
+  EventBase(name,parent),
+  m_targetTime(-1.0),
+  m_targetCycle(-1),
+  m_targetExactTimestep(0)
 {
-  RegisterViewWrapper<real64>(SoloEventViewKeys.targetTime.Key())->
-    setApplyDefaultValue(-1)->
+  RegisterViewWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
+    setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Event time");
 
-  RegisterViewWrapper<integer>(SoloEventViewKeys.targetCycle.Key())->
+  RegisterViewWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event cycle");
+    setDescription("Event cycle");
 
-  RegisterViewWrapper<integer>(SoloEventViewKeys.targetExactTimestep.Key())->
-    setApplyDefaultValue(-1)->
+  RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+    setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows timesteps to be truncated to match time frequency perfectly");
-
+    setDescription("Allows timesteps to be truncated to match time frequency perfectly");
 }
 
 
@@ -59,14 +61,10 @@ void SoloEvent::EstimateEventTiming(real64 const time,
                                     integer const cycle,
                                     ManagedGroup * domain)
 {
-  real64 const targetTime = this->getReference<real64>(SoloEventViewKeys.targetTime);
-  integer const targetCycle = this->getReference<integer>(SoloEventViewKeys.targetCycle);
-  integer const lastCycle = this->getReference<integer>(EventBase::viewKeys.lastCycle);
-  
   // Check event status
-  if (lastCycle < 0)
+  if (m_lastCycle < 0)
   {
-    if (targetTime >= 0.0)
+    if (m_targetTime >= 0.0)
     {
       if (dt <= 0)
       {
@@ -74,13 +72,13 @@ void SoloEvent::EstimateEventTiming(real64 const time,
       }
       else
       {
-        real64 forecast = (targetTime - time) / dt;
+        real64 forecast = (m_targetTime - time) / dt;
         SetForecast(static_cast<integer>(std::min(forecast, 1e9)));
       }
     }
     else
     {
-      SetForecast(targetCycle - cycle);
+      SetForecast(m_targetCycle - cycle);
     }
   }
   else
@@ -92,14 +90,11 @@ void SoloEvent::EstimateEventTiming(real64 const time,
 
 real64 SoloEvent::GetTimestepRequest(real64 const time)
 {
-  integer const targetExactTimestep = this->getReference<integer>(SoloEventViewKeys.targetExactTimestep);
-  real64 const targetTime = this->getReference<real64>(SoloEventViewKeys.targetTime);
-  
   real64 requestedDt = EventBase::GetTimestepRequest(time);
 
-  if ((targetTime > 0) && (targetExactTimestep > 0))
+  if ((m_targetTime > 0) && (m_targetExactTimestep > 0))
   {
-    requestedDt = std::min(requestedDt, targetTime - time);
+    requestedDt = std::min(requestedDt, m_targetTime - time);
   }
 
   return requestedDt;

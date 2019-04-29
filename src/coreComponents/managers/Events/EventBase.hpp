@@ -155,6 +155,7 @@ public:
     static constexpr auto beginTimeString = "beginTime";
     static constexpr auto endTimeString = "endTime";
     static constexpr auto forceDtString = "forceDt";
+    static constexpr auto maxEventDtString = "maxEventDt";
     static constexpr auto lastTimeString = "lastTime";
     static constexpr auto lastCycleString = "lastCycle";
 
@@ -171,6 +172,7 @@ public:
     dataRepository::ViewKey beginTime = { "beginTime" };
     dataRepository::ViewKey endTime = { "endTime" };
     dataRepository::ViewKey forceDt = { "forceDt" };
+    dataRepository::ViewKey maxEventDt = { "maxEventDt" };
     dataRepository::ViewKey lastTime = { "lastTime" };
     dataRepository::ViewKey lastCycle = { "lastCycle" };
 
@@ -197,11 +199,18 @@ public:
   integer GetEventCount() const { return m_eventCount; }
   real64  GetEventProgress() const { return m_eventProgress; }
 
+
+protected:
+  real64 m_lastTime;
+  integer m_lastCycle;
+
+
 private:
   string m_eventTarget;
   real64 m_beginTime;
   real64 m_endTime;
   real64 m_forceDt;
+  real64 m_maxEventDt;
   integer m_allowSuperstep;
   integer m_allowSubstep;
   integer m_substepFactor;
@@ -209,13 +218,12 @@ private:
 
   integer m_currentSubEvent;
   integer m_isTargetExecuting;
-  integer m_eventForecast = 0;
-  integer m_exitFlag = 0;
-  integer m_eventCount = 0;
-  integer m_timeStepEventCount = 0;
-  real64 m_eventProgress = 0;
-  real64 m_lastTime;
-  integer m_lastCycle;
+  integer m_eventForecast;
+  integer m_exitFlag;
+  integer m_eventCount;
+  integer m_timeStepEventCount;
+  real64 m_eventProgress;
+  
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
