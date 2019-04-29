@@ -70,6 +70,7 @@ public:
     static constexpr auto maxLineSearchCutsString   = "maxLineSearchCuts";
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
+    static constexpr auto maxSubStepsString         = "maxSubSteps";
 
   } viewKeys;
 
@@ -101,7 +102,7 @@ public:
   integer maxLineSearchCuts() const           { return m_maxLineSearchCuts; }
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
-
+  integer maxSubSteps() const                 { return m_maxSubSteps; }
 
 
   integer m_verbose;
@@ -128,7 +129,7 @@ public:
   integer m_maxLineSearchCuts;
   real64  m_lineSearchCutFactor;
   integer m_allowNonConverged;
-
+  integer m_maxSubSteps;
 
 
 };
