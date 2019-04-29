@@ -153,6 +153,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allow non-converged solution to be accepted");
 
+  RegisterViewWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
+    setApplyDefaultValue(10)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Maximum number of time sub-steps allowed for the solver");
 
   RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
