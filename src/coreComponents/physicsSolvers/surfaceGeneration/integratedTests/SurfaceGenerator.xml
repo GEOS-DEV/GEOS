@@ -52,7 +52,7 @@
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="0.5"
+                   maxEventDt="0.5"
                    target="/Solvers/lagSolve" />
   
     <PeriodicEvent name="outputs"

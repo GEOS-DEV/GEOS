@@ -50,7 +50,7 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="100.0"
+                   maxEventDt="100.0"
                    target="/Solvers/compflow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep

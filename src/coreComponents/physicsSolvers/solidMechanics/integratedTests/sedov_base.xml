@@ -15,7 +15,7 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-5"
+                   maxEventDt="1.0e-5"
                    target="/Solvers/lagsolve" />
 
     <!-- This event is applied every 5e-4s.  The targetExactTimestep

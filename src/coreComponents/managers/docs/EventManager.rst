@@ -10,7 +10,7 @@ The goal of the GEOSX event manager is to be flexible with regards to event type
   <Events maxTime="1.0e-2">
     <PeriodicEvent name="event_a"
                    target="/path/to/event"
-                   forceDt="1" />
+                   maxEventDt="1" />
     <HaltEvent name="event_b"
                target="/path/to/halt_target"
                maxRunTime="1e6" />
