@@ -96,12 +96,6 @@ public:
   
 private:
 
-  // the gravity vector
-  R1Tensor m_gravityVector;
-
-  // a flag specifying whether gravity is accounted for or not
-  bool m_gravityFlag;
-
   // the list of materials for the wells
   string_array m_materialList;
 };
