@@ -97,7 +97,7 @@ public:
 
 protected: 
 
-  void PostProcessInput();
+  virtual void PostProcessInput() override;
 
 private:
   

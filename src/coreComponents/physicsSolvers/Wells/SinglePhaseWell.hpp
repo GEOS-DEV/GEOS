@@ -153,11 +153,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
+  virtual void AssembleFluxTerms( DomainPartition * const domain,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
+                                  real64 const time_n,
+                                  real64 const dt ) override;
 
 
   /**
@@ -168,11 +168,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssemblePerforationTerms( DomainPartition * const domain,
-                                 Epetra_FECrsMatrix * const jacobian,
-                                 Epetra_FEVector * const residual,
-                                 real64 const time_n,
-                                 real64 const dt );
+  virtual void AssemblePerforationTerms( DomainPartition * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt ) override;
   
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -182,11 +182,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
+  virtual void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                           Epetra_FECrsMatrix * const jacobian,
+                                           Epetra_FEVector * const residual,
+                                           real64 const time_n,
+                                           real64 const dt ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
@@ -194,9 +194,9 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormPressureRelations( DomainPartition * const domain,
-                              Epetra_FECrsMatrix * const jacobian,
-                              Epetra_FEVector * const residual );
+  virtual void FormPressureRelations( DomainPartition * const domain,
+                                      Epetra_FECrsMatrix * const jacobian,
+                                      Epetra_FEVector * const residual ) override;
 
   /**
    * @brief assembles the control equation for the well head (first connection)
@@ -204,19 +204,19 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormControlEquation( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual );
+  virtual void FormControlEquation( DomainPartition * const domain,
+                                    Epetra_FECrsMatrix * const jacobian,
+                                    Epetra_FEVector * const residual ) override;
   
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
    * @param sparsity the sparsity pattern matrix
    */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity,
-                           globalIndex firstWellElemDofNumber,
-                           localIndex numDofPerResElement) override;
+   virtual void SetSparsityPattern( DomainPartition const * const domain,
+                                    Epetra_FECrsGraph * const sparsity,
+                                    globalIndex firstWellElemDofNumber,
+                                    localIndex numDofPerResElement) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -228,10 +228,10 @@ public:
    * This function sets the number of global rows, and sets the dof numbers for
    * this solver. dof numbers are referred to trilinosIndices currently.
    */
-  void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) override;
+  virtual void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
+                                             localIndex & numLocalRows,
+                                             globalIndex & numGlobalRows,
+                                             localIndex offset ) override;
   
   /**@}*/
 
