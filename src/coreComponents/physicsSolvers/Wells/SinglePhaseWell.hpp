@@ -113,23 +113,9 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
-
   virtual real64
   CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                          DomainPartition *const domain) override;
-  
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
   
   virtual bool
   CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem, 
@@ -157,14 +143,8 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param well the well containing the well elements and their associated fields
    */
-  void UpdateState( Well * well );
+  virtual void UpdateState( Well * well ) override;
   
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the well manager to update all wells
-   */
-  void UpdateStateAll( DomainPartition * domain );
-
   /**
    * @brief assembles the flux terms for all connections between well elements
    * @param domain the physical domain object
@@ -194,6 +174,20 @@ public:
                                  real64 const time_n,
                                  real64 const dt );
   
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                   Epetra_FECrsMatrix * const jacobian,
+                                   Epetra_FEVector * const residual,
+                                   real64 const time_n,
+                                   real64 const dt );
+
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
    * @param domain the physical domain object
@@ -279,8 +273,6 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
 private:
@@ -292,28 +284,28 @@ private:
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
-   * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void ComputeAllPerforationRates( Well * well );
-
-  /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
-   */
-  void RecordWellData( Well * well );
-
-  /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void InitializeWells( DomainPartition * const domain );
+  void InitializeWells( DomainPartition * const domain ) override;
 
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
    */
-  void CheckWellControlSwitch( DomainPartition * const domain );
+  void CheckWellControlSwitch( DomainPartition * const domain ) override;
+
+  /**
+   * @brief Compute all the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputeAllPerforationRates( Well const * const well );
+
+  /**
+   * @brief Save all the rates and pressures in the well for reporting purposes
+   * @param well the well with its perforations
+   */
+  void RecordWellData( Well const * const well );
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_resDofNumber; // TODO will move to DofManager
   

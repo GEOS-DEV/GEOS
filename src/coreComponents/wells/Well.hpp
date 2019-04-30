@@ -33,6 +33,11 @@
 namespace geosx
 {
 
+/**
+ * @class Well
+ *
+ * This class describes a well with its perforations, well elements, type, and control
+ */  
 class Well : public ObjectManagerBase
 {
 public:
@@ -95,43 +100,96 @@ public:
 
   virtual dataRepository::ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const rootGroup ) override;
+  /**
+   * @brief Getter for the well elements
+   * @return a pointer to the WellElementSubRegion object
+   */
+  WellElementSubRegion * getWellElements() { return &m_wellElementSubRegion; }
 
-  virtual void PostProcessInput() override;
-
-  WellElementSubRegion * getWellElements()             { return &m_wellElementSubRegion; }
+  /**
+   * @brief Const getter for the well elements
+   * @return a pointer to the const WellElementSubRegion object
+   */
   WellElementSubRegion const * getWellElements() const { return &m_wellElementSubRegion; }
   
-  PerforationData * getPerforations()             { return &m_perforationData; }
+  /**
+   * @brief Getter for the perforations
+   * @return a pointer to the PerforationData object
+   */
+  PerforationData * getPerforations() { return &m_perforationData; }
+
+  /**
+   * @brief Getter for the perforations
+   * @return a pointer to the const PerforationData object
+   */
   PerforationData const * getPerforations() const { return &m_perforationData; }
   
-  R1Tensor const & getGravityVector() const;
+  /**
+   * @brief Setter for the reference well elem index where the control will be enforced
+   * @param refIndex the reference well elem index where the control will be enforced
+   */
+  void setReferenceWellElementIndex( localIndex refIndex ) 
+  { m_refWellElemIndex = refIndex; }
 
-  real64 const & getReferenceDepth() const { return m_referenceDepth; }
 
+  /**
+   * @brief Getter for the reference well elem index where the control will be enforced
+   * @return the reference well element index where the control will be enforced
+   */
+  localIndex const & getReferenceWellElementIndex() const 
+  { return m_refWellElemIndex; }
+
+
+  /**
+   * @brief Getter for the well type (injector or producer)
+   * @return the well type
+   */
   Type getType() const { return m_type; }
 
+  /**
+   * @brief Setter for the control equation at this well
+   * @param control the type of control that is enforced
+   * @param val the value of the control (max pressure, min rate, etc)
+   */
   void setControl( Control control, real64 const & val );
+
+  /**
+   * @brief Getter for the control equation at this well
+   * @return the type of control that is enforced at this well
+   */
   Control getControl() const { return m_currentControl; }
 
+  /**
+   * @brief Getter for the target BH pressure
+   * @return the target BH pressure
+   */
   real64 const & getTargetBHP() const { return m_targetBHP; }
 
+  /**
+   * @brief Getter for the target rate
+   * @return the target rate
+   */
   real64 const & getTargetRate() const { return m_targetRate; }
 
-  real64 const & getInjectionStream( localIndex ic ) const
-  { return m_injectionStream[ic]; }
+  /**
+   * @brief Getter for the composition of the injection rate
+   * @param the index of the component
+   * @return the global component fraction for component ic
+   */
+  real64 getInjectionStream( localIndex ic ) const;
   
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-
-    static constexpr auto referenceDepthString  = "referenceDepth";
-    static constexpr auto typeString            = "type";
-    static constexpr auto controlString         = "control";
-    static constexpr auto targetBHPString       = "targetBHP";
-    static constexpr auto targetRateString      = "targetRate";
-    static constexpr auto injectionStreamString = "injectionStream";
+    static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
+    static constexpr auto refWellElemDepthString = "referenceDepth";
+    static constexpr auto typeString             = "type";
+    static constexpr auto controlString          = "control";
+    static constexpr auto targetBHPString        = "targetBHP";
+    static constexpr auto targetRateString       = "targetRate";
+    static constexpr auto injectionStreamString  = "injectionStream";
     
-    dataRepository::ViewKey referenceDepth  = { referenceDepthString };
+    dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    dataRepository::ViewKey referenceDepth  = { refWellElemDepthString };
     dataRepository::ViewKey type            = { typeString };
     dataRepository::ViewKey control         = { controlString };
     dataRepository::ViewKey targetBHP       = { targetBHPString };
@@ -156,16 +214,23 @@ public:
 
 protected:
 
+  virtual void PostProcessInput() override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
+
+private:
+
   // segments
   WellElementSubRegion m_wellElementSubRegion;
   WellElementManager m_wellElementManager;
 
-  // perforation
+  // perforations
   PerforationData    m_perforationData;
   PerforationManager m_perforationManager;
 
-  // depth
-  real64 m_referenceDepth;
+  // reference index
+  real64 m_refWellElemDepth; // not used yet
+  localIndex m_refWellElemIndex;
   
   // well type
   string  m_typeString;
@@ -176,7 +241,7 @@ protected:
   Control m_currentControl;
   real64  m_targetBHP;
   real64  m_targetRate;
-
+ 
   // global component fraction at the injector
   array1d<real64>  m_injectionStream;
 };

@@ -30,8 +30,6 @@
 namespace geosx
 {
 
-class MeshLevel;
-
 namespace dataRepository
 {
 namespace keys
@@ -40,29 +38,69 @@ static constexpr auto perforations = "Perforations";
 }
 }
 
-class DomainPartition;
 class Perforation;
 
+/**
+ * @class PerforationManager
+ *
+ * This class processes the data from the XML and partitions the perforations
+ */  
 class PerforationManager : public ObjectManagerBase
 {
 public:
 
-  explicit PerforationManager( string const & name, dataRepository::ManagedGroup * const parent );
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */
+  explicit PerforationManager( string const & name, 
+                               dataRepository::ManagedGroup * const parent );
+
+  /**
+   * @brief default destructor
+   */
   ~PerforationManager() override;
 
+  /// deleted default constructor
   PerforationManager() = delete;
+
+  /// deleted copy constructor
   PerforationManager( PerforationManager const &) = delete;
+
+  /// deleted move constructor
   PerforationManager( PerforationManager && ) = delete;
+
+  /// deleted assignment operator
+  PerforationManager & operator=( PerforationManager const & ) = delete;
+
+  /// deleted move operator
+  PerforationManager & operator=( PerforationManager && ) = delete;
 
   virtual const string getCatalogName() const override;
   
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Getter for the total number of perforations
+   * @return the number of perforations on this rank
+   */
   globalIndex numPerforationsGlobal()  const
   { return integer_conversion<globalIndex>(m_globalPerforationList.size()); }
 
+  /**
+   * @brief Getter for perforation iperf
+   * @param the global index of the perforation
+   * @return a pointer to the Perforation object
+   */
+  Perforation * getPerforation( globalIndex iperf );
+
+  /**
+   * @brief Const getter for perforation iperf
+   * @param the global index of the perforation
+   * @return a pointer to the const Perforation object
+   */
   Perforation const * getPerforation( globalIndex iperf ) const;
-  Perforation *       getPerforation( globalIndex iperf );
   
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
@@ -84,6 +122,7 @@ protected:
 
 private:
 
+  // global list of perforations for this well
   string_array m_globalPerforationList;
 
 };

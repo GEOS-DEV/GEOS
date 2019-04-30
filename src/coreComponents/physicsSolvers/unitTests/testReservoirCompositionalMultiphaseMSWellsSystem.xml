@@ -89,7 +89,7 @@
           type="producer"
           control="BHP"
           targetBHP="3e6"
-          targetRate="-1e-2"
+          targetRate="1e-2"
           referenceDepth="0.5">
       <Segments>
         <Segment name="prod0_segtop"

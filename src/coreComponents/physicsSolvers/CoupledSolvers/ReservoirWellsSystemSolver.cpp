@@ -114,7 +114,7 @@ void ReservoirWellsSystemSolver::SetupSystem ( DomainPartition * const domain,
                                            numResGlobalRows,
                                            0 );
   /*
-  // TODO: make this work in parallel
+  // TODO: make this work in parallel, I am still unsure about how to use this
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back(viewKeysSinglePhaseFlow.blockLocalDofNumber.Key());
   CommunicationTools::

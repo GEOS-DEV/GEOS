@@ -36,7 +36,8 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     m_wellElementManager(groupKeyStruct::wellElementsString, this ),
     m_perforationData( groupKeyStruct::perforationDataString, this ),
     m_perforationManager( groupKeyStruct::perforationsString, this ),
-    m_referenceDepth( 0.0 ),
+    m_refWellElemDepth( 0.0 ),
+    m_refWellElemIndex( -1 ),
     m_typeString( "producer" ),
     m_type( Type::PRODUCER ),
     m_controlString( "BHP" ),
@@ -52,22 +53,25 @@ Well::Well(string const & name, dataRepository::ManagedGroup * const parent)
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
 
-  // TODO: here, revisit what should be REQUIRED/OPTIONAL
-  
-  RegisterViewWrapper( viewKeyStruct::referenceDepthString, &m_referenceDepth, false )->
+  RegisterViewWrapper( viewKeyStruct::targetBHPString, &m_targetBHP, false )->
+    setDefaultValue(-1)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Target bottom-hole pressure");
+
+  RegisterViewWrapper( viewKeyStruct::targetRateString, &m_targetRate, false )->
+    setDefaultValue(-1)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Target rate");
+
+  RegisterViewWrapper( viewKeyStruct::refWellElemIndexString, &m_refWellElemIndex, false );
+
+  RegisterViewWrapper( viewKeyStruct::refWellElemDepthString, &m_refWellElemDepth, false )->
     setDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference depth for well bottom hole pressure");
 
-  RegisterViewWrapper( viewKeyStruct::targetBHPString, &m_targetBHP, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Target bottom-hole pressure");
-
-  RegisterViewWrapper( viewKeyStruct::targetRateString, &m_targetRate, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
-
   RegisterViewWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
+    setDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Global component densities for the injection stream");
   
@@ -83,18 +87,26 @@ Well::~Well()
 {
 }
  
-dataRepository::ManagedGroup * Well::CreateChild(string const & childKey, string const & childName)
+dataRepository::ManagedGroup * Well::CreateChild( string const & childKey, 
+                                                  string const & childName )
 {
   return nullptr;
 }
 
-void Well::InitializePostSubGroups( ManagedGroup * const rootGroup )
-{
+real64 Well::getInjectionStream( localIndex ic ) const
+{ 
+  real64 compFrac = -1;
+  if (ic < m_injectionStream.size()) 
+  {
+    compFrac = m_injectionStream[ic];
+  }
+  return compFrac;
 }
   
 void Well::PostProcessInput()
 {  
-  // set well type
+  // 1) set well type
+
   if (m_typeString == "producer")
   {
     m_type = Type::PRODUCER;
@@ -108,7 +120,8 @@ void Well::PostProcessInput()
     GEOS_ERROR("Invalid well type: " << m_typeString);
   }
   
-  // set initial control type
+  // 2) set initial control type
+
   if (m_controlString == "BHP")
   {
     m_currentControl = Control::BHP;
@@ -116,14 +129,17 @@ void Well::PostProcessInput()
   else if (m_controlString == "gasRate")
   {
     m_currentControl = Control::GASRATE;
+    GEOS_ERROR("This control is not implemented yet");
   }
   else if (m_controlString == "oilRate")
   {
     m_currentControl = Control::OILRATE;
+    GEOS_ERROR("This control is not implemented yet");
   }
   else if (m_controlString == "waterRate")
   {
     m_currentControl = Control::WATERRATE;
+    GEOS_ERROR("This control is not implemented yet");
   }
   else if (m_controlString == "liquidRate")
   {
@@ -134,9 +150,32 @@ void Well::PostProcessInput()
     GEOS_ERROR("Invalid initial well control: " << m_controlString);
   }
 
-  // TODO: this is temporary, wellElemSubRegion should have the size of the number of well elements on this rank
-  m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );
-  
+  // 3.a) check target BHP
+  if (m_targetBHP < 0)
+  {
+    GEOS_ERROR("Target bottom-hole pressure for well "<< getName() 
+            << " is negative");
+  }
+
+  // 3.b) check target rate 
+  if (m_targetRate < 0) // choose a default value if negative
+  {
+    GEOS_ERROR("Target rate for well "<< getName() 
+            << " is negative");
+  }
+
+  // currently there is only one MPI rank per well
+  m_wellElementSubRegion.resize( m_wellElementManager.numWellElementsGlobal() );  
+}
+
+void Well::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+{
+  // for a producer, the solvers compute negative rates, so we adjust the input here
+  if (getType() == Type::PRODUCER && m_targetRate > 0.0)
+  {
+    m_targetRate *= -1;
+  }
+
 }
 
 void Well::setControl( Control control, real64 const & val )
@@ -150,12 +189,6 @@ void Well::setControl( Control control, real64 const & val )
   {
     m_targetRate = val;
   }
-}
-
-
-R1Tensor const & Well::getGravityVector() const
-{
-  return getParent()->group_cast<WellManager const *>()->getGravityVector();
 }
 
 } //namespace geosx

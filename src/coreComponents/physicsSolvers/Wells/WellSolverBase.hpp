@@ -101,6 +101,90 @@ public:
   virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
 
   /**
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   */
+  /**@{*/
+
+  virtual void ImplicitStepSetup( real64 const& time_n,
+                                  real64 const& dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+
+
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time_n,
+                               real64 const dt ) override;
+
+  virtual void ImplicitStepComplete( real64 const & time,
+                                     real64 const & dt,
+                                     DomainPartition * const domain ) override;
+
+  /**
+   * @brief assembles the flux terms for all connections between well elements
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  virtual void AssembleFluxTerms( DomainPartition * const domain,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
+                                  real64 const time_n,
+                                  real64 const dt ) = 0;
+
+  /**
+   * @brief assembles the perforation rate terms 
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  virtual void AssemblePerforationTerms( DomainPartition * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt ) = 0;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   * @param time_n previous time value
+   * @param dt time step
+   */
+  virtual void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                           Epetra_FECrsMatrix * const jacobian,
+                                           Epetra_FEVector * const residual,
+                                           real64 const time_n,
+                                           real64 const dt ) = 0;
+
+  /**
+   * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  virtual void FormPressureRelations( DomainPartition * const domain,
+                                      Epetra_FECrsMatrix * const jacobian,
+                                      Epetra_FEVector * const residual ) = 0;
+  
+  /**
+   * @brief assembles the control equation for the first connection
+   * @param domain the physical domain object
+   * @param jacobian the entire jacobian matrix of the system
+   * @param residual the entire residual of the system
+   */
+  virtual void FormControlEquation( DomainPartition * const domain,
+                                    Epetra_FECrsMatrix * const jacobian,
+                                    Epetra_FEVector * const residual ) = 0;
+
+  /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
    * @param sparsity the sparsity pattern matrix
@@ -108,7 +192,7 @@ public:
   virtual void SetSparsityPattern( DomainPartition const * const domain,
                                    Epetra_FECrsGraph * const sparsity,
                                    globalIndex firstWellElemDofNumber,
-                                   localIndex numDofPerResElement );
+                                   localIndex numDofPerResElement ) = 0;
 
   /**
    * @brief sets the dof indices for this solver
@@ -123,9 +207,21 @@ public:
   virtual void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
                                              localIndex & numLocalRows,
                                              globalIndex & numGlobalRows,
-                                             localIndex offset );
+                                             localIndex offset ) = 0;
 
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void UpdateStateAll( DomainPartition * const domain );
   
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param well the well containing all the primary and dependent fields
+   */
+  virtual void UpdateState( Well * const well ) = 0;
+
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
@@ -166,7 +262,23 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
   virtual void ResetViews( DomainPartition * const domain );
+
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  virtual void InitializeWells( DomainPartition * const domain ) = 0;
+  
+  /**
+   * @brief Check if the controls are viable; if not, switch the controls
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  virtual void CheckWellControlSwitch( DomainPartition * const domain ) = 0;
+
   
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;

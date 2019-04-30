@@ -29,12 +29,16 @@
 #include "wells/Well.hpp"
 #include "wells/PerforationData.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "systemSolverInterface/LinearSolverWrapper.hpp"
+#include "systemSolverInterface/EpetraBlockSystem.hpp"
+
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace systemSolverInterface;
   
 WellSolverBase::WellSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
@@ -64,18 +68,82 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
   SolverBase::RegisterDataOnMesh( meshBodies );
 }
 
-void WellSolverBase::SetSparsityPattern( DomainPartition const * const domain,
-                                         Epetra_FECrsGraph * const sparsity,
-                                         globalIndex firstWellElemDofNumber,
-                                         localIndex numDofPerResElement )
+void WellSolverBase::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
+                                        DomainPartition * const domain,
+                                        EpetraBlockSystem * const blockSystem )
 {
+  // bind the stored reservoir views to the current domain
+  ResetViews( domain );
+
+  // Initialize the primary and secondary variables for the first time step
+  if (time_n <= 0.0)
+  {
+    InitializeWells( domain );
+  }
+
+  // set deltas to zero and recompute dependent quantities
+  ResetStateToBeginningOfStep( domain );
+  
+  // assumes that the setup of dof numbers and linear system
+  // is done in ReservoirWellSolver
 }
 
-void WellSolverBase::SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
-                                                   localIndex & numLocalRows,
-                                                   globalIndex & numGlobalRows,
-                                                   localIndex offset )
+void WellSolverBase::AssembleSystem( DomainPartition * const domain,
+                                     EpetraBlockSystem * const blockSystem,
+                                     real64 const time_n, real64 const dt )
+{ 
+  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
+                                                                BlockIDs::compositionalBlock );
+  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+
+  // TODO: implement parallelization here
+  // We want to have the possibility to solve different wells on different MPI ranks,
+  // but we will first assume that all the well elements of a given well belong to the same rank
+
+  // TODO here: gather all the property info from the perforated cells 
+
+  // first deal with the well control and switch if necessary
+  CheckWellControlSwitch( domain );
+
+  // then assemble the mass balance equations
+  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+  AssemblePerforationTerms( domain, jacobian, residual, time_n, dt );
+
+  // then assemble the volume balance equations
+  AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
+
+  // then assemble the pressure relations between well elements
+  FormPressureRelations( domain, jacobian, residual );
+
+  // finally assemble the well control equation
+  FormControlEquation( domain, jacobian, residual );
+  
+  // TODO here: scatter all the wells terms (perforation derivatives) to other ranks before linear solve
+
+  if( verboseLevel() >= 3 )
+  {
+    GEOS_LOG_RANK("After CompositionalMultiphaseWell::AssembleSystem");
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+  }
+
+}
+
+void WellSolverBase::ImplicitStepComplete( real64 const & time,
+                                           real64 const & dt,
+                                           DomainPartition * const domain )
 {
+  // implemented in derived classes
+}
+
+void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
+{
+  WellManager * const wellManager = domain->getWellManager();
+
+  wellManager->forSubGroups<Well>( [&] ( Well * const well ) -> void
+  {
+    UpdateState( well );
+  });
 }
  
 void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
@@ -108,18 +176,18 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
 {
   R1Tensor const & gravityVector = getGravityVector();
 
-  // set the gravity vector for the well manager
   WellManager * const wellManager = domain->getWellManager();
-  wellManager->setGravityVector(gravityVector, m_gravityFlag);
    
-  wellManager->forSubGroups<Well>( [&] ( Well * well ) -> void
+  wellManager->forSubGroups<Well>( [&] ( Well * const well ) -> void
   {
-    // 1) precompute the depth of the well elements
-    WellElementSubRegion * const wellElementSubRegion = well->getWellElements();
+    WellElementSubRegion const * const wellElementSubRegion = well->getWellElements();
     PerforationData const * const perforationData = well->getPerforations();
 
     arrayView1d<R1Tensor const> const & wellElemLocation = 
       wellElementSubRegion->getReference<array1d<R1Tensor>>( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+
+    arrayView1d<localIndex const> const & nextWellElemIndex =
+      wellElementSubRegion->getReference<array1d<localIndex>>( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString );    
 
     arrayView1d<real64> const & wellElemGravDepth = 
       wellElementSubRegion->getReference<array1d<real64>>( WellElementSubRegion::viewKeyStruct::gravityDepthString );
@@ -130,20 +198,34 @@ void WellSolverBase::PrecomputeData(DomainPartition * const domain)
     arrayView1d<real64> const & perfGravDepth = 
       perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::gravityDepthString );
 
+    localIndex iwelemControl = -1;
     for (localIndex iwelem = 0; iwelem < wellElementSubRegion->numWellElementsLocal(); ++iwelem)
     {
+      // precompute the depth of the well elements
       wellElemGravDepth[iwelem] = Dot( wellElemLocation[iwelem], gravityVector );
-      std::cout << "wellElemGravDepth[" << iwelem << "] = " 
-                << wellElemGravDepth[iwelem] << std::endl;
-    }
 
-    for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
+      // set the first well element of the well
+      localIndex const iwelemNext = nextWellElemIndex[iwelem];
+      if (iwelemNext < 0)
+      {
+        GEOS_ERROR_IF( iwelemControl >= 0, 
+                      "Invalid well definition: well " << well->getName() 
+                   << " has multiple well heads");
+        iwelemControl = iwelem;
+      }
+    }
+    
+    // save the index of reference well element (used to enforce constraints) 
+    GEOS_ERROR_IF( iwelemControl < 0, 
+                  "Invalid well definition: well " << well->getName() 
+               << " has no well head");
+    well->setReferenceWellElementIndex( iwelemControl );
+
+    forall_in_range( 0, perforationData->numPerforationsLocal(), GEOSX_LAMBDA ( localIndex const iperf )
     {
+      // precompute the depth of the perforations
       perfGravDepth[iperf] = Dot( perfLocation[iperf], gravityVector );
-      std::cout << "perfGravDepth[" << iperf << "] = " 
-                << perfGravDepth[iperf] << std::endl;
-
-    }
+    });
   });
 }
 

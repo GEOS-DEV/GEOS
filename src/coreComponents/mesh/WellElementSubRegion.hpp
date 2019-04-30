@@ -35,6 +35,11 @@ static constexpr auto wellElementData = "wellElementData";
 }
 }
 
+/**
+ * @class WellElementSubRegion
+ *
+ * This class describes a collection of local well elements
+ */  
 class WellElementSubRegion : public ElementSubRegionBase
 {
 public:
@@ -45,17 +50,26 @@ public:
 
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
-  WellElementSubRegion( string const & name, ManagedGroup * const parent );
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */  
+  WellElementSubRegion( string const & name, 
+                        ManagedGroup * const parent );
+
+  /**
+   * @brief default destructor
+   */
   virtual ~WellElementSubRegion() override;
 
+  /**
+   * @brief Getter for the number of well elements on this rank
+   * @return the number of well elememts on this rank
+   */
   localIndex numWellElementsLocal()  const
   { return integer_conversion<localIndex>(size()); }
 
-  WellElement const * getWellElement( localIndex iwelem ) const;
-  WellElement *       getWellElement( localIndex iwelem );
-
-  localIndex getReferenceElem() const
-  { return 0; } 
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    const NodeManager& nodeManager,
@@ -93,11 +107,9 @@ public:
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    static constexpr auto wellElementIndexString = "wellElementIndex";
     static constexpr auto nextWellElementIndexString = "nextWellElementIndex";
     static constexpr auto gravityDepthString = "gravityDepth";
     
-    dataRepository::ViewKey wellElementIndex = { wellElementIndexString };
     dataRepository::ViewKey nextWellElementIndex = { nextWellElementIndexString };
     dataRepository::ViewKey gravityDepth = { gravityDepthString };
 
@@ -113,9 +125,10 @@ private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
 
-  array1d<localIndex> m_wellElementIndex;
+  // indices of the next well element 
   array1d<localIndex> m_nextWellElementIndex;
 
+  // depth of the current well element
   array1d<real64> m_gravityDepth;
 };
 

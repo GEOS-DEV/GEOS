@@ -57,12 +57,14 @@ class CompositionalMultiphaseWell : public WellSolverBase
 {
 public:
 
+  // define the column offset of the derivatives
   struct ColOffset
   {
     static constexpr integer DPRES = 0;
-    static constexpr integer DRATE = 1;
+    static constexpr integer DCOMP = 1;
   };
 
+  // define the row offset of the residual equations
   struct RowOffset
   {
     static constexpr integer CONTROL = 0;
@@ -113,16 +115,6 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
 
   virtual real64
   CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
@@ -147,38 +139,31 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateComponentFraction( Well * well );
+  void UpdateComponentFraction( Well const * const well );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdatePhaseVolumeFraction( Well * well );
+  void UpdatePhaseVolumeFraction( Well const * const well );
 
   /**
    * @brief Recompute mixture densities using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateMixtureDensity( Well * well );
+  void UpdateMixtureDensity( Well const * const well );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateFluidModel( Well * well );
+  void UpdateFluidModel( Well * const well );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  void UpdateState( Well * well );
-
-  
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateStateAll( DomainPartition * domain );
+  virtual void UpdateState( Well * const well ) override;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -200,11 +185,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
+  virtual void AssembleFluxTerms( DomainPartition * const domain,
+                                  Epetra_FECrsMatrix * const jacobian,
+                                  Epetra_FEVector * const residual,
+                                  real64 const time_n,
+                                  real64 const dt ) override;
 
   /**
    * @brief assembles the perforation rate terms 
@@ -214,11 +199,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssemblePerforationTerms( DomainPartition * const domain,
-                                 Epetra_FECrsMatrix * const jacobian,
-                                 Epetra_FEVector * const residual,
-                                 real64 const time_n,
-                                 real64 const dt );
+  virtual void AssemblePerforationTerms( DomainPartition * const domain,
+                                         Epetra_FECrsMatrix * const jacobian,
+                                         Epetra_FEVector * const residual,
+                                         real64 const time_n,
+                                         real64 const dt ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -228,11 +213,11 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleVolumeBalanceTerms( DomainPartition * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
+  virtual void AssembleVolumeBalanceTerms( DomainPartition * const domain,
+                                           Epetra_FECrsMatrix * const jacobian,
+                                           Epetra_FEVector * const residual,
+                                           real64 const time_n,
+                                           real64 const dt ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head (first connection)
@@ -240,9 +225,9 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormPressureRelations( DomainPartition * const domain,
-                              Epetra_FECrsMatrix * const jacobian,
-                              Epetra_FEVector * const residual );
+  virtual void FormPressureRelations( DomainPartition * const domain,
+                                      Epetra_FECrsMatrix * const jacobian,
+                                      Epetra_FEVector * const residual ) override;
 
   /**
    * @brief assembles the control equation for the first connection
@@ -250,19 +235,19 @@ public:
    * @param jacobian the entire jacobian matrix of the system
    * @param residual the entire residual of the system
    */
-  void FormControlEquation( DomainPartition * const domain,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual );
+  virtual void FormControlEquation( DomainPartition * const domain,
+                                    Epetra_FECrsMatrix * const jacobian,
+                                    Epetra_FEVector * const residual ) override;
   
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
    * @param sparsity the sparsity pattern matrix
    */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity,
-                           globalIndex firstWellElemDofNumber,
-                           localIndex numDofPerResElement ) override;
+  virtual void SetSparsityPattern( DomainPartition const * const domain,
+                                   Epetra_FECrsGraph * const sparsity,
+                                   globalIndex firstWellElemDofNumber,
+                                   localIndex numDofPerResElement ) override;
 
   /**
    * @brief sets the dof indices for this solver
@@ -274,10 +259,10 @@ public:
    * This function sets the number of global rows, and sets the dof numbers for
    * this solver. dof numbers are referred to trilinosIndices currently.
    */
-  void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) override;
+  virtual void SetNumRowsAndTrilinosIndices( DomainPartition const * const domain,
+                                             localIndex & numLocalRows,
+                                             globalIndex & numGlobalRows,
+                                            localIndex offset ) override;
   
   /**@}*/
 
@@ -366,10 +351,10 @@ public:
   } groupKeysCompMultiphaseWell;
 
 protected:
+
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
 
 private:
   
@@ -379,28 +364,34 @@ private:
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
-   * @brief Compute the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void ComputeAllPerforationRates( Well * well );
-
-  /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
-   */
-  void RecordWellData( Well * well );
-
-  /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void InitializeWells( DomainPartition * const domain );
+  void InitializeWells( DomainPartition * const domain ) override;
   
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
    */
-  void CheckWellControlSwitch( DomainPartition * const domain );
+  void CheckWellControlSwitch( DomainPartition * const domain ) override;
+
+  /**
+   * @brief Resize the allocated multidimensional fields
+   * @param well the well for which the fields are resized
+   */
+  void ResizeFields( Well * const well );
+
+  /**
+   * @brief Compute the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputeAllPerforationRates( Well const * const well );
+
+  /**
+   * @brief Save all the rates and pressures in the well for reporting purposes
+   * @param well the well with its perforations
+   */
+  void RecordWellData( Well const * const well );
   
   /// the max number of fluid phases
   localIndex m_numPhases;

@@ -28,7 +28,6 @@ namespace geosx
 WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * const parent ):
   ElementSubRegionBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
   RegisterViewWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
 
   RegisterViewWrapper( viewKeyStruct::gravityDepthString, &m_gravityDepth, false );
@@ -40,47 +39,50 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
 WellElementSubRegion::~WellElementSubRegion()
 {}
 
-WellElement const * WellElementSubRegion::getWellElement( localIndex iwelem ) const
-{
-  Well const * parent = getParent()->group_cast<Well const *>();
-  WellElementManager const * wellElementManager
-    = parent->GetGroup<WellElementManager>( Well::groupKeyStruct::wellElementsString );
-  WellElement const * wellElement
-    = wellElementManager->getWellElement( m_wellElementIndex[iwelem] );
-  return wellElement;
-}
-
-WellElement * WellElementSubRegion::getWellElement( localIndex iwelem )
-{
-  Well * parent = getParent()->group_cast<Well *>();
-  WellElementManager * wellElementManager
-    = parent->GetGroup<WellElementManager>( Well::groupKeyStruct::wellElementsString );
-  WellElement * wellElement
-    = wellElementManager->getWellElement( m_wellElementIndex[iwelem] );
-  return wellElement;
-}
-
 void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  // TODO: make this work in parallel
-  // TODO: this function is temporary and will be rewritten entirely
-    
-  // dummy map from local to global
+  // TODO: this function is temporary and needs to be improved
+  //       depending on the parallelization strategy 
+   
+  Well const * const parent = getParent()->group_cast<Well *>();
+
+  WellElementManager const * const wellElementManager = 
+    parent->GetGroup<WellElementManager>( Well::groupKeyStruct::wellElementsString );
+
+  // initialize the attribute of the well elements
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem)
   {
-    m_wellElementIndex[iwelem] = iwelem;
+ 
+    // get the current well element
+    WellElement const * const wellElement = 
+      wellElementManager->getWellElement( iwelem );
 
-    if (iwelem == 0)
+    // initialize the next well elem index
+    m_nextWellElementIndex[iwelem] = -2;
+
+    if (iwelem == 0) // well head, set next element to -1
     {
       m_nextWellElementIndex[iwelem] = -1;
     }
-    else
+    else // else find the next well element by name
     {
-      string const nextWellElementName = getWellElement( iwelem )->getNextWellElementName();
-      // this is a temporary hack
+      // get the next well element name
+      string const nextWellElementName = wellElement->getNextWellElementName();
+
+      // find the index of the next well element and save it
       for (localIndex iwelemNext = 0; iwelemNext < size(); ++iwelemNext)
       {
-        if (getWellElement( iwelemNext )->getName() == nextWellElementName)
+        if (iwelemNext == iwelem)
+        {
+          continue;
+        }
+
+        // get a possible next well elem
+        WellElement const * const nextWellElement = 
+          wellElementManager->getWellElement( iwelemNext );
+
+        // if the names match, save the index
+        if (nextWellElement->getName() == nextWellElementName)
         {
           m_nextWellElementIndex[iwelem] = iwelemNext;
           break;
@@ -88,9 +90,16 @@ void WellElementSubRegion::InitializePreSubGroups( ManagedGroup * const problemM
       }
     }
 
-
-    m_elementVolume[iwelem] = 1.;
-    m_elementCenter[iwelem] = getWellElement( iwelem )->getLocation();
+    // error message if the well element is not found
+    if (m_nextWellElementIndex[iwelem] == -2)
+    {
+      GEOS_ERROR("Invalid next well element name: " << wellElement->getNextWellElementName()
+                 << " for well element " << wellElement->getName() );
+    }    
+    
+    // save volume and location
+    m_elementVolume[iwelem] = 1.; 
+    m_elementCenter[iwelem] = wellElement->getLocation();
   }
 }
 

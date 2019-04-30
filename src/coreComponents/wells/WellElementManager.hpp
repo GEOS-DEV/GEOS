@@ -30,8 +30,6 @@
 namespace geosx
 {
 
-class MeshLevel;
-
 namespace dataRepository
 {
 namespace keys
@@ -40,29 +38,69 @@ static constexpr auto wellElements = "Segments";
 }
 }
 
-class DomainPartition;
 class WellElement;
 
+/**
+ * @class WellElementManager
+ *
+ * This class processes the data from the XML and partitions the wellElements
+ */  
 class WellElementManager : public ObjectManagerBase
 {
 public:
 
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */
   explicit WellElementManager( string const & name, dataRepository::ManagedGroup * const parent );
+
+  /**
+   * @brief default destructor
+   */
   ~WellElementManager() override;
 
+  /// deleted default constructor
   WellElementManager() = delete;
+
+  /// deleted copy constructor
   WellElementManager( WellElementManager const &) = delete;
+
+  /// deleted move constructor
   WellElementManager( WellElementManager && ) = delete;
+
+  /// deleted assignment operator
+  WellElementManager & operator=( WellElementManager const & ) = delete;
+
+  /// deleted move operator
+  WellElementManager & operator=( WellElementManager && ) = delete;
 
   virtual const string getCatalogName() const override;
   
   dataRepository::ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Getter for the total number of well elements
+   * @return the number of well elements on this rank
+   */
   globalIndex numWellElementsGlobal()  const
   { return integer_conversion<globalIndex>(m_globalWellElementList.size()); }
 
+  /**
+   * @brief Getter for well element iwelem
+   * @param the global index of the well element
+   * @return a pointer to the WellElement object
+   */
+  WellElement * getWellElement( globalIndex iwelem );
+
+  /**
+   * @brief Const Getter for well element iwelem
+   * @param the global index of the well element
+   * @return a pointer to the const WellElement object
+   */
   WellElement const * getWellElement( globalIndex iwelem ) const;
-  WellElement *       getWellElement( globalIndex iwelem );
+
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
@@ -84,6 +122,7 @@ protected:
 
 private:
 
+  // global list of well elements for this well
   string_array m_globalWellElementList;
 
 };

@@ -42,7 +42,7 @@ class Well;
 /**
  * @class WellManager
  *
- * This class keeps tracks of all the wells
+ * This class keeps track of all the wells
  */  
 class WellManager : public dataRepository::ManagedGroup
 {
@@ -79,33 +79,6 @@ public:
 
   dataRepository::ManagedGroup * CreateChild( string const & childKey, 
                                               string const & childName ) override;
-
-  /**
-   * @brief Getter for a well by name
-   * @param name the name of the well
-   * @return a pointer to the well
-   */
-  Well * getWell( string const & name );
-
-  /**
-   * @brief Setter for the gravity vector and the gravity flag
-   * @param gravity the R1 tensor contained the gravity vector
-   * @param gravityFlag a flag to specify whether gravity is taken into account or not
-   */
-  void setGravityVector( R1Tensor const & gravity, 
-                         bool gravityFlag = true );
-
-  /**
-   * @brief Getter for the gravity vector
-   * @return an R1Tensor containing the gravity vector
-   */
-  R1Tensor const & getGravityVector() const { return m_gravityVector; }
-
-  /**
-   * @brief Getter for the gravity flag
-   * @return a boolean containing the gravity flag
-   */
-  bool getGravityFlag() const { return m_gravityFlag; }
 
   /**
    * @brief Getter for the material list

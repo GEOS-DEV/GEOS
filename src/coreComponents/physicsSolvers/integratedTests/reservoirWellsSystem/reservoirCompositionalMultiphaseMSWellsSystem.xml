@@ -88,8 +88,8 @@
     <Well name="prod0"
           type="producer"
           control="BHP"
-          targetBHP="3e6"
-          targetRate="-1e-2"
+          targetBHP="4e6"
+          targetRate="1"
           referenceDepth="0.5">
       <Segments>
         <Segment name="prod0_segtop"
@@ -119,12 +119,12 @@
                      segmentName="prod0_seg1b1" /> 
       </Perforations> 
     </Well> 
-
+<!--
     <Well name="inj0"
           type="injector"
-	  control="liquidRate"
-	  targetBHP="6e6"
-	  targetRate="1e-3"
+	  control="BHP"
+	  targetBHP="1e7"
+	  targetRate="1"
           referenceDepth="0.5"
 	  injectionStream="0.1 0.1 0.1 0.7">
       <Segments>
@@ -159,7 +159,7 @@
                      segmentName="inj0_seg1b1" /> 
       </Perforations> 
     </Well>   
-
+-->
   </Wells>
   
   <Constitutive>

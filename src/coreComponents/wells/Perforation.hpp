@@ -29,25 +29,59 @@
 namespace geosx
 {
 
+/**
+ * @class Perforation
+ *
+ * This class describes a perforation with its location, transmissibility and corresponding well element
+ */  
 class Perforation : public dataRepository::ManagedGroup
 {
 public:
 
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */
   explicit Perforation( string const & name, dataRepository::ManagedGroup * const parent );
+  
+  /**
+   * @brief default destructor
+   */
   ~Perforation() override;
 
+  /// deleted default constructor
   Perforation() = delete;
+
+  /// deleted copy constructor
   Perforation( Perforation const &) = delete;
+
+  /// deleted move constructor
   Perforation( Perforation && ) = delete;
 
-  R1Tensor const & getLocation() const
-  { return m_location; }
+  /// deleted assignment operator
+  Perforation & operator=( Perforation const & ) = delete;
 
-  real64 getTransmissibility() const
-  { return m_transmissibility; }
+  /// deleted move operator
+  Perforation & operator=( Perforation && ) = delete;
 
-  string const & getWellElementName() const
-  { return m_wellElementName; }
+  /**
+   * @brief Getter for the physical location of the perforation
+   * @return an R1Tensor containing the coordinates of the perforation
+   */
+  R1Tensor const & getLocation() const { return m_location; }
+
+  /**
+   * @brief Getter for the transmissibility at the perforation
+   * @return the transmissibility
+   */
+  real64 getTransmissibility() const { return m_transmissibility; }
+
+  /**
+   * @brief Getter for the name of the well element this perforation is attached to
+   * @return a string for the name of the well element
+   */
+  string const & getWellElementName() const { return m_wellElementName; }
 
   struct viewKeyStruct
   {
@@ -61,6 +95,10 @@ public:
 
   } viewKeysPerforation;
 
+protected: 
+
+  void PostProcessInput();
+
 private:
   
   // geometry
@@ -69,9 +107,6 @@ private:
 
   // connectivity
   string m_wellElementName;
-
-  // depending on whether we keep the WellStencil class or not,
-  // we may need additional member variables here (i.e., cell id)
   
 };
 

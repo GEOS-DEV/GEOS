@@ -29,20 +29,54 @@
 namespace geosx
 {
 
+/**
+ * @class WellElement
+ *
+ * This class describes a well element with its location and the next well element
+ */  
 class WellElement : public dataRepository::ManagedGroup
 {
 public:
 
-  explicit WellElement( string const & name, dataRepository::ManagedGroup * const parent );
+  /**
+   * @brief main constructor for ManagedGroup Objects
+   * @param name the name of this instantiation of ManagedGroup in the repository
+   * @param parent the parent group of this instantiation of ManagedGroup
+   */
+  explicit WellElement( string const & name, 
+                        dataRepository::ManagedGroup * const parent );
+
+  /**
+   * @brief default destructor
+   */
   ~WellElement() override;
 
+  /// deleted default constructor
   WellElement() = delete;
+
+  /// deleted copy constructor
   WellElement( WellElement const &) = delete;
+
+  /// deleted move constructor
   WellElement( WellElement && ) = delete;
 
+  /// deleted assignment operator
+  WellElement & operator=( WellElement const & ) = delete;
+
+  /// deleted move operator
+  WellElement & operator=( WellElement && ) = delete;
+
+  /**
+   * @brief Getter for the physical location of the well element
+   * @return an R1Tensor containing the coordinates of the well element
+   */
   R1Tensor const & getLocation() const
   { return m_location; }
   
+  /**
+   * @brief Getter for the name of the well element
+   * @return a string containing the name of the well element
+   */
   string const & getNextWellElementName() const 
   { return m_nextWellElementName; }
 

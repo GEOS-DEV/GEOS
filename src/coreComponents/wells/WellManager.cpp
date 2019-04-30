@@ -43,7 +43,6 @@ WellManager::WellManager(string const & name,
 
 WellManager::~WellManager()
 {
-
 }
   
 ManagedGroup * WellManager::CreateChild(string const & childKey, string const & childName)
@@ -57,17 +56,6 @@ ManagedGroup * WellManager::CreateChild(string const & childKey, string const & 
     GEOS_ERROR( "Unrecognized node: " << childKey );
   }
   return nullptr;
-}
-
-Well * WellManager::getWell(string const & name)
-{
-  return GetGroup<Well>(name);
-}
-
-void WellManager::setGravityVector(R1Tensor const & gravity, bool gravityFlag)
-{
-  m_gravityVector = gravity;
-  m_gravityFlag   = gravityFlag;
 }
 
 } //namespace geosx

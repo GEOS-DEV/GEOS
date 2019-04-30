@@ -46,6 +46,18 @@ public:
    */
   virtual ~ReservoirWellsSystemSolver() override;
 
+  /// deleted copy constructor
+  ReservoirWellsSystemSolver( ReservoirWellsSystemSolver const & ) = delete;
+
+  /// default move constructor
+  ReservoirWellsSystemSolver( ReservoirWellsSystemSolver && ) = default;
+
+  /// deleted assignment operator
+  ReservoirWellsSystemSolver & operator=( ReservoirWellsSystemSolver const & ) = delete;
+
+  /// deleted move operator
+  ReservoirWellsSystemSolver & operator=( ReservoirWellsSystemSolver && ) = delete;
+
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.

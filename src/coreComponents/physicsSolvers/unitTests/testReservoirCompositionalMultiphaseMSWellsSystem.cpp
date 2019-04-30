@@ -799,7 +799,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         residual->Scale( 0.0 );
         assembleFunction( wellSolver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>( iwelemOffset + CompositionalMultiphaseWell::ColOffset::DPRES + jc + 1);
+        long long const dofIndex = integer_conversion<long long>( iwelemOffset + CompositionalMultiphaseWell::ColOffset::DCOMP + jc);
 
         for (int lid = 0; lid < localSizeInt; ++lid)
         {
@@ -834,7 +834,7 @@ void testNumericalJacobian( ReservoirWellsSystemSolver * solver,
         residual->Scale( 0.0 );
         assembleFunction( wellSolver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>(iwelemOffset + NC + 1 );
+        long long const dofIndex = integer_conversion<long long>(iwelemOffset + CompositionalMultiphaseWell::ColOffset::DCOMP + NC );
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
         //      this is computing J_RW and J_WW

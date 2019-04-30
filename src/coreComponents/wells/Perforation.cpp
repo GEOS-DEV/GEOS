@@ -46,8 +46,18 @@ Perforation::Perforation(string const & name, ManagedGroup * const parent)
 
   RegisterViewWrapper( viewKeyStruct::wellElementNameString, &m_wellElementName, false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Well element name");
+    setDescription("Segment name");
 }
+
+void Perforation::PostProcessInput()
+{  
+  GEOS_ERROR_IF( m_wellElementName.empty(), 
+                 "Invalid segment name in segment " << getName() );
+  
+  GEOS_ERROR_IF( m_transmissibility <= 0, 
+                 "Negative transmissibility value in segment " << getName() );
+}
+
 
 Perforation::~Perforation()
 {
