@@ -1,23 +1,22 @@
-.. _LinearElasticIsotropic:
+.. _LinearElasticAnisotropic:
 
 ############################################
-Linear elastic isotropic solid model
+Linear elastic anisotropic solid model
 ############################################
 
 Overview
 =========================
 
-This model may be used to represents a solid material with a linear elastic isotropic response to loading.
+This model may be used to represents a solid material with a linear elastic anisotropic response to loading.
 The relationship between stress and strain is typically represented by `Hooke's Law <https://en.wikipedia.org/wiki/Hooke%27s_law>`__, 
 which for the case of linear elasticity, may be expressed as:
 
 .. math::
-   \sigma_{ij} + \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
+   \sigma_{ij} + C_{ijkl} \epsilon_{kl},
    
 where :math:`\sigma_{ij}` is the :math:`ij` component of the cauchy stress tensor, 
-:math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,
-:math:`\lambda` is the Lames elastic constant,
-and :math:`\mu` is the elastic shear modulus.
+:math:`\epsilon_{kl}` is the :math:`kl` component of the the strain tensor, and
+:math:`C_{ijkl}` is the fourth order  elastic stiffness tensor.
 
 Hooke's Law may also be expressed using `Voigt notation <https://en.wikipedia.org/wiki/Voigt_notation>`__ for the stress and strain tensors as:
 
@@ -37,12 +36,12 @@ or,
     \end{bmatrix}
     = 
     \begin{bmatrix}
-      2\mu+\lambda  &   \lambda     &   \lambda   & 0   & 0 & 0 \\
-          \lambda     &  2\mu+\lambda   &   \lambda   & 0   & 0 & 0 \\
-          \lambda     &    \lambda    & 2\mu+\lambda & 0  & 0 & 0 \\
-          0         &       0     &       0 &\mu  & 0 & 0 \\
-      0         &           0     & 0       & 0   & \mu & 0 \\
-      0         &       0     & 0       & 0   & 0 & \mu
+      c_{1111} & c_{1122} & c_{1133} & c_{1123} & c_{1113} & c_{1112} \\
+      c_{2211} & c_{2222} & c_{2233} & c_{2223} & c_{2213} & c_{2212} \\
+      c_{3311} & c_{3322} & c_{3333} & c_{3323} & c_{3313} & c_{3312} \\
+      c_{2311} & c_{2322} & c_{2333} & c_{2323} & c_{2313} & c_{2312} \\
+      c_{1311} & c_{1322} & c_{1333} & c_{1323} & c_{1313} & c_{1312} \\
+      c_{2311} & c_{2322} & c_{2333} & c_{2323} & c_{2313} & c_{2312}
     \end{bmatrix}
     \begin{bmatrix}
       \epsilon_{11} \\
@@ -78,7 +77,7 @@ Usage
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
+.. include:: /coreComponents/fileIO/schema/docs/LinearElasticAnisotropic.rst
 
 Input example
 =========================
@@ -86,8 +85,12 @@ Input example
 .. code-block:: xml
 
   <Constitutive>
-    <LinearElasticIsotropic name="shale"
-                            defaultDensity="2700"
-                            defaultBulkModulus="61.9e6"
-                            defaultShearModulus="28.57e6"
+    <LinearElasticAnisotropic name="shale"
+                              defaultDensity="2700"
+                              c11=1.0e10 c12=1.1e9  c13=1.2e9  c14=1.3e9 c15=1.4e9 c16=1.5e9
+                              c21=2.0e9  c22=2.1e10 c23=2.2e9  c24=2.3e9 c25=2.4e9 c26=2.5e9
+                              c31=3.0e9  c32=3.1e9  c33=3.2e10 c34=3.3e9 c35=3.4e9 c36=3.5e9
+                              c41=4.0e9  c42=4.1e9  c43=4.2e9  c44=4.3e9 c45=4.4e9 c46=4.5e9
+                              c51=5.0e9  c52=5.1e9  c53=5.2e9  c54=5.3e9 c55=5.4e9 c56=5.5e9
+                              c61=6.0e9  c62=6.1e9  c63=6.2e9  c64=6.3e9 c65=6.4e9 c66=6.5e9 />
   </Constitutive>
