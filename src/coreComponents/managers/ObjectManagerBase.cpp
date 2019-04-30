@@ -239,14 +239,17 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
       dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-      if(DOPACK)
+      if( wrapper!=nullptr )
       {
-        packedSize += wrapper->Pack( buffer, packList );
-      }
-      else
-      {
-        packedSize += wrapper->PackSize( packList );
+        packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
+        if(DOPACK)
+        {
+          packedSize += wrapper->Pack( buffer, packList );
+        }
+        else
+        {
+          packedSize += wrapper->PackSize( packList );
+        }
       }
     }
   }
