@@ -251,6 +251,10 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
           packedSize += wrapper->PackSize( packList );
         }
       }
+      else
+      {
+        packedSize += bufferOps::Pack<DOPACK>( buffer, string("nullptr") );
+      }
     }
   }
 
@@ -303,8 +307,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-      unpackedSize += wrapper->Unpack(buffer,packList);
+      if( wrapperName != "nullptr" )
+      {
+        ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+        unpackedSize += wrapper->Unpack(buffer,packList);
+      }
     }
   }
 
