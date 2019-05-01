@@ -75,19 +75,19 @@
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
                    endTime="0.02"   
-                   maxEventDt="0.01"
+                   forceDt="0.01"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication0"
                    beginTime="0.02"
                    endTime="500"   
-                   maxEventDt="20.0"
+                   forceDt="20.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
                    beginTime="500"
                    endTime="2e3"   
-                   maxEventDt="100.0"
+                   forceDt="100.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="restarts"

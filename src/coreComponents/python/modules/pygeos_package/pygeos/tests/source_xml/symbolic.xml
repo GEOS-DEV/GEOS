@@ -98,7 +98,7 @@
          Note: if an event is triggered, then it's children
          are tested/evaluated. -->
     <PeriodicEvent name="init_solvers"
-                   maxEventDt="0.25"
+                   forceDt="0.25"
                    beginTime="0"
                    endTime="$:initTime" >
       <PeriodicEvent name="solver_a" target="/Solvers/implag3"/>

@@ -48,7 +48,7 @@
   <Events maxTime="5e6">
 
     <PeriodicEvent name="solverApplications"
-                   maxEventDt="1e5"
+                   forceDt="1e5"
                    target="/Solvers/compflow" />
 
     <PeriodicEvent name="outputs"
