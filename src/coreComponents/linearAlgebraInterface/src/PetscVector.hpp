@@ -27,6 +27,9 @@
 #include <petscvec.h>
 
 #include "common/DataTypes.hpp"
+#include <vector>
+#include <string> // Hannah: need these?
+#include <time.h>
 
 namespace geosx
 {
@@ -59,7 +62,7 @@ class PetscVector
   PetscVector(PetscVector const & vec);
 
   /* Construct from Petsc vector */
-  PetscVector(Vec vec);
+  PetscVector(Vec vec); // Hannah: do I need this?
 
   /**
    * @brief Virtual destructor.
@@ -68,60 +71,164 @@ class PetscVector
   //@}
 
   //! @name Create Methods
-  //@{we
+  //@{
 
   /**
-   * @brief Construct vector from array.
+   * @brief Create a vector based on local number of elements.
    *
-   * Create a vector from a size and an array of values.
+   * Create a vector based on local number of elements.  Global size is
+   * the sum across processors.  For specifying a global size and having
+   * automatic partitioning, see createGlobal().
    *
-   * \param size Global number of elements.
-   * \param values Array of values to populate vector.
+   * \param localSize local number of elements.
    *
    */
-  void create(int const size, PetscScalar *values);
+  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Construct vector from std::vector.
+   * @brief Create a vector based on global number of elements.
    *
-   * Create a vector from an std vector.
+   * Create a vector based on global number of elements. Every processors
+   * gets the same number of local elements except proc 0, which gets any
+   * remainder elements as well if the split can't be done evenly.
    *
-   * \param vec Std vector to cast as PetscVector
+   * \param globalSize Global number of elements.
    *
    */
-  void create(std::vector<PetscScalar> &vec);
+  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
+
+  /**
+   * @brief Construct parallel vector from a local array.
+   *
+   * Create a vector from local data
+   *
+   * \param localValues local data to put into vector
+   *
+   */
+  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
+  // Hannah: to do
+
+  //@}
+  //! @name Open / close
+  //@{
+
+  /**
+   * @brief Empty function for PETSc implementation. May be required by other libraries.
+   *
+   */
+  void open();
+
+  /**
+   * @brief Assemble vector
+   *
+   * // Hannah: blurb here
+   */
+  void close();
+
+  //@}
+  //! @name Add/Set Methods
+  //@
 
   /**
    * @brief Set vector value.
    *
    * Set vector value at given element.
    *
-   * \param element elements index.
-   * \param value Values to add in given element.
+   * \param globalRow global row index
+   * \param value Value to add at given row.
    *
    */
-  void set(int element, PetscScalar value);
-
-  // /* set values of vector elements */
-  // void set(array1d<int> elements, array1d<PetscScalar> values);
+  void set( globalIndex const globalRow,
+            real64 const value );
 
   /**
    * @brief Add into vector value.
    *
    * Add into vector value at given element.
    *
-   * \param element elements index.
-   * \param value Values to add in given element.
+   * \param globalRow global row.
+   * \param value Values to add in given row.
    *
    */
-  void add(int element, PetscScalar value);
+  void add( globalIndex const globalRow,
+            real64 const value );
 
-  // /* add values to vector elements */
-  // void add(array1d<int> elements, array1d<PetscScalar> values);
+  /**
+   * @brief Set vector values.
+   *
+   * Set vector values at given elements.
+   *
+   * \param globalIndices global row indices.
+   * \param values Values to add in given rows.
+   * \param size Number of elements
+   *
+   */
+  void set( globalIndex const * globalIndices,
+            real64 const * values,
+            localIndex size );
+
+  /**
+   * @brief Add vector values.
+   *
+   * Add vector values at given elements.
+   *
+   * \param globalIndices global row indices.
+   * \param values Values to add in given rows.
+   * \param size Number of elements
+   *
+   */
+  void add( globalIndex const * globalIndices,
+            real64 const * values,
+            localIndex size );
+
+  /**
+   * @brief Set vector values using array1d
+   *
+   * Set vector values at given elements.
+   *
+   * \param globalIndices global row indices.
+   * \param values Values to add in given rows.
+   *
+   */
+  void set( array1d<globalIndex> const & globalIndices,
+            array1d<real64> const & values );
+
+
+  /**
+   * @brief Add into vector values using array1d
+   *
+   * Add into vector values at given rows.
+   *
+   * \param globalIndices global rows indices
+   * \param values Values to add in given rows.
+   *
+   */
+  void add( array1d<globalIndex> const & globalIndices,
+            array1d<real64> const & values );
+
+  /**
+   * @brief Set all elements to a constant value.
+   *
+   * \param value Values to set vector elements to.
+   *
+   */
+  void set( real64 const value );
+
+  /**
+   * @brief Set vector elements to zero.
+   *
+   */
+  void zero();
+
+  /**
+   * @brief Set vector elements to random entries.
+   *
+   */
+  void rand();
 
   //@}
 
-  //! @name Linear Algebra Methods
+  //! @name Algebraic Operations
   //@{
 
   /**
@@ -130,23 +237,23 @@ class PetscVector
    * \param scalingFactor Scaling Factor.
    *
    */
-  void scale(PetscScalar const scalingFactor);
+  void scale(real64 const scalingFactor);
 
   /**
    * @brief Dot product with the vector vec.
    *
-   * \param vec Vector to dot-product with.
-   * \param dst Result.
+   * \param vec EpetraVector to dot-product with.
    *
    */
-  void dot(PetscVector const vec, PetscScalar *dst);
+  real64 dot( PetscVector const &vec );
+  // Hannah: fix spacing later
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x Vector to add.
+   * \param x PetscVector to add.
    *
    */
   void copy(PetscVector const &x);
@@ -160,7 +267,7 @@ class PetscVector
    * \param x Vector to add.
    *
    */
-  void axpy(PetscScalar const alpha, PetscVector const &x);
+  void axpy(real64 const alpha, PetscVector const &x);
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -172,31 +279,25 @@ class PetscVector
    * \param beta Scaling factor for self vector.
    *
    */
-  void axpby(PetscScalar const alpha, PetscVector &x, PetscScalar const beta);
+  void axpby(PetscScalar const alpha, PetscVector &x, real64 const beta);
 
   /**
    * @brief 1-norm of the vector.
    *
-   * \param 1-norm of the vector.
-   *
    */
-  void norm1(PetscScalar &result) const;
+  real64 norm1() const;
 
   /**
    * @brief 2-norm of the vector.
    *
-   * \param 2-norm of the vector.
-   *
    */
-  void norm2(PetscScalar &result) const;
+  real64 norm2() const;
 
   /**
    * @brief Infinity-norm of the vector.
    *
-   * \param Inf-norm of the vector.
-   *
    */
-  void normInf(PetscScalar &result) const;
+  real64 normInf() const
 
   //@}
 
@@ -206,27 +307,35 @@ class PetscVector
   /**
    * @brief Returns the global of the vector.
    */
-  int globalSize() const;
+  globalIndex globalSize() const;
 
   /**
    * @brief Returns the local size of the vector.
    */
-  int localSize() const;
+  localIndex localSize() const;
+
+   /**
+   * @brief Returns a single element.
+   */
+  real64 get(globalIndex globalRow) const;
 
   /**
-   * @brief Returns element i of the vector.
+   * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
    */
-  PetscScalar getElement(int i) const;
+  void get( array1d<globalIndex> const & globalIndices,
+            array1d<real64> & values ) const;
+  // Hannah: to do
 
   /**
    * @brief Returns a const pointer to the underlying Vec.
    */
-  const Vec* getPointer() const;
+  const Vec* unwrappedPointer() const;
+  // Hannah: Vec const * ?
 
   /**
    * @brief Returns a non-const pointer to the underlying Vec.
    */
-  const Vec* getPointer();
+  Vec* unwrappedPointer();
 
   /* Returns vector */
   Vec getConstVec() const;
@@ -244,12 +353,20 @@ class PetscVector
    */
   void print() const;
 
+  /**
+   * @brief Write the vector to a matlab-compatible file
+   */
+  void write( string const & filename ) const;
+  // Hannah: to do 
+
+  //@}
+
  protected:
   
   // Underlying Petsc Vec type
   Vec _vec;
 };
 
-}
+} // end geosx namespace
 
 #endif /* PETSCVECTOR_HPP_ */
