@@ -703,6 +703,18 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
 
 }
 
+void ObjectManagerBase::inheritGhostRankFromParent( std::set<localIndex> const & indices )
+{
+  arrayView1d<localIndex const> const &
+  parentIndex = this->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+
+  for( auto const a : indices )
+  {
+    m_ghostRank[a] = m_ghostRank[ parentIndex[a] ];
+  }
+}
+
+
 void ObjectManagerBase::CopyObject( const localIndex source, const localIndex destination )
 {
   for( auto & wrapper : wrappers() )
