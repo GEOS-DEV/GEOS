@@ -163,7 +163,8 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
       perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
     
     // define a reservoir pressure used for initialization
-    real64 resPres = well->getTargetBHP();
+    real64 resPres = ( well->getType() == Well::Type::PRODUCER )
+                   ? 1e20 : 0;
 
     // 1) Loop over all perforations to compute an average density
     real64 avgDensity = 0;

@@ -526,7 +526,8 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     avgCompFrac = 0.0;
     
     // define a reservoir pressure used for initialization
-    real64 resPres = well->getTargetBHP();
+    real64 resPres = ( well->getType() == Well::Type::PRODUCER )
+                   ? 1e20 : 0;
 
     for (localIndex iperf = 0; iperf < perforationData->numPerforationsLocal(); ++iperf)
     {

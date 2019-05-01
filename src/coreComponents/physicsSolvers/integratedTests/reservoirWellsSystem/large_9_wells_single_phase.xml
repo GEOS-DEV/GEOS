@@ -1,0 +1,558 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  <Solvers
+    gravityVector="0.0, 0.0, -9.81">
+
+    <ReservoirWellsSystem name="reservoirWellsSystem"
+                          flowSolverName="singlePhaseFlow"
+                          wellSolverName="singlePhaseWell"
+                          verboseLevel="1"
+                          targetRegions="Domain">
+      <SystemSolverParameters useDirectSolver="1"
+                              maxIterNewton="40"
+                              verbosityFlag="2"/>
+    </ReservoirWellsSystem>
+  
+    <SinglePhaseFlow name="singlePhaseFlow"
+                     verboseLevel="1"
+                     gravityFlag="0"
+                     targetRegions="Domain"
+                     discretization="singlePhaseTPFA"
+                     fluidName="water"
+                     solidName="rock">
+    </SinglePhaseFlow>
+
+    <SinglePhaseWell name="singlePhaseWell"
+                     verboseLevel="1"
+                     gravityFlag="0"
+                     targetRegions="Domain"
+                     segmentFluidName="water">
+    </SinglePhaseWell>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="C3D8" 
+                  xCoords="0, 360"
+                  yCoords="0, 660"
+                  zCoords="0, 0.6"
+                  nx="60"
+                  ny="220"
+                  nz="1"
+                  cellBlockNames="cb1"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
+  </Geometry>
+
+
+  <Events maxTime="2e8">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1e7"
+                   target="/Solvers/reservoirWellsSystem" />
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   timeFrequency="0.5e5"
+                   targetExactTimestep="0.5e5"
+                   target="/Outputs/siloWellPump" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1e99"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"
+                   endTime="-1"/>
+  </Events>
+  
+    <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 boundaryFieldName="facePressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+
+  </NumericalMethods>
+
+    <ElementRegions>
+    <ElementRegion name="Domain" cellBlocks="cb1" materialList="water rock" />
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-9"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+  </Constitutive>
+
+  <Wells name="Wells"
+         materialList="water">
+   
+    <Well name="prod0"
+          type="producer"
+          control="BHP"
+          targetBHP="5e2"
+          targetRate="1"
+          referenceDepth="0.4">
+      <Segments>
+        <Segment name="prod0_seg0"
+                 nextSegmentName=""
+                 location="277 360 0.4"/>
+        <Segment name="prod0_seg1"
+                 nextSegmentName="prod0_seg0"
+                 location="277 380 0.4"/>
+        <Segment name="prod0_seg2"
+                 nextSegmentName="prod0_seg1"
+                 location="277 400 0.4"/>
+        <Segment name="prod0_seg3"
+                 nextSegmentName="prod0_seg2"
+                 location="277 420 0.4"/>
+        <Segment name="prod0_seg4"
+                 nextSegmentName="prod0_seg3"
+                 location="277 440 0.4"/>
+        <Segment name="prod0_seg5"
+                 nextSegmentName="prod0_seg4"
+                 location="300 450 0.4"/>
+        <Segment name="prod0_seg6"
+                 nextSegmentName="prod0_seg5"
+                 location="330 480 0.4"/>
+        <Segment name="prod0_seg7"
+                 nextSegmentName="prod0_seg3"
+                 location="250 450 0.4"/>
+        <Segment name="prod0_seg8"
+                 nextSegmentName="prod0_seg7"
+                 location="235 480 0.4"/>
+        <Segment name="prod0_seg9"
+                 nextSegmentName="prod0_seg8"
+                 location="215 500 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="prod0_p0"
+                     location="277.94 440.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg3" />
+        <Perforation name="prod0_p1"
+                     location="288.11 445.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg4" />
+        <Perforation name="prod0_p2"
+                     location="300.11 450.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg4" />
+        <Perforation name="prod0_p3"
+                     location="315.11 465.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg6" />
+        <Perforation name="prod0_p4"
+                     location="330.11 480.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg6" />
+        <Perforation name="prod0_p5"
+                     location="230.11 470.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg8" />
+        <Perforation name="prod0_p6"
+                     location="210.11 510.265 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod0_seg9" />
+      </Perforations> 
+    </Well>
+
+    <Well name="prod1"
+          type="producer"
+          control="BHP"
+          targetBHP="5e2"
+          targetRate="1"
+          referenceDepth="0.4">
+      <Segments>
+        <Segment name="prod1_seg0"
+                 nextSegmentName=""
+                 location="140 530 0.4"/>
+        <Segment name="prod1_seg1"
+                 nextSegmentName="prod1_seg0"
+                 location="161 550 0.4"/>
+        <Segment name="prod1_seg2"
+                 nextSegmentName="prod1_seg1"
+                 location="180 550 0.4"/>
+        <Segment name="prod1_seg3"
+                 nextSegmentName="prod1_seg2"
+                 location="230 566 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="prod1_p0"
+                     location="161 547 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod1_seg1" />
+        <Perforation name="prod1_p1"
+                     location="176 549 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod1_seg2" />
+        <Perforation name="prod1_p2"
+                     location="195 551 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod1_seg2" />
+        <Perforation name="prod1_p3"
+                     location="220 561 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod1_seg3" />
+        <Perforation name="prod1_p4"
+                     location="240 571 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod1_seg3" />
+      </Perforations> 
+    </Well>
+
+
+    <Well name="prod2"
+          type="producer"
+          control="BHP"
+          targetBHP="5e2"
+          targetRate="1"
+          referenceDepth="0.4">
+      <Segments>
+        <Segment name="prod2_seg0"
+                 nextSegmentName=""
+                 location="134 554 0.4"/>
+        <Segment name="prod2_seg1"
+                 nextSegmentName="prod2_seg0"
+                 location="154 574 0.4"/>
+        <Segment name="prod2_seg2"
+                 nextSegmentName="prod2_seg1"
+                 location="154 594 0.4"/>
+        <Segment name="prod2_seg3"
+                 nextSegmentName="prod2_seg2"
+                 location="169 607.5 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="prod2_p0"
+                     location="154 574 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod2_seg1" />
+        <Perforation name="prod2_p1"
+                     location="154 589 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod2_seg2" />
+        <Perforation name="prod2_p2"
+                     location="154 606 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod2_seg2" />
+        <Perforation name="prod2_p3"
+                     location="164 607 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod2_seg3" />
+        <Perforation name="prod2_p4"
+                     location="174 608 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod2_seg3" />
+      </Perforations> 
+    </Well>
+
+    <Well name="prod3"
+          type="producer"
+          control="liquidRate"
+          targetBHP="1e5"
+          targetRate="0.001"
+          referenceDepth="0.4">
+      <Segments>
+        <Segment name="prod3_seg0"
+                 nextSegmentName=""
+                 location="155 280 0.4"/>
+        <Segment name="prod3_seg1"
+                 nextSegmentName="prod3_seg0"
+                 location="135 258 0.4"/>
+        <Segment name="prod3_seg2"
+                 nextSegmentName="prod3_seg1"
+                 location="110 230 0.4"/>
+        <Segment name="prod3_seg3"
+                 nextSegmentName="prod3_seg2"
+                 location="90 200 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="prod3_p0"
+                     location="139 258 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod3_seg1" />
+        <Perforation name="prod3_p1"
+                     location="129 244 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod3_seg2" />
+        <Perforation name="prod3_p2"
+                     location="101 220 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod3_seg2" />
+        <Perforation name="prod3_p3"
+                     location="99 200 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod3_seg3" />
+        <Perforation name="prod3_p4"
+                     location="80 199 0.4"
+                     transmissibility="1e-11"
+                     segmentName="prod3_seg3" />
+      </Perforations> 
+    </Well>
+    
+    <Well name="inj0"
+          type="injector"
+          control="liquidRate" 
+          targetBHP="1e7"
+          targetRate="1e-1"
+          referenceDepth="0.4" > 
+      <Segments>
+        <Segment name="inj0_seg0"
+                 nextSegmentName=""
+                 location="0 0 0"/>
+        <Segment name="inj0_seg1"
+                 nextSegmentName="inj0_seg0"
+                 location="250 660 0.4"/>
+        <Segment name="inj0_seg2"
+                 nextSegmentName="inj0_seg1"
+                 location="270 640 0.4"/>
+        <Segment name="inj0_seg3"
+                 nextSegmentName="inj0_seg2"
+                 location="300 620 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="inj0_p0"
+                     location="274 636 0.4"
+                     transmissibility="1e-12"
+                     segmentName="inj0_seg1" />
+        <Perforation name="inj0_p1"
+                     location="283 615 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj0_seg2" />
+        <Perforation name="inj0_p2"
+                     location="296 615 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj0_seg3" />
+      </Perforations> 
+    </Well>
+
+    <Well name="inj1"
+          type="injector"
+          control="BHP" 
+          targetBHP="1e7"
+          targetRate="1e1"
+          referenceDepth="0.4" > 
+      <Segments>
+        <Segment name="inj1_seg0"
+                 nextSegmentName=""
+                 location="40 100 0.4"/>
+        <Segment name="inj1_seg1"
+                 nextSegmentName="inj1_seg0"
+                 location="60 120 0.4"/>
+        <Segment name="inj1_seg2"
+                 nextSegmentName="inj1_seg1"
+                 location="70 140 0.4"/>
+        <Segment name="inj1_seg3"
+                 nextSegmentName="inj1_seg2"
+                 location="80 141 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="inj1_p0"
+                     location="66 151 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj1_seg1" />
+        <Perforation name="inj1_p1"
+                     location="72 145 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj1_seg2" />
+        <Perforation name="inj1_p2"
+                     location="82 140 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj1_seg3" />
+        <Perforation name="inj1_p3"
+                     location="59 120 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj1_seg1" />
+      </Perforations> 
+    </Well>
+
+    <Well name="inj2"
+          type="injector"
+          control="BHP" 
+          targetBHP="1e7"
+          targetRate="1e1"
+          referenceDepth="0.4" > 
+      <Segments>
+        <Segment name="inj2_seg0"
+                 nextSegmentName=""
+                 location="50 380 0.4"/>
+        <Segment name="inj2_seg1"
+                 nextSegmentName="inj2_seg0"
+                 location="70 420 0.4"/>
+        <Segment name="inj2_seg2"
+                 nextSegmentName="inj2_seg1"
+                 location="90 401 0.4"/>
+        <Segment name="inj2_seg3"
+                 nextSegmentName="inj2_seg2"
+                 location="110 400 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="inj2_p0"
+                     location="76 426 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj2_seg1" />
+        <Perforation name="inj2_p1"
+                     location="84 420 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj2_seg2" />
+        <Perforation name="inj2_p2"
+                     location="94 413 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj2_seg2" />
+        <Perforation name="inj2_p3"
+                     location="106 404 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj2_seg3" />
+        <Perforation name="inj2_p4"
+                     location="118 394 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj2_seg3" />
+      </Perforations> 
+    </Well>
+
+    <Well name="inj3"
+          type="injector"
+          control="BHP" 
+          targetBHP="1e7"
+          targetRate="1e1"
+          referenceDepth="0.4" > 
+      <Segments>
+        <Segment name="inj3_seg0"
+                 nextSegmentName=""
+                 location="190 35 0.4"/>
+        <Segment name="inj3_seg1"
+                 nextSegmentName="inj3_seg0"
+                 location="220 50 0.4"/>
+        <Segment name="inj3_seg2"
+                 nextSegmentName="inj3_seg1"
+                 location="190 110 0.4"/>
+        <Segment name="inj3_seg3"
+                 nextSegmentName="inj3_seg2"
+                 location="250 125 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="inj3_p0"
+                     location="229 57 0.4"
+                     transmissibility="1e-12"
+                     segmentName="inj3_seg1" />
+        <Perforation name="inj3_p1"
+                     location="195 112 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj3_seg2" />
+        <Perforation name="inj3_p2"
+                     location="246 120 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj3_seg3" />
+      </Perforations> 
+    </Well>
+
+    <Well name="inj4"
+          type="injector"
+          control="BHP" 
+          targetBHP="1e7"
+          targetRate="1e1"
+          referenceDepth="0.4" > 
+      <Segments>
+        <Segment name="inj4_seg0"
+                 nextSegmentName=""
+                 location="300 260 0.4"/>
+        <Segment name="inj4_seg1"
+                 nextSegmentName="inj4_seg0"
+                 location="320 280 0.4"/>
+        <Segment name="inj4_seg2"
+                 nextSegmentName="inj4_seg1"
+                 location="340 270 0.4"/>
+        <Segment name="inj4_seg3"
+                 nextSegmentName="inj4_seg2"
+                 location="370 260 0.4"/>
+      </Segments> 
+      <Perforations>
+        <Perforation name="inj4_p0"
+                     location="325 299 0.4"
+                     transmissibility="1e-12"
+                     segmentName="inj4_seg1" />
+        <Perforation name="inj4_p1"
+                     location="346 274 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj4_seg2" />
+        <Perforation name="inj4_p2"
+                     location="364 263 0.4"
+                     transmissibility="1e-11"
+                     segmentName="inj4_seg3" />
+      </Perforations> 
+    </Well>
+
+    
+  </Wells>
+ 
+  
+  <FieldSpecifications>
+    <FieldSpecification name="permx"
+                        component="0"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/Domain/cb1"
+                        fieldName="permeability"
+                        scale="1e-15"/>
+
+
+    <FieldSpecification name="permy"
+                        component="1"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/Domain/cb1"
+                        fieldName="permeability"
+                        scale="1e-15"/>
+
+    <FieldSpecification name="permz"
+                        component="2"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/Domain/cb1"
+                        fieldName="permeability"
+                        scale="1e-15"/>
+
+    <FieldSpecification name="referencePorosity"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/Domain/cb1"
+                        scale="0.2"
+                        fieldName="referencePorosity"/>
+
+    <FieldSpecification name="initialPressure"
+                        initialCondition="1"
+                        setNames="all"
+                        objectPath="ElementRegions/Domain/cb1"
+                        fieldName="pressure"
+                        scale="1e6"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+
+  </Functions>
+
+  <!-- <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition> -->
+
+  <Outputs>
+      <Silo name="siloWellPump"/>
+      <Restart name="sidreRestart"/>
+  </Outputs>
+</Problem>

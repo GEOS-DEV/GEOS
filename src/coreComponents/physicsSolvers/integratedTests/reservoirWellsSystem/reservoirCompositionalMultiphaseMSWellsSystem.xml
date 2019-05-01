@@ -39,8 +39,8 @@
     </CompositionalMultiphaseWell>
 
     
-  </Solvers>
-  
+  </Solvers>  
+
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
@@ -53,7 +53,8 @@
                   cellBlockNames="cb1"/>
   </Mesh>
 
-  <Events maxTime="5e4">
+
+  <Events maxTime="2.5e4">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="2.5e3"
@@ -80,8 +81,36 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" materialList="fluid1 rock relperm" />
+    <ElementRegion name="Region2" 
+                   cellBlocks="cb1" 
+                   materialList="fluid1 rock relperm" />
   </ElementRegions>
+
+  <Constitutive>
+    <CompositionalMultiphaseFluid name="fluid1"
+                                  phaseNames="oil gas"
+                                  equationsOfState="PR PR"
+                                  componentNames="N2 C10 C20 H2O"
+                                  componentCriticalPressure="34e5, 25.3e5, 14.6e5, 220.5e5"
+                                  componentCriticalTemperature="126.2, 622.0, 782.0, 647.0"
+                                  componentAcentricFactor="0.04, 0.443, 0.816, 0.344"
+                                  componentMolarWeight="28e-3, 134e-3, 275e-3, 18e-3"
+                                  componentVolumeShift="0 0 0 0"
+                                  componentBinaryCoeff="0 0 0 0
+                                                        0 0 0 0
+                                                        0 0 0 0
+                                                        0 0 0 0"/>
+    
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+
+    <BrooksCoreyRelativePermeability name="relperm"
+                                     phaseNames="oil gas"
+                                     phaseMinVolumeFraction="0.1 0.15"
+                                     phaseRelPermExponent="2.0 2.0"
+                                     phaseRelPermMaxValue="0.8 0.9"/>
+  </Constitutive>
 
   <Wells name="wellGroup"
          materialList="fluid1">
@@ -119,7 +148,7 @@
                      segmentName="prod0_seg1b1" /> 
       </Perforations> 
     </Well> 
-<!--
+
     <Well name="inj0"
           type="injector"
 	  control="BHP"
@@ -159,42 +188,15 @@
                      segmentName="inj0_seg1b1" /> 
       </Perforations> 
     </Well>   
--->
+
   </Wells>
-  
-  <Constitutive>
-    <CompositionalMultiphaseFluid name="fluid1"
-                                  phaseNames="oil gas"
-                                  equationsOfState="PR PR"
-                                  componentNames="N2 C10 C20 H2O"
-                                  componentCriticalPressure="34e5, 25.3e5, 14.6e5, 220.5e5"
-                                  componentCriticalTemperature="126.2, 622.0, 782.0, 647.0"
-                                  componentAcentricFactor="0.04, 0.443, 0.816, 0.344"
-                                  componentMolarWeight="28e-3, 134e-3, 275e-3, 18e-3"
-                                  componentVolumeShift="0 0 0 0"
-                                  componentBinaryCoeff="0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0"/>
     
-    <PoreVolumeCompressibleSolid name="rock"
-                                 referencePressure="0.0"
-                                 compressibility="1e-9"/>
-
-    <BrooksCoreyRelativePermeability name="relperm"
-                                     phaseNames="oil gas"
-                                     phaseMinVolumeFraction="0.1 0.15"
-                                     phaseRelPermExponent="2.0 2.0"
-                                     phaseRelPermMaxValue="0.8 0.9"/>
-  </Constitutive>
-
-  
   <FieldSpecifications>
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -202,7 +204,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -210,14 +212,14 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
@@ -226,7 +228,7 @@
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="5e6"/>
 
@@ -235,7 +237,7 @@
     <FieldSpecification name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.099"/>
@@ -243,7 +245,7 @@
     <FieldSpecification name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.3"/>
@@ -251,7 +253,7 @@
     <FieldSpecification name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.6"/>
@@ -259,7 +261,7 @@
     <FieldSpecification name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="3"
                scale="0.001"/>

@@ -194,7 +194,7 @@
                component="0"
                initialCondition="1"  
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -202,7 +202,7 @@
                component="1"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
@@ -210,14 +210,14 @@
                component="2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
@@ -226,7 +226,7 @@
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="5e6"/>
 
@@ -235,7 +235,7 @@
     <FieldSpecification name="initialComposition_N2"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="0"
                scale="0.099"/>
@@ -243,7 +243,7 @@
     <FieldSpecification name="initialComposition_C10"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="1"
                scale="0.3"/>
@@ -251,7 +251,7 @@
     <FieldSpecification name="initialComposition_C20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="2"
                scale="0.6"/>
@@ -259,7 +259,7 @@
     <FieldSpecification name="initialComposition_H20"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
+               objectPath="ElementRegions/Region2/cb1"
                fieldName="globalCompFraction"
                component="3"
                scale="0.001"/>
