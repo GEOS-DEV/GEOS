@@ -302,6 +302,19 @@ void PetscVector::print() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscVector::write( string const & filename ) const
 {
+	// // need a char[] for PETSc
+	// char filename_char[filename.length() + 1]; 
+    // strcpy(filename_char, filename.c_str()); 
+
+	// // set up PETSc viewer
+	// PetscViewer viewer;
+	// PetscViewerCreate(PETSC_COMM_WORLD, &viewer);
+	// PetscViewerSetType(viewer, PETSCVIEWERBINARY);
+	// PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+	// PetscViewerFileSetMode(viewer, FILE_MODE_WRITE);
+	// PetscViewerFileSetName(viewer, filename_char);
+	// VecView(_vec, viewer)
+
 	// Hannah: to do
 }
 
