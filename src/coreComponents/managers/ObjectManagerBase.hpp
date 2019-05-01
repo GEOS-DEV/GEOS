@@ -200,6 +200,15 @@ public:
                        int const rank,
                        localIndex & newIndex );
 
+  /**
+   * @brief sets the value of m_ghostRank to the value of the objects parent.
+   * @param indices the list of indices for which to set the ghost rank
+   *
+   * This function takes a list of indices, and then sets the value of m_ghostRank for those indices to be equal to the
+   * value of the "parent" index. This assumes that "parentIndex" is allocated and filled correctly.
+   */
+  void inheritGhostRankFromParent( std::set<localIndex> const & indices );
+
   void CopyObject( localIndex const source, localIndex const destination );
 
   void SetMaxGlobalIndex();
