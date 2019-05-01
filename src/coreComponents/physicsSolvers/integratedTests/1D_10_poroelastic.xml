@@ -73,13 +73,13 @@
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
                    endTime="10"   
-                   maxEventDt="1.0"
+                   forceDt="1.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
                    beginTime="10"
                    endTime="8000"   
-                   maxEventDt="600.0"
+                   forceDt="600.0"
                    target="/Solvers/poroSolve" />
 
   </Events>
