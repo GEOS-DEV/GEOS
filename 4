@@ -1,0 +1,312 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:annotation>
+		<xsd:documentation xml:lang="en">New schema for GEOS</xsd:documentation>
+	</xsd:annotation>
+	<xsd:simpleType name="mapPair">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2Sym_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2SymTensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r1_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:element name="Problem" type="ProblemType" />
+	<xsd:complexType name="ProblemType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Events" type="EventsType" />
+			<xsd:element name="Geometry" type="GeometryType" maxOccurs="1" />
+			<xsd:element name="Mesh" type="MeshType" maxOccurs="1" />
+			<xsd:element name="NumericalMethods" type="NumericalMethodsType" />
+			<xsd:element name="Outputs" type="OutputsType" maxOccurs="1" />
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="Solvers" type="SolversType" maxOccurs="1" />
+			<xsd:element name="Domain" type="DomainType" maxOccurs="1" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="EventsType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+		</xsd:choice>
+		<xsd:attribute name="cycle" type="integer" />
+		<xsd:attribute name="dt" type="real64" />
+		<xsd:attribute name="maxCycle" type="integer" />
+		<xsd:attribute name="maxTime" type="real64" />
+		<xsd:attribute name="time" type="real64" />
+		<xsd:attribute name="verbosity" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="PeriodicEventType">
+		<xsd:attribute name="allowSubstep" type="integer" />
+		<xsd:attribute name="allowSuperstep" type="integer" />
+		<xsd:attribute name="beginTime" type="real64" />
+		<xsd:attribute name="cycleFrequency" type="integer" />
+		<xsd:attribute name="endTime" type="real64" />
+		<xsd:attribute name="forceDt" type="real64" />
+		<xsd:attribute name="function" type="string" />
+		<xsd:attribute name="lastCycle" type="integer" />
+		<xsd:attribute name="lastTime" type="real64" />
+		<xsd:attribute name="object" type="string" />
+		<xsd:attribute name="set" type="string" />
+		<xsd:attribute name="stat" type="integer" />
+		<xsd:attribute name="substepFactor" type="integer" />
+		<xsd:attribute name="target" type="string" />
+		<xsd:attribute name="targetExactTimestep" type="integer" />
+		<xsd:attribute name="threshold" type="real64" />
+		<xsd:attribute name="timeFrequency" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="GeometryType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Box" type="BoxType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BoxType">
+		<xsd:attribute name="xMax" type="R1Tensor" />
+		<xsd:attribute name="xMin" type="R1Tensor" />
+	</xsd:complexType>
+	<xsd:complexType name="MeshType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="InternalMesh" type="InternalMeshType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="InternalMeshType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="cellBlockNames" type="string_array" />
+		<xsd:attribute name="elementTypes" type="string_array" />
+		<xsd:attribute name="nx" type="integer_array" />
+		<xsd:attribute name="ny" type="integer_array" />
+		<xsd:attribute name="nz" type="integer_array" />
+		<xsd:attribute name="trianglePattern" type="integer" />
+		<xsd:attribute name="xCoords" type="real64_array" />
+		<xsd:attribute name="xbias" type="real64_array" />
+		<xsd:attribute name="yCoords" type="real64_array" />
+		<xsd:attribute name="ybias" type="real64_array" />
+		<xsd:attribute name="zCoords" type="real64_array" />
+		<xsd:attribute name="zbias" type="real64_array" />
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="NumericalMethodsType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="BasisFunctions" type="BasisFunctionsType" maxOccurs="1" />
+			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" maxOccurs="1" />
+			<xsd:element name="FiniteVolume" type="FiniteVolumeType" maxOccurs="1" />
+			<xsd:element name="QuadratureRules" type="QuadratureRulesType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BasisFunctionsType" />
+	<xsd:complexType name="FiniteElementSpaceType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="FE1" type="FE1Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="FE1Type">
+		<xsd:attribute name="basis" type="string" use="required" />
+		<xsd:attribute name="quadrature" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FiniteVolumeType" />
+	<xsd:complexType name="QuadratureRulesType" />
+	<xsd:complexType name="OutputsType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Silo" type="SiloType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="SiloType">
+		<xsd:attribute name="parallelThreads" type="integer" />
+		<xsd:attribute name="plotLevel" type="integer" />
+		<xsd:attribute name="slaveDirectory" type="string" />
+	</xsd:complexType>
+	<xsd:complexType name="SetsType" />
+	<xsd:complexType name="SolversType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+		</xsd:choice>
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+	</xsd:complexType>
+	<xsd:complexType name="LaplaceFEMType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" />
+		</xsd:choice>
+		<xsd:attribute name="courant" type="real64" />
+		<xsd:attribute name="fieldName" type="string" />
+		<xsd:attribute name="maxDt" type="real64" />
+		<xsd:attribute name="timeIntegrationOption" type="string" />
+		<xsd:attribute name="verboseLevel" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="SystemSolverParametersType">
+		<xsd:attribute name="ilut_drop" type="real64" />
+		<xsd:attribute name="ilut_fill" type="real64" />
+		<xsd:attribute name="krylovTol" type="real64" />
+		<xsd:attribute name="maxIterNewton" type="integer" />
+		<xsd:attribute name="newtonTol" type="real64" />
+		<xsd:attribute name="numKrylovIter" type="integer" />
+		<xsd:attribute name="scalingOption" type="integer" />
+		<xsd:attribute name="solverType" type="string" />
+		<xsd:attribute name="useDirectSolver" type="integer" />
+		<xsd:attribute name="useMLPrecond" type="integer" />
+		<xsd:attribute name="useNewtonSolve" type="integer" />
+		<xsd:attribute name="verbosityFlag" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="DomainType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Constitutive" type="ConstitutiveType" />
+			<xsd:element name="MeshBodies" type="MeshBodiesType" />
+			<xsd:element name="cellMananger" type="cellManangerType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ConstitutiveType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticIsotropicType">
+		<xsd:attribute name="BulkModulus0" type="real64" />
+		<xsd:attribute name="PoissonRatio" type="real64" />
+		<xsd:attribute name="ShearModulus0" type="real64" />
+		<xsd:attribute name="YoungsModulus" type="real64" />
+		<xsd:attribute name="density0" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="MeshBodiesType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="mesh1" type="mesh1Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="mesh1Type">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Level0" type="Level0Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="Level0Type">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="ElementRegions" type="ElementRegionsType" />
+			<xsd:element name="InternalMesh" type="InternalMeshType" />
+			<xsd:element name="edgeManager" type="edgeManagerType" />
+			<xsd:element name="NodeManager" type="NodeManagerType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ElementRegionsType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="elementRegions" type="elementRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="elementRegionsType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="ElementRegion" type="ElementRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ElementRegionType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="cellBlockSubRegions" type="cellBlockSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="cellBlocks" type="string_array" use="required" />
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<xsd:attribute name="material" type="string" use="required" />
+		<xsd:attribute name="materialList" type="string_array" use="required" />
+		<xsd:attribute name="numericalMethod" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="cellBlockSubRegionsType" />
+	<xsd:complexType name="neighborDataType" />
+	<xsd:complexType name="edgeManagerType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="NodeManagerType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="cellManangerType">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="Sets" type="SetsType" />
+			<xsd:element name="cellBlocks" type="cellBlocksType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+		</xsd:choice>
+		<xsd:attribute name="ghostRank" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="cellBlocksType" />
+</xsd:schema>

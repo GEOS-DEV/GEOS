@@ -239,14 +239,21 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
       dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-      if(DOPACK)
+      if( wrapper!=nullptr )
       {
-        packedSize += wrapper->Pack( buffer, packList );
+        packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
+        if(DOPACK)
+        {
+          packedSize += wrapper->Pack( buffer, packList );
+        }
+        else
+        {
+          packedSize += wrapper->PackSize( packList );
+        }
       }
       else
       {
-        packedSize += wrapper->PackSize( packList );
+        packedSize += bufferOps::Pack<DOPACK>( buffer, string("nullptr") );
       }
     }
   }
@@ -300,8 +307,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-      unpackedSize += wrapper->Unpack(buffer,packList);
+      if( wrapperName != "nullptr" )
+      {
+        ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+        unpackedSize += wrapper->Unpack(buffer,packList);
+      }
     }
   }
 
@@ -702,6 +712,18 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   return 1;
 
 }
+
+void ObjectManagerBase::inheritGhostRankFromParent( std::set<localIndex> const & indices )
+{
+  arrayView1d<localIndex const> const &
+  parentIndex = this->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+
+  for( auto const a : indices )
+  {
+    m_ghostRank[a] = m_ghostRank[ parentIndex[a] ];
+  }
+}
+
 
 void ObjectManagerBase::CopyObject( const localIndex source, const localIndex destination )
 {
