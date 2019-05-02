@@ -57,31 +57,31 @@ PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
 
 void PetscSolver::solve( PetscSparseMatrix &mat,
                          PetscVector &sol,
-                         PetscVector &rhs )
+                         PetscVector &rhs,
+                         MPI_Comm const comm )
 {
   if( m_parameters.solverType == "direct" )
-    solve_direct( mat, sol, rhs );
+    solve_direct( mat, sol, rhs, comm );
   else
-    solve_krylov( mat, sol, rhs );
+    solve_krylov( mat, sol, rhs, comm );
 }
 
 // ----------------------------
 // Direct solver
 // ----------------------------
 
-void PetscSolver::solve_direct( MPI_Comm const comm,
-                                PetscSparseMatrix &mat,
+void PetscSolver::solve_direct( PetscSparseMatrix &mat,
                                 PetscVector &sol,
-                                PetscVector &rhs )
+                                PetscVector &rhs,
+                                MPI_Comm const comm )
 {
   // create linear solver
   KSP ksp;
   KSPCreate(comm, &ksp);
-
   KSPSetOperators(ksp, mat.getMat(), mat.getMat());
   KSPSetType(ksp, KSPPREONLY);
 
-  // use direct solve preconditioner
+  // use direct solve preconditioner MUMPS
   PC prec;
   KSPGetPC(ksp, &prec);
   PCSetType(prec, PCLU);
@@ -89,6 +89,8 @@ void PetscSolver::solve_direct( MPI_Comm const comm,
   // more MUMPS parameters can go here
 
   // solve system
+  // Hannah: output here
+  KSPSetFromOptions(ksp);
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 
@@ -97,10 +99,10 @@ void PetscSolver::solve_direct( MPI_Comm const comm,
 // Iterative solver
 // ----------------------------
 
-void PetscSolver::solve_krylov( MPI_Comm const comm,
-                                PetscSparseMatrix &mat,
+void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
                                 PetscVector &sol,
-                                PetscVector &rhs )
+                                PetscVector &rhs,
+                                MPI_Comm const comm )
 {
   // create linear solver
   KSP ksp;
@@ -109,7 +111,7 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   KSPGMRESSetRestart(ksp, m_parameters.krylov.maxRestart);
   KSPSetTolerances(ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT, PETSC_DEFAULT, m_parameters.krylov.maxIterations);
 
-  // Choose the solver type
+  // pick the solver type
   if( m_parameters.solverType == "gmres" )
   {
     KSPSetType(ksp, KSPGMRES);
@@ -123,13 +125,15 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
     KSPSetType(ksp, KSPCG);
   }
   else
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
-
-  // Create a preconditioner
+  {
+    printf("The requested linear solverType doesn't seem to exist\n");
+    // GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+  }
+  
+  // create a preconditioner and pick type
   PC prec;
   KSPGetPC(ksp, &prec);
 
-  // Choose the preconditioner type
   if( m_parameters.preconditionerType == "none" )
   {
     PCSetType(prec, PCNONE);
@@ -140,11 +144,13 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    printf("The requested linear preconditionerType isn't availbe in PETSc\n");
+    // GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
-    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    printf("The requested linear preconditionerType isn't availbe in PETSc\n");
+    // GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
@@ -157,8 +163,7 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
-
-    std::map<string, string> translate; // maps GEOSX to PETSc syntax for Hyper options
+    std::map<std::string, std::string> translate; // maps GEOSX to PETSc syntax for Hyper options
 
     translate.insert( std::make_pair( "jacobi", "Jacobi" ));
     translate.insert( std::make_pair( "sequentialGaussSeidel", "sequential-Gauss-Seidel" ));
@@ -175,41 +180,43 @@ void PetscSolver::solve_krylov( MPI_Comm const comm,
     translate.insert( std::make_pair( "fcfJacobi", "FCF-Jacobi" ));
     translate.insert( std::make_pair( "l1scaledJacobi", "l1scaled-Jacobi" ));
 
-    if(m_parameters.amg.solver == "Hypre")
-    {
-      PCSetType(prec, PCHYPRE);
-      PCHYPRESetType(prec, "boomeramg")
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", m_parameters.amg.maxLevels); 
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", m_parameters.amg.cycleType); 
-      // relaxation method
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_all", translate[m_parameters.amg.smootherType]); // <symmetric-SOR/Jacobi> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_coarse", translate[m_parameters.amg.coarseType]); // <Gaussian-elimination> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-      // number of relaxation sweeps
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_all", m_parameters.amg.numSweeps); 
-      PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", m_parameters.amg.numSweeps); // coarsest grid
-    } 
-    else
-    {
-      GEOS_ERROR( "The requested linear AMG solver isn't available in PETSc" );
-    }
+    PCSetType(prec, PCHYPRE);
+    PCHYPRESetType(prec, "boomeramg");
+  
+    // PETSc needs char[]
+    char max_levels[10], cycle_type[10], num_sweeps[10], smoother_type[30], coarse_type[30];
+    sprintf(max_levels, "%d", m_parameters.amg.maxLevels);
+    sprintf(cycle_type, "%s", m_parameters.amg.cycleType.c_str());
+    sprintf(num_sweeps, "%d", m_parameters.amg.maxLevels);
+    sprintf(smoother_type, "%s", translate[m_parameters.amg.smootherType].c_str());
+    sprintf(coarse_type, "%s", translate[m_parameters.amg.coarseType].c_str());
+
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", max_levels); 
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", cycle_type); 
+    // relaxation method
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_all", smoother_type); // <symmetric-SOR/Jacobi> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type); // <Gaussian-elimination> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+    // number of relaxation sweeps
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps); 
+    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps); // coarsest grid
   }
   else
-    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+  {
+    GEOS_ERROR( "The requested preconditionerType isn't availbe in exist" );
+  }
 
   // HANNAH: in PETSc? Ask for a convergence normalized by the right hand side
-  KSPSetNormType(prec, KSP_NORM_PRECONDITIONED);
+  // KSPSetNormType(ksp, KSP_NORM_PRECONDITIONED);
 
-  // Control output
-  switch( m_parameters.verbosity )
+  // display output
+  if (m_parameters.verbosity > 0)
   {
-  case 1:
-    PetscOptionsSetValue(NULL, "-ksp_monitor_short", "");
-    break;
-  case 2:
-    PetscOptionsSetValue(NULL, "-ksp_monitor", "");
+    PetscOptionsSetValue(NULL, "-ksp_monitor", NULL); 
+    // PetscOptionsSetValue(NULL, "-log_view", "true"); // Hannah: not working?
   }
 
   // Actually solve
+  KSPSetFromOptions(ksp); 
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
 }
 

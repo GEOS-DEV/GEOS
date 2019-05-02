@@ -28,8 +28,8 @@
 
 #include <petscksp.h>
 
+#include "PetscVector.hpp"
 #include "PetscSparseMatrix.hpp"
-// #include "PetscVector.hpp"
 #include "LinearSolverParameters.hpp"
 
 namespace geosx
@@ -64,7 +64,9 @@ public:
 
   void solve( PetscSparseMatrix &mat,
               PetscVector &sol,
-              PetscVector &rhs );
+              PetscVector &rhs,
+              MPI_Comm const comm );
+              // Hannah: PETSc needs communicator for KSP
 
 private:
 
@@ -72,11 +74,13 @@ private:
 
   void solve_direct( PetscSparseMatrix &mat,
                      PetscVector &sol,
-                     PetscVector &rhs );
+                     PetscVector &rhs,
+                     MPI_Comm const comm );
 
   void solve_krylov( PetscSparseMatrix &mat,
                      PetscVector &sol,
-                     PetscVector &rhs );
+                     PetscVector &rhs,
+                     MPI_Comm const comm );
 
 };
 
