@@ -192,6 +192,15 @@ constexpr bool is_packable_by_index<T>::value;
 
 } /* namespace bufferOps */
 
+template<typename T, bool COND>
+struct add_const_if
+{
+  using type = typename std::conditional<COND, typename std::add_const<T>::type, T>::type;
+};
+
+template<typename T, bool COND>
+using add_const_if_t = typename add_const_if<T, COND>::type;
+
 } /* namespace geosx */
 
 #endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_ */
