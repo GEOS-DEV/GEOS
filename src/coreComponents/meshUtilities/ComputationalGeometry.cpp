@@ -39,11 +39,11 @@ namespace computationalGeometry
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& points,
-                         R1Tensor& center,
-                         R1Tensor& normal,
-                         real64 const areaTolerance )
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance )
 {
   R1Tensor v1,v2,vc;
   const localIndex n = pointsIndices.size();
@@ -128,11 +128,11 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& pointReferences,
-                         const array1d<R1Tensor>& pointDisplacements,
-                         R1Tensor& center,
-                         R1Tensor& normal )
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal )
 {
   R1Tensor v1,v2,vc;
   const localIndex n = pointsIndices.size();
