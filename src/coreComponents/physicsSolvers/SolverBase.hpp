@@ -24,7 +24,7 @@
 #include <string>
 #include <limits>
 
-#include "codingUtilities/Meta.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
