@@ -41,13 +41,16 @@ public:
 
 protected:
 
-  virtual void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
+  virtual void computeCellStencil( DomainPartition const & domain,
+                                   CellStencil & stencil ) override;
 
   virtual void computeFractureStencil( DomainPartition const & domain,
                                        CellStencil & fractureStencil,
                                        CellStencil & cellStencil ) override;
 
-  virtual void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) override;
+  virtual void computeBoundaryStencil( DomainPartition const & domain,
+                                       set<localIndex> const & faceSet,
+                                       BoundaryStencil & stencil ) override;
 
 };
 

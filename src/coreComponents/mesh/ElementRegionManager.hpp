@@ -167,17 +167,31 @@ public:
 
 
   template< typename LAMBDA >
-  void forElementRegions( LAMBDA lambda )
+  void forElementRegions( LAMBDA && lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
-    elementRegions->forSubGroups<ElementRegion>( lambda );
+    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
-  void forElementRegions( LAMBDA lambda ) const
+  void forElementRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
-    elementRegions->forSubGroups<ElementRegion>( lambda );
+    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
+  {
+    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  {
+    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    elementRegions->forSubGroups<ElementRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -187,12 +201,24 @@ public:
     forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
-
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
     forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
+
+  template< typename LAMBDA >
+  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
@@ -218,16 +244,47 @@ public:
     }
   }
 
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
+  {
+    forElementRegions( targetRegions, [&] ( ElementRegion * const elemRegion )
+    {
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+    } );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementRegions( targetRegions, [&] ( ElementRegion const * const elemRegion )
+    {
+      elemRegion->forElementSubRegions<SUBREGIONTYPE,SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+    } );
+  }
+
 
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda ) const
   {
     forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
+
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA lambda )
   {
     forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementSubRegionsComplete<CellElementSubRegion,FaceElementSubRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -270,6 +327,44 @@ public:
     }
   }
 
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA lambda )
+  {
+    forElementRegions( targetRegions, [&] ( ElementRegion * const elementRegion )
+    {
+      localIndex const er = elementRegion->getIndexInParent();
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
+
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
+      }
+    } );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA lambda ) const
+  {
+    forElementRegions( targetRegions, [&] ( ElementRegion const * const elementRegion )
+    {
+      localIndex const er = elementRegion->getIndexInParent();
+
+      for( localIndex esr=0 ;  esr<elementRegion->numSubRegions() ; ++esr )
+      {
+        ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
+
+        ElementRegion::applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        });
+      }
+    } );
+  }
 
   // template< typename VIEWTYPE >
   // ElementViewAccessor<VIEWTYPE> ConstructViewAccessor( string const & name,

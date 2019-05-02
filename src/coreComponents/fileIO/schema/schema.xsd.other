@@ -377,16 +377,18 @@
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
+			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
+			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
-			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
-			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
-			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
-			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
+			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
@@ -430,96 +432,6 @@
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--dTotalDensity_dGlobalCompFraction = (no description available)-->
 		<xsd:attribute name="dTotalDensity_dGlobalCompFraction" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--density = (no description available)-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--dPressure_dDensity = (no description available)-->
-		<xsd:attribute name="dPressure_dDensity" type="real64_array2d" />
-		<!--viscosity = (no description available)-->
-		<xsd:attribute name="viscosity" type="real64_array2d" />
-		<!--dViscosity_dDensity = (no description available)-->
-		<xsd:attribute name="dViscosity_dDensity" type="real64_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="LinearElasticAnisotropicType">
-		<!--density = Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--DeviatorStress = Stress Deviator-->
-		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
-		<!--MeanStress = Mean stress-->
-		<xsd:attribute name="MeanStress" type="real64_array2d" />
-		<!--defaultStiffness = Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
-		<!--stiffness = Elastic Stiffness Field in Voigt notation-->
-		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor, 1, long, LvArray::ChaiVector&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor&gt; &gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="LinearElasticIsotropicType">
-		<!--density = Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--DeviatorStress = Stress Deviator-->
-		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
-		<!--MeanStress = Mean stress-->
-		<xsd:attribute name="MeanStress" type="real64_array2d" />
-		<!--BulkModulus = Elastic Bulk Modulus Field-->
-		<xsd:attribute name="BulkModulus" type="real64_array" />
-		<!--ShearModulus = Elastic Shear Modulus-->
-		<xsd:attribute name="ShearModulus" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroLinearElasticAnisotropicType">
-		<!--density = Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--DeviatorStress = Stress Deviator-->
-		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
-		<!--MeanStress = Mean stress-->
-		<xsd:attribute name="MeanStress" type="real64_array2d" />
-		<!--defaultStiffness = Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
-		<!--stiffness = Elastic Stiffness Field in Voigt notation-->
-		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor, 1, long, LvArray::ChaiVector&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor&gt; &gt;" />
-		<!--poreVolumeMultiplier = (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--dPVMult_dDensity = (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
-		<!--phaseTypes = (no description available)-->
-		<xsd:attribute name="phaseTypes" type="integer_array" />
-		<!--phaseRelPerm = (no description available)-->
-		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
-		<!--dPhaseRelPerm_dPhaseVolFraction = (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroLinearElasticIsotropicType">
-		<!--density = Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--DeviatorStress = Stress Deviator-->
-		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
-		<!--MeanStress = Mean stress-->
-		<xsd:attribute name="MeanStress" type="real64_array2d" />
-		<!--BulkModulus = Elastic Bulk Modulus Field-->
-		<xsd:attribute name="BulkModulus" type="real64_array" />
-		<!--ShearModulus = Elastic Shear Modulus-->
-		<xsd:attribute name="ShearModulus" type="real64_array" />
-		<!--poreVolumeMultiplier = (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--dPVMult_dDensity = (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
-		<!--phaseTypes = (no description available)-->
-		<xsd:attribute name="phaseTypes" type="integer_array" />
-		<!--phaseOrder = (no description available)-->
-		<xsd:attribute name="phaseOrder" type="integer_array" />
-		<!--phaseCapPressure = (no description available)-->
-		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
-		<!--dPhaseCapPressure_dPhaseVolFraction = (no description available)-->
-		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
-	</xsd:complexType>
-	<xsd:complexType name="PoreVolumeCompressibleSolidType">
-		<!--poreVolumeMultiplier = (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--dPVMult_dDensity = (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--phaseFraction = (no description available)-->
@@ -572,6 +484,112 @@
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--dPhaseCapPressure_dPhaseVolFraction = (no description available)-->
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="CompressibleSinglePhaseFluidType">
+		<!--density = (no description available)-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dPressure_dDensity = (no description available)-->
+		<xsd:attribute name="dPressure_dDensity" type="real64_array2d" />
+		<!--viscosity = (no description available)-->
+		<xsd:attribute name="viscosity" type="real64_array2d" />
+		<!--dViscosity_dDensity = (no description available)-->
+		<xsd:attribute name="dViscosity_dDensity" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticAnisotropicType">
+		<!--density = Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--DeviatorStress = Stress Deviator-->
+		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
+		<!--MeanStress = Mean stress-->
+		<xsd:attribute name="MeanStress" type="real64_array2d" />
+		<!--defaultStiffness = Default Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
+		<!--stiffness = Elastic Stiffness Field in Voigt notation-->
+		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor, 1, long, LvArray::ChaiVector&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticAnisotropicType">
+		<!--density = Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--DeviatorStress = Stress Deviator-->
+		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
+		<!--MeanStress = Mean stress-->
+		<xsd:attribute name="MeanStress" type="real64_array2d" />
+		<!--defaultStiffness = Default Elastic Stiffness Tensor in Voigt notation-->
+		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
+		<!--stiffness = Elastic Stiffness Field in Voigt notation-->
+		<xsd:attribute name="stiffness" type="LvArray::Array&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor, 1, long, LvArray::ChaiVector&lt;geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor&gt; &gt;" />
+		<!--poreVolumeMultiplier = (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--dPVMult_dDensity = (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticIsotropicType">
+		<!--density = Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--DeviatorStress = Stress Deviator-->
+		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
+		<!--MeanStress = Mean stress-->
+		<xsd:attribute name="MeanStress" type="real64_array2d" />
+		<!--BulkModulus = Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus = Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--poreVolumeMultiplier = (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--dPVMult_dDensity = (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
+		<!--phaseTypes = (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--phaseOrder = (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseCapPressure = (no description available)-->
+		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
+		<!--dPhaseCapPressure_dPhaseVolFraction = (no description available)-->
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="PoreVolumeCompressibleSolidType">
+		<!--poreVolumeMultiplier = (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--dPVMult_dDensity = (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
+		<!--phaseTypes = (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--phaseRelPerm = (no description available)-->
+		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--dPhaseRelPerm_dPhaseVolFraction = (no description available)-->
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
+		<!--phaseTypes = (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--phaseRelPerm = (no description available)-->
+		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--dPhaseRelPerm_dPhaseVolFraction = (no description available)-->
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticIsotropicType">
+		<!--density = Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--DeviatorStress = Stress Deviator-->
+		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
+		<!--MeanStress = Mean stress-->
+		<xsd:attribute name="MeanStress" type="real64_array2d" />
+		<!--BulkModulus = Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus = Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
+		<!--phaseTypes = (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--phaseRelPerm = (no description available)-->
+		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--dPhaseRelPerm_dPhaseVolFraction = (no description available)-->
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, long, LvArray::ChaiVector&lt;double&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -732,15 +750,11 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="TwoPointFluxApproximationType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BoundarySetData" type="BoundarySetDataType" />
-		</xsd:choice>
 		<!--cellStencil = (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
 		<!--fractureStencil = (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="BoundarySetDataType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
