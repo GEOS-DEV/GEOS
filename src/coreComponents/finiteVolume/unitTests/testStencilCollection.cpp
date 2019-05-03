@@ -113,11 +113,11 @@ TEST(testStencilCollection, noAcessorIterationTPFA)
                          arrayView1d<double> const & dataOut,
                          FluxStencil<Cell, double> const & stencil )
   {
-    csArrayView2d<FluxStencil<Cell, double>::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxStencil<Cell, double>::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      for (localIndex i = 0; i < connections.size(iconn); ++i)
+      for (localIndex i = 0; i < connections.sizeOfArray(iconn); ++i)
       {
         FluxStencil<Cell, double>::Entry const & entry = connections(iconn, i);
         dataOut[iconn] += entry.weight * dataIn[entry.index.ei];
