@@ -97,20 +97,35 @@ public:
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d<localIndex const> const & packList ) const
-  { return 0;}
-
+  { return 0; }
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d<localIndex> & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps )
-  { return 0;}
-
+  { return 0; }
 
 
   virtual localIndex UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        integer const recursive );
+
+
+  localIndex PackParentChildMapsSize( arrayView1d<localIndex const> const & packList ) const
+  {
+    buffer_unit_type * buffer = nullptr;
+    return PackParentChildMapsPrivate<false>( buffer, packList );
+  }
+
+  localIndex PackParentChildMaps( buffer_unit_type * & buffer,
+                                  arrayView1d<localIndex const> const & packList ) const
+  {
+    return PackParentChildMapsPrivate<true>( buffer, packList );
+  }
+
+  localIndex UnpackParentChildMaps( buffer_unit_type const * & buffer,
+                                    localIndex_array & packList );
+
 
 private:
   template< bool DOPACK >
@@ -123,6 +138,11 @@ private:
   localIndex PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList,
                                     integer const recursive ) const;
+
+  template<bool DOPACK>
+  localIndex PackParentChildMapsPrivate( buffer_unit_type * & buffer,
+                                         arrayView1d<localIndex const> const & packList ) const;
+
 
   //**********************************************************************************************************************
   // functions for compatibility with old data structure
