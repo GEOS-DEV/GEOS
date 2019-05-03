@@ -74,7 +74,7 @@ public:
     m_ownsData( true ),
     m_data( new T() )
   {
-    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
       this->setSizedFromParent(0);
     }
@@ -92,7 +92,7 @@ public:
   m_ownsData( true ),
   m_data( object.release() )
   {
-    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
       this->setSizedFromParent(0);
     }
@@ -112,7 +112,7 @@ public:
     m_ownsData( takeOwnership ),
     m_data( object )
   {
-    if( traits::is_tensorT<T>::value || std::is_arithmetic<T>::value || traits::is_string<T>::value )
+    if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
       this->setSizedFromParent(0);
     }
@@ -634,11 +634,11 @@ public:
   {
     HAS_MEMBER_FUNCTION(isSorted,bool,const,,)
     template<class U = T>
-    static typename std::enable_if<traits::is_set<U>::value, bool>::type shouldResize()
+    static typename std::enable_if<traits::is_set<U>, bool>::type shouldResize()
     { return false;  }
 
     template<class U = T>
-    static typename std::enable_if<!traits::is_set<U>::value, bool>::type shouldResize()
+    static typename std::enable_if<!traits::is_set<U>, bool>::type shouldResize()
     { return true; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual bool shouldResize() const override final
