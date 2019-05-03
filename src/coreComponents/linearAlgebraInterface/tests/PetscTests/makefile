@@ -1,6 +1,6 @@
 #
 
-PETSC_DIR = /Users/hannahmorgan/petsc
+PETSC_DIR = ../../../../../../thirdPartyLibs/build-default-release/petsc/src/petsc
 PETSC_ARCH = arch-darwin-c-debug
 
 include ${PETSC_DIR}/lib/petsc/conf/variables
