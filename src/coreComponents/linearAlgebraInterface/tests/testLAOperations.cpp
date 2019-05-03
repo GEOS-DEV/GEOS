@@ -38,6 +38,7 @@
 #include "common/DataTypes.hpp"
 
 #include "TrilinosInterface.hpp"
+#include "PetscInterface.hpp"
 //#include "HypreInterface.hpp"
 #include "LinearSolverParameters.hpp"
 
@@ -631,14 +632,14 @@ TEST(testLAOperations,testEpetraLAOperations)
 /*! @function testPETScLAOperations.
  * @brief Runs all tests using the PETSc interface.
  */
-//TEST(testLAOperations,testPETScLAOperations)
-//{
-  //MPI_Init( nullptr, nullptr );
-  //testInterfaceSolvers<PETScInterface>();
-  //testGEOSXSolvers<PETScInterface>();
-  //testGEOSXBlockSolvers<PETScInterface>();
-  //MPI_Finalize();
-//}
+TEST(testLAOperations,testPETScLAOperations)
+{
+  MPI_Init( nullptr, nullptr );
+  testInterfaceSolvers<PETScInterface>();
+  testGEOSXSolvers<PETScInterface>();
+  testGEOSXBlockSolvers<PETScInterface>();
+  MPI_Finalize();
+}
 
 //@}
 
