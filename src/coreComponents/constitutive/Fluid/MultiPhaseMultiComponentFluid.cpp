@@ -64,25 +64,31 @@ MultiPhaseMultiComponentFluid::~MultiPhaseMultiComponentFluid()
 }
 
 
-std::unique_ptr<ConstitutiveBase>
-MultiPhaseMultiComponentFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
+void MultiPhaseMultiComponentFluid::DeliverClone( string const & name,
+                                                  ManagedGroup * const parent,
+                                                  std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< MultiPhaseMultiComponentFluid > clone = std::make_unique<MultiPhaseMultiComponentFluid>( name, parent );
+  clone = std::make_unique<MultiPhaseMultiComponentFluid>( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique<MultiPhaseMultiComponentFluid>( name, parent );
+  }
+  MultiPhaseMultiComponentFluid * const newConstitutiveRelation = dynamic_cast<MultiPhaseMultiComponentFluid *>(clone.get());
 
-  clone->m_useMass = this->m_useMass;
 
-  clone->m_componentNames       = this->m_componentNames;
-  clone->m_componentMolarWeight = this->m_componentMolarWeight;
+  newConstitutiveRelation->m_useMass = this->m_useMass;
 
-  clone->m_phaseNames           = this->m_phaseNames;
+  newConstitutiveRelation->m_componentNames       = this->m_componentNames;
+  newConstitutiveRelation->m_componentMolarWeight = this->m_componentMolarWeight;
 
-  clone->m_phasePVTParaFiles       = this->m_phasePVTParaFiles;
+  newConstitutiveRelation->m_phaseNames           = this->m_phaseNames;
 
-  clone->m_flashModelParaFile = this->m_flashModelParaFile;
+  newConstitutiveRelation->m_phasePVTParaFiles       = this->m_phasePVTParaFiles;
 
-  clone->CreatePVTModels();
+  newConstitutiveRelation->m_flashModelParaFile = this->m_flashModelParaFile;
 
-  return std::move( clone );
+  newConstitutiveRelation->CreatePVTModels();
+
 }
 
 void MultiPhaseMultiComponentFluid::PostProcessInput()
