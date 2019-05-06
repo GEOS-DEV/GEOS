@@ -35,7 +35,6 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/LinearElasticIsotropic.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
@@ -330,7 +329,7 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
 
         for( localIndex k=0 ; k<numElems ; ++k )
         {
-          if( elemGhostRank[k] < 0 )
+          //if( elemGhostRank[k] < 0 )
           {
             for( localIndex a=0 ; a<numNodesPerElement ; ++a )
             {

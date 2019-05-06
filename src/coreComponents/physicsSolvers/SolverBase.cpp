@@ -129,17 +129,35 @@ real64 SolverBase::SolverStep( real64 const& time_n,
 }
 
 
-void SolverBase::Execute( real64 const& time_n,
-                          real64 const& dt,
+void SolverBase::Execute( real64 const time_n,
+                          real64 const dt,
                           integer const cycleNumber,
                           integer const eventCounter,
-                          real64 const & eventProgress,
+                          real64 const eventProgress,
                           ManagedGroup * domain )
 {
-  if( dt > 0 )
+  real64 dtRemaining = dt;
+
+  SystemSolverParameters * const solverParams = getSystemSolverParameters();
+  integer const maxSubSteps = solverParams->maxSubSteps();
+
+  for (integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep)
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+    real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
+                                          dtRemaining,
+                                          cycleNumber,
+                                          domain->group_cast<DomainPartition *>() );
+    dtRemaining -= dtAccepted;
+
+    if (m_verboseLevel >= 1 && dtRemaining > 0.0)
+    {
+      GEOS_LOG_RANK_0( getName() << ": sub-step = " << subStep
+                       << ", accepted dt = " << dtAccepted
+                       << ", remaining dt = " << dtRemaining );
+    }
   }
+
+  GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 }
 
 
@@ -273,11 +291,12 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     if (dtAttempt > 0)
       ResetStateToBeginningOfStep( domain );
 
-    // main Newton loop
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
-    integer & k = solverParams->numNewtonIterations();
-    for( k=0 ; k<maxNewtonIter ; ++k )
+    integer & newtonIter = solverParams->numNewtonIterations();
+
+    // main Newton loop
+    for( newtonIter=0 ; newtonIter<maxNewtonIter ; ++newtonIter )
     {
 
       // call assemble to fill the matrix and the rhs
@@ -291,7 +310,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       if ( m_verboseLevel >= 1 )
       {
-        GEOS_LOG_RANK_0( "Attempt: " << dtAttempt  << ", Newton: " << k << ", R = " << residualNorm );
+        GEOS_LOG_RANK_0( "Attempt: " << dtAttempt  << ", Newton: " << newtonIter << ", R = " << residualNorm );
       }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
