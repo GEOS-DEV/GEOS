@@ -13,7 +13,11 @@ set( linearAlgebraInterface_headers
      NativeCG.hpp
      NativeBICGSTAB.hpp
      TrilinosSolver.hpp
-     TrilinosInterface.hpp) 
+     TrilinosInterface.hpp
+     PetscVector.hpp
+     PetscSparseMatrix.hpp
+     PetscSolver.hpp
+     PetscInterface.hpp ) 
 
 #
 # Specify all sources
@@ -24,9 +28,12 @@ set( linearAlgebraInterface_sources
      DofManager.cpp
      EpetraMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp )
+     TrilinosSolver.cpp 
+     PetscVector.cpp
+     PetscSparseMatrix.cpp
+     PetscSolver.cpp )
 
-set( dependencyList common trilinos hypre mpi managers)
+set( dependencyList common trilinos petsc hypre mpi managers)
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
