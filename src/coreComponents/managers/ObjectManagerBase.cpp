@@ -239,14 +239,21 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
       dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-      if(DOPACK)
+      if( wrapper!=nullptr )
       {
-        packedSize += wrapper->Pack( buffer, packList );
+        packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
+        if(DOPACK)
+        {
+          packedSize += wrapper->Pack( buffer, packList );
+        }
+        else
+        {
+          packedSize += wrapper->PackSize( packList );
+        }
       }
       else
       {
-        packedSize += wrapper->PackSize( packList );
+        packedSize += bufferOps::Pack<DOPACK>( buffer, string("nullptr") );
       }
     }
   }
@@ -300,8 +307,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-      unpackedSize += wrapper->Unpack(buffer,packList);
+      if( wrapperName != "nullptr" )
+      {
+        ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+        unpackedSize += wrapper->Unpack(buffer,packList);
+      }
     }
   }
 
@@ -328,6 +338,86 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
   return unpackedSize;
 }
+
+template<bool DOPACK>
+localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & buffer,
+                                                          arrayView1d<localIndex const> const & packList ) const
+{
+  localIndex packedSize = 0;
+
+  localIndex_array const * const
+  parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+  if( parentIndex != nullptr )
+  {
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::parentIndexString) );
+    packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                           *parentIndex,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           this->m_localToGlobalMap );
+  }
+
+  localIndex_array const * const
+  childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
+  if( childIndex != nullptr )
+  {
+    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::childIndexString) );
+    packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                           *childIndex,
+                                           packList,
+                                           this->m_localToGlobalMap,
+                                           this->m_localToGlobalMap );
+  }
+
+  return packedSize;
+}
+template
+localIndex ObjectManagerBase::PackParentChildMapsPrivate<true>( buffer_unit_type * & buffer,
+                                                                arrayView1d<localIndex const> const & packList ) const;
+template
+localIndex ObjectManagerBase::PackParentChildMapsPrivate<false>( buffer_unit_type * & buffer,
+                                                                 arrayView1d<localIndex const> const & packList ) const;
+
+
+localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & buffer,
+                                                     localIndex_array & packList )
+{
+  localIndex unpackedSize = 0;
+
+  localIndex_array * const
+  parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+  if( parentIndex != nullptr )
+  {
+    string shouldBeParentIndexString;
+    unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
+    GEOS_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
+                   "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString);
+    unpackedSize += bufferOps::Unpack( buffer,
+                                       *parentIndex,
+                                       packList,
+                                       this->m_globalToLocalMap,
+                                       this->m_globalToLocalMap );
+  }
+
+  localIndex_array * const
+  childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
+  if( childIndex != nullptr )
+  {
+    string shouldBeChildIndexString;
+    unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
+    GEOS_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
+                   "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString);
+    unpackedSize += bufferOps::Unpack( buffer,
+                                       *childIndex,
+                                       packList,
+                                       this->m_globalToLocalMap,
+                                       this->m_globalToLocalMap );
+  }
+
+  return unpackedSize;
+}
+
+
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
@@ -598,6 +688,7 @@ void ObjectManagerBase::ViewPackingExclusionList( set<localIndex> & exclusionLis
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::globalToLocalMapString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::ghostRankString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::parentIndexString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::childIndexString));
 
 }
 
@@ -702,6 +793,18 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   return 1;
 
 }
+
+void ObjectManagerBase::inheritGhostRankFromParent( std::set<localIndex> const & indices )
+{
+  arrayView1d<localIndex const> const &
+  parentIndex = this->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+
+  for( auto const a : indices )
+  {
+    m_ghostRank[a] = m_ghostRank[ parentIndex[a] ];
+  }
+}
+
 
 void ObjectManagerBase::CopyObject( const localIndex source, const localIndex destination )
 {

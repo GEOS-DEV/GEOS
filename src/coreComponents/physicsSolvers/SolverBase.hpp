@@ -24,9 +24,11 @@
 #include <string>
 #include <limits>
 
+#include "codingUtilities/GeosxTraits.hpp"
+#include "common/DataTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-#include "common/DataTypes.hpp"
+#include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
@@ -81,11 +83,11 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
-                        real64 const & eventProgress,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -396,6 +398,33 @@ public:
 
   string_array const & getTargetRegions() const {return m_targetRegions;}
 
+
+  template<bool CONST>
+  using SubregionFunc = std::function<void ( add_const_if_t<ElementSubRegionBase, CONST> * )>;
+
+  template<typename MESH, typename LAMBDA>
+  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
+                          std::is_convertible<LAMBDA, SubregionFunc<std::is_const<MESH>::value>>::value,
+                          void>::type
+  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  {
+    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
+  template<bool CONST>
+  using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
+                                                     add_const_if_t<ElementRegion, CONST> *,
+                                                     add_const_if_t<ElementSubRegionBase, CONST> * )>;
+
+  template<typename MESH, typename LAMBDA>
+  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
+                          std::is_convertible<LAMBDA, SubregionFuncComplete<std::is_const<MESH>::value>>::value,
+                          void>::type
+  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  {
+    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
 protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
@@ -404,8 +433,11 @@ protected:
 
   string getDiscretizationName() const {return m_discretizationName;}
 
-protected:
+  template<typename BASETYPE>
+  static BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
 
+  template<typename BASETYPE>
+  static BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
 
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
@@ -425,7 +457,31 @@ protected:
 
 };
 
+template<typename BASETYPE>
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+{
+  ManagedGroup const * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
+  BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
+
+template<typename BASETYPE>
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+{
+  ManagedGroup * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
 
 } /* namespace ANST */
 
