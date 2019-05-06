@@ -1,0 +1,16 @@
+In this directory:
+
+classes:
+  PetscVector
+  PetscSparseMatrix
+  PetscSolver 
+
+test file:
+  makefile
+  testLAOperations.cpp
+  
+These are wrappers around PETSc objects to be used with GEOSX (in progress). 
+They are functional and working properly, but use int/double types (not what GEOSX wants).
+
+Yay!
+
