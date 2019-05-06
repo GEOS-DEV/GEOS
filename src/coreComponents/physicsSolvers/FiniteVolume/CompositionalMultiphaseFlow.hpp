@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
 #include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
+#include <constitutive/CapillaryPressure/CapillaryPressureBase.hpp>
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "../../mesh/ElementRegionManager.hpp"
 
@@ -152,22 +153,10 @@ public:
   void UpdateComponentFraction( ManagedGroup * dataGroup );
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateComponentFractionAll( DomainPartition * domain );
-
-  /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
   void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdatePhaseVolumeFractionAll( DomainPartition * domain );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -176,22 +165,10 @@ public:
   void UpdateFluidModel( ManagedGroup * dataGroup );
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateFluidModelAll( DomainPartition * domain );
-
-  /**
    * @brief Update all relevant solid models using current values of pressure
    * @param dataGroup the group storing the required fields
    */
   void UpdateSolidModel( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateSolidModelAll( DomainPartition * domain );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -201,21 +178,21 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param dataGroup the group storing the required fields
+   */
+  void UpdateCapPressureModel( ManagedGroup * dataGroup );
+
+  /**
+   * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateRelPermModelAll( DomainPartition * domain );
+  void UpdatePhaseMobility( ManagedGroup * dataGroup );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
   void UpdateState( ManagedGroup * dataGroup );
-
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void UpdateStateAll( DomainPartition * domain );
 
   /**
    * @brief Get the number of fluid components (species)
@@ -278,7 +255,9 @@ public:
 
     static constexpr auto relPermNameString  = "relPermName";
     static constexpr auto relPermIndexString = "relPermIndex";
-
+    static constexpr auto capPressureNameString  = "capPressureName";
+    static constexpr auto capPressureIndexString = "capPressureIndex"; 
+    
     static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     // primary solution field
@@ -299,6 +278,11 @@ public:
     static constexpr auto dPhaseVolumeFraction_dPressureString          = "dPhaseVolumeFraction_dPressure";
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dGlobalCompDensity";
 
+    // intermediate values for mobilities
+    static constexpr auto phaseMobilityString                     = "phaseMobility";
+    static constexpr auto dPhaseMobility_dPressureString          = "dPhaseMobility_dPressure";
+    static constexpr auto dPhaseMobility_dGlobalCompDensityString = "dPhaseMobility_dGlobalCompDensity";
+
     // these are used to store last converged time step values
     static constexpr auto phaseVolumeFractionOldString     = "phaseVolumeFractionOld";
     static constexpr auto phaseDensityOldString            = "phaseDensityOld";
@@ -308,7 +292,8 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
-
+    static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
+    
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -317,6 +302,8 @@ public:
 
     ViewKey relPermName  = { relPermNameString };
     ViewKey relPermIndex = { relPermIndexString };
+    ViewKey capPressureName  = { capPressureNameString };
+    ViewKey capPressureIndex = { capPressureIndexString };
 
     ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
@@ -338,6 +325,11 @@ public:
     ViewKey dPhaseVolumeFraction_dPressure          = { dPhaseVolumeFraction_dPressureString };
     ViewKey dPhaseVolumeFraction_dGlobalCompDensity = { dPhaseVolumeFraction_dGlobalCompDensityString };
 
+    // intermediate values for mobilities
+    ViewKey phaseMobility                     = { phaseMobilityString };
+    ViewKey dPhaseMobility_dPressure          = { dPhaseMobility_dPressureString };
+    ViewKey dPhaseMobility_dGlobalCompDensity = { dPhaseMobility_dGlobalCompDensityString };
+
     // these are used to store last converged time step values
     ViewKey phaseVolumeFractionOld     = { phaseVolumeFractionOldString };
     ViewKey phaseDensityOld            = { phaseDensityOldString };
@@ -347,6 +339,7 @@ public:
     // these are allocated on faces for BC application until we can get constitutive models on faces
     ViewKey phaseViscosity             = { phaseViscosityString };
     ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
+    ViewKey phaseCapillaryPressure     = { phaseCapillaryPressureString };
 
   } viewKeysCompMultiphaseFlow;
 
@@ -355,54 +348,15 @@ public:
   } groupKeysCompMultiphaseFlow;
 
 protected:
+
+  virtual void PostProcessInput() override;
+  
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 
 private:
-
-  /**
-   * @brief Extract the fluid model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::MultiFluidBase * GetFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the fluid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::MultiFluidBase const * GetFluidModel( ManagedGroup const * const dataGroup ) const;
-
-  /**
-   * @brief Extract the solid model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::ConstitutiveBase * GetSolidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the solid model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::ConstitutiveBase const * GetSolidModel( ManagedGroup const * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase * GetRelPermModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Extract the relative permeability model used by this solver from a group (const version)
-   * @param dataGroup target group (e.g. subregion, face/edge/node manager, etc.)
-   * @return
-   */
-  constitutive::RelativePermeabilityBase const * GetRelPermModel( ManagedGroup const * const dataGroup ) const;
 
   /**
    * @brief Resize the allocated multidimensional fields
@@ -503,6 +457,15 @@ private:
   /// index of the rel perm constitutive model
   localIndex m_relPermIndex;
 
+  /// flag to determine whether or not to apply capillary pressure
+  integer m_capPressureFlag;
+  
+  /// name of the cap pressure constitutive model
+  string m_capPressureName;
+
+  /// index of the cap pressure constitutive model
+  localIndex m_capPressureIndex;
+
 
   /// views into primary variable fields
 
@@ -522,6 +485,10 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseVolFrac;
   ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseVolFrac_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_phaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dPhaseMob_dCompDens;
 
   /// views into backup fields
 
@@ -555,6 +522,10 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseRelPerm;
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseRelPerm_dPhaseVolFrac;
+
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_phaseCapPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCapPressure_dPhaseVolFrac;
+
 };
 
 } // namespace geosx

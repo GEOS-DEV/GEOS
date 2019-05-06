@@ -83,28 +83,30 @@ BlackOilFluid::~BlackOilFluid()
 
 }
 
-std::unique_ptr<ConstitutiveBase>
-BlackOilFluid::DeliverClone( string const & name, ManagedGroup * const parent ) const
+void
+BlackOilFluid::DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< BlackOilFluid > clone = std::make_unique<BlackOilFluid>( name, parent );
+  std::unique_ptr< BlackOilFluid > newModel = std::make_unique<BlackOilFluid>( name, parent );
 
-  clone->m_useMass = this->m_useMass;
+  newModel->m_useMass = this->m_useMass;
 
-  clone->m_componentNames       = this->m_componentNames;
-  clone->m_componentMolarWeight = this->m_componentMolarWeight;
+  newModel->m_componentNames       = this->m_componentNames;
+  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
 
-  clone->m_phaseNames           = this->m_phaseNames;
-  clone->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
+  newModel->m_phaseNames           = this->m_phaseNames;
+  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
 
-  clone->m_surfaceDensities = this->m_surfaceDensities;
-  clone->m_tableFiles       = this->m_tableFiles;
+  newModel->m_surfaceDensities = this->m_surfaceDensities;
+  newModel->m_tableFiles       = this->m_tableFiles;
 
-  clone->m_fluidTypeString = this->m_fluidTypeString;
-  clone->m_fluidType       = this->m_fluidType;
+  newModel->m_fluidTypeString = this->m_fluidTypeString;
+  newModel->m_fluidType       = this->m_fluidType;
 
-  clone->createFluid();
+  newModel->createFluid();
 
-  return std::move( clone );
+  clone = std::move( newModel );
 }
 
 void BlackOilFluid::PostProcessInput()

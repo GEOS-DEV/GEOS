@@ -71,6 +71,7 @@ public:
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
     static constexpr auto doLineSearchString   = "doLineSearch";    
+    static constexpr auto maxSubStepsString         = "maxSubSteps";
 
   } viewKeys;
 
@@ -102,9 +103,13 @@ public:
   integer maxLineSearchCuts() const           { return m_maxLineSearchCuts; }
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
+<<<<<<< HEAD
 
   integer doLineSearch() const           { return m_doLineSearch; }  
 
+=======
+  integer maxSubSteps() const                 { return m_maxSubSteps; }
+>>>>>>> develop
 
 
   integer m_verbose;
@@ -131,8 +136,12 @@ public:
   integer m_maxLineSearchCuts;
   real64  m_lineSearchCutFactor;
   integer m_allowNonConverged;
+<<<<<<< HEAD
 
   integer m_doLineSearch;  
+=======
+  integer m_maxSubSteps;
+>>>>>>> develop
 
 
 };

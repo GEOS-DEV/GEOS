@@ -43,11 +43,11 @@ namespace computationalGeometry
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& points,
-                         R1Tensor& center,
-                         R1Tensor& normal,
-                         real64 const areaTolerance = 0.0 );
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance = 0.0 );
 
 /**
  * @author settgast
@@ -60,11 +60,11 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& pointReferences,
-                         const array1d<R1Tensor>& pointDisplacements,
-                         R1Tensor& center,
-                         R1Tensor& normal );
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal );
 
 
 real64 HexVolume( R1Tensor const * const points );

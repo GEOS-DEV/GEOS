@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 
 class Epetra_FECrsGraph;
 
@@ -270,7 +271,19 @@ private:
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateConstitutiveModels( DomainPartition * const domain );
+  void UpdateFluidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateSolidModel( ManagedGroup * const dataGroup );
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param domain the domain
+   */
+  void UpdateState( ManagedGroup * dataGroup );
 
   /// views into primary variable fields
 
@@ -304,7 +317,7 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStressOld;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalMeanStress;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_bulkModulus;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64>              m_biotCoefficient;
 };
 

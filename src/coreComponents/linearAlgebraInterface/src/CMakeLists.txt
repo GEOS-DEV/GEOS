@@ -2,29 +2,31 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
-     NativeCG.hpp
-     NativeBICGSTAB.hpp
      BlockMatrixView.hpp
      BlockVectorView.hpp
+     DofManager.hpp
      EpetraMatrix.hpp
      EpetraVector.hpp
-     InterfaceTypes.hpp
-     TrilinosSolver.hpp
-     TrilinosInterface.hpp
      HypreInterface.hpp 
-     LinearSolverParameters.hpp)
+     InterfaceTypes.hpp
+     LinearSolverParameters.hpp
+     NativeCG.hpp
+     NativeBICGSTAB.hpp
+     TrilinosSolver.hpp
+     TrilinosInterface.hpp) 
 
 #
 # Specify all sources
 #
 set( linearAlgebraInterface_sources
+     BlockVectorView.cpp
+     BlockMatrixView.cpp
+     DofManager.cpp
      EpetraMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp
-     BlockVectorView.cpp
-     BlockMatrixView.cpp)
+     TrilinosSolver.cpp )
 
-set( dependencyList common trilinos hypre mpi)
+set( dependencyList common trilinos hypre mpi managers)
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
