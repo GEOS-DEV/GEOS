@@ -973,7 +973,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
-
+    if (numMatInRegion <= 0) continue;
     array1d<localIndex> matIndices(numMatInRegion);
 
     for( localIndex a=0 ; a<numMatInRegion ; ++a )
@@ -992,7 +992,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           matlist[elemCount++] = matIndices[0];
         }
       }
-      else if( numMatInRegion > 1 )
+      else
       {
         for( localIndex k = 0 ; k < subRegion->size() ; ++k )
         {
@@ -1654,12 +1654,20 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
         elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                    auto const * const subRegion )
         {
-          ViewWrapper<arrayType> const &
-          sourceWrapper = ViewWrapper<arrayType>::cast( *(viewPointers[er][esr][fieldName] ) );
-          arrayType const & sourceArray = sourceWrapper.reference();
+          // check if the field actually exists / plotted on the current subregion
+          if (viewPointers[er][esr].count(fieldName) > 0)
+          {
+            ViewWrapper<arrayType> const & sourceWrapper =
+              ViewWrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
+            arrayType const & sourceArray = sourceWrapper.reference();
 
-          targetArray.copy(counter, sourceArray );
-          counter += sourceArray.size(0);
+            targetArray.copy(counter, sourceArray);
+            counter += sourceArray.size(0);
+          }
+          else
+          {
+            counter += subRegion->size();
+          }
         });
       }
     });

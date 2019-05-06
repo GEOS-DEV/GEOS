@@ -65,25 +65,25 @@ BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()
 
 }
 
-std::unique_ptr<ConstitutiveBase>
-BrooksCoreyCapillaryPressure::DeliverClone(string const & name,
-					   ManagedGroup * const parent) const
+void
+BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
+                                            ManagedGroup * const parent,
+                                            std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr< BrooksCoreyCapillaryPressure > clone = std::make_unique<BrooksCoreyCapillaryPressure>( name, parent );
+  std::unique_ptr< BrooksCoreyCapillaryPressure > newModel = std::make_unique<BrooksCoreyCapillaryPressure>( name, parent );
 
-  clone->m_phaseNames = this->m_phaseNames;
-  clone->m_phaseTypes = this->m_phaseTypes;
-  clone->m_phaseOrder = this->m_phaseOrder;
+  newModel->m_phaseNames = this->m_phaseNames;
+  newModel->m_phaseTypes = this->m_phaseTypes;
+  newModel->m_phaseOrder = this->m_phaseOrder;
   
-  clone->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
-  clone->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
-  clone->m_phaseEntryPressure          = this->m_phaseEntryPressure;
+  newModel->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
+  newModel->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
+  newModel->m_phaseEntryPressure          = this->m_phaseEntryPressure;
 
-  clone->m_capPressureEpsilon = this->m_capPressureEpsilon;
-  clone->m_volFracScale       = this->m_volFracScale;
+  newModel->m_capPressureEpsilon = this->m_capPressureEpsilon;
+  newModel->m_volFracScale       = this->m_volFracScale;
 
-  std::unique_ptr<ConstitutiveBase> rval = std::move( clone );
-  return rval;
+  clone = std::move( newModel );
 }
 
 
@@ -116,15 +116,15 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 1.0)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
     GEOS_ERROR_IF(    (m_phaseEntryPressure[ip] < 0.0)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid entry pressure: " << m_phaseEntryPressure[ip] );
 
     GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
-		   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }
