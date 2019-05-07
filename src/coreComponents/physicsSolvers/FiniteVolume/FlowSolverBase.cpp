@@ -22,7 +22,10 @@
 
 #include "FlowSolverBase.hpp"
 
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 
 namespace geosx
@@ -105,6 +108,31 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   ConstitutiveBase const * solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
   m_solidIndex = solid->getIndexInParent();
+
+  // fill stencil targetRegions
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  array1d<string> & stencilTargetRegions = fluxApprox->targetRegions();
+  std::set<string> stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+  for( auto const & targetRegion : m_targetRegions )
+  {
+    stencilTargetRegionsSet.insert(targetRegion);
+  }
+
+  stencilTargetRegions.clear();
+  for( auto const & targetRegion : stencilTargetRegionsSet )
+  {
+    stencilTargetRegions.push_back( targetRegion );
+  }
+
+
+
+
 }
 
 void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)

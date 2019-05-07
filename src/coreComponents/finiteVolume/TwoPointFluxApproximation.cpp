@@ -112,7 +112,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
       continue;
 
-    if (!regionFilter.empty() && !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])))
+    if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
       continue;
 
     faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
@@ -202,7 +202,7 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
                                                                          ElementRegion const * const fractureRegion,
                                                                          FaceElementSubRegion const * const fractureSubRegion)
   {
-    if (!regionFilter.empty() && !regionFilter.contains(fractureRegionIndex))
+    if ( !regionFilter.contains(fractureRegionIndex) )
       return;
 
     FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
@@ -265,16 +265,18 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
         stencilCells.resize(numElems);
         stencilWeights.resize(numElems);
 
-          R2SymTensor coefTensor;
-          R1Tensor cellToFaceVec;
-          R1Tensor faceConormal;
+        R2SymTensor coefTensor;
+        R1Tensor cellToFaceVec;
+        R1Tensor faceConormal;
 
-        for (localIndex ke = 0; ke < numElems; ++ke)
+        if( regionFilter.contains(elemRegionList[kfe][0]) && regionFilter.contains(elemRegionList[kfe][1]) )
         {
-          localIndex const faceIndex = faceMap[kfe][ke];
-          localIndex const er  = elemRegionList[kfe][ke];
-          localIndex const esr = elemSubRegionList[kfe][ke];
-          localIndex const ei  = elemList[kfe][ke];
+          for (localIndex ke = 0; ke < numElems; ++ke)
+          {
+            localIndex const faceIndex = faceMap[kfe][ke];
+            localIndex const er  = elemRegionList[kfe][ke];
+            localIndex const esr = elemSubRegionList[kfe][ke];
+            localIndex const ei  = elemList[kfe][ke];
 
             cellToFaceVec = faceCenter[faceIndex];
             cellToFaceVec -= elemCenter[er][esr][ei];
@@ -293,15 +295,13 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
             stencilCells[1] = { fractureRegionIndex, 0, kfe};
             stencilWeights[1] = -pow(-1,ke) * ht ;
 
-          fractureStencil.add(2, stencilCells.data(), stencilWeights.data(), faceIndex );
+            fractureStencil.add(2, stencilCells.data(), stencilWeights.data(), faceIndex );
+
+            // remove cell connectors from original stencil
+            cellStencilZeros[kfe][ke] = { elemRegionList[kfe][ke], elemSubRegionList[kfe][ke], elemList[kfe][ke] };
+          }
+          cellStencil.zero( faceMap[kfe][0], cellStencilZeros.data() );
         }
-
-
-        // remove cell connectors from original stencil
-        cellStencilZeros[kfe][0] = { elemRegionList[kfe][0], elemSubRegionList[kfe][0], elemList[kfe][0] };
-        cellStencilZeros[kfe][1] = { elemRegionList[kfe][1], elemSubRegionList[kfe][1], elemList[kfe][1] };
-
-        cellStencil.zero( faceMap[kfe][0], cellStencilZeros.data() );
       }
     }
 
