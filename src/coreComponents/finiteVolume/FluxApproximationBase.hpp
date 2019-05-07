@@ -135,6 +135,9 @@ public:
   {
   };
 
+  string_array const & targetRegions() const { return m_targetRegions; }
+  string_array &       targetRegions()       { return m_targetRegions; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
