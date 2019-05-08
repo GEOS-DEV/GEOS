@@ -58,10 +58,6 @@ public:
                                            dataRepository::ManagedGroup * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * There are three types of time-steps that are allowed:
-   *   - Regular steps (default).  This will call execute the solver with the dt specified by this event's parent.
-   *   - Superstep (allowSuperstep = 1).  The dt for the step will be set to (dt + time_n - lastTime)
-   *   - Substep (allowSubstep = 1, substepFactor >= 1).  This will repeatedly step with timestep=dt/substepFactor
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -150,7 +146,6 @@ public:
 
   struct viewKeyStruct
   {
-
     static constexpr auto eventTargetString = "target";
     static constexpr auto beginTimeString = "beginTime";
     static constexpr auto endTimeString = "endTime";
@@ -158,15 +153,9 @@ public:
     static constexpr auto maxEventDtString = "maxEventDt";
     static constexpr auto lastTimeString = "lastTime";
     static constexpr auto lastCycleString = "lastCycle";
-
-    static constexpr auto allowSuperstepString = "allowSuperstep";
-    static constexpr auto allowSubstepString = "allowSubstep";
-    static constexpr auto substepFactorString = "substepFactor";
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
-
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
-
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -175,12 +164,7 @@ public:
     dataRepository::ViewKey maxEventDt = { "maxEventDt" };
     dataRepository::ViewKey lastTime = { "lastTime" };
     dataRepository::ViewKey lastCycle = { "lastCycle" };
-
-    dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
-    dataRepository::ViewKey allowSubstep = { "allowSubstep" };
-    dataRepository::ViewKey substepFactor = { "substepFactor" };
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
-
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
   } viewKeys;
@@ -211,19 +195,14 @@ private:
   real64 m_endTime;
   real64 m_forceDt;
   real64 m_maxEventDt;
-  integer m_allowSuperstep;
-  integer m_allowSubstep;
-  integer m_substepFactor;
   integer m_targetExactStartStop;
-
   integer m_currentSubEvent;
-  integer m_isTargetExecuting;
+  integer m_targetExecFlag;
   integer m_eventForecast;
   integer m_exitFlag;
   integer m_eventCount;
   integer m_timeStepEventCount;
   real64 m_eventProgress;
-  
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
