@@ -193,12 +193,19 @@ real64 PeriodicEvent::GetTimestepRequest(real64 const time)
 
   if ((m_timeFrequency > 0) && (m_targetExactTimestep > 0))
   {
+    // Limit the timestep request to match the exact execution frequency
     real64 nextTargetTime = m_lastTime + m_timeFrequency;
-    real64 maxDt = nextTargetTime - time;
 
-    // If the event is executing next cycle, then maxDt is the m_timeFrequency
-    maxDt = (time >= nextTargetTime) ? m_timeFrequency : maxDt;
-    requestedDt = (maxDt < requestedDt) ? maxDt : requestedDt;
+    if (time < nextTargetTime)
+    {
+      requestedDt = std::min(requestedDt, nextTargetTime - time);
+    }
+    else
+    {
+      // Note: This should only occur on a cycle where the event is executing
+      requestedDt = std::min(requestedDt, m_timeFrequency);
+    }
+    
   }
 
   return requestedDt;
