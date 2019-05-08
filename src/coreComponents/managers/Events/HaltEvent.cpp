@@ -68,6 +68,7 @@ void HaltEvent::EstimateEventTiming(real64 const time,
   integer forecast = static_cast<integer>((m_maxRuntime - (currentTime - m_externalStartTime)) / m_externalDt);
   
   // The timing for the ranks may differ slightly, so synchronize
+  // TODO: Only do the communication when you are close to the end?
 #ifdef GEOSX_USE_MPI
     integer forecast_global;
     MPI_Allreduce(&forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
