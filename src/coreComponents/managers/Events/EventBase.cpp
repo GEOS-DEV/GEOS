@@ -42,12 +42,9 @@ EventBase::EventBase( const std::string& name,
   m_endTime(1e100),
   m_forceDt(-1.0),
   m_maxEventDt(-1.0),
-  m_allowSuperstep(0),
-  m_allowSubstep(0),
-  m_substepFactor(1),
   m_targetExactStartStop(0),
   m_currentSubEvent(0),
-  m_isTargetExecuting(0),
+  m_targetExecFlag(0),
   m_eventForecast(0),
   m_exitFlag(0),
   m_eventCount(0),
@@ -81,28 +78,12 @@ EventBase::EventBase( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Forced timestep for this event");
 
-  RegisterViewWrapper(viewKeyStruct::allowSuperstepString, &m_allowSuperstep, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows event super-stepping (dt_super=dt+t-t_last)");
-
-  RegisterViewWrapper(viewKeyStruct::allowSubstepString, &m_allowSubstep, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows event sub-stepping");
-
-  RegisterViewWrapper(viewKeyStruct::substepFactorString, &m_substepFactor, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("integer substep factor (dt_sub=dt/f)");
-
   RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("allows timesteps to be truncated to match the start/stop times exactly");
-
-
-  RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
+ 
+ RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
     setApplyDefaultValue(-1.0e100)->
     setDescription("last event occurrence (time)");
 
@@ -113,7 +94,7 @@ EventBase::EventBase( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setDescription("index of the current subevent");
 
-  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_isTargetExecuting, false )->
+  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("index of the current subevent");
 
 
@@ -232,57 +213,17 @@ void EventBase::Execute(real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
   
-  if (m_allowSuperstep > 0)
+  // If m_targetExecFlag is set, then the code has resumed at a point
+  // after the target has executed. 
+  if ((m_target != nullptr) && (m_targetExecFlag == 0))
   {
-    real64 actualDt = dt + time_n - m_lastTime;
-    Step(m_lastTime, actualDt, cycleNumber, domain);     // Should we use the lastTime or time here?
-  }
-  else if (m_allowSubstep > 0)
-  {
-    real64 actualDt = dt / m_substepFactor;
-    real64 actualTime = time_n;
-
-    for (integer ii=0; ii<m_substepFactor; ii++)
-    {
-      Step(actualTime, actualDt, cycleNumber, domain);
-      actualTime += actualDt;
-    }
-  }
-  else
-  {
-    Step(time_n, dt, cycleNumber, domain);
-  }
-
-  // In some cases, a periodic event controlled by a time-frequency may trigger on a zero-dt step.
-  // This leads to ambiguity as to which cycle the event should execute on.
-  // To resolve this, only increment lastTime if dt>0, and cause the event to trigger on both.
-  if (dt > 0.0)
-  {
-    m_lastTime = time_n;
-  }
-  m_lastCycle = cycleNumber;
-}
-
-
-void EventBase::Step(real64 const time,
-                     real64 const dt,  
-                     integer const cycle,
-                     dataRepository::ManagedGroup * domain )
-{
-  GEOSX_MARK_FUNCTION;
-  // m_currentSubEvent indicates which child event was active when the restart was written
-  // m_isTargetExecuting blocks double-execution of the target during restarts, and is useful debug information in outputs
-  
-  if ((m_target != nullptr) && (m_isTargetExecuting == 0))
-  {
-    m_isTargetExecuting = 1;
+    m_targetExecFlag = 1;
     m_target->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
   }
-  m_isTargetExecuting = 0;
-
-  // Iterage using the managed integer currentSubEvent, which will
-  // allow restart runs to pick up where they left off.
-  for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
+  
+  // Iterate through the sub-event list using the managed integer m_currentSubEvent
+  // This allows for  restart runs to pick up where they left off.
+  for ( ; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent)
   {
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
 
@@ -292,64 +233,65 @@ void EventBase::Step(real64 const time,
     }
   }
 
+  // Update the event status
+  m_targetExecFlag = 0;
   m_currentSubEvent = 0;
+  m_lastTime = time_n;
+  m_lastCycle = cycleNumber;
 }
 
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  real64 nextDt = std::numeric_limits<integer>::max();
   real64 requestedDt = std::numeric_limits<integer>::max();
   
-  if (time >= m_endTime)
+  // Events and their targets may request a max dt when active
+  if ((time >= m_endTime) && (time < m_endTime))
   {
-    // This is the final timestep for this event, don't include it in the calculation
-  }
-  else if (m_forceDt > 0)
-  {
-    nextDt = m_forceDt;
-  }
-  else
-  {
-    if (m_target != nullptr)
+    if (m_forceDt > 0)
     {
-      requestedDt = m_target->GetTimestepRequest(time);
-      nextDt = std::min(requestedDt, nextDt);
+      // Override the event dt request
+      requestedDt = m_forceDt;
     }
-
-    this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+    else
     {
-      if (subEvent->GetForecast() <= 1)
+      if (m_target != nullptr)
       {
-        requestedDt = subEvent->GetTimestepRequest(time);
-        nextDt = std::min(requestedDt, nextDt);
+        // Get the target's dt request
+        requestedDt = std::min(requestedDt, m_target->GetTimestepRequest(time));
       }
-    });
 
-    if (m_maxEventDt > 0)
-    {
-      nextDt = std::min(m_maxEventDt, nextDt);
-    }
+      // Get the sub-event dt requests
+      this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+      {
+        if (subEvent->GetForecast() <= 1)
+        {
+          requestedDt = std::min(requestedDt, subEvent->GetTimestepRequest(time));
+        }
+      });
 
-    if (m_allowSubstep > 0)
-    {
-      nextDt *= m_substepFactor;
+      if (m_maxEventDt > 0)
+      {
+        // Limit the event dt request
+        requestedDt = std::min(m_maxEventDt, requestedDt);
+      }
     }
   }
 
+  // Try to respect the start/stop times of the event window
   if (m_targetExactStartStop == 1)
   {
     if (time < m_beginTime)
     {
-      nextDt = std::min(m_beginTime - time, nextDt);
+      requestedDt = std::min(m_beginTime - time, requestedDt);
     }
     else if (time < m_endTime)
     {
-      nextDt = std::min(m_endTime - time, nextDt);
+      requestedDt = std::min(m_endTime - time, requestedDt);
     }
   }
 
-  return nextDt;
+  return requestedDt;
 }
 
 
@@ -361,9 +303,11 @@ void EventBase::Cleanup(real64 const time_n,
 {
   if (m_target != nullptr)
   {
+    // Cleanup the target
     m_target->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
 
+  // Cleanup any sub-events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
     subEvent->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
