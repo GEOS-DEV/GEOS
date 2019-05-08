@@ -26,18 +26,7 @@
 // BLAS and LAPACK function declaration
 extern "C"
 {
-  double dasum_( int *, double *, int * );
-  void daxpy_( int *, double *, double *, int *, double *, int * );
-  void dcopy_( int *, double *, int *, double *, int * );
-  double ddot_( int *, double *, int *, double *, int * );
-  int idamax_( int *, double *, int * );
-  void dgemm_( char *, char *, int *, int *, int *, double *, double *,
-               int *, double *, int *, double *, double *, int * );
-  void dgetrf_( int *, int *, double *, int *, int *, int * );
-  void dgetri_( int *, double *, int *, int *, double *, int *, int * );
-  double dlange_( char *, int *, int *, double *, int *, double * );
-  double dnrm2_( int *, double *, int * );
-  void dscal_( int *, double *, double *, int * );
+  #include "BlasLapackFunctions.hpp"
 }
 
 // Put everything under the geosx namespace.
@@ -48,8 +37,8 @@ namespace geosx
 
 real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
-  static int INCX = 1;
-  int N = integer_conversion<int>( X.size() );
+  int const INCX = 1;
+  int const N = integer_conversion<int>( X.size() );
   return dasum_( &N,
                  X.data(),
                  &INCX);
@@ -57,8 +46,8 @@ real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 
 real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X )
 {
-  static int INCX = 1;
-  int N = integer_conversion<int>( X.size() );
+  int const INCX = 1;
+  int const N = integer_conversion<int>( X.size() );
   return dnrm2_( &N,
                  X.data(),
                  &INCX);
@@ -66,8 +55,8 @@ real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X )
 
 real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X )
                                     {
-  static int INCX = 1;
-  int N = integer_conversion<int>( X.size() );
+  int const INCX = 1;
+  int const N = integer_conversion<int>( X.size() );
   int ind = idamax_( &N,
                      X.data(),
                      &INCX);
@@ -127,7 +116,7 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A )
     default:
     {
       // Compute the determinant via LU factorization
-      int NN = integer_conversion<int>( A.size(0) );
+      int const NN = integer_conversion<int>( A.size(0) );
       int INFO;
       array1d<int> IPIV( NN );
       array2d<double> LUfactor( A );
@@ -168,9 +157,9 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A )
 real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A )
 {
   // Computed as one-norm of the transpose matrix
-  static char NORM = '1';
-  int M = integer_conversion<int>( A.size(0) );
-  int N = integer_conversion<int>( A.size(1) );
+  char const NORM = '1';
+  int const  M = integer_conversion<int>( A.size(0) );
+  int const  N = integer_conversion<int>( A.size(1) );
   return dlange_(&NORM,
                  &N,
                  &M,
@@ -183,9 +172,9 @@ real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A )
 real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A )
 {
   // Computed as infinity-norm of the transpose matrix
-  static char NORM = 'I';
-  int M = integer_conversion<int>( A.size(0) );
-  int N = integer_conversion<int>( A.size(1) );
+  char const NORM = 'I';
+  int const M = integer_conversion<int>( A.size(0) );
+  int const N = integer_conversion<int>( A.size(1) );
   array1d<double> WORK(N);
   return  dlange_( &NORM,
                    &N,
@@ -198,9 +187,9 @@ real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A )
 real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A )
 {
   // Computed using the transpose matrix
-  static char NORM = 'F';
-  int M = integer_conversion<int>( A.size(0) );
-  int N = integer_conversion<int>( A.size(1) );
+  char const NORM = 'F';
+  int const M = integer_conversion<int>( A.size(0) );
+  int const N = integer_conversion<int>( A.size(1) );
   return dlange_(&NORM,
                  &N,
                  &M,
@@ -218,11 +207,11 @@ void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for sum" );
 
-  static int INCX = 1;
-  static int INCY = 1;
-  int N = static_cast<int>( X.size() );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = static_cast<int>( X.size() );
   daxpy_( &N,
-          const_cast<double*>(&alpha),
+          &alpha,
           X.data(),
           &INCX,
           Y.data(),
@@ -240,11 +229,11 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
                    A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for sum" );
 
-  static int INCX = 1;
-  static int INCY = 1;
-  int N = static_cast<int>( A.size() );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = static_cast<int>( A.size() );
   daxpy_( &N,
-          const_cast<double*>(&alpha),
+          &alpha,
           A.data(),
           &INCX,
           B.data(),
@@ -257,12 +246,12 @@ void BlasLapackLA::vectorScale( array1d<real64> & X,
                                 real64 alpha )
 {
 
-  static int INCX = 1;
-  int N = static_cast<int>( X.size() );
+  int const INCX = 1;
+  int const N = static_cast<int>( X.size() );
   dscal_( &N,
-         const_cast<double*>(&alpha),
-         X.data(),
-         &INCX);
+          &alpha,
+          X.data(),
+          &INCX);
 
   return;
 }
@@ -271,12 +260,12 @@ void BlasLapackLA::matrixScale( array2d<real64> & A,
                                 real64 alpha )
 {
 
-  static int INCX = 1;
-  int N = static_cast<int>( A.size() );
+  int const INCX = 1;
+  int const N = static_cast<int>( A.size() );
   dscal_( &N,
-         const_cast<double*>(&alpha),
-         A.data(),
-         &INCX);
+          &alpha,
+          A.data(),
+          &INCX);
 
   return;
 }
@@ -287,9 +276,9 @@ real64 BlasLapackLA::vectorDot( array1d<real64> const & X,
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for dot product" );
 
-  static int INCX = 1;
-  static int INCY = 1;
-  int N = static_cast<int>( X.size() );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = static_cast<int>( X.size() );
   return ddot_( &N,
                 X.data(),
                 &INCX,
@@ -308,26 +297,26 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
                    A.size( 0 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
-  int M = integer_conversion<int>( A.size( 0 ) );
-  int N = 1;
-  int K = integer_conversion<int>( A.size( 1 ) );
+  int const M = integer_conversion<int>( A.size( 0 ) );
+  int const N = 1;
+  int const K = integer_conversion<int>( A.size( 1 ) );
 
   // A*X = Y is computed as X^T * A^T = Y^T, i.e. accessing the transpose
   // matrix using a column-major layout
-  static char TRANS1 = 'N';
-  static char TRANS2 = 'N';
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'N';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          X.data(),
          &N,
          A.data(),
          &K,
-         const_cast<double*>(&beta),
+         &beta,
          Y.data(),
          &N);
 
@@ -344,26 +333,26 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
                        A.size( 1 ) == Y.size(),
                    "Matrix, source vector and destination vector not compatible" );
 
-  int M = integer_conversion<int>( A.size( 1 ) );
-  int N = 1;
-  int K = integer_conversion<int>( A.size( 0 ) );
+  int const M = integer_conversion<int>( A.size( 1 ) );
+  int const N = 1;
+  int const K = integer_conversion<int>( A.size( 0 ) );
 
   // A^T*X = Y is computed as X^T * A = Y^T, i.e. accessing the transpose
   // matrix using a column-major layout
-  static char TRANS1 = 'N';
-  static char TRANS2 = 'T';
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'T';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          X.data(),
          &N,
          A.data(),
          &M,
-         const_cast<double*>(&beta),
+         &beta,
          Y.data(),
          &N);
 
@@ -382,26 +371,26 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
                    A.size( 1 ) == B.size( 0 ),
                    "Matrix dimensions not compatible for product" );
 
-  int M = integer_conversion<int>( A.size( 0 ) );
-  int N = integer_conversion<int>( B.size( 1 ) );
-  int K = integer_conversion<int>( A.size( 1 ) );
+  int const M = integer_conversion<int>( A.size( 0 ) );
+  int const N = integer_conversion<int>( B.size( 1 ) );
+  int const K = integer_conversion<int>( A.size( 1 ) );
 
   // A*B = C is computed as B^T * A^T = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
-  static char TRANS1 = 'N';
-  static char TRANS2 = 'N';
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'N';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          B.data(),
          &N,
          A.data(),
          &K,
-         const_cast<double*>(&beta),
+         &beta,
          C.data(),
          &N);
 
@@ -420,27 +409,27 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
                    A.size( 0 ) == B.size( 0 ),
                    "Matrix dimensions not compatible for product" );
 
-  int M = integer_conversion<int>( A.size( 1 ) );
-  int N = integer_conversion<int>( B.size( 1 ) );
-  int K = integer_conversion<int>( A.size( 0 ) );
+  int const M = integer_conversion<int>( A.size( 1 ) );
+  int const N = integer_conversion<int>( B.size( 1 ) );
+  int const K = integer_conversion<int>( A.size( 0 ) );
 
   // A^T*B = C is computed as B^T * A = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
 
-  static char TRANS1 = 'N';
-  static char TRANS2 = 'T';
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'T';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          B.data(),
          &N,
          A.data(),
          &M,
-         const_cast<double*>(&beta),
+         &beta,
          C.data(),
          &N);
 
@@ -459,27 +448,27 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
                        A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
 
-  int M = integer_conversion<int>( A.size( 0 ) );
-  int N = integer_conversion<int>( B.size( 0 ) );
-  int K = integer_conversion<int>( A.size( 1 ) );
+  int const M = integer_conversion<int>( A.size( 0 ) );
+  int const N = integer_conversion<int>( B.size( 0 ) );
+  int const K = integer_conversion<int>( A.size( 1 ) );
 
   // A*B^T = C is computed as B * A^T = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
 
-  static char TRANS1 = 'T';
-  static char TRANS2 = 'N';
+  char const TRANS1 = 'T';
+  char const TRANS2 = 'N';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          B.data(),
          &K,
          A.data(),
          &K,
-         const_cast<double*>(&beta),
+         &beta,
          C.data(),
          &N);
 
@@ -498,27 +487,27 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
                        A.size( 0 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
 
-  int M = integer_conversion<int>( A.size( 1 ) );
-  int N = integer_conversion<int>( B.size( 0 ) );
-  int K = integer_conversion<int>( A.size( 0 ) );
+  int const M = integer_conversion<int>( A.size( 1 ) );
+  int const N = integer_conversion<int>( B.size( 0 ) );
+  int const K = integer_conversion<int>( A.size( 0 ) );
 
   // A^T*B^T = C is computed as B * A = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
 
-  static char TRANS1 = 'T';
-  static char TRANS2 = 'T';
+  char const TRANS1 = 'T';
+  char const TRANS2 = 'T';
 
   dgemm_(&TRANS1,
          &TRANS2,
          &N,
          &M,
          &K,
-         const_cast<double*>(&alpha),
+         &alpha,
          B.data(),
          &K,
          A.data(),
          &M,
-         const_cast<double*>(&beta),
+         &beta,
          C.data(),
          &N);
 
@@ -539,7 +528,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   real64 & detA )
 {
   // --- Check that source matrix is square
-  int NN = integer_conversion<int>(A.size( 0 ));
+  int const NN = integer_conversion<int>(A.size( 0 ));
   GEOS_ASSERT_MSG( NN > 0 &&
                    NN == A.size( 1 ),
                    "Matrix must be square" );
@@ -672,9 +661,9 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for copying" );
 
-  static int INCX = 1;
-  static int INCY = 1;
-  int N = static_cast<int>( X.size() );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = static_cast<int>( X.size() );
   dcopy_( &N,
           X.data(),
           &INCX,
@@ -691,9 +680,9 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
                    A.size(1) == B.size(1),
                    "Matrix dimensions not compatible for copying" );
 
-  static int INCX = 1;
-  static int INCY = 1;
-  int N = static_cast<int>( A.size() );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = static_cast<int>( A.size() );
   dcopy_( &N,
           A.data(),
           &INCX,

@@ -456,7 +456,7 @@ public:
   /**
    * @brief Print service method for GEOSX array2d.
    */
-  static void printMatrix(array2d<real64> const & X) ;
+  static void printMatrix(array2d<real64> const & A) ;
 
   //@}
 
