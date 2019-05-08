@@ -5,7 +5,6 @@
 set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp)
-     #testSerialLAOperations.cpp
 
 set( LAI_tests_with_xml
      testDofManager.cpp )

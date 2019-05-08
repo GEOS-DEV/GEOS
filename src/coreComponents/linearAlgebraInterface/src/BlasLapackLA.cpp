@@ -24,29 +24,21 @@
 #include "BlasLapackLA.hpp"
 
 // BLAS and LAPACK function declaration
-extern "C" void
-dcopy_(int *, double *, int *, double *, int *);
-extern "C" void
-daxpy_(int *, double *, double *, int *, double *, int *);
-extern "C" void
-dscal_(int *, double *, double *, int *);
-extern "C" double
-ddot_(int *, double *, int *, double *, int *);
-extern "C" void
-dgemm_(char *, char *, int *, int *, int *, double *, double *,
-       int *, double *, int *, double *, double *, int *);
-extern "C" void
-dgetrf_(int *, int *, double *, int *, int *, int *);
-extern "C" void
-dgetri_(int *, double *, int *, int *, double *, int *, int *);
-extern "C" double
-dasum_(int *, double *, int *);
-extern "C" double
-dnrm2_(int *, double *, int *);
-extern "C" int
-idamax_(int *, double *, int *);
-extern "C" double
-dlange_(char *, int *, int *, double *, int *, double *);
+extern "C"
+{
+  double dasum_( int *, double *, int * );
+  void daxpy_( int *, double *, double *, int *, double *, int * );
+  void dcopy_( int *, double *, int *, double *, int * );
+  double ddot_( int *, double *, int *, double *, int * );
+  int idamax_( int *, double *, int * );
+  void dgemm_( char *, char *, int *, int *, int *, double *, double *,
+               int *, double *, int *, double *, double *, int * );
+  void dgetrf_( int *, int *, double *, int *, int *, int * );
+  void dgetri_( int *, double *, int *, int *, double *, int *, int * );
+  double dlange_( char *, int *, int *, double *, int *, double * );
+  double dnrm2_( int *, double *, int * );
+  void dscal_( int *, double *, double *, int * );
+}
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -54,7 +46,7 @@ namespace geosx
 
 //-------------------------------------------------------Mathematical methods---
 
-real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X ) const
+real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
   static int INCX = 1;
   int N = integer_conversion<int>( X.size() );
@@ -63,7 +55,7 @@ real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X ) const
                  &INCX);
 }
 
-real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X ) const
+real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X )
 {
   static int INCX = 1;
   int N = integer_conversion<int>( X.size() );
@@ -72,7 +64,7 @@ real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X ) const
                  &INCX);
 }
 
-real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X ) const
+real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X )
                                     {
   static int INCX = 1;
   int N = integer_conversion<int>( X.size() );
@@ -83,7 +75,7 @@ real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X ) const
   return std::abs( X(ind) );
 }
 
-real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
+real64 BlasLapackLA::determinant( array2d<real64> const & A )
                                   {
   // --- check that matrix is square
   GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
@@ -173,7 +165,7 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A ) const
 
 }
 
-real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
+real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A )
 {
   // Computed as one-norm of the transpose matrix
   static char NORM = '1';
@@ -188,7 +180,7 @@ real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A ) const
 
 }
 
-real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A ) const
+real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A )
 {
   // Computed as infinity-norm of the transpose matrix
   static char NORM = 'I';
@@ -203,7 +195,7 @@ real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A ) const
                    WORK.data());
 }
 
-real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A ) const
+real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A )
 {
   // Computed using the transpose matrix
   static char NORM = 'F';
@@ -220,7 +212,7 @@ real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A ) const
 
 void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
                                     array1d<real64> & Y,
-                                    real64 const alpha ) const
+                                    real64 const alpha )
 {
 
   GEOS_ASSERT_MSG( X.size() == Y.size(),
@@ -241,7 +233,7 @@ void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
 
 void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
                                     array2d<real64> & B,
-                                    real64 const alpha ) const
+                                    real64 const alpha )
 {
 
   GEOS_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
@@ -250,7 +242,7 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
 
   static int INCX = 1;
   static int INCY = 1;
-  int N = static_cast<int>( A.size( 0 ) * A.size( 1 ) );
+  int N = static_cast<int>( A.size() );
   daxpy_( &N,
           const_cast<double*>(&alpha),
           A.data(),
@@ -262,7 +254,7 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
 }
 
 void BlasLapackLA::vectorScale( array1d<real64> & X,
-                                real64 alpha ) const
+                                real64 alpha )
 {
 
   static int INCX = 1;
@@ -276,11 +268,11 @@ void BlasLapackLA::vectorScale( array1d<real64> & X,
 }
 
 void BlasLapackLA::matrixScale( array2d<real64> & A,
-                                real64 alpha ) const
+                                real64 alpha )
 {
 
   static int INCX = 1;
-  int N = static_cast<int>( A.size( 0 ) * A.size( 1 ) );
+  int N = static_cast<int>( A.size() );
   dscal_( &N,
          const_cast<double*>(&alpha),
          A.data(),
@@ -290,7 +282,7 @@ void BlasLapackLA::matrixScale( array2d<real64> & A,
 }
 
 real64 BlasLapackLA::vectorDot( array1d<real64> const & X,
-                                array1d<real64> const & Y ) const
+                                array1d<real64> const & Y )
 {
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for dot product" );
@@ -310,7 +302,7 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
                                          array1d<real64> const & X,
                                          array1d<real64> & Y,
                                          real64 const alpha,
-                                         real64 const beta ) const
+                                         real64 const beta )
 {
   GEOS_ASSERT_MSG( A.size( 1 ) == X.size() &&
                    A.size( 0 ) == Y.size(),
@@ -346,7 +338,7 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
                                           array1d<real64> const & X,
                                           array1d<real64> & Y,
                                           real64 const alpha,
-                                          real64 const beta ) const
+                                          real64 const beta )
 {
   GEOS_ASSERT_MSG( A.size( 0 ) == X.size() &&
                        A.size( 1 ) == Y.size(),
@@ -382,7 +374,7 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
                                          array2d<real64> const & B,
                                          array2d<real64> & C,
                                          real64 const alpha,
-                                         real64 const beta ) const
+                                         real64 const beta )
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
@@ -420,7 +412,7 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
                                           array2d<real64> const & B,
                                           array2d<real64> & C,
                                           real64 const alpha,
-                                          real64 const beta ) const
+                                          real64 const beta )
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -459,7 +451,7 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
                                           array2d<real64> const & B,
                                           array2d<real64> & C,
                                           real64 const alpha,
-                                          real64 const beta ) const
+                                          real64 const beta )
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
@@ -498,7 +490,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
                                            array2d<real64> const & B,
                                            array2d<real64> & C,
                                            real64 const alpha,
-                                           real64 const beta ) const
+                                           real64 const beta )
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -534,7 +526,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
 }
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
-                                  array2d<real64> & Ainv ) const
+                                  array2d<real64> & Ainv )
 {
   real64 detA;
   matrixInverse( A,
@@ -544,7 +536,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv,
-                                  real64 & detA ) const
+                                  real64 & detA )
 {
   // --- Check that source matrix is square
   int NN = integer_conversion<int>(A.size( 0 ));
@@ -675,7 +667,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
 }
 
 void BlasLapackLA::vectorCopy( array1d<real64> const & X,
-                               array1d<real64> & Y ) const
+                               array1d<real64> & Y )
 {
   GEOS_ASSERT_MSG( X.size() == Y.size(),
                    "Vector dimensions not compatible for copying" );
@@ -693,7 +685,7 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
 }
 
 void BlasLapackLA::matrixCopy( array2d<real64> const & A,
-                               array2d<real64> & B ) const
+                               array2d<real64> & B )
 {
   GEOS_ASSERT_MSG( A.size(0) == B.size(0) &&
                    A.size(1) == B.size(1),
@@ -701,7 +693,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 
   static int INCX = 1;
   static int INCY = 1;
-  int N = static_cast<int>( A.size( 0 ) * A.size( 1 ) );
+  int N = static_cast<int>( A.size() );
   dcopy_( &N,
           A.data(),
           &INCX,
@@ -713,7 +705,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 
 //----------------------------------------------------------------I/O methods---
 // vector nice output
-void BlasLapackLA::printVector( array1d<real64> const & X ) const
+void BlasLapackLA::printVector( array1d<real64> const & X )
 {
   for( int i = 0 ; i < X.size() ; ++i )
   {
@@ -723,13 +715,13 @@ void BlasLapackLA::printVector( array1d<real64> const & X ) const
 }
 
 // vector nice output
-void BlasLapackLA::printMatrix( array2d<real64> const & X ) const
+void BlasLapackLA::printMatrix( array2d<real64> const & A )
 {
-  for( int i = 0 ; i < X.size( 0 ) ; ++i )
+  for( int i = 0 ; i < A.size( 0 ) ; ++i )
   {
-    for( int j = 0 ; j < X.size( 1 ) ; ++j )
+    for( int j = 0 ; j < A.size( 1 ) ; ++j )
     {
-      printf( "%10.2e ", X( i, j ) );
+      printf( "%10.2e ", A( i, j ) );
     }
     printf( "\n" );
   }

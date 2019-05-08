@@ -46,17 +46,17 @@ public:
   /**
    * @brief Returns the 1-norm of the vector.
    */
-  real64 vectorNorm1( array1d<real64> const & X ) const;
+  static real64 vectorNorm1( array1d<real64> const & X ) ;
 
   /**
    * @brief Returns the two norm of the vector.
    */
-  real64 vectorNorm2( array1d<real64> const & X ) const;
+  static real64 vectorNorm2( array1d<real64> const & X ) ;
 
   /**
    * @brief Infinity-norm of the vector.
    */
-  real64 vectorNormInf( array1d<real64> const & X ) const;
+  static real64 vectorNormInf( array1d<real64> const & X ) ;
 
   /**
    * @brief Computes matrix determinant.
@@ -71,7 +71,7 @@ public:
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  real64 determinant( array2d<real64> const & A ) const;
+  static real64 determinant( array2d<real64> const & A ) ;
 
   /**
    * @brief Returns the infinity norm of the matrix.
@@ -82,7 +82,7 @@ public:
    * norm is computed as the one norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  real64 matrixNormInf(array2d<real64> const & A) const;
+  static real64 matrixNormInf(array2d<real64> const & A) ;
 
   /**
    * @brief Returns the one norm of the matrix.
@@ -93,7 +93,7 @@ public:
    * is computed as the infinity norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  real64 matrixNorm1(array2d<real64> const & A) const;
+  static real64 matrixNorm1(array2d<real64> const & A) ;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
@@ -104,7 +104,7 @@ public:
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  real64 matrixNormFrobenius(array2d<real64> const & A) const;
+  static real64 matrixNormFrobenius(array2d<real64> const & A) ;
 
   /**
    * @brief Vector-Vector sum;
@@ -124,9 +124,9 @@ public:
    * @warning
    * Assumes that <tt>x</tt> and <tt>y</tt> have the same size.
    */
-  void vectorVectorAdd( array1d<real64> const & X,
-                        array1d<real64> & Y,
-                        real64 const alpha = 1. ) const;
+  static void vectorVectorAdd( array1d<real64> const & X,
+                               array1d<real64> & Y,
+                               real64 const alpha = 1. );
 
   /**
    * @brief Matrix-Matrix sum;
@@ -146,9 +146,9 @@ public:
    * @warning
    * Assumes that <tt>A</tt> and <tt>B</tt> have the same size.
    */
-  void matrixMatrixAdd( array2d<real64> const & A,
-                        array2d<real64> & B,
-                        real64 const alpha = 1. ) const;
+  static void matrixMatrixAdd( array2d<real64> const & A,
+                               array2d<real64> & B,
+                               real64 const alpha = 1. ) ;
 
   /**
    * @brief In-place scalar-vector product;
@@ -157,8 +157,8 @@ public:
    * \param IN
    * scalarThis - Scalar to multiply with \a this.
    */
-  void vectorScale( array1d<real64> & X,
-                    real64 alpha ) const;
+  static void vectorScale( array1d<real64> & X,
+                           real64 alpha ) ;
 
   /**
    * @brief In-place scalar-matrix product;
@@ -167,8 +167,8 @@ public:
    * \param IN
    * alpha - Scalar to multiply with <tt>A</tt>.
    */
-  void matrixScale( array2d<real64> & A,
-                    real64 alpha) const;
+  static void matrixScale( array2d<real64> & A,
+                           real64 alpha) ;
 
   /**
    * @brief Dot product of two vectors.
@@ -179,8 +179,8 @@ public:
    * <tt>y</tt> - GEOSX array1d.
    *
    */
-  real64 vectorDot( array1d<real64> const & X,
-                    array1d<real64> const & Y) const;
+  static real64 vectorDot( array1d<real64> const & X,
+                           array1d<real64> const & Y) ;
 
   /**
    * @brief Matrix-Vector product;
@@ -202,11 +202,11 @@ public:
    * Assumes that <tt>X</tt> and <tt>X</tt> have compatible sizes
    * with <tt>A<tt>.
    */
-  void matrixVectorMultiply(array2d<real64> const & A,
-                            array1d<real64> const & X,
-                            array1d<real64>  & Y,
-                            real64 const alpha=1.,
-                            real64 const beta=0.) const;
+  static void matrixVectorMultiply(array2d<real64> const & A,
+                                   array1d<real64> const & X,
+                                   array1d<real64>  & Y,
+                                   real64 const alpha=1.,
+                                   real64 const beta=0.) ;
 
   /**
    * @brief transpose(Matrix)-Vector product;
@@ -228,11 +228,11 @@ public:
    * Assumes that <tt>X</tt> and <tt>X</tt> have compatible sizes
    * with <tt>A<tt><sup>T</sup>.
    */
-  void matrixTVectorMultiply(array2d<real64> const & A,
-                             array1d<real64> const & X,
-                             array1d<real64>  & Y,
-                             real64 const alpha=1.,
-                             real64 const beta=0.) const;
+  static void matrixTVectorMultiply(array2d<real64> const & A,
+                                    array1d<real64> const & X,
+                                    array1d<real64>  & Y,
+                                    real64 const alpha=1.,
+                                    real64 const beta=0.) ;
 
   /**
    * @brief Matrix-Matrix product;
@@ -257,11 +257,11 @@ public:
    * <tt>C<tt> already has the right size.
    *
    */
-  void matrixMatrixMultiply( array2d<real64> const & A,
-                             array2d<real64> const & B,
-                             array2d<real64> & C,
-                             real64 const alpha=1.,
-                             real64 const beta=0.) const;
+  static void matrixMatrixMultiply( array2d<real64> const & A,
+                                    array2d<real64> const & B,
+                                    array2d<real64> & C,
+                                    real64 const alpha=1.,
+                                    real64 const beta=0.) ;
 
   /**
    * @brief transpose(Matrix)-Matrix product;
@@ -286,11 +286,11 @@ public:
    * <tt>C<tt> already has the right size.
    *
    */
-  void matrixTMatrixMultiply( array2d<real64> const & A,
-                              array2d<real64> const & B,
-                              array2d<real64> & C,
-                              real64 const alpha=1.,
-                              real64 const beta=0.) const;
+  static void matrixTMatrixMultiply( array2d<real64> const & A,
+                                     array2d<real64> const & B,
+                                     array2d<real64> & C,
+                                     real64 const alpha=1.,
+                                     real64 const beta=0.);
 
   /**
    * @brief Matrix-transpose(Matrix) product;
@@ -315,11 +315,11 @@ public:
    * <tt>C<tt> already has the right size.
    *
    */
-  void matrixMatrixTMultiply( array2d<real64> const & A,
-                              array2d<real64> const & B,
-                              array2d<real64> & C,
-                              real64 const alpha=1.,
-                              real64 const beta=0.) const;
+  static void matrixMatrixTMultiply( array2d<real64> const & A,
+                                     array2d<real64> const & B,
+                                     array2d<real64> & C,
+                                     real64 const alpha=1.,
+                                     real64 const beta=0.) ;
 
   /**
    * @brief transpose(Matrix)-transpose(Matrix) product;
@@ -346,11 +346,11 @@ public:
    * <tt>C<tt> already has the right size.
    *
    */
-  void matrixTMatrixTMultiply( array2d<real64> const & A,
-                               array2d<real64> const & B,
-                               array2d<real64> & C,
-                               real64 const alpha=1.,
-                               real64 const beta=0.) const;
+  static void matrixTMatrixTMultiply( array2d<real64> const & A,
+                                      array2d<real64> const & B,
+                                      array2d<real64> & C,
+                                      real64 const alpha=1.,
+                                      real64 const beta=0.) ;
 
   /**
    * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
@@ -375,8 +375,8 @@ public:
    * for any copy/transposition that would be required operating with the
    * row-major layout.
    */
-  void matrixInverse( array2d<real64> const & A,
-                       array2d<real64> & Ainv ) const;
+  static void matrixInverse( array2d<real64> const & A,
+                             array2d<real64> & Ainv ) ;
 
   /**
    * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
@@ -405,9 +405,9 @@ public:
    * for any copy/transposition that would be required operating with the
    * row-major layout.
    */
-  void matrixInverse( array2d<real64> const & A,
-                      array2d<real64> & Ainv,
-                      real64 & detA) const;
+  static void matrixInverse( array2d<real64> const & A,
+                             array2d<real64> & Ainv,
+                             real64 & detA) ;
 
   /**
    * @brief Vector copy;
@@ -423,8 +423,8 @@ public:
    * Assumes that <tt>x</tt> and <tt>y</tt> have the same size.
    *
    */
-  void vectorCopy( array1d<real64> const & X,
-                   array1d<real64> & Y ) const;
+  static void vectorCopy( array1d<real64> const & X,
+                          array1d<real64> & Y ) ;
 
   /**
    * @brief Vector copy;
@@ -440,8 +440,8 @@ public:
    * Assumes that <tt>A</tt> and <tt>B</tt> have the same size.
    *
    */
-  void matrixCopy( array2d<real64> const & A,
-                   array2d<real64> & B ) const;
+  static void matrixCopy( array2d<real64> const & A,
+                          array2d<real64> & B ) ;
   //@}
 
   //----------------------------------------------------------------------------
@@ -451,12 +451,12 @@ public:
   /**
    * @brief Print service method for GEOSX array1d.
    */
-  void printVector(array1d<real64> const & X) const;
+  static void printVector(array1d<real64> const & X) ;
 
   /**
    * @brief Print service method for GEOSX array2d.
    */
-  void printMatrix(array2d<real64> const & X) const;
+  static void printMatrix(array2d<real64> const & X) ;
 
   //@}
 

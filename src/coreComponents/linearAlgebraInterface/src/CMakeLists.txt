@@ -16,7 +16,6 @@ set( linearAlgebraInterface_headers
      TrilinosInterface.hpp
      HypreInterface.hpp 
      LinearSolverParameters.hpp
-     LapackSuiteInterface.hpp
      BlasLapackLA.hpp)
 
 #

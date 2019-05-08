@@ -72,6 +72,8 @@ void matrixRand( array2d<real64> & A,
   return;
 }
 
+static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
@@ -107,10 +109,6 @@ template<typename LAI>
 void testArray1dLA()
 {
 
-  BlasLapackLA denseLA;
-
-  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
-
   // Repeat the following step for vectors of increasing size:
   //
   // a. Resize vectors v1, v2, and v3 to be of equal size
@@ -145,30 +143,30 @@ void testArray1dLA()
     v2 = 0.0;
 
     // d.
-    denseLA.vectorVectorAdd( v1, v2, alfa );
+    LAI::vectorVectorAdd( v1, v2, alfa );
 
     // e.
-    denseLA.vectorScale( v1, alfa );
+    LAI::vectorScale( v1, alfa );
 
     // f.
-    denseLA.vectorCopy( v1, v3 );
+    LAI::vectorCopy( v1, v3 );
 
     // g.
-    EXPECT_NEAR( denseLA.vectorNorm1( v2 ),
-                 denseLA.vectorNorm1( v3 ),
-                 machinePrecision * denseLA.vectorNorm1( v2 ) );
-    EXPECT_NEAR( denseLA.vectorNorm2( v2 ),
-                 denseLA.vectorNorm2( v3 ),
-                 machinePrecision * denseLA.vectorNorm2( v2 ) );
-    EXPECT_NEAR( denseLA.vectorNormInf( v2 ),
-                 denseLA.vectorNormInf( v3 ),
-                 machinePrecision * denseLA.vectorNormInf( v2 ) );
+    EXPECT_NEAR( LAI::vectorNorm1( v2 ),
+                 LAI::vectorNorm1( v3 ),
+                 machinePrecision * LAI::vectorNorm1( v2 ) );
+    EXPECT_NEAR( LAI::vectorNorm2( v2 ),
+                 LAI::vectorNorm2( v3 ),
+                 machinePrecision * LAI::vectorNorm2( v2 ) );
+    EXPECT_NEAR( LAI::vectorNormInf( v2 ),
+                 LAI::vectorNormInf( v3 ),
+                 machinePrecision * LAI::vectorNormInf( v2 ) );
 
     // i.
-    real64 beta = denseLA.vectorDot( v2, v2 );
-    EXPECT_NEAR( std::sqrt( denseLA.vectorDot( v2, v2 ) ),
-                 denseLA.vectorNorm2( v2 ),
-                 machinePrecision * denseLA.vectorNorm2( v2 ) );
+    real64 beta = LAI::vectorDot( v2, v2 );
+    EXPECT_NEAR( std::sqrt( LAI::vectorDot( v2, v2 ) ),
+                 LAI::vectorNorm2( v2 ),
+                 machinePrecision * LAI::vectorNorm2( v2 ) );
 
   }
 
@@ -177,9 +175,6 @@ void testArray1dLA()
 template<typename LAI>
 void testArray2dLA()
 {
-  BlasLapackLA denseLA;
-
-  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 
   array2d<real64> A, B, C, D, LHS, RHS;
   std::default_random_engine generator;
@@ -233,31 +228,31 @@ void testArray2dLA()
 
           // Compute tmp1 = ( alfa*A*B + beta*C )
           array2d<real64> tmp1( C );
-          denseLA.matrixMatrixMultiply( A, B, tmp1, alfa, beta );
+          LAI::matrixMatrixMultiply( A, B, tmp1, alfa, beta );
 
           // Compute LHS = tmp1*D
-          denseLA.matrixMatrixMultiply( tmp1, D, LHS );
+          LAI::matrixMatrixMultiply( tmp1, D, LHS );
 
           // Compute tmp2 = B*D
           array2d<real64> tmp2( B.size( 0 ), D.size( 1 ) );
-          denseLA.matrixMatrixMultiply( B, D, tmp2 );
+          LAI::matrixMatrixMultiply( B, D, tmp2 );
 
           // Compute RHS = alfa*A*tmp2
-          denseLA.matrixMatrixMultiply( A, tmp2, RHS, alfa );
+          LAI::matrixMatrixMultiply( A, tmp2, RHS, alfa );
 
           // Compute RHS = RHS + beta*C*D
-          denseLA.matrixMatrixMultiply( C, D, RHS, beta, 1. );
+          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
 
           // Check norms
-          EXPECT_NEAR( denseLA.matrixNormInf( LHS ),
-                       denseLA.matrixNormInf( RHS ),
-                       denseLA.matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNorm1( LHS ),
-                       denseLA.matrixNorm1( RHS ),
-                       denseLA.matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNormFrobenius( LHS ),
-                       denseLA.matrixNormFrobenius( RHS ),
-                       denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
+                       LAI::matrixNormInf( RHS ),
+                       LAI::matrixNormInf( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
+                       LAI::matrixNorm1( RHS ),
+                       LAI::matrixNorm1( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
+                       LAI::matrixNormFrobenius( RHS ),
+                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
         }
       }
     }
@@ -310,31 +305,31 @@ void testArray2dLA()
 
           // Compute tmp1 = ( alfa*A^T*B + beta*C )
           array2d<real64> tmp1( C );
-          denseLA.matrixTMatrixMultiply( A, B, tmp1, alfa, beta );
+          LAI::matrixTMatrixMultiply( A, B, tmp1, alfa, beta );
 
           // Compute LHS = tmp*D
-          denseLA.matrixMatrixMultiply( tmp1, D, LHS );
+          LAI::matrixMatrixMultiply( tmp1, D, LHS );
 
           // Compute tmp2 = B*D
           array2d<real64> tmp2( B.size( 0 ), D.size( 1 ) );
-          denseLA.matrixMatrixMultiply( B, D, tmp2 );
+          LAI::matrixMatrixMultiply( B, D, tmp2 );
 
           // Compute RHS = alfa*A^T*tmp2
-          denseLA.matrixTMatrixMultiply( A, tmp2, RHS, alfa );
+          LAI::matrixTMatrixMultiply( A, tmp2, RHS, alfa );
 
           // Compute RHS = RHS + beta*C*D
-          denseLA.matrixMatrixMultiply( C, D, RHS, beta, 1. );
+          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
 
           // Check norms
-          EXPECT_NEAR( denseLA.matrixNormInf( LHS ),
-                       denseLA.matrixNormInf( RHS ),
-                       denseLA.matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNorm1( LHS ),
-                       denseLA.matrixNorm1( RHS ),
-                       denseLA.matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNormFrobenius( LHS ),
-                       denseLA.matrixNormFrobenius( RHS ),
-                       denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
+                       LAI::matrixNormInf( RHS ),
+                       LAI::matrixNormInf( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
+                       LAI::matrixNorm1( RHS ),
+                       LAI::matrixNorm1( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
+                       LAI::matrixNormFrobenius( RHS ),
+                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
       }
@@ -387,31 +382,31 @@ void testArray2dLA()
 
           // Compute tmp1 = ( alfa*A*B^T + beta*C )
           array2d<real64> tmp1( C );
-          denseLA.matrixMatrixTMultiply( A, B, tmp1, alfa, beta );
+          LAI::matrixMatrixTMultiply( A, B, tmp1, alfa, beta );
 
           // Compute LHS = tmp*D
-          denseLA.matrixMatrixMultiply( tmp1, D, LHS );
+          LAI::matrixMatrixMultiply( tmp1, D, LHS );
 
           // Compute tmp2 = B^T*D
           array2d<real64> tmp2( B.size( 1 ), D.size( 1 ) );
-          denseLA.matrixTMatrixMultiply( B, D, tmp2 );
+          LAI::matrixTMatrixMultiply( B, D, tmp2 );
 
           // Compute RHS = alfa*A*tmp2
-          denseLA.matrixMatrixMultiply( A, tmp2, RHS, alfa );
+          LAI::matrixMatrixMultiply( A, tmp2, RHS, alfa );
 
           // Compute RHS = RHS + beta*C*D
-          denseLA.matrixMatrixMultiply( C, D, RHS, beta, 1. );
+          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
 
           // Check norms
-          EXPECT_NEAR( denseLA.matrixNormInf( LHS ),
-                       denseLA.matrixNormInf( RHS ),
-                       denseLA.matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNorm1( LHS ),
-                       denseLA.matrixNorm1( RHS ),
-                       denseLA.matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNormFrobenius( LHS ),
-                       denseLA.matrixNormFrobenius( RHS ),
-                       denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
+                       LAI::matrixNormInf( RHS ),
+                       LAI::matrixNormInf( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
+                       LAI::matrixNorm1( RHS ),
+                       LAI::matrixNorm1( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
+                       LAI::matrixNormFrobenius( RHS ),
+                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
       }
@@ -464,31 +459,31 @@ void testArray2dLA()
 
           // Compute tmp1 = ( alfa*A^T*B^T + beta*C )
           array2d<real64> tmp1( C );
-          denseLA.matrixTMatrixTMultiply( A, B, tmp1, alfa, beta );
+          LAI::matrixTMatrixTMultiply( A, B, tmp1, alfa, beta );
 
           // Compute LHS = tmp*D
-          denseLA.matrixMatrixMultiply( tmp1, D, LHS );
+          LAI::matrixMatrixMultiply( tmp1, D, LHS );
 
           // Compute tmp2 = B^T*D
           array2d<real64> tmp2( B.size( 1 ), D.size( 1 ) );
-          denseLA.matrixTMatrixMultiply( B, D, tmp2 );
+          LAI::matrixTMatrixMultiply( B, D, tmp2 );
 
           // Compute RHS = alfa*A^T*tmp2
-          denseLA.matrixTMatrixMultiply( A, tmp2, RHS, alfa );
+          LAI::matrixTMatrixMultiply( A, tmp2, RHS, alfa );
 
           // Compute RHS = RHS + beta*C*D
-          denseLA.matrixMatrixMultiply( C, D, RHS, beta, 1. );
+          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
 
           // Check norms
-          EXPECT_NEAR( denseLA.matrixNormInf( LHS ),
-                       denseLA.matrixNormInf( RHS ),
-                       denseLA.matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNorm1( LHS ),
-                       denseLA.matrixNorm1( RHS ),
-                       denseLA.matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( denseLA.matrixNormFrobenius( LHS ),
-                       denseLA.matrixNormFrobenius( RHS ),
-                       denseLA.matrixNormFrobenius( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
+                       LAI::matrixNormInf( RHS ),
+                       LAI::matrixNormInf( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
+                       LAI::matrixNorm1( RHS ),
+                       LAI::matrixNorm1( LHS ) * machinePrecision );
+          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
+                       LAI::matrixNormFrobenius( RHS ),
+                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
 
         }
       }
@@ -500,10 +495,6 @@ void testArray2dLA()
 template<typename LAI>
 void testArray2dArray1dLA()
 {
-
-  BlasLapackLA denseLA;
-
-  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 
   std::default_random_engine generator;
   std::uniform_real_distribution<real64> distribution( 0.0, 1.0 );
@@ -543,7 +534,7 @@ void testArray2dArray1dLA()
                   generator );
 
       // a.
-      denseLA.matrixVectorMultiply( A, x, y );
+      LAI::matrixVectorMultiply( A, x, y );
 
       // b.
       // --- construct tmp = x^T
@@ -555,11 +546,11 @@ void testArray2dArray1dLA()
 
       // -- compute yT = tmp * A^T
       yT.resize( 1, A.size( 0 ) );
-      denseLA.matrixMatrixTMultiply( tmp, A, yT );
+      LAI::matrixMatrixTMultiply( tmp, A, yT );
 
       // c.
-      alfa = denseLA.vectorNorm2( y );
-      beta = denseLA.matrixNormFrobenius( yT );
+      alfa = LAI::vectorNorm2( y );
+      beta = LAI::matrixNormFrobenius( yT );
       EXPECT_NEAR( alfa,
                    beta,
                    alfa * machinePrecision );
@@ -572,7 +563,7 @@ void testArray2dArray1dLA()
       }
 
       // e.
-      beta = std::sqrt( denseLA.vectorDot( y, yTT ) );
+      beta = std::sqrt( LAI::vectorDot( y, yTT ) );
 
       // f. check that ( (norm(y, norm-2) == sqrt(yTT_dot_y))
       EXPECT_NEAR( alfa,
@@ -585,10 +576,6 @@ void testArray2dArray1dLA()
 template<typename LAI>
 void testArray2dInverseLA()
 {
-
-  BlasLapackLA denseLA;
-
-  real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 
   array2d<real64> E;
   array2d<real64> Einv;
@@ -625,14 +612,14 @@ void testArray2dInverseLA()
 
     // b.
     Einv.resize( E.size(0), E.size(1) );
-    denseLA.matrixInverse(E, Einv, det );
+    LAI::matrixInverse(E, Einv, det );
 
     // c.
     EinvXE.resize( E.size(0), E.size(1) );
-    denseLA.matrixMatrixMultiply( Einv, E, EinvXE );
+    LAI::matrixMatrixMultiply( Einv, E, EinvXE );
 
     // d.
-    EXPECT_NEAR( denseLA.determinant(EinvXE),
+    EXPECT_NEAR( LAI::determinant(EinvXE),
                  1.,
                  machinePrecision );
   }
