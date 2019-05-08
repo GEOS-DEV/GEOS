@@ -42,7 +42,7 @@
   </Geometry>
 
 
-  <Events maxTime="10.0">
+  <Events maxTime="50.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
