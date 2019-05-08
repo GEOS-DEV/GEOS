@@ -814,11 +814,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         vector->createWithGlobalSize( connLocPattDistr->globalCols(), MPI_COMM_GEOSX );
       }
     }
-    parallelMatrix.MatrixMatrixMultiply( *connLocPattDistr,
-                                         true,
-                                         *connLocPattDistr,
-                                         false,
-                                         locLocDistr );
+    connLocPattDistr->MatrixMatrixMultiply( true,
+                                            *connLocPattDistr,
+                                            false,
+                                            locLocDistr );
   }
   else if( rowFieldIndex >= 0 and colFieldIndex >= 0 )
   {
@@ -838,12 +837,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         {
           vector->createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
         }
-        parallelMatrix.MatrixMatrixMultiply( *rowConnLocPattDistr,
-                                             true,
-                                             *colConnLocPattDistr,
-                                             false,
-                                             locLocDistr,
-                                             false );
+        rowConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                   *colConnLocPattDistr,
+                                                   false,
+                                                   locLocDistr,
+                                                   false );
       }
       else
       {
@@ -858,12 +856,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
         {
           vector->createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
         }
-        parallelMatrix.MatrixMatrixMultiply( *colConnLocPattDistr,
-                                             true,
-                                             *rowConnLocPattDistr,
-                                             false,
-                                             locLocDistr,
-                                             false );
+        colConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                   *rowConnLocPattDistr,
+                                                   false,
+                                                   locLocDistr,
+                                                   false );
       }
     }
     else
@@ -913,11 +910,10 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
           {
             localPattern.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
           }
-          parallelMatrix.MatrixMatrixMultiply( *connLocPattDistr,
-                                               true,
-                                               *connLocPattDistr,
-                                               false,
-                                               localPattern );
+          connLocPattDistr->MatrixMatrixMultiply( true,
+                                                  *connLocPattDistr,
+                                                  false,
+                                                  localPattern );
 
           for( globalIndex i = localPattern.ilower() ; i < localPattern.iupper() ; ++i )
           {
@@ -944,12 +940,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( rowConnLocPattDistr->globalCols(), colConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            parallelMatrix.MatrixMatrixMultiply( *rowConnLocPattDistr,
-                                                 true,
-                                                 *colConnLocPattDistr,
-                                                 false,
-                                                 localPattern,
-                                                 false );
+            rowConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                       *colConnLocPattDistr,
+                                                       false,
+                                                       localPattern,
+                                                       false );
           }
           else
           {
@@ -958,12 +953,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( colConnLocPattDistr->globalCols(), rowConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            parallelMatrix.MatrixMatrixMultiply( *colConnLocPattDistr,
-                                                 true,
-                                                 *rowConnLocPattDistr,
-                                                 false,
-                                                 localPattern,
-                                                 false );
+            colConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                       *rowConnLocPattDistr,
+                                                       false,
+                                                       localPattern,
+                                                       false );
           }
 
           // Assembly (with right offsets)
@@ -1002,19 +996,17 @@ void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
   ParallelMatrix productStep1;
 
   productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1, MPI_COMM_GEOSX );
-  parallelMatrix.MatrixMatrixMultiply( locLocDistr,
-                                       false,
-                                       permutation,
-                                       false,
-                                       productStep1 );
+  locLocDistr.MatrixMatrixMultiply( false,
+                                    permutation,
+                                    false,
+                                    productStep1 );
 
   // Matrix B = P*C
   permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1, MPI_COMM_GEOSX );
-  parallelMatrix.MatrixMatrixMultiply( permutation,
-                                       true,
-                                       productStep1,
-                                       false,
-                                       permutedMatrix );
+  permutation.MatrixMatrixMultiply( true,
+                                    productStep1,
+                                    false,
+                                    permutedMatrix );
 }
 
 // Copy values from DOFs to nodes

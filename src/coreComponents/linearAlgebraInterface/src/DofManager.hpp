@@ -517,11 +517,6 @@ private:
    * Release internal storage
    */
   void cleanUp();
-
-  /*
-   * just to call member functions
-   */
-  ParallelMatrix parallelMatrix;
 };
 
 } /* namespace geosx */

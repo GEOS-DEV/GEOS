@@ -508,8 +508,7 @@ public:
   /**
    * @brief Performe a matrix matrix product with Parallel Matrix
    */
-  void MatrixMatrixMultiply( EpetraMatrix const &A,
-                             bool const transA,
+  void MatrixMatrixMultiply( bool const transA,
                              EpetraMatrix const &B,
                              bool const transB,
                              EpetraMatrix &C,

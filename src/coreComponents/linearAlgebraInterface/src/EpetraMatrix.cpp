@@ -483,16 +483,19 @@ bool EpetraMatrix::isAssembled() const
 // MatrixMatrixMultiply
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*src = dst.
-void EpetraMatrix::MatrixMatrixMultiply( EpetraMatrix const &A,
-                                       bool const transA,
-                                       EpetraMatrix const &B,
-                                       bool const transB,
-                                       EpetraMatrix &C,
-                                       bool const call_FillComplete ) const
+void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
+                                         EpetraMatrix const &B,
+                                         bool const transB,
+                                         EpetraMatrix &C,
+                                         bool const call_FillComplete ) const
 {
   int
-  err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(), transA,
-                                           *B.unwrappedPointer(), transB, *C.unwrappedPointer(), call_FillComplete );
+  err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
+                                           transA,
+                                           *B.unwrappedPointer(),
+                                           transB,
+                                           *C.unwrappedPointer(),
+                                           call_FillComplete );
 
   GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
 
