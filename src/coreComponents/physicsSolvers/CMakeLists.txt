@@ -6,6 +6,7 @@ message( "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
@@ -23,6 +24,7 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
