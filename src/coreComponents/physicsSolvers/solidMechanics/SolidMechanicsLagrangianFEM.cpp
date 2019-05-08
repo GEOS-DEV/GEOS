@@ -1233,6 +1233,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
   FaceManager * const faceManager = mesh->getFaceManager();
   NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 //  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
@@ -1273,6 +1274,58 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   {
     fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
     ApplyChomboPressure( domain, *blockSystem );
+  }
+
+  {
+  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+    FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
+
+    forall_in_range<elemPolicy>( 0,
+                                 subRegion->size(),
+                                 GEOSX_LAMBDA ( localIndex const kfe )
+    {
+
+      R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
+//      Nbar -= faceNormal[faceMap[kfe][1]];
+      Nbar.Normalize();
+      std::cout<<Nbar<<std::endl;
+
+      globalIndex nodeDOF[20];
+      real64 nodeRHS[20];
+
+      for( localIndex kf=0 ; kf<1 ; ++kf )
+      {
+        localIndex const faceIndex = faceMap[kfe][kf];
+        localIndex const numNodes = facesToNodes[faceIndex].size();
+
+        std::cout<<faceIndex<<", "<<numNodes<<std::endl;
+
+        for( localIndex a=0 ; a<numNodes ; ++a )
+        {
+          for( int component=0 ; component<3 ; ++component )
+          {
+            nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
+            nodeRHS[3*a+component] = - fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+            std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
+          }
+        }
+
+        rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
+      }
+
+
+    });
+  });
   }
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,

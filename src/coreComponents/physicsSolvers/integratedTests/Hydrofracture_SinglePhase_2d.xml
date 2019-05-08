@@ -7,20 +7,20 @@
     gravityVector="0.0,0.0,-9.81">
   
   
-      <Hydrofracture name="hydrofracture" 
-                 solidSolverName="lagsolve"
-                 fluidSolverName="SinglePhaseFlow"
-                 couplingTypeOption="FixedStress"
-                 verboseLevel="1"
-                 targetRegions="Fracture"
-                 >
+    <Hydrofracture name="hydrofracture" 
+                   solidSolverName="lagsolve"
+                   fluidSolverName="SinglePhaseFlow"
+                   couplingTypeOption="FixedStress"
+                   verboseLevel="1"
+                   targetRegions="Fracture"
+                   >
       <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Hydrofracture>
   
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="1"
+                                  verboseLevel="3"
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   solidMaterialName="rock"
@@ -45,7 +45,7 @@
     </SinglePhaseFlow>
     
         <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="3"
+                      verboseLevel="0"
                       targetRegions="Region2">
     </SurfaceGenerator>
     
@@ -55,10 +55,10 @@
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
                   xCoords="-1, 1"
-                  yCoords="0, 10"
+                  yCoords="0, 1"
                   zCoords="0, 1"
                   nx="2"
-                  ny="10"
+                  ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
@@ -73,9 +73,9 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="2.0">
   
-      <SoloEvent name="preFracture"
+    <SoloEvent name="preFracture"
                target="/Solvers/SurfaceGen"/>
   
     <!-- This event is applied every cycle, and overrides the
@@ -156,7 +156,7 @@
 
     <FieldSpecification name="frac"
                initialCondition="1"
-               setNames="fracPlane"
+               setNames="fracture"
                objectPath="faceManager"
                fieldName="ruptureState"
                scale="1"/>
@@ -177,19 +177,33 @@
                fieldName="referencePorosity"
                scale="0.05"/>
                
-    <!-- >FieldSpecification name="left"
+    <FieldSpecification name="topbot"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="1"
+               scale="0.0"
+               setNames="yneg, ypos"/>
+
+    <FieldSpecification name="zconstraint"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="2"
+               scale="0.0"
+               setNames="zneg, zpos"/>
+
+    <FieldSpecification name="left"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="-1"
+               scale="0.0"
                setNames="xneg"/>
 
     <FieldSpecification name="right"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="1"
-               setNames="xpos"/ -->
+               scale="0.0"
+               setNames="xpos"/>
 
                
     <FieldSpecification name="source"
