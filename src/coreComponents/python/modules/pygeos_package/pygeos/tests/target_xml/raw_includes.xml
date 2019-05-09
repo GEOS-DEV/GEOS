@@ -50,7 +50,7 @@
   <Partition>
   </Partition>
   <Events maxTime="4.0">
-    <PeriodicEvent name="solverApplications" maxEventDt="0.002" target="/Solvers/solver1"/>
+    <PeriodicEvent name="solverApplications" forceDt="0.002" target="/Solvers/solver1"/>
     <PeriodicEvent name="outputs" timeFrequency="1.0" targetExactTimestep="1" target="/Outputs/siloOutput"/>
   </Events>
   <Fracture fractureFlag="100" preFractureSetName="source Frac_0" separableSet="fracturable" rockToughness="1e6" failCriterion="1" failgap="0.0004" dfnPrefix="Frac_"/>

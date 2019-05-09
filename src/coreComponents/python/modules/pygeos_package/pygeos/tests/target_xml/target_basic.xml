@@ -65,7 +65,7 @@
   <!--    Unsorted Blocks     -->
   <!--                        -->
   <Events maxTime="4.0">
-    <PeriodicEvent name="solverApplications" maxEventDt="0.002" target="/Solvers/solver1"/>
+    <PeriodicEvent name="solverApplications" forceDt="0.002" target="/Solvers/solver1"/>
     <PeriodicEvent name="outputs" timeFrequency="0.1" targetExactTimestep="1" target="/Outputs/siloOutput"/>
   </Events>
   <!--                        -->
