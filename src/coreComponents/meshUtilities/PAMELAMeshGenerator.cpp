@@ -59,6 +59,9 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * co
   RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fields to be imported from the external mesh file");
+  RegisterViewWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the fields within GEOSX");
   RegisterViewWrapper(viewKeyStruct::scaleString, &m_scale, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(1.)->setDescription("Scale the coordinates of the vertices");
@@ -304,10 +307,10 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       if( cellBlock != nullptr )
       {
         auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
-        for( auto & fieldName : m_fieldsToImport )
+        for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
-          auto meshProperty = meshProperties[fieldName];
-          real64_array & property = cellBlock->AddProperty( fieldName );
+          auto meshProperty = meshProperties[m_fieldsToImport[fieldIndex]];
+          real64_array & property = cellBlock->AddProperty( m_fieldNamesInGEOSX[fieldIndex] );
           GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty.size_owned() ),
                          "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
                          << meshProperty.size_owned() << ") on " <<cellBlock->getName() );
