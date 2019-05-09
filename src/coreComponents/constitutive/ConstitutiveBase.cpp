@@ -49,7 +49,9 @@ namespace constitutive
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+  ManagedGroup( name, parent ),
+  m_numQuadraturePoints(1),
+  m_constitutiveDataGroup(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
@@ -66,8 +68,9 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
 }
 
 void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                 localIndex const )
+                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
   m_constitutiveDataGroup = parent;
 
   for( auto & group : this->GetSubGroups() )
