@@ -76,10 +76,6 @@ EventManager::EventManager( std::string const & name,
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("index of the current subevent.");
 
-  RegisterViewWrapper(viewKeyStruct::currentMaxDtString, &m_currentMaxDt, false )->
-    setRestartFlags(RestartFlags::WRITE_AND_READ)->
-    setDescription("Maximum dt request for event loop.");
-
 }
 
 
@@ -129,7 +125,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   // Inform user if it appears this is a mid-loop restart
   if ((m_currentSubEvent > 0))
   {
-    GEOS_LOG_RANK_0("The restart-file was written during step " << currentSubEvent << " of the event loop.  Resuming from that point.");
+    GEOS_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
   }
 
   // Run problem
@@ -155,7 +151,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       GEOSX_MARK_BEGIN("EventManager::MPI calls");
 
       real64 dt_global;
-      MPI_Allreduce(&m_dt, &result_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
+      MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
       m_dt = dt_global;
 
       GEOSX_MARK_END("EventManager::MPI calls");
@@ -175,7 +171,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
       if (m_verbosity > 0)
       {
-        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), f=" << eventForecast);
+        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), forecast=" << eventForecast);
       }
 
       // Execute, signal events
@@ -190,6 +186,8 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
       }
 
       // Check the exit flag
+      // Note: Currently, this is only being used by the HaltEvent
+      //       If it starts being used elsewhere it may need to be synchronized
       exitFlag += subEvent->GetExitFlag();
     }
 
