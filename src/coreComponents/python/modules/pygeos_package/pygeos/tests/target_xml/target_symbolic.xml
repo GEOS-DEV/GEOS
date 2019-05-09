@@ -622,7 +622,7 @@
   <!--    Unsorted Blocks     -->
   <!--                        -->
   <Events maxTime="1e4">
-    <PeriodicEvent name="init_solvers" maxEventDt="0.25" beginTime="0" endTime="5.0">
+    <PeriodicEvent name="init_solvers" forceDt="0.25" beginTime="0" endTime="5.0">
       <PeriodicEvent name="solver_a" target="/Solvers/implag3"/>
       <PeriodicEvent name="solver_b" target="/Solvers/ppsolve"/>
     </PeriodicEvent>
