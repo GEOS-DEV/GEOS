@@ -43,6 +43,22 @@ public:
     static constexpr integer MAX_NUM_PHASES = 3;
   };
 
+  // order of the phase properties in the water-oil data
+  struct WaterOilPairPhaseType
+  {
+    static constexpr integer WATER = 0; // first water phase property
+    static constexpr integer OIL   = 1; // second oil phase property
+  };
+
+  // order of the phase properties in the gas-oil data
+  struct GasOilPairPhaseType
+  {
+    static constexpr integer GAS   = 0; // first gas phase property
+    static constexpr integer OIL   = 1; // second oil phase property
+  };
+
+
+
   RelativePermeabilityBase( std::string const & name, dataRepository::ManagedGroup * const parent );
 
   virtual ~RelativePermeabilityBase() override;
@@ -64,6 +80,10 @@ public:
                             localIndex const k,
                             localIndex const q ) = 0;
 
+  /**
+   * @brief Perform a batch constitutive update (all points).
+   * @param[in] phaseVolFraction input phase volume fraction
+   */
   virtual void BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction ) = 0;
 
   localIndex numFluidPhases() const;

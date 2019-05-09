@@ -22,6 +22,7 @@ Currently supported constitutive models are:
   * Solid mechanics
 
     * :doc:`/coreComponents/constitutive/docs/LinearElasticIsotropic`
+    * :doc:`/coreComponents/constitutive/docs/LinearElasticAnisotropic`
 
 * Fluids
 

@@ -33,7 +33,6 @@
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/LinearElasticIsotropic.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -177,9 +176,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Indicates whether or not to use "
-                    "`Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or"
+                    "`Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or "
                     "`Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:\n"
-                    " 0 - Infinitesimal Strain \n "
+                    " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain");
 
   RegisterViewWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
@@ -237,6 +236,72 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups(ManagedGroup * const ro
 
 }
 
+void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodes = mesh->getNodeManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
+
+  ElementRegionManager const * const elementRegionManager = mesh->getElemManager();
+  ConstitutiveManager const * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+
+  arrayView1d<real64> & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  mass = 0.0;
+
+  NumericalMethodsManager const *
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteElementDiscretizationManager const *
+  feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+
+  FiniteElementDiscretization const *
+  feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > rho =
+    elementRegionManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("density", constitutiveManager);
+
+  for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
+  {
+    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+    {
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+
+      std::unique_ptr<FiniteElementBase>
+      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+
+      for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
+      {
+
+        // TODO this integration needs to be be carried out properly.
+        real64 elemMass = 0;
+        for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
+        {
+          elemMass += rho[er][esr][m_solidMaterialFullIndex][k][q] * detJ[k][q];
+        }
+        for( localIndex a=0 ; a< elemsToNodes.size(1) ; ++a )
+        {
+          mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size(1);
+        }
+
+        for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
+        {
+          if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
+          {
+            m_sendOrRecieveNodes.insert( elemsToNodes[k][a] );
+          }
+          else
+          {
+            m_nonSendOrRecieveNodes.insert( elemsToNodes[k][a] );
+          }
+        }
+
+      }
+    });
+  }
+}
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
@@ -375,6 +440,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                                    const int cycleNumber,
                                                    DomainPartition * const domain )
 {
+
+  updateIntrinsicNodalData(domain);
   GEOSX_MARK_FUNCTION;
 
   static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
@@ -426,7 +493,15 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
       integer const component = bc->GetComponent();
       for( auto const a : targetSet )
       {
-        uhat[a][component] = u[a][component] - u[a][component];
+        vel[a][component] = u[a][component];
+      }
+    },
+    [&]( FieldSpecificationBase const * const bc, set<localIndex> const & targetSet )->void
+    {
+      integer const component = bc->GetComponent();
+      for( auto const a : targetSet )
+      {
+        uhat[a][component] = u[a][component] - vel[a][component];
         vel[a][component]  = uhat[a][component] / dt;
       }
     }
@@ -471,6 +546,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -478,7 +554,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt );
@@ -526,6 +601,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
                                    dNdX,
@@ -533,7 +609,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt);
@@ -1083,12 +1158,12 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
       int dim = 3;
       m_maxForce = ImplicitElementKernelLaunchSelector( numNodesPerElement,
                                                         fe->n_quadrature_points(),
+                                                        constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                                         elementSubRegion->size(),
                                                         dt,
                                                         dNdX,
                                                         detJ,
                                                         fe.get(),
-                                                        constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                                         elementSubRegion->m_ghostRank,
                                                         elemsToNodes,
                                                         trilinos_index,

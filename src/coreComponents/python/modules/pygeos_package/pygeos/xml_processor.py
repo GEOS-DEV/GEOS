@@ -109,12 +109,13 @@ def generateRandomName(prefix='', suffix='.xml'):
   from time import time
   from os import getpid
 
-  return '%s%s%s' % (prefix, md5(str(time())+str(getpid())).hexdigest(), suffix)
+  tmp = str(time()) + str(getpid())
+  return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-def preprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/components/core/src/schema/gpac_new.xsd', verbose=1):
+def preprocessGEOSXML(inputFile, outputFile='', schema='', verbose=0):
 
-  if (verbose > 0):
+  if verbose:
     print('\nReading input xml parameters and parsing symbolic math...')
 
   # Expand the input path
@@ -146,31 +147,38 @@ def preprocessGEOSXML(inputFile, schema='/g/g17/sherman/GEOS/geosx/src/component
       Pmap[p.get('name')] = p.get('value')
   parameterHandler.target = Pmap
 
-  # Apply regexes and write the new file
+  # Process the xml
   applyRegexToNode(root)
-  recordName = generateRandomName(prefix='prep_')
-  tree.write(recordName, pretty_print=True)
+
+  # Generate a random output name if not specified
+  if not outputFile:
+    outputFile = generateRandomName(prefix='prep_')
+
+  # Write the output file
+  tree.write(outputFile, pretty_print=True)
 
   # Check for un-matched special characters
-  with open(recordName, 'r') as ofile:
+  with open(outputFile, 'r') as ofile:
     for line in ofile:
       if any([sc in line for sc in ['$', '[', ']', '{', '}']]):
         raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
 
-  if (verbose > 0):
-    print('Preprocessed xml file stored in %s' % (recordName))
-    validateXML(recordName, schema)
+  if verbose:
+    print('Preprocessed xml file stored in %s' % (outputFile))
 
-  return recordName
+  if schema:
+    validateXML(outputFile, schema, verbose)
+
+  return outputFile
 
 
-def validateXML(fname, schema):
-  print('Validating the xml against the schema...')
+def validateXML(fname, schema, verbose):
+  if verbose:
+    print('Validating the xml against the schema...')
   try:
     ofile = ElementTree.parse(fname)
     sfile = ElementTree.XMLSchema(ElementTree.parse(os.path.expanduser(schema)))
     sfile.assertValid(ofile)
-    print('Done!')
   except ElementTree.DocumentInvalid as err:
     print(err)
     print('\nWarning: input XML contains potentially invalid input parameters:')
@@ -179,4 +187,6 @@ def validateXML(fname, schema):
     print('\n'+'-'*20)
     print('(Total schema warnings: %i)\n' % (len(sfile.error_log)))
 
+  if verbose:
+    print('Done!')
 

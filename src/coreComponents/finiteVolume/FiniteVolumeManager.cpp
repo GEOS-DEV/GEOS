@@ -67,5 +67,10 @@ FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::str
   return this->GetGroup<FluxApproximationBase>(name);
 }
 
+FluxApproximationBase * FiniteVolumeManager::getFluxApproximation(std::string const &name)
+{
+  return this->GetGroup<FluxApproximationBase>(name);
+}
+
 
 } // namespace geosx

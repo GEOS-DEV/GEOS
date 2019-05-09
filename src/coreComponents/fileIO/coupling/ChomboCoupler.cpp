@@ -60,7 +60,14 @@ void ChomboCoupler::write(double dt)
     }
   }
 
-  integer const* ruptureState = faces->getReference<integer_array>("ruptureState").data();
+  arrayView1d<integer const> const & ruptureState = faces->getReference<integer_array>("ruptureState");
+  arrayView1d<integer const> const & ghostRank = faces->getReference<integer_array>(faces->viewKeys.ghostRank);
+
+  bool * faceMask = new bool[n_faces];
+  for (localIndex i = 0; i < n_faces; ++i)
+  {
+    faceMask[i] = (ruptureState[i] > 1) && (ghostRank[i] < 0);
+  }
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
@@ -78,11 +85,12 @@ void ChomboCoupler::write(double dt)
   node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
   node_fields["displacement"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, displacement_ptr);
 
-  writeBoundaryFile(m_comm, m_outputPath.data(), dt, ruptureState,
+  writeBoundaryFile(m_comm, m_outputPath.data(), dt, faceMask,
     m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
     m_node_offset, m_n_nodes_written, n_nodes,                     node_fields);
 
   delete[] connectivity_array;
+  delete[] faceMask;
 }
 
 void ChomboCoupler::read(bool usePressures)
