@@ -256,12 +256,12 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   arrayView2d<real64 const> const & dCompDens =
     dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
 
-  KernelLaunchSelector1<UpdateComponentFractionKernel>( m_numComponents,
-                                                        0, dataGroup->size(),
-                                                        compDens,
-                                                        dCompDens,
-                                                        compFrac,
-                                                        dCompFrac_dCompDens );
+  KernelLaunchSelector1<ComponentFractionKernel>( m_numComponents,
+                                                  0, dataGroup->size(),
+                                                  compDens,
+                                                  dCompDens,
+                                                  compFrac,
+                                                  dCompFrac_dCompDens );
 }
 
 void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * const dataGroup )
@@ -310,20 +310,20 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   arrayView4d<real64 const> const & dPhaseDens_dComp =
     fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
-  KernelLaunchSelector2<UpdatePhaseVolumeFractionKernel>( m_numComponents, m_numPhases,
-                                                          0, dataGroup->size(),
-                                                          compDens,
-                                                          dCompDens,
-                                                          dCompFrac_dCompDens,
-                                                          phaseDens,
-                                                          dPhaseDens_dPres,
-                                                          dPhaseDens_dComp,
-                                                          phaseFrac,
-                                                          dPhaseFrac_dPres,
-                                                          dPhaseFrac_dComp,
-                                                          phaseVolFrac,
-                                                          dPhaseVolFrac_dPres,
-                                                          dPhaseVolFrac_dComp );
+  KernelLaunchSelector2<PhaseVolumeFractionKernel>( m_numComponents, m_numPhases,
+                                                    0, dataGroup->size(),
+                                                    compDens,
+                                                    dCompDens,
+                                                    dCompFrac_dCompDens,
+                                                    phaseDens,
+                                                    dPhaseDens_dPres,
+                                                    dPhaseDens_dComp,
+                                                    phaseFrac,
+                                                    dPhaseFrac_dPres,
+                                                    dPhaseFrac_dComp,
+                                                    phaseVolFrac,
+                                                    dPhaseVolFrac_dPres,
+                                                    dPhaseVolFrac_dComp );
 }
 
 void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const dataGroup )
@@ -380,22 +380,22 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const data
   arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac =
     relperm->getReference<array4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
-  KernelLaunchSelector2<UpdatePhaseMobilityKernel>( m_numComponents, m_numPhases,
-                                                    0, dataGroup->size(),
-                                                    dCompFrac_dCompDens,
-                                                    phaseDens,
-                                                    dPhaseDens_dPres,
-                                                    dPhaseDens_dComp,
-                                                    phaseVisc,
-                                                    dPhaseVisc_dPres,
-                                                    dPhaseVisc_dComp,
-                                                    phaseRelPerm,
-                                                    dPhaseRelPerm_dPhaseVolFrac,
-                                                    dPhaseVolFrac_dPres,
-                                                    dPhaseVolFrac_dComp,
-                                                    phaseMob,
-                                                    dPhaseMob_dPres,
-                                                    dPhaseMob_dComp );
+  KernelLaunchSelector2<PhaseMobilityKernel>( m_numComponents, m_numPhases,
+                                              0, dataGroup->size(),
+                                              dCompFrac_dCompDens,
+                                              phaseDens,
+                                              dPhaseDens_dPres,
+                                              dPhaseDens_dComp,
+                                              phaseVisc,
+                                              dPhaseVisc_dPres,
+                                              dPhaseVisc_dComp,
+                                              phaseRelPerm,
+                                              dPhaseRelPerm_dPhaseVolFrac,
+                                              dPhaseVolFrac_dPres,
+                                              dPhaseVolFrac_dComp,
+                                              phaseMob,
+                                              dPhaseMob_dPres,
+                                              dPhaseMob_dComp );
 }
 
 void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGroup )
