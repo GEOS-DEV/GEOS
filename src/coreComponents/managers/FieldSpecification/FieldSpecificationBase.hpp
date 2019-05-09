@@ -539,7 +539,8 @@ public:
     constexpr static auto initialConditionString = "initialCondition";
     constexpr static auto beginTimeString = "beginTime";
     constexpr static auto endTimeString = "endTime";
-
+    constexpr static auto readFromString = "readFromMeshBody";
+    constexpr static auto nameFromString = "fieldNameInMeshBody";
 
   } viewKeys;
 
@@ -669,6 +670,11 @@ private:
   string m_bcApplicationFunctionName;
 
 
+  /// Name on the mesh on which the property is.
+  string m_readFrom;
+
+  /// Tag or name of the property on the imported mesh
+  string m_nameFrom;
 };
 
 
