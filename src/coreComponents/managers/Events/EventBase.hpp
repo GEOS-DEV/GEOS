@@ -131,6 +131,12 @@ public:
   virtual real64 GetTimestepRequest(real64 const time) override;
 
 
+  /**
+   * This method is used to get event-specifit dt requests
+   */
+  virtual real64 GetEventApplicationDtRequest(real64 const time){ return std::numeric_limits<real64>::max(); }
+
+
   /// This method is used to count the number of events/sub-events
   void GetExecutionOrder(array1d<integer> & eventCounters);
 

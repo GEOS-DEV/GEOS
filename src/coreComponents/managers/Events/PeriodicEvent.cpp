@@ -108,8 +108,9 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
     } 
     else
     {
+      // Note: add a small value to this forecast to account for floating point errors
       real64 forecast = (m_timeFrequency - (time - m_lastTime)) / dt;
-      SetForecast(static_cast<integer>(std::min(std::max(forecast, 0.0), 1e9)));
+      SetForecast(static_cast<integer>(std::min(std::max(forecast + 1e-10, 0.0), 1e9)));
     }
   }
   else
@@ -187,9 +188,9 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
 }
 
 
-real64 PeriodicEvent::GetTimestepRequest(real64 const time)
+real64 PeriodicEvent::GetEventApplicationDtRequest(real64 const time)
 {
-  real64 requestedDt = EventBase::GetTimestepRequest(time);
+  real64 requestedDt = std::numeric_limits<real64>::max();
 
   if ((m_timeFrequency > 0) && (m_targetExactTimestep > 0))
   {
@@ -205,7 +206,6 @@ real64 PeriodicEvent::GetTimestepRequest(real64 const time)
       // Note: This should only occur on a cycle where the event is executing
       requestedDt = std::min(requestedDt, m_timeFrequency);
     }
-    
   }
 
   return requestedDt;
