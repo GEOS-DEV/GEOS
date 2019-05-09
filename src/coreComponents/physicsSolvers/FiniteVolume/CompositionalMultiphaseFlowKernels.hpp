@@ -34,7 +34,7 @@ namespace CompositionalMultiphaseFlowKernels
 
 /******************************** UpdateComponentFractionKernel ********************************/
 
-struct UpdateComponentFractionKernel
+struct ComponentFractionKernel
 {
 
   template<localIndex NC>
@@ -65,32 +65,52 @@ struct UpdateComponentFractionKernel
                       arrayView2d<real64> const & compFrac,
                       arrayView3d<real64> const & dCompFrac_dCompDens );
 
+  template<localIndex NC>
+  static void Launch( set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & compDens,
+                      arrayView2d<real64 const> const & dCompDens,
+                      arrayView2d<real64> const & compFrac,
+                      arrayView3d<real64> const & dCompFrac_dCompDens );
+
+  static void Launch( localIndex NC,
+                      set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & compDens,
+                      arrayView2d<real64 const> const & dCompDens,
+                      arrayView2d<real64> const & compFrac,
+                      arrayView3d<real64> const & dCompFrac_dCompDens );
+
 };
 
-#define LAUNCH_UpdateComponentFractionKernel(NC) \
+#define INST_ComponentFractionKernel(NC) \
 extern template \
-void UpdateComponentFractionKernel::Launch<NC>( localIndex begin, localIndex end, \
-                                                arrayView2d<real64 const> const & compDens, \
-                                                arrayView2d<real64 const> const & dCompDens, \
-                                                arrayView2d<real64> const & compFrac, \
-                                                arrayView3d<real64> const & dCompFrac_dCompDens )
+void ComponentFractionKernel::Launch<NC>( localIndex begin, localIndex end, \
+                                          arrayView2d<real64 const> const & compDens, \
+                                          arrayView2d<real64 const> const & dCompDens, \
+                                          arrayView2d<real64> const & compFrac, \
+                                          arrayView3d<real64> const & dCompFrac_dCompDens ); \
+extern template \
+void ComponentFractionKernel::Launch<NC>( set<localIndex> targetSet, \
+                                          arrayView2d<real64 const> const & compDens, \
+                                          arrayView2d<real64 const> const & dCompDens, \
+                                          arrayView2d<real64> const & compFrac, \
+                                          arrayView3d<real64> const & dCompFrac_dCompDens )
 
-LAUNCH_UpdateComponentFractionKernel(1);
-LAUNCH_UpdateComponentFractionKernel(2);
-LAUNCH_UpdateComponentFractionKernel(3);
-LAUNCH_UpdateComponentFractionKernel(4);
-LAUNCH_UpdateComponentFractionKernel(5);
-LAUNCH_UpdateComponentFractionKernel(6);
-LAUNCH_UpdateComponentFractionKernel(7);
-LAUNCH_UpdateComponentFractionKernel(8);
-LAUNCH_UpdateComponentFractionKernel(9);
-LAUNCH_UpdateComponentFractionKernel(10);
+INST_ComponentFractionKernel(1);
+INST_ComponentFractionKernel(2);
+INST_ComponentFractionKernel(3);
+INST_ComponentFractionKernel(4);
+INST_ComponentFractionKernel(5);
+INST_ComponentFractionKernel(6);
+INST_ComponentFractionKernel(7);
+INST_ComponentFractionKernel(8);
+INST_ComponentFractionKernel(9);
+INST_ComponentFractionKernel(10);
 
-#undef LAUNCH_UpdateComponentFractionKernel
+#undef INST_ComponentFractionKernel
 
 /******************************** UpdatePhaseVolumeFractionKernel ********************************/
 
-struct UpdatePhaseVolumeFractionKernel
+struct PhaseVolumeFractionKernel
 {
 
   template<localIndex NC, localIndex NP>
@@ -153,62 +173,106 @@ struct UpdatePhaseVolumeFractionKernel
                       arrayView2d<real64> const & dPhaseVolFrac_dPres,
                       arrayView3d<real64> const & dPhaseVolFrac_dComp );
 
+  template<localIndex NC, localIndex NP>
+  static void Launch( set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & compDens,
+                      arrayView2d<real64 const> const & dCompDens,
+                      arrayView3d<real64 const> const & dCompFrac_dCompDens,
+                      arrayView3d<real64 const> const & phaseDens,
+                      arrayView3d<real64 const> const & dPhaseDens_dPres,
+                      arrayView4d<real64 const> const & dPhaseDens_dComp,
+                      arrayView3d<real64 const> const & phaseFrac,
+                      arrayView3d<real64 const> const & dPhaseFrac_dPres,
+                      arrayView4d<real64 const> const & dPhaseFrac_dComp,
+                      arrayView2d<real64> const & phaseVolFrac,
+                      arrayView2d<real64> const & dPhaseVolFrac_dPres,
+                      arrayView3d<real64> const & dPhaseVolFrac_dComp );
+
+  static void Launch( localIndex NC, localIndex NP,
+                      set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & compDens,
+                      arrayView2d<real64 const> const & dCompDens,
+                      arrayView3d<real64 const> const & dCompFrac_dCompDens,
+                      arrayView3d<real64 const> const & phaseDens,
+                      arrayView3d<real64 const> const & dPhaseDens_dPres,
+                      arrayView4d<real64 const> const & dPhaseDens_dComp,
+                      arrayView3d<real64 const> const & phaseFrac,
+                      arrayView3d<real64 const> const & dPhaseFrac_dPres,
+                      arrayView4d<real64 const> const & dPhaseFrac_dComp,
+                      arrayView2d<real64> const & phaseVolFrac,
+                      arrayView2d<real64> const & dPhaseVolFrac_dPres,
+                      arrayView3d<real64> const & dPhaseVolFrac_dComp );
+
 };
 
-#define LAUNCH_UpdatePhaseVolumeFractionKernel(NC,NP) \
+#define INST_PhaseVolumeFractionKernel(NC,NP) \
 extern template \
-void UpdatePhaseVolumeFractionKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
-                                                      arrayView2d<real64 const> const & compDens, \
-                                                      arrayView2d<real64 const> const & dCompDens, \
-                                                      arrayView3d<real64 const> const & dCompFrac_dCompDens, \
-                                                      arrayView3d<real64 const> const & phaseDens, \
-                                                      arrayView3d<real64 const> const & dPhaseDens_dPres, \
-                                                      arrayView4d<real64 const> const & dPhaseDens_dComp, \
-                                                      arrayView3d<real64 const> const & phaseFrac, \
-                                                      arrayView3d<real64 const> const & dPhaseFrac_dPres, \
-                                                      arrayView4d<real64 const> const & dPhaseFrac_dComp, \
-                                                      arrayView2d<real64> const & phaseVolFrac, \
-                                                      arrayView2d<real64> const & dPhaseVolFrac_dPres, \
-                                                      arrayView3d<real64> const & dPhaseVolFrac_dComp )
+void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
+                                               arrayView2d<real64 const> const & compDens, \
+                                               arrayView2d<real64 const> const & dCompDens, \
+                                               arrayView3d<real64 const> const & dCompFrac_dCompDens, \
+                                               arrayView3d<real64 const> const & phaseDens, \
+                                               arrayView3d<real64 const> const & dPhaseDens_dPres, \
+                                               arrayView4d<real64 const> const & dPhaseDens_dComp, \
+                                               arrayView3d<real64 const> const & phaseFrac, \
+                                               arrayView3d<real64 const> const & dPhaseFrac_dPres, \
+                                               arrayView4d<real64 const> const & dPhaseFrac_dComp, \
+                                               arrayView2d<real64> const & phaseVolFrac, \
+                                               arrayView2d<real64> const & dPhaseVolFrac_dPres, \
+                                               arrayView3d<real64> const & dPhaseVolFrac_dComp ); \
+extern template \
+void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> targetSet, \
+                                               arrayView2d<real64 const> const & compDens, \
+                                               arrayView2d<real64 const> const & dCompDens, \
+                                               arrayView3d<real64 const> const & dCompFrac_dCompDens, \
+                                               arrayView3d<real64 const> const & phaseDens, \
+                                               arrayView3d<real64 const> const & dPhaseDens_dPres, \
+                                               arrayView4d<real64 const> const & dPhaseDens_dComp, \
+                                               arrayView3d<real64 const> const & phaseFrac, \
+                                               arrayView3d<real64 const> const & dPhaseFrac_dPres, \
+                                               arrayView4d<real64 const> const & dPhaseFrac_dComp, \
+                                               arrayView2d<real64> const & phaseVolFrac, \
+                                               arrayView2d<real64> const & dPhaseVolFrac_dPres, \
+                                               arrayView3d<real64> const & dPhaseVolFrac_dComp )
 
-LAUNCH_UpdatePhaseVolumeFractionKernel(1,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(2,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(3,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(4,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(5,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(6,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(7,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(8,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(9,1);
-LAUNCH_UpdatePhaseVolumeFractionKernel(10,1);
+INST_PhaseVolumeFractionKernel(1,1);
+INST_PhaseVolumeFractionKernel(2,1);
+INST_PhaseVolumeFractionKernel(3,1);
+INST_PhaseVolumeFractionKernel(4,1);
+INST_PhaseVolumeFractionKernel(5,1);
+INST_PhaseVolumeFractionKernel(6,1);
+INST_PhaseVolumeFractionKernel(7,1);
+INST_PhaseVolumeFractionKernel(8,1);
+INST_PhaseVolumeFractionKernel(9,1);
+INST_PhaseVolumeFractionKernel(10,1);
 
-LAUNCH_UpdatePhaseVolumeFractionKernel(1,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(2,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(3,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(4,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(5,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(6,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(7,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(8,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(9,2);
-LAUNCH_UpdatePhaseVolumeFractionKernel(10,2);
+INST_PhaseVolumeFractionKernel(1,2);
+INST_PhaseVolumeFractionKernel(2,2);
+INST_PhaseVolumeFractionKernel(3,2);
+INST_PhaseVolumeFractionKernel(4,2);
+INST_PhaseVolumeFractionKernel(5,2);
+INST_PhaseVolumeFractionKernel(6,2);
+INST_PhaseVolumeFractionKernel(7,2);
+INST_PhaseVolumeFractionKernel(8,2);
+INST_PhaseVolumeFractionKernel(9,2);
+INST_PhaseVolumeFractionKernel(10,2);
 
-LAUNCH_UpdatePhaseVolumeFractionKernel(1,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(2,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(3,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(4,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(5,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(6,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(7,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(8,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(9,3);
-LAUNCH_UpdatePhaseVolumeFractionKernel(10,3);
+INST_PhaseVolumeFractionKernel(1,3);
+INST_PhaseVolumeFractionKernel(2,3);
+INST_PhaseVolumeFractionKernel(3,3);
+INST_PhaseVolumeFractionKernel(4,3);
+INST_PhaseVolumeFractionKernel(5,3);
+INST_PhaseVolumeFractionKernel(6,3);
+INST_PhaseVolumeFractionKernel(7,3);
+INST_PhaseVolumeFractionKernel(8,3);
+INST_PhaseVolumeFractionKernel(9,3);
+INST_PhaseVolumeFractionKernel(10,3);
 
-#undef LAUNCH_UpdatePhaseVolumeFractionKernel
+#undef INST_PhaseVolumeFractionKernel
 
 /******************************** UpdatePhaseMobilityKernel ********************************/
 
-struct UpdatePhaseMobilityKernel
+struct PhaseMobilityKernel
 {
 
   template<localIndex NC, localIndex NP>
@@ -279,62 +343,115 @@ struct UpdatePhaseMobilityKernel
                       arrayView2d<real64> const & dPhaseMob_dPres,
                       arrayView3d<real64> const & dPhaseMob_dComp );
 
+  template<localIndex NC, localIndex NP>
+  static void Launch( set<localIndex> targetSet,
+                      arrayView3d<real64 const> const & dCompFrac_dCompDens,
+                      arrayView3d<real64 const> const & phaseDens,
+                      arrayView3d<real64 const> const & dPhaseDens_dPres,
+                      arrayView4d<real64 const> const & dPhaseDens_dComp,
+                      arrayView3d<real64 const> const & phaseVisc,
+                      arrayView3d<real64 const> const & dPhaseVisc_dPres,
+                      arrayView4d<real64 const> const & dPhaseVisc_dComp,
+                      arrayView3d<real64 const> const & phaseRelPerm,
+                      arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
+                      arrayView2d<real64 const> const & dPhaseVolFrac_dPres,
+                      arrayView3d<real64 const> const & dPhaseVolFrac_dComp,
+                      arrayView2d<real64> const & phaseMob,
+                      arrayView2d<real64> const & dPhaseMob_dPres,
+                      arrayView3d<real64> const & dPhaseMob_dComp );
+
+  static void Launch( localIndex NC, localIndex NP,
+                      set<localIndex> targetSet,
+                      arrayView3d<real64 const> const & dCompFrac_dCompDens,
+                      arrayView3d<real64 const> const & phaseDens,
+                      arrayView3d<real64 const> const & dPhaseDens_dPres,
+                      arrayView4d<real64 const> const & dPhaseDens_dComp,
+                      arrayView3d<real64 const> const & phaseVisc,
+                      arrayView3d<real64 const> const & dPhaseVisc_dPres,
+                      arrayView4d<real64 const> const & dPhaseVisc_dComp,
+                      arrayView3d<real64 const> const & phaseRelPerm,
+                      arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac,
+                      arrayView2d<real64 const> const & dPhaseVolFrac_dPres,
+                      arrayView3d<real64 const> const & dPhaseVolFrac_dComp,
+                      arrayView2d<real64> const & phaseMob,
+                      arrayView2d<real64> const & dPhaseMob_dPres,
+                      arrayView3d<real64> const & dPhaseMob_dComp );
+
 };
 
-#define LAUNCH_UpdatePhaseMobilityKernel(NC,NP) \
+#define INST_PhaseMobilityKernel(NC,NP) \
 extern template \
-void UpdatePhaseMobilityKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
-                                               arrayView3d<real64 const> const & dCompFrac_dCompDens, \
-                                               arrayView3d<real64 const> const & phaseDens, \
-                                               arrayView3d<real64 const> const & dPhaseDens_dPres, \
-                                               arrayView4d<real64 const> const & dPhaseDens_dComp, \
-                                               arrayView3d<real64 const> const & phaseVisc, \
-                                               arrayView3d<real64 const> const & dPhaseVisc_dPres, \
-                                               arrayView4d<real64 const> const & dPhaseVisc_dComp, \
-                                               arrayView3d<real64 const> const & phaseRelPerm, \
-                                               arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac, \
-                                               arrayView2d<real64 const> const & dPhaseVolFrac_dPres, \
-                                               arrayView3d<real64 const> const & dPhaseVolFrac_dComp, \
-                                               arrayView2d<real64> const & phaseMob, \
-                                               arrayView2d<real64> const & dPhaseMob_dPres, \
-                                               arrayView3d<real64> const & dPhaseMob_dComp )
+void PhaseMobilityKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
+                                         arrayView3d<real64 const> const & dCompFrac_dCompDens, \
+                                         arrayView3d<real64 const> const & phaseDens, \
+                                         arrayView3d<real64 const> const & dPhaseDens_dPres, \
+                                         arrayView4d<real64 const> const & dPhaseDens_dComp, \
+                                         arrayView3d<real64 const> const & phaseVisc, \
+                                         arrayView3d<real64 const> const & dPhaseVisc_dPres, \
+                                         arrayView4d<real64 const> const & dPhaseVisc_dComp, \
+                                         arrayView3d<real64 const> const & phaseRelPerm, \
+                                         arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac, \
+                                         arrayView2d<real64 const> const & dPhaseVolFrac_dPres, \
+                                         arrayView3d<real64 const> const & dPhaseVolFrac_dComp, \
+                                         arrayView2d<real64> const & phaseMob, \
+                                         arrayView2d<real64> const & dPhaseMob_dPres, \
+                                         arrayView3d<real64> const & dPhaseMob_dComp ); \
+extern template \
+void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> targetSet, \
+                                         arrayView3d<real64 const> const & dCompFrac_dCompDens, \
+                                         arrayView3d<real64 const> const & phaseDens, \
+                                         arrayView3d<real64 const> const & dPhaseDens_dPres, \
+                                         arrayView4d<real64 const> const & dPhaseDens_dComp, \
+                                         arrayView3d<real64 const> const & phaseVisc, \
+                                         arrayView3d<real64 const> const & dPhaseVisc_dPres, \
+                                         arrayView4d<real64 const> const & dPhaseVisc_dComp, \
+                                         arrayView3d<real64 const> const & phaseRelPerm, \
+                                         arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac, \
+                                         arrayView2d<real64 const> const & dPhaseVolFrac_dPres, \
+                                         arrayView3d<real64 const> const & dPhaseVolFrac_dComp, \
+                                         arrayView2d<real64> const & phaseMob, \
+                                         arrayView2d<real64> const & dPhaseMob_dPres, \
+                                         arrayView3d<real64> const & dPhaseMob_dComp )
 
-LAUNCH_UpdatePhaseMobilityKernel(1,1);
-LAUNCH_UpdatePhaseMobilityKernel(2,1);
-LAUNCH_UpdatePhaseMobilityKernel(3,1);
-LAUNCH_UpdatePhaseMobilityKernel(4,1);
-LAUNCH_UpdatePhaseMobilityKernel(5,1);
-LAUNCH_UpdatePhaseMobilityKernel(6,1);
-LAUNCH_UpdatePhaseMobilityKernel(7,1);
-LAUNCH_UpdatePhaseMobilityKernel(8,1);
-LAUNCH_UpdatePhaseMobilityKernel(9,1);
-LAUNCH_UpdatePhaseMobilityKernel(10,1);
+INST_PhaseMobilityKernel(1,1);
+INST_PhaseMobilityKernel(2,1);
+INST_PhaseMobilityKernel(3,1);
+INST_PhaseMobilityKernel(4,1);
+INST_PhaseMobilityKernel(5,1);
+INST_PhaseMobilityKernel(6,1);
+INST_PhaseMobilityKernel(7,1);
+INST_PhaseMobilityKernel(8,1);
+INST_PhaseMobilityKernel(9,1);
+INST_PhaseMobilityKernel(10,1);
 
-LAUNCH_UpdatePhaseMobilityKernel(1,2);
-LAUNCH_UpdatePhaseMobilityKernel(2,2);
-LAUNCH_UpdatePhaseMobilityKernel(3,2);
-LAUNCH_UpdatePhaseMobilityKernel(4,2);
-LAUNCH_UpdatePhaseMobilityKernel(5,2);
-LAUNCH_UpdatePhaseMobilityKernel(6,2);
-LAUNCH_UpdatePhaseMobilityKernel(7,2);
-LAUNCH_UpdatePhaseMobilityKernel(8,2);
-LAUNCH_UpdatePhaseMobilityKernel(9,2);
-LAUNCH_UpdatePhaseMobilityKernel(10,2);
+INST_PhaseMobilityKernel(1,2);
+INST_PhaseMobilityKernel(2,2);
+INST_PhaseMobilityKernel(3,2);
+INST_PhaseMobilityKernel(4,2);
+INST_PhaseMobilityKernel(5,2);
+INST_PhaseMobilityKernel(6,2);
+INST_PhaseMobilityKernel(7,2);
+INST_PhaseMobilityKernel(8,2);
+INST_PhaseMobilityKernel(9,2);
+INST_PhaseMobilityKernel(10,2);
 
-LAUNCH_UpdatePhaseMobilityKernel(1,3);
-LAUNCH_UpdatePhaseMobilityKernel(2,3);
-LAUNCH_UpdatePhaseMobilityKernel(3,3);
-LAUNCH_UpdatePhaseMobilityKernel(4,3);
-LAUNCH_UpdatePhaseMobilityKernel(5,3);
-LAUNCH_UpdatePhaseMobilityKernel(6,3);
-LAUNCH_UpdatePhaseMobilityKernel(7,3);
-LAUNCH_UpdatePhaseMobilityKernel(8,3);
-LAUNCH_UpdatePhaseMobilityKernel(9,3);
-LAUNCH_UpdatePhaseMobilityKernel(10,3);
+INST_PhaseMobilityKernel(1,3);
+INST_PhaseMobilityKernel(2,3);
+INST_PhaseMobilityKernel(3,3);
+INST_PhaseMobilityKernel(4,3);
+INST_PhaseMobilityKernel(5,3);
+INST_PhaseMobilityKernel(6,3);
+INST_PhaseMobilityKernel(7,3);
+INST_PhaseMobilityKernel(8,3);
+INST_PhaseMobilityKernel(9,3);
+INST_PhaseMobilityKernel(10,3);
 
-#undef LAUNCH_UpdatePhaseMobilityKernel
+#undef INST_PhaseMobilityKernel
 
 /******************************** Kernel launch machinery ********************************/
+
+namespace helpers
+{
 
 template<typename T, typename LAMBDA>
 bool KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
@@ -371,11 +488,13 @@ bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
   }
 }
 
+} // namespace helpers
+
 template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
   bool const run =
-  KernelLaunchSelectorCompSwitch( numComp, [&] (auto NC)
+  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] (auto NC)
   {
     KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>(args)... );
   });
@@ -392,10 +511,10 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
   bool run2 = false;
   // gcc-7 produces bugged code without explicit capture list here...
   bool const run =
-  KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
+  helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
   {
     run2 =
-    KernelLaunchSelectorPhaseSwitch( numPhase, [&] ( auto NP )
+    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&] ( auto NP )
     {
       // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
       auto constexpr NC_ = decltype(NC)::value;
