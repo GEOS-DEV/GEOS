@@ -55,6 +55,7 @@ public:
     constexpr static auto filePathString = "file";
     constexpr static auto scaleString = "scale";
     constexpr static auto fieldsToImportString = "fieldsToImport";
+    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
   };
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
@@ -87,6 +88,8 @@ private:
 
   /// Scale factor that will be applied to the point coordinates
   real64 m_scale;
+
+  string_array m_fieldNamesInGEOSX;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =
