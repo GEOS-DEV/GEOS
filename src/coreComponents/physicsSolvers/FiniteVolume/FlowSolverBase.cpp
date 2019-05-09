@@ -22,7 +22,10 @@
 
 #include "FlowSolverBase.hpp"
 
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 
 namespace geosx
@@ -74,19 +77,19 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 {
   SolverBase::RegisterDataOnMesh( MeshBodies );
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & subgroup : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshBody * const meshBody = subgroup.second->group_cast<MeshBody *>();
+    MeshLevel * const mesh = meshBody->getMeshLevel(0);
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forElementSubRegions([&]( auto * const elementSubRegion) -> void
+    applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
     {
-      elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      elementSubRegion->template RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
-    FaceManager * const faceManager = meshLevel->getFaceManager();
+    FaceManager * const faceManager = mesh->getFaceManager();
     faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
   }
 }
@@ -105,6 +108,31 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   ConstitutiveBase const * solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
   m_solidIndex = solid->getIndexInParent();
+
+  // fill stencil targetRegions
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  array1d<string> & stencilTargetRegions = fluxApprox->targetRegions();
+  std::set<string> stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+  for( auto const & targetRegion : m_targetRegions )
+  {
+    stencilTargetRegionsSet.insert(targetRegion);
+  }
+
+  stencilTargetRegions.clear();
+  for( auto const & targetRegion : stencilTargetRegionsSet )
+  {
+    stencilTargetRegions.push_back( targetRegion );
+  }
+
+
+
+
 }
 
 void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
@@ -119,35 +147,38 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup *
   PrecomputeData(domain);
 }
 
-void FlowSolverBase::PrecomputeData(DomainPartition * const domain)
+void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   FaceManager * const faceManager = mesh->getFaceManager();
 
   R1Tensor const & gravityVector = getGravityVector();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
-    elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor>>( CellBlock::viewKeyStruct::elementCenterString );
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> gravityDepth =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::gravityDepthString);
-
-  // Loop over all the elements and calculate element centers, and element volumes
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k )->void
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {
-    gravityDepth[er][esr][k] = Dot(elemCenter[er][esr][k], gravityVector);
-  });
+    arrayView1d<R1Tensor const> const & elemCenter =
+      subRegion->getReference<array1d<R1Tensor>>( CellBlock::viewKeyStruct::elementCenterString );
 
+    arrayView1d<real64> const & gravityDepth =
+      subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
-  r1_array & faceCenter = faceManager->getReference<r1_array>(FaceManager::viewKeyStruct::faceCenterString);
-  real64_array & gravityDepthFace = faceManager->getReference<real64_array>(viewKeysFlowSolverBase.gravityDepth);
+    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex a )
+    {
+      gravityDepth[a] = Dot( elemCenter[a], gravityVector );
+    } );
+  } );
 
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    gravityDepthFace[kf] = Dot(faceCenter[kf], gravityVector);
+    arrayView1d<R1Tensor const> const & faceCenter =
+      faceManager->getReference<array1d<R1Tensor>>(FaceManager::viewKeyStruct::faceCenterString);
+
+    arrayView1d<real64> const & gravityDepth =
+      faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
+
+    forall_in_range<elemPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex a )
+    {
+      gravityDepth[a] = Dot( faceCenter[a], gravityVector );
+    } );
   }
 }
 

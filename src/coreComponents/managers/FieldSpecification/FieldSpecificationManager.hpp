@@ -136,6 +136,15 @@ public:
                                       string const & fieldName,
                                       LAMBDA && lambda ) const;
 
+  template< typename PRELAMBDA, typename POSTLAMBDA >
+  void ApplyFieldValue( real64 const time,
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        PRELAMBDA && preLambda,
+                        POSTLAMBDA && postLambda ) const;
+
+
   /**
    * @brief function to apply initial conditions
    * @param domain the DomainParition object
@@ -174,6 +183,7 @@ public:
               LAMBDA && lambda ) const
   {
     GEOSX_MARK_FUNCTION;
+    // loop over all FieldSpecificationBase objects
     for( auto & subGroup : this->GetSubGroups() )
     {
       FieldSpecificationBase const * fs = subGroup.second->group_cast<FieldSpecificationBase const *>();
@@ -197,24 +207,40 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
+            dataRepository::ManagedGroup * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+            if( elemRegionSubGroup!=nullptr )
+            {
+              targetGroup = elemRegionSubGroup;
+            }
+
+            dataRepository::ManagedGroup * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+            if( elemSubRegionSubGroup!=nullptr )
+            {
+              targetGroup = elemSubRegionSubGroup;
+            }
+
+//            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
+//            {
+//              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+//            }
+//            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
+//            {
+//              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+//            }
+
+            if( targetPath[pathLevel] == dataRepository::keys::elementRegions ||
+                targetPath[pathLevel] == ElementRegion::viewKeyStruct::elementSubRegions )
+            {
+              continue;
+            }
+
             targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
             GEOS_ERROR_IF( targetGroup == nullptr,
-                         "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+                "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
-
-          dataRepository::ManagedGroup const * setGroup = targetGroup->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
-          string_array setNames = fs->GetSetNames();
-          for( auto & setName : setNames )
-          {
-            dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
-            if( setWrapper != nullptr )
-            {
-              set<localIndex> const & targetSet = setWrapper->reference();
-              lambda( fs, setName, targetSet, targetGroup, targetName );
-            }
-          }
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -229,6 +255,40 @@ private:
   FieldSpecificationManager( string const & name, dataRepository::ManagedGroup * const parent );
   virtual ~FieldSpecificationManager() override;
 
+  template< typename LAMBDA >
+  void ApplyOnTargetRecursive( ManagedGroup * target,
+                               FieldSpecificationBase const * fs,
+                               string const & targetName,
+                               LAMBDA && lambda
+                             ) const
+  {
+    if( ( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
+        || target->getName() == "nodeManager"
+        || target->getName() == "FaceManager"
+        || target->getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are inconsistencies with the name of the Managers...
+        && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
+        && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
+    {
+      dataRepository::ManagedGroup const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+      string_array setNames = fs->GetSetNames();
+      for( auto & setName : setNames )
+      {
+        dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+        if( setWrapper != nullptr )
+        {
+          set<localIndex> const & targetSet = setWrapper->reference();
+          lambda( fs, setName, targetSet, target, targetName );
+        }
+      } 
+    }
+    else
+    {
+      target->forSubGroups([&]( ManagedGroup * subTarget ) -> void
+      {
+        ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
+      });
+    }
+  }
 };
 
 template< typename LAMBDA >
@@ -252,10 +312,30 @@ ApplyFieldValue( real64 const time,
       fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
       lambda( fs, targetSet );
     } );
-
-
 }
 
+template< typename PRELAMBDA, typename POSTLAMBDA >
+void
+FieldSpecificationManager::
+ApplyFieldValue( real64 const time,
+                 dataRepository::ManagedGroup * domain,
+                 string const & fieldPath,
+                 string const & fieldName,
+                 PRELAMBDA && preLambda,
+                 POSTLAMBDA && postLambda ) const
+{
+  Apply( time, domain, fieldPath, fieldName,
+        [&]( FieldSpecificationBase const * const fs,
+        string const &,
+        set<localIndex> const & targetSet,
+        ManagedGroup * const targetGroup,
+        string const & targetField )
+    {
+      preLambda( fs, targetSet );
+      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+      postLambda( fs, targetSet );
+    } );
+}
 
 } /* namespace geosx */
 

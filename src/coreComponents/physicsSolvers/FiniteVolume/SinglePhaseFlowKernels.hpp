@@ -137,7 +137,8 @@ inline static void MakeAccumulation( real64 const & dPres,
  * This is a general version that assumes different element regions.
  * See below for a specialized version for fluxes within a region.
  */
-inline static void MakeFlux( StencilCollection<CellDescriptor, real64>::Accessor stencil,
+inline static void MakeFlux( localIndex const stencilSize,
+                             FluxApproximationBase::CellStencil::Entry const * stencil,
                              ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & pres,
                              ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dPres,
                              ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & gravDepth,
@@ -151,13 +152,12 @@ inline static void MakeFlux( StencilCollection<CellDescriptor, real64>::Accessor
                              arraySlice1d<real64> const & flux,
                              arraySlice2d<real64> const & fluxJacobian )
 {
-  localIndex constexpr numElems = StencilCollection<CellDescriptor, real64>::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
-  localIndex const stencilSize = stencil.size();
+  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-  stackArray1d<real64, numElems> densWeight(numElems);
-  stackArray1d<real64, numElems> mobility(numElems);
-  stackArray1d<real64, numElems> dMobility_dP(numElems);
+  stackArray1d<real64, numElems>   densWeight(numElems);
+  stackArray1d<real64, numElems>   mobility(numElems);
+  stackArray1d<real64, numElems>   dMobility_dP(numElems);
   stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
   stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
 
@@ -169,11 +169,12 @@ inline static void MakeFlux( StencilCollection<CellDescriptor, real64>::Accessor
 
   // calculate quantities on primary connected cells
   real64 densMean = 0.0;
-  stencil.forConnected([&](CellDescriptor const & cell, localIndex i)
+  for (localIndex ke = 0; ke < numElems; ++ke)
   {
-    localIndex const er = cell.region;
+    CellDescriptor const & cell = stencil[ke].index;
+    localIndex const er  = cell.region;
     localIndex const esr = cell.subRegion;
-    localIndex const ei = cell.index;
+    localIndex const ei  = cell.index;
 
     // density
     real64 const density = dens[er][esr][fluidIndex][ei][0];
@@ -184,29 +185,32 @@ inline static void MakeFlux( StencilCollection<CellDescriptor, real64>::Accessor
     real64 const dVisc_dP = dVisc_dPres[er][esr][fluidIndex][ei][0];
 
     // mobility
-    mobility[i] = density / viscosity;
-    dMobility_dP[i] = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+    mobility[ke] = density / viscosity;
+    dMobility_dP[ke] = dDens_dP / viscosity - mobility[ke] / viscosity * dVisc_dP;
 
     // average density
-    densMean += densWeight[i] * density;
-    dDensMean_dP[i] = densWeight[i] * dDens_dP;
-  });
+    densMean += densWeight[ke] * density;
+    dDensMean_dP[ke] = densWeight[ke] * dDens_dP;
+  }
 
   // compute potential difference MPFA-style
   real64 potDif = 0.0;
-  stencil.forAll([&](CellDescriptor const & cell, real64 w, localIndex i)
+  for (localIndex ke = 0; ke < stencilSize; ++ke)
   {
-    localIndex const er = cell.region;
+    CellDescriptor const & cell = stencil[ke].index;
+    localIndex const er  = cell.region;
     localIndex const esr = cell.subRegion;
-    localIndex const ei = cell.index;
+    localIndex const ei  = cell.index;
+
+    real64 weight = stencil[ke].weight;
 
     real64 const gravD = gravDepth[er][esr][ei];
     real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-    real64 const dGrav_dP = gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+    real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
 
-    potDif += w * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-    dFlux_dP[i] = w * (1.0 - dGrav_dP);
-  });
+    potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+    dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
+  }
 
   // upwinding of fluid properties (make this an option?)
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -250,7 +254,8 @@ inline static void MakeFlux( StencilCollection<CellDescriptor, real64>::Accessor
  * This is a specialized version for fluxes within the same region.
  * See above for a general version.
  */
-inline static void MakeFlux( StencilCollection<localIndex, real64>::Accessor stencil,
+inline static void MakeFlux( localIndex const stencilSize,
+                             FluxApproximationBase::CellStencil::Entry const * stencil,
                              arrayView1d<real64 const> const & pres,
                              arrayView1d<real64 const> const & dPres,
                              arrayView1d<real64 const> const & gravDepth,
@@ -263,9 +268,8 @@ inline static void MakeFlux( StencilCollection<localIndex, real64>::Accessor ste
                              arraySlice1d<real64> const & flux,
                              arraySlice2d<real64> const & fluxJacobian )
 {
-  localIndex constexpr numElems = StencilCollection<CellDescriptor, real64>::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = StencilCollection<CellDescriptor, real64>::MAX_STENCIL_SIZE;
-  localIndex const stencilSize = stencil.size();
+  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
   stackArray1d<real64, numElems> densWeight(numElems);
   stackArray1d<real64, numElems> mobility(numElems);
@@ -281,8 +285,11 @@ inline static void MakeFlux( StencilCollection<localIndex, real64>::Accessor ste
 
   // calculate quantities on primary connected cells
   real64 densMean = 0.0;
-  stencil.forConnected([&](localIndex const ei, localIndex const i)
+  for (localIndex i = 0; i < numElems; ++i)
   {
+    CellDescriptor const & cell = stencil[i].index;
+    localIndex const ei = cell.index;
+
     // density
     real64 const density = dens[ei][0];
     real64 const dDens_dP = dDens_dPres[ei][0];
@@ -298,19 +305,24 @@ inline static void MakeFlux( StencilCollection<localIndex, real64>::Accessor ste
     // average density
     densMean += densWeight[i] * density;
     dDensMean_dP[i] = densWeight[i] * dDens_dP;
-  });
+  }
 
   // compute potential difference MPFA-style
   real64 potDif = 0.0;
-  stencil.forAll([&](localIndex const ei, real64 const w, localIndex const i)
+  for (localIndex ke = 0; ke < stencilSize; ++ke)
   {
+    CellDescriptor const & cell = stencil[ke].index;
+    localIndex const ei = cell.index;
+
+    real64 const weight = stencil[ke].weight;
+
     real64 const gravD = gravDepth[ei];
     real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-    real64 const dGrav_dP = gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+    real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
 
-    potDif += w * (pres[ei] + dPres[ei] - gravTerm);
-    dFlux_dP[i] = w * (1.0 - dGrav_dP);
-  });
+    potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
+    dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
+  }
 
   // upwinding of fluid properties (make this an option?)
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
