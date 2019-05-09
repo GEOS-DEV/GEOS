@@ -73,7 +73,7 @@ void SoloEvent::EstimateEventTiming(real64 const time,
       else
       {
         real64 forecast = (m_targetTime - time) / dt;
-        SetForecast(static_cast<integer>(std::min(forecast, 1e9)));
+        SetForecast(static_cast<integer>(std::min(forecast + 1e-10, 1e9)));
       }
     }
     else
@@ -88,11 +88,11 @@ void SoloEvent::EstimateEventTiming(real64 const time,
 }
 
 
-real64 SoloEvent::GetTimestepRequest(real64 const time)
+real64 SoloEvent::GetEventApplicationDtRequest(real64 const time)
 {
-  real64 requestedDt = EventBase::GetTimestepRequest(time);
+  real64 requestedDt = std::numeric_limits<real64>::max();
 
-  if ((m_targetTime > 0) && (m_targetExactTimestep > 0))
+  if ((m_lastCycle < 0) && (m_targetTime > 0) && (m_targetExactTimestep > 0))
   {
     requestedDt = std::min(requestedDt, m_targetTime - time);
   }
