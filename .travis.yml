@@ -7,18 +7,18 @@ env:
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
 matrix:
   include:
-  - os: osx
-    osx_image: xcode10
-    env:
-    - CC=clang
-    - CXX=clang++
-    - FC=gfortran
-    - MPICC=mpicc
-    - MPICXX=mpicxx
-    - MPIFC=mpifort
-    - MPIEXEC=/usr/local/bin/mpirun
-    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
-    - CMAKE_BUILD_TYPE=Release
+#  - os: osx
+#    osx_image: xcode10
+#    env:
+#    - CC=clang
+#    - CXX=clang++
+#    - FC=gfortran
+#    - MPICC=mpicc
+#    - MPICXX=mpicxx
+#    - MPIFC=mpifort
+#    - MPIEXEC=/usr/local/bin/mpirun
+#    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+#    - CMAKE_BUILD_TYPE=Release
   - compiler: clang6-LC-toss3
     sudo: required
     services: docker
