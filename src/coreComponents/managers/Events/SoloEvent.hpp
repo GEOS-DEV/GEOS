@@ -56,9 +56,9 @@ public:
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
-   * dt to exactly match the time frequency
+   * dt to exactly match the application time
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetEventApplicationDtRequest(real64 const time) override;
 
 
   struct viewKeyStruct

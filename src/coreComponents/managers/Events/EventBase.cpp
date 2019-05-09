@@ -55,7 +55,7 @@ EventBase::EventBase( const std::string& name,
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
   
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
-    setInputFlag(InputFlags::REQUIRED)->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("event target");
 
   RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
@@ -135,10 +135,9 @@ void EventBase::ExpandObjectCatalogs()
 
 void EventBase::GetTargetReferences()
 {
-  string eventTarget = this->getReference<string>(viewKeys.eventTarget);
-  if (!eventTarget.empty())
+  if (!m_eventTarget.empty())
   {
-    ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
+    ManagedGroup * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
     GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
@@ -218,7 +217,7 @@ void EventBase::Execute(real64 const time_n,
   if ((m_target != nullptr) && (m_targetExecFlag == 0))
   {
     m_targetExecFlag = 1;
-    m_target->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
+    m_target->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
   
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
@@ -229,7 +228,7 @@ void EventBase::Execute(real64 const time_n,
 
     if (subEvent->GetForecast() <= 0)
     {
-      subEvent->Execute(time, dt, cycle, m_eventCount, m_eventProgress, domain);
+      subEvent->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
     }
   }
 
@@ -243,10 +242,10 @@ void EventBase::Execute(real64 const time_n,
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  real64 requestedDt = std::numeric_limits<integer>::max();
-  
+  real64 requestedDt = std::numeric_limits<real64>::max();
+
   // Events and their targets may request a max dt when active
-  if ((time >= m_endTime) && (time < m_endTime))
+  if ((time >= m_beginTime) && (time < m_endTime))
   {
     if (m_forceDt > 0)
     {
@@ -255,26 +254,26 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     }
     else
     {
-      if (m_target != nullptr)
+      if (m_maxEventDt > 0)
       {
-        // Get the target's dt request
+        // Limit the event dt request
+        requestedDt = std::min(m_maxEventDt, requestedDt);
+      }
+
+      // Get the event-specific dt request
+      requestedDt = std::min(requestedDt, GetEventApplicationDtRequest(time));
+
+      // Get the target's dt request if the event has the potential to execute this cycle
+      if ((m_eventForecast <= 1) && (m_target != nullptr))
+      {
         requestedDt = std::min(requestedDt, m_target->GetTimestepRequest(time));
       }
 
       // Get the sub-event dt requests
       this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
       {
-        if (subEvent->GetForecast() <= 1)
-        {
-          requestedDt = std::min(requestedDt, subEvent->GetTimestepRequest(time));
-        }
+        requestedDt = std::min(requestedDt, subEvent->GetTimestepRequest(time));
       });
-
-      if (m_maxEventDt > 0)
-      {
-        // Limit the event dt request
-        requestedDt = std::min(m_maxEventDt, requestedDt);
-      }
     }
   }
 
@@ -356,7 +355,10 @@ void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
   // Calculate the event progress indicator
   // This is defined as the percent completion through the executaion loop
   // with respect to the beginning of the event.
-  m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
+  if (eventCounters[1] > 0)
+  {
+    m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
+  }
   
   // Do this for child events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
