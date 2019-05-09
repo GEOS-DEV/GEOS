@@ -35,8 +35,8 @@ using namespace dataRepository;
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ExecutableGroup(name, parent),
-  m_lastTime(1e100),
-  m_lastCycle(0),
+  m_lastTime(-1.0e100),
+  m_lastCycle(-1.0e9),
   m_eventTarget(""),
   m_beginTime(0.0),
   m_endTime(1e100),
