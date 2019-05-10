@@ -84,11 +84,11 @@ public:
     WEIGHT weight;
   };
 
-  csArrayView2d<Entry const> getConnections() const { return m_connections; }
+  ArrayOfArraysView<Entry const, true> getConnections() const { return m_connections; }
 
 private:
 
-  csArray2d<Entry> m_connections;
+  ArrayOfArrays<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
 
 };
@@ -116,9 +116,9 @@ localIndex FluxStencil<INDEX, WEIGHT>::numConnections() const
 
 template<typename INDEX, typename WEIGHT>
 void FluxStencil<INDEX, WEIGHT>::reserve( localIndex const numConn,
-                                                localIndex const avgStencilSize )
+                                           localIndex const avgStencilSize )
 {
-  m_connections.reserveNumArrays( numConn );
+  m_connections.reserve( numConn );
   m_connections.reserveValues( numConn * avgStencilSize );
 }
 
@@ -151,7 +151,7 @@ void FluxStencil<INDEX, WEIGHT>::zero( localIndex const connectorIndex,
   if( ( entries[0].index == cells[0] && entries[1].index == cells[1] ) ||
       ( entries[0].index == cells[1] && entries[1].index == cells[0] ) )
   {
-    for (localIndex i = 0; i < m_connections.size( connectionListIndex ); ++i)
+    for (localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i)
     {
       entries[i].weight = 0; // TODO remove entries altogether?
     }
