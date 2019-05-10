@@ -321,7 +321,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
             property[count++] = propertyValue;
           }
         }
-      };
+      }
     }
   }
 
