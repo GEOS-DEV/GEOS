@@ -58,6 +58,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->resize(source->size());
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
+  this->ConstructGlobalToLocalMap();
   source->forExternalProperties([&]( string const & propertyName,
                                      real64_array const & property )->void
   {
