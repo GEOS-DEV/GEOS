@@ -58,7 +58,7 @@ public:
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the application time
    */
-  virtual real64 GetEventApplicationDtRequest(real64 const time) override;
+  virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
 
   struct viewKeyStruct
