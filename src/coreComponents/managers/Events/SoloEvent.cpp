@@ -46,7 +46,7 @@ SoloEvent::SoloEvent( const std::string& name,
     setDescription("Event cycle");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allows timesteps to be truncated to match time frequency perfectly");
 }
