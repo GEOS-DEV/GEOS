@@ -224,12 +224,6 @@ public:
   template< typename LAMBDA >
   void forExternalProperties( LAMBDA && lambda ) const
   {
-    /*
-    for( auto & externalPropertyName : m_externalPropertyNames )
-    {
-      lambda( externalPropertyName, this->getWrapperBase( externalPropertyName) );
-    }
-    */
     for( auto & externalProperty : m_externalProperties )
     {
       lambda( externalProperty.first, externalProperty.second );

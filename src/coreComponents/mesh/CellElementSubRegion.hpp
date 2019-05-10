@@ -109,7 +109,6 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-  void BindExternalProperties( CellBlock const * source );
 
 };
 
