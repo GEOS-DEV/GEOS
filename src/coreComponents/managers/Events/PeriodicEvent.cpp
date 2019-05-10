@@ -53,7 +53,7 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
     setDescription("event frequency (cycle, Default)");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("allows timesteps to be truncated to match time frequency perfectly");
 
