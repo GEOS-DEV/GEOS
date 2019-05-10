@@ -72,8 +72,9 @@ void SoloEvent::EstimateEventTiming(real64 const time,
       }
       else
       {
-        real64 forecast = (m_targetTime - time) / dt;
-        SetForecast(static_cast<integer>(std::min(forecast + 1e-10, 1e9)));
+        // Note: add a small value to this forecast to account for floating point errors
+        real64 forecast = ((m_targetTime - time) / dt) + 1e-10;
+        SetForecast(static_cast<integer>(std::min(forecast, 1e9)));
       }
     }
     else
@@ -88,13 +89,20 @@ void SoloEvent::EstimateEventTiming(real64 const time,
 }
 
 
-real64 SoloEvent::GetEventApplicationDtRequest(real64 const time)
+real64 SoloEvent::GetEventTypeDtRequest(real64 const time)
 {
   real64 requestedDt = std::numeric_limits<real64>::max();
 
+  // Note: if m_lastCycle is set, then the event has already executed
   if ((m_lastCycle < 0) && (m_targetTime > 0) && (m_targetExactTimestep > 0))
   {
-    requestedDt = std::min(requestedDt, m_targetTime - time);
+    // This extra step is necessary to prevent the event manager from
+    // falling into a dt=0 loop
+    real64 tmp_t = std::nextafter(time, time + 1.0);
+    if (tmp_t < m_targetTime)
+    {
+      requestedDt = std::min(requestedDt, m_targetTime - time);
+    }
   }
 
   return requestedDt;

@@ -134,7 +134,7 @@ public:
   /**
    * This method is used to get event-specifit dt requests
    */
-  virtual real64 GetEventApplicationDtRequest(real64 const time){ return std::numeric_limits<real64>::max(); }
+  virtual real64 GetEventTypeDtRequest(real64 const time){ return std::numeric_limits<real64>::max(); }
 
 
   /// This method is used to count the number of events/sub-events
@@ -162,6 +162,7 @@ public:
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
+    static constexpr auto verbosityString = "verbosity";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
@@ -173,7 +174,8 @@ public:
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
-  } viewKeys;
+    dataRepository::ViewKey verbosity = { "verbosity" };
+    } viewKeys;
 
   ///Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
@@ -188,6 +190,8 @@ public:
 
   integer GetEventCount() const { return m_eventCount; }
   real64  GetEventProgress() const { return m_eventProgress; }
+
+  real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
 
 protected:
@@ -209,6 +213,8 @@ private:
   integer m_eventCount;
   integer m_timeStepEventCount;
   real64 m_eventProgress;
+  integer m_verbosity;
+  real64 m_currentEventDtRequest;
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;

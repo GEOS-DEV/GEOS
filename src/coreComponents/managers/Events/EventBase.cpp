@@ -50,6 +50,8 @@ EventBase::EventBase( const std::string& name,
   m_eventCount(0),
   m_timeStepEventCount(0),
   m_eventProgress(0),
+  m_verbosity(0),
+  m_currentEventDtRequest(0.0),
   m_target(nullptr)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
@@ -79,7 +81,7 @@ EventBase::EventBase( const std::string& name,
     setDescription("Forced timestep for this event");
 
   RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("allows timesteps to be truncated to match the start/stop times exactly");
  
@@ -97,7 +99,10 @@ EventBase::EventBase( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("index of the current subevent");
 
-
+  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level");
 }
 
 
@@ -225,8 +230,14 @@ void EventBase::Execute(real64 const time_n,
   for ( ; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent)
   {
     EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
+    integer subEventForecast = subEvent->GetForecast();
 
-    if (subEvent->GetForecast() <= 0)
+    if (m_verbosity > 0)
+    {
+      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
+    }
+
+    if (subEventForecast <= 0)
     {
       subEvent->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
     }
@@ -242,7 +253,7 @@ void EventBase::Execute(real64 const time_n,
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  real64 requestedDt = std::numeric_limits<real64>::max();
+  m_currentEventDtRequest = std::numeric_limits<real64>::max();
 
   // Events and their targets may request a max dt when active
   if ((time >= m_beginTime) && (time < m_endTime))
@@ -250,29 +261,29 @@ real64 EventBase::GetTimestepRequest(real64 const time)
     if (m_forceDt > 0)
     {
       // Override the event dt request
-      requestedDt = m_forceDt;
+      m_currentEventDtRequest = m_forceDt;
     }
     else
     {
       if (m_maxEventDt > 0)
       {
         // Limit the event dt request
-        requestedDt = std::min(m_maxEventDt, requestedDt);
+        m_currentEventDtRequest = std::min(m_maxEventDt, m_currentEventDtRequest);
       }
 
       // Get the event-specific dt request
-      requestedDt = std::min(requestedDt, GetEventApplicationDtRequest(time));
+      m_currentEventDtRequest = std::min(m_currentEventDtRequest, GetEventTypeDtRequest(time));
 
       // Get the target's dt request if the event has the potential to execute this cycle
       if ((m_eventForecast <= 1) && (m_target != nullptr))
       {
-        requestedDt = std::min(requestedDt, m_target->GetTimestepRequest(time));
+        m_currentEventDtRequest = std::min(m_currentEventDtRequest, m_target->GetTimestepRequest(time));
       }
 
       // Get the sub-event dt requests
       this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
       {
-        requestedDt = std::min(requestedDt, subEvent->GetTimestepRequest(time));
+        m_currentEventDtRequest = std::min(m_currentEventDtRequest, subEvent->GetTimestepRequest(time));
       });
     }
   }
@@ -280,17 +291,20 @@ real64 EventBase::GetTimestepRequest(real64 const time)
   // Try to respect the start/stop times of the event window
   if (m_targetExactStartStop == 1)
   {
-    if (time < m_beginTime)
+    // Using this instead of the raw time will prevent falling into dt = 0 loops:
+    real64 tmp_t = std::nextafter(time, time + 1.0);
+
+    if (tmp_t < m_beginTime)
     {
-      requestedDt = std::min(m_beginTime - time, requestedDt);
+      m_currentEventDtRequest = std::min(m_beginTime - time, m_currentEventDtRequest);
     }
-    else if (time < m_endTime)
+    else if (tmp_t < m_endTime)
     {
-      requestedDt = std::min(m_endTime - time, requestedDt);
+      m_currentEventDtRequest = std::min(m_endTime - time, m_currentEventDtRequest);
     }
   }
 
-  return requestedDt;
+  return m_currentEventDtRequest;
 }
 
 
