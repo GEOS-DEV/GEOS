@@ -832,8 +832,11 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
+
+  //  ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
+
+  // apply pressure and source flux boundary conditions.
+  ApplyBC_implicit(domain, time_n, dt, blockSystem);  
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
   if (verboseLevel() >= 2)
@@ -850,7 +853,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
 
 }
 
-void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
+void SinglePhaseFlow::ApplyBC_implicit( DomainPartition * domain,
                                                  real64 const time_n, real64 const dt,
                                                  EpetraBlockSystem * const blockSystem )
 {
@@ -868,24 +871,50 @@ void SinglePhaseFlow::ApplyDirichletBC_implicit( DomainPartition * domain,
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
-    arrayView1d<real64 const> const &
-    pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
+    if(fs->getCatalogName() == "SourceFlux")
+      {
 
-    arrayView1d<real64 const> const &
-    dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
+	fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( lset,
+								   time_n + dt,
+								   dt,
+								   subRegion,
+								   dofNumber,
+								   1,
+								   blockSystem,
+								   BlockIDs::fluidPressureBlock,
+								   [&] (localIndex const a) -> real64
+								   {
+								     return 0;
+								   });
 
-    // call the application of the boundary condition to alter the matrix and rhs
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
-                                                                 time_n + dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 1,
-                                                                 blockSystem,
-                                                                 BlockIDs::fluidPressureBlock,
-    [&] (localIndex const a) -> real64
-    {
-      return pres[a] + dPres[a];
-    });
+      }
+    else
+      {
+
+	//for now assume all the non-flux boundary conditions are Dirichlet type BC.
+
+	arrayView1d<real64 const> const &
+	  pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
+
+	arrayView1d<real64 const> const &
+	  dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
+
+	
+	// call the application of the boundary condition to alter the matrix and rhs
+	fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
+								     time_n + dt,
+								     subRegion,
+								     dofNumber,
+								     1,
+								     blockSystem,
+								     BlockIDs::fluidPressureBlock,
+								     [&] (localIndex const a) -> real64
+								     {
+								       return pres[a] + dPres[a];
+								     });
+
+      }
+	
   } );
 }
 
@@ -1279,7 +1308,7 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
   residual->Scale(-1.0);
 
   solution->Scale(0.0);
-
+  
   m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
                                                 params,
                                                 BlockIDs::fluidPressureBlock );
@@ -1289,6 +1318,7 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
     GEOS_LOG_RANK("After SinglePhaseFlow::SolveSystem");
     GEOS_LOG_RANK("\nsolution\n" << *solution);
   }
+
 }
 
 void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domain )
