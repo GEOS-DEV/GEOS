@@ -58,7 +58,7 @@ EventManager::EventManager( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation time.");
+    setDescription("Verbosity level");
 
   RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -171,7 +171,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
       if (m_verbosity > 0)
       {
-        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), forecast=" << eventForecast);
+        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
       }
 
       // Execute, signal events
