@@ -50,6 +50,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
+using namespace SinglePhaseFlowKernels;
 
 SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
                                   ManagedGroup * const parent ):
@@ -77,6 +78,8 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldPorosityString );
       subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
@@ -86,8 +89,9 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
     FaceManager * const faceManager = meshLevel->getFaceManager();
     {
       faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::densityString );
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::viscosityString );
+      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::densityString )->reference().resizeDimension<1>(1);
+      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::viscosityString )->reference().resizeDimension<1>(1);
+      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::mobilityString );
     }
   }
 }
@@ -100,7 +104,7 @@ void SinglePhaseFlow::InitializePreSubGroups(ManagedGroup * const rootGroup)
   getLinearSystemRepository()->SetBlockID( BlockIDs::fluidPressureBlock, this->getName() );
 }
 
-void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup)
+void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -117,7 +121,7 @@ void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup)
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup)
+void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -132,13 +136,51 @@ void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup)
   });
 }
 
+void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
+{
+  GEOSX_MARK_FUNCTION;
 
-void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup )
+  // output
+
+  arrayView1d<real64> const & mob =
+    dataGroup->getReference<array1d<real64>>( viewKeyStruct::mobilityString );
+
+  arrayView1d<real64> const & dMob_dPres =
+    dataGroup->getReference<array1d<real64>>( viewKeyStruct::dMobility_dPressureString );
+
+  // input
+
+  SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
+
+  arrayView2d<real64 const> const & dens =
+    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
+
+  arrayView2d<real64 const> const & dDens_dPres =
+    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
+
+  arrayView2d<real64 const> const & visc =
+    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString );
+
+  arrayView2d<real64 const> const & dVisc_dPres =
+    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
+
+  MobilityKernel::Launch( 0, dataGroup->size(),
+                          dens,
+                          dDens_dPres,
+                          visc,
+                          dVisc_dPres,
+                          mob,
+                          dMob_dPres );
+}
+
+
+void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
   UpdateFluidModel( dataGroup );
   UpdateSolidModel( dataGroup );
+  UpdateMobility( dataGroup );
 }
 
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
@@ -609,23 +651,23 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
 
-      SinglePhaseFlowKernels::MakeAccumulation<ISPORO>( dPres[ei],
-                                                        dens[ei][0],
-                                                        densOld[ei],
-                                                        dDens_dPres[ei][0],
-                                                        volume[ei],
-                                                        dVol[ei],
-                                                        poroRef[ei],
-                                                        poroOld[ei],
-                                                        pvmult[ei][0],
-                                                        dPVMult_dPres[ei][0],
-                                                        biotCoefficient,
-                                                        bulkModulus[ei],
-                                                        totalMeanStress[ei],
-                                                        oldTotalMeanStress[ei],
-                                                        poro[ei],
-                                                        localAccum,
-                                                        localAccumJacobian );
+      AccumulationKernel::Compute<ISPORO>( dPres[ei],
+                                           dens[ei][0],
+                                           densOld[ei],
+                                           dDens_dPres[ei][0],
+                                           volume[ei],
+                                           dVol[ei],
+                                           poroRef[ei],
+                                           poroOld[ei],
+                                           pvmult[ei][0],
+                                           dPVMult_dPres[ei][0],
+                                           biotCoefficient,
+                                           bulkModulus[ei],
+                                           totalMeanStress[ei],
+                                           oldTotalMeanStress[ei],
+                                           poro[ei],
+                                           localAccum,
+                                           localAccumJacobian );
 
         // add contribution to global residual and jacobian
       residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
@@ -659,8 +701,8 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth   = m_gravDepth;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens        = m_density;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres = m_dDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & mob         = m_mobility;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dMob_dPres  = m_dMobility_dPres;
 
   integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
@@ -683,20 +725,20 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
       stackArray1d<real64, numElems> localFlux(numElems);
       stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
 
-      SinglePhaseFlowKernels::MakeFlux( stencilSize,
-                                        connections[iconn],
-                                        pres,
-                                        dPres,
-                                        gravDepth,
-                                        dens,
-                                        dDens_dPres,
-                                        visc,
-                                        dVisc_dPres,
-                                        fluidIndex,
-                                        gravityFlag,
-                                        dt,
-                                        localFlux,
-                                        localFluxJacobian );
+      MakeFlux( stencilSize,
+                connections[iconn],
+                pres,
+                dPres,
+                gravDepth,
+                dens,
+                dDens_dPres,
+                mob,
+                dMob_dPres,
+                fluidIndex,
+                gravityFlag,
+                dt,
+                localFlux,
+                localFluxJacobian );
 
       // extract DOF numbers
       eqnRowIndices = -1;
@@ -830,17 +872,18 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth   = m_gravDepth;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens        = m_density;
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres = m_dDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc        = m_viscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres = m_dVisc_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & mob         = m_mobility;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dMob_dPres  = m_dMobility_dPres;
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   // use ArrayView to make capture by value easy in lambdas
-  arrayView1d<real64> & presFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::facePressureString );
-  arrayView1d<real64> & densFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::densityString );
-  arrayView1d<real64> & viscFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::viscosityString );
-  arrayView1d<real64> & gravDepthFace = faceManager->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
+  arrayView1d<real64 const> const & presFace      = faceManager->getReference<array1d<real64>>( viewKeyStruct::facePressureString );
+  arrayView2d<real64>       const & densFace      = faceManager->getReference<array2d<real64>>( viewKeyStruct::densityString );
+  arrayView2d<real64>       const & viscFace      = faceManager->getReference<array2d<real64>>( viewKeyStruct::viscosityString );
+  arrayView1d<real64>       const & mobFace       = faceManager->getReference<array1d<real64>>( viewKeyStruct::mobilityString );
+  arrayView1d<real64 const> const & gravDepthFace = faceManager->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
   dataRepository::ManagedGroup const * sets = faceManager->sets();
 
@@ -880,7 +923,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       integer ke;
       for (ke = 0; ke < 2; ++ke)
       {
-        if (elemRegionList[kf][ke] >= 0 && (regionFilter.empty() || regionFilter.contains(elemRegionList[kf][ke])))
+        if (elemRegionList[kf][ke] >= 0 && regionFilter.contains(elemRegionList[kf][ke]))
         {
           break;
         }
@@ -892,8 +935,10 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       real64 dummy; // don't need derivatives on faces
 
       SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->group_cast<SingleFluidBase *>();
-      fluid->Compute( presFace[kf], densFace[kf], dummy, viscFace[kf], dummy );
+      fluid->Compute( presFace[kf], densFace[kf][0], dummy, viscFace[kf][0], dummy );
     }
+
+    MobilityKernel::Launch( targetSet, densFace, viscFace, mobFace );
   });
 
   // *** assembly loop ***
@@ -944,7 +989,6 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
         PointDescriptor const & point = connections(iconn, i).index;
 
         real64 density = 0, dDens_dP = 0;
-        real64 viscosity = 0, dVisc_dP = 0;
         switch (point.tag)
         {
           case PointDescriptor::Tag::CELL:
@@ -955,34 +999,27 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
             eqnRowIndex = dofNumber[er][esr][ei];
 
-            density   = dens[er][esr][m_fluidIndex][ei][0];
-            dDens_dP  = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+            density  = dens[er][esr][m_fluidIndex][ei][0];
+            dDens_dP = dDens_dPres[er][esr][m_fluidIndex][ei][0];
 
-            viscosity = visc[er][esr][m_fluidIndex][ei][0];
-            dVisc_dP  = dVisc_dPres[er][esr][m_fluidIndex][ei][0];
+            mobility[i]     = mob[er][esr][ei];
+            dMobility_dP[i] = dMob_dPres[er][esr][ei];
 
             cell_order = i; // mark position of the cell in connection for sign consistency later
             break;
           }
           case PointDescriptor::Tag::FACE:
           {
-            localIndex const kf = point.faceIndex;
-
-            density = densFace[kf];
+            density  = densFace[point.faceIndex][0];
             dDens_dP = 0.0;
 
-            viscosity = viscFace[kf];
-            dVisc_dP = 0.0;
-
+            mobility[i]     = mobFace[point.faceIndex];
+            dMobility_dP[i] = 0.0;
             break;
           }
           default:
             GEOS_ERROR("Unsupported point type in stencil");
         }
-
-        // mobility
-        mobility[i]  = density / viscosity;
-        dMobility_dP[i]  = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
 
         // average density
         densMean += densWeight[i] * density;
@@ -1225,6 +1262,11 @@ void SinglePhaseFlow::ResetViews(DomainPartition * const domain)
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaPressureString );
   m_deltaVolume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaVolumeString );
+
+  m_mobility =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::mobilityString );
+  m_dMobility_dPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::dMobility_dPressureString );
 
   m_porosityOld =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::oldPorosityString );
