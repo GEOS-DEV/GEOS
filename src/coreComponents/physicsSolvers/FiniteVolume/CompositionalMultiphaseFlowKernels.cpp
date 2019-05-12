@@ -22,8 +22,6 @@
 
 #include "CompositionalMultiphaseFlowKernels.hpp"
 
-#include "constitutive/Fluid/MultiFluidBase.hpp"
-
 namespace geosx
 {
 
@@ -34,10 +32,10 @@ namespace CompositionalMultiphaseFlowKernels
 
 template<localIndex NC>
 inline RAJA_HOST_DEVICE void
-ComponentFractionKernel::Compute( arraySlice1d<real64 const> compDens,
-                                  arraySlice1d<real64 const> dCompDens,
-                                  arraySlice1d<real64> compFrac,
-                                  arraySlice2d<real64> dCompFrac_dCompDens )
+ComponentFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
+                                  arraySlice1d<real64 const> const dCompDens,
+                                  arraySlice1d<real64> const compFrac,
+                                  arraySlice2d<real64> const dCompFrac_dCompDens )
 {
   real64 totalDensity = 0.0;
 
@@ -60,11 +58,11 @@ ComponentFractionKernel::Compute( arraySlice1d<real64 const> compDens,
 }
 
 inline RAJA_HOST_DEVICE void
-ComponentFractionKernel::Compute( localIndex NC,
-                                  arraySlice1d<real64 const> compDens,
-                                  arraySlice1d<real64 const> dCompDens,
-                                  arraySlice1d<real64> compFrac,
-                                  arraySlice2d<real64> dCompFrac_dCompDens )
+ComponentFractionKernel::Compute( localIndex const NC,
+                                  arraySlice1d<real64 const> const compDens,
+                                  arraySlice1d<real64 const> const dCompDens,
+                                  arraySlice1d<real64> const compFrac,
+                                  arraySlice2d<real64> const dCompFrac_dCompDens )
 {
   real64 totalDensity = 0.0;
 
@@ -87,7 +85,7 @@ ComponentFractionKernel::Compute( localIndex NC,
 }
 
 template<localIndex NC>
-void ComponentFractionKernel::Launch( localIndex begin, localIndex end,
+void ComponentFractionKernel::Launch( localIndex const begin, localIndex const end,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -102,8 +100,8 @@ void ComponentFractionKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void ComponentFractionKernel::Launch( localIndex NC,
-                                      localIndex begin, localIndex end,
+void ComponentFractionKernel::Launch( localIndex const NC,
+                                      localIndex const begin, localIndex const end,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -120,7 +118,7 @@ void ComponentFractionKernel::Launch( localIndex NC,
 }
 
 template<localIndex NC>
-void ComponentFractionKernel::Launch( set<localIndex> targetSet,
+void ComponentFractionKernel::Launch( set<localIndex> const & targetSet,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -135,8 +133,8 @@ void ComponentFractionKernel::Launch( set<localIndex> targetSet,
   } );
 }
 
-void ComponentFractionKernel::Launch( localIndex NC,
-                                      set<localIndex> targetSet,
+void ComponentFractionKernel::Launch( localIndex const NC,
+                                      set<localIndex> const & targetSet,
                                       arrayView2d<real64 const> const & compDens,
                                       arrayView2d<real64 const> const & dCompDens,
                                       arrayView2d<real64> const & compFrac,
@@ -154,13 +152,13 @@ void ComponentFractionKernel::Launch( localIndex NC,
 
 #define INST_ComponentFractionKernel(NC) \
 template \
-void ComponentFractionKernel::Launch<NC>( localIndex begin, localIndex end, \
+void ComponentFractionKernel::Launch<NC>( localIndex const begin, localIndex const end, \
                                           arrayView2d<real64 const> const & compDens, \
                                           arrayView2d<real64 const> const & dCompDens, \
                                           arrayView2d<real64> const & compFrac, \
                                           arrayView3d<real64> const & dCompFrac_dCompDens ); \
 template \
-void ComponentFractionKernel::Launch<NC>( set<localIndex> targetSet, \
+void ComponentFractionKernel::Launch<NC>( set<localIndex> const & targetSet, \
                                           arrayView2d<real64 const> const & compDens, \
                                           arrayView2d<real64 const> const & dCompDens, \
                                           arrayView2d<real64> const & compFrac, \
@@ -171,11 +169,6 @@ INST_ComponentFractionKernel(2);
 INST_ComponentFractionKernel(3);
 INST_ComponentFractionKernel(4);
 INST_ComponentFractionKernel(5);
-INST_ComponentFractionKernel(6);
-INST_ComponentFractionKernel(7);
-INST_ComponentFractionKernel(8);
-INST_ComponentFractionKernel(9);
-INST_ComponentFractionKernel(10);
 
 #undef INST_ComponentFractionKernel
 
@@ -183,18 +176,18 @@ INST_ComponentFractionKernel(10);
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
-PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> compDens,
-                                    arraySlice1d<real64 const> dCompDens,
-                                    arraySlice2d<real64 const> dCompFrac_dCompDens,
-                                    arraySlice1d<real64 const> phaseDens,
-                                    arraySlice1d<real64 const> dPhaseDens_dPres,
-                                    arraySlice2d<real64 const> dPhaseDens_dComp,
-                                    arraySlice1d<real64 const> phaseFrac,
-                                    arraySlice1d<real64 const> dPhaseFrac_dPres,
-                                    arraySlice2d<real64 const> dPhaseFrac_dComp,
-                                    arraySlice1d<real64> phaseVolFrac,
-                                    arraySlice1d<real64> dPhaseVolFrac_dPres,
-                                    arraySlice2d<real64> dPhaseVolFrac_dComp )
+PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
+                                    arraySlice1d<real64 const> const dCompDens,
+                                    arraySlice2d<real64 const> const dCompFrac_dCompDens,
+                                    arraySlice1d<real64 const> const phaseDens,
+                                    arraySlice1d<real64 const> const dPhaseDens_dPres,
+                                    arraySlice2d<real64 const> const dPhaseDens_dComp,
+                                    arraySlice1d<real64 const> const phaseFrac,
+                                    arraySlice1d<real64 const> const dPhaseFrac_dPres,
+                                    arraySlice2d<real64 const> const dPhaseFrac_dComp,
+                                    arraySlice1d<real64> const phaseVolFrac,
+                                    arraySlice1d<real64> const dPhaseVolFrac_dPres,
+                                    arraySlice2d<real64> const dPhaseVolFrac_dComp )
 {
   stackArray1d<real64, NC> work( NC );
 
@@ -239,19 +232,19 @@ PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> compDens,
 }
 
 inline RAJA_HOST_DEVICE void
-PhaseVolumeFractionKernel::Compute( localIndex NC, localIndex NP,
-                                    arraySlice1d<real64 const> compDens,
-                                    arraySlice1d<real64 const> dCompDens,
-                                    arraySlice2d<real64 const> dCompFrac_dCompDens,
-                                    arraySlice1d<real64 const> phaseDens,
-                                    arraySlice1d<real64 const> dPhaseDens_dPres,
-                                    arraySlice2d<real64 const> dPhaseDens_dComp,
-                                    arraySlice1d<real64 const> phaseFrac,
-                                    arraySlice1d<real64 const> dPhaseFrac_dPres,
-                                    arraySlice2d<real64 const> dPhaseFrac_dComp,
-                                    arraySlice1d<real64> phaseVolFrac,
-                                    arraySlice1d<real64> dPhaseVolFrac_dPres,
-                                    arraySlice2d<real64> dPhaseVolFrac_dComp )
+PhaseVolumeFractionKernel::Compute( localIndex const NC, localIndex const NP,
+                                    arraySlice1d<real64 const> const compDens,
+                                    arraySlice1d<real64 const> const dCompDens,
+                                    arraySlice2d<real64 const> const dCompFrac_dCompDens,
+                                    arraySlice1d<real64 const> const phaseDens,
+                                    arraySlice1d<real64 const> const dPhaseDens_dPres,
+                                    arraySlice2d<real64 const> const dPhaseDens_dComp,
+                                    arraySlice1d<real64 const> const phaseFrac,
+                                    arraySlice1d<real64 const> const dPhaseFrac_dPres,
+                                    arraySlice2d<real64 const> const dPhaseFrac_dComp,
+                                    arraySlice1d<real64> const phaseVolFrac,
+                                    arraySlice1d<real64> const dPhaseVolFrac_dPres,
+                                    arraySlice2d<real64> const dPhaseVolFrac_dComp )
 {
   localIndex constexpr maxNC = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
@@ -298,7 +291,7 @@ PhaseVolumeFractionKernel::Compute( localIndex NC, localIndex NP,
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseVolumeFractionKernel::Launch( localIndex begin, localIndex end,
+void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const end,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -329,8 +322,8 @@ void PhaseVolumeFractionKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void PhaseVolumeFractionKernel::Launch( localIndex NC, localIndex NP,
-                                        localIndex begin, localIndex end,
+void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP,
+                                        localIndex const begin, localIndex const end,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -363,7 +356,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex NC, localIndex NP,
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseVolumeFractionKernel::Launch( set<localIndex> targetSet,
+void PhaseVolumeFractionKernel::Launch( set<localIndex> const & targetSet,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -394,8 +387,8 @@ void PhaseVolumeFractionKernel::Launch( set<localIndex> targetSet,
   } );
 }
 
-void PhaseVolumeFractionKernel::Launch( localIndex NC, localIndex NP,
-                                        set<localIndex> targetSet,
+void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP,
+                                        set<localIndex> const & targetSet,
                                         arrayView2d<real64 const> const & compDens,
                                         arrayView2d<real64 const> const & dCompDens,
                                         arrayView3d<real64 const> const & dCompFrac_dCompDens,
@@ -429,7 +422,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex NC, localIndex NP,
 
 #define INST_PhaseVolumeFractionKernel(NC,NP) \
 template \
-void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
+void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex const begin, localIndex const end, \
                                                arrayView2d<real64 const> const & compDens, \
                                                arrayView2d<real64 const> const & dCompDens, \
                                                arrayView3d<real64 const> const & dCompFrac_dCompDens, \
@@ -443,7 +436,7 @@ void PhaseVolumeFractionKernel::Launch<NC,NP>( localIndex begin, localIndex end,
                                                arrayView2d<real64> const & dPhaseVolFrac_dPres, \
                                                arrayView3d<real64> const & dPhaseVolFrac_dComp ); \
 template \
-void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> targetSet, \
+void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
                                                arrayView2d<real64 const> const & compDens, \
                                                arrayView2d<real64 const> const & dCompDens, \
                                                arrayView3d<real64 const> const & dCompFrac_dCompDens, \
@@ -462,33 +455,18 @@ INST_PhaseVolumeFractionKernel(2,1);
 INST_PhaseVolumeFractionKernel(3,1);
 INST_PhaseVolumeFractionKernel(4,1);
 INST_PhaseVolumeFractionKernel(5,1);
-INST_PhaseVolumeFractionKernel(6,1);
-INST_PhaseVolumeFractionKernel(7,1);
-INST_PhaseVolumeFractionKernel(8,1);
-INST_PhaseVolumeFractionKernel(9,1);
-INST_PhaseVolumeFractionKernel(10,1);
 
 INST_PhaseVolumeFractionKernel(1,2);
 INST_PhaseVolumeFractionKernel(2,2);
 INST_PhaseVolumeFractionKernel(3,2);
 INST_PhaseVolumeFractionKernel(4,2);
 INST_PhaseVolumeFractionKernel(5,2);
-INST_PhaseVolumeFractionKernel(6,2);
-INST_PhaseVolumeFractionKernel(7,2);
-INST_PhaseVolumeFractionKernel(8,2);
-INST_PhaseVolumeFractionKernel(9,2);
-INST_PhaseVolumeFractionKernel(10,2);
 
 INST_PhaseVolumeFractionKernel(1,3);
 INST_PhaseVolumeFractionKernel(2,3);
 INST_PhaseVolumeFractionKernel(3,3);
 INST_PhaseVolumeFractionKernel(4,3);
 INST_PhaseVolumeFractionKernel(5,3);
-INST_PhaseVolumeFractionKernel(6,3);
-INST_PhaseVolumeFractionKernel(7,3);
-INST_PhaseVolumeFractionKernel(8,3);
-INST_PhaseVolumeFractionKernel(9,3);
-INST_PhaseVolumeFractionKernel(10,3);
 
 #undef INST_PhaseVolumeFractionKernel
 
@@ -496,20 +474,20 @@ INST_PhaseVolumeFractionKernel(10,3);
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
-PhaseMobilityKernel::Compute( arraySlice2d<real64 const> dCompFrac_dCompDens,
-                              arraySlice1d<real64 const> phaseDens,
-                              arraySlice1d<real64 const> dPhaseDens_dPres,
-                              arraySlice2d<real64 const> dPhaseDens_dComp,
-                              arraySlice1d<real64 const> phaseVisc,
-                              arraySlice1d<real64 const> dPhaseVisc_dPres,
-                              arraySlice2d<real64 const> dPhaseVisc_dComp,
-                              arraySlice1d<real64 const> phaseRelPerm,
-                              arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
-                              arraySlice1d<real64 const> dPhaseVolFrac_dPres,
-                              arraySlice2d<real64 const> dPhaseVolFrac_dComp,
-                              arraySlice1d<real64> phaseMob,
-                              arraySlice1d<real64> dPhaseMob_dPres,
-                              arraySlice2d<real64> dPhaseMob_dComp )
+PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDens,
+                              arraySlice1d<real64 const> const phaseDens,
+                              arraySlice1d<real64 const> const dPhaseDens_dPres,
+                              arraySlice2d<real64 const> const dPhaseDens_dComp,
+                              arraySlice1d<real64 const> const phaseVisc,
+                              arraySlice1d<real64 const> const dPhaseVisc_dPres,
+                              arraySlice2d<real64 const> const dPhaseVisc_dComp,
+                              arraySlice1d<real64 const> const phaseRelPerm,
+                              arraySlice2d<real64 const> const dPhaseRelPerm_dPhaseVolFrac,
+                              arraySlice1d<real64 const> const dPhaseVolFrac_dPres,
+                              arraySlice2d<real64 const> const dPhaseVolFrac_dComp,
+                              arraySlice1d<real64> const phaseMob,
+                              arraySlice1d<real64> const dPhaseMob_dPres,
+                              arraySlice2d<real64> const dPhaseMob_dComp )
 {
   stackArray1d<real64, NC> dRelPerm_dC( NC );
   stackArray1d<real64, NC> dDens_dC( NC );
@@ -556,21 +534,21 @@ PhaseMobilityKernel::Compute( arraySlice2d<real64 const> dCompFrac_dCompDens,
 }
 
 inline RAJA_HOST_DEVICE void
-PhaseMobilityKernel::Compute( localIndex NC, localIndex NP,
-                              arraySlice2d<real64 const> dCompFrac_dCompDens,
-                              arraySlice1d<real64 const> phaseDens,
-                              arraySlice1d<real64 const> dPhaseDens_dPres,
-                              arraySlice2d<real64 const> dPhaseDens_dComp,
-                              arraySlice1d<real64 const> phaseVisc,
-                              arraySlice1d<real64 const> dPhaseVisc_dPres,
-                              arraySlice2d<real64 const> dPhaseVisc_dComp,
-                              arraySlice1d<real64 const> phaseRelPerm,
-                              arraySlice2d<real64 const> dPhaseRelPerm_dPhaseVolFrac,
-                              arraySlice1d<real64 const> dPhaseVolFrac_dPres,
-                              arraySlice2d<real64 const> dPhaseVolFrac_dComp,
-                              arraySlice1d<real64> phaseMob,
-                              arraySlice1d<real64> dPhaseMob_dPres,
-                              arraySlice2d<real64> dPhaseMob_dComp )
+PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
+                              arraySlice2d<real64 const> const dCompFrac_dCompDens,
+                              arraySlice1d<real64 const> const phaseDens,
+                              arraySlice1d<real64 const> const dPhaseDens_dPres,
+                              arraySlice2d<real64 const> const dPhaseDens_dComp,
+                              arraySlice1d<real64 const> const phaseVisc,
+                              arraySlice1d<real64 const> const dPhaseVisc_dPres,
+                              arraySlice2d<real64 const> const dPhaseVisc_dComp,
+                              arraySlice1d<real64 const> const phaseRelPerm,
+                              arraySlice2d<real64 const> const dPhaseRelPerm_dPhaseVolFrac,
+                              arraySlice1d<real64 const> const dPhaseVolFrac_dPres,
+                              arraySlice2d<real64 const> const dPhaseVolFrac_dComp,
+                              arraySlice1d<real64> const phaseMob,
+                              arraySlice1d<real64> const dPhaseMob_dPres,
+                              arraySlice2d<real64> const dPhaseMob_dComp )
 {
   localIndex constexpr maxNC = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
@@ -619,7 +597,7 @@ PhaseMobilityKernel::Compute( localIndex NC, localIndex NP,
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseMobilityKernel::Launch( localIndex begin, localIndex end,
+void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -654,8 +632,8 @@ void PhaseMobilityKernel::Launch( localIndex begin, localIndex end,
   } );
 }
 
-void PhaseMobilityKernel::Launch( localIndex NC, localIndex NP,
-                                  localIndex begin, localIndex end,
+void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
+                                  localIndex const begin, localIndex const end,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -692,7 +670,7 @@ void PhaseMobilityKernel::Launch( localIndex NC, localIndex NP,
 }
 
 template<localIndex NC, localIndex NP>
-void PhaseMobilityKernel::Launch( set<localIndex> targetSet,
+void PhaseMobilityKernel::Launch( set<localIndex> const & targetSet,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -727,8 +705,8 @@ void PhaseMobilityKernel::Launch( set<localIndex> targetSet,
   } );
 }
 
-void PhaseMobilityKernel::Launch( localIndex NC, localIndex NP,
-                                  set<localIndex> targetSet,
+void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
+                                  set<localIndex> const & targetSet,
                                   arrayView3d<real64 const> const & dCompFrac_dCompDens,
                                   arrayView3d<real64 const> const & phaseDens,
                                   arrayView3d<real64 const> const & dPhaseDens_dPres,
@@ -766,7 +744,7 @@ void PhaseMobilityKernel::Launch( localIndex NC, localIndex NP,
 
 #define INST_PhaseMobilityKernel(NC,NP) \
 template \
-void PhaseMobilityKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
+void PhaseMobilityKernel::Launch<NC,NP>( localIndex const begin, localIndex const end, \
                                          arrayView3d<real64 const> const & dCompFrac_dCompDens, \
                                          arrayView3d<real64 const> const & phaseDens, \
                                          arrayView3d<real64 const> const & dPhaseDens_dPres, \
@@ -782,7 +760,7 @@ void PhaseMobilityKernel::Launch<NC,NP>( localIndex begin, localIndex end, \
                                          arrayView2d<real64> const & dPhaseMob_dPres, \
                                          arrayView3d<real64> const & dPhaseMob_dComp ); \
 template \
-void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> targetSet, \
+void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
                                          arrayView3d<real64 const> const & dCompFrac_dCompDens, \
                                          arrayView3d<real64 const> const & phaseDens, \
                                          arrayView3d<real64 const> const & dPhaseDens_dPres, \
@@ -803,33 +781,18 @@ INST_PhaseMobilityKernel(2,1);
 INST_PhaseMobilityKernel(3,1);
 INST_PhaseMobilityKernel(4,1);
 INST_PhaseMobilityKernel(5,1);
-INST_PhaseMobilityKernel(6,1);
-INST_PhaseMobilityKernel(7,1);
-INST_PhaseMobilityKernel(8,1);
-INST_PhaseMobilityKernel(9,1);
-INST_PhaseMobilityKernel(10,1);
 
 INST_PhaseMobilityKernel(1,2);
 INST_PhaseMobilityKernel(2,2);
 INST_PhaseMobilityKernel(3,2);
 INST_PhaseMobilityKernel(4,2);
 INST_PhaseMobilityKernel(5,2);
-INST_PhaseMobilityKernel(6,2);
-INST_PhaseMobilityKernel(7,2);
-INST_PhaseMobilityKernel(8,2);
-INST_PhaseMobilityKernel(9,2);
-INST_PhaseMobilityKernel(10,2);
 
 INST_PhaseMobilityKernel(1,3);
 INST_PhaseMobilityKernel(2,3);
 INST_PhaseMobilityKernel(3,3);
 INST_PhaseMobilityKernel(4,3);
 INST_PhaseMobilityKernel(5,3);
-INST_PhaseMobilityKernel(6,3);
-INST_PhaseMobilityKernel(7,3);
-INST_PhaseMobilityKernel(8,3);
-INST_PhaseMobilityKernel(9,3);
-INST_PhaseMobilityKernel(10,3);
 
 #undef INST_PhaseMobilityKernel
 

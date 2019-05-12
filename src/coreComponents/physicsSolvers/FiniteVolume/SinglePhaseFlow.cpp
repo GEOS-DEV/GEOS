@@ -725,20 +725,20 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
       stackArray1d<real64, numElems> localFlux(numElems);
       stackArray2d<real64, numElems*maxStencilSize> localFluxJacobian(numElems, stencilSize);
 
-      MakeFlux( stencilSize,
-                connections[iconn],
-                pres,
-                dPres,
-                gravDepth,
-                dens,
-                dDens_dPres,
-                mob,
-                dMob_dPres,
-                fluidIndex,
-                gravityFlag,
-                dt,
-                localFlux,
-                localFluxJacobian );
+      FluxKernel::Compute( stencilSize,
+                           connections[iconn],
+                           pres,
+                           dPres,
+                           gravDepth,
+                           dens,
+                           dDens_dPres,
+                           mob,
+                           dMob_dPres,
+                           fluidIndex,
+                           gravityFlag,
+                           dt,
+                           localFlux,
+                           localFluxJacobian );
 
       // extract DOF numbers
       eqnRowIndices = -1;
