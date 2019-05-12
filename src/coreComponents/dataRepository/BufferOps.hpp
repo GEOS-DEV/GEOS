@@ -79,13 +79,13 @@ Unpack( char const *& buffer,
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
-typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+typename std::enable_if< traits::is_tensorT<T>, localIndex >::type
 Pack( char*& buffer,
       T const & var );
 
 //------------------------------------------------------------------------------
 template< typename T >
-typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
+typename std::enable_if< traits::is_tensorT<T>, localIndex >::type
 Unpack( char const *& buffer,
         T & var );
 

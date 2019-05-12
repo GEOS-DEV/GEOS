@@ -53,7 +53,7 @@ struct FieldSpecificationEqual
    * This function performs field[index] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                      localIndex const index,
                      int const component,
@@ -74,7 +74,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                      localIndex const index,
                      int const component,
@@ -95,7 +95,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
@@ -126,7 +126,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
@@ -159,7 +159,7 @@ struct FieldSpecificationEqual
    * This function performs field[index] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
@@ -186,7 +186,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
@@ -270,7 +270,7 @@ struct FieldSpecificationAdd
    * This function performs field[index] += value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
@@ -291,7 +291,7 @@ struct FieldSpecificationAdd
    * This function performs field[index][component] += value.
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
@@ -311,7 +311,7 @@ struct FieldSpecificationAdd
    * This function performs field[index] += value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                      localIndex const index,
                      int const component,
@@ -335,7 +335,7 @@ struct FieldSpecificationAdd
    * This function performs field[index][component] += value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                      localIndex const index,
                      int const component,

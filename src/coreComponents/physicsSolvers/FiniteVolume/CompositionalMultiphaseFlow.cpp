@@ -786,11 +786,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
   fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size( iconn );
+      localIndex const stencilSize = connections.sizeOfArray( iconn );
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
       stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
 
@@ -848,11 +848,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size( iconn );
+      localIndex const stencilSize = connections.sizeOfArray( iconn );
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
       stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
 
@@ -1146,11 +1146,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   fluxApprox->forCellStencils( [&] ( FluxApproximationBase::CellStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size(iconn);
+      localIndex const stencilSize = connections.sizeOfArray(iconn);
 
       // create local work arrays
       stackArray1d<long long, numElems * maxNumComp>  eqnRowIndices( numElems * NC );

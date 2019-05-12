@@ -482,11 +482,11 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
 
   fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size( iconn );
+      localIndex const stencilSize = connections.sizeOfArray( iconn );
       stackArray1d<globalIndex, numElems> dofIndexRow( numElems );
       stackArray1d<globalIndex, maxStencil> dofIndexCol( stencilSize );
 
@@ -531,11 +531,11 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   // add additional connectivity resulting from boundary stencils
   fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size( iconn );
+      localIndex const stencilSize = connections.sizeOfArray( iconn );
       stackArray1d<globalIndex, numElems> dofIndexRow( numElems );
       stackArray1d<globalIndex, maxStencil> dofIndexCol( stencilSize );
 
@@ -712,11 +712,11 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
   {
-    csArrayView2d<FluxApproximationBase::CellStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size(iconn);
+      localIndex const stencilSize = connections.sizeOfArray(iconn);
 
       // working arrays
       stackArray1d<globalIndex, numElems> eqnRowIndices(numElems);
@@ -962,11 +962,11 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
       return;
 
     FluxApproximationBase::BoundaryStencil const & stencil = fluxApprox->getBoundaryStencil(setName);
-    csArrayView2d<FluxApproximationBase::BoundaryStencil::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.size(iconn);
+      localIndex const stencilSize = connections.sizeOfArray(iconn);
 
       stackArray1d<globalIndex, maxStencilSize> dofColIndices( stencilSize );
 

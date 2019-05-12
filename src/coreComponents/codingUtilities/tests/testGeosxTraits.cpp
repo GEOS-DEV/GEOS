@@ -40,8 +40,7 @@
 #define __null nullptr
 #endif
 
-#include "../src/codingUtilities/GeosxTraits.hpp"
-#include<type_traits>
+#include "codingUtilities/GeosxTraits.hpp"
 
 using namespace geosx;
 using namespace geosx::traits;
@@ -49,60 +48,67 @@ using namespace bufferOps;
 
 TEST(testGeosxTraits,test_is_tensorT)
 {
-  EXPECT_TRUE( is_tensorT<R1Tensor>::value );
-  EXPECT_TRUE( is_tensorT<R2Tensor>::value );
-  EXPECT_TRUE( is_tensorT<R2SymTensor>::value );
+  static_assert(is_tensorT<R1Tensor>, "Should be true");
+  static_assert(is_tensorT<R2Tensor>, "Should be true");
+  static_assert(is_tensorT<R2SymTensor>, "Should be true");
 
-  EXPECT_FALSE( is_tensorT<int>::value );
-  EXPECT_FALSE( is_tensorT<double>::value );
-  EXPECT_FALSE( is_tensorT<void>::value );
+  static_assert(!is_tensorT<int>, "Should be false");
+  static_assert(!is_tensorT<double>, "Should be false");
+  static_assert(!is_tensorT<void>, "Should be false");
 }
 
 
 TEST(testGeosxTraits,test_is_string)
 {
-  EXPECT_TRUE( is_string<string>::value );
+  static_assert(is_string<string>, "Should be true");
 
-  EXPECT_FALSE( is_string<int>::value );
-  EXPECT_FALSE( is_string<double>::value );
-  EXPECT_FALSE( is_string<void>::value );
+  static_assert(!is_string<int>, "Should be false");
+  static_assert(!is_string<double>, "Should be false");
+  static_assert(!is_string<void>, "Should be false");
 }
 
 TEST(testGeosxTraits,test_is_array)
 {
-  using arrayType = LvArray::Array<int,1,int>;
-  EXPECT_TRUE( is_array<arrayType >::value );
-
-  EXPECT_FALSE( is_array<int>::value );
-  EXPECT_FALSE( is_array<double>::value );
-  EXPECT_FALSE( is_array<void>::value );
+  static_assert(is_array<LvArray::Array<int,1,int>>, "Should be true");
+  
+  static_assert(!is_array<int>, "Should be false");
+  static_assert(!is_array<double>, "Should be false");
+  static_assert(!is_array<void>, "Should be false");
 }
 
 TEST(testGeosxTraits,test_is_map)
 {
-  using mapType = map<string,int>;
-  EXPECT_TRUE( is_map< mapType >::value );
+  static_assert(is_map<map<string,int>>, "Should be true");
+  static_assert(is_map<unordered_map<string,int>>, "Should be true");
 
-  EXPECT_FALSE( is_map<int>::value );
-  EXPECT_FALSE( is_map<double>::value );
-  EXPECT_FALSE( is_map<void>::value );
+  static_assert(!is_map<int>, "Should be false");
+  static_assert(!is_map<double>, "Should be false");
+  static_assert(!is_map<void>, "Should be false");
+  SUCCEED();
+}
+
+TEST(testGeosxTraits,test_is_set)
+{
+  static_assert(is_set<set<string>>, "Should be true");
+
+  static_assert(!is_set<int>, "Should be false");
+  static_assert(!is_set<double>, "Should be false");
+  static_assert(!is_set<void>, "Should be false");
+  SUCCEED();
 }
 
 TEST(testGeosxTraits,test_is_pair)
 {
-  using pairType = std::pair<string,int>;
-  EXPECT_TRUE( is_pair< pairType >::value );
+  static_assert(is_pair<std::pair<string,int>>, "Should be true");
 
-  EXPECT_FALSE( is_pair<int>::value );
-  EXPECT_FALSE( is_pair<double>::value );
-  EXPECT_FALSE( is_pair<void>::value );
-
+  static_assert(!is_pair<int>, "Should be false");
+  static_assert(!is_pair<double>, "Should be false");
+  static_assert(!is_pair<void>, "Should be false");
+  SUCCEED();
 }
-
 
 TEST(testGeosxTraits,test_is_noncontainer_type_packable)
 {
-
   EXPECT_TRUE( is_noncontainer_type_packable<int>::value );
   EXPECT_TRUE( is_noncontainer_type_packable<double>::value );
   EXPECT_FALSE( is_noncontainer_type_packable<void>::value );
