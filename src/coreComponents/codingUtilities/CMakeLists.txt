@@ -32,3 +32,5 @@ blt_add_library( NAME                  codingUtilities
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX codingUtilities )
+
+add_subdirectory(tests)
