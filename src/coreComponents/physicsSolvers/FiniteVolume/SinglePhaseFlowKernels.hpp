@@ -17,13 +17,15 @@
  */
 
 /**
- * @file SinglePhaseFlow_kernels.hpp
+ * @file SinglePhaseFlowKernels.hpp
  */
 
 #ifndef GEOSX_SINGLEPHASEFLOWKERNELS_HPP
 #define GEOSX_SINGLEPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -32,23 +34,70 @@ namespace geosx
 namespace SinglePhaseFlowKernels
 {
 
+/******************************** MobilityKernel ********************************/
+
+struct MobilityKernel
+{
+  static inline RAJA_HOST_DEVICE void
+  Compute( real64 const & dens,
+           real64 const & dDens_dPres,
+           real64 const & visc,
+           real64 const & dVisc_dPres,
+           real64 & mob,
+           real64 & dMob_dPres );
+
+  static inline RAJA_HOST_DEVICE void
+  Compute( real64 const & dens,
+           real64 const & visc,
+           real64 & mob );
+
+  static void Launch( localIndex begin, localIndex end,
+                      arrayView2d<real64 const> const & dens,
+                      arrayView2d<real64 const> const & dDens_dPres,
+                      arrayView2d<real64 const> const & visc,
+                      arrayView2d<real64 const> const & dVisc_dPres,
+                      arrayView1d<real64> const & mob,
+                      arrayView1d<real64> const & dMob_dPres );
+
+  static void Launch( set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & dens,
+                      arrayView2d<real64 const> const & dDens_dPres,
+                      arrayView2d<real64 const> const & visc,
+                      arrayView2d<real64 const> const & dVisc_dPres,
+                      arrayView1d<real64> const & mob,
+                      arrayView1d<real64> const & dMob_dPres );
+
+  static void Launch( localIndex begin, localIndex end,
+                      arrayView2d<real64 const> const & dens,
+                      arrayView2d<real64 const> const & visc,
+                      arrayView1d<real64> const & mob );
+
+  static void Launch( set<localIndex> targetSet,
+                      arrayView2d<real64 const> const & dens,
+                      arrayView2d<real64 const> const & visc,
+                      arrayView1d<real64> const & mob );
+};
+
+/******************************** AccumulationKernel ********************************/
+
 template<bool ISPORO>
 struct AssembleAccumulationTermsHelper;
 
 template<>
 struct AssembleAccumulationTermsHelper<true>
 {
-  inline static constexpr void porosityUpdate( real64 & poro,
-                                               real64 & dPoro_dPres,
-                                               real64 const biotCoefficient,
-                                               real64 const poroOld,
-                                               real64 const bulkModulus,
-                                               real64 const totalMeanStress,
-                                               real64 const oldTotalMeanStress,
-                                               real64 const dPres,
-                                               real64 const poroRef,
-                                               real64 const pvmult,
-                                               real64 const dPVMult_dPres )
+  inline static constexpr void
+  porosityUpdate( real64 & poro,
+                  real64 & dPoro_dPres,
+                  real64 const biotCoefficient,
+                  real64 const poroOld,
+                  real64 const bulkModulus,
+                  real64 const totalMeanStress,
+                  real64 const oldTotalMeanStress,
+                  real64 const dPres,
+                  real64 const poroRef,
+                  real64 const pvmult,
+                  real64 const dPVMult_dPres )
   {
     dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
     poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
@@ -58,65 +107,73 @@ struct AssembleAccumulationTermsHelper<true>
 template<>
 struct AssembleAccumulationTermsHelper<false>
 {
-  inline static constexpr void porosityUpdate( real64 & poro,
-                                               real64 & dPoro_dPres,
-                                               real64 const biotCoefficient,
-                                               real64 const poroOld,
-                                               real64 const bulkModulus,
-                                               real64 const totalMeanStress,
-                                               real64 const oldTotalMeanStress,
-                                               real64 const dPres,
-                                               real64 const poroRef,
-                                               real64 const pvmult,
-                                               real64 const dPVMult_dPres )
+  inline static constexpr void
+  porosityUpdate( real64 & poro,
+                  real64 & dPoro_dPres,
+                  real64 const biotCoefficient,
+                  real64 const poroOld,
+                  real64 const bulkModulus,
+                  real64 const totalMeanStress,
+                  real64 const oldTotalMeanStress,
+                  real64 const dPres,
+                  real64 const poroRef,
+                  real64 const pvmult,
+                  real64 const dPVMult_dPres )
   {
     poro = poroRef * pvmult;
     dPoro_dPres = dPVMult_dPres * poroRef;
   }
 };
 
-template<bool COUPLED>
-inline static void MakeAccumulation( real64 const & dPres,
-                                     real64 const & densNew,
-                                     real64 const & densOld,
-                                     real64 const & dDens_dPres,
-                                     real64 const & volume,
-                                     real64 const & dVol,
-                                     real64 const & poroRef,
-                                     real64 const & poroOld,
-                                     real64 const & pvMult,
-                                     real64 const & dPVMult_dPres,
-                                     real64 const & biotCoefficient,
-                                     real64 const & bulkModulus,
-                                     real64 const & totalMeanStress,
-                                     real64 const & oldTotalMeanStress,
-                                     real64 & poroNew,
-                                     real64 & localAccum,
-                                     real64 & localAccumJacobian )
+struct AccumulationKernel
 {
-  real64 const volNew = volume + dVol;
 
-  // TODO porosity update needs to be elsewhere...
-  real64 dPoro_dPres;
-  AssembleAccumulationTermsHelper<COUPLED>::porosityUpdate( poroNew,
-                                                            dPoro_dPres,
-                                                            biotCoefficient,
-                                                            poroOld,
-                                                            bulkModulus,
-                                                            totalMeanStress,
-                                                            oldTotalMeanStress,
-                                                            dPres,
-                                                            poroRef,
-                                                            pvMult,
-                                                            dPVMult_dPres );
+  template<bool COUPLED>
+  inline static void
+  Compute( real64 const & dPres,
+           real64 const & densNew,
+           real64 const & densOld,
+           real64 const & dDens_dPres,
+           real64 const & volume,
+           real64 const & dVol,
+           real64 const & poroRef,
+           real64 const & poroOld,
+           real64 const & pvMult,
+           real64 const & dPVMult_dPres,
+           real64 const & biotCoefficient,
+           real64 const & bulkModulus,
+           real64 const & totalMeanStress,
+           real64 const & oldTotalMeanStress,
+           real64 & poroNew,
+           real64 & localAccum,
+           real64 & localAccumJacobian )
+  {
+    real64 const volNew = volume + dVol;
+
+    // TODO porosity update needs to be elsewhere...
+    real64 dPoro_dPres;
+    AssembleAccumulationTermsHelper<COUPLED>::porosityUpdate( poroNew,
+                                                              dPoro_dPres,
+                                                              biotCoefficient,
+                                                              poroOld,
+                                                              bulkModulus,
+                                                              totalMeanStress,
+                                                              oldTotalMeanStress,
+                                                              dPres,
+                                                              poroRef,
+                                                              pvMult,
+                                                              dPVMult_dPres );
 
 
-  // Residual contribution is mass conservation in the cell
-  localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
+    // Residual contribution is mass conservation in the cell
+    localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
 
-  // Derivative of residual wrt to pressure in the cell
-  localAccumJacobian = dPoro_dPres * densNew * volNew + dDens_dPres * poroNew * volNew;
-}
+    // Derivative of residual wrt to pressure in the cell
+    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+  }
+};
+
+/******************************** FluxKernel ********************************/
 
 /**
  * @brief Compute flux and its derivatives for a given connection represented by a stencil object
@@ -137,27 +194,26 @@ inline static void MakeAccumulation( real64 const & dPres,
  * This is a general version that assumes different element regions.
  * See below for a specialized version for fluxes within a region.
  */
-inline static void MakeFlux( localIndex const stencilSize,
-                             FluxApproximationBase::CellStencil::Entry const * stencil,
-                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & pres,
-                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dPres,
-                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & gravDepth,
-                             ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens,
-                             ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres,
-                             ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & visc,
-                             ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dVisc_dPres,
-                             localIndex const fluidIndex,
-                             integer const gravityFlag,
-                             real64 const dt,
-                             arraySlice1d<real64> const & flux,
-                             arraySlice2d<real64> const & fluxJacobian )
+inline static void
+MakeFlux( localIndex const stencilSize,
+          FluxApproximationBase::CellStencil::Entry const * stencil,
+          ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres,
+          ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres,
+          ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth,
+          ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens,
+          ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres,
+          ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & mob,
+          ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dMob_dPres,
+          localIndex const fluidIndex,
+          integer const gravityFlag,
+          real64 const dt,
+          arraySlice1d<real64> const & flux,
+          arraySlice2d<real64> const & fluxJacobian )
 {
   localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
   localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
   stackArray1d<real64, numElems>   densWeight(numElems);
-  stackArray1d<real64, numElems>   mobility(numElems);
-  stackArray1d<real64, numElems>   dMobility_dP(numElems);
   stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
   stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
 
@@ -172,24 +228,13 @@ inline static void MakeFlux( localIndex const stencilSize,
   for (localIndex ke = 0; ke < numElems; ++ke)
   {
     CellDescriptor const & cell = stencil[ke].index;
-    localIndex const er  = cell.region;
-    localIndex const esr = cell.subRegion;
-    localIndex const ei  = cell.index;
 
     // density
-    real64 const density = dens[er][esr][fluidIndex][ei][0];
-    real64 const dDens_dP = dDens_dPres[er][esr][fluidIndex][ei][0];
-
-    // viscosity
-    real64 const viscosity = visc[er][esr][fluidIndex][ei][0];
-    real64 const dVisc_dP = dVisc_dPres[er][esr][fluidIndex][ei][0];
-
-    // mobility
-    mobility[ke] = density / viscosity;
-    dMobility_dP[ke] = dDens_dP / viscosity - mobility[ke] / viscosity * dVisc_dP;
+    real64 const density = dens[cell.region][cell.subRegion][fluidIndex][cell.index][0];
+    real64 const dDens_dP = dDens_dPres[cell.region][cell.subRegion][fluidIndex][cell.index][0];
 
     // average density
-    densMean += densWeight[ke] * density;
+    densMean        += densWeight[ke] * density;
     dDensMean_dP[ke] = densWeight[ke] * dDens_dP;
   }
 
@@ -215,14 +260,22 @@ inline static void MakeFlux( localIndex const stencilSize,
   // upwinding of fluid properties (make this an option?)
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
+  CellDescriptor const & cell_up = stencil[k_up].index;
+  localIndex er_up  = cell_up.region;
+  localIndex esr_up = cell_up.subRegion;
+  localIndex ei_up  = cell_up.index;
+
+  real64 const mobility     = mob[er_up][esr_up][ei_up];
+  real64 const dMobility_dP = dMob_dPres[er_up][esr_up][ei_up];
+
   // compute the final flux and derivatives
-  real64 const fluxVal = mobility[k_up] * potDif;
+  real64 const fluxVal = mobility * potDif;
   for (localIndex ke = 0; ke < stencilSize; ++ke)
   {
-    dFlux_dP[ke] *= mobility[k_up];
+    dFlux_dP[ke] *= mobility;
   }
 
-  dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+  dFlux_dP[k_up] += dMobility_dP * potDif;
 
   // populate local flux vector and derivatives
   flux[0] = dt * fluxVal;
@@ -254,26 +307,25 @@ inline static void MakeFlux( localIndex const stencilSize,
  * This is a specialized version for fluxes within the same region.
  * See above for a general version.
  */
-inline static void MakeFlux( localIndex const stencilSize,
-                             FluxApproximationBase::CellStencil::Entry const * stencil,
-                             arrayView1d<real64 const> const & pres,
-                             arrayView1d<real64 const> const & dPres,
-                             arrayView1d<real64 const> const & gravDepth,
-                             arrayView2d<real64 const> const & dens,
-                             arrayView2d<real64 const> const & dDens_dPres,
-                             arrayView2d<real64 const> const & visc,
-                             arrayView2d<real64 const> const & dVisc_dPres,
-                             integer const gravityFlag,
-                             real64 const dt,
-                             arraySlice1d<real64> const & flux,
-                             arraySlice2d<real64> const & fluxJacobian )
+inline static void
+MakeFlux( localIndex const stencilSize,
+          FluxApproximationBase::CellStencil::Entry const * stencil,
+          arrayView1d<real64 const> const & pres,
+          arrayView1d<real64 const> const & dPres,
+          arrayView1d<real64 const> const & gravDepth,
+          arrayView2d<real64 const> const & dens,
+          arrayView2d<real64 const> const & dDens_dPres,
+          arrayView1d<real64 const> const & mob,
+          arrayView1d<real64 const> const & dMob_dPres,
+          integer const gravityFlag,
+          real64 const dt,
+          arraySlice1d<real64> const & flux,
+          arraySlice2d<real64> const & fluxJacobian )
 {
   localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
   localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
   stackArray1d<real64, numElems> densWeight(numElems);
-  stackArray1d<real64, numElems> mobility(numElems);
-  stackArray1d<real64, numElems> dMobility_dP(numElems);
   stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
   stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
 
@@ -288,19 +340,10 @@ inline static void MakeFlux( localIndex const stencilSize,
   for (localIndex i = 0; i < numElems; ++i)
   {
     CellDescriptor const & cell = stencil[i].index;
-    localIndex const ei = cell.index;
 
     // density
-    real64 const density = dens[ei][0];
-    real64 const dDens_dP = dDens_dPres[ei][0];
-
-    // viscosity
-    real64 const viscosity = visc[ei][0];
-    real64 const dVisc_dP = dVisc_dPres[ei][0];
-
-    // mobility
-    mobility[i] = density / viscosity;
-    dMobility_dP[i] = dDens_dP / viscosity - mobility[i] / viscosity * dVisc_dP;
+    real64 const density = dens[cell.index][0];
+    real64 const dDens_dP = dDens_dPres[cell.index][0];
 
     // average density
     densMean += densWeight[i] * density;
@@ -327,14 +370,20 @@ inline static void MakeFlux( localIndex const stencilSize,
   // upwinding of fluid properties (make this an option?)
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
+  CellDescriptor const & cell_up = stencil[k_up].index;
+  localIndex ei_up  = cell_up.index;
+
+  real64 const mobility     = mob[ei_up];
+  real64 const dMobility_dP = dMob_dPres[ei_up];
+
   // compute the final flux and derivatives
-  real64 const fluxVal = mobility[k_up] * potDif;
+  real64 const fluxVal = mobility * potDif;
   for (localIndex ke = 0; ke < stencilSize; ++ke)
   {
-    dFlux_dP[ke] *= mobility[k_up];
+    dFlux_dP[ke] *= mobility;
   }
 
-  dFlux_dP[k_up] += dMobility_dP[k_up] * potDif;
+  dFlux_dP[k_up] += dMobility_dP * potDif;
 
   // populate local flux vector and derivatives
   flux[0] = dt * fluxVal;

@@ -24,6 +24,7 @@
 #define GEOSX_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
+#include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -32,7 +33,7 @@ namespace geosx
 namespace CompositionalMultiphaseFlowKernels
 {
 
-/******************************** UpdateComponentFractionKernel ********************************/
+/******************************** ComponentFractionKernel ********************************/
 
 struct ComponentFractionKernel
 {
@@ -108,7 +109,7 @@ INST_ComponentFractionKernel(10);
 
 #undef INST_ComponentFractionKernel
 
-/******************************** UpdatePhaseVolumeFractionKernel ********************************/
+/******************************** PhaseVolumeFractionKernel ********************************/
 
 struct PhaseVolumeFractionKernel
 {
@@ -270,7 +271,7 @@ INST_PhaseVolumeFractionKernel(10,3);
 
 #undef INST_PhaseVolumeFractionKernel
 
-/******************************** UpdatePhaseMobilityKernel ********************************/
+/******************************** PhaseMobilityKernel ********************************/
 
 struct PhaseMobilityKernel
 {
@@ -447,6 +448,209 @@ INST_PhaseMobilityKernel(9,3);
 INST_PhaseMobilityKernel(10,3);
 
 #undef INST_PhaseMobilityKernel
+
+/******************************** AccumulationKernel ********************************/
+
+struct AccumulationKernel
+{
+
+  static inline RAJA_HOST_DEVICE void
+  Compute( localIndex NC, localIndex NP,
+           real64 const & volume,
+           real64 const & porosityOld,
+           real64 const & porosityRef,
+           real64 const & pvMult,
+           real64 const & dPvMult_dPres,
+           arraySlice2d<real64 const> const & dCompFrac_dCompDens,
+           arraySlice1d<real64 const> const & phaseVolFracOld,
+           arraySlice1d<real64 const> const & phaseVolFrac,
+           arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
+           arraySlice2d<real64 const> const & dPhaseVolFrac_dCompDens,
+           arraySlice1d<real64 const> const & phaseDensOld,
+           arraySlice1d<real64 const> const & phaseDens,
+           arraySlice1d<real64 const> const & dPhaseDens_dPres,
+           arraySlice2d<real64 const> const & dPhaseDens_dComp,
+           arraySlice2d<real64 const> const & phaseCompFracOld,
+           arraySlice2d<real64 const> const & phaseCompFrac,
+           arraySlice2d<real64 const> const & dPhaseCompFrac_dPres,
+           arraySlice3d<real64 const> const & dPhaseCompFrac_dComp,
+           arraySlice1d<real64> const & localAccum,
+           arraySlice2d<real64> const & localAccumJacobian )
+  {
+    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+
+    // temporary work arrays
+    stackArray1d<real64, maxNumComp> dPhaseAmount_dC( NC );
+    stackArray1d<real64, maxNumComp> dPhaseCompFrac_dC( NC );
+
+    // reset the local values
+    for (localIndex ic = 0; ic < NC; ++ic)
+    {
+      localAccum[ic] = 0.0;
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        localAccumJacobian[ic][jc] = 0.0;
+      }
+    }
+
+    // compute fluid-independent (pore volume) part
+    real64 const volNew = volume;
+    real64 const volOld = volume;
+    real64 const dVol_dP = 0.0; // used in poroelastic solver
+
+    real64 const poroNew = porosityRef * pvMult;
+    real64 const poroOld = porosityOld;
+    real64 const dPoro_dP = porosityRef * dPvMult_dPres;
+
+    real64 const poreVolNew = volNew * poroNew;
+    real64 const poreVolOld = volOld * poroOld;
+    real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
+
+    // sum contributions to component accumulation from each phase
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      real64 const phaseAmountNew = poreVolNew * phaseVolFrac[ip] * phaseDens[ip];
+      real64 const phaseAmountOld = poreVolOld * phaseVolFracOld[ip] * phaseDensOld[ip];
+
+      real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFrac[ip] * phaseDens[ip]
+                                    + poreVolNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                         + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+
+      // assemble density dependence
+      applyChainRule(NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC);
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
+                              + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
+        dPhaseAmount_dC[jc] *= poreVolNew;
+      }
+
+      // ic - index of component whose conservation equation is assembled
+      // (i.e. row number in local matrix)
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
+        real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
+
+        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
+                                          + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
+
+        localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
+        localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
+
+        // jc - index of component w.r.t. whose compositional var the derivative is being taken
+        // (i.e. col number in local matrix)
+
+        // assemble phase composition dependence
+        applyChainRule(NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC);
+        for (localIndex jc = 0; jc < NC; ++jc)
+        {
+          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
+                                           + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+          localAccumJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
+        }
+      }
+    }
+  }
+
+  template<localIndex NC, localIndex NP>
+  static inline RAJA_HOST_DEVICE void
+  Compute( real64 const & volume,
+           real64 const & porosityOld,
+           real64 const & porosityRef,
+           real64 const & pvMult,
+           real64 const & dPvMult_dPres,
+           arraySlice2d<real64 const> const & dCompFrac_dCompDens,
+           arraySlice1d<real64 const> const & phaseVolFracOld,
+           arraySlice1d<real64 const> const & phaseVolFrac,
+           arraySlice1d<real64 const> const & dPhaseVolFrac_dPres,
+           arraySlice2d<real64 const> const & dPhaseVolFrac_dCompDens,
+           arraySlice1d<real64 const> const & phaseDensOld,
+           arraySlice1d<real64 const> const & phaseDens,
+           arraySlice1d<real64 const> const & dPhaseDens_dPres,
+           arraySlice2d<real64 const> const & dPhaseDens_dComp,
+           arraySlice2d<real64 const> const & phaseCompFracOld,
+           arraySlice2d<real64 const> const & phaseCompFrac,
+           arraySlice2d<real64 const> const & dPhaseCompFrac_dPres,
+           arraySlice3d<real64 const> const & dPhaseCompFrac_dComp,
+           arraySlice1d<real64> const & localAccum,
+           arraySlice2d<real64> const & localAccumJacobian )
+  {
+    // temporary work arrays
+    stackArray1d<real64, NC> dPhaseAmount_dC( NC );
+    stackArray1d<real64, NC> dPhaseCompFrac_dC( NC );
+
+    // reset the local values
+    for (localIndex ic = 0; ic < NC; ++ic)
+    {
+      localAccum[ic] = 0.0;
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        localAccumJacobian[ic][jc] = 0.0;
+      }
+    }
+
+    // compute fluid-independent (pore volume) part
+    real64 const volNew = volume;
+    real64 const volOld = volume;
+    real64 const dVol_dP = 0.0; // used in poroelastic solver
+
+    real64 const poroNew = porosityRef * pvMult;
+    real64 const poroOld = porosityOld;
+    real64 const dPoro_dP = porosityRef * dPvMult_dPres;
+
+    real64 const poreVolNew = volNew * poroNew;
+    real64 const poreVolOld = volOld * poroOld;
+    real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
+
+    // sum contributions to component accumulation from each phase
+    for (localIndex ip = 0; ip < NP; ++ip)
+    {
+      real64 const phaseAmountNew = poreVolNew * phaseVolFrac[ip] * phaseDens[ip];
+      real64 const phaseAmountOld = poreVolOld * phaseVolFracOld[ip] * phaseDensOld[ip];
+
+      real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFrac[ip] * phaseDens[ip]
+                                    + poreVolNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                         + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+
+      // assemble density dependence
+      applyChainRule(NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC);
+      for (localIndex jc = 0; jc < NC; ++jc)
+      {
+        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
+                                  + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
+        dPhaseAmount_dC[jc] *= poreVolNew;
+      }
+
+      // ic - index of component whose conservation equation is assembled
+      // (i.e. row number in local matrix)
+      for (localIndex ic = 0; ic < NC; ++ic)
+      {
+        real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
+        real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
+
+        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
+                                          + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
+
+        localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
+        localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
+
+        // jc - index of component w.r.t. whose compositional var the derivative is being taken
+        // (i.e. col number in local matrix)
+
+        // assemble phase composition dependence
+        applyChainRule(NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC);
+        for (localIndex jc = 0; jc < NC; ++jc)
+        {
+          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
+                                           + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+          localAccumJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
+        }
+      }
+    }
+  }
+
+};
 
 /******************************** Kernel launch machinery ********************************/
 

@@ -30,7 +30,7 @@ namespace geosx
 namespace CompositionalMultiphaseFlowKernels
 {
 
-/******************************** UpdateComponentFractionKernel ********************************/
+/******************************** ComponentFractionKernel ********************************/
 
 template<localIndex NC>
 inline RAJA_HOST_DEVICE void
@@ -179,7 +179,7 @@ INST_ComponentFractionKernel(10);
 
 #undef INST_ComponentFractionKernel
 
-/******************************** UpdatePhaseVolumeFractionKernel ********************************/
+/******************************** PhaseVolumeFractionKernel ********************************/
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
@@ -492,7 +492,7 @@ INST_PhaseVolumeFractionKernel(10,3);
 
 #undef INST_PhaseVolumeFractionKernel
 
-/******************************** UpdatePhaseMobilityKernel ********************************/
+/******************************** PhaseMobilityKernel ********************************/
 
 template<localIndex NC, localIndex NP>
 inline RAJA_HOST_DEVICE void
