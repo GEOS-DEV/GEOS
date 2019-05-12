@@ -148,15 +148,29 @@ public:
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( ManagedGroup * dataGroup );
+  void UpdateComponentFraction( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute component fractions from primary variables (component densities)
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdateComponentFraction( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
+  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdatePhaseVolumeFraction( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -186,7 +200,14 @@ public:
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( ManagedGroup * dataGroup );
+  void UpdatePhaseMobility( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute phase mobility from constitutive and primary variables
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdatePhaseMobility( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

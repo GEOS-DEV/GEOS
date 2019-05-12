@@ -174,9 +174,13 @@ public:
 
     static constexpr auto deltaVolumeString = "deltaVolume";
 
-    // these are used to store last converged time step values
+    // secondary/backup fields
     static constexpr auto densityString   = "density";
     static constexpr auto viscosityString = "viscosity";
+
+    static constexpr auto mobilityString  = "mobility";
+    static constexpr auto dMobility_dPressureString  = "dMobility_dPressure";
+
     static constexpr auto porosityString  = "porosity";
     static constexpr auto oldPorosityString  = "oldPorosity";
 
@@ -195,6 +199,10 @@ public:
     // these are used to store last converged time step values
     ViewKey density      = { densityString };
     ViewKey viscosity    = { viscosityString };
+
+    ViewKey mobility            = { mobilityString };
+    ViewKey dMobility_dPressure = { dMobility_dPressureString };
+
     ViewKey porosity     = { porosityString };
     ViewKey oldPorosity  = { oldPorosityString };
 
@@ -269,21 +277,27 @@ private:
 
   /**
    * @brief Function to update all constitutive models
-   * @param domain the domain
+   * @param dataGroup group that contains the fields
    */
-  void UpdateFluidModel( ManagedGroup * const dataGroup );
+  void UpdateFluidModel( ManagedGroup * const dataGroup ) const;
 
   /**
    * @brief Function to update all constitutive models
-   * @param domain the domain
+   * @param dataGroup group that contains the fields
    */
-  void UpdateSolidModel( ManagedGroup * const dataGroup );
+  void UpdateSolidModel( ManagedGroup * const dataGroup ) const;
 
   /**
-   * @brief Function to update all constitutive models
-   * @param domain the domain
+   * @brief Function to update fluid mobility
+   * @param dataGroup group that contains the fields
    */
-  void UpdateState( ManagedGroup * dataGroup );
+  void UpdateMobility( ManagedGroup * const dataGroup ) const;
+
+  /**
+   * @brief Function to update all constitutive state and dependent variables
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateState( ManagedGroup * dataGroup ) const;
 
   /// views into primary variable fields
 
@@ -294,7 +308,12 @@ private:
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
 
+  /// views into intermediate fields
+
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosity;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_mobility;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_dMobility_dPres;
 
   /// views into backup fields
 
