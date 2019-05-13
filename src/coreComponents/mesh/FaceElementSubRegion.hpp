@@ -145,7 +145,7 @@ private:
   array1d< real64 > m_elementAperture;
 
   /// The member level field for the element center
-  array1d< R1Tensor > m_elementArea;
+  array1d< real64 > m_elementArea;
 };
 
 } /* namespace geosx */
