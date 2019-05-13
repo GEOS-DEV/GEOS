@@ -319,6 +319,80 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
 
+void ElementRegion::AddToFractureMesh( FaceManager const * const faceManager, localIndex const faceIndices[2]  )
+{
+
+  // key is edge index, value is faceElementIndex....this only works for a single fracture Region with a single subregion!!
+  map< localIndex, set<localIndex> > fractureConnectorIndicesMap;
+
+  array1d< localIndex > &
+  fractureConnectorIndices = getReference< array1d<localIndex > >( viewKeyStruct::fractureConnectorIndicesString );
+
+  array1d<array1d<localIndex> > &
+  fractureConnectors = getReference< array1d<array1d<localIndex> > >( viewKeyStruct::fractureElementConnectorString );
+
+  array1d< localIndex > &
+  fractureCellConnectorIndices = getReference< array1d<localIndex > >( viewKeyStruct::fractureCellConnectorIndicesString );
+
+  FixedToManyElementRelation &
+  fractureCellConnectors = getReference< FixedToManyElementRelation >( viewKeyStruct::fractureToCellConnectorString );
+
+
+  array2d<localIndex > const & faceToElementRegion = faceManager->elementRegionList();
+  array2d<localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
+  array2d<localIndex > const & faceToElementIndex = faceManager->elementList();
+
+  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  string const setName = "fracture";
+
+  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup<FaceElementSubRegion>(setName);
+  if( subRegion==nullptr )
+  {
+    subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>(setName);
+  }
+  subRegion->resize( subRegion->size() + 1 );
+
+  fractureCellConnectors.resize( subRegion->size(), 2 );
+
+  FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+  FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
+  FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+
+  OrderedVariableOneToManyRelation const & facesToNodesMap = faceManager->nodeList();
+  OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
+
+  localIndex const kfe = subRegion->size() - 1;
+
+  faceMap[kfe][0] = faceIndices[0];
+  faceMap[kfe][1] = faceIndices[1];
+
+  arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceIndices[0]];
+  arrayView1d<localIndex const> const & faceToNodesMap1 = facesToNodesMap[faceIndices[1]];
+  nodeMap[kfe].resize( faceToNodesMap0.size() * 2 );
+  for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
+  {
+    const localIndex aa = a == 0 ? a : faceToNodesMap0.size() - a;
+
+    // TODO HACK need to generalize to something other than quads
+    nodeMap[kfe][a]   = faceToNodesMap0[a];
+    nodeMap[kfe][a+4] = faceToNodesMap1[aa];
+  }
+
+  arrayView1d<localIndex const> const & faceToEdgesMap = facesToEdgesMap[faceIndices[0]];
+  edgeMap[kfe].resize( faceToEdgesMap.size() );
+  for( localIndex a=0 ; a<faceToEdgesMap.size() ; ++a )
+  {
+    edgeMap[kfe][a] = faceToEdgesMap[a];
+    fractureConnectorIndicesMap[ faceToEdgesMap[a] ].insert( kfe );
+  }
+
+  for( localIndex ke=0 ; ke<2 ; ++ke )
+  {
+    fractureCellConnectors.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][0];
+    fractureCellConnectors.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][0];
+    fractureCellConnectors.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][0];
+  }
+}
 
  void ElementRegion::GenerateFractureMesh( FaceManager const * const faceManager )
  {

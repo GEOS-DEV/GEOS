@@ -38,15 +38,18 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
+    setApplyDefaultValue(1.0)->
     setDescription("The aperture of each FaceCell.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
+    setApplyDefaultValue(1.0)->
     setDescription("The area of each FaceCell.");
 
   RegisterViewWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
     setDescription("The center of each FaceCell.");
 
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
+    setApplyDefaultValue(1.0)->
     setDescription("The volume of each FaceCell.");
 }
 

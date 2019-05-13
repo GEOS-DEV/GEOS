@@ -1206,6 +1206,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView2d<localIndex> & facesToElementSubRegions = faceManager.elementSubRegionList();
   arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
 
+  ElementRegion * const fractureElementRegion = elementManager.GetRegion("Fracture");
+
   arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
 
   arrayView1d<localIndex> const & parentFaceIndices =
@@ -1387,6 +1389,10 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           }
         }
 
+        {
+        localIndex faceIndices[2] = {faceIndex,newFaceIndex};
+        fractureElementRegion->AddToFractureMesh( &faceManager, faceIndices );
+        }
 //        externalFaceManager.SplitFace(parentFaceIndex, newFaceIndex, nodeManager);
 
       } // if( faceManager.SplitObject( faceIndex, newFaceIndex ) )
