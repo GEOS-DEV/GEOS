@@ -37,7 +37,7 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
-  std::map< std::string, std::set<localIndex> > modifiedElements;
+  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
 };
