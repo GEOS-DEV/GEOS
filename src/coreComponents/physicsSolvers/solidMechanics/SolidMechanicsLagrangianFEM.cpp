@@ -1296,14 +1296,14 @@ ApplyBoundaryConditions( DomainPartition * const domain,
     {
 
       R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
-//      Nbar -= faceNormal[faceMap[kfe][1]];
+      Nbar -= faceNormal[faceMap[kfe][1]];
       Nbar.Normalize();
       std::cout<<Nbar<<std::endl;
 
       globalIndex nodeDOF[20];
       real64 nodeRHS[20];
 
-      for( localIndex kf=0 ; kf<1 ; ++kf )
+      for( localIndex kf=0 ; kf<2 ; ++kf )
       {
         localIndex const faceIndex = faceMap[kfe][kf];
         localIndex const numNodes = facesToNodes[faceIndex].size();
@@ -1315,7 +1315,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
           for( int component=0 ; component<3 ; ++component )
           {
             nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-            nodeRHS[3*a+component] = - fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+            nodeRHS[3*a+component] = fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
             std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
           }
         }

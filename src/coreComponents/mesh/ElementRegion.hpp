@@ -128,6 +128,8 @@ public:
 
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
+  void AddToFractureMesh( FaceManager const * const faceManager, localIndex const faceIndices[2] );
+
   subGroupMap & GetSubRegions()
   {
     return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
