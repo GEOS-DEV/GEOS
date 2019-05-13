@@ -38,7 +38,7 @@ namespace SinglePhaseFlowKernels
 
 struct MobilityKernel
 {
-  static inline RAJA_HOST_DEVICE void
+  static RAJA_HOST_DEVICE void
   Compute( real64 const & dens,
            real64 const & dDens_dPres,
            real64 const & visc,
@@ -46,7 +46,7 @@ struct MobilityKernel
            real64 & mob,
            real64 & dMob_dPres );
 
-  static inline RAJA_HOST_DEVICE void
+  static RAJA_HOST_DEVICE void
   Compute( real64 const & dens,
            real64 const & visc,
            real64 & mob );
