@@ -1446,7 +1446,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       localIndex const subRegionIndex = elemRegion->GetSubRegions().getIndex( elemSubRegion.getName() );
       const localIndex elemIndex = elem.second;
 
-      modifiedObjects.modifiedElements[elemSubRegion.getName()].insert( elemIndex );
+      modifiedObjects.modifiedElements[{regionIndex,subRegionIndex}].insert( elemIndex );
 
 
       arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
