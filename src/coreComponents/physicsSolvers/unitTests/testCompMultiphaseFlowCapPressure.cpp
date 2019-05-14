@@ -53,7 +53,7 @@ char** global_argv;
 }
 
 template<typename T, int NDIM>
-using array = LvArray::Array<T,NDIM,localIndex>;
+using Array = LvArray::Array<T,NDIM,localIndex>;
 
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template<int DIM>
@@ -142,7 +142,7 @@ checkDerivative( array_slice<T,DIM> const & valueEps,
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
 array1d<real64> invertLayout( arraySlice1d<real64 const> const & input, localIndex N )
 {
-  array<real64,1> output( N );
+  Array<real64,1> output( N );
   for (int i = 0; i < N; ++i)
     output[i] = input[i];
 
@@ -151,7 +151,7 @@ array1d<real64> invertLayout( arraySlice1d<real64 const> const & input, localInd
 
 array2d<real64> invertLayout( arraySlice2d<real64 const> const & input, localIndex N1, localIndex N2 )
 {
-  array<real64,2> output( N2, N1 );
+  Array<real64,2> output( N2, N1 );
 
   for (int i = 0; i < N1; ++i)
     for (int j = 0; j < N2; ++j)
@@ -162,7 +162,7 @@ array2d<real64> invertLayout( arraySlice2d<real64 const> const & input, localInd
 
 array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localIndex N1, localIndex N2, localIndex N3 )
 {
-  array<real64,3> output( N3, N1, N2 );
+  Array<real64,3> output( N3, N1, N2 );
 
   for (int i = 0; i < N1; ++i)
     for (int j = 0; j < N2; ++j)
