@@ -1112,26 +1112,26 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & blockLocalDofNumber = m_dofNumber;
+  FluxKernel::ElementView<arrayView1d<globalIndex>> const & blockLocalDofNumber = m_dofNumber.toViewConst();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & pres = m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dPres = m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & gravDepth = m_gravDepth;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & phaseMob = m_phaseMob;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseMob_dPres = m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseMob_dComp = m_dPhaseMob_dCompDens;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseVolFrac_dComp = m_dPhaseVolFrac_dCompDens;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dCompFrac_dCompDens = m_dCompFrac_dCompDens;
+  FluxKernel::ElementView<arrayView1d<real64 const>> const & pres                = m_pressure.toViewConst();
+  FluxKernel::ElementView<arrayView1d<real64 const>> const & dPres               = m_deltaPressure.toViewConst();
+  FluxKernel::ElementView<arrayView1d<real64 const>> const & gravDepth           = m_gravDepth.toViewConst();
+  FluxKernel::ElementView<arrayView2d<real64 const>> const & phaseMob            = m_phaseMob.toViewConst();
+  FluxKernel::ElementView<arrayView2d<real64 const>> const & dPhaseMob_dPres     = m_dPhaseMob_dPres.toViewConst();
+  FluxKernel::ElementView<arrayView3d<real64 const>> const & dPhaseMob_dComp     = m_dPhaseMob_dCompDens.toViewConst();
+  FluxKernel::ElementView<arrayView2d<real64 const>> const & dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres.toViewConst();
+  FluxKernel::ElementView<arrayView3d<real64 const>> const & dPhaseVolFrac_dComp = m_dPhaseVolFrac_dCompDens.toViewConst();
+  FluxKernel::ElementView<arrayView3d<real64 const>> const & dCompFrac_dCompDens = m_dCompFrac_dCompDens.toViewConst();
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseDens        = m_phaseDens;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dPhaseDens_dPres = m_dPhaseDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseDens_dComp = m_dPhaseDens_dComp;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & phaseCompFrac    = m_phaseCompFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> const & dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseCapPressure                = m_phaseCapPressure;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
+  FluxKernel::MaterialView<arrayView3d<real64 const>> const & phaseDens                   = m_phaseDens.toViewConst();
+  FluxKernel::MaterialView<arrayView3d<real64 const>> const & dPhaseDens_dPres            = m_dPhaseDens_dPres.toViewConst();
+  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseDens_dComp            = m_dPhaseDens_dComp.toViewConst();
+  FluxKernel::MaterialView<arrayView4d<real64 const>> const & phaseCompFrac               = m_phaseCompFrac.toViewConst();
+  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseCompFrac_dPres        = m_dPhaseCompFrac_dPres.toViewConst();
+  FluxKernel::MaterialView<arrayView5d<real64 const>> const & dPhaseCompFrac_dComp        = m_dPhaseCompFrac_dComp.toViewConst();
+  FluxKernel::MaterialView<arrayView3d<real64 const>> const & phaseCapPres                = m_phaseCapPressure.toViewConst();
+  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseCapPres_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac.toViewConst();
 
   localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
   localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
@@ -1183,8 +1183,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
                            phaseCompFrac,
                            dPhaseCompFrac_dPres,
                            dPhaseCompFrac_dComp,
-                           phaseCapPressure,
-                           dPhaseCapPressure_dPhaseVolFrac,
+                           phaseCapPres,
+                           dPhaseCapPres_dPhaseVolFrac,
                            fluidIndex,
                            capPressureIndex,
                            gravityFlag,

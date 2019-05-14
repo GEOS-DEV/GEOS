@@ -638,27 +638,47 @@ struct AccumulationKernel
 struct FluxKernel
 {
 
+  /**
+   * @brief The type for element-based non-constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::asViewConst;
+
+  /**
+   * @brief The type for element-based constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::MaterialViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
+
   static inline RAJA_HOST_DEVICE void
   Compute( localIndex const NC, localIndex const NP,
            localIndex const stencilSize,
            FluxApproximationBase::CellStencil::Entry const * const stencil,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & pres,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & dPres,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const & gravDepth,
-           ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & phaseMob,
-           ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseMob_dPres,
-           ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseMob_dComp,
-           ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> const & dPhaseVolFrac_dPres,
-           ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dPhaseVolFrac_dComp,
-           ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> const & dCompFrac_dCompDens,
-           ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseDens ,
-           ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & dPhaseDens_dPres,
-           ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseDens_dComp,
-           ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & phaseCompFrac,
-           ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseCompFrac_dPres,
-           ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> const & dPhaseCompFrac_dComp,
-           ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> const & phaseCapPressure,
-           ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> const & dPhaseCapPressure_dPhaseVolFrac,
+           ElementView <arrayView1d<real64 const>> const & pres,
+           ElementView <arrayView1d<real64 const>> const & dPres,
+           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           ElementView <arrayView2d<real64 const>> const & phaseMob,
+           ElementView <arrayView2d<real64 const>> const & dPhaseMob_dPres,
+           ElementView <arrayView3d<real64 const>> const & dPhaseMob_dComp,
+           ElementView <arrayView2d<real64 const>> const & dPhaseVolFrac_dPres,
+           ElementView <arrayView3d<real64 const>> const & dPhaseVolFrac_dComp,
+           ElementView <arrayView3d<real64 const>> const & dCompFrac_dCompDens,
+           MaterialView<arrayView3d<real64 const>> const & phaseDens,
+           MaterialView<arrayView3d<real64 const>> const & dPhaseDens_dPres,
+           MaterialView<arrayView4d<real64 const>> const & dPhaseDens_dComp,
+           MaterialView<arrayView4d<real64 const>> const & phaseCompFrac,
+           MaterialView<arrayView4d<real64 const>> const & dPhaseCompFrac_dPres,
+           MaterialView<arrayView5d<real64 const>> const & dPhaseCompFrac_dComp,
+           MaterialView<arrayView3d<real64 const>> const & phaseCapPressure,
+           MaterialView<arrayView4d<real64 const>> const & dPhaseCapPressure_dPhaseVolFrac,
            localIndex const fluidIndex,
            localIndex const capPressureIndex,
            integer const gravityFlag,

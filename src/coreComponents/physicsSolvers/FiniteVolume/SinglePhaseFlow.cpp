@@ -696,13 +696,13 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres        = m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres       = m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth   = m_gravDepth;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens        = m_density;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres = m_dDens_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & mob         = m_mobility;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dMob_dPres  = m_dMobility_dPres;
+  FluxKernel::ElementView <arrayView1d<real64 const>> const & pres        = m_pressure.toViewConst();
+  FluxKernel::ElementView <arrayView1d<real64 const>> const & dPres       = m_deltaPressure.toViewConst();
+  FluxKernel::ElementView <arrayView1d<real64 const>> const & gravDepth   = m_gravDepth.toViewConst();
+  FluxKernel::MaterialView<arrayView2d<real64 const>> const & dens        = m_density.toViewConst();
+  FluxKernel::MaterialView<arrayView2d<real64 const>> const & dDens_dPres = m_dDens_dPres.toViewConst();
+  FluxKernel::ElementView <arrayView1d<real64 const>> const & mob         = m_mobility.toViewConst();
+  FluxKernel::ElementView <arrayView1d<real64 const>> const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
   integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
