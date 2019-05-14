@@ -178,6 +178,26 @@ struct AccumulationKernel
 struct FluxKernel
 {
   /**
+   * @brief The type for element-based non-constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::asViewConst;
+
+  /**
+   * @brief The type for element-based constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::MaterialViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
+
+  /**
    * @brief Compute flux and its derivatives for a given connection
    *
    * This is a general version that assumes different element regions.
@@ -186,13 +206,13 @@ struct FluxKernel
   inline static RAJA_HOST_DEVICE void
   Compute( localIndex const stencilSize,
            FluxApproximationBase::CellStencil::Entry const * const stencil,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & gravDepth,
-           ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dens,
-           ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dDens_dPres,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & mob,
-           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dMob_dPres,
+           ElementView <arrayView1d<real64 const>> const & pres,
+           ElementView <arrayView1d<real64 const>> const & dPres,
+           ElementView <arrayView1d<real64 const>> const & gravDepth,
+           MaterialView<arrayView2d<real64 const>> const & dens,
+           MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
+           ElementView <arrayView1d<real64 const>> const & mob,
+           ElementView <arrayView1d<real64 const>> const & dMob_dPres,
            localIndex const fluidIndex,
            integer const gravityFlag,
            real64 const dt,
@@ -293,6 +313,7 @@ struct FluxKernel
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
+           localIndex const fluidIndex,
            integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
