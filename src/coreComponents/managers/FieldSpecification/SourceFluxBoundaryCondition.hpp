@@ -34,11 +34,13 @@ class SourceFluxBoundaryCondition : public FieldSpecificationBase
 public:
   SourceFluxBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
   SourceFluxBoundaryCondition() = delete;
-  virtual ~SourceFluxBoundaryCondition();
+  virtual ~SourceFluxBoundaryCondition() override;
+
+  virtual void InitializePreSubGroups( ManagedGroup * const ) override;
 
   static string CatalogName() { return "SourceFlux"; }
 
-  virtual const string getCatalogName() const 
+  virtual const string getCatalogName() const override
   {
     return SourceFluxBoundaryCondition::CatalogName();
   }

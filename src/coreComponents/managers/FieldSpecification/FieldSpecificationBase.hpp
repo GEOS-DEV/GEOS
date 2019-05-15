@@ -534,7 +534,7 @@ public:
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
-				  real64 const dt,
+                                  real64 const dt,
                                   dataRepository::ManagedGroup * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
@@ -752,14 +752,15 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
 
 template< typename FIELD_OP >
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                                            real64 const time,
-                                                            dataRepository::ManagedGroup * dataGroup,
-                                                            string const & fieldName,
-                                                            string const & dofMapName,
-                                                            integer const & dofDim,
-                                                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                            systemSolverInterface::BlockIDs const blockID ) const
+void FieldSpecificationBase::
+ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                real64 const time,
+                                dataRepository::ManagedGroup * dataGroup,
+                                string const & fieldName,
+                                string const & dofMapName,
+                                integer const & dofDim,
+                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                systemSolverInterface::BlockIDs const blockID ) const
 {
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
@@ -795,76 +796,15 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 systemSolverInterface::BlockIDs const blockID,
                                 LAMBDA && lambda ) const
 {
-  integer const component = GetComponent();
-  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
-
-  integer const numBlocks = blockSystem->numBlocks();
-  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( blockID );
-
-  globalIndex_array  dof( targetSet.size() );
-  real64_array     rhsContribution( targetSet.size() );
-
-  if( functionName.empty() )
-  {
-
-    integer counter=0;
-    for( auto a : targetSet )
-    {
-      dof( counter ) = dofDim*dofMap[a]+component;
-      FIELD_OP::SpecifyFieldValue( dof( counter ),
-                           blockSystem,
-                           blockID,
-                           rhsContribution( counter ),
-                           m_scale,
-                           lambda( a ) );
-      ++counter;
-    }
-    FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-  }
-  else
-  {
-    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-    if( function->isFunctionOfTime()==2 )
-    {
-      real64 value = m_scale * function->Evaluate( &time );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        FIELD_OP::SpecifyFieldValue( dof( counter ),
-                             blockSystem,
-                             blockID,
-                             rhsContribution( counter ),
-                             value,
-                             lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-    else
-    {
-      real64_array result;
-      result.resize( integer_conversion<localIndex>( targetSet.size()));
-      function->Evaluate( dataGroup, time, targetSet, result );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
-        FIELD_OP::SpecifyFieldValue( dof( counter ),
-                             blockSystem,
-                             blockID,
-                             rhsContribution( counter ),
-                             m_scale*result[counter],
-                             lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-  }
+  ApplyBoundaryConditionToSystem<FIELD_OP,LAMBDA>( targetSet,
+                                                   time,
+                                                   1.0,
+                                                   dataGroup,
+                                                   dofMap,
+                                                   dofDim,
+                                                   blockSystem,
+                                                   blockID,
+                                                   std::forward<LAMBDA&&>(lambda) );
 }
 
 template< typename FIELD_OP, typename LAMBDA >
