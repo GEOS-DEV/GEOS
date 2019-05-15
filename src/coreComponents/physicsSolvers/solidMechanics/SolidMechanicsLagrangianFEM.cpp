@@ -680,13 +680,14 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                      string const fieldName )->void
     {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                 time,
-                                                 targetGroup,
-                                                 fieldName,
-                                                 viewKeyStruct::globalDofNumberString,
-                                                 3,
-                                                 &blockSystem,
-                                                 BlockIDs::displacementBlock );
+                                                                 false,
+                                                                 time,
+                                                                 targetGroup,
+                                                                 fieldName,
+                                                                 viewKeyStruct::globalDofNumberString,
+                                                                 3,
+                                                                 &blockSystem,
+                                                                 BlockIDs::displacementBlock );
   });
 }
 
@@ -1226,6 +1227,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+                                                               false,
                                                                time_n+dt,
                                                                targetGroup,
                                                                keys::TotalDisplacement, // TODO fix use of dummy name for
