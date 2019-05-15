@@ -833,10 +833,69 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
   GEOSX_MARK_FUNCTION;
 
 
-  //  ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  // apply pressure and source flux boundary conditions.
-  ApplyBC_implicit(domain, time_n, dt, blockSystem);  
+  // call the BoundaryConditionManager::ApplyField function that will check to see
+  // if the boundary condition should be applied to this subregion
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( lset,
+                                                               time_n + dt,
+                                                               dt,
+                                                               subRegion,
+                                                               dofNumber,
+                                                               1,
+                                                               blockSystem,
+                                                               BlockIDs::fluidPressureBlock,
+                                                               [&] (localIndex const a) -> real64
+    {
+      return 0;
+    });
+
+  });
+
+
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+    //for now assume all the non-flux boundary conditions are Dirichlet type BC.
+
+    arrayView1d<real64 const> const &
+    pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
+
+    arrayView1d<real64 const> const &
+    dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
+
+    // call the application of the boundary condition to alter the matrix and rhs
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
+                                                                 time_n + dt,
+                                                                 subRegion,
+                                                                 dofNumber,
+                                                                 1,
+                                                                 blockSystem,
+                                                                 BlockIDs::fluidPressureBlock,
+                                                                 [&] (localIndex const a) -> real64
+    {
+      return pres[a] + dPres[a];
+    });
+  });
+
+
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
   if (verboseLevel() >= 2)
@@ -851,71 +910,6 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
     GEOS_LOG_RANK( "\nResidual\n" << *residual );
   }
 
-}
-
-void SinglePhaseFlow::ApplyBC_implicit( DomainPartition * domain,
-                                                 real64 const time_n, real64 const dt,
-                                                 EpetraBlockSystem * const blockSystem )
-{
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-
-  // call the BoundaryConditionManager::ApplyField function that will check to see
-  // if the boundary condition should be applied to this subregion
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                    string const &,
-                    set<localIndex> const & lset,
-                    ManagedGroup * subRegion,
-                    string const & ) -> void
-  {
-    arrayView1d<globalIndex const> const &
-    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
-
-    if(fs->getCatalogName() == "SourceFlux")
-      {
-
-	fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( lset,
-								   time_n + dt,
-								   dt,
-								   subRegion,
-								   dofNumber,
-								   1,
-								   blockSystem,
-								   BlockIDs::fluidPressureBlock,
-								   [&] (localIndex const a) -> real64
-								   {
-								     return 0;
-								   });
-
-      }
-    else
-      {
-
-	//for now assume all the non-flux boundary conditions are Dirichlet type BC.
-
-	arrayView1d<real64 const> const &
-	  pres = subRegion->getReference<array1d<real64> >( viewKeyStruct::pressureString );
-
-	arrayView1d<real64 const> const &
-	  dPres = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaPressureString );
-
-	
-	// call the application of the boundary condition to alter the matrix and rhs
-	fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
-								     time_n + dt,
-								     subRegion,
-								     dofNumber,
-								     1,
-								     blockSystem,
-								     BlockIDs::fluidPressureBlock,
-								     [&] (localIndex const a) -> real64
-								     {
-								       return pres[a] + dPres[a];
-								     });
-
-      }
-	
-  } );
 }
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,

@@ -39,6 +39,10 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
   // TODO Auto-generated destructor stub
 }
 
+void SourceFluxBoundaryCondition::InitializePreSubGroups( ManagedGroup * const )
+{
+  this->SetFieldName("FLUX");
+}
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, ManagedGroup * const )
