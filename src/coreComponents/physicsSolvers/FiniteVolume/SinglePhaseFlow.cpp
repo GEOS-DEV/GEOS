@@ -848,6 +848,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
     dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( lset,
+                                                               true,
                                                                time_n + dt,
                                                                dt,
                                                                subRegion,
@@ -883,6 +884,7 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( lset,
+                                                                 false,
                                                                  time_n + dt,
                                                                  subRegion,
                                                                  dofNumber,
