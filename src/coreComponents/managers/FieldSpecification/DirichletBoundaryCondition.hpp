@@ -40,7 +40,10 @@ public:
 
   static string CatalogName() { return "Dirichlet"; }
 
-
+  virtual const string getCatalogName() const 
+  {
+    return DirichletBoundaryCondition::CatalogName();
+  }
 
 };
 
