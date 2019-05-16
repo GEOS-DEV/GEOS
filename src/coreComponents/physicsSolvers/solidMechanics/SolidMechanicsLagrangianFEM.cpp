@@ -405,6 +405,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
+    int locallyFractured = 0;
+    int globallyFractured = 0;
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
       ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
@@ -414,19 +416,18 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       {
         if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
         {
-          solveIter=m_maxNumResolves;
+          locallyFractured = 1;
         }
-        int temp = solveIter;
-        MPI_Allreduce( &temp,
-                       &solveIter,
+        MPI_Allreduce( &locallyFractured,
+                       &globallyFractured,
                        1,
                        MPI_INT,
                        MPI_MAX,
                        MPI_COMM_GEOSX);
       }
-      else
+      if( globallyFractured == 0 )
       {
-        solveIter=m_maxNumResolves;
+        break;
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
