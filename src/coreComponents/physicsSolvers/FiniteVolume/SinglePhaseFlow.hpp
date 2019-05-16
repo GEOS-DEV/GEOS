@@ -253,9 +253,6 @@ private:
    * @param time_n current time
    * @param blockSystem the entire block system
    */
-  void ApplyDirichletBC_implicit( DomainPartition * object,
-                                  real64 const time_n, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
