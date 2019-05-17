@@ -240,14 +240,14 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   LvArray::SparsityPattern< idx_t, idx_t > graph( integer_conversion< idx_t >( nbCellElements ),
                                                   integer_conversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
-  array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
+  array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() - 1 );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
     offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->GetSubRegion(subRegionIndex)->size();
   }
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
-    if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
+    if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
       idx_t const ei0  = integer_conversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
@@ -258,6 +258,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
       nbConnections++;
     }
   }
+  graph.compress();
 
   // METIS partitionning
   idx_t * offsets = const_cast< idx_t* >( graph.getOffsets() );
