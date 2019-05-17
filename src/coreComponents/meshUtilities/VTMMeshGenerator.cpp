@@ -32,10 +32,6 @@
 //#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
-#ifdef USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
 
