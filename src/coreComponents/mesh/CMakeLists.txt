@@ -10,6 +10,7 @@ set(mesh_headers
     ElementRegion.hpp
     ElementRegionManager.hpp
     FaceElementSubRegion.hpp
+    FaceElementRegion.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp
@@ -29,6 +30,7 @@ set(mesh_sources
     ElementSubRegionBase.cpp
     ElementRegion.cpp
     ElementRegionManager.cpp
+    FaceElementRegion.cpp
     FaceElementSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp

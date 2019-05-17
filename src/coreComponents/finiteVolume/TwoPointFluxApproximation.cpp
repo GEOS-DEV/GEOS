@@ -23,6 +23,7 @@
 #include "TwoPointFluxApproximation.hpp"
 
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/FaceElementRegion.hpp"
 
 namespace geosx
 {
@@ -165,7 +166,11 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 }
 
 
-
+//void TwoPointFluxApproximation::addToFractureStencil( CellStencil & fractureStencil,
+//                                                      CellStencil & cellStencil )
+//{
+//
+//}
 
 void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,
                                                         CellStencil & fractureStencil,
@@ -208,13 +213,13 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
     FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
     array1d<localIndex> const & fractureConnectorIndices =
-      fractureRegion->getReference< array1d<localIndex > >( ElementRegion::viewKeyStruct::fractureConnectorIndicesString );
+      fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::viewKeyStruct::fractureConnectorToEdgeMapString );
 
     array1d<array1d<localIndex> > const & fractureConnectors =
-      fractureRegion->getReference< array1d<array1d<localIndex> > >( ElementRegion::viewKeyStruct::fractureElementConnectorString );
+      fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::viewKeyStruct::fractureElementConnectorString );
 
     FixedToManyElementRelation const & fractureCellConnectors =
-      fractureRegion->getReference< FixedToManyElementRelation >( ElementRegion::viewKeyStruct::fractureToCellConnectorString );
+      fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::viewKeyStruct::fractureToCellConnectorString );
 
     arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
