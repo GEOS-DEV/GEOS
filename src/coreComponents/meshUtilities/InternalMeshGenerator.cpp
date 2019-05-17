@@ -124,7 +124,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
   RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");;
+    setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");
 
 }
 

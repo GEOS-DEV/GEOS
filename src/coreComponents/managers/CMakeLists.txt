@@ -1,4 +1,3 @@
-
 #
 # Specify all headers
 #
@@ -56,46 +55,18 @@ set(managers_sources
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
-    FieldSpecification/SourceFluxBoundaryCondition.cpp)    
+    FieldSpecification/SourceFluxBoundaryCondition.cpp)
 
-#set( dependencyList dataRepository fileIO  )
-#set( dependencyList2 optionparser mathpresso RAJA trilinos )
-#foreach( lib ${dependencyList} )
-#    set( dependencyList2 ${dependencyList2} ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
-#endforeach()
-#message( "dependencyList2 = ${dependencyList2}" )
-
+set( dependencyList dataRepository fileIO optionparser RAJA trilinos )
+if( ENABLE_MATHPRESSO )
+   set( dependencyList ${dependencyList} mathpresso )
+endif()
 
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
-                 DEPENDS_ON            dataRepository fileIO optionparser mathpresso RAJA trilinos
-#                 SHARED FALSE
+                 DEPENDS_ON            ${dependencyList}
                )
-
-
-#get_target_property( id managers INCLUDE_DIRECTORIES )
-#message("managers INCLUDE_DIRECTORIES = ${id}")
-#
-#get_target_property( iid managers INTERFACE_INCLUDE_DIRECTORIES )
-#message("managers INTERFACE_INCLUDE_DIRECTORIES = ${iid}")
-#
-#get_target_property( isid managers INTERFACE_SYSTEM_INCLUDE_DIRECTORIES )
-#message("managers INTERFACE_SYSTEM_INCLUDE_DIRECTORIES = ${isid}")
-#
-#
-#
-#get_target_property( ill managers INTERFACE_LINK_LIBRARIES )
-#message("managers INTERFACE_LINK_LIBRARIES = ${ill}")
-#
-#foreach( dependency ${ill} )
-#    get_target_property( depList ${dependency} INTERFACE_INCLUDE_DIRECTORIES )
-#    message( "    ${dependency} iid = ${depList} ")
-#    list( APPEND _expanded_DEPENDS_ON ${depList} )
-#endforeach()
- 
-
-
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 

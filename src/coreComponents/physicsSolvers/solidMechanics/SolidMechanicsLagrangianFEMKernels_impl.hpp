@@ -197,7 +197,10 @@ void ObjectOfArraysKernel(localIndex noElem, geosxIndex elemList, real64 dt,
             }
           }
 
-          for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+          for(int tx=0; tx<LOCAL_DIM; ++tx)
+          {
+            F[tx][tx] += 1.0;
+          }
           
           real64 detF = det<real64>(F);
           Finverse<real64> (F, Finv);
@@ -371,7 +374,10 @@ void ObjectOfArraysKernel_Shape(localIndex noElem, geosxIndex elemList, real64 d
             }
           }
 
-          for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+          for(int tx=0; tx<LOCAL_DIM; ++tx)
+          { 
+            F[tx][tx] += 1.0;
+          }
           
           real64 detF = det<real64>(F);
           Finverse<real64> (F, Finv);
@@ -523,7 +529,10 @@ RAJA_INLINE void ArrayOfObjectsKernel_Shape(localIndex noElem, geosxIndex elemLi
             }
           }
 
-          for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+          for(int tx=0; tx<LOCAL_DIM; ++tx)
+          {
+            F[tx][tx] += 1.0;
+          }
           
           real64 detF = det<real64>(F);
           Finverse<real64> (F, Finv);
@@ -668,7 +677,10 @@ RAJA_INLINE void ArrayOfObjectsKernel(localIndex noElem, geosxIndex elemList, re
             }
           }
 
-          for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+          for(int tx=0; tx<LOCAL_DIM; ++tx)
+          {
+            F[tx][tx] += 1.0;
+          }
           
           real64 detF = det<real64>(F);
           Finverse<real64> (F, Finv);
@@ -821,7 +833,10 @@ RAJA_INLINE void ArrayOfObjects_KinematicKernel(localIndex noElem, geosxIndex el
             }
           }
 
-          for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+          for(int tx=0; tx<LOCAL_DIM; ++tx)
+          {
+            F[tx][tx] += 1.0;
+          }
           
           real64 detF = det<real64>(F);
           Finverse<real64> (F, Finv);
@@ -1110,7 +1125,10 @@ RAJA_INLINE void ObjectOfArrays_KinematicKernel(localIndex noElem, geosxIndex el
              }
            }
 
-           for(int tx=0; tx<LOCAL_DIM; ++tx){ F[tx][tx] += 1.0;};
+           for(int tx=0; tx<LOCAL_DIM; ++tx)
+           {
+             F[tx][tx] += 1.0;
+           }
            
            real64 detF = det<real64>(F);
            Finverse<real64> (F, Finv);

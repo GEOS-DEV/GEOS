@@ -445,9 +445,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   updateIntrinsicNodalData(domain);
   GEOSX_MARK_FUNCTION;
 
-  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
-  static real64 maxTimes[10] = {0.0};
-
   GEOSX_GET_TIME( t0 );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -729,7 +726,6 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
 
     if( functionName.empty() )
     {
-      integer counter=0;
       for( auto kf : targetSet )
       {
         localIndex const numNodes = facesToNodes[kf].size();
@@ -770,7 +766,6 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
           result.resize( targetSet.size() );
           function->Evaluate( faceManager, time, targetSet, result );
 
-          integer counter=0;
           for( auto kf : targetSet )
           {
             localIndex const numNodes = facesToNodes[kf].size();
@@ -937,10 +932,6 @@ void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * c
                                                                  localIndex_array& localIndices,
                                                                  localIndex offset )
 {
-//  dim =
-// domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
-  int dim = 3;
-
   int n_mpi_processes;
   MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
 
@@ -1157,7 +1148,6 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
 
 
       // space for element matrix and rhs
-      int dim = 3;
       m_maxForce = ImplicitElementKernelLaunchSelector( numNodesPerElement,
                                                         fe->n_quadrature_points(),
                                                         constitutiveRelations[er][esr][m_solidMaterialFullIndex],

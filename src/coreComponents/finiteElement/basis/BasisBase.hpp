@@ -51,13 +51,6 @@ public:
   // Catalog name interface
   static string CatalogName() { return "BasisBase"; }
 
-  BasisBase() = default;
-  BasisBase( BasisBase const & ) = default;
-  BasisBase( BasisBase &&) = default;
-  BasisBase& operator=( BasisBase const & ) = default;
-  BasisBase& operator=( BasisBase&& ) = default;
-
-
   using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 

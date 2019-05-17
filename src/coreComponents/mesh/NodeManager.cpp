@@ -291,7 +291,7 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
   for( auto const & targetIndex : receivedNodes )
   {
-    set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
+    std::set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
     for( localIndex k=0 ; k<m_toElements.m_toElementRegion[targetIndex].size() ; ++k )
     {
       localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];

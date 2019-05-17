@@ -120,7 +120,7 @@ public:
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
 
-    char dirname[100];
+    // char dirname[100];
     if( rank == 0 )
     {
 //      DBGetDir(m_dbBaseFilePtr, dirname );
