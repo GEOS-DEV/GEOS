@@ -37,6 +37,7 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
+  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
   std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
@@ -432,13 +433,14 @@ private:
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto fractureRegionNameString = "fractureRegion";
   }; //SurfaceGenViewKeys;
 
 private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
-  /// set of sepearable faces
+  /// set of separable faces
   localIndex_set m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
@@ -462,6 +464,8 @@ private:
   /// copy of the original face->elemIndex mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemIndex;
 
+  /// name of the element region to place all new fractures
+  string m_fractureRegionName;
 
 };
 
