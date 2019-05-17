@@ -315,7 +315,7 @@ void VtuFile::CheckXmlChildFileConsistency(pugi::xml_document const & vtmDoc,
         if(pieceNodeChild.empty()) {
             GEOS_ERROR("Node " + pieceNodeChildName +
                 " not found or empty in " + filename);
-        };
+        }
     }
 
     string const mandatoryDataAttributes[3] =
@@ -806,7 +806,7 @@ void RankBlock::TransferRankBlockToGEOSMesh( MeshLevel * const meshLevel ) const
 
           for( int i = 0 ; i < elemRegManager->GetRegions().size() ; i++) {
               std::cout<< "REGION DBUT : " << i << std::endl;
-              std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;;
+              std::cout << elemRegManager->GetRegion(i)->getName() << std::endl;
               std::cout<< "REGION FIN : " << i << std::endl;
           }
           CellElementSubRegion * const subRegion = elemRegManager->GetRegion( "Region2" )->RegisterGroup<CellElementSubRegion>("cb1");

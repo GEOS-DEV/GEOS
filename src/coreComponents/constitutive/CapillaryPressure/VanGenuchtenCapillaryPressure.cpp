@@ -101,9 +101,9 @@ void VanGenuchtenCapillaryPressure::PostProcessInput()
                 << (expected) << " expected)"); \
   }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString );
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString );
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureMultiplier, NP, viewKeyStruct::phaseCapPressureMultiplierString );
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureMultiplier, NP, viewKeyStruct::phaseCapPressureMultiplierString )
 
 #undef COREY_CHECK_INPUT_LENGTH
 
