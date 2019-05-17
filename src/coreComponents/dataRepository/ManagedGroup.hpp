@@ -486,17 +486,60 @@ public:
    */
   localIndex numSubGroups() const { return m_subGroups.size(); }
 
-  template< typename T = ManagedGroup, typename LAMBDA >
+
+  template< typename LAMBDA >
+  static bool applyLambdaToGroup( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )
+  { return false; }
+
+  template< typename GROUPTYPE, typename ... GROUPTYPES, typename LAMBDA >
+  static bool applyLambdaToGroup( ManagedGroup const * const group, LAMBDA&& lambda )
+  {
+    bool rval = false;
+    GROUPTYPE const * const castedGroup = dynamic_cast<GROUPTYPE const *>( group );
+    if( castedGroup!= nullptr )
+    {
+      lambda( castedGroup );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToGroup< GROUPTYPES... >( group, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+
+  template< typename LAMBDA >
+  static bool applyLambdaToGroup( ManagedGroup * const group, LAMBDA&& lambda )
+  { return false; }
+
+  template< typename GROUPTYPE, typename ... GROUPTYPES, typename LAMBDA >
+  static bool applyLambdaToGroup( ManagedGroup * const group, LAMBDA&& lambda )
+  {
+    bool rval = false;
+    GROUPTYPE * const castedGroup = dynamic_cast<GROUPTYPE *>( group );
+    if( castedGroup!= nullptr )
+    {
+      lambda( castedGroup );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToGroup< GROUPTYPES... >( group, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+
+
+  template< typename T = ManagedGroup, typename ... TS, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
     for( auto& subGroupIter : m_subGroups )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T * subGroup = dynamic_cast<T *>( subGroupIter.second );
-#else
-      T * subGroup = static_cast<T *>( subGroupIter.second );
-#endif
-      lambda( subGroup );
+      bool validCast =
+      applyLambdaToGroup<T,TS...>( subGroupIter.second, [&]( auto * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
 
@@ -504,17 +547,16 @@ public:
    *
    * @param lambda
    */
-  template< typename T = ManagedGroup, typename LAMBDA >
+  template< typename T = ManagedGroup, typename ... TS, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
-#else
-      T const * subGroup = static_cast<T const *>( subGroupIter.second );
-#endif
-      lambda( subGroup );
+      bool validCast =
+      applyLambdaToGroup<T,TS...>( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
 

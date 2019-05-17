@@ -18,6 +18,11 @@
                               newtonTol="1.0e-8"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
+    <SurfaceGenerator name="SurfaceGen"
+                      verboseLevel="3"
+                      fractureRegion="Fracture"
+                      targetRegions="Fracture">
+    </SurfaceGenerator>
   </Solvers>
   
   <Mesh>
@@ -77,9 +82,9 @@
                    cellBlocks="cb1"
                    materialList="water rock"/>
                    
-    <ElementRegion name="Fracture"
-                   fractureSet="fracture"
-                   materialList="water rock"/>
+    <FaceElementRegion name="Fracture"
+                       fractureSet="fracture"
+                       materialList="water rock"/>
                    
   </ElementRegions>
 

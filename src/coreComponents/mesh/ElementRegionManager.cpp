@@ -16,23 +16,14 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ElementManagerT.cpp
- *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
- */
-
 #include <map>
 #include <vector>
 
 #include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
+#include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
-//#include "legacy/IO/BinStream.h"
 #include "constitutive/ConstitutiveManager.hpp"
-//#include "legacy/Constitutive/Material/MaterialFactory.h"
-//#include "legacy/ArrayT/ArrayT.h"
 #include "CellBlockManager.hpp"
 
 namespace geosx
@@ -95,11 +86,13 @@ void ElementRegionManager::resize( integer_array const & numElements,
 
 ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
-   GEOS_ERROR_IF( !(childKey == "ElementRegion"),
-                  "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog");
-   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName);
-   ManagedGroup * elementRegions = this->GetGroup(keys::elementRegions);
-   return elementRegions->RegisterGroup<ElementRegion>( childName );
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
+                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
+  GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
+  ManagedGroup * const elementRegions = this->GetGroup(keys::elementRegions);
+  return elementRegions->RegisterGroup( childName,
+                                        CatalogInterface::Factory( childKey, childName, elementRegions ) );
+
  }
 
 
@@ -137,7 +130,7 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 
 void ElementRegionManager::GenerateFractureMesh( FaceManager const * const faceManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateFractureMesh( faceManager );
   });

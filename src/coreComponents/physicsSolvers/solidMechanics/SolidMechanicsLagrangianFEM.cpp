@@ -1287,44 +1287,45 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
-    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
-    FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
-
-    forall_in_range<elemPolicy>( 0,
-                                 subRegion->size(),
-                                 GEOSX_LAMBDA ( localIndex const kfe )
+    if( subRegion->hasView("pressure") )
     {
+      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+      FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
 
-      R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
-      Nbar -= faceNormal[faceMap[kfe][1]];
-      Nbar.Normalize();
-      std::cout<<Nbar<<std::endl;
-
-      globalIndex nodeDOF[20];
-      real64 nodeRHS[20];
-
-      for( localIndex kf=0 ; kf<2 ; ++kf )
+      forall_in_range<elemPolicy>( 0,
+                                   subRegion->size(),
+                                   GEOSX_LAMBDA ( localIndex const kfe )
       {
-        localIndex const faceIndex = faceMap[kfe][kf];
-        localIndex const numNodes = facesToNodes[faceIndex].size();
 
-        std::cout<<faceIndex<<", "<<numNodes<<std::endl;
+        R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
+        Nbar -= faceNormal[faceMap[kfe][1]];
+        Nbar.Normalize();
+        std::cout<<Nbar<<std::endl;
 
-        for( localIndex a=0 ; a<numNodes ; ++a )
+        globalIndex nodeDOF[20];
+        real64 nodeRHS[20];
+
+        for( localIndex kf=0 ; kf<2 ; ++kf )
         {
-          for( int component=0 ; component<3 ; ++component )
+          localIndex const faceIndex = faceMap[kfe][kf];
+          localIndex const numNodes = facesToNodes[faceIndex].size();
+
+          std::cout<<faceIndex<<", "<<numNodes<<std::endl;
+
+          for( localIndex a=0 ; a<numNodes ; ++a )
           {
-            nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-            nodeRHS[3*a+component] = fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
-            std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
+            for( int component=0 ; component<3 ; ++component )
+            {
+              nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
+              nodeRHS[3*a+component] = fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+              std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
+            }
           }
+
+          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
         }
-
-        rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
-      }
-
-
-    });
+      });
+    }
   });
   }
 

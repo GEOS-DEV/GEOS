@@ -25,6 +25,7 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
+#include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 #ifdef USE_GEOSX_PTP
@@ -140,6 +141,11 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
   this->RegisterViewWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
                              0 );
+
+  this->RegisterViewWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+    setInputFlag(dataRepository::InputFlags::OPTIONAL)->
+    setApplyDefaultValue("FractureRegion");
+
 
 }
 
@@ -1206,7 +1212,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView2d<localIndex> & facesToElementSubRegions = faceManager.elementSubRegionList();
   arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
 
-  ElementRegion * const fractureElementRegion = elementManager.GetRegion("Fracture");
+  FaceElementRegion * const fractureElementRegion = elementManager.GetRegion<FaceElementRegion>("Fracture");
 
   arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
 
@@ -1390,8 +1396,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         }
 
         {
-        localIndex faceIndices[2] = {faceIndex,newFaceIndex};
-        fractureElementRegion->AddToFractureMesh( &faceManager, faceIndices );
+          localIndex faceIndices[2] = {faceIndex,newFaceIndex};
+          modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].
+          insert( fractureElementRegion->AddToFractureMesh( &faceManager, faceIndices ) );
         }
 //        externalFaceManager.SplitFace(parentFaceIndex, newFaceIndex, nodeManager);
 
@@ -1949,15 +1956,18 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
       ElementRegion const & elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellElementSubRegion const & subRegion = *(elemRegion.GetSubRegion<CellElementSubRegion>( esr ));
-        arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
-        for( localIndex k=0 ; k<subRegion.size() ; ++k )
+        CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
+        if( subRegion != nullptr )
         {
-          std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( &subRegion, k );
-
-          for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
+          arrayView2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+          for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
-            inverseElemsToNodes[elemsToNodes( k, a )].insert( elem );
+            std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( subRegion, k );
+
+            for( localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a )
+            {
+              inverseElemsToNodes[elemsToNodes( k, a )].insert( elem );
+            }
           }
         }
       }
@@ -2050,23 +2060,26 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
       ElementRegion const & elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
-        CellElementSubRegion const & subRegion = *(elemRegion.GetSubRegion<CellElementSubRegion>( esr ));
-        arrayView2d<localIndex> const & elemsToNodes = subRegion.nodeList();
-        arrayView2d<localIndex> const & elemsToFaces = subRegion.faceList();
-
-        for( localIndex k=0 ; k<subRegion.size() ; ++k )
+        CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
+        if( subRegion != nullptr )
         {
-          std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( &subRegion, k );
+          arrayView2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+          arrayView2d<localIndex> const & elemsToFaces = subRegion->faceList();
 
-          for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
+          for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
-            const localIndex faceID = elemsToFaces( k, a );
-            inverseElemsToFaces[faceID].insert( elem );
+            std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( subRegion, k );
 
-//            if( parentFaceIndex[faceID] != -1 )
-//            {
-//              inverseElemsToFaces[parentFaceIndex[faceID]].insert(elem);
-//            }
+            for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
+            {
+              const localIndex faceID = elemsToFaces( k, a );
+              inverseElemsToFaces[faceID].insert( elem );
+
+  //            if( parentFaceIndex[faceID] != -1 )
+  //            {
+  //              inverseElemsToFaces[parentFaceIndex[faceID]].insert(elem);
+  //            }
+            }
           }
         }
       }
