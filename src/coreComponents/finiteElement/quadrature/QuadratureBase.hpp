@@ -50,12 +50,6 @@ public:
   // Catalog name interface
   static string CatalogName() { return "QuadratureBase"; }
 
-  QuadratureBase() = default;
-  QuadratureBase( QuadratureBase const & ) = default;
-  QuadratureBase( QuadratureBase &&) = default;
-  QuadratureBase& operator=( QuadratureBase const & ) = default;
-  QuadratureBase& operator=( QuadratureBase&& ) = default;  
-
   using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 

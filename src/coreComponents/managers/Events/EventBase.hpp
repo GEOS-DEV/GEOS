@@ -48,12 +48,6 @@ public:
   // Catalog name interface
   static string CatalogName() { return "EventBase"; }
 
-  EventBase() = default;
-  EventBase( EventBase const & ) = default;
-  EventBase( EventBase &&) = default;
-  EventBase& operator=( EventBase const & ) = default;
-  EventBase& operator=( EventBase&& ) = default;
-
   /**
    * If the event forecast is equal to 1, then signal the targets to prepare for execution
    * during the next cycle.

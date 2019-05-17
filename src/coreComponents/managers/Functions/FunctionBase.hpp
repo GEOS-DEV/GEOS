@@ -123,6 +123,8 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
   
   localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
+  GEOS_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
+
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
