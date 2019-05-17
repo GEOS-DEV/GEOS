@@ -37,7 +37,6 @@
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
 
-
 class TableManager
 {
 public:

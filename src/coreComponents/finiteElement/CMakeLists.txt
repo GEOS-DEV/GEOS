@@ -35,10 +35,12 @@ set( finiteElement_sources
      quadrature/QuadratureRuleManager.cpp
    )
 
+set( dependencyList dataRepository codingUtilities )
+
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
-                 DEPENDS_ON            dataRepository codingUtilities
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
