@@ -1,7 +1,4 @@
-
-#
 # Specify all headers
-#
 set(mesh_headers
     AggregateElementSubRegion.hpp
     BufferOps.hpp
@@ -21,10 +18,7 @@ set(mesh_headers
     ToElementRelation.hpp
   )
 
-
-#
 # Specify all sources
-#
 set(mesh_sources
     AggregateElementSubRegion.cpp
     BufferOps.cpp
@@ -43,10 +37,12 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
+set(mesh_dependencies managers metis)
+
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            managers metis
+                 DEPENDS_ON            ${mesh_dependencies}
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
