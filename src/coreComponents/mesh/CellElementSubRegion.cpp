@@ -43,6 +43,8 @@ CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * 
 
   RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
+  RegisterViewWrapper( viewKeyStruct::aggregateGlobalIndexString, &m_aggregateGlobalIndex, 0)->setPlotLevel( PlotLevel::LEVEL_0 );
+
 }
 
 CellElementSubRegion::~CellElementSubRegion()

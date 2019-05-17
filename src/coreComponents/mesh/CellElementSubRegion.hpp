@@ -74,6 +74,8 @@ public:
     static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
     static constexpr auto constitutiveMapString = "ConstitutiveMap";
 
+    static constexpr auto aggregateGlobalIndexString = "aggregateGlobalIndex";
+
 
 
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
@@ -104,6 +106,9 @@ private:
 
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInNodelist;
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
+
+  /// Contains the aggregate global index owning the cell
+  array1d< globalIndex > m_aggregateGlobalIndex;
 
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,

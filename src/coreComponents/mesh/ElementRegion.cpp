@@ -224,7 +224,6 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
     });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
-  GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
@@ -316,7 +315,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   {
     partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
   }
-  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
+  aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters, aggregateVolumes);
 }
 
 

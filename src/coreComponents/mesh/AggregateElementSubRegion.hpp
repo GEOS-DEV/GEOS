@@ -42,18 +42,17 @@ public:
   }
 
   template< typename LAMBDA >
-  void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
+  void forGlobalFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
   {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex]; 
-        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
+    for(globalIndex fineCell :  m_globalFineByAggregates[aggregateIndex])
     {
-      lambda(m_fineToCoarse[fineCell]);
+      lambda(fineCell);
     }
   }
 
   localIndex GetNbCellsPerAggregate( localIndex aggregateIndex ) const
   {
-    return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] - m_nbFineCellsPerCoarseCell[aggregateIndex];
+    return m_globalFineByAggregates[aggregateIndex].size();
   }
 
   AggregateElementSubRegion( string const & name,
@@ -63,13 +62,9 @@ public:
  
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
                                   array1d< localIndex > const & fineToCoarse,
-                                  array1d< R1Tensor > const & barycenters);
+                                  array1d< R1Tensor > const & barycenters,
+                                  array1d< real64 > const & volumes );
 
-  const array1d< localIndex >& GetFineToCoarseMap()
-  {
-    return m_fineToCoarse;
-  }
-  
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    NodeManager const & nodeManager,
                                                    const bool useReferencePos = true) const override
@@ -80,19 +75,11 @@ public:
   virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
                                      array1d<R1Tensor> const & X ) override
   {
-      //TODO ?
   }
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
   {
-    //TODO ?
   }
-
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
-  {
-    static constexpr auto elementVolumeString          = "elementVolume";
-    static constexpr auto fineElementsListString       = "fineElements";
-  };
 
   /*!
    * @brief returns the element to node relations.
@@ -118,11 +105,8 @@ private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;
 
-  /// Relation between fine and coarse elements ordered by aggregates
-  array1d< localIndex > m_fineToCoarse;
-
-  /// Number of fine cells per aggregate
-  array1d< localIndex > m_nbFineCellsPerCoarseCell;
+  /// Fine cell global index within each aggregate
+  array1d< array1d < localIndex > > m_globalFineByAggregates;
 };
 }
 

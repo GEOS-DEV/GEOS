@@ -34,31 +34,41 @@ AggregateElementSubRegion::~AggregateElementSubRegion()
 
 void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregates,
                                                            array1d< localIndex > const & fineToCoarse,
-                                                           array1d< R1Tensor > const & barycenters)
+                                                           array1d< R1Tensor > const & barycenters,
+                                                           array1d< real64 > const & volumes )
 {
+  this->resize( nbAggregates );
   m_elementCenter = barycenters;
-  m_nbFineCellsPerCoarseCell.resize( nbAggregates + 1 );
-  m_fineToCoarse.resize( fineToCoarse.size() );
-  
-  /// First loop to count the number of fine cells per coarse cell
-  for( localIndex fineCell = 0; fineCell < fineToCoarse.size(); fineCell++ )
-  {
-    m_nbFineCellsPerCoarseCell[1 + fineToCoarse[fineCell]]++;
-  }
+  m_elementVolume = volumes;
 
-  /// Second loop to cumulate the number of fine cells
-  for( localIndex coarseCell = 1; coarseCell <= nbAggregates; coarseCell++ )
+  // Next lines are for computing the global index of the aggregates
+  int mpiSize;
+  int mpiRank;
+  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
+  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  array1d< localIndex > nbAggregatesPerRank(mpiSize);
+  MPI_Allgather( &nbAggregates, 1, MPI_LONG_LONG,nbAggregatesPerRank.data(), 1, MPI_LONG_LONG, MPI_COMM_GEOSX);
+  globalIndex offsetForGlobalIndex = 0;
+  for( localIndex i = 0; i < mpiRank; i++ )
   {
-    m_nbFineCellsPerCoarseCell[coarseCell] += m_nbFineCellsPerCoarseCell[coarseCell-1]; 
+    offsetForGlobalIndex += nbAggregatesPerRank[i];
   }
-
-  /// Third loop to order the index of the fine cells
-  array1d< localIndex > offset( nbAggregates );
-  for( localIndex fineCell = 0; fineCell < fineToCoarse.size(); fineCell++ )
+  for( localIndex i = 0; i < nbAggregates; i++ )
   {
-    localIndex coarseCell = fineToCoarse[fineCell];
-    m_fineToCoarse[m_nbFineCellsPerCoarseCell[coarseCell] + offset[coarseCell]++] = fineCell;
-
+    this->m_localToGlobalMap[i] = i + offsetForGlobalIndex;
   }
+  this->ConstructGlobalToLocalMap();
+
+  // Aggregate global indexes are saved within the fine cells
+  ElementRegion const * elementRegion = this->getParent()->getParent()->group_cast<ElementRegion const *>();
+  elementRegion->forElementSubRegions( [&]( auto * elementSubRegion ) -> void
+  {
+    auto & aggregateIndexSave =
+      elementSubRegion->template getWrapper< array1d< globalIndex > > ( CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString )->reference();
+    for(int i = 0; i < elementSubRegion->size() ;i++)
+    {
+      aggregateIndexSave[i] = m_localToGlobalMap[fineToCoarse[i]];
+    }
+  });
 }
 }
