@@ -30,10 +30,6 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
 
-#ifdef USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 #include "Mesh/MeshFactory.hpp"
 
 #include "MeshDataWriters/MeshParts.hpp"

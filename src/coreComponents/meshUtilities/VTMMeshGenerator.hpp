@@ -32,10 +32,6 @@
 
 #include "fileIO/vtm/VtmFile.hpp"
 
-#ifdef USE_ATK
-#include <slic/slic.hpp>
-#endif
-
 namespace geosx
 {
 
@@ -154,9 +150,7 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
-#ifdef USE_ATK
-          SLIC_ERROR("Mesh bias must between -1 and 1!");
-#endif
+          GEOS_ERROR("Mesh bias must between -1 and 1!");
         }
 
         realT len = max -  min;
