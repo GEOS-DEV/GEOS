@@ -205,10 +205,10 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   {
     return;
   }
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  ManagedGroup * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
+    elementSubRegions->RegisterGroup<AggregateElementSubRegion>( AggregateElementSubRegion::CatalogName() );
 
   array2d<localIndex> const & elemRegionList     = faceManager->elementRegionList();
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
@@ -223,7 +223,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
       nbCellElements += elementSubRegion->size();
     });
   // Number of aggregate computation
-  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
+  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio ) );
 
   // METIS variable declarations
   using idx_t = ::idx_t;

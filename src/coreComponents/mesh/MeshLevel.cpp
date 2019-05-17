@@ -25,6 +25,7 @@
 //#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
+#include "AggregateElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -161,15 +162,39 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
   {
     ElementRegion const * const elemRegion = elemManager->GetRegion(kReg);
 
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    localIndex nbGhostAggregates = 0;
+    const ElementSubRegionBase * aggRegion = elemRegion->GetSubRegion( AggregateElementSubRegion::CatalogName() ) ;
+    bool aggregatesArePresent = false;
+    localIndex aggRegionIndex = -1;
+    if( aggRegion != nullptr )
     {
+      aggregatesArePresent = true;
+      aggRegionIndex = aggRegion->getIndexInParent();
+    }
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const kSubReg, auto const * const subRegion )
+    {
+      auto & aggregateGlobalIndexes =
+        subRegion->template getWrapper< array1d< globalIndex > > (CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString)->reference();
       elementAdjacencyList[kReg][kSubReg].get().clear();
       elementAdjacencyList[kReg][kSubReg].get().resize( integer_conversion<localIndex>(elementAdjacencySet[kReg][kSubReg].size()) );
       std::copy( elementAdjacencySet[kReg][kSubReg].begin(),
                  elementAdjacencySet[kReg][kSubReg].end(),
                  elementAdjacencyList[kReg][kSubReg].get().begin() );
 
-    }
+      if( aggregatesArePresent )
+      {
+        std::set< globalIndex> uniqueAggregate;
+        for( localIndex i = 0 ; i < elementAdjacencyList[kReg][kSubReg].get().size(); i++ )
+        {
+          globalIndex aggregateIndex = aggregateGlobalIndexes[elementAdjacencyList[kReg][kSubReg][i]];
+          if( uniqueAggregate.find(aggregateIndex) == uniqueAggregate.end())
+          {
+            elementAdjacencyList[kReg][aggRegionIndex].get().push_back(aggRegion->m_globalToLocalMap.at(aggregateIndex));
+            uniqueAggregate.insert(aggregateIndex);
+          }
+        }
+      }
+    });
   }
 
 }
