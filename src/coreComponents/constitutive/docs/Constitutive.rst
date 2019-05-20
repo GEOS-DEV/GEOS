@@ -36,6 +36,13 @@ Currently supported constitutive models are:
     * :doc:`/coreComponents/constitutive/docs/CompositionalMultiphaseFluid`
     * :doc:`/coreComponents/constitutive/docs/CO2-EOS`
 
+* Porous solids
+
+  * Poroelasticity
+
+    * :doc:`/coreComponents/constitutive/docs/PoroLinearElasticIsotropic`
+    * :doc:`/coreComponents/constitutive/docs/PoroLinearElasticAnisotropic`
+
 * Solid-fluid interaction
 
   * Relative permeability
@@ -55,13 +62,11 @@ Input example
   <Problem>
     ...
     <Constitutive>
-      <LinearElasticIsotropic name="shale"
-                              density0="2700"
-                              BulkModulus0="61.9e6"
-                              ShearModulus0="28.57e6"
-                              BiotCoefficient="1"
-                              referencePressure="2.125e6"
-                              compressibility="3e-10"/>
+      <PoroLinearElasticIsotropic name="shale"
+                                  defaultDensity="2700"
+                                  defaultBulkModulus="61.9e6"
+                                  defaultShearModulus="28.57e6"
+                                  BiotCoefficient="1.0"/>
 
       <CompressibleSinglePhaseFluid name="water"
                                     referencePressure="2.125e6"
