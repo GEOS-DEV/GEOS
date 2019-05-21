@@ -30,7 +30,9 @@ public:
 
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
-  localIndex AddToFractureMesh( FaceManager const * const faceManager, localIndex const faceIndices[2] );
+  localIndex AddToFractureMesh( FaceManager const * const faceManager,
+                                string const & subRegionName,
+                                localIndex const faceIndices[2] );
 
 
   struct viewKeyStruct : public ElementRegion::viewKeyStruct
