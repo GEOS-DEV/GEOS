@@ -212,14 +212,20 @@ void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & 
 
     FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
-    array1d<localIndex> const & fractureConnectorIndices =
-      fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::viewKeyStruct::fractureConnectorToEdgeMapString );
+    array1d<localIndex> const &
+    fractureConnectorIndices = fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::
+                                                                                     viewKeyStruct::
+                                                                                     fractureConnectorToEdgeMapString );
 
-    array1d<array1d<localIndex> > const & fractureConnectors =
-      fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::viewKeyStruct::fractureElementConnectorString );
+    array1d<array1d<localIndex> > const &
+    fractureConnectors = fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::
+                                                                                        viewKeyStruct::
+                                                                                        fractureElementConnectorString );
 
-    FixedToManyElementRelation const & fractureCellConnectors =
-      fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::viewKeyStruct::fractureToCellConnectorString );
+    FixedToManyElementRelation const &
+    fractureCellConnectors = fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::
+                                                                                         viewKeyStruct::
+                                                                                         fractureToCellConnectorString );
 
     arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
