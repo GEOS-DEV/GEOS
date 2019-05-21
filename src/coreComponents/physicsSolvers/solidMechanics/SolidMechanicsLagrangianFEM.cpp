@@ -1318,7 +1318,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
             for( int component=0 ; component<3 ; ++component )
             {
               nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-              nodeRHS[3*a+component] = fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+              nodeRHS[3*a+component] = - fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
               std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
             }
           }
