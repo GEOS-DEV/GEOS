@@ -51,6 +51,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
     setApplyDefaultValue(1.0)->
     setDescription("The volume of each FaceCell.");
+
+  m_numNodesPerElement = 8;
 }
 
 FaceElementSubRegion::~FaceElementSubRegion()
