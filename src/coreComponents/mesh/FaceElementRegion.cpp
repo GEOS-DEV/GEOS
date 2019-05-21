@@ -125,6 +125,21 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
     }
   }
 
+
+  for( auto const & setIter : faceManager->sets()->wrappers() )
+  {
+    set<localIndex> const & faceSet = faceManager->sets()->getReference<set<localIndex> >( setIter.first );
+    set<localIndex> & faceElementSet = subRegion->sets()->RegisterViewWrapper< set<localIndex> >( setIter.first )->reference();
+    for( localIndex a=0 ; a<faceMap.size(0) ; ++a )
+    {
+      localIndex const faceIndex = faceMap[a][0];
+      if( faceSet.count( faceIndex ) )
+      {
+        faceElementSet.insert( a );
+      }
+    }
+  }
+
   return rval;
 }
 
@@ -149,6 +164,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
      FaceElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>("default");
      set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
      subRegion->resize( targetSet.size() );
+     subRegion->numNodesPerElement() = 8;
 
      m_fractureToCellConnectors.resize( targetSet.size(), 2 );
 
