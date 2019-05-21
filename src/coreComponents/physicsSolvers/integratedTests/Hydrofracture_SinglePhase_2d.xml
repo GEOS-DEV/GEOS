@@ -32,7 +32,7 @@
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="0"
+                     verboseLevel="3"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="Fracture"
@@ -69,7 +69,6 @@
     <Box name="right"     xMin=" 8.99, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
     <Box name="bottom"    xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
     <Box name="top"       xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="fracture0" xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  0.01, 0.01"/>
     <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
     <Box name="source"    xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  1.01, 1.01"/>
   </Geometry>
@@ -171,20 +170,20 @@
                scale="1.0e-4"/-->
 
                
-    <FieldSpecification name="topbot"
+    <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="1"
                scale="0.0"
-               setNames="yneg, ypos"/>
+               setNames="all"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="2"
                scale="0.0"
-               setNames="zneg, zpos"/>
-
+               setNames="all"/>
+               
     <FieldSpecification name="left"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
@@ -199,9 +198,9 @@
                scale="0.0"
                setNames="xpos"/>
 
-               
+
     <FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture/fracture"
+               objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="1.0e7"
                setNames="source"/>
