@@ -20,6 +20,8 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
   m_fractureCellConnectorIndices(),
   m_fractureToCellConnectors()
 {
+  this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
+
   RegisterViewWrapper( viewKeyStruct::fractureSetString, &m_fractureSetNames, false )->
     setInputFlag(InputFlags::OPTIONAL);
 
@@ -42,6 +44,8 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
   RegisterViewWrapper( viewKeyStruct::fractureToCellConnectorString, &m_fractureToCellConnectors, 0 )
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
+
+
 }
 
 FaceElementRegion::~FaceElementRegion()
@@ -51,26 +55,21 @@ FaceElementRegion::~FaceElementRegion()
 
 
 
-localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceManager, localIndex const faceIndices[2]  )
+localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceManager,
+                                                 string const & subRegionName,
+                                                 localIndex const faceIndices[2]  )
 {
   localIndex rval = -1;
 
   set<localIndex> connectedEdges;
-
-
 
   array2d<localIndex > const & faceToElementRegion = faceManager->elementRegionList();
   array2d<localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
   array2d<localIndex > const & faceToElementIndex = faceManager->elementList();
 
   ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-  string const setName = "fracture";
 
-  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup<FaceElementSubRegion>(setName);
-  if( subRegion==nullptr )
-  {
-    subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>(setName);
-  }
+  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup<FaceElementSubRegion>(subRegionName);
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
@@ -147,7 +146,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
    for( string const & setName : this->m_fractureSetNames )
    {
-     FaceElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>(setName);
+     FaceElementSubRegion * const subRegion = elementSubRegions->RegisterGroup<FaceElementSubRegion>("default");
      set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
      subRegion->resize( targetSet.size() );
 

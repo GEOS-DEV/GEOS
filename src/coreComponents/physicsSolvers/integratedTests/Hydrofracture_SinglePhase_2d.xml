@@ -12,7 +12,7 @@
                    fluidSolverName="SinglePhaseFlow"
                    couplingTypeOption="FixedStress"
                    verboseLevel="1"
-                   targetRegions="Fracture"
+                   targetRegions="Region2"
                    >
       <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
@@ -46,6 +46,7 @@
     
         <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="0"
+                      fractureRegion="Fracture"
                       targetRegions="Region2">
     </SurfaceGenerator>
     
@@ -125,9 +126,8 @@
                    cellBlocks="cb1"
                    materialList="water rock"/>
                    
-    <ElementRegion name="Fracture"
-                   fractureSet="fracture0"
-                   materialList="water rock"/>
+    <FaceElementRegion name="Fracture"
+                       materialList="water rock"/>
                    
   </ElementRegions>
 
@@ -139,14 +139,14 @@
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic name="rock"
-                                defaultDensity="2700"
-                                defaultBulkModulus="5.5556e9"
-                                defaultShearModulus="4.16667e9"
-                                BiotCoefficient="1"
-                                compressibility="1.6155088853e-08"
-                                referencePressure="2.125e6"
-                                />
+      <PoroLinearElasticIsotropic name="rock"
+                              defaultDensity="2700"
+                              defaultBulkModulus="61.9e6"
+                              defaultShearModulus="28.57e6"
+                              BiotCoefficient="1"
+                              compressibility="1.6155088853e-08"
+                              referencePressure="2.125e6"
+                              />
   </Constitutive>
 
   <InitialConditions>
