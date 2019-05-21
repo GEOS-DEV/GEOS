@@ -113,7 +113,7 @@
                component="0"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
+               objectPath="ElementRegions/Fracture"
                fieldName="elementAperture"
                scale="1.0e-4"/>
 
@@ -121,12 +121,12 @@
     <FieldSpecification name="referencePorosityF"
                initialCondition="1"
                setNames="all"
-               objectPath="ElementRegions/Fracture/fracture"
+               objectPath="ElementRegions/Fracture"
                fieldName="referencePorosity"
                scale="0.05"/>
                
     <FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture/fracture"
+               objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="1.0e7"
                setNames="source"/>

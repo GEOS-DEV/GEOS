@@ -381,6 +381,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
 
+        arrayView2d<real64 > & blah = rho[er][esr][m_solidMaterialFullIndex];
         // TODO this integration needs to be be carried out properly.
         real64 elemMass = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
