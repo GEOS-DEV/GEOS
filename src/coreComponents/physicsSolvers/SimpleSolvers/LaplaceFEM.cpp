@@ -529,6 +529,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
+                                                                 false,
                                                                  time,
                                                                  targetGroup,
                                                                  "Temperature",
