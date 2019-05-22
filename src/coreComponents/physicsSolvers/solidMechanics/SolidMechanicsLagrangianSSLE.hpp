@@ -84,6 +84,7 @@ public:
             arrayView1d<R1Tensor> const & acc,
             arrayView2d<real64> const & meanStress,
             arrayView2d<R2SymTensor> const & devStress,
+            arrayView2d<R1Tensor> const & nodalForceFromElement,
             real64 const dt );
   };
 
@@ -171,6 +172,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
         arrayView1d<R1Tensor> const & acc,
         arrayView2d<real64> const & meanStress,
         arrayView2d<R2SymTensor> const & devStress,
+        arrayView2d<R1Tensor> const & nodalForceFromElement,
         real64 const dt )
 {
   forall_in_set<elemPolicy>( elementList.values(),
@@ -251,6 +253,11 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
 
 
     AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
+
+//    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+//    {
+//      nodalForceFromElement[k][a] = f_local[a];
+//    }
   });
 
   return dt;
