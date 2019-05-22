@@ -156,7 +156,6 @@ private:
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
                               ElementRegionManager & elementManager,
-                              SpatialPartition& partition,
                               const bool prefrac );
 
   /**
@@ -432,6 +431,7 @@ private:
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
   }; //SurfaceGenViewKeys;
 
 private:

@@ -536,6 +536,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
+      arrayView2d<R1Tensor> const & nodalForceFromElement = elementSubRegion->getReference< array2d<R1Tensor> >(keys::nodalForceFromElement);
+
       arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -556,6 +558,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    acc,
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
+                                   nodalForceFromElement,
                                    dt );
 
       GEOSX_MARK_END(externalElemsLoop);
@@ -591,6 +594,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
+      arrayView2d<R1Tensor> const & nodalForceFromElement = elementSubRegion->getReference< array2d<R1Tensor> >(keys::nodalForceFromElement);
+
       arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -611,6 +616,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    acc,
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
+                                   nodalForceFromElement,
                                    dt);
 
       GEOSX_MARK_END(internalElemsLoop);
