@@ -227,6 +227,7 @@ public:
         arrayView1d<R1Tensor> const & acc,\
         arrayView2d<real64> const & meanStress, \
         arrayView2d<R2SymTensor> const & devStress, \
+        arrayView2d<R1Tensor> const & nodalForceFromElement, \
         real64 const dt ) OVERRIDE\
     {\
       return ElementKernelLaunchSelector<WRAPPER>( NUM_NODES_PER_ELEM,\
@@ -241,6 +242,7 @@ public:
                                                    acc,\
                                                    meanStress,\
                                                    devStress,\
+                                                   nodalForceFromElement,\
                                                    dt );\
     }
 
@@ -354,6 +356,7 @@ public:
             arrayView1d<R1Tensor> const & acc,
             arrayView2d<real64> const & meanStress,
             arrayView2d<R2SymTensor> const & devStress,
+            arrayView2d<R1Tensor> const & nodalForceFromElement,
             real64 const dt );
   };
 
@@ -594,6 +597,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
         arrayView1d<R1Tensor> const & acc,
         arrayView2d<real64> const & meanStress,
         arrayView2d<R2SymTensor> const & devStress,
+        arrayView2d<R1Tensor> const & nodalForceFromElement,
         real64 const dt )
 {
 
