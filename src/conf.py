@@ -226,7 +226,7 @@ imgmath_font_size=14
 #####################################################
 # add LaTeX macros 
 
-f = file('docs/sphinx/latex_macros.sty')
+f = open('docs/sphinx/latex_macros.sty')
 
 try:
     imgmath_latex_preamble  # check whether this is already defined

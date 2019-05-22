@@ -32,7 +32,7 @@ Looking at the XML file
 ------------------------------------
 
 We are going to inspect blocks in the following XML file:
-``src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
+``src\coreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
 
 The file contains a number of XML blocks.
 We will describe the most important of them.
@@ -57,7 +57,7 @@ and the maximum number of iterations.
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="Domain">
-      <SystemSolverParameters name="SystemSolverParameters"
+      <SystemSolverParameters
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -392,7 +392,7 @@ format.
 
    <Mesh>
        <PAMELAMeshGenerator name="CubeTetra"
-           file="cube_10x10x10_tet.msh"/>
+           file="cube_10x10x10_hex.msh"/>
    </Mesh>
 
 The mesh looks like this:
@@ -464,7 +464,7 @@ and contains ``water`` and ``rock`` only.
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="PART00001_POLYHEDRON_POLYHEDRON_GROUP_1_TETRA" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="0_TETRA" materialList="water rock"/>
   </ElementRegions>
 
 
