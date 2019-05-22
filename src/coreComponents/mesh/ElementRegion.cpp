@@ -261,7 +261,9 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   }
 
   // METIS partitionning
-  METIS_PartGraphRecursive( &nnodes, &nconst, graph.getOffsets(), graph.getColumns(), nullptr, nullptr, nullptr,
+  idx_t * offsets = const_cast< idx_t* >( graph.getOffsets() );
+  idx_t * columns = const_cast< idx_t* >( &graph.getColumns(0)[0] );
+  METIS_PartGraphRecursive( &nnodes, &nconst, offsets, columns, nullptr, nullptr, nullptr,
                             &nparts, nullptr, nullptr, options, &objval, parts.data() );
 
   // Compute Aggregate barycenters

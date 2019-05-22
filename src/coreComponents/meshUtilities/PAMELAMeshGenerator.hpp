@@ -33,10 +33,6 @@
 
 #include "MeshGeneratorBase.hpp"
 
-#ifdef USE_ATK
-#include <slic/slic.hpp>
-#endif
-
 namespace geosx
 {
 
