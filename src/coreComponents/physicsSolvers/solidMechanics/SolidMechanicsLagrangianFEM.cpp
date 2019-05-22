@@ -405,6 +405,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
+    int locallyFractured = 0;
+    int globallyFractured = 0;
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
       ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
@@ -414,19 +416,18 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       {
         if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
         {
-          solveIter=m_maxNumResolves;
+          locallyFractured = 1;
         }
-        int temp = solveIter;
-        MPI_Allreduce( &temp,
-                       &solveIter,
+        MPI_Allreduce( &locallyFractured,
+                       &globallyFractured,
                        1,
                        MPI_INT,
                        MPI_MAX,
                        MPI_COMM_GEOSX);
       }
-      else
+      if( globallyFractured == 0 )
       {
-        solveIter=m_maxNumResolves;
+        break;
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
@@ -686,13 +687,14 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                      string const fieldName )->void
     {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                 time,
-                                                 targetGroup,
-                                                 fieldName,
-                                                 viewKeyStruct::globalDofNumberString,
-                                                 3,
-                                                 &blockSystem,
-                                                 BlockIDs::displacementBlock );
+                                                                 false,
+                                                                 time,
+                                                                 targetGroup,
+                                                                 fieldName,
+                                                                 viewKeyStruct::globalDofNumberString,
+                                                                 3,
+                                                                 &blockSystem,
+                                                                 BlockIDs::displacementBlock );
   });
 }
 
@@ -1232,6 +1234,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+                                                               false,
                                                                time_n+dt,
                                                                targetGroup,
                                                                keys::TotalDisplacement, // TODO fix use of dummy name for

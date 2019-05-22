@@ -1,39 +1,43 @@
-.. _LinearElasticIsotropic:
+.. _PoroLinearElasticIsotropic:
 
 ############################################
-Linear elastic isotropic solid model
+Linear poroelastic isotropic solid model
 ############################################
 
 Overview
 =========================
 
-This model may be used to represents a solid material with a linear elastic isotropic response to loading.
-The relationship between stress and strain is typically represented by `Hooke's Law <https://en.wikipedia.org/wiki/Hooke%27s_law>`__, 
-which for the case of linear elasticity, may be expressed as:
+This model may be used to represents a porous material with a linear poroelastic isotropic response to response to coupled deformation-diffusion processes.
+The relationship between stress and strain is typically formulated within the framework of the `Biot theory of poroelasticity <https://doi.org/10.1016/B978-0-08-040615-2.50011-3>`__, 
+which for the case of linear poroelasticity, may be expressed as:
 
 .. math::
-   \sigma_{ij} = \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
+   \sigma_{ij} = \sigma\prime_{ij}  - b p \delta_{ij} = \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij} - b p \delta_{ij},
    
-where :math:`\sigma_{ij}` is the :math:`ij` component of the cauchy stress tensor, 
+where :math:`\sigma_{ij}` is the :math:`ij` component of the total stress tensor, 
+:math:`\sigma\prime_{ij}` is the :math:`ij` component of the effective (Cauchy) stress tensor, 
 :math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,
 :math:`\lambda` is the Lames elastic constant,
-and :math:`\mu` is the elastic shear modulus.
+:math:`\mu` is the elastic shear modulus,
+:math:`b` is Biot's coefficient,
+:math:`p` is fluid pressure,
+and :math:`\delta` is Kronecker delta.
 
-Hooke's Law may also be expressed using `Voigt notation <https://en.wikipedia.org/wiki/Voigt_notation>`__ for the stress and strain tensors as:
+Hooke's Law may also be expressed using `Voigt notation <https://en.wikipedia.org/wiki/Voigt_notation>`__ for the effective stress and strain tensors as:
 
 .. math::
-   \tensor{\sigma} = \tensor{C} \cdot \tensor{\epsilon},
+   \tensor{\sigma\prime} = \tensor{C} \cdot \tensor{\epsilon},
    
 or,
 
 .. math::
     \begin{bmatrix}
-      \sigma_{11} \\
-      \sigma_{22} \\
-      \sigma_{33} \\
-      \sigma_{23} \\
-      \sigma_{13} \\
-      \sigma_{12}
+      \sigma\prime_{11} \\
+      \sigma\prime_{22} \\
+      \sigma\prime_{33} \\
+      \sigma\prime_{23} \\
+      \sigma\prime_{13} \\
+      \sigma\prime_{12}
     \end{bmatrix}
     = 
     \begin{bmatrix}
@@ -55,7 +59,7 @@ or,
 
 Variations
 ==========
-The application of linear elasticity as presented above is typically restricted to the case of 
+The application of linear poroelasticity as presented above is typically restricted to the case of 
 `infinitesimal strain <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`__.
 For the case of `infinitesimal strain <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`__, the 
 above relations are applied directly. 
@@ -63,8 +67,8 @@ For the case of `finite strain <https://en.wikipedia.org/wiki/Finite_strain_theo
 the above relations may be slightly modified to an incremental update and rotation:
 
 .. math::
-   \Delta \tensor{\sigma} &= \tensor{C} \cdot \hat{\tensor{D}},\\
-   \tensor{\sigma}^{n+1} &= \hat{\tensor{R}}( \tensor{\sigma}^{n} + \Delta \tensor{\sigma} ) \hat{\tensor{R}}^T,
+   \Delta \tensor{\sigma\prime} &= \tensor{C} \cdot \hat{\tensor{D}},\\
+   \tensor{\sigma\prime}^{n+1} &= \hat{\tensor{R}}( \tensor{\sigma\prime}^{n} + \Delta \tensor{\sigma\prime} ) \hat{\tensor{R}}^T,
    
 where :math:`\hat{\tensor{D}}` is the "incremental rate of deformation tensor" and :math:`\hat{\tensor{R}}` is the incremental rotation tensor, which are 
 typically calculated from the `velocity gradient <https://en.wikipedia.org/wiki/Strain-rate_tensor>`__.
@@ -78,7 +82,7 @@ Usage
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
+.. include:: /coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
 
 Input example
 =========================
@@ -86,8 +90,10 @@ Input example
 .. code-block:: xml
 
   <Constitutive>
-    <LinearElasticIsotropic name="shale"
-                            defaultDensity="2700"
-                            defaultBulkModulus="61.9e6"
-                            defaultShearModulus="28.57e6"
+    <PoroLinearElasticIsotropic name="shale"
+                                defaultDensity="2700"
+                                defaultBulkModulus="61.9e6"
+                                defaultShearModulus="28.57e6"
+                                BiotCoefficient="1.0"/>
   </Constitutive>
+

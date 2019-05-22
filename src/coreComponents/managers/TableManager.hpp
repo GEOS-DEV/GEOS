@@ -37,10 +37,6 @@
 #include <map>
 #include "../codingUtilities/IOUtilities.hpp"
 
-#ifdef GEOSX_USE_ATK
-#include <slic/slic.hpp>
-#endif
-
 
 class TableManager
 {
@@ -58,25 +54,19 @@ public:
   //CONST
   template < unsigned int dim>
   inline const std::map<std::string,  Table<dim, realT> >& Tables() const { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization");
-#endif
+    GEOS_ERROR("Cannot call base specialization");
   }
 
   //NON-CONST
   template < unsigned int dim>
   inline std::map<std::string,  Table<dim, realT> >& Tables() { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization"); 
-#endif
+    GEOS_ERROR("Cannot call base specialization"); 
   }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
   inline void NewTable(const std::string& name, const ARRAY2& x, const ARRAY& values, TableInterpolation::Order interp) { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization"); 
-#endif
+    GEOS_ERROR("Cannot call base specialization"); 
   }
 
   template <unsigned int dim, class ARRAY>
@@ -84,9 +74,7 @@ public:
   {
     typename std::map<std::string, Table<dim, realT> >::iterator table = Tables<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table name " + tableName + " not found.\n");
-#endif
+      GEOS_ERROR("Table name " + tableName + " not found.\n");
     }
     return &(table->second);
 
@@ -101,9 +89,7 @@ public:
     typename std::map<std::string, Table<dim, realT> >::const_iterator table =
         Tables<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table name " + tableName + " not found.\n");
-#endif
+      GEOS_ERROR("Table name " + tableName + " not found.\n");
     }
     return table->second.Lookup(key, interpolate);
   }
@@ -114,25 +100,19 @@ public:
   //CONST
   template < unsigned int dim>
   inline const std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() const { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization"); 
-#endif
+    GEOS_ERROR("Cannot call base specialization"); 
   }
 
   //NON-CONST
   template < unsigned int dim>
   inline std::map<std::string,  Table<dim, R1Tensor> >& VectorFields() { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization"); 
-#endif
+    GEOS_ERROR("Cannot call base specialization"); 
   }
 
   //ADD
   template < unsigned int dim, class ARRAY, class ARRAY2>
   inline void NewVectorField(const std::string& name, const ARRAY2& x, const ARRAY& values) { 
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("Cannot call base specialization"); 
-#endif
+    GEOS_ERROR("Cannot call base specialization"); 
   }
 
   //LOOKUP
@@ -144,9 +124,7 @@ public:
     typename std::map<std::string, Table<dim, R1Tensor> >::const_iterator table =
         VectorFields<dim>().find(tableName);
     if (table == Tables<dim>().end()) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("VectorField name " + tableName + " not found.\n");
-#endif
+      GEOS_ERROR("VectorField name " + tableName + " not found.\n");
     }
     return table->second.Lookup(key, interpolate);
   }
@@ -376,9 +354,7 @@ void TableManager::ReadVoxelFile(const std::string& filename, localIndex nCompon
   }
   else
   {
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("ReadVoxelFile: Failed to load file:" + filename + " \n");
-#endif
+    GEOS_ERROR("ReadVoxelFile: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -406,9 +382,7 @@ void TableManager::ReadTimeVoxelFile(const std::string& filename, localIndex nCo
   }
   else
   {
-#ifdef GEOSX_USE_ATK
-    SLIC_ERROR("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
-#endif
+    GEOS_ERROR("ReadTimeVoxelFile: Failed to load file:" + filename + " \n");
   }
 }
 
@@ -489,9 +463,7 @@ void TableManager::ReadNUFTFile(const std::string& filename,
     }
     else
     {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("readTimeVoxelFile: Failed to load file:" + filename + " \n");
-#endif
+      GEOS_ERROR("readTimeVoxelFile: Failed to load file:" + filename + " \n");
     }
   }
 
