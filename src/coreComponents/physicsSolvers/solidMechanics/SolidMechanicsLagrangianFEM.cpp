@@ -209,7 +209,11 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString );
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString );
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects("SolidMechanicsLagrangianFEM")->
+      setDescription( "The total displacement vector.");
+
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->setPlotLevel(PlotLevel::LEVEL_2);
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
