@@ -26,7 +26,7 @@ namespace geosx
 {
 
 // .... DOF MANAGER :: CONSTRUCTOR
-DofManager::DofManager()
+DofManager::DofManager( localIndex const verbosity )
 {
   mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
   mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
@@ -53,6 +53,8 @@ DofManager::DofManager()
       m_sparsityPattern[i][j] = std::make_pair( nullptr, nullptr );
     }
   }
+
+  m_verbosity = verbosity;
 }
 
 // .... DOF MANAGER :: SET MESH
@@ -295,9 +297,12 @@ void DofManager::addField( string const & field,
   connLocPattDistr->close();
 
   // log some basic info
-  GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
-  GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
-  GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  if( m_verbosity>0 )
+  {
+    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
+    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
+    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  }
 }
 
 // addField: allow the usage of a predefine location-connection pattern (user-defined)
@@ -423,9 +428,12 @@ void DofManager::addField( string const & field,
   }
 
   // log some basic info
-  GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
-  GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
-  GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  if( m_verbosity>0 )
+  {
+    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
+    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
+    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  }
 }
 
 // .... DOF MANAGER :: CREATE INDEX ARRAY
@@ -1241,9 +1249,10 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
 
   rowConnLocPattDistr = new ParallelMatrix();
   rowConnLocPattDistr->createWithGlobalSize( rowPatternLocal.nRows,
-                                             rowPatternLocal.nCols,
+                                             m_fields[rowFieldIndex].connLocPattern->globalCols(),
                                              maxEntriesPerRow,
                                              MPI_COMM_GEOSX );
+
   for( globalIndex i = 0 ; i < rowPatternLocal.nRows ; ++i )
   {
     localIndex nnz = rowPatternLocal.rowLengths[i + 1] - rowPatternLocal.rowLengths[i];
@@ -1262,7 +1271,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
   // Pattern of connections and column locations
   colConnLocPattDistr = new ParallelMatrix();
   colConnLocPattDistr->createWithGlobalSize( colPatternLocal.nRows,
-                                             colPatternLocal.nCols,
+                                             m_fields[colFieldIndex].connLocPattern->globalCols(),
                                              maxEntriesPerRow,
                                              MPI_COMM_GEOSX );
   for( globalIndex i = 0 ; i < colPatternLocal.nRows ; ++i )

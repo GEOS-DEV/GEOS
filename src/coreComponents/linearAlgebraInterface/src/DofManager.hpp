@@ -71,7 +71,7 @@ public:
   /**
    * Constructor
    */
-  DofManager();
+  DofManager( localIndex const verbosity = 0 );
 
   /**
    * Destructor
@@ -335,6 +335,11 @@ public:
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
 private:
+  /**
+   * Verbosity level
+   */
+  localIndex m_verbosity = 0;
+
   /**
    *  Limit on max number of fields
    */
