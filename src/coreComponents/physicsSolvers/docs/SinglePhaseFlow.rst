@@ -26,6 +26,52 @@ and :math:`\phi` is porosity, :math:`\rho` is fluid density, :math:`\mu` is flui
 :math:`\boldsymbol{k}` is the permeability tensor, :math:`\boldsymbol{g}` is the gravity vector,
 and :math:`q` is the source function (currently not supported).
 
+When the entire pore space is filed by a single phase, we can subtitute the Darcy's law into the mass balance equation to obtain the single phase flow equation
+
+.. math::
+   \boldsymbol{\nabla} \cdot \frac{\rho \boldsymbol{k}}{\mu} (\nabla p - \gamma \nabla z) = \frac{\partial}{\partial t}(\phi\rho) + q
+
+with :math:`\gamma \nabla z= \rho \boldsymbol{g}`.
+
+
+Space discretization with Finite volume mehtod
+=========================
+Let :math:`\Omega \subset \mathbb{R}^n, \, n =1,2,3` be an open set defining the computational domain. We consider :math:`\Omega` meshed by element such that :math:`\Omega = \cup_{i}V_i` and integrate the single phase flow equation, described above, over each element :math:`V_i`:
+
+.. math::
+   \int_{V_i} \frac{\partial}{\partial t}(\phi\rho) dV + \int_{V_i} \boldsymbol{\nabla} \cdot \frac{\rho \boldsymbol{k}}{\mu} (\nabla p - \gamma \nabla z) dV + \int_{V_i} q dV  = 0
+
+Applying the divergence theorem to the second term lead to
+
+.. math::
+  \int_{V_i} \frac{\partial}{\partial t}(\phi\rho)_i + \oint_{S_i} \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right) \cdot \boldsymbol{n} dS + \int_{V_i} q dV  = 0
+
+where :math:`S_i` represents the surface area of the element :math:`V_i` and :math:`\boldsymbol{n}` is a outward unit vector normal to the surface.
+
+The flux terms is given by
+
+.. math::
+   \begin{aligned}
+   V_i \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right) & = \Gamma_{i+\frac{1}{2}} (p_{i+1}-p_i) + \Gamma_{i-\frac{1}{2}} (p_{i-1} - p_i) \\
+                                                            & - \Gamma_{i+\frac{1}{2}} \gamma_{i+\frac{1}{2}} (z_{i+1} - z_i) + \Gamma_{i-\frac{1}{2}} \gamma_{i-\frac{1}{2}}(z_{i-1} - z_i)
+   \end{aligned}
+
+where the transmissibilities is given by :math:`\Gamma_{i\pm \frac{1}{2}} = \left(\frac{\rho \boldsymbol{k}}{\mu}\right)_{i\pm\frac{1}{2}}`.
+
+Time discretization
+=========================
+Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time interval :math:`[t_0,T], \, t_0, T \in \mathbb{R}^+`. We use the backward Euler method to integrate the single phase flow equation between two grid points :math:`t_n` and :math:`t_{n+1}, \, n< N` to obtain:
+
+.. math::
+   \int_{V_i} \frac{(\phi\rho)_i^{n+1} - (\phi\rho)_i^n}{\Delta t} + \oint_{S_i} \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right)^{n+1} \cdot \boldsymbol{n} dS + \int_{V_i} q^{n+1} dV = 0
+
+where :math:`\Delta t = t_{n+1}-t_n` is the time-step.
+By summing over the whole domain we obtain the full discrete schemes which reads
+
+.. math::
+   \sum_{V_i \in \Omega} \int_{V_i} \frac{(\phi\rho)_i^{n+1} - (\phi\rho)_i^n}{\Delta t} + \oint_{S_i} \nabla \left(\frac{\rho \boldsymbol{k}}{\mu}(\nabla p -\gamma \nabla z)\right)^{n+1} \cdot \boldsymbol{n} dS + \int_{V_i} q^{n+1} dV = 0
+
+
 Usage
 =========================
 
