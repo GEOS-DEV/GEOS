@@ -547,7 +547,6 @@ set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )
 
 endif()
 
-
 ################################
 # HYPRE
 ################################
@@ -590,8 +589,6 @@ blt_register_library( NAME hypre
 set( thirdPartyLibs ${thirdPartyLibs} hypre )  
 
 endif()
-
-
 
 #if (UNCRUSTIFY_EXECUTABLE)
 #  include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
