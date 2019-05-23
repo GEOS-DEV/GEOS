@@ -33,8 +33,6 @@ extern "C"
 namespace geosx
 {
 
-//-------------------------------------------------------Mathematical methods---
-
 real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
   int const INCX = 1;
@@ -690,30 +688,6 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
           &INCY );
 
   return;
-}
-
-//----------------------------------------------------------------I/O methods---
-// vector nice output
-void BlasLapackLA::printVector( array1d<real64> const & X )
-{
-  for( int i = 0 ; i < X.size() ; ++i )
-  {
-    printf( "%10.2e ", X[i] );
-    printf( "\n" );
-  }
-}
-
-// vector nice output
-void BlasLapackLA::printMatrix( array2d<real64> const & A )
-{
-  for( int i = 0 ; i < A.size( 0 ) ; ++i )
-  {
-    for( int j = 0 ; j < A.size( 1 ) ; ++j )
-    {
-      printf( "%10.2e ", A( i, j ) );
-    }
-    printf( "\n" );
-  }
 }
 
 } // end geosx namespace
