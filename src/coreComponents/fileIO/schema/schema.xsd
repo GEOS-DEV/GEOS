@@ -187,9 +187,36 @@
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="SourceFluxType">
+		<!--setNames = Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--objectPath = Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--fieldName = Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" default="" />
+		<!--component = Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" default="0" />
+		<!--direction = Direction to apply boundary condition to-->
+		<xsd:attribute name="direction" type="R1Tensor" default="0 0 0" />
+		<!--functionName = Name of function that specifies variation of the BC-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--bcApplicationTableName = Name of table that specifies the on/off application of the bc.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--scale = Scale factor for value of BC.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--initialCondition = BC is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--beginTime = time at which BC will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--endTime = time at which bc will stop being applied-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--name = A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType">
 		<!--setNames = Name of sets that boundary condition is applied to.-->
