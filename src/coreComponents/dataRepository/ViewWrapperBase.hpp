@@ -393,6 +393,17 @@ public:
     return this;
   }
 
+  std::vector<string> const & getRegisteringObjects() const
+  {
+    return m_registeringObjects;
+  }
+
+  ViewWrapperBase * setRegisteringObjects( string const & objectName )
+  {
+    m_registeringObjects.push_back( objectName );
+    return this;
+  }
+
   /**
    *
    * @return
@@ -426,6 +437,8 @@ private:
 
   /// a string description of the wrapped object
   string m_description;
+
+  std::vector<string> m_registeringObjects;
 
   #ifdef GEOSX_USE_ATK
   /// a pointer to the corrosponding sidre view
