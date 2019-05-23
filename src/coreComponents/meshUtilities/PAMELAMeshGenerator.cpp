@@ -85,6 +85,7 @@ ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string
 
 void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
+  GEOS_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
