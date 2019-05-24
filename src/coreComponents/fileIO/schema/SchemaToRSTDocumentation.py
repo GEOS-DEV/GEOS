@@ -2,7 +2,14 @@
 import os
 import re
 import numpy as np
-from lxml import etree
+from xml.etree import ElementTree as etree
+
+
+class TreeBuilderWithComments(etree.TreeBuilder):
+  def comment(self, data):
+    self.start(etree.Comment, {})
+    self.data(data)
+    self.end(etree.Comment)
 
 
 def writeTableRST(file_name, values):
@@ -66,8 +73,8 @@ def parseSchemaNode(node, link_string='XML', include_defaults=True):
 
   # Parse comments
   attribute_comments = {}
-  for comment_node in child_node.iterchildren(etree.Comment):
-    tmp = str(comment_node)[4:-3].split(' = ', 1)
+  for comment_node in child_node.iter(etree.Comment):
+    tmp = comment_node.text.split(' = ', 1)
     attribute_comments[tmp[0]] = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
 
   # Parse attributes
@@ -136,7 +143,8 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
   output_handle.write('Input Schema Definitions\n')
   output_handle.write('********************************\n\n')
 
-  include_tree = etree.parse(schema_name)
+  parser = etree.XMLParser(target=TreeBuilderWithComments())
+  include_tree = etree.parse(schema_name, parser=parser)
   include_root = include_tree.getroot()
 
   for child_node in include_root.findall(xsd + 'complexType'):
