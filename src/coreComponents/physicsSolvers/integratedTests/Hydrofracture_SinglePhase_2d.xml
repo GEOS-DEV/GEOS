@@ -40,7 +40,7 @@
                      solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"
-                              newtonTol="1.0e-8"
+                              newtonTol="1.0e-5"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
     
@@ -56,10 +56,10 @@
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
                   xCoords="-1, 1"
-                  yCoords="0, 1"
+                  yCoords="0, 2"
                   zCoords="0, 1"
                   nx="2"
-                  ny="1"
+                  ny="2"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
@@ -132,20 +132,22 @@
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
-      <PoroLinearElasticIsotropic name="rock"
-                              defaultDensity="2700"
-                              defaultBulkModulus="61.9e6"
-                              defaultShearModulus="28.57e6"
-                              BiotCoefficient="1"
-                              compressibility="1.6155088853e-08"
-                              referencePressure="2.125e6"
-                              />
+    <PoroLinearElasticIsotropic name="rock"
+                                defaultDensity="2700"
+                                defaultBulkModulus="61.9e6"
+                                defaultShearModulus="28.57e6"
+                                BiotCoefficient="1"
+                                compressibility="1.6155088853e-18"
+                                referencePressure="2.125e6"
+                                />
   </Constitutive>
 
   <InitialConditions>
@@ -153,6 +155,13 @@
   </InitialConditions>
 
   <FieldSpecifications>
+
+    <FieldSpecification name="waterDensity"
+               initialCondition="1"
+               setNames="fracture"
+               objectPath="ElementRegions"
+               fieldName="water_density"
+               scale="1000"/>
 
     <FieldSpecification name="frac"
                initialCondition="1"
@@ -202,7 +211,7 @@
     <FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="1.0e7"
+               scale="1.0e6"
                setNames="source"/>
   </FieldSpecifications>
 

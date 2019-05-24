@@ -79,6 +79,12 @@ void ViewWrapperBase::resize()
   resize(m_parent->size());
 }
 
+void ViewWrapperBase::CopyWrapperAttributes( ViewWrapperBase const & source )
+{
+  m_name = source.m_name;
+  m_sizedFromParent = source.m_sizedFromParent;
+  m_restart_flags = source.m_restart_flags;
+}
 
 }
 } /* namespace geosx */

@@ -72,7 +72,8 @@ public:
                         ManagedGroup * const parent ):
     ViewWrapperBase(name, parent),
     m_ownsData( true ),
-    m_data( new T() )
+    m_data( new T() ),
+    m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -90,7 +91,8 @@ public:
                         std::unique_ptr<T> object ):
     ViewWrapperBase(name, parent),
   m_ownsData( true ),
-  m_data( object.release() )
+  m_data( object.release() ),
+  m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -110,7 +112,8 @@ public:
                         bool takeOwnership):
     ViewWrapperBase(name,parent),
     m_ownsData( takeOwnership ),
-    m_data( object )
+    m_data( object ),
+    m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -135,7 +138,9 @@ public:
    */
   ViewWrapper( ViewWrapper const & source ):
     ViewWrapperBase("copy_constructor_test", nullptr),
-    m_data(source.m_data)
+    m_ownsData(source.m_ownsData),
+    m_data(source.m_data),
+    m_default(source.m_default)
   {}
 
   /**
@@ -144,7 +149,9 @@ public:
    */
   ViewWrapper( ViewWrapper&& source ):
     ViewWrapperBase(source),
-    m_data( std::move(source.m_data) )
+    m_ownsData(source.m_ownsData),
+    m_data( std::move(source.m_data) ),
+    m_default( source.m_default )
   {}
 
   /**
@@ -192,9 +199,19 @@ public:
   {
     std::unique_ptr<ViewWrapperBase>
     clonedWrapper = std::make_unique<ViewWrapper<T> >( name, parent, this->m_data, false );
+    clonedWrapper->CopyWrapperAttributes( *this );
 
     return clonedWrapper;
   }
+
+  virtual void CopyWrapperAttributes( ViewWrapperBase const & source ) override
+  {
+    ViewWrapperBase::CopyWrapperAttributes( source );
+    ViewWrapper<T> const & castedSource = *cast(&source);
+    m_ownsData = castedSource.m_ownsData;
+    m_default = castedSource.m_default;
+  }
+
 
   virtual const std::type_info& get_typeid() const noexcept override final
   {

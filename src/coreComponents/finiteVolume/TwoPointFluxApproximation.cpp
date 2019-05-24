@@ -166,11 +166,90 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 }
 
 
-//void TwoPointFluxApproximation::addToFractureStencil( CellStencil & fractureStencil,
-//                                                      CellStencil & cellStencil )
-//{
-//
-//}
+void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & domain,
+                                                      string const & faceElementRegionName )
+{
+  MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  EdgeManager const * const edgeManager = mesh->getEdgeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
+  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
+                                                                                               viewKeyStruct::
+                                                                                               elementCenterString);
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor> > const
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
+
+  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
+
+  CellStencil & fractureStencil = getReference<CellStencil>(viewKeyStruct::fractureStencilString);
+  CellStencil & cellStencil     = getStencil();
+
+  FaceElementRegion const * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(faceElementRegionName);
+  localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
+
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>("default");
+  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+
+  array1d<localIndex> const &
+  fractureConnectorIndices = fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::
+                                                                                   viewKeyStruct::
+                                                                                   fractureConnectorToEdgeMapString );
+
+  array1d<array1d<localIndex> > const &
+  fractureConnectors = fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::
+                                                                                      viewKeyStruct::
+                                                                                      fractureElementConnectorString );
+
+  FixedToManyElementRelation const &
+  fractureCellConnectors = fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::
+                                                                                       viewKeyStruct::
+                                                                                       fractureToCellConnectorString );
+
+  arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
+
+  localIndex constexpr maxElems = CellStencil::MAX_STENCIL_SIZE;
+
+  stackArray1d<CellDescriptor, maxElems> stencilCells;
+  stackArray1d<real64, maxElems> stencilWeights;
+
+  for( auto const fci : fractureRegion->m_recalculateConnectors )
+  {
+    localIndex const numElems = fractureConnectors[fci].size();
+    if( numElems > 1 )
+    {
+      localIndex const edgeIndex = fractureConnectorIndices[fci];
+
+      GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
+      stencilCells.resize(numElems);
+      stencilWeights.resize(numElems);
+
+        R1Tensor edgeCenter, edgeLength;
+        edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
+        edgeManager->calculateLength( edgeIndex, X, edgeLength );
+
+      for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
+      {
+        localIndex const fractureElementIndex = fractureConnectors[fci][kfe];
+        R1Tensor cellCenterToEdgeCenter = edgeCenter;
+        cellCenterToEdgeCenter -= faceCenter[ faceMap[fractureElementIndex][0] ];
+        stencilCells[kfe] = { fractureRegionIndex, 0, fractureElementIndex };
+        // TODO stenciWeights will mean something else once you take out the aperture.
+        // We won't be doing the harmonic mean here...etc.
+        stencilWeights[kfe] = pow( -1 , kfe ) * pow( aperture[fractureElementIndex], 3) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+      }
+      fractureStencil.add(2, stencilCells.data(), stencilWeights.data(), fci );
+    }
+  }
+
+}
 
 void TwoPointFluxApproximation::computeFractureStencil( DomainPartition const & domain,
                                                         CellStencil & fractureStencil,

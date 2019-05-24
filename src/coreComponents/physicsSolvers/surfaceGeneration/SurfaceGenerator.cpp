@@ -25,6 +25,9 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
@@ -240,7 +243,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      real64 const & dt,
                                      const int cycleNumber,
-                                     DomainPartition * domain )
+                                     DomainPartition * const domain )
 {
   int rval = 0;
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
@@ -265,6 +268,22 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                time_n );
     }
   }
+
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
+
+  for( localIndex a=0 ; a<fvManager->numSubGroups() ; ++a )
+  {
+    FluxApproximationBase * const fluxApprox = fvManager->GetGroup<FluxApproximationBase>(a);
+    if( fluxApprox!=nullptr )
+    {
+      fluxApprox->addToFractureStencil( *domain, this->m_fractureRegionName );
+    }
+  }
+
   return rval;
 }
 
@@ -427,6 +446,9 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
 //    CalculateKinkAngles(faceManager, edgeManager, nodeManager, modifiedObjects, false);
 //    MarkBirthTime(faceManager, modifiedObjects, time);
   }
+
+
+
 
   return rval;
 }
