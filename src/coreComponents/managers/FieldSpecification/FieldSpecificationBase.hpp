@@ -752,6 +752,31 @@ public:
   real64 GetScale() const
   { return m_scale; }
 
+  void SetFieldName( string const & fieldName )
+  {
+    m_fieldName = fieldName;
+  }
+
+  void SetObjectPath( string const & objectPath )
+  {
+    m_objectPath = objectPath;
+  }
+
+  void SetScale( real64 const & scale )
+  {
+    m_scale = scale;
+  }
+
+  void InitialCondition( bool isInitialCondition)
+  {
+    m_initialCondition = isInitialCondition;
+  }
+
+  void AddSetName( string const & setName )
+  {
+    m_setNames.push_back( setName );
+  }
+
 
 protected:
   void PostProcessInput() override final;

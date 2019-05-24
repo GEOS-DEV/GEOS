@@ -1,11 +1,10 @@
 
 
-=============== =========================================== ==================================== 
-Name            Type                                        Description                          
-=============== =========================================== ==================================== 
-cellStencil     StencilCollection< CellDescriptor, double > (no description available)           
-fractureStencil StencilCollection< CellDescriptor, double > (no description available)           
-BoundarySetData node                                        :ref:`DATASTRUCTURE_BoundarySetData` 
-=============== =========================================== ==================================== 
+=============== ===================================== ========================== 
+Name            Type                                  Description                
+=============== ===================================== ========================== 
+cellStencil     FluxStencil< CellDescriptor, double > (no description available) 
+fractureStencil FluxStencil< CellDescriptor, double > (no description available) 
+=============== ===================================== ========================== 
 
 
