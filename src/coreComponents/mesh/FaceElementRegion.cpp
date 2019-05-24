@@ -84,6 +84,8 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   localIndex const kfe = subRegion->size() - 1;
 
+  m_newFractureElements.insert(kfe);
+
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
 
@@ -117,12 +119,17 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   for( auto const & edge : connectedEdges )
   {
-    if( m_edgesToFractureConnectors[edge] > 0 )
+    if( m_edgesToFractureConnectors.count(edge)==0 )
     {
-      localIndex const connectorIndex = m_edgesToFractureConnectors[edge];
-      m_fractureElementConnectors[connectorIndex].resize( m_fractureElementConnectors[connectorIndex].size() + 1 );
-      m_fractureElementConnectors[connectorIndex][m_fractureElementConnectors[connectorIndex].size()] = kfe;
+      m_fractureElementConnectors.push_back({});
+      m_fractureConnectorsToEdges.push_back(edge);
+      m_edgesToFractureConnectors[edge] = m_fractureConnectorsToEdges.size()-1;
     }
+    localIndex const connectorIndex = m_edgesToFractureConnectors[edge];
+    localIndex const numCells = m_fractureElementConnectors[connectorIndex].size() + 1;
+    m_fractureElementConnectors[connectorIndex].resize( numCells );
+    m_fractureElementConnectors[connectorIndex][ numCells-1 ] = kfe;
+    m_recalculateConnectors.insert( connectorIndex );
   }
 
 

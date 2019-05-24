@@ -119,6 +119,10 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
 
+  virtual void addToFractureStencil( DomainPartition const & domain,
+                                     string const & faceElementRegionName ) {}
+
+
   struct viewKeyStruct
   {
     static constexpr auto fieldNameString             = "fieldName";
