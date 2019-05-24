@@ -1,3 +1,5 @@
+.. _2_ImportingExternalMesh:
+
 ###############################
 Importing external meshes
 ###############################
