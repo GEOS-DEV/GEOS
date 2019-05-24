@@ -77,7 +77,7 @@ protected:
     "                discretization=\"FE1\""
     "                timeIntegrationOption=\"SteadyState\""
     "                fieldName=\"Temperature\""
-    "                verboseLevel=\"2\""
+    "                verboseLevel=\"0\""
     "                targetRegions=\"Region1\">"
     "    </LaplaceFEM>"
     "  </Solvers>"
