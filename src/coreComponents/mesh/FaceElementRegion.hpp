@@ -45,6 +45,9 @@ public:
     static constexpr auto fractureCellConnectorIndicesString = "fractureCellConnectorIndices";
   };
 
+  set< localIndex > m_recalculateConnectors;
+  set< localIndex > m_newFractureElements;
+
 private:
   string_array m_fractureSetNames;
 
@@ -53,6 +56,7 @@ private:
   array1d< array1d<localIndex> > m_fractureElementConnectors;
   array1d<localIndex > m_fractureCellConnectorIndices;
   FixedToManyElementRelation m_fractureToCellConnectors;
+
 };
 
 } /* namespace geosx */
