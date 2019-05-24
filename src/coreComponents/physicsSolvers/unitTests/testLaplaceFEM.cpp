@@ -46,6 +46,8 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/EventManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
@@ -67,10 +69,143 @@ protected:
 
   static void SetUpTestCase()
   {
+    string const inputStream =
+    "<?xml version=\"1.0\" ?>"
+    "<Problem xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+    "  <Solvers>"
+    "    <LaplaceFEM name=\"laplace\""
+    "                discretization=\"FE1\""
+    "                timeIntegrationOption=\"SteadyState\""
+    "                fieldName=\"Temperature\""
+    "                verboseLevel=\"2\""
+    "                targetRegions=\"Region1\">"
+    "    </LaplaceFEM>"
+    "  </Solvers>"
+    "  <Mesh>"
+    "    <InternalMesh name=\"mesh1\""
+    "                  elementTypes=\"C3D8\""
+    "                  xCoords=\"0, 1\""
+    "                  yCoords=\"0, 1\""
+    "                  zCoords=\"0, 1\""
+    "                  nx=\"10\""
+    "                  ny=\"10\""
+    "                  nz=\"10\""
+    "                  cellBlockNames=\"cb1\" />"
+    "  </Mesh>"
+    "  <Events maxTime=\"1.0\">"
+    "    <!-- This event is applied every cycle, and overrides the solver time-step request -->"
+    "    <PeriodicEvent name=\"solverApplications\""
+    "                   forceDt=\"1.0\""
+    "                   target=\"/Solvers/laplace\" />"
+    "    <!-- This event is applied every 1.0s.  The targetExactTimestep flag allows this event"
+    "    to request a dt modification to match an integer multiple of the timeFrequency. -->"
+    "    <PeriodicEvent name=\"outputs\""
+    "                   timeFrequency=\"1.0\""
+    "                   targetExactTimestep=\"1\""
+    "                   target=\"/Outputs/siloOutput\" />"
+    "  </Events>"
+    "  <NumericalMethods>"
+    "    <BasisFunctions>"
+    "      <LagrangeBasis3 name=\"linearBasis\" degree=\"1\" />"
+    "    </BasisFunctions>"
+    "    <QuadratureRules>"
+    "      <GaussQuadrature3 name=\"gaussian\" degree=\"2\" />"
+    "    </QuadratureRules>"
+    "    <FiniteElements>"
+    "      <FiniteElementSpace name=\"FE1\" basis=\"linearBasis\" quadrature=\"gaussian\" />"
+    "    </FiniteElements>"
+    "  </NumericalMethods>"
+    "  <ElementRegions>"
+    "    <ElementRegion name=\"Region1\" cellBlocks=\"cb1\" materialList=\"shale\" />"
+    "  </ElementRegions>"
+    "  <Constitutive>"
+    "    <LinearElasticIsotropic name=\"granite\""
+    "                            defaultDensity=\"2700\""
+    "                            defaultBulkModulus=\"5.5556e9\""
+    "                            defaultShearModulus=\"4.16667e9\" />"
+    "    <LinearElasticIsotropic name=\"shale\""
+    "                            defaultDensity=\"2700\""
+    "                            defaultBulkModulus=\"5.5556e9\""
+    "                            defaultShearModulus=\"4.16667e9\" />"
+    "  </Constitutive>"
+    "  <FieldSpecifications>"
+    "    <FieldSpecification name=\"sourceTerm\""
+    "                        fieldName=\"Temperature\""
+    "                        objectPath=\"nodeManager\""
+    "                        scale=\"1000.0\""
+    "                        setNames=\"source\" />"
+    "    <FieldSpecification name=\"sinkTerm\""
+    "                        fieldName=\"Temperature\""
+    "                        objectPath=\"nodeManager\""
+    "                        scale=\"0.0\""
+    "                        setNames=\"sink\" />"
+    "  </FieldSpecifications>"
+    "  <Functions>"
+    "    <TableFunction name=\"timeFunction\""
+    "                   inputVarNames=\"time\""
+    "                   coordinates=\"0.0 1.0e-6 2.0e-6 1.0e9\""
+    "                   values=\"0.0 1.0 1.0 1.0\" />"
+    "    <SymbolicFunction name=\"spaceFunction\""
+    "                      inputVarNames=\"ReferencePosition\""
+    "                      variableNames=\"x y z\""
+    "                      expression=\"sqrt(pow(x,2)+pow(y,2)+pow(z,2))\" />"
+    "  </Functions>"
+    "  <Outputs>"
+    "    <Silo name=\"siloOutput\" parallelThreads=\"32\" plotFileRoot=\"plot\" />"
+    "  </Outputs>"
+    "  <Geometry>"
+    "    <Box name=\"source\" xMin=\"-0.01, -0.01, -0.01\" xMax=\"+0.01, +1.01, +1.01\" />"
+    "    <Box name=\"sink\"   xMin=\"+0.99, -0.01, -0.01\" xMax=\"+1.01, +1.01, +1.01\" />"
+    "  </Geometry>"
+    "</Problem>";
+
+    xmlWrapper::xmlDocument xmlDocument;
+    xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
+    if (!xmlResult)
+    {
+      GEOS_LOG_RANK_0("XML parsed with errors!");
+      GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
+      GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+    }
+
+    dataRepository::ManagedGroup * commandLine =
+      problemManager.GetGroup<dataRepository::ManagedGroup>( problemManager.groupKeys.commandLine );
+    commandLine->RegisterViewWrapper<integer>( problemManager.viewKeys.zPartitionsOverride.Key() )->
+      setApplyDefaultValue(mpiSize);
+
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+    problemManager.InitializePythonInterpreter();
+    problemManager.ProcessInputFileRecursive( xmlProblemNode );
+
+    // The objects in domain are handled separately for now
+    DomainPartition * domain  = problemManager.getDomainPartition();
+    constitutive::ConstitutiveManager *
+    constitutiveManager = domain->GetGroup<constitutive::ConstitutiveManager>( problemManager.groupKeys.constitutiveManager );
+    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child(constitutiveManager->getName().c_str());
+    constitutiveManager->ProcessInputFileRecursive( topLevelNode );
+    constitutiveManager->PostProcessInputRecursive();
+
+    // Open mesh levels
+    MeshManager * meshManager = problemManager.GetGroup<MeshManager>( problemManager.groupKeys.meshManager );
+    meshManager->GenerateMeshLevels(domain);
+
+    ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+    topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
+    elementManager->ProcessInputFileRecursive( topLevelNode );
+    elementManager->PostProcessInputRecursive();
+
+    problemManager.ProblemSetup();
+
+    /////////////////////////////
+    /////////////////////////////
+    /*
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput( global_argc, global_argv );
     problemManager.ParseInputFile();
     problemManager.ProblemSetup();
+    */
+    /////////////////////////////
+    /////////////////////////////
 
     solver = problemManager.GetPhysicsSolverManager().GetGroup<LaplaceFEM>( "laplace" );
   }
@@ -91,6 +226,7 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
 {
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
 
+  string const fieldName = "Temperature";
   real64 const time = 1.0;
   real64 const dt = 1.0;
   real64 const scalingFactor = 1.0;
@@ -99,7 +235,7 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   DomainPartition * domain = problemManager.getDomainPartition();
 
   // Create and solve the problem
-  LaplaceFEM laplaceFEM( "Temperature", domain );
+  LaplaceFEM laplaceFEM( fieldName, domain );
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
   solver->ImplicitStepSetup( time, dt, domain, system );
   solver->AssembleSystem( domain, system, time, dt );
@@ -116,7 +252,7 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   // Get solution
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
-  real64_array & fieldVar = nodeManager->getReference<real64_array>(string("Temperature"));
+  real64_array & fieldVar = nodeManager->getReference<real64_array>( fieldName );
 
   // Compute relative error
   real64 xMin = 0.0;
@@ -198,9 +334,8 @@ int main(int argc, char** argv)
 
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
 
-  MPI_Comm_rank(MPI_COMM_GEOSX, &mpiRank);
-
-  MPI_Comm_size(MPI_COMM_GEOSX, &mpiSize);
+  mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+  mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
 
   logger::InitializeLogger(MPI_COMM_GEOSX);
 #else
