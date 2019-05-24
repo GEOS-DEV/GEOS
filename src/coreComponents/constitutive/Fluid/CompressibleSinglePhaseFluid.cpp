@@ -106,20 +106,24 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
                                             ManagedGroup * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  std::unique_ptr<CompressibleSinglePhaseFluid> newFluid =
-    std::make_unique<CompressibleSinglePhaseFluid>( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique<CompressibleSinglePhaseFluid>( name, parent );
+  }
+  SingleFluidBase::DeliverClone( name, parent, clone );
+  CompressibleSinglePhaseFluid * const newConstitutiveRelation = dynamic_cast<CompressibleSinglePhaseFluid *>(clone.get());
 
-  newFluid->m_compressibility      = this->m_compressibility;
-  newFluid->m_viscosibility        = this->m_viscosibility;
-  newFluid->m_referencePressure    = this->m_referencePressure;
-  newFluid->m_referenceDensity     = this->m_referenceDensity;
-  newFluid->m_referenceViscosity   = this->m_referenceViscosity;
-  newFluid->m_densityModelString   = this->m_densityModelString;
-  newFluid->m_viscosityModelString = this->m_viscosityModelString;
-  newFluid->m_densityModelType     = this->m_densityModelType;
-  newFluid->m_viscosityModelType   = this->m_viscosityModelType;
 
-  clone = std::move(newFluid);
+  newConstitutiveRelation->m_compressibility      = this->m_compressibility;
+  newConstitutiveRelation->m_viscosibility        = this->m_viscosibility;
+  newConstitutiveRelation->m_referencePressure    = this->m_referencePressure;
+  newConstitutiveRelation->m_referenceDensity     = this->m_referenceDensity;
+  newConstitutiveRelation->m_referenceViscosity   = this->m_referenceViscosity;
+  newConstitutiveRelation->m_densityModelString   = this->m_densityModelString;
+  newConstitutiveRelation->m_viscosityModelString = this->m_viscosityModelString;
+  newConstitutiveRelation->m_densityModelType     = this->m_densityModelType;
+  newConstitutiveRelation->m_viscosityModelType   = this->m_viscosityModelType;
+
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()
