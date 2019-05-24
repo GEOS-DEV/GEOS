@@ -543,6 +543,92 @@ void testMatrixMatrixOperations()
   EXPECT_DOUBLE_EQ( a * a, b );
 }
 
+//---------------------------
+// Test matrix-matrix product
+//---------------------------
+// Currently just test matrix-matrix multiply, but eventually
+// should include add and other level-III operations
+template<typename LAI>
+void testMatrixMatrixProduct()
+{
+  using ParallelMatrix = typename LAI::ParallelMatrix;
+
+  globalIndex n = 100;
+  globalIndex N = n * n;
+
+  ParallelMatrix A = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
+  ParallelMatrix B = computeIdentity<LAI>( MPI_COMM_WORLD, N );
+  ParallelMatrix C;
+  C.createWithGlobalSize( N, N, MPI_COMM_WORLD );
+
+  // C = A * B
+  A.MatrixMatrixMultiply( false, B, false, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = A^T * B
+  A.MatrixMatrixMultiply( true, B, false, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = A * B^T
+  A.MatrixMatrixMultiply( false, B, true, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = A^T * B^T
+  A.MatrixMatrixMultiply( true, B, true, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = B * A
+  B.MatrixMatrixMultiply( false, A, false, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = B^T * A
+  B.MatrixMatrixMultiply( true, A, false, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = B * A^T
+  B.MatrixMatrixMultiply( false, A, true, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // C = B^T * A^T
+  B.MatrixMatrixMultiply( true, A, true, C );
+
+  EXPECT_DOUBLE_EQ( A.norm1(), C.norm1() );
+  EXPECT_DOUBLE_EQ( A.normInf(), C.normInf() );
+  EXPECT_DOUBLE_EQ( A.normFrobenius(), C.normFrobenius() );
+
+  // We need a new matrix, because in previous products, the pattern was constant
+  // (the same as A), but now it is increasing.
+  ParallelMatrix D;
+  D.createWithGlobalSize( N, N, MPI_COMM_WORLD );
+
+  // D = A^T * A
+  A.MatrixMatrixMultiply( true, A, false, D );
+
+  EXPECT_DOUBLE_EQ( pow(A.norm1(), 2), D.norm1() );
+  EXPECT_DOUBLE_EQ( pow(A.normInf(), 2), D.normInf() );
+}
+
 //-----------------------------------
 // Test rectangular matrix operations
 //-----------------------------------
@@ -612,6 +698,7 @@ TEST(testLAOperations,testEpetraLAOperations)
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
   testMatrixMatrixOperations<TrilinosInterface>();
+  testMatrixMatrixProduct<TrilinosInterface>();
   testRectangularMatrixOperations<TrilinosInterface>();
   MPI_Finalize();
 }
