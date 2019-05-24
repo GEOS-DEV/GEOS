@@ -48,6 +48,7 @@ Currently supported constitutive models are:
   * Relative permeability
 
     * :doc:`/coreComponents/constitutive/docs/BrooksCoreyRelativePermeability`
+    * :doc:`/coreComponents/constitutive/docs/ThreePhaseRelativePermeability`
 
   * Capillary pressure
 
