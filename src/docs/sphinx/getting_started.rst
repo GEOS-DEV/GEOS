@@ -7,7 +7,7 @@ Getting Started with GEOSX
 Getting Ready
 =================================
 GEOSX resides in a git repository hosted at https://github.com/GEOSX/GEOSX.
-It is suggested that you setup ssh keys, and use ssh for your clones as discussed 
+It is suggested that you setup ssh keys, and use ssh for your clones as discussed
 `here <https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/>`__.
 It is suggested that a directory be created to host the various clones that one may require for an effective development workflow, so the first step is to make a directory
 
@@ -21,20 +21,16 @@ It is suggested that a directory be created to host the various clones that one 
 Downloading the Code
 =================================
 There are currently two separate repositories that should be downloaded.
-The first is the main repository, which may be cloned and initialized by the following steps: 
+The first is the main repository, which may be cloned and initialized by the following steps:
 
 2. Clone the main repository
 
 .. code-block:: sh
 
    git clone git@github.com:GEOSX/GEOSX.git
-   
    cd GEOSX
-   
    git submodule init
-   
    git submodule update
-   
    cd ..
 
 
@@ -70,7 +66,7 @@ Note that the 'make' step should be run serially, as the indiviudal package buil
    make hdf5
    make -j1
 
-The next step is to compile the main code. 
+The next step is to compile the main code.
 Again, the config-build sets up cmake for you.
 
 5. Configure and make the main code
@@ -82,12 +78,12 @@ Again, the config-build sets up cmake for you.
    cd build-your-platform-release
    make -j4
 
-   
+
 Running the Code
 =================================
 
 GEOSX executables read in a XML input file. A simple example XML is located
-`here <https://github.com/GEOSX/GEOSX/blob/develop/src/components/core/tests/PhysicsSolvers/LaplaceFEM.xml/>`__. 
+`here <https://github.com/GEOSX/GEOSX/blob/develop/src/components/core/tests/PhysicsSolvers/LaplaceFEM.xml/>`__.
 To execute a serial run enter the following command from a working directory:
 
 .. code-block:: sh
