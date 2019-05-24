@@ -11,12 +11,14 @@ GEOSX is a simulation platform focused on providing streamlined development of H
 
    docs/sphinx/getting_started
 
+   docs/sphinx/Tutorials/Tutorials_list
+
    docs/sphinx/UserGuide/UserGuide
 
    docs/sphinx/DeveloperGuide/DeveloperGuide
-   
+
    docs/sphinx/MiniApps/MiniApps
-   
+
    docs/sphinx/CompleteXMLSchema
 
    docs/sphinx/CompleteDatastructure
@@ -24,7 +26,7 @@ GEOSX is a simulation platform focused on providing streamlined development of H
    docs/sphinx/authors
 
    docs/sphinx/publications
-   
+
    docs/sphinx/acknowledgements
 
 Indices and tables
