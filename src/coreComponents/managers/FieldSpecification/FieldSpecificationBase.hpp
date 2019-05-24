@@ -52,7 +52,7 @@ struct FieldSpecificationEqual
    * This function performs field[index] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                      localIndex const index,
                      int const component,
@@ -73,7 +73,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                      localIndex const index,
                      int const component,
@@ -94,7 +94,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
@@ -125,7 +125,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                 localIndex const index,
                 int const component,
@@ -158,7 +158,7 @@ struct FieldSpecificationEqual
    * This function performs field[index] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
@@ -185,7 +185,7 @@ struct FieldSpecificationEqual
    * This function performs field[index][component] = value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
                 localIndex const index,
                 int const component,
@@ -315,7 +315,7 @@ struct FieldSpecificationAdd
    * This function performs field[index] += value.
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
@@ -336,7 +336,7 @@ struct FieldSpecificationAdd
    * This function performs field[index][component] += value.
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
                 localIndex const index,
                 int const component,
@@ -356,7 +356,7 @@ struct FieldSpecificationAdd
    * This function performs field[index] += value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< !traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                      localIndex const index,
                      int const component,
@@ -380,7 +380,7 @@ struct FieldSpecificationAdd
    * This function performs field[index][component] += value for all values of field[index].
    */
   template< typename T >
-  static inline typename std::enable_if< traits::is_tensorT<T>::value, void>::type
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
                      localIndex const index,
                      int const component,
@@ -499,6 +499,11 @@ public:
 
   static string CatalogName() { return "FieldSpecification"; }
 
+  virtual const string getCatalogName() const 
+  {
+    return FieldSpecificationBase::CatalogName();
+  }
+  
   /**
    * @}
    */
@@ -562,6 +567,7 @@ public:
    */
   template< typename FIELD_OP >
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                       bool normalizeBySetSize,
                                        real64 const time,
                                        dataRepository::ManagedGroup * dataGroup,
                                        string const & fieldName,
@@ -598,6 +604,7 @@ public:
   template< typename FIELD_OP, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                  bool normalizeBySetSize,
                                   real64 const time,
                                   dataRepository::ManagedGroup * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
@@ -606,7 +613,21 @@ public:
                                   systemSolverInterface::BlockIDs const blockID,
                                   LAMBDA && lambda ) const;
 
-  // calls user-provided lambda to apply computed boundary value
+
+  template< typename FIELD_OP, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                  bool normalizeBySetSize,
+                                  real64 const time,
+                                  real64 const dt,
+                                  dataRepository::ManagedGroup * dataGroup,
+                                  arrayView1d<globalIndex const> const & dofMap,
+                                  integer const & dofDim,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                  systemSolverInterface::BlockIDs const blockID,
+                                  LAMBDA && lambda ) const;
+
+// calls user-provided lambda to apply computed boundary value
 //  template<typename LAMBDA>
 //  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
 //                               real64 const time,
@@ -886,14 +907,16 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
 
 template< typename FIELD_OP >
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                                            real64 const time,
-                                                            dataRepository::ManagedGroup * dataGroup,
-                                                            string const & fieldName,
-                                                            string const & dofMapName,
-                                                            integer const & dofDim,
-                                                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                            systemSolverInterface::BlockIDs const blockID ) const
+void FieldSpecificationBase::
+ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                bool normalizeBySetSize,
+                                real64 const time,
+                                dataRepository::ManagedGroup * dataGroup,
+                                string const & fieldName,
+                                string const & dofMapName,
+                                integer const & dofDim,
+                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                systemSolverInterface::BlockIDs const blockID ) const
 {
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
   std::type_index typeIndex = std::type_index( vw->get_typeid());
@@ -907,7 +930,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
       dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
       fieldType & field = view.reference();
 
-      this->ApplyBoundaryConditionToSystem<FIELD_OP>( targetSet, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
+      this->ApplyBoundaryConditionToSystem<FIELD_OP>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
         [&]( localIndex const a )->real64
         {
           return static_cast<real64>(rtTypes::value( field[a], component ));
@@ -921,7 +944,34 @@ template< typename FIELD_OP, typename LAMBDA >
 void
 FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                bool normalizeBySetSize,
                                 real64 const time,
+                                dataRepository::ManagedGroup * dataGroup,
+                                arrayView1d<globalIndex const> const & dofMap,
+                                integer const & dofDim,
+                                systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                systemSolverInterface::BlockIDs const blockID,
+                                LAMBDA && lambda ) const
+{
+  ApplyBoundaryConditionToSystem<FIELD_OP,LAMBDA>( targetSet,
+                                                   normalizeBySetSize,
+                                                   time,
+                                                   1.0,
+                                                   dataGroup,
+                                                   dofMap,
+                                                   dofDim,
+                                                   blockSystem,
+                                                   blockID,
+                                                   std::forward<LAMBDA&&>(lambda) );
+}
+
+template< typename FIELD_OP, typename LAMBDA >
+void
+FieldSpecificationBase::
+ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                bool normalizeBySetSize,
+                                real64 const time,
+                                real64 const dt,
                                 dataRepository::ManagedGroup * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
                                 integer const & dofDim,
@@ -938,7 +988,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
   globalIndex_array  dof( targetSet.size() );
   real64_array     rhsContribution( targetSet.size() );
-
+  real64 const setSizeFactor = normalizeBySetSize ? 1.0/targetSet.size() : 1.0;
   if( functionName.empty() )
   {
 
@@ -947,11 +997,11 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     {
       dof( counter ) = dofDim*dofMap[a]+component;
       FIELD_OP::SpecifyFieldValue( dof( counter ),
-                           blockSystem,
-                           blockID,
-                           rhsContribution( counter ),
-                           m_scale,
-                           lambda( a ) );
+                                   blockSystem,
+                                   blockID,
+                                   rhsContribution( counter ),
+                                   m_scale * dt * setSizeFactor,
+                                   lambda( a ) );
       ++counter;
     }
     FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -964,17 +1014,17 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * function->Evaluate( &time );
+      real64 value = m_scale * dt * function->Evaluate( &time ) * setSizeFactor;
       integer counter=0;
       for( auto a : targetSet )
       {
         dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
         FIELD_OP::SpecifyFieldValue( dof( counter ),
-                             blockSystem,
-                             blockID,
-                             rhsContribution( counter ),
-                             value,
-                             lambda( a ) );
+                                     blockSystem,
+                                     blockID,
+                                     rhsContribution( counter ),
+                                     value,
+                                     lambda( a ) );
         ++counter;
       }
       FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -992,7 +1042,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                              blockSystem,
                              blockID,
                              rhsContribution( counter ),
-                             m_scale*result[counter],
+                             m_scale * dt * result[counter] * setSizeFactor,
                              lambda( a ) );
         ++counter;
       }

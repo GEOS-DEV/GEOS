@@ -20,10 +20,6 @@
 #ifndef __TABLE__
 #define __TABLE__
 
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include <vector>
@@ -71,9 +67,7 @@ public:
         for( int j = 0; j < x[i].size(); j++)
         {
           if(x[i][j] <= xlast) {
-#ifdef GEOSX_USE_ATK
-            SLIC_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
-#endif
+            GEOS_ERROR("Table:SetGrid - ticks for axis " + std::to_string(i) +" must be a monotonic increasing vector of values");
           }
           xlast = x[i][j];
         }
@@ -106,9 +100,7 @@ public:
   {
     m_p = p;
     if(m_size == 0 || m_p.size() != m_size)
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table:SetValues - Must set axes before attempting to set data");
-#endif
+      GEOS_ERROR("Table:SetValues - Must set axes before attempting to set data");
     m_set = true;
   }
 
@@ -130,9 +122,7 @@ public:
   unsigned int Dimension(const unsigned dim) const
   {
     if(dim >= T_dim) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table dimension out of range");
-#endif
+      GEOS_ERROR("Table dimension out of range");
     }
     return this->m_x[dim].size();
   }
@@ -140,9 +130,7 @@ public:
   const std::vector<realT>& AxisValues(const unsigned int dim) const
   {
     if(dim >= T_dim) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table dimension out of range");
-#endif
+      GEOS_ERROR("Table dimension out of range");
     }
     return m_x[dim];
   }
@@ -150,9 +138,7 @@ public:
   unsigned int ValuesPerBlock(const unsigned int dim) const
   {
     if(dim >= T_dim) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table dimension out of range");
-#endif
+      GEOS_ERROR("Table dimension out of range");
     }
     return m_mult[dim];
   }
@@ -310,9 +296,7 @@ private:
     if(m_zeroGradient || !m_set || T_dim < 1)
       return ret;
     if(gradientDimension >= T_dim) {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Table:Gradient - cannot have gradient dimension >= dimension");
-#endif
+      GEOS_ERROR("Table:Gradient - cannot have gradient dimension >= dimension");
     }
 
     unsigned int i = 0, dim = T_dim - 1;
