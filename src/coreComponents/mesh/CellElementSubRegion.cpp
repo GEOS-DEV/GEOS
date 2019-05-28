@@ -59,10 +59,17 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( string const & propertyName,
-                                     real64_array const & property )->void
+  source->forExternalProperties([&]( const dataRepository::ViewWrapperBase * vw )->void
   {
-    this->RegisterViewWrapper( propertyName, &const_cast< real64_array & >( property), 0 ); // TODO before merge : I don't like this...
+    std::type_index typeIndex = std::type_index( vw->get_typeid());
+    rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+                                    [&]( auto type ) -> void
+    {
+      using fieldType = decltype(type);
+      const dataRepository::ViewWrapper<fieldType> & field = dataRepository::ViewWrapper< fieldType >::cast( *vw );
+      const fieldType & fieldref = field.reference();
+      this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+    });
   });
 }
 
