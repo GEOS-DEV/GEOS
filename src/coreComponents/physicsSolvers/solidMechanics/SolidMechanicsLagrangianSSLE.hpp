@@ -254,10 +254,10 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
 
     AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
 
-//    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
-//    {
-//      nodalForceFromElement[k][a] = f_local[a];
-//    }
+    for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+    {
+      nodalForceFromElement[k][a] = f_local[a];
+    }
   });
 
   return dt;
