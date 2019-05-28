@@ -612,5 +612,30 @@ if(UNCRUSTIFY_FOUND)
     
 endif()
 
+################################
+# PETSC
+################################
+#if( ENABLE_PETSC )
+
+  #if(EXISTS ${PETSC_DIR})
+  
+  #else()
+      message( INFO ": setting up PETSC" )
+      message( INFO ": Hannah was here" )
+      set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
+  #endif()
+  
+  # PETSc version?
+  # include(${PETSC_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+  
+  
+  blt_register_library( NAME petsc
+                        INCLUDES ${Petsc_INCLUDE_DIRS} 
+                        LIBRARIES ${Petsc_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} petsc )  
+
+#endif()
+
 message("Leaving SetupGeosxThirdParty.cmake\n")
 
