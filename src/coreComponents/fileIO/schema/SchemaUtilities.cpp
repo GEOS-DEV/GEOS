@@ -175,19 +175,36 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
           {
             string attributeName = wrapper->getName();
 
-            // Attribute Description
-            // There isn't an available attribute for this, so include it in a comment
+            // Write any additional documentation that isn't expected by the .xsd format in a comment
+            // Attribute description
             string description = wrapper->getDescription();
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+            string commentString = attributeName + " => ";
+            
             if (!description.empty())
             {
-              commentNode.set_value((attributeName + " = " + description).c_str());
+              commentString += description;
             }
             else
             {
-              commentNode.set_value((attributeName + " = (no description available)").c_str());
+              commentString += "(no description available)";
             }
 
+            // List of objects that registered this field
+            std::vector<string> registrars = wrapper->getRegisteringObjects();
+            if (registrars.size() > 0)
+            {
+              commentString += " => " + registrars[0];
+              for (size_t ii=1; ii<registrars.size(); ++ii)
+              {
+                commentString += ", " + registrars[ii];
+              }
+            }
+
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+            commentNode.set_value(commentString.c_str());
+
+
+            // Write the valid schema attributes
             // Basic attributes
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
             attributeNode.append_attribute("name") = attributeName.c_str();
@@ -225,7 +242,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
         if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
         {
           xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
-          commentNode.set_value("name = A name is required for any non-unique nodes");
+          commentNode.set_value("name => A name is required for any non-unique nodes");
         
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
           attributeNode.append_attribute("name") = "name";
