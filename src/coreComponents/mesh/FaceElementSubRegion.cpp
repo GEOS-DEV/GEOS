@@ -15,6 +15,11 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+
+/**
+ * @file FaceElementSubRegion.cpp
+ */
+
 #include "FaceElementSubRegion.hpp"
 
 #include "NodeManager.hpp"
@@ -28,29 +33,29 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   ElementSubRegionBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
-    setDescription("Map to the nodes attached to each FaceCell.");
+    setDescription("Map to the nodes attached to each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
-    setDescription("Map to the edges attached to each FaceCell.");
+    setDescription("Map to the edges attached to each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
-    setDescription("Map to the faces attached to each FaceCell.")->
+    setDescription("Map to the faces attached to each FaceElement.")->
     reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setApplyDefaultValue(1.0)->
-    setDescription("The aperture of each FaceCell.");
+    setDescription("The aperture of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(1.0)->
-    setDescription("The area of each FaceCell.");
+    setDescription("The area of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
-    setDescription("The center of each FaceCell.");
+    setDescription("The center of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
     setApplyDefaultValue(1.0)->
-    setDescription("The volume of each FaceCell.");
+    setDescription("The volume of each FaceElement.");
 
   m_numNodesPerElement = 8;
 }

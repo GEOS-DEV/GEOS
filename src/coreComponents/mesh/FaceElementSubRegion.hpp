@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file FaceElementSubRegion.hpp
+ */
+
 #ifndef FACECELLSUBREGION_HPP_
 #define FACECELLSUBREGION_HPP_
 
@@ -25,6 +29,14 @@
 namespace geosx
 {
 
+/**
+ * @class FaceElementSubRegion
+ *
+ * The FaceElementSubRegion class contains the functionality to support the concept of Elements that are comprised of
+ * a face, or a pair of faces. This class which derives from ElementSubRegionBase, has specific connectivity maps and
+ * and methods to support the specific geometry of an element comprised of a reduced dimensionality face element (i.e.
+ * face area and aperture = volume)
+ */
 class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
@@ -34,7 +46,7 @@ public:
   using FaceMapType=FixedOneToManyRelation;
 
   static const string CatalogName()
-  { return "FaceCell"; }
+  { return "FaceElementSubRegion"; }
 
   virtual const string getCatalogName() const override
   {
@@ -65,15 +77,10 @@ public:
     m_elementVolume[k] = 1;
   }
 
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    static constexpr auto nodeListString               = "nodeList";
-    static constexpr auto edgeListString               = "edgeList";
-    static constexpr auto faceListString               = "faceList";
     static constexpr auto elementApertureString        = "elementAperture";
     static constexpr auto elementAreaString            = "elementArea";
-    static constexpr auto elementCenterString          = "elementCenter";
-    static constexpr auto elementVolumeString          = "elementVolume";
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;

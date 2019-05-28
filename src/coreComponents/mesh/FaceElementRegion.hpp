@@ -1,8 +1,6 @@
-/*
- * FaceElementRegion.hpp
+/**
+ * @file FaceElementRegion.hpp
  *
- *  Created on: May 15, 2019
- *      Author: settgast
  */
 
 #ifndef CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
@@ -13,23 +11,53 @@
 namespace geosx
 {
 
+/**
+ * @class FaceElementRegion
+ *
+ * The FaceElementRegion class contains the functionality to support the concept of a FaceElementRegion in the element
+ * hierarchy. FaceElementRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
+ *
+ *
+ */
 class FaceElementRegion : public ElementRegion
 {
 public:
+  /**
+   * @brief constructor
+   * @param name The name of the object in the data hierarchy.
+   * @param parent Pointer to the parent group in the data hierarchy.
+   */
   FaceElementRegion( string const & name, ManagedGroup * const parent );
+
   FaceElementRegion() = delete;
   virtual ~FaceElementRegion() override;
 
+  /**
+   * @brief The key name for the FaceElementRegion in the object catalog.
+   * @return A string containing the key name.
+   */
   static const string CatalogName()
   { return "FaceElementRegion"; }
 
   virtual const string getCatalogName() const override final
   { return FaceElementRegion::CatalogName(); }
 
+
   virtual void GenerateMesh( ManagedGroup const * ) override {}
 
+  /**
+   * @brief This function generates the face/fracture mesh
+   * @param faceManager
+   */
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
+  /**
+   * @brief This function generates and adds entries to the face/fracture mesh
+   * @param faceManager A pointer to the FaceManager object.
+   * @param subRegionName The name of the FaceElementSubRegion to insert the new entries.
+   * @param faceIndices The local indices of the new faces that define the face element.
+   * @return The local index of the new FaceElement entry.
+   */
   localIndex AddToFractureMesh( FaceManager const * const faceManager,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );

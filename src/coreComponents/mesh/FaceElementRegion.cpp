@@ -1,8 +1,5 @@
-/*
- * FaceElementRegion.cpp
- *
- *  Created on: May 15, 2019
- *      Author: settgast
+/**
+ * @file FaceElementRegion.cpp
  */
 
 #include "FaceElementRegion.hpp"
