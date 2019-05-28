@@ -310,7 +310,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
           auto meshProperty = meshProperties[m_fieldsToImport[fieldIndex]];
-          real64_array & property = cellBlock->AddProperty( m_fieldNamesInGEOSX[fieldIndex] );
+          real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
           GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty.size_owned() ),
                          "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
                          << meshProperty.size_owned() << ") on " <<cellBlock->getName() );

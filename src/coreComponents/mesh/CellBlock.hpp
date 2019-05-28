@@ -211,22 +211,24 @@ public:
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
   /**
-   * @brief Add a real64 property on the CellBlock
+   * @brief Add a property on the CellBlock
    * @param[in] propertyName the name of the property
-   * @return a non-const reference to the real64_array
+   * @return a non-const reference to the property
    */
-  real64_array & AddProperty( string const & propertyName )
+  template<typename T>
+  T & AddProperty( string const & propertyName )
   {
-    return m_externalProperties.insert( { propertyName, real64_array( this->size() ) } ).first->second;
-   // return this->RegisterViewWrapper< real64_array >( propertyName )->reference();
+    m_externalPropertyNames.push_back( propertyName );
+    return this->RegisterViewWrapper< T >( propertyName )->reference();
   }
 
   template< typename LAMBDA >
   void forExternalProperties( LAMBDA && lambda ) const
   {
-    for( auto & externalProperty : m_externalProperties )
+    for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      lambda( externalProperty.first, externalProperty.second );
+      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
+      lambda( vw );
     }
   }
 
@@ -242,11 +244,9 @@ protected:
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
 
-  /// Map containing the properties imported from an external file
-  /// Key is the name of the property
-  unordered_map< string, real64_array > m_externalProperties;
-//  string_array m_externalPropertyNames;
-
+private:
+  /// Name of the properties register from an external mesh
+  string_array m_externalPropertyNames;
 
 };
 
