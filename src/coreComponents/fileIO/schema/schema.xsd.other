@@ -270,7 +270,7 @@
 		<xsd:attribute name="velocityTilde" type="r1_array" />
 		<!--uhatTilde => (no description available)-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
-		<!--TotalDisplacement => The total displacement vector. => SolidMechanicsLagrangianSSLEblah, SolidMechanics_LagrangianFEM-->
+		<!--TotalDisplacement => The total displacement vector. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="r1_array" />
 		<!--IncrementalDisplacement => (no description available)-->
 		<xsd:attribute name="IncrementalDisplacement" type="r1_array" />
