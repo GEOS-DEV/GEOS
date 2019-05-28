@@ -72,7 +72,7 @@ def parseSchemaNode(node,
                     include_defaults=True,
                     include_registrant=False):
   type_name = child_node.get('name')[:-4]
-  table_headers = ['Name', 'Type', 'Default', 'Description', 'Registered By']
+  table_headers = ['Name', 'Type', 'Default', 'Registered By', 'Description']
   table_dict = {k: [] for k in table_headers}
 
   # Parse comments
@@ -98,15 +98,15 @@ def parseSchemaNode(node,
 
     # Add any available descriptions, registrant information
     ka = table_dict['Name'][-1]
-    if ka in attribute_comments:
-      table_dict['Description'].append(attribute_comments[ka])
-    else:
-      table_dict['Description'].append('')
-
     if ka in attribute_registrants:
       table_dict['Registered By'].append(attribute_registrants[ka])
     else:
       table_dict['Registered By'].append('')
+
+    if ka in attribute_comments:
+      table_dict['Description'].append(attribute_comments[ka])
+    else:
+      table_dict['Description'].append('')
 
   # Parse nodes
   for choice_node in child_node.findall(xsd + 'choice'):
