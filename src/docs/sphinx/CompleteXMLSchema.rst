@@ -21,6 +21,13 @@ Element: FieldSpecifications
 .. include:: ../../coreComponents/fileIO/schema/docs/FieldSpecifications.rst
 
 
+.. _XML_SourceFlux:
+
+Element: SourceFlux
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -713,6 +720,13 @@ Datastructure: commandLine
 Datastructure: FieldSpecifications
 ==================================
 .. include:: ../../coreComponents/fileIO/schema/docs/FieldSpecifications_other.rst
+
+
+.. _DATASTRUCTURE_SourceFlux:
+
+Datastructure: SourceFlux
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:

@@ -60,29 +60,46 @@ def format_value(x):
   return(x)
 
 
-def parseSchemaNode(node, link_string='XML', include_defaults=True):
+def parseSchemaNode(node,
+                    link_string='XML',
+                    include_defaults=True,
+                    include_registrar=False):
   type_name = child_node.get('name')[:-4]
-  table_values = [['Name', 'Type', 'Default', 'Description']]
+  table_headers = ['Name', 'Type', 'Default', 'Description', 'Registered By']
+  table_dict = {k: [] for k in table_headers}
 
   # Parse comments
   attribute_comments = {}
+  attribute_registrars = {}
   for comment_node in child_node.iterchildren(etree.Comment):
-    tmp = str(comment_node)[4:-3].split(' = ', 1)
+    tmp = str(comment_node)[4:-3].split(' => ')
     attribute_comments[tmp[0]] = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
+    if (len(tmp) > 2):
+      attribute_registrars[tmp[0]] = [':ref:`%s_%s`' % (link_string, x) for x in tmp[2].split(', ')]
 
   # Parse attributes
   for attribute_node in child_node.findall(xsd + 'attribute'):
-    table_row = [format_value(attribute_node.get(v, default=' ')) for v in ['name', 'type', 'default']]
+    # Read the name, type, default values
+    table_dict['Name'].append(format_value(attribute_node.get('name', default=' ')))
+    table_dict['Type'].append(format_value(attribute_node.get('type', default=' ')))
+    table_dict['Default'].append(format_value(attribute_node.get('default', default=' ')))
+
+    # Handle the special case for required values
     useValue = attribute_node.get('use')
     if useValue:
-      table_row[2] = useValue
-    table_values.append(table_row)
+      table_dict['Default'][-1] = useValue
 
-    k = table_values[-1][0]
-    if k in attribute_comments:
-      table_values[-1].append(attribute_comments[k])
+    # Add any available descriptions, registrar information
+    ka = table_dict['Name'][-1]
+    if ka in attribute_comments:
+      table_dict['Description'].append(attribute_comments[ka])
     else:
-      table_values[-1].append('\-')
+      table_dict['Description'].append('')
+
+    if ka in attribute_registrars:
+      table_dict['Registered By'].append(attribute_registrars[ka])
+    else:
+      table_dict['Registered By'].append('')
 
   # Parse nodes
   for choice_node in child_node.findall(xsd + 'choice'):
@@ -99,16 +116,29 @@ def parseSchemaNode(node, link_string='XML', include_defaults=True):
       elif (sub_unique):
         node_use = 'unique'
 
-      table_values.append([sub_name, 'node', node_use, ':ref:`%s_%s`' % (link_string, sub_name)])
+      table_dict['Name'].append(sub_name)
+      table_dict['Type'].append('node')
+      table_dict['Default'].append(node_use)
+      table_dict['Description'].append(':ref:`%s_%s`' % (link_string, sub_name))
+      table_dict['Registered By'].append('')
 
   # Handle empty tables
-  if (len(table_values) == 1):
-    table_values.append(['\-', '\-', '\-', '(no documentation available)'])
+  if (len(table_dict['Name']) == 0):
+    table_dict['Name'].append('')
+    table_dict['Type'].append('')
+    table_dict['Default'].append('')
+    table_dict['Description'].append('')
+    table_dict['Registered By'].append('(no documentation available)')
 
-  # Remove default values if not needed
+  # Move values into a table
   if not include_defaults:
-    for ii in range(0, len(table_values)):
-      table_values[ii].pop(2)
+    table_headers.remove('Default')
+  if not include_registrar:
+    table_headers.remove('Registered By')
+
+  table_values = [[k for k in table_headers]]
+  for ii in range(0, len(table_dict['Name'])):
+    table_values.append([table_dict[k][ii] for k in table_headers])
 
   return type_name, table_values
 
@@ -152,7 +182,6 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
     output_handle.write('='*len(element_header) + '\n')
     output_handle.write('.. include:: %s/%s.rst\n\n' % (sphinx_path, type_name))
 
-
   # Parse the non-schema definitions
   output_handle.write('********************************\n')
   output_handle.write('Datastructure Definitions\n')
@@ -164,7 +193,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
   for child_node in include_root.findall(xsd + 'complexType'):
     # The additional documentation uses the same format as the schema
-    type_name, table_values = parseSchemaNode(child_node, link_string='DATASTRUCTURE', include_defaults=False)
+    type_name, table_values = parseSchemaNode(child_node, link_string='DATASTRUCTURE', include_defaults=False, include_registrar=True)
     type_name_lower = type_name.lower()
 
     # Write table

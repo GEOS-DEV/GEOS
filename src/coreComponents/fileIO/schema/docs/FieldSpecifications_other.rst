@@ -1,10 +1,11 @@
 
 
-================== ==== ======================================= 
-Name               Type Description                             
-================== ==== ======================================= 
-Dirichlet          node :ref:`DATASTRUCTURE_Dirichlet`          
-FieldSpecification node :ref:`DATASTRUCTURE_FieldSpecification` 
-================== ==== ======================================= 
+================== ==== ======================================= ============= 
+Name               Type Description                             Registered By 
+================== ==== ======================================= ============= 
+SourceFlux         node :ref:`DATASTRUCTURE_SourceFlux`                       
+Dirichlet          node :ref:`DATASTRUCTURE_Dirichlet`                        
+FieldSpecification node :ref:`DATASTRUCTURE_FieldSpecification`               
+================== ==== ======================================= ============= 
 
 
