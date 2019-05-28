@@ -63,19 +63,19 @@ def format_value(x):
 def parseSchemaNode(node,
                     link_string='XML',
                     include_defaults=True,
-                    include_registrar=False):
+                    include_registrant=False):
   type_name = child_node.get('name')[:-4]
   table_headers = ['Name', 'Type', 'Default', 'Description', 'Registered By']
   table_dict = {k: [] for k in table_headers}
 
   # Parse comments
   attribute_comments = {}
-  attribute_registrars = {}
+  attribute_registrants = {}
   for comment_node in child_node.iterchildren(etree.Comment):
     tmp = str(comment_node)[4:-3].split(' => ')
     attribute_comments[tmp[0]] = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
     if (len(tmp) > 2):
-      attribute_registrars[tmp[0]] = [':ref:`%s_%s`' % (link_string, x) for x in tmp[2].split(', ')]
+      attribute_registrants[tmp[0]] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in tmp[2].split(', ')])
 
   # Parse attributes
   for attribute_node in child_node.findall(xsd + 'attribute'):
@@ -89,15 +89,15 @@ def parseSchemaNode(node,
     if useValue:
       table_dict['Default'][-1] = useValue
 
-    # Add any available descriptions, registrar information
+    # Add any available descriptions, registrant information
     ka = table_dict['Name'][-1]
     if ka in attribute_comments:
       table_dict['Description'].append(attribute_comments[ka])
     else:
       table_dict['Description'].append('')
 
-    if ka in attribute_registrars:
-      table_dict['Registered By'].append(attribute_registrars[ka])
+    if ka in attribute_registrants:
+      table_dict['Registered By'].append(attribute_registrants[ka])
     else:
       table_dict['Registered By'].append('')
 
@@ -127,15 +127,16 @@ def parseSchemaNode(node,
     table_dict['Name'].append('')
     table_dict['Type'].append('')
     table_dict['Default'].append('')
-    table_dict['Description'].append('')
-    table_dict['Registered By'].append('(no documentation available)')
+    table_dict['Description'].append('(no documentation available)')
+    table_dict['Registered By'].append('')
 
-  # Move values into a table
+  # Remove unused columns
   if not include_defaults:
     table_headers.remove('Default')
-  if not include_registrar:
+  if (not any(table_dict['Registered By'])) | (not include_registrant):
     table_headers.remove('Registered By')
 
+  # Move values into a table
   table_values = [[k for k in table_headers]]
   for ii in range(0, len(table_dict['Name'])):
     table_values.append([table_dict[k][ii] for k in table_headers])
@@ -193,7 +194,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
   for child_node in include_root.findall(xsd + 'complexType'):
     # The additional documentation uses the same format as the schema
-    type_name, table_values = parseSchemaNode(child_node, link_string='DATASTRUCTURE', include_defaults=False, include_registrar=True)
+    type_name, table_values = parseSchemaNode(child_node, link_string='DATASTRUCTURE', include_defaults=False, include_registrant=True)
     type_name_lower = type_name.lower()
 
     # Write table
