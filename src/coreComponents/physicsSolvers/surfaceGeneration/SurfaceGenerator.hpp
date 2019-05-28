@@ -90,7 +90,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition * domain) override;
 //
 //  virtual void ImplicitStepSetup( real64 const& time_n,
 //                              real64 const& dt,
@@ -127,15 +127,43 @@ public:
 /**@}*/
 
 
-  int SeparationDriver( MeshLevel * const mesh,
+  int SeparationDriver( DomainPartition * domain,
+                        MeshLevel * const mesh,
                         array1d<NeighborCommunicator> & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time );
+                        const realT time);
 
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
+
+  //wu40: Since the field nodalForceFromElement is used in another solver (SolidMechanicsLagrangianFEM), I have to make the viewKeyStruct public here.
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto SIFonFaceString = "SIFonFace";
+    constexpr static auto K_ICString = "K_IC";
+    constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
+    constexpr static auto SeparableFaceNameString = "separableFaceName";
+    constexpr static auto isFaceSeparableString = "isFaceseparable";
+    constexpr static auto stressNOnFaceString = "stressNOnFace";
+    constexpr static auto failCriterionString = "failCriterion";
+    constexpr static auto maxTurnAngleString = "maxTurnAngle";
+    constexpr static auto faceToEdgeProjectionTolString = "faceToEdgeProjectionTol";
+    constexpr static auto faceToFaceCoplaneTolString = "faceToFaceCoplaneTol";
+    constexpr static auto faceToEdgeCoplaneTolString = "faceToEdgeCoplaneTol";
+    constexpr static auto markExtendedLayerString = "markExtendedLayer";
+    constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
+    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto displacementBasedSIFString = "displacementBasedSIF";
+    constexpr static auto rockToughnessString = "rockToughness";
+
+    constexpr static auto SIF_IString = "SIF_I";
+    constexpr static auto SIF_IIString = "SIF_II";
+    constexpr static auto SIF_IIIString = "SIF_III";
+  }; //SurfaceGenViewKeys;
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
@@ -152,11 +180,12 @@ private:
    * @param partition
    * @param prefrac
    */
-  void IdentifyRupturedFaces( NodeManager & nodeManager,
+  void IdentifyRupturedFaces( DomainPartition * domain,
+                              NodeManager & nodeManager,
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
                               ElementRegionManager & elementManager,
-                              const bool prefrac );
+                              const bool prefrac);
 
   /**
    * @brief
@@ -170,7 +199,8 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( const localIndex edgeID,
+  realT CalculateEdgeSIF ( DomainPartition * domain,
+                           const localIndex edgeID,
                            localIndex& trailFaceID,
                            NodeManager & nodeManager,
                            EdgeManager & edgeManager,
@@ -196,6 +226,7 @@ private:
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
+                                 ElementRegionManager & elementManager,
                                  R1Tensor& vecTipNorm,
                                  R1Tensor& vecTip,
                                  ModifiedObjectLists& modifiedObjects,
@@ -216,6 +247,16 @@ private:
                                 ElementRegionManager & elementManager,
                                 array1d<std::set<localIndex> >& nodesToRupturedFaces,
                                 array1d<std::set<localIndex> >& edgesToRupturedFaces );
+
+  /**
+   *
+   * @param elementManager
+   * @param faceManager
+   * @param iFace
+   */
+  int CheckOrphanElement( ElementRegionManager & elementManager,
+                           FaceManager & faceManager,
+                           localIndex iFace);
 
   /**
    *
@@ -426,20 +467,41 @@ private:
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  /*struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
     constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
-  }; //SurfaceGenViewKeys;
+  }; //SurfaceGenViewKeys;*/
 
 private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
+  //Maximum angle that the fracture can change from its previous propagation direction.
+  realT m_maxTurnAngle;
+
+  int m_markExtendedLayer;
+
+  realT m_faceToEdgeProjectionTol;
+
+  realT m_faceToFaceCoplaneTol;
+
+  realT m_faceToEdgeCoplaneTol;
+
   /// set of sepearable faces
+  string m_separableFaceName;
   localIndex_set m_separableFaceSet;
+
+  // solid solver name
+  string m_solidMaterialName;
+
+  localIndex m_solidMaterialFullIndex;
+
+  int m_displacementBasedSIF;
+
+  realT m_rockToughness;
 
   /// copy of the original node->face mapping prior to any separation
   array1d< set<localIndex> > m_originalNodetoFaces;
