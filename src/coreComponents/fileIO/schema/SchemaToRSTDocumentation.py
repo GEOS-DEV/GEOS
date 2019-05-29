@@ -147,26 +147,32 @@ def buildTableValues(type_map,
   table_values = [[' ' for jj in range(0, N_cols)] for ii in range(0, N_rows+1)]
   table_values[0] = table_headers
 
-  # Add values to the table
-  for ii in range(0, N_rows):
-    # Get the row, set the name
-    att_name = akeys[ii]
-    table_row = table_values[ii+1]
-    table_row[0] = att_name
+  if (N_rows > 0):
+    # Add values to the table
+    for ii in range(0, N_rows):
+      # Get the row, set the name
+      att_name = akeys[ii]
+      table_row = table_values[ii+1]
+      table_row[0] = att_name
 
-    # Set the other parameters
-    for jj in range(1, len(table_headers)):
-      k = table_headers[jj]
-      if k in type_map[att_name]:
-        table_row[jj] = type_map[att_name][k]
+      # Set the other parameters
+      for jj in range(1, len(table_headers)):
+        k = table_headers[jj]
+        if k in type_map[att_name]:
+          table_row[jj] = type_map[att_name][k]
 
-        # Format any registration entries as links
-        if ('Registered' in k):
-          table_row[jj] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in table_row[jj]])
+          # Format any registration entries as links
+          if ('Registered' in k):
+            table_row[jj] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in table_row[jj]])
 
-    # Set the link if the target is a node
-    if (table_row[1] == 'node'):
-      table_row[-1] = ':ref:`%s_%s`' % (link_string, table_row[0])
+      # Set the link if the target is a node
+      if (table_row[1] == 'node'):
+        table_row[-1] = ':ref:`%s_%s`' % (link_string, table_row[0])
+  else:
+    # Case for an empty table
+    table_row = [' ' for x in table_headers]
+    table_row[-1] = '(no documentation available)'
+    table_values.append(table_row)
 
   return table_values
 
