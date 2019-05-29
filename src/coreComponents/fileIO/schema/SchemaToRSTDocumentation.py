@@ -221,7 +221,23 @@ include_root = include_tree.getroot()
 other_attribute_map = buildAttributeMap(include_root)
 
 
-# TODO: handle non-unique (and case-sensitive) links
+# Check for non-unique (ignoring case) links
+input_keys = sorted(input_attribute_map.keys())
+input_keys_lower = [k.lower() for k in input_keys]
+input_keys_count = [input_keys_lower.count(k) for k in input_keys_lower]
+input_repeated_keys = [input_keys[ii] for ii in range(0, len(input_keys)) if input_keys_count[ii] > 1]
+
+other_keys = sorted(other_attribute_map.keys())
+other_keys_lower = [k.lower() for k in other_keys]
+other_keys_count = [other_keys_lower.count(k) for k in other_keys_lower]
+other_repeated_keys = [other_keys[ii] for ii in range(0, len(other_keys)) if other_keys_count[ii] > 1]
+
+if ((len(input_repeated_keys) > 0) | (len(other_repeated_keys) > 0)):
+  print('Repeated input keys:')
+  print(input_repeated_keys)
+  print('Repeated other keys:')
+  print(other_repeated_keys)
+  raise ValueError('Repeated keys in the GEOSX data structure are not allowed!')
 
 
 # Build documentation tables
@@ -237,7 +253,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
   output_handle.write('Input Schema Definitions\n')
   output_handle.write('********************************\n\n')
 
-  for type_name in input_attribute_map.keys():
+  for type_name in sorted(input_attribute_map.keys()):
     # Write the individual tables
     table_values = buildTableValues(input_attribute_map[type_name])
     writeTableRST('%s/%s.rst' % (output_folder, type_name), table_values)
@@ -254,7 +270,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
   output_handle.write('Datastructure Definitions\n')
   output_handle.write('********************************\n\n')
 
-  for type_name in other_attribute_map.keys():
+  for type_name in sorted(other_attribute_map.keys()):
     # Write the individual tables
     table_values = buildTableValues(other_attribute_map[type_name], link_string='DATASTRUCTURE', include_defaults=False)
     writeTableRST('%s/%s_other.rst' % (output_folder, type_name), table_values)
