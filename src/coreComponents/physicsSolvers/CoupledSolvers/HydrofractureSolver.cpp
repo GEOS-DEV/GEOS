@@ -31,6 +31,7 @@
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 
@@ -142,6 +143,47 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
+  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+
+  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
+  array1d< array1d<localIndex> > const & facesToNodes = faceManager->nodeList();
+
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
+  {
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    {
+      arrayView1d<real64> const & aperture = subRegion->getElementAperture();
+      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64> const & area = subRegion->getElementArea();
+      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+
+      for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
+      {
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const kf1 = elemsToFaces[kfe][1];
+        localIndex const numNodesPerFace=facesToNodes[kf0].size();
+        localIndex const * const nodelist0 = facesToNodes[kf0];
+        localIndex const * const nodelist1 = facesToNodes[kf1];
+        R1Tensor temp;
+        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+        {
+          temp += u[nodelist0[a]];
+          temp -= u[nodelist1[a]];
+        }
+        area[kfe] = faceArea[kfe];
+        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace+0.0001;
+        volume[kfe] = aperture[kfe] * area[kfe];
+        std::cout<<"kfe, area, aperture, volume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<std::endl;
+      }
+
+    });
+  });
 
 }
 
@@ -162,6 +204,8 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
+  this->UpdateDeformationForCoupling(domain);
 
   int iter = 0;
   while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )

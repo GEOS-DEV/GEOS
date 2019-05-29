@@ -20,7 +20,7 @@
   
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="3"
+                                  verboseLevel="0"
                                   discretization="FE1"
                                   targetRegions="Region2"
                                   solidMaterialName="rock"
@@ -28,7 +28,7 @@
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
-                              verbosityFlag="2"/>
+                              verbosityFlag="0"/>
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
