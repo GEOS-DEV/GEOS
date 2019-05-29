@@ -127,7 +127,8 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
 
 
 def buildTableValues(type_map,
-                     link_string='XML'):
+                     link_string='XML',
+                     include_defaults=True):
   table_headers = ['Name', 'Type', 'Default', 'Registered On', 'Registered By', 'Description']
   optional_headers = ['Default', 'Registered On', 'Registered By']
   akeys = type_map.keys()
@@ -140,6 +141,10 @@ def buildTableValues(type_map,
         header_count += 1
     if (header_count == 0):
       table_headers.remove(optional_headers[ii])
+
+  if not include_defaults:
+    if 'Default' in table_headers:
+      table_headers.remove('Default')
 
   # Setup the empty table
   N_rows = len(akeys)
@@ -233,7 +238,7 @@ with open('%s.rst' % (complete_output), 'w') as output_handle:
 
   for type_name in other_attribute_map.keys():
     # Write the individual tables
-    table_values = buildTableValues(other_attribute_map[type_name], link_string='DATASTRUCTURE')
+    table_values = buildTableValues(other_attribute_map[type_name], link_string='DATASTRUCTURE', include_defaults=False)
     writeTableRST('%s/%s_other.rst' % (output_folder, type_name), table_values)
 
     # Write to the master list
