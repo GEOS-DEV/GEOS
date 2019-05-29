@@ -306,7 +306,7 @@ public:
         ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
 
         bool validCast =
-        ManagedGroup::applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        ManagedGroup::applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
@@ -325,7 +325,7 @@ public:
       {
         ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-        ManagedGroup::applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        ManagedGroup::applyLambdaToContainer<ElementSubRegionBase,SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
@@ -345,7 +345,7 @@ public:
       {
         ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
 
-        ManagedGroup::applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+        ManagedGroup::applyLambdaToContainer<ElementSubRegionBase,SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });
@@ -364,7 +364,7 @@ public:
       {
         ElementSubRegionBase const * const subRegion = elementRegion->GetSubRegion(esr);
 
-        ManagedGroup::applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+        ManagedGroup::applyLambdaToContainer<ElementSubRegionBase,SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );
         });

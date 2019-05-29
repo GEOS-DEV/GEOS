@@ -123,29 +123,15 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-
-    for( auto const & subGroupIter : elementSubRegions->GetSubGroups() )
-    {
-      applyLambdaToGroup<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto const * const subRegion )
-      {
-        lambda( subRegion );
-      });
-    }
+    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-
-    for( auto & subGroupIter : elementSubRegions->GetSubGroups() )
-    {
-      applyLambdaToGroup<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
-      {
-        lambda( subRegion );
-      });
-    }
+    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -167,7 +153,7 @@ public:
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
-      applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       });
@@ -180,7 +166,7 @@ public:
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
-      applyLambdaToGroup<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       });
