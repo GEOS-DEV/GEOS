@@ -783,8 +783,8 @@ void ProblemManager::GenerateMesh()
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
-          subRegion->CalculateCellVolumes( array1d<localIndex>(),
-                                           nodeManager->referencePosition() );
+          subRegion->CalculateElementGeometricQuantities( *nodeManager,
+                                                          *faceManager );
         });
 
       });

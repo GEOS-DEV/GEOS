@@ -1291,6 +1291,8 @@ ApplyBoundaryConditions( DomainPartition * const domain,
     if( subRegion->hasView("pressure") )
     {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+
       FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
 
       forall_in_range<elemPolicy>( 0,
@@ -1301,7 +1303,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
         R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
         Nbar -= faceNormal[faceMap[kfe][1]];
         Nbar.Normalize();
-        std::cout<<Nbar<<std::endl;
+//        std::cout<<Nbar<<std::endl;
 
         globalIndex nodeDOF[20];
         real64 nodeRHS[20];
@@ -1311,15 +1313,15 @@ ApplyBoundaryConditions( DomainPartition * const domain,
           localIndex const faceIndex = faceMap[kfe][kf];
           localIndex const numNodes = facesToNodes[faceIndex].size();
 
-          std::cout<<faceIndex<<", "<<numNodes<<std::endl;
+//          std::cout<<faceIndex<<", "<<numNodes<<std::endl;
 
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
             for( int component=0 ; component<3 ; ++component )
             {
               nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-              nodeRHS[3*a+component] = - fluidPressure[kfe] * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
-              std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
+              nodeRHS[3*a+component] = - (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+//              std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
             }
           }
 

@@ -61,21 +61,8 @@ public:
                                      const NodeManager& nodeManager,
                                      const bool useReferencePos = true) const override;
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) override
-  {
-    ElementSubRegionBase::CalculateCellVolumes<FaceElementSubRegion>( *this,
-                                                       indices,
-                                                       X );
-  }
-
-  inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X ) const
-  {
-    m_elementArea[k] = 1;
-    m_elementCenter[k] = 1;
-    m_elementVolume[k] = 1;
-  }
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & facemanager ) override;
 
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
@@ -136,6 +123,9 @@ public:
 
   arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
+
+  arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
 private:
 
