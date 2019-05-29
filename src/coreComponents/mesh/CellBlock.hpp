@@ -210,6 +210,27 @@ public:
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
+  /**
+   * @brief Add a property on the CellBlock
+   * @param[in] propertyName the name of the property
+   * @return a non-const reference to the property
+   */
+  template<typename T>
+  T & AddProperty( string const & propertyName )
+  {
+    m_externalPropertyNames.push_back( propertyName );
+    return this->RegisterViewWrapper< T >( propertyName )->reference();
+  }
+
+  template< typename LAMBDA >
+  void forExternalProperties( LAMBDA && lambda ) const
+  {
+    for( auto & externalPropertyName : m_externalPropertyNames )
+    {
+      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
+      lambda( vw );
+    }
+  }
 
 protected:
 
@@ -223,7 +244,9 @@ protected:
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
 
-
+private:
+  /// Name of the properties register from an external mesh
+  string_array m_externalPropertyNames;
 
 };
 
