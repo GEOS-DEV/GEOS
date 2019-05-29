@@ -120,8 +120,9 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
     for kb in attribute_map[ka].keys():
       if ('Registered By' in attribute_map[ka][kb]):
         for kc in attribute_map[ka][kb]['Registered By']:
-          attribute_map[kc][kb] = attribute_map[ka][kb]
+          attribute_map[kc][kb] = attribute_map[ka][kb].copy()
           attribute_map[kc][kb]['Registered On'] = [kc]
+          del attribute_map[kc][kb]['Registered By']
 
   return attribute_map
 
