@@ -106,11 +106,14 @@ void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup)
 
   arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+  arrayView1d<real64 const> const & density = dataGroup->getReference<array1d<real64>>( viewKeyStruct::densityString );
 
   // TODO replace with batch update (need up-to-date pressure and temperature fields)
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
+    std::cout<<"a, dPres, pres, density = "<<a<<", "<<dPres[a]<<", "<<pres[a]<<", "<<density[a]<<std::endl;
+
   });
   //fluid->BatchUpdate( pres, temp, compFrac );
 }

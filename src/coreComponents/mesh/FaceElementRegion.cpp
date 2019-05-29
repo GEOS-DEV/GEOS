@@ -46,9 +46,7 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
 }
 
 FaceElementRegion::~FaceElementRegion()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 
