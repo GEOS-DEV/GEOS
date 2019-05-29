@@ -3,8 +3,8 @@
 ========== ==== =============================== 
 Name       Type Description                     
 ========== ==== =============================== 
-ThickPlane node :ref:`DATASTRUCTURE_ThickPlane` 
 Box        node :ref:`DATASTRUCTURE_Box`        
+ThickPlane node :ref:`DATASTRUCTURE_ThickPlane` 
 ========== ==== =============================== 
 
 
