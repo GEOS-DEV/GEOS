@@ -131,7 +131,24 @@ def buildTableValues(type_map,
                      include_defaults=True):
   table_headers = ['Name', 'Type', 'Default', 'Registered On', 'Registered By', 'Description']
   optional_headers = ['Default', 'Registered On', 'Registered By']
-  akeys = type_map.keys()
+
+  # Sort the keys
+  akeys = []
+  rb_keys = []
+  ro_keys = []
+  node_keys = []
+  for k in sorted(type_map.keys()):
+    if ('Registered By' in type_map[k]):
+      rb_keys.append(k)
+    elif ('Registered On' in type_map[k]):
+      ro_keys.append(k)
+    elif (type_map[k]['Type'] == 'node'):
+      node_keys.append(k)
+    else:
+      akeys.append(k)
+  akeys.extend(rb_keys)
+  akeys.extend(ro_keys)
+  akeys.extend(node_keys)
 
   # Remove any unused headers
   for ii in range(0, len(optional_headers)):
