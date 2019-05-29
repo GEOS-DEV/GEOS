@@ -179,18 +179,18 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappersByType<CellStencil>([&] (auto const & vw) -> void
+  this->forViewWrappers<CellStencil>([&] (auto const * const vw) -> void
   {
-    lambda(vw.reference());
+    lambda(vw->reference());
   });
 }
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
+  this->forViewWrappers<BoundaryStencil>([&] (auto const * const vw) -> void
   {
-    lambda(vw.reference());
+    lambda(vw->reference());
   });
 }
 
