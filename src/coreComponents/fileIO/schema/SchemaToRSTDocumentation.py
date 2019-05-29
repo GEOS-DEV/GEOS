@@ -130,13 +130,13 @@ def buildTableValues(type_map,
                      link_string='XML'):
   table_headers = ['Name', 'Type', 'Default', 'Registered On', 'Registered By', 'Description']
   optional_headers = ['Default', 'Registered On', 'Registered By']
-  akeys = type_map[type_name].keys()
+  akeys = type_map.keys()
 
   # Remove any unused headers
   for ii in range(0, len(optional_headers)):
     header_count = 0
     for k in akeys:
-      if (optional_headers[ii] in type_map[type_name][k]):
+      if (optional_headers[ii] in type_map[k]):
         header_count += 1
     if (header_count == 0):
       table_headers.remove(optional_headers[ii])
@@ -144,7 +144,7 @@ def buildTableValues(type_map,
   # Setup the empty table
   N_rows = len(akeys)
   N_cols = len(table_headers)
-  table_values = [[' ' for jj in N_cols] for ii in range(0, N_rows+1)]
+  table_values = [[' ' for jj in range(0, N_cols)] for ii in range(0, N_rows+1)]
   table_values[0] = table_headers
 
   # Add values to the table
@@ -157,8 +157,8 @@ def buildTableValues(type_map,
     # Set the other parameters
     for jj in range(1, len(table_headers)):
       k = table_headers[jj]
-      if k in type_map[type_name][att_name]:
-        table_row[jj] = type_map[type_name][att_name][k]
+      if k in type_map[att_name]:
+        table_row[jj] = type_map[att_name][k]
 
         # Format any registration entries as links
         if ('Registered' in k):
