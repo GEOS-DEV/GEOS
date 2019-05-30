@@ -141,12 +141,13 @@ public:
   //wu40: Since the field nodalForceFromElement is used in another solver (SolidMechanicsLagrangianFEM), I have to make the viewKeyStruct public here.
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static auto flowFacePressureString = "flowFacePressure";
+    constexpr static auto flowFaceTypeString = "flowFaceType";
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto SIFonFaceString = "SIFonFace";
     constexpr static auto K_ICString = "K_IC";
     constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
-    constexpr static auto SeparableFaceNameString = "separableFaceName";
-    constexpr static auto isFaceSeparableString = "isFaceseparable";
+    constexpr static auto isFaceSeparableString = "isFaceSeparable";
     constexpr static auto stressNOnFaceString = "stressNOnFace";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto maxTurnAngleString = "maxTurnAngle";
@@ -158,8 +159,9 @@ public:
     constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
     constexpr static auto solidMaterialNameString = "solidMaterialName";
     constexpr static auto displacementBasedSIFString = "displacementBasedSIF";
+    constexpr static auto allowVacuumFracString = "allowVacuumFrac";
     constexpr static auto rockToughnessString = "rockToughness";
-
+    constexpr static auto saturationPressureCuttoffString = "saturationPressureCuttoff";
     constexpr static auto SIF_IString = "SIF_I";
     constexpr static auto SIF_IIString = "SIF_II";
     constexpr static auto SIF_IIIString = "SIF_III";
@@ -490,10 +492,6 @@ private:
 
   realT m_faceToEdgeCoplaneTol;
 
-  /// set of sepearable faces
-  string m_separableFaceName;
-  localIndex_set m_separableFaceSet;
-
   // solid solver name
   string m_solidMaterialName;
 
@@ -501,7 +499,11 @@ private:
 
   int m_displacementBasedSIF;
 
+  int m_allowVacuumFrac;
+
   realT m_rockToughness;
+
+  realT m_saturationPressureCuttoff;
 
   /// copy of the original node->face mapping prior to any separation
   array1d< set<localIndex> > m_originalNodetoFaces;
