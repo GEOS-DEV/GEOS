@@ -143,10 +143,11 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
   m_faceToEdgeProjectionTol(0.3),
   m_faceToFaceCoplaneTol(0.05),
   m_faceToEdgeCoplaneTol(0.3),
-  m_separableFaceSet(),
   m_solidMaterialName(""),
   m_displacementBasedSIF(0),
-  m_rockToughness(1.0e99)
+  m_allowVacuumFrac(0),
+  m_rockToughness(1.0e99),
+  m_saturationPressureCuttoff(0.01)
 {
   this->RegisterViewWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
@@ -155,7 +156,7 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
                              &this->m_maxTurnAngle,
                              0 );
 
-  this->RegisterViewWrapper( viewKeyStruct::maxTurnAngleString,
+  this->RegisterViewWrapper( viewKeyStruct::markExtendedLayerString,
                              &this->m_markExtendedLayer,
                              0 );
 
@@ -175,17 +176,21 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid material used in solid mechanic solver");
 
+  RegisterViewWrapper(viewKeyStruct::displacementBasedSIFString, &m_displacementBasedSIF, 0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Option to calculate SIC. 0: VCCT; 1: displacement based");
+
+  RegisterViewWrapper(viewKeyStruct::allowVacuumFracString, &m_allowVacuumFrac, 0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Option to allow vacuum fracturing. 0: fluid-driven fracturing; 1: dry fracturing");
+
   RegisterViewWrapper(viewKeyStruct::rockToughnessString, &m_rockToughness, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Rock toughness of the solid material");
 
-  RegisterViewWrapper(viewKeyStruct::displacementBasedSIFString, &m_displacementBasedSIF, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Option to calculate SIC. 0: VCCT; 1: displacement based");
-
-  RegisterViewWrapper(viewKeyStruct::SeparableFaceNameString, &m_separableFaceName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the pre-designated face set for fracture propagation");
+  RegisterViewWrapper(viewKeyStruct::saturationPressureCuttoffString, &m_saturationPressureCuttoff, 0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("A critical value for fluid pressure. Used to determine if an edge is splitable or not.");
 
 
 
@@ -247,6 +252,16 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("child index of the face.");
+
+    faceManager->RegisterViewWrapper<real64_array>(viewKeyStruct::flowFacePressureString)->
+      setApplyDefaultValue(0)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Fluid pressure on faces");
+
+    faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::flowFaceTypeString)->
+      setApplyDefaultValue(0)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+      setDescription("Flow type of faces. 0=non-fracture face. 1=fracture face");
 
     faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::ruptureStateString)->
       setApplyDefaultValue(0)->
@@ -319,6 +334,9 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
     m_originalFacesToElemRegion = faceManager->elementRegionList();
     m_originalFacesToElemSubRegion = faceManager->elementSubRegionList();
     m_originalFacesToElemIndex = faceManager->elementList();
+
+    ElementRegionManager::ElementViewAccessor<arrayView2d<R1Tensor>> nodalForceFromElement =
+        elemManager->ConstructViewAccessor<array2d<R1Tensor>, arrayView2d<R1Tensor>>(SurfaceGenerator::viewKeyStruct::nodalForceFromElementString);
 
     //wu40: we don't have an initialize function in this solver, and therefore I put the resize of fields here.
     elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const elementSubRegion )->void
@@ -2504,8 +2522,9 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const poissonRatio =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "defaultPoissonRatio", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< real64 > const poissonRatio =
+      elementManager.ConstructFullMaterialViewAccessor<real64>( "defaultPoissonRatio", constitutiveManager);
+
 
 //  real64_array const * const ppFlowPressure = faceManager.getReferencePointer<FieldInfo::pressure>();
 //  const real64_array& faceArea = faceManager.getReference<realT>("faceArea");
@@ -2517,7 +2536,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   //wu40: I think we don't have to do the sanity check here since it has already been done in function CheckEdgeSplitability. Check with Randy.
   for( auto iface : edgesToFaces[edgeID] )
   {
-    if( faceManager.m_isExternal[iface] == 1 )
+    if( faceManager.m_isExternal[iface] >= 1 )
     {
       nExternalFaces++;
       faceInvolved.push_back( iface );
@@ -2531,8 +2550,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
   // Figure out the two fracture faces connected to this edge
   localIndex faceA(0), faceAp(0);
-  if( (faceParentIndex[faceInvolved[0]] == LOCALINDEX_MAX && faceParentIndex[faceInvolved[1]] == faceInvolved[0]) ||
-      (faceParentIndex[faceInvolved[1]] == LOCALINDEX_MAX && faceParentIndex[faceInvolved[0]] == faceInvolved[1]) )
+  if( (faceParentIndex[faceInvolved[0]] == -1 && faceParentIndex[faceInvolved[1]] == faceInvolved[0]) ||
+      (faceParentIndex[faceInvolved[1]] == -1 && faceParentIndex[faceInvolved[0]] == faceInvolved[1]) )
   {
     faceA = faceInvolved[0];
     faceAp = faceInvolved[1];
@@ -2544,7 +2563,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     GEOS_ERROR( msg );
   }
 
-  trailFaceID = faceParentIndex[faceInvolved[0]];
+  trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
 
 
   // We define three unit vectors
@@ -2601,10 +2620,15 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     lNodeFaceAp = facesToNodes[faceAp];
 
     //We remove all the shared nodes and the one remains should be the open one.
-    lNodeFaceAp.erase( *(std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][0] )));
-    lNodeFaceAp.erase( *(std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][1] )));
-    lNodeFaceA.erase( *(std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][0] )));
-    lNodeFaceA.erase( *(std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][1] )));
+    lNodeFaceAp.erase( std::distance(lNodeFaceAp.begin(), (std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][0] ))));
+    lNodeFaceAp.erase( std::distance(lNodeFaceAp.begin(), (std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][1] ))));
+    lNodeFaceA.erase( std::distance(lNodeFaceA.begin(), (std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][0] ))));
+    lNodeFaceA.erase( std::distance(lNodeFaceA.begin(), (std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][1] ))));
+
+//    lNodeFaceAp.erase( *(std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][0] )) );
+//    lNodeFaceAp.erase( *(std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][1] )));
+//    lNodeFaceA.erase( *(std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][0] )));
+//    lNodeFaceA.erase( *(std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][1] )));
 
     for( auto j : facesToNodes[faceA] )
     {
@@ -2614,8 +2638,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
         if( std::find( facesToNodes[faceAp].begin(), facesToNodes[faceAp].end(), iNd ) != facesToNodes[faceAp].end())
         {
           numSharedNodes++;
-          lNodeFaceA.erase( *(std::find( lNodeFaceA.begin(), lNodeFaceA.end(), iNd )));
-          lNodeFaceAp.erase( *(std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), iNd )));
+          lNodeFaceA.erase( std::distance(lNodeFaceA.begin(), (std::find( lNodeFaceA.begin(), lNodeFaceA.end(), iNd ))));
+          lNodeFaceAp.erase( std::distance(lNodeFaceAp.begin(), (std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), iNd ))));
         }
       }
     }
@@ -2750,7 +2774,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
             fNodeO -= nodalForceFromElement[er][esr][iEle][nodeID];
           }
 
-          GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
+          GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex]);
         }
       }
     }  // loop over two nodes on the edge
@@ -2776,18 +2800,27 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       xEle = elementSubRegion->getElementCenter()[iEle];
       xEle -= xEdge;
 
-      if( Dot( xEle, vecTipNorm ) > 0 )
+      //wu40: since nodalForceFromElement take the local index of a node in an element, we need to get the local node index from its global index.
+      //TODO: check with Randy if there is a more straightforward way to do this.
+      arrayView2d<localIndex> & elementsToNodes = elementSubRegion.nodeList();
+      for (localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a)
       {
-        nElemEachSide[0] += 1;
-        fNodeO += nodalForceFromElement[er][esr][iEle][nodeID];
-      }
-      else
-      {
-        nElemEachSide[1] +=1;
-        fNodeO -= nodalForceFromElement[er][esr][iEle][nodeID];
+        if (elemsToNodes[iEle][a] == nodeID)
+        {
+          if( Dot( xEle, vecTipNorm ) > 0 )
+          {
+            nElemEachSide[0] += 1;
+            fNodeO += nodalForceFromElement[er][esr][iEle][a];
+          }
+          else
+          {
+            nElemEachSide[1] +=1;
+            fNodeO -= nodalForceFromElement[er][esr][iEle][a];
+          }
+        }
       }
 
-      GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
+      GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex]);
     } // Loop through all elements connected to this node
   }
 
@@ -2911,7 +2944,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       localIndex_array extFacesOnTrailingEdge;
       for( auto iface : edgesToFaces[trailingEdge] )
       {
-        if( faceManager.m_isExternal[iface] == 1 )
+        if( faceManager.m_isExternal[iface] >= 1 )
           extFacesOnTrailingEdge.push_back( iface );
       }
 
@@ -3422,7 +3455,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       localIndex_array extFacesOnTrailingEdge;
       for( auto iface : edgesToFaces[trailingEdge] )
       {
-        if( faceManager.m_isExternal[iface] == 1 )
+        if( faceManager.m_isExternal[iface] >= 1 )
           extFacesOnTrailingEdge.push_back( iface );
       }
 
@@ -3697,7 +3730,7 @@ int SurfaceGenerator::CheckOrphanElement ( ElementRegionManager & elementManager
     for (localIndex a=0; a < elementsToFaces.size(1); ++a)
     {
       localIndex jFace = elementsToFaces[iEle][a];
-      if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] == 1) && jFace != iFace)
+      if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] >= 1) && jFace != iFace)
       {
         nRuptureFace +=1;
       }
@@ -3771,7 +3804,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
   for( auto iface : edgesToFaces[edgeID] )
   {
     if( facesToElementIndex.size(1) == 2  &&
-        faceManager.m_isExternal[iface] != 1 &&
+        faceManager.m_isExternal[iface] < 1 &&
         CheckOrphanElement(elementManager, faceManager, iface ) == 0 &&
         isFaceSeparable[iface] == 1 )
     {
@@ -3899,7 +3932,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
         {
           for( auto iface : edgesToFaces[edgeID] )
           {
-            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.m_isExternal[iface] != 1 &&
+            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.m_isExternal[iface] < 1 &&
                 ( std::find(facesToNodes[iface].begin(), facesToNodes[iface].end(), edgesToNodes[edgeID][0]) != facesToNodes[iface].end() ||
                   std::find(facesToNodes[iface].begin(), facesToNodes[iface].end(), edgesToNodes[edgeID][1]) != facesToNodes[iface].end()))
             {
@@ -3991,7 +4024,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
     localIndex iface = *a;
 
     if( faceManager.m_toElementsRelation[iface].size() == 2  &&
-        faceManager.m_isExternal[iface] != 1 &&
+        faceManager.m_isExternal[iface] < 1 &&
         CheckOrphanElement( faceManager, iface ) == 0 &&
         isFaceSeparable[iface] == 1 )
     {
@@ -4112,7 +4145,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
                a!=edgeManager.m_toFacesRelation[iedge].end() ; ++a )
           {
             localIndex iface = *a;
-            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.m_isExternal[iface] != 1 &&
+            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.m_isExternal[iface] < 1 &&
                 ( faceManager.IsNodeOnFace( iface, edgesToNodes[edgeID][0] ) ||
                   faceManager.IsNodeOnFace( iface, edgesToNodes[edgeID][1] )))
             {
@@ -4226,6 +4259,10 @@ int SurfaceGenerator::CheckEdgeSplitability( const localIndex edgeID,
   //                  = 3, this is an eligible kink, we need to process it as a kink
 
   arrayView1d< set<localIndex> > const & edgesToFaces = edgeManager.faceList();
+  localIndex_array const & faceParentIndex = faceManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  integer_array* const flowFaceType = faceManager.getPointer<integer_array>( viewKeyStruct::flowFaceTypeString );
+  real64_array* const faceFluidPressure = faceManager.getPointer<real64_array>( viewKeyStruct::flowFacePressureString );
+
 
   int isSplitable = -1;
 
@@ -4239,7 +4276,7 @@ int SurfaceGenerator::CheckEdgeSplitability( const localIndex edgeID,
   localIndex_array faceInvolved;
   for( auto iface : edgesToFaces[edgeID] )
   {
-    if( faceManager.m_isExternal[iface] == 1 )
+    if( faceManager.m_isExternal[iface] >= 1 )
     {
       nExternalFaces++;
       faceInvolved.push_back( iface );
@@ -4267,7 +4304,40 @@ int SurfaceGenerator::CheckEdgeSplitability( const localIndex edgeID,
 
   if( nExternalFaces == 2 )
   {
-    isSplitable = 1;
+    localIndex parentFace = -1;
+    if (faceParentIndex[faceInvolved[0]] == -1 && faceParentIndex[faceInvolved[1]] == faceInvolved[0])
+    {
+      parentFace = faceInvolved[0];
+    }
+    else if (faceParentIndex[faceInvolved[1]] == -1 && faceParentIndex[faceInvolved[0]] == faceInvolved[1])
+    {
+      parentFace = faceInvolved[1];
+    }
+
+    if (parentFace == -1)
+    {
+      isSplitable = -1;
+    }
+    else
+    {
+      if ( faceFluidPressure == nullptr || flowFaceType == nullptr || prefrac || m_allowVacuumFrac == 1)  //This is a dry simulation.  No fluid involved.
+      {
+        isSplitable = 1;
+      }
+      else
+      {
+        if ((*flowFaceType)[parentFace] > 0 && (*faceFluidPressure)[parentFace] > m_saturationPressureCuttoff)
+        {
+          isSplitable = 1;
+        }
+        else
+        {
+          isSplitable = 0;
+        }
+      }
+    }
+
+//    isSplitable = 1;
   }
 
   return (isSplitable);
