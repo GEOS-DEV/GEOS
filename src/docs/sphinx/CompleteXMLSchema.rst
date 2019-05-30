@@ -606,13 +606,6 @@ Datastructure: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
 
 
-.. _DATASTRUCTURE_ElementRegionsGroup:
-
-Datastructure: ElementRegionsGroup
-==================================
-.. include:: ../../coreComponents/fileIO/schema/docs/ElementRegionsGroup_other.rst
-
-
 .. _DATASTRUCTURE_Events:
 
 Datastructure: Events
@@ -1024,6 +1017,13 @@ Datastructure: domain
 Datastructure: edgeManager
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/edgeManager_other.rst
+
+
+.. _DATASTRUCTURE_elementRegions:
+
+Datastructure: elementRegions
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/elementRegions_other.rst
 
 
 .. _DATASTRUCTURE_elementSubRegions:

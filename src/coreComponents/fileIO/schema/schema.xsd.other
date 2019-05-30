@@ -363,7 +363,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="ElementRegionsGroup" type="ElementRegionsGroupType" />
+			<xsd:element name="elementRegions" type="elementRegionsType" />
 			<xsd:element name="ElementRegion" type="ElementRegionType" />
 		</xsd:choice>
 		<!--localToGlobalMap => (no description available)-->
@@ -377,7 +377,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 	</xsd:complexType>
-	<xsd:complexType name="ElementRegionsGroupType">
+	<xsd:complexType name="elementRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegion" type="ElementRegionType" />
 		</xsd:choice>
