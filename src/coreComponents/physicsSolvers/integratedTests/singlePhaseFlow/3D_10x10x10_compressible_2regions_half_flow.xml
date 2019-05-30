@@ -44,7 +44,7 @@
                    forceDt="20.0"
                    target="/Solvers/SinglePhaseFlow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    <!-- This event is applied every 1.0s. The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
