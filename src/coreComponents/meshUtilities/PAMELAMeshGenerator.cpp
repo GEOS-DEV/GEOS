@@ -47,9 +47,20 @@ using namespace dataRepository;
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
   MeshGeneratorBase( name, parent )
 {
-  this->RegisterViewWrapper<string>(keys::filePath)->
+
+  RegisterViewWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
+    setInputFlag(InputFlags::REQUIRED)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the mesh file");
+  RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fields to be imported from the external mesh file");
+  RegisterViewWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of the fields within GEOSX");
+  RegisterViewWrapper(viewKeyStruct::scaleString, &m_scale, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDefaultValue(1.)->setDescription("Scale the coordinates of the vertices");
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
@@ -62,7 +73,7 @@ void PAMELAMeshGenerator::PostProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
-      ( PAMELA::MeshFactory::makeMesh( this->getReference<string>( keys::filePath )));
+      ( PAMELA::MeshFactory::makeMesh( m_filePath ));
   m_pamelaMesh->CreateFacesFromCells();
   m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
                                                PAMELA::ELEMENTS::FAMILY::POLYGON );
@@ -149,10 +160,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
+        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        if ( nbCells == 0 ) continue;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
         cellBlock -> SetElementType("C3D8");
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 8 );
@@ -188,10 +200,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "TETRA" )
       {
+        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        if ( nbCells == 0 ) continue;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
         cellBlock -> SetElementType("C3D4");
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 4 );
@@ -219,10 +232,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "WEDGE" )
       {
+        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        if ( nbCells == 0 ) continue;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
         cellBlock -> SetElementType("C3D6");
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 6 );
@@ -254,10 +268,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "PYRAMID" )
       {
+        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        if ( nbCells == 0 ) continue;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
         cellBlock -> SetElementType("C3D5");
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 5 );
@@ -283,6 +298,25 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
             cornerList[4]->get_localIndex();
 
           cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+        }
+      }
+      /// Import ppt
+      if( cellBlock != nullptr )
+      {
+        auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
+        for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
+        {
+          auto meshProperty = meshProperties[m_fieldsToImport[fieldIndex]];
+          real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
+          GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty.size_owned() ),
+                         "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                         << meshProperty.size_owned() << ") on " <<cellBlock->getName() );
+          localIndex count = 0;
+          for(auto propertyValueItr = meshProperty.begin_owned() ; propertyValueItr != meshProperty.end_owned() ; propertyValueItr++)
+          {
+            real64 propertyValue = (*propertyValueItr);
+            property[count++] = propertyValue;
+          }
         }
       }
     }
