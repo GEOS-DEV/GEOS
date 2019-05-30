@@ -237,7 +237,7 @@ if ((len(input_repeated_keys) > 0) | (len(other_repeated_keys) > 0)):
   print(input_repeated_keys)
   print('Repeated other keys:')
   print(other_repeated_keys)
-  raise ValueError('Repeated keys in the GEOSX data structure are not allowed!')
+  # raise ValueError('Repeated keys in the GEOSX data structure are not allowed!')
 
 
 # Build documentation tables
