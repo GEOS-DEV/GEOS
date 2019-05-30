@@ -25,6 +25,8 @@
 
 #include "gtest/gtest.h"
 
+#include <numeric>
+
 #ifdef __clang__
 #define __null nullptr
 #endif
