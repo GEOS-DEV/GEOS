@@ -2763,15 +2763,26 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
         if (udist <= edgeLength && udist > 0.0)
         {
           xEle -= xEdge;
-          if( Dot( xEle, vecTipNorm ) > 0 )
+
+          //wu40: since nodalForceFromElement take the local index of a node in an element, we need to get the local node index from its global index.
+          //TODO: check with Randy if there is a more straightforward way to do this.
+          arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+          for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
           {
-            nElemEachSide[0] += 1;
-            fNodeO += nodalForceFromElement[er][esr][iEle][nodeID];
-          }
-          else
-          {
-            nElemEachSide[1] +=1;
-            fNodeO -= nodalForceFromElement[er][esr][iEle][nodeID];
+            if (elementsToNodes[iEle][n] == nodeID)
+            {
+              if( Dot( xEle, vecTipNorm ) > 0 )
+              {
+                nElemEachSide[0] += 1;
+                fNodeO += nodalForceFromElement[er][esr][iEle][n];
+              }
+              else
+              {
+                nElemEachSide[1] +=1;
+                fNodeO -= nodalForceFromElement[er][esr][iEle][n];
+              }
+            }
+
           }
 
           GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex]);
@@ -2800,22 +2811,20 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       xEle = elementSubRegion->getElementCenter()[iEle];
       xEle -= xEdge;
 
-      //wu40: since nodalForceFromElement take the local index of a node in an element, we need to get the local node index from its global index.
-      //TODO: check with Randy if there is a more straightforward way to do this.
-      arrayView2d<localIndex> & elementsToNodes = elementSubRegion.nodeList();
-      for (localIndex a=0 ; a<elemsToNodes.size( 1 ) ; ++a)
+      arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+      for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
       {
-        if (elemsToNodes[iEle][a] == nodeID)
+        if (elementsToNodes[iEle][n] == nodeID)
         {
           if( Dot( xEle, vecTipNorm ) > 0 )
           {
             nElemEachSide[0] += 1;
-            fNodeO += nodalForceFromElement[er][esr][iEle][a];
+            fNodeO += nodalForceFromElement[er][esr][iEle][n];
           }
           else
           {
             nElemEachSide[1] +=1;
-            fNodeO -= nodalForceFromElement[er][esr][iEle][a];
+            fNodeO -= nodalForceFromElement[er][esr][iEle][n];
           }
         }
       }
@@ -2993,14 +3002,21 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
         realT udist;
         R1Tensor x0_x1(X[edgesToNodes[edgeID][0]]), x0_xEle(xEle);
         x0_x1 -= X[edgesToNodes[edgeID][1]];
+        x0_x1.Normalize();
         x0_xEle -= X[edgesToNodes[edgeID][1]];
         udist = Dot(x0_x1, x0_xEle);
 
         if(  ( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
         {
-          fNode += nodalForceFromElement[er][esr][iEle][iNd];
+          arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+          for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
+          {
+            if (elementsToNodes[iEle][n] == iNd)
+            {
+              fNode += nodalForceFromElement[er][esr][iEle][n];
+            }
+          }
         }
-
       }
 
       fFaceA[i] += fNode;
