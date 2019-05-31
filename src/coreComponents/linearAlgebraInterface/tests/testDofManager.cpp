@@ -25,6 +25,8 @@
 
 #include "gtest/gtest.h"
 
+#include <numeric>
+
 #ifdef __clang__
 #define __null nullptr
 #endif
@@ -561,13 +563,7 @@ TEST_F(DofManagerTest, TestWithTimes)
 
   if( mpiRank == 0 )
   {
-    // To avoid error ‘accumulate’ is not a member of ‘std’
-    //double totalTime = std::accumulate( timesSum.begin(), timesSum.end(), 0.0 );
-    double totalTime = 0.0;
-    for( localIndex i = 0; i < timesSum.size(); ++i)
-    {
-      totalTime += timesSum[i];
-    }
+    double totalTime = std::accumulate( timesSum.begin(), timesSum.end(), 0.0 );
     std::cout << "TIMING" << std::endl;
     std::cout << "addField: " << std::fixed << std::setprecision( 0 ) << std::trunc( timeAddField * 1e3 ) << " [ms] -- "
               << std::fixed
