@@ -9,15 +9,18 @@ Overview
 
 In the black-oil model three pseudo-components, oil (o), gas (g) and water (w)
 are considered. These are assumed to be partitioned across three fluid phases,
-named liquid (l), vapour (v) and aqueous (a).
+named liquid (l), vapor (v) and aqueous (a).
+
+Phase behavior is characterized by the following properties which are used to relate
+properties of the fluids in the reservoir to their properties at surface conditions.
 
 * :math:`B_o`: oil formation volume factor
 * :math:`B_g`: gas formation volume factor
 * :math:`R_s`: gas/oil ratio
-* :math:`r_s`: oil/gas ratio
+* :math:`R_v`: oil/gas ratio
 
-Phase behavior is characterized by black-oil tables, that tabulate saturated and
-undersaturated oil and gas properties as functions of pressure and solution ratios.
+By  tables, that tabulate saturated and undersaturated oil and gas properties
+as functions of pressure and solution ratios.
 
 Dead oil
 -------------
@@ -36,9 +39,11 @@ three phases:
     0 & 0 & 1
     \end{bmatrix}
 
+and the phase densities are
+
 .. math::
       \rho_{l} = & \, \frac{\rho_{o}^{STC}}{B_{o}} \\
-      \rho_{v} = & \, \frac{\rho_{g}^{STC}}{B_{g}}
+      \rho_{v} = & \, \frac{\rho_{g}^{STC}}{B_{g}}.
 
 Live oil
 -------------
@@ -61,9 +66,11 @@ hydrocarbon components and the following composition matrix can be used
     0 & 0 & 1
     \end{bmatrix}
 
+whereas the densities of the two hydrocarbon phases are
+
 .. math::
   \rho_{l} = & \, \frac{\rho_{o}^{STC} + \rho_{g}^{STC} R_{s}}{B_{o}} \\
-  \rho_{v} = & \, \frac{\rho_{g}^{STC} + \rho_{o}^{STC} r_{s}}{B_{g}}
+  \rho_{v} = & \, \frac{\rho_{g}^{STC} + \rho_{o}^{STC} R_{v}}{B_{g}}
 
 See `Petrowiki`_ for more information.
 
