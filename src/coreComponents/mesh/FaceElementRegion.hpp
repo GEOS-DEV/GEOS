@@ -66,10 +66,10 @@ public:
   struct viewKeyStruct : public ElementRegion::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
-    static constexpr auto edgesTofractureConnectorsMapString = "edgesToFractureConnectors";
-    static constexpr auto fractureConnectorToEdgeMapString = "fractureConnectorsToEdges";
-    static constexpr auto fractureElementConnectorString = "fractureElementConnectors";
-    static constexpr auto fractureToCellConnectorString = "fractureCellConnectors";
+    static constexpr auto edgesTofractureConnectorsString = "edgesToFractureConnectors";
+    static constexpr auto fractureConnectorsToEdgesString = "fractureConnectorsToEdges";
+    static constexpr auto fractureConnectorsToFaceElementsString = "fractureElementConnectors";
+    static constexpr auto faceElementsToCellsString = "fractureCellConnectors";
     static constexpr auto fractureCellConnectorIndicesString = "fractureCellConnectorIndices";
   };
 
@@ -81,9 +81,9 @@ private:
 
   map< localIndex, localIndex > m_edgesToFractureConnectors;
   array1d<localIndex> m_fractureConnectorsToEdges;
-  array1d< array1d<localIndex> > m_fractureElementConnectors;
+  array1d< array1d<localIndex> > m_fractureConnectorsToFaceElements;
   array1d<localIndex > m_fractureCellConnectorIndices;
-  FixedToManyElementRelation m_fractureToCellConnectors;
+  FixedToManyElementRelation m_faceElementsToCells;
 
 };
 

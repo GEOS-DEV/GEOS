@@ -13,24 +13,24 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
   m_fractureSetNames(),
   m_edgesToFractureConnectors(),
   m_fractureConnectorsToEdges(),
-  m_fractureElementConnectors(),
+  m_fractureConnectorsToFaceElements(),
   m_fractureCellConnectorIndices(),
-  m_fractureToCellConnectors()
+  m_faceElementsToCells()
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
 
   RegisterViewWrapper( viewKeyStruct::fractureSetString, &m_fractureSetNames, false )->
     setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsMapString, &m_edgesToFractureConnectors, 0 )
+  RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsString, &m_edgesToFractureConnectors, 0 )
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureConnectorToEdgeMapString, &m_fractureConnectorsToEdges, 0 )
+  RegisterViewWrapper( viewKeyStruct::fractureConnectorsToEdgesString, &m_fractureConnectorsToEdges, 0 )
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureElementConnectorString, &m_fractureElementConnectors, 0 )
+  RegisterViewWrapper( viewKeyStruct::fractureConnectorsToFaceElementsString, &m_fractureConnectorsToFaceElements, 0 )
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
 
@@ -38,7 +38,7 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureToCellConnectorString, &m_fractureToCellConnectors, 0 )
+  RegisterViewWrapper( viewKeyStruct::faceElementsToCellsString, &m_faceElementsToCells, 0 )
     ->setRestartFlags( RestartFlags::NO_WRITE)
     ->setSizedFromParent(0);
 
@@ -68,7 +68,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
-  m_fractureToCellConnectors.resize( subRegion->size(), 2 );
+  m_faceElementsToCells.resize( subRegion->size(), 2 );
 
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
@@ -106,9 +106,9 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   for( localIndex ke=0 ; ke<2 ; ++ke )
   {
-    m_fractureToCellConnectors.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][0];
-    m_fractureToCellConnectors.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][0];
-    m_fractureToCellConnectors.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][0];
+    m_faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][0];
+    m_faceElementsToCells.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][0];
+    m_faceElementsToCells.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][0];
   }
 
 
@@ -116,14 +116,14 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   {
     if( m_edgesToFractureConnectors.count(edge)==0 )
     {
-      m_fractureElementConnectors.push_back({});
+      m_fractureConnectorsToFaceElements.push_back({});
       m_fractureConnectorsToEdges.push_back(edge);
       m_edgesToFractureConnectors[edge] = m_fractureConnectorsToEdges.size()-1;
     }
     localIndex const connectorIndex = m_edgesToFractureConnectors[edge];
-    localIndex const numCells = m_fractureElementConnectors[connectorIndex].size() + 1;
-    m_fractureElementConnectors[connectorIndex].resize( numCells );
-    m_fractureElementConnectors[connectorIndex][ numCells-1 ] = kfe;
+    localIndex const numCells = m_fractureConnectorsToFaceElements[connectorIndex].size() + 1;
+    m_fractureConnectorsToFaceElements[connectorIndex].resize( numCells );
+    m_fractureConnectorsToFaceElements[connectorIndex][ numCells-1 ] = kfe;
     m_recalculateConnectors.insert( connectorIndex );
   }
 
@@ -168,7 +168,15 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
      subRegion->resize( targetSet.size() );
      subRegion->numNodesPerElement() = 8;
 
-     m_fractureToCellConnectors.resize( targetSet.size(), 2 );
+#if 1
+     for( auto const faceIndex : targetSet )
+     {
+       localIndex const faceIndices[2] = {faceIndex,faceIndex};
+       AddToFractureMesh( faceManager, "default",faceIndices );
+     }
+   }
+#else
+     m_faceElementsToCells.resize( targetSet.size(), 2 );
 
      FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
      FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
@@ -204,16 +212,16 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
        for( localIndex ke=0 ; ke<2 ; ++ke )
        {
-         m_fractureToCellConnectors.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndex][ke];
-         m_fractureToCellConnectors.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndex][ke];
-         m_fractureToCellConnectors.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndex][ke];
+         m_faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndex][ke];
+         m_faceElementsToCells.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndex][ke];
+         m_faceElementsToCells.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndex][ke];
        }
        ++kfe;
      }
    }
 
    m_fractureConnectorsToEdges.resize( edgeToFractureElementMap.size() );
-   m_fractureElementConnectors.resize( edgeToFractureElementMap.size() );
+   m_fractureConnectorsToFaceElements.resize( edgeToFractureElementMap.size() );
    localIndex connectorIndex=0;
    for( auto const & connector : edgeToFractureElementMap )
    {
@@ -221,17 +229,17 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
      {
        m_edgesToFractureConnectors[connector.first] = connectorIndex;
        m_fractureConnectorsToEdges[connectorIndex] = connector.first;
-       m_fractureElementConnectors[connectorIndex].resize( connector.second.size() );
+       m_fractureConnectorsToFaceElements[connectorIndex].resize( connector.second.size() );
        localIndex fractureElementCounter = -1;
        for( auto const fractureElementIndex : connector.second )
        {
-         m_fractureElementConnectors[connectorIndex][++fractureElementCounter] = fractureElementIndex;
+         m_fractureConnectorsToFaceElements[connectorIndex][++fractureElementCounter] = fractureElementIndex;
        }
        ++connectorIndex;
      }
    }
    m_fractureConnectorsToEdges.resize(connectorIndex);
-   m_fractureElementConnectors.resize(connectorIndex);
+   m_fractureConnectorsToFaceElements.resize(connectorIndex);
 
 
    forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion  * const subRegion )
@@ -251,8 +259,9 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
        }
      }
    });
+#endif
 
- }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, std::string const &, ManagedGroup * const )
 
