@@ -275,14 +275,30 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
 
-  for( localIndex a=0 ; a<fvManager->numSubGroups() ; ++a )
+  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
-    FluxApproximationBase * const fluxApprox = fvManager->GetGroup<FluxApproximationBase>(a);
-    if( fluxApprox!=nullptr )
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+
     {
-      fluxApprox->addToFractureStencil( *domain, this->m_fractureRegionName );
+      NodeManager * const nodeManager = meshLevel->getNodeManager();
+      EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+      FaceManager * const faceManager = meshLevel->getFaceManager();
+      ElementRegionManager * const elemManager = meshLevel->getElemManager();
+      FaceElementRegion * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(this->m_fractureRegionName);
+
+      for( localIndex a=0 ; a<fvManager->numSubGroups() ; ++a )
+      {
+        FluxApproximationBase * const fluxApprox = fvManager->GetGroup<FluxApproximationBase>(a);
+        if( fluxApprox!=nullptr )
+        {
+          fluxApprox->addToFractureStencil( *domain,
+                                            this->m_fractureRegionName );
+          fractureRegion->m_recalculateConnectors.clear();
+        }
+      }
     }
   }
+
 
   return rval;
 }
