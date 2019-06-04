@@ -21,34 +21,6 @@
 
 #include "RAJA/RAJA.hpp"
 
-#if defined(RAJA_ENABLE_CUDA)
-typedef RAJA::cuda_exec<256> elemPolicy;
-typedef RAJA::cuda_exec<256> onePointPolicy;
-
-typedef RAJA::cuda_exec<256> memSetPolicy;
-typedef RAJA::cuda_exec<256> computeForcePolicy;
-
-typedef RAJA::cuda_exec<256> quadraturePolicy;
-typedef RAJA::atomic::cuda_atomic atomicPolicy;
-
-typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
-
-#elif defined(GEOSX_USE_OPENMP)
-typedef RAJA::omp_parallel_for_exec elemPolicy;
-typedef RAJA::omp_parallel_for_exec onePointPolicy;
-
-typedef RAJA::omp_parallel_for_exec memSetPolicy;
-typedef RAJA::omp_parallel_for_exec computeForcePolicy;
-
-typedef RAJA::omp_parallel_for_exec quadraturePolicy;
-typedef RAJA::atomic::omp_atomic atomicPolicy;
-
-typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::omp_reduce_ordered reducePolicy;
-
-typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
-
-#else
 typedef RAJA::loop_exec elemPolicy;
 typedef RAJA::loop_exec onePointPolicy;
 
@@ -65,22 +37,15 @@ typedef RAJA::loop_exec parallelHostPolicy;
 
 typedef RAJA::loop_exec materialUpdatePolicy;
 
-
-#endif
-
-#if defined(RAJA_ENABLE_CUDA)
-#define GEOSX_LAMBDA [=] RAJA_DEVICE
-#else
-#define GEOSX_LAMBDA [&]
-#endif
+#define GEOSX_LAMBDA [=]
 
 namespace geosx
-{  
+{
 
 //Alias to RAJA reduction operators
 template< typename POLICY, typename T >
 using ReduceSum = RAJA::ReduceSum<POLICY, T>;
-  
+
 //
 template<typename POLICY=atomicPolicy, typename T>
 RAJA_INLINE void atomicAdd(T *acc, T value)

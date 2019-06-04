@@ -17,10 +17,12 @@ set(systemSolverInterface_sources
     LinearSolverWrapper.cpp
    )
 
+set( dependencyList ${dependencyList} fileIO common trilinos )
+
 blt_add_library( NAME                  systemSolverInterface
                  SOURCES               ${systemSolverInterface_sources}
                  HEADERS               ${systemSolverInterface_headers}
-                 DEPENDS_ON            fileIO common trilinos
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( systemSolverInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

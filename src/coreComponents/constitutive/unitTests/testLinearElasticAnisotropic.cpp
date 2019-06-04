@@ -105,7 +105,6 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
-  real64 DdtVoigt[6] = {0.0};
   real64 stressV[6] = {0.0};
   R2Tensor Rot;
   R2SymTensor zero;
