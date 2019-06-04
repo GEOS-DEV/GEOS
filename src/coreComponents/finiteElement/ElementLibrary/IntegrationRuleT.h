@@ -142,7 +142,7 @@ inline void CalculateShapeFunctionDerivative( const realT y[8],
                                 { 1, -1,  1, -1,  1, -1, 1, -1},
                                 {-1,  1, -1,  1,  1, -1, 1, -1} };
 
-   const realT volinv = 1.0 / vol;;
+   const realT volinv = 1.0 / vol;
 
 
    // compute the hourglass modes

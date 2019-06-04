@@ -18,6 +18,12 @@ set( nranks 2 )
 # Add gtest C++ based tests
 #
 
+set( dependencyList gtest linearAlgebraInterface )
+
+if( ENABLE_MPI )
+    set( dependencyList ${dependencyList} mpi )
+endif()
+
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
   message("processing test_name ${test_name}")
@@ -25,7 +31,7 @@ foreach(test ${LAI_tests})
   blt_add_executable( NAME ${test_name}  
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON gtest linearAlgebraInterface )
+                      DEPENDS_ON ${dependencyList} )
 
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name} -x ${nranks}
@@ -36,6 +42,7 @@ endforeach()
 # 
 #  Add tests requiring input xml
 #
+set( dependencyList ${dependencyList} geosx_core )
 
 foreach(test ${LAI_tests_with_xml})
   get_filename_component( test_name ${test} NAME_WE )
@@ -44,7 +51,7 @@ foreach(test ${LAI_tests_with_xml})
   blt_add_executable( NAME ${test_name}  
                       SOURCES ${LAI_tests_with_xml_routines} ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON geosx_core gtest linearAlgebraInterface )
+                      DEPENDS_ON ${dependencyList} )
 
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/${test_name}.xml -x ${nranks}

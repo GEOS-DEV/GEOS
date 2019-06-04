@@ -25,9 +25,7 @@
 
 #include "gtest/gtest.h"
 
-#ifdef __clang__
-#define __null nullptr
-#endif
+#include <numeric>
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -64,24 +62,28 @@ protected:
 
   static void SetUpTestCase()
   {
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput( global_argc, global_argv );
-    problemManager.ParseInputFile();
-    problemManager.ProblemSetup();
+    problemManager = new ProblemManager("Problem", nullptr);
+
+    problemManager->InitializePythonInterpreter();
+    problemManager->ParseCommandLineInput( global_argc, global_argv );
+    problemManager->ParseInputFile();
+    problemManager->ProblemSetup();
   }
 
   static void TearDownTestCase()
   {
+    delete problemManager;
+    problemManager = nullptr;
   }
 
-  static ProblemManager problemManager;
+  static ProblemManager * problemManager;
 };
 
-ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
+ProblemManager * DofManagerTest::problemManager = nullptr;
 
 TEST_F(DofManagerTest, TestOne)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
