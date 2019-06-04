@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.9)
 ################################
 # GEOSX
 ################################
-project(geosx LANGUAGES C CXX)
+project(geosx LANGUAGES C CXX Fortran)
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
 set(CMAKE_ENABLE_EXPORTS ON)
@@ -78,7 +78,7 @@ else()
 #  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=0)
 endif()
 
-if( ENABLE_OPENMP)
+if( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
