@@ -33,7 +33,6 @@
 #include "Mesh/MeshFactory.hpp"
 
 #include "MeshDataWriters/MeshParts.hpp"
-#include "MeshDataWriters/VTKWriter.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
@@ -73,15 +72,14 @@ void PAMELAMeshGenerator::PostProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >
-      ( PAMELA::MeshFactory::makeMesh( m_filePath ));
+      ( PAMELA::MeshFactory::makeMesh( m_filePath ) );
   m_pamelaMesh->CreateFacesFromCells();
   m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
                                                PAMELA::ELEMENTS::FAMILY::POLYGON );
   m_pamelaMesh->CreateLineGroupWithAdjacency(
     "TopologicalC2C",
-    m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
-                                                               PAMELA::ELEMENTS::FAMILY::POLYGON ));
-
+  m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
+                                                             PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
 void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
@@ -108,7 +106,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 
   // Use the PartMap of PAMELA to get the mesh
-  auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get()));
+  auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));
 
   // Vertices are written first
   r1_array const & X = nodeManager->referencePosition();
@@ -144,6 +142,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() ) );
   
   // First loop which iterate on the regions
+  array1d< globalIndex > globalIndexRegionOffset( polyhedronPartMap.size() +1 );
   for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
   {
     auto regionPtr = regionItr->second;
@@ -303,19 +302,39 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       /// Import ppt
       if( cellBlock != nullptr )
       {
-        auto meshProperties = m_pamelaMesh->get_PolyhedronProperty_double()->get_PropertyMap();
         for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
-          auto meshProperty = meshProperties[m_fieldsToImport[fieldIndex]];
-          real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
-          GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty.size_owned() ),
-                         "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
-                         << meshProperty.size_owned() << ") on " <<cellBlock->getName() );
-          localIndex count = 0;
-          for(auto propertyValueItr = meshProperty.begin_owned() ; propertyValueItr != meshProperty.end_owned() ; propertyValueItr++)
+          auto meshProperty = regionPtr->FindVariableByName( m_fieldsToImport[fieldIndex] );
+          auto dimension = meshProperty->Dimension;
+          if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
-            real64 propertyValue = (*propertyValueItr);
-            property[count++] = propertyValue;
+            real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
+            GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
+                "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                << meshProperty->size() << ") on " <<cellBlock->getName() );
+            for( int cellIndex = 0; cellIndex < property.size(); cellIndex++ )
+            {
+              property[cellIndex] = meshProperty->get_data( cellIndex )[0];
+            }
+          }
+          else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
+          {
+            array2d< real64 > & property = cellBlock->AddProperty< array2d< real64 > >( m_fieldNamesInGEOSX[fieldIndex] );
+            property.resizeDimension<1>( static_cast< localIndex >( dimension ) );
+            GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
+                "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                << meshProperty->size() << ") on " <<cellBlock->getName() );
+            for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
+            {
+              for( int dim = 0; dim < 3; dim++ )
+              {
+                property[cellIndex][dim] = meshProperty->get_data( cellIndex )[dim];
+              }
+            }
+          }
+          else
+          {
+            GEOS_ERROR("Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX");
           }
         }
       }
