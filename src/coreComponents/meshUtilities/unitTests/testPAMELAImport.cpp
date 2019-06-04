@@ -34,30 +34,82 @@ TEST( PAMELAImport, testXML )
 {
   MeshManager meshManager("mesh", nullptr);
 
-  std::stringstream inputStream;
-  inputStream <<
+  // Load the mesh
+  std::stringstream inputStreamMesh;
+  inputStreamMesh <<
   "<?xml version=\"1.0\" ?>" <<
   "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
   "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
+  "  fieldsToImport=\"barycenter\""<<
+  "  fieldNamesInGEOSX=\"barycenter\""<<
   "  file=\"" <<gmshFilePath.c_str()<< "\"/>"<<
   "</Mesh>";
-  const string inputString = inputStream.str();
+  const string inputStringMesh = inputStreamMesh.str();
+  std::cout << gmshFilePath.c_str() << std::endl;
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputString.c_str(), inputString.size() );
-  if (!xmlResult)
-  {
-    GEOS_LOG_RANK_0("XML parsed with errors!");
-    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
-  }
+  xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
 
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child("Mesh");
   meshManager.ProcessInputFileRecursive( xmlMeshNode );
   meshManager.PostProcessInputRecursive();
 
+  // Create the domain and generate the Mesh
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
   meshManager.GenerateMeshes( domain.get() );
+
+  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  // Create the ElementRegions
+  std::stringstream inputStreamRegion;
+  inputStreamRegion <<
+  "<?xml version=\"1.0\" ?>" <<
+  "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
+  "  <ElementRegion name=\"0\" cellBlocks=\"0_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"1\" cellBlocks=\"1_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"2\" cellBlocks=\"2_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"3\" cellBlocks=\"3_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"4\" cellBlocks=\"4_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"5\" cellBlocks=\"5_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"6\" cellBlocks=\"6_TETRA\" materialList=\"water rock\"/>" <<
+  "  <ElementRegion name=\"7\" cellBlocks=\"7_TETRA\" materialList=\"water rock\"/>" <<
+  "</ElementRegions>";
+  const string inputStringRegion = inputStreamRegion.str();
+
+  xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
+
+  xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child("ElementRegions");
+  elemManager->ProcessInputFileRecursive( xmlRegionNode );
+  elemManager->PostProcessInputRecursive();
+
+  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+
+  // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
+  elemManager->GenerateMesh( cellBlockManager );
+
+
+  // Check if the computed center match with the importer center
+  auto centerProperty =  elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64> >( "barycenter" );
+  elemManager->forElementRegions( [&]( ElementRegion * const elemRegion)->void
+  {
+    localIndex er = elemRegion->getIndexInParent();
+    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto * const elemSubRegion )
+    {
+      for( localIndex ei = 0; ei < elemSubRegion->size(); ei++ )
+      {
+        R1Tensor center = elemSubRegion->calculateElementCenter( ei, *nodeManager );
+        R1Tensor centerFromProperty( centerProperty[er][esr][ei][0], 
+                                     centerProperty[er][esr][ei][1],
+                                     centerProperty[er][esr][ei][2] );
+        center -= centerFromProperty;
+        GEOS_ERROR_IF( center.L2_Norm() > meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
+      }
+    });
+  });
 
 }
 
