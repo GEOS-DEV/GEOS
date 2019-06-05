@@ -144,6 +144,12 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 
   m_densityModelType   = stringToExponentType( m_densityModelString );
   m_viscosityModelType = stringToExponentType( m_viscosityModelString );
+
+  real64 dRho_dP;
+  real64 dVisc_dP;
+  Compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
+  this->getWrapper< array2d<real64> >(viewKeyStruct::dDens_dPresString)->setDefaultValue( dRho_dP );
+  this->getWrapper< array2d<real64> >(viewKeyStruct::dVisc_dPresString)->setDefaultValue( dVisc_dP );
 }
 
 void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
