@@ -4,7 +4,7 @@
 Compositional multiphase flow FV solver
 #######################################
 
-Here, we refer the compositional solver in three steps:
+Here, we review the compositional solver in three steps:
 
 1. :ref:`theory`
 
@@ -59,7 +59,7 @@ Using the multiphase extension of Darcy's law, the phase velocity :math:`\boldsy
 is written as a function of the phase potential gradient :math:`\nabla \Phi_{\ell}`:
 
 .. math::
-  \boldsymbol{u}_{\ell} = -\boldsymbol{k} \lambda_{\ell} \nabla \Phi_{\ell}
+  \boldsymbol{u}_{\ell} := -\boldsymbol{k} \lambda_{\ell} \nabla \Phi_{\ell}
   = - \boldsymbol{k} \lambda_{\ell} \big( \nabla (p - P_{c,\ell}) - \rho_{\ell} g \nabla z \big).
 
 In this equation, :math:`\boldsymbol{k}` is the rock permeability,
@@ -115,7 +115,7 @@ Primary variables
 
 The variable formulation implemented in GEOSX is a global variable formulation based on
 :math:`n_c+1` primary variables, namely, one pressure, :math:`p`, and
-:math:`n_c+1` (by default, molar) component densities, :math:`\rho_c`.
+:math:`n_c` (by default, molar) component densities, :math:`\rho_c`.
 By default, we use molar component densities. A flag discussed in the section
 :ref:`usage` can be used to use mass component densities instead of molar component densities.
 
@@ -131,18 +131,18 @@ Assembling the residual equations and calling the
 fractions and saturations. This is done with the relationship:
 
 .. math::
-  z_c = \frac{\rho_c}{\rho_T},
+  z_c := \frac{\rho_c}{\rho_T},
 
 where
 
 .. math::
-  \rho_T = \sum_c \rho_c.
+  \rho_T := \sum_c \rho_c.
 
 These secondary variables are used as input to the flash calculations.
 After the flash calculations, the saturations are computed as:
 
 .. math::
-  S_{\ell} = \nu_{\ell} \frac{ \rho_T }{ \rho_{\ell}},
+  S_{\ell} := \nu_{\ell} \frac{ \rho_T }{ \rho_{\ell}},
 
 where :math:`\nu_{\ell}` is the global mole fraction of phase :math:`\ell`
 and :math:`\rho_{\ell}` is the molar density of phase :math:`\ell`.
@@ -180,6 +180,26 @@ The compositional multiphase solver uses a fully implicit (backward Euler) tempo
 
 Solution strategy
 -----------------
+
+The nonlinear solution strategy is based on Newton's method.
+at each Newton iteration, the solver assembles a residual vector, :math:`R`,
+collecting the :math:`n_c` discrete mass conservation equations and the volume
+constraint for all the control volumes.
+The solver also assembles the Jacobian matrix :math:`J` containing the analytical
+derivatives of :math:`R` with respect to the primary variables, namely, pressure
+and component densities.
+The Newton update, :math:`\delta X`, is then computed as:
+
+.. math::
+  \delta X := - J^{-1} R,
+
+The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebraInterface/docs/LinearSolverParameters`.
+The Newton update is then applied to the primary variables:
+
+..  math::
+  X := X + \delta X.
+
+This procedure is repeated until convergence.
 
 .. _usage:
 

@@ -34,8 +34,8 @@ When the entire pore space is filled by a single phase, we can substitute the Da
 with :math:`\gamma \nabla z= \rho \boldsymbol{g}`.
 
 
-Space discretization with Finite volume mehtod
-=========================
+Space discretization with Finite volume method
+==============================================
 Let :math:`\Omega \subset \mathbb{R}^n, \, n =1,2,3` be an open set defining the computational domain. We consider :math:`\Omega` meshed by element such that :math:`\Omega = \cup_{i}V_i` and integrate the single phase flow equation, described above, over each element :math:`V_i`:
 
 .. math::
