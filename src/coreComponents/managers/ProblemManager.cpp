@@ -783,7 +783,7 @@ void ProblemManager::GenerateMesh()
 
       });
 
-      elemManager->GenerateAggregates( faceManager, nodeManager );
+      elemManager->GenerateAggregates( faceManager );
 //      elemManager->forElementSubRegions([&](CellBlockSubRegion * const subRegion)->void
 //      {
 //        subRegion->nodeList().SetRelatedObject(nodeManager);

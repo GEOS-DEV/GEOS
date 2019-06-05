@@ -100,7 +100,7 @@ public:
 
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
+  void GenerateAggregates( FaceManager const * const faceManager );
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;

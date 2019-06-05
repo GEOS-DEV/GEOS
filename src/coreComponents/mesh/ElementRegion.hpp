@@ -124,7 +124,7 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlocks );
 
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
+  void GenerateAggregates( FaceManager const * const faceManager ); 
 
   void GenerateFractureMesh( FaceManager const * const faceManager );
 
