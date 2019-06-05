@@ -43,7 +43,8 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Reference pressure for fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false );
+  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false )->
+    setDefaultValue(1.0);
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
 }
 
