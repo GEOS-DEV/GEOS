@@ -116,13 +116,15 @@ void DomainPartition::SetMaps(  )
 void DomainPartition::GenerateSets(  )
 {
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup * nodeManager = mesh->getNodeManager();
+  ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
+  dataRepository::ManagedGroup const * const
+  nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
-  std::map< string, integer_array > nodeInSet;
-  string_array setNames;
+  std::map< string, integer_array > nodeInSet; // map to contain indicator of whether a node is in a set.
+  string_array setNames; // just a holder for the names of the sets
 
+  // loop over all wrappers and fill the nodeIndSet arrays for each set
   for( auto & viewWrapper : nodeSets->wrappers() )
   {
     string name = viewWrapper.second->getName();
@@ -141,15 +143,13 @@ void DomainPartition::GenerateSets(  )
   }
 
 
-  ElementRegionManager * elementRegionManager = mesh->getElemManager();
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
   for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
   {
-    ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
-    for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetSubGroups() )
+    ElementRegion * const elementRegion = subGroup.second->group_cast<ElementRegion *>();
+    elementRegion->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
     {
-      ElementSubRegionBase * const subRegion = subRegionIter.second->group_cast<ElementSubRegionBase *>();
-//      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
       dataRepository::ManagedGroup * elementSets = subRegion->sets();
       std::map< string, integer_array > numNodesInSet;
 
@@ -175,7 +175,7 @@ void DomainPartition::GenerateSets(  )
           }
         }
       }
-    }
+    });
   }
 }
 

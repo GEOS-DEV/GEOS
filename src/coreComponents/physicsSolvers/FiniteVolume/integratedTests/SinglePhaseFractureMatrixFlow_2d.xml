@@ -7,7 +7,7 @@
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="2"
+                     verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="Region2 Fracture"
@@ -19,7 +19,7 @@
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="3"
+                      verboseLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="Fracture">
     </SurfaceGenerator>
@@ -28,10 +28,10 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
-                  xCoords="-1, 1"
+                  xCoords="-2, 2"
                   yCoords="0, 10"
                   zCoords="0, 1"
-                  nx="2"
+                  nx="4"
                   ny="10"
                   nz="1"
                   cellBlockNames="cb1"/>
@@ -47,11 +47,15 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="20000.0">
+
+   <SoloEvent name="preFracture"
+              target="/Solvers/SurfaceGen"/>
+
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
+                   forceDt="100.0"
                    target="/Solvers/SinglePhaseFlow" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
@@ -83,7 +87,6 @@
                    materialList="water rock"/>
                    
     <FaceElementRegion name="Fracture"
-                       fractureSet="fracture"
                        materialList="water rock"/>
                    
   </ElementRegions>
@@ -114,7 +117,7 @@
                setNames="all"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
-               scale="2.0e-15"/>
+               scale="1.0e-17"/>
 
     <FieldSpecification name="permy"
                component="1"
@@ -122,7 +125,7 @@
                setNames="all"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
-               scale="2.0e-15"/>
+               scale="1.0e-17"/>
 
     <FieldSpecification name="permz"
                component="2"
@@ -130,31 +133,12 @@
                setNames="all"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="permeability"
-               scale="2.0e-15"/>
-
-
-    <FieldSpecification name="aperture"
-               component="0"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/Fracture"
-               fieldName="elementAperture"
-               scale="1.0e-4"/>
-
-
-
+               scale="1.0e-17"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="all"
                objectPath="ElementRegions/Region2/cb1"
-               fieldName="referencePorosity"
-               scale="0.05"/>
-
-    <FieldSpecification name="referencePorosityF"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/Fracture"
                fieldName="referencePorosity"
                scale="0.05"/>
                
@@ -164,6 +148,13 @@
                objectPath="ElementRegions/Region2/cb1"
                fieldName="pressure"
                scale="0.0"/>
+
+    <FieldSpecification name="frac"
+               initialCondition="1"
+               setNames="fracture"
+               objectPath="faceManager"
+               fieldName="ruptureState"
+               scale="1"/>
 
     <FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"

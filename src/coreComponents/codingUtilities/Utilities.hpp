@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Utilities.h
- *
- *  Created on: Sep 13, 2010
- *      Author: settgast1
+/**
+ * @file Utilities.hpp
  */
 
 #ifndef UTILITIES_H_
@@ -508,6 +505,20 @@ template< typename T1, typename T2 >
 const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key)
 {
   return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key ));
+}
+
+template< typename T1, typename T2, typename LAMBDA >
+bool executeOnMapValue( std::map<T1,T2> const & Map, const T1& key, LAMBDA&& lambda )
+{
+  bool rval = false;
+  typename std::map<T1,T2>::const_iterator MapIter = Map.find( key );
+  if( MapIter!=Map.end()  )
+  {
+    rval = true;
+    lambda(MapIter->second);
+  }
+
+  return rval;
 }
 
 

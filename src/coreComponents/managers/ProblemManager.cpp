@@ -768,8 +768,6 @@ void ProblemManager::GenerateMesh()
 
       edgeManager->BuildEdges(faceManager, nodeManager );
 
-      elemManager->GenerateFractureMesh( faceManager );
-
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );

@@ -128,15 +128,6 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
   });
 }
 
-void ElementRegionManager::GenerateFractureMesh( FaceManager const * const faceManager )
-{
-  this->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const elemRegion)->void
-  {
-    elemRegion->GenerateFractureMesh( faceManager );
-  });
-}
-
-
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
   this->forElementRegions([&](ElementRegion * const elemRegion)->void
