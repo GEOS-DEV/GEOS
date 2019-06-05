@@ -67,6 +67,6 @@ Input example
                                        phaseNames="oil water"
                                        phaseMinVolumeFraction="0.02 0.015"
                                        phaseRelPermExponent="2 2.5"
-                                       phaseMaxValue="0.8 1.0"/>
+                                       phaseRelPermMaxValue="0.8 1.0"/>
       ...
    </Constitutive>

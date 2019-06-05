@@ -85,7 +85,7 @@ Input example
                                       phaseNames="water oil"
                                       phaseMinVolumeFraction="0.1 0.015"
                                       phaseCapPressureExponentInv="0.55 0"
-                                      phaseEntryPressure="1e6 0"
+                                      phaseCapPressureMultiplier="1e6 0"
                                       capPressureEpsilon="1e-7"/>
       ...
     </Constitutive>
