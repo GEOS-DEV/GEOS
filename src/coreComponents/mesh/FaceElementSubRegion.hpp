@@ -64,6 +64,10 @@ public:
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
 
+  void CalculateElementGeometricQuantities( localIndex const index,
+                                            arrayView1d<real64 const> const & faceArea );
+
+
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
     static constexpr auto elementApertureString        = "elementAperture";

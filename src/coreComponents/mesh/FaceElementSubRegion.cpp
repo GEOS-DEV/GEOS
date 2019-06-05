@@ -43,7 +43,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
-    setApplyDefaultValue(0.0)->
+    setApplyDefaultValue(1.0e-5)->
     setDescription("The aperture of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
@@ -91,6 +91,13 @@ void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * con
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
 
+void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
+                                                                arrayView1d<real64 const> const & faceArea )
+{
+  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
+  m_elementVolume[k] = m_elementAperture[k] * faceArea[k];
+}
+
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & faceManager )
 {
@@ -102,6 +109,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager cons
     m_elementVolume[k] = m_elementAperture[k] * faceArea[k];
   });
 }
+
 
 
 } /* namespace geosx */

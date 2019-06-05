@@ -150,10 +150,6 @@ protected:
   virtual void computeCellStencil( DomainPartition const & domain,
                                    CellStencil & stencil ) = 0;
 
-  virtual void computeFractureStencil( DomainPartition const & domain,
-                                       CellStencil & fractureStencil,
-                                       CellStencil & cellStencil ) = 0;
-
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        set<localIndex> const & faceSet,
