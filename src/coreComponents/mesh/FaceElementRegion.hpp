@@ -64,12 +64,6 @@ public:
   virtual void GenerateMesh( ManagedGroup const * ) override {}
 
   /**
-   * @brief This function generates the face/fracture mesh
-   * @param faceManager
-   */
-  void GenerateFractureMesh( FaceManager const * const faceManager );
-
-  /**
    * @brief This function generates and adds entries to the face/fracture mesh
    * @param faceManager A pointer to the FaceManager object.
    * @param subRegionName The name of the FaceElementSubRegion to insert the new entries.
@@ -95,12 +89,9 @@ public:
   set< localIndex > m_newFractureElements;
 
 private:
-  string_array m_fractureSetNames;
-
   map< localIndex, localIndex > m_edgesToFractureConnectors;
   array1d<localIndex> m_fractureConnectorsToEdges;
   array1d< array1d<localIndex> > m_fractureConnectorsToFaceElements;
-//  array1d<localIndex > m_fractureCellConnectorIndices;
   FixedToManyElementRelation m_faceElementsToCells;
 
 };
