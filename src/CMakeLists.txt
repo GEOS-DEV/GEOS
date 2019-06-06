@@ -91,6 +91,15 @@ blt_add_executable(NAME geosx
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
+
+
+add_custom_target( geosx_update_rst_tables
+                   ALL
+                   COMMAND bash ../scripts/updateRstTables.bash
+                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                   DEPENDS geosx
+                 )
+
 if( ${SPHINX_FOUND} )
   blt_add_sphinx_target( geosx_docs )
 endif()
