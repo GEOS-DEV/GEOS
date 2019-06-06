@@ -195,24 +195,11 @@ protected:
     elementManager->PostProcessInputRecursive();
 
     problemManager.ProblemSetup();
-
-    /////////////////////////////
-    /////////////////////////////
-    /*
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput( global_argc, global_argv );
-    problemManager.ParseInputFile();
-    problemManager.ProblemSetup();
-    */
-    /////////////////////////////
-    /////////////////////////////
-
     solver = problemManager.GetPhysicsSolverManager().GetGroup<LaplaceFEM>( "laplace" );
   }
 
   static void TearDownTestCase()
   {
-
   }
 
   static ProblemManager problemManager;
@@ -227,43 +214,38 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
 
   string const fieldName = "Temperature";
-  real64 const time = 1.0;
+  real64 const time = 0.0;
   real64 const dt = 1.0;
-  real64 const scalingFactor = 1.0;
   int const cycleNumber = 0;
 
   DomainPartition * domain = problemManager.getDomainPartition();
 
   // Create and solve the problem
   LaplaceFEM laplaceFEM( fieldName, domain );
-  EpetraBlockSystem * system = solver->getLinearSystemRepository();
-  solver->ImplicitStepSetup( time, dt, domain, system );
-  solver->AssembleSystem( domain, system, time, dt );
-  solver->ApplyBoundaryConditions( domain, system, time, dt );
   solver->SolverStep( time, dt, cycleNumber, domain );
-  solver->ApplySystemSolution( system, scalingFactor, domain );
 
-  // Get matrix and matrix size
-  Epetra_FECrsMatrix const * const matrix = system->GetMatrix( BlockIDs::dummyScalarBlock,
-                                                               BlockIDs::dummyScalarBlock );
-  real64 const matrixSize3 = std::pow( static_cast<real64>( matrix->NumGlobalRows64() ), 1.0/3.0 );
+  // Get nodeManager
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  localIndex const numNodes = nodeManager->size();
+
+  // Get matrix size
+  globalIndex const matrixSize = 11*11*11;
+  real64 const matrixSize3 = std::pow( static_cast<real64>( matrixSize ), 1.0/3.0 );
   real64 const tol = 4.0 * std::pow( matrixSize3, 2 ) * eps;
 
   // Get solution
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
   real64_array & fieldVar = nodeManager->getReference<real64_array>( fieldName );
 
   // Compute relative error
   real64 xMin = 0.0;
   real64 xMax = 0.0;
-  // TODO read them on input
+  // BC values
   real64 const vMin = 1000.0;
   real64 const vMax = 0.0;
 
   // Compute domain bounds (x direction)
   r1_array const & referencePosition = nodeManager->getReference<r1_array>(dataRepository::keys::referencePositionString);
-  localIndex const numNodes = nodeManager->size();
   for( localIndex a = 0 ; a < numNodes ; ++a )
   {
     R1Tensor nodePosition;

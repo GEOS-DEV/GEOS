@@ -73,7 +73,7 @@ public:
   /**
    * Constructor
    */
-  DofManager();
+  DofManager( localIndex const verbosity = 0 );
 
   /**
    * Destructor
@@ -269,23 +269,35 @@ public:
   localIndex offsetLocalDofs( string const & field = "" ) const;
 
   /**
-   * Get a sparsity pattern.  Without additional arguments, this function routines the sparsity pattern for the
-   * monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
+   * Set a sparsity pattern.  Without additional arguments, this function provides the sparsity pattern
+   * for the monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
    */
-  void getSparsityPattern( ParallelMatrix & locLocDistr,
+  void setSparsityPattern( ParallelMatrix & locLocDistr,
                            string const & rowField = "",
-                           string const & colField = "",
-                           bool const withVector = false,
-                           ParallelVector * vector = nullptr ) const;
+                           string const & colField = "" ) const;
 
   /**
-   * Get a sparsity pattern. Low level version
+   * Set a sparsity pattern. Low level version
    */
-  void getSparsityPattern( ParallelMatrix & locLocDistr,
+  void setSparsityPattern( ParallelMatrix & locLocDistr,
                            localIndex const rowFieldIndex,
-                           localIndex const colFieldIndex,
-                           bool const withVector = false,
-                           ParallelVector * vector = nullptr ) const;
+                           localIndex const colFieldIndex ) const;
+
+  /**
+   * Allocate a vector.  Without additional arguments, this function provides the a vector consistent
+   * with the sparsity pattern for the monolithic matrix.  Sub-vectors can be extracted, however, using
+   * row and column field keys.
+   */
+  void setVector( ParallelVector & vector,
+                  string const & rowField = "",
+                  string const & colField = "" ) const;
+
+  /**
+   * Allocate a vector. Low level version
+   */
+  void setVector( ParallelVector & vector,
+                  localIndex const rowFieldIndex,
+                  localIndex const colFieldIndex ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
@@ -359,6 +371,11 @@ public:
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
 private:
+  /**
+   * Verbosity level
+   */
+  localIndex m_verbosity = 0;
+
   /**
    *  Limit on max number of fields
    */

@@ -356,7 +356,8 @@ public:
   /**
    * @brief Write the vector to a matlab-compatible file
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
 
   /**
    * Map a global row index to local row index

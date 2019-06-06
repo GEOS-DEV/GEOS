@@ -200,6 +200,7 @@ struct FieldSpecificationEqual
     }
   }
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
    *        equations.
@@ -392,6 +393,7 @@ struct FieldSpecificationAdd
     }
   }
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a value to a vector field for a single dof.
    * @param[in] dof The degree of freedom that is to be modified.
@@ -499,11 +501,11 @@ public:
 
   static string CatalogName() { return "FieldSpecification"; }
 
-  virtual const string getCatalogName() const 
+  virtual const string getCatalogName() const
   {
     return FieldSpecificationBase::CatalogName();
   }
-  
+
   /**
    * @}
    */
@@ -545,6 +547,7 @@ public:
 //                               dataRepository::ManagedGroup * dataGroup,
 //                               LAMBDA && lambda );
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
@@ -577,6 +580,7 @@ public:
                                        systemSolverInterface::BlockIDs const blockID ) const;
 
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
@@ -905,7 +909,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 }
 
 
-
+// TODO: to be removed. The new version works with LAI
 template< typename FIELD_OP >
 void FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
@@ -965,6 +969,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    std::forward<LAMBDA&&>(lambda) );
 }
 
+// TODO: to be removed. The new version works with LAI
 template< typename FIELD_OP, typename LAMBDA >
 void
 FieldSpecificationBase::

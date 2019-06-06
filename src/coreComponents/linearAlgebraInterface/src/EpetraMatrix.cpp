@@ -113,6 +113,15 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Reinitialize.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Keeps the map and graph but sets all values to user-defined value.
+void EpetraMatrix::set( real64 const value )
+{
+  m_matrix->PutScalar( value );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Reinitialize.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Keeps the map and graph but sets all values to 0.
 void EpetraMatrix::zero()
 {
@@ -438,9 +447,23 @@ void EpetraMatrix::print() const
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
-void EpetraMatrix::write( string const & filename ) const
+void EpetraMatrix::write( string const & filename,
+                          bool const mtxFormat ) const
 {
-  EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+  if( mtxFormat )
+  {
+    // Ensure the ".mtx" extension
+    string name( filename );
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    {
+      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
+    }
+    EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *m_matrix );
+  }
+  else
+  {
+    EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

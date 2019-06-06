@@ -150,6 +150,14 @@ public:
   /**
    * @brief Reinitialize the matrix.
    *
+   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
+   *
+   */
+  void set( real64 const value );
+
+  /**
+   * @brief Reinitialize the matrix.
+   *
    * Keeps the parallel partitioning and the sparsity pattern but sets all elements to zero.
    *
    */
@@ -503,7 +511,8 @@ public:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
 
   /**
    * @brief Performe a matrix matrix product with Parallel Matrix

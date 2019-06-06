@@ -301,9 +301,23 @@ void EpetraVector::print() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
 //       if we prefer that.
-void EpetraVector::write( string const & filename ) const
+void EpetraVector::write( string const & filename,
+                          bool const mtxFormat ) const
 {
-  EpetraExt::MultiVectorToMatlabFile( filename.c_str(), *m_vector );
+  if( mtxFormat )
+  {
+    // Ensure the ".mtx" extension
+    string name( filename );
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    {
+      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
+    }
+    EpetraExt::MultiVectorToMatrixMarketFile( name.c_str(), *m_vector );
+  }
+  else
+  {
+    EpetraExt::MultiVectorToMatlabFile( filename.c_str(), *m_vector );
+  }
 }
 
 // ----------------------------

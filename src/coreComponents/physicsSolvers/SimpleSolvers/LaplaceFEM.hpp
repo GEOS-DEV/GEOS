@@ -135,24 +135,14 @@ public:
   void SetupSystem( DomainPartition * const domain,
                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  void SetupMLPreconditioner( DomainPartition const & domain,
-                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
-
-  void ApplyDirichletBC_implicit( real64 const time,
-                                  DomainPartition & domain,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem );
+  // TODO: can I remove this?
+//  void SetupMLPreconditioner( DomainPartition const & domain,
+//                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs );
-
-  /////////////////////////////////////////////////////////////////////////////////////////
-  void solve( ParallelMatrix & matrix,
-              ParallelVector & rhs,
-              ParallelVector & solution,
-              SystemSolverParameters const * const params );
-  /////////////////////////////////////////////////////////////////////////////////////////
 
   enum class timeIntegrationOption
   {
@@ -176,6 +166,10 @@ public:
     return & m_solution;
   }
 
+  inline globalIndex getSize() const {
+    return m_matrix.globalRows();
+  }
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -192,6 +186,7 @@ private:
   ParallelMatrix m_matrix;
   ParallelVector m_rhs;
   ParallelVector m_solution;
+  LinearSolverParameters m_parameters;
 };
 
 } /* namespace geosx */
