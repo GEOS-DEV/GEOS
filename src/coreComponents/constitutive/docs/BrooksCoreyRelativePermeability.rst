@@ -4,26 +4,26 @@
 Brooks-Corey relative permeability model
 ############################################
 
-********
+
 Overview
-********
+======================
 
 The following paragraphs explain how the Brooks-Corey
 model is used to compute the phase relative permeabilities as a function
 of volume fraction with the expression:
 
 .. math::
-    k_{r, m} = k_{\textit{rm,max}} S_{c,m}^{\lambda_{m}}
+    k_{r\ell} = k_{\textit{r}\ell,\textit{max}} S_{\ell,\textit{scaled}}^{\lambda_{\ell}},
 
 where the scaled volume fraction of phase :math:`\ell` is computed as:
 
 .. math::
+   S_{\ell,\textit{scaled}} = \frac{S_{\ell} - S_{\ell,\textit{min}} }{1 - S_{\textit{w,min}} - S_{\textit{o,min}} - S_{\textit{g,min}} }.
 
-   S_{\textit{m,c}} = \frac{S_{m} - S_{\textit{m,min}} }{1 - S_{\textit{w,min}} - S_{\textit{o,min}} - S_{\textit{g,min}} }
+The minimum phase volume fractions :math:`S_{\ell,\textit{min}}` are model parameters specified by the user.
 
-****************
-Model parameters
-****************
+Usage
+======================
 
 The relative permeability constitutive model is listed in
 ``<Constitutive>`` block of the input XML file.
@@ -33,21 +33,31 @@ This name is used to assign the model to regions of the physical
 domain via a ``materialList`` attribute of the ``<ElementRegion>``
 node.
 
-Besides ``name``, this model requires the specification of four
-types of parameters:
+The following attributes are supported:
 
-* ``phaseNames`` - The list of phase names. The number of phases can be either 2 or 3. Example: "oil water gas".
+.. include:: /coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
-* ``phaseMinVolFraction`` - The list of minimum volume fractions :math:`S_{m,min}` for each phase specified in ``phaseNames``, in the same order. Below this volume fraction, the phase is assumed to be immobile. Default value for each phase: 0.0.
+Below are some comments on the model parameters.
 
-* ``phaseRelPermExponent`` - The list of exponents :math:`\lambda_{m}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 1.0.
+* ``phaseNames`` - The number of phases can be either 2 or 3. The capillary pressure model assumes that oil is always present. Supported phase names are:
 
-* ``phaseMaxValue`` - The list of maximum values :math:`k_{\textit{rm,max}}` for each phase specified in ``phaseNames``, in the same order. Default value for each phase: 0.0.
+===== ===========
+Value Phase
+===== ===========
+oil   Oil phase
+gas   Gas phase
+water Water phase
+===== ===========
+
+* ``phaseMinVolFraction`` - The list of minimum volume fractions :math:`S_{\ell,min}` for each phase is specified in the same order as in ``phaseNames``. Below this volume fraction, the phase is assumed to be immobile.
+
+* ``phaseRelPermExponent`` - The list of exponents :math:`\lambda_{\ell}` for each phase is specified in the same order as in ``phaseNames``.
+
+* ``phaseMaxValue`` - The list of maximum values :math:`k_{\textit{r} \ell,\textit{max}}` for each phase is specified in the same order as in ``phaseNames``.
 
 
-**************
 Input example
-**************
+=======================
 
 .. code-block:: xml
 
@@ -57,6 +67,6 @@ Input example
                                        phaseNames="oil water"
                                        phaseMinVolumeFraction="0.02 0.015"
                                        phaseRelPermExponent="2 2.5"
-                                       phaseMaxValue="0.8 1.0"/>
+                                       phaseRelPermMaxValue="0.8 1.0"/>
       ...
    </Constitutive>
