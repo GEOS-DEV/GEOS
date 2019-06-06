@@ -44,7 +44,7 @@ ls
 
 # Generate an updated schema
 cd bin
-geosx -s ../../src/coreComponents/fileIO/schema/schema.xsd
+./geosx -s ../../src/coreComponents/fileIO/schema/schema.xsd
 
 # Build the documentation tables
 cd ../../src/coreComponents/fileIO/schema/
