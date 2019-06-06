@@ -51,16 +51,16 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
-using ParallelVector = typename TrilinosInterface::ParallelVector;
-using LinearSolver = typename TrilinosInterface::LinearSolver;
+using LAI = TrilinosInterface;
+using ParallelMatrix = typename LAI::ParallelMatrix;
+using ParallelVector = typename LAI::ParallelVector;
+using LinearSolver = typename LAI::LinearSolver;
 
 class LaplaceFEM : public SolverBase
 {
 public:
   LaplaceFEM( const std::string& name,
               ManagedGroup * const parent );
-
 
   virtual ~LaplaceFEM() override;
 
