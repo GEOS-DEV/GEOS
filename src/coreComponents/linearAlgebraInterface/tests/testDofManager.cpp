@@ -124,14 +124,12 @@ protected:
 
   static void TearDownTestCase()
   {
-    delete problemManager;
-    problemManager = nullptr;
   }
 
-  static ProblemManager * problemManager;
+  static ProblemManager problemManager;
 };
 
-ProblemManager * DofManagerTest::problemManager = nullptr;
+ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
 
 TEST_F(DofManagerTest, TestFEM_partial)
 {
@@ -419,7 +417,7 @@ TEST_F(DofManagerTest, TestPermutation)
 // This last test is always true! It collects time
 TEST_F(DofManagerTest, TestWithTimes)
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = problemManager.getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
