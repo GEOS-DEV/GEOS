@@ -2132,7 +2132,7 @@ realT SurfaceGenerator::CalculateKinkAngle ( const localIndex edgeID,
                                              FaceManager & faceManager )
 {
   localIndex_array faces;
-  realT kinkAngle;
+  // realT kinkAngle;
 
   for( auto iface : edgeManager.faceList()[edgeID] )
   {
@@ -2963,7 +2963,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( const localIndex edgeID,
     // tipArea is already twice the triangle area so we don't need this.
     SIF_I[edgeID] = tipOpening[0] / 2.0 * GdivBeta / pow( r/6.28, 0.5 );
     SIF_II[edgeID] = 0.0;  // SIF is not accurate in this scenario anyway.  Let's not worry about turning.
-    SIF_III[edgeID] = 0.0;;
+    SIF_III[edgeID] = 0.0;
   }
 
 

@@ -76,7 +76,7 @@ struct Arg : public option::Arg
   static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
   {
     char* endptr = nullptr;
-    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {};
+    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {}
     if ((endptr != option.arg) && (*endptr == 0))
     {
       return option::ARG_OK;
