@@ -93,7 +93,7 @@ localIndex Unpack( char const * & buffer,
     localIndex const index = packList[a];
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
 
-    set< std::tuple<localIndex, localIndex, localIndex> > values;
+    std::set< std::tuple<localIndex, localIndex, localIndex> > values;
     if( !clearFlag )
     {
       for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )

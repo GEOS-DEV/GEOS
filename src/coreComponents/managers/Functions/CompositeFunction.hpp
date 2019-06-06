@@ -24,7 +24,10 @@
 #define COMPOSITEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
+
+#ifdef GEOSX_USE_MATHPRESSO
 #include <mathpresso/mathpresso.h>
+#endif
 
 namespace geosx
 {
@@ -74,15 +77,16 @@ private:
   string_array m_variableNames;
   string       m_expression;
 
+#ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
+#endif
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
   std::vector<FunctionBase*> m_subFunctions;
 
 };
-
 
 } /* namespace geosx */
 

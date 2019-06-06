@@ -24,18 +24,20 @@ if( NOT GEOSX_TPL_DIR )
 endif()
 message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 
-set(ATK_DIR "${GEOSX_TPL_DIR}/axom" CACHE PATH "")
-set(CONDUIT_DIR "${GEOSX_TPL_DIR}/conduit" CACHE PATH "")
-
 set( thirdPartyLibs "")
 
 
 ################################
 # Conduit
 ################################
+if (NOT EXISTS ${CONDUIT_DIR})
+    message(INFO ": Using conduit from thirdPartyLibs")
+    set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit CACHE PATH "")
+endif()
+
 if (EXISTS ${CONDUIT_DIR})
   message( "CONDUIT_DIR = ${CONDUIT_DIR}" )
-  include(cmake/thirdparty/FindConduit.cmake)
+  include( cmake/thirdparty/FindConduit.cmake )
   blt_register_library( NAME conduit
                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
                         LIBRARIES  conduit
@@ -51,42 +53,22 @@ if (EXISTS ${CONDUIT_DIR})
                         LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
                         
+  set( CONDUIT_FOUND ON CACHE BOOL "" )
   set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
-
 else()
+  set( CONDUIT_FOUND OFF CACHE BOOL "" )
   message( "Not using conduit" )
 endif()
-
 
 ################################
 # AXOM
 ################################
-if (EXISTS ${ATK_DIR})
-  message( "ATK_DIR = ${ATK_DIR}" )
-  include(cmake/thirdparty/FindATK.cmake)
-  blt_register_library( NAME sidre
-                        INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  sidre
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
 
-  blt_register_library( NAME slic
-                        INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  slic
-                        TREAT_INCLUDES_AS_SYSTEM ON)
-
-  blt_register_library( NAME lumberjack
-                        INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  lumberjack
-                        TREAT_INCLUDES_AS_SYSTEM ON)
-                        
-  set( thirdPartyLibs ${thirdPartyLibs} sidre slic )
-else()
-  message( "Not using axom" )
-endif()
-
-
+################################
+# uncrustify
+################################
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
-
 
 ################################
 # HDF5
@@ -129,10 +111,7 @@ blt_register_library( NAME silo
                       TREAT_INCLUDES_AS_SYSTEM ON
                       DEPENDS_ON hdf5 )
 
-set( thirdPartyLibs ${thirdPartyLibs} silo )  
-
-
-
+set( thirdPartyLibs ${thirdPartyLibs} silo )
 
 ################################
 # RAJA
@@ -155,35 +134,10 @@ blt_register_library( NAME raja
 
 set( thirdPartyLibs ${thirdPartyLibs} raja )  
 
-
-
 ################################
 # CHAI
 ################################
-if( ${ENABLE_CHAI})
-  if( EXISTS ${CHAI_DIR})
-      message("Using system CHAI found at ${CHAI_DIR}")
-      set(CHAI_FOUND TRUE)
-  else()
-      message(INFO ": Using CHAI from thirdPartyLibs")
-      set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
-  endif()
-
-  include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
-  if ( NOT CHAI_FOUND)
-      message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
-  endif()    
-
-  blt_register_library( NAME chai
-                        INCLUDES ${CHAI_INCLUDE_DIRS}
-                        LIBRARIES ${CHAI_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
-
-  set( thirdPartyLibs ${thirdPartyLibs} chai )
-else()
-  message("Not using CHAI")
-endif()
-
+include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
 
 ################################
 # FPARSER
@@ -226,115 +180,108 @@ set( thirdPartyLibs ${thirdPartyLibs} fparser )
 
 endif()
 
-
-
-
-
-
 ################################
 # CALIPER
 ################################
 if( ENABLE_CALIPER )
-message( INFO ": setting up caliper" )
+    message( INFO ": setting up caliper" )
 
-if( EXISTS ${CALIPER_DIR} )
-    message( INFO "Found system caliper" )
-    message("Using system CALIPER found at ${CALIPER_DIR}")
-    set(CALIPER_FOUND TRUE)    
-else()
-    message(INFO ": Using CALIPER from thirdPartyLibs")
-    set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
-    set(CALIPER_FOUND TRUE)
+    if( EXISTS ${CALIPER_DIR} )
+        message( INFO "Found system caliper" )
+        message("Using system CALIPER found at ${CALIPER_DIR}")
+        set(CALIPER_FOUND TRUE)    
+    else()
+        message(INFO ": Using CALIPER from thirdPartyLibs")
+        set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
+        set(CALIPER_FOUND TRUE)
+    endif()
+
+    find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
+            PATHS  ${CALIPER_DIR}/include
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT_PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH)
+
+    set( caliper_lib_list caliper caliper-reader caliper-common gotcha caliper-mpi )
+                        
+    message(INFO "looking for libs in ${CALIPER_DIR}")
+    blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
+                        NAMES ${caliper_lib_list}
+                        PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
+                    )
+
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(CALIPER  DEFAULT_MSG
+                                    CALIPER_INCLUDE_DIRS
+                                    CALIPER_LIBRARIES )
+
+    if (NOT CALIPER_FOUND)
+        message(FATAL_ERROR ": CALIPER not found in ${CALIPER_DIR}. Maybe you need to build it")
+    else() 
+        message("CALIPER_INCLUDE_DIRS = ${CALIPER_INCLUDE_DIRS}")
+        message("CALIPER_LIBRARIES = ${CALIPER_LIBRARIES}")    
+    endif()
+    blt_register_library( NAME caliper
+                        INCLUDES ${CALIPER_INCLUDE_DIRS}
+                        LIBRARIES ${CALIPER_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} caliper )  
 endif()
-
-find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
-           PATHS  ${CALIPER_DIR}/include
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
-
-set( caliper_lib_list caliper caliper-reader caliper-common gotcha caliper-mpi )
-                       
-message(INFO "looking for libs in ${CALIPER_DIR}")
-blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
-                    NAMES ${caliper_lib_list}
-                    PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
-                   )
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CALIPER  DEFAULT_MSG
-                                  CALIPER_INCLUDE_DIRS
-                                  CALIPER_LIBRARIES )
-
-
-if (NOT CALIPER_FOUND)
-    message(FATAL_ERROR ": CALIPER not found in ${CALIPER_DIR}. Maybe you need to build it")
-else() 
-    message("CALIPER_INCLUDE_DIRS = ${CALIPER_INCLUDE_DIRS}")
-    message("CALIPER_LIBRARIES = ${CALIPER_LIBRARIES}")    
-endif()
-blt_register_library( NAME caliper
-                      INCLUDES ${CALIPER_INCLUDE_DIRS}
-                      LIBRARIES ${CALIPER_LIBRARIES}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} caliper )  
-                      
-endif()
-
-
 
 ################################
 # ASMJIT / MATHPRESSO
 ################################
-set(ENABLE_MATHPRESSO ON CACHE BOOL  "Enables mathpresso Plugin")
-if( ENABLE_MATHPRESSO )
-
-message( INFO ": setting up asmjit" )
-set(ASMJIT_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/asmjit/src/asmjit)
-set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
-
-message( INFO ": setting up MathPresso" )
-set(MATHPRESSO_DIR ${GEOSX_TPL_DIR}/mathpresso)
-
-find_path( MATHPRESSO_INCLUDE_DIRS mathpresso/mathpresso.h
-           PATHS  ${MATHPRESSO_DIR}/include
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
-
-find_library( MATHPRESSO_LIBRARY NAMES mathpresso
-              PATHS ${MATHPRESSO_DIR}/lib
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(MATHPRESSO  DEFAULT_MSG
-                                  MATHPRESSO_INCLUDE_DIRS
-                                  MATHPRESSO_LIBRARY )
-                                  
-if (NOT MATHPRESSO_FOUND)
-    message(FATAL_ERROR ": MATHPRESSO not found in ${MATHPRESSO_DIR}. Maybe you need to build it")
+if (NOT EXISTS ${MATHPRESSO_DIR})
+    message(INFO ": Using mathpresso from thirdPartyLibs")
+    set(MATHPRESSO_DIR ${GEOSX_TPL_DIR}/mathpresso CACHE PATH "")
 endif()
 
-blt_register_library( NAME mathpresso
-                      INCLUDES ${MATHPRESSO_INCLUDE_DIRS}
-                      LIBRARIES ${MATHPRESSO_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+if (EXISTS ${MATHPRESSO_DIR})
+    message( INFO ": setting up asmjit" )
+    set(ASMJIT_LOCAL_DIR ${PROJECT_BINARY_DIR}/thirdparty/asmjit/src/asmjit)
+    set(ASMJIT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/thirdparty/asmjit)
 
-set( thirdPartyLibs ${thirdPartyLibs} mathpresso )  
+    message( INFO ": setting up MathPresso" )
+    find_path( MATHPRESSO_INCLUDE_DIRS mathpresso/mathpresso.h
+            PATHS  ${MATHPRESSO_DIR}/include
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT_PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH)
 
+    find_library( MATHPRESSO_LIBRARY NAMES mathpresso
+                PATHS ${MATHPRESSO_DIR}/lib
+                NO_DEFAULT_PATH
+                NO_CMAKE_ENVIRONMENT_PATH
+                NO_CMAKE_PATH
+                NO_SYSTEM_ENVIRONMENT_PATH
+                NO_CMAKE_SYSTEM_PATH)
+
+
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(MATHPRESSO  DEFAULT_MSG
+                                    MATHPRESSO_INCLUDE_DIRS
+                                    MATHPRESSO_LIBRARY )
+                                    
+    if (NOT MATHPRESSO_FOUND)
+        message(FATAL_ERROR ": MATHPRESSO not found in ${MATHPRESSO_DIR}. Maybe you need to build it")
+    endif()
+
+    blt_register_library( NAME mathpresso
+                        INCLUDES ${MATHPRESSO_INCLUDE_DIRS}
+                        LIBRARIES ${MATHPRESSO_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+    
+    set(MATHPRESSO_FOUND ON CACHE BOOL "")
+    set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
+else()
+    set(MATHPRESSO_FOUND OFF CACHE BOOL "")
+    message(INFO ": Not using mathpresso")
 endif()
-
-
 
 ################################
 # PUGIXML
@@ -387,8 +334,6 @@ blt_register_library( NAME pugixml
 
 set( thirdPartyLibs ${thirdPartyLibs} pugixml )  
 
-
-
 ################################
 # TRILINOS
 ################################
@@ -403,6 +348,10 @@ if( ENABLE_TRILINOS )
   
   include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
   
+  list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
+  list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
+  message(STATUS "Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+  message(STATUS "Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
   
   blt_register_library( NAME trilinos
                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
@@ -412,18 +361,16 @@ if( ENABLE_TRILINOS )
 
 endif()
 
-
-
 ################################
 # METIS
 ################################
 if( ENABLE_METIS )
-	message( INFO ": setting up METIS" )
+    message( INFO ": setting up METIS" )
 
-	set(METIS_DIR ${GEOSX_TPL_DIR}/metis)
+    set(METIS_DIR ${GEOSX_TPL_DIR}/metis)
 
-	find_path( METIS_INCLUDE_DIRS metis.h
-	   PATHS  ${METIS_DIR}/include
+    find_path( METIS_INCLUDE_DIRS metis.h
+       PATHS  ${METIS_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
            NO_CMAKE_PATH
@@ -431,43 +378,38 @@ if( ENABLE_METIS )
            NO_CMAKE_SYSTEM_PATH)
 
    find_library( METIS_LIBRARY NAMES metis
-	      PATHS ${METIS_DIR}/lib
+          PATHS ${METIS_DIR}/lib
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
               NO_CMAKE_PATH
               NO_SYSTEM_ENVIRONMENT_PATH
               NO_CMAKE_SYSTEM_PATH)
 
-message( "METIS_INCLUDE_DIRS = ${METIS_INCLUDE_DIRS}" )
-message( "METIS_LIBRARY = ${METIS_LIBRARY}" )
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(METIS  DEFAULT_MSG
-                                  METIS_INCLUDE_DIRS
-				  METIS_LIBRARY )
-if (NOT METIS_FOUND)
-	message(FATAL_ERROR ": METIS not found in ${METIS_DIR}. Maybe you need to build it")
+    message( "METIS_INCLUDE_DIRS = ${METIS_INCLUDE_DIRS}" )
+    message( "METIS_LIBRARY = ${METIS_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(METIS DEFAULT_MSG METIS_INCLUDE_DIRS METIS_LIBRARY )
+    if (NOT METIS_FOUND)
+        message(FATAL_ERROR ": METIS not found in ${METIS_DIR}. Maybe you need to build it")
+    endif()
+
+    blt_register_library( NAME metis
+                            INCLUDES ${METIS_INCLUDE_DIRS} 
+                LIBRARIES ${METIS_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} metis )
 endif()
-
-blt_register_library( NAME metis
-               	      INCLUDES ${METIS_INCLUDE_DIRS} 
-		      LIBRARIES ${METIS_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} metis )  
-
-endif()
-
-
 
 ################################
 # PARMETIS
 ################################
 if( ENABLE_PARMETIS )
-	message( INFO ": setting up PARMETIS" )
+    message( INFO ": setting up PARMETIS" )
 
-	set(PARMETIS_DIR ${GEOSX_TPL_DIR}/parmetis)
+    set(PARMETIS_DIR ${GEOSX_TPL_DIR}/parmetis)
 
-	find_path( PARMETIS_INCLUDE_DIRS parmetis.h
+    find_path( PARMETIS_INCLUDE_DIRS parmetis.h
            PATHS  ${PARMETIS_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
@@ -483,37 +425,34 @@ if( ENABLE_PARMETIS )
               NO_SYSTEM_ENVIRONMENT_PATH
               NO_CMAKE_SYSTEM_PATH)
 
-message( "PARMETIS_INCLUDE_DIRS = ${PARMETIS_INCLUDE_DIRS}" )
-message( "PARMETIS_LIBRARY = ${PARMETIS_LIBRARY}" )
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PARMETIS  DEFAULT_MSG
-                                  PARMETIS_INCLUDE_DIRS
-                                  PARMETIS_LIBRARY )
-if (NOT PARMETIS_FOUND)
-	message(FATAL_ERROR ": PARMETIS not found in ${PARMETIS_DIR}. Maybe you need to build it")
+    message( "PARMETIS_INCLUDE_DIRS = ${PARMETIS_INCLUDE_DIRS}" )
+    message( "PARMETIS_LIBRARY = ${PARMETIS_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(PARMETIS  DEFAULT_MSG
+                                    PARMETIS_INCLUDE_DIRS
+                                    PARMETIS_LIBRARY )
+    if (NOT PARMETIS_FOUND)
+        message(FATAL_ERROR ": PARMETIS not found in ${PARMETIS_DIR}. Maybe you need to build it")
+    endif()
+
+    blt_register_library( NAME parmetis
+                        INCLUDES ${PARMETIS_INCLUDE_DIRS} 
+                        LIBRARIES ${PARMETIS_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} parmetis )
 endif()
-
-blt_register_library( NAME parmetis
-                      INCLUDES ${PARMETIS_INCLUDE_DIRS} 
-                      LIBRARIES ${PARMETIS_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
-
-set( thirdPartyLibs ${thirdPartyLibs} parmetis )  
-
-endif()
-
-
 
 ################################
 # SUPERLU_DIST
 ################################
 if( ENABLE_SUPERLU_DIST)
-	message( INFO ": setting up SUPERLU_DIST" )
+    message( INFO ": setting up SUPERLU_DIST" )
 
-	set(SUPERLU_DIST_DIR ${GEOSX_TPL_DIR}/superlu_dist)
+    set(SUPERLU_DIST_DIR ${GEOSX_TPL_DIR}/superlu_dist)
 
-	find_path( SUPERLU_DIST_INCLUDE_DIRS superlu_defs.h
-		PATHS  ${SUPERLU_DIST_DIR}/include
+    find_path( SUPERLU_DIST_INCLUDE_DIRS superlu_defs.h
+        PATHS  ${SUPERLU_DIST_DIR}/include
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH
            NO_CMAKE_PATH
@@ -521,78 +460,77 @@ if( ENABLE_SUPERLU_DIST)
            NO_CMAKE_SYSTEM_PATH)
 
    find_library( SUPERLU_DIST_LIBRARY NAMES superlu_dist
-	      PATHS ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
+          PATHS ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
               NO_CMAKE_PATH
               NO_SYSTEM_ENVIRONMENT_PATH
               NO_CMAKE_SYSTEM_PATH)
 
-message( "SUPERLU_DIST_INCLUDE_DIRS = ${SUPERLU_DIST_INCLUDE_DIRS}" )
-message( "SUPERLU_DIST_LIBRARY = ${SUPERLU_DIST_LIBRARY}" )
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(SUPERLU_DIST  DEFAULT_MSG
-	                          SUPERLU_DIST_INCLUDE_DIRS
-				  SUPERLU_DIST_LIBRARY )
-if (NOT SUPERLU_DIST_FOUND)
-	message(FATAL_ERROR ": SUPERLU_DIST not found in ${SUPERLU_DIST_DIR}. Maybe you need to build it")
-endif()
+    message( "SUPERLU_DIST_INCLUDE_DIRS = ${SUPERLU_DIST_INCLUDE_DIRS}" )
+    message( "SUPERLU_DIST_LIBRARY = ${SUPERLU_DIST_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(SUPERLU_DIST  DEFAULT_MSG
+                                SUPERLU_DIST_INCLUDE_DIRS
+                    SUPERLU_DIST_LIBRARY )
+    if (NOT SUPERLU_DIST_FOUND)
+        message(FATAL_ERROR ": SUPERLU_DIST not found in ${SUPERLU_DIST_DIR}. Maybe you need to build it")
+    endif()
 
-blt_register_library( NAME superlu_dist
-               	      INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
-	              LIBRARIES ${SUPERLU_DIST_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+    blt_register_library( NAME superlu_dist
+                            INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
+                    LIBRARIES ${SUPERLU_DIST_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
 
-set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )  
-
+    set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )
 endif()
 
 ################################
 # HYPRE
 ################################
 if( ENABLE_HYPRE )
-message( INFO ": setting up HYPRE" )
+    message( INFO ": setting up HYPRE" )
 
-set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
+    set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
 
-find_path( HYPRE_INCLUDE_DIRS HYPRE.h
-           PATHS  ${HYPRE_DIR}/include
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
+    find_path( HYPRE_INCLUDE_DIRS HYPRE.h
+            PATHS  ${HYPRE_DIR}/include
+            NO_DEFAULT_PATH
+            NO_CMAKE_ENVIRONMENT_PATH
+            NO_CMAKE_PATH
+            NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH)
 
-find_library( HYPRE_LIBRARY NAMES HYPRE
-              PATHS ${HYPRE_DIR}/lib
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
+    find_library( HYPRE_LIBRARY NAMES HYPRE
+                PATHS ${HYPRE_DIR}/lib
+                NO_DEFAULT_PATH
+                NO_CMAKE_ENVIRONMENT_PATH
+                NO_CMAKE_PATH
+                NO_SYSTEM_ENVIRONMENT_PATH
+                NO_CMAKE_SYSTEM_PATH)
 
-message( "HYPRE_INCLUDE_DIRS = ${HYPRE_INCLUDE_DIRS}" )
-message( "HYPRE_LIBRARY = ${HYPRE_LIBRARY}" )
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(HYPRE  DEFAULT_MSG
-                                  HYPRE_INCLUDE_DIRS
-                                  HYPRE_LIBRARY )
-if (NOT HYPRE_FOUND)
-    message(FATAL_ERROR ": HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
+    message( "HYPRE_INCLUDE_DIRS = ${HYPRE_INCLUDE_DIRS}" )
+    message( "HYPRE_LIBRARY = ${HYPRE_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(HYPRE  DEFAULT_MSG
+                                    HYPRE_INCLUDE_DIRS
+                                    HYPRE_LIBRARY )
+    if (NOT HYPRE_FOUND)
+        message(FATAL_ERROR ": HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
+    endif()
+
+    blt_register_library( NAME hypre
+                        INCLUDES ${HYPRE_INCLUDE_DIRS} 
+                        LIBRARIES ${HYPRE_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} hypre )
 endif()
 
-blt_register_library( NAME hypre
-                      INCLUDES ${HYPRE_INCLUDE_DIRS} 
-                      LIBRARIES ${HYPRE_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
 
-set( thirdPartyLibs ${thirdPartyLibs} hypre )  
-
-endif()
-
-#if (UNCRUSTIFY_EXECUTABLE)
-#  include(cmake/blt/cmake/thirdparty/FindUncrustify.cmake)
-#endif()
+################################
+# unsrustify
+################################
 message("UNCRUSTIFY_FOUND = ${UNCRUSTIFY_FOUND}")
 if(UNCRUSTIFY_FOUND)
     # targets for verifying formatting
@@ -610,4 +548,3 @@ if(UNCRUSTIFY_FOUND)
 endif()
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
-

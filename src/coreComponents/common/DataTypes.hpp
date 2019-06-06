@@ -529,7 +529,7 @@ public:
       { std::type_index(typeid(integer)),       integer_id },
       { std::type_index(typeid(localIndex)),    localIndex_id },
       { std::type_index(typeid(globalIndex)),   globalIndex_id },
-      { std::type_index(typeid(real32)),        real32_id },   
+      { std::type_index(typeid(real32)),        real32_id },
       { std::type_index(typeid(real64)),        real64_id },
       { std::type_index(typeid(R1Tensor)),      real64_id },
       { std::type_index(typeid(R2Tensor)),      real64_id },
@@ -642,60 +642,50 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_id ):
-    {
-      return lambda( integer(1) );
-      break;
-    }
-    case ( TypeIDs::real32_id ):
-    {
-      return lambda( real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_id ):
-    {
-      return lambda( real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1Tensor_id ):
-    {
-      return lambda( R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Tensor_id ):
-    {
-      return lambda( R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2SymTensor_id ):
-    {
-      return lambda( R2SymTensor() );
-      break;
-    }
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1) );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1) );
-      break;
-    }
-    case ( TypeIDs::string_id ):
-    {
-      return lambda( string("") );
-      break;
-    }
-    default:
-    {
-      GEOS_ERROR( "TypeID not recognized." );
-    }
+      case ( TypeIDs::integer_id ):
+      {
+        return lambda( integer(1) );
+      }
+      case ( TypeIDs::real32_id ):
+      {
+        return lambda( real32(1) );
+      }
+      case ( TypeIDs::real64_id ):
+      {
+        return lambda( real64(1) );
+      }
+      case ( TypeIDs::r1Tensor_id ):
+      {
+        return lambda( R1Tensor() );
+      }
+      case ( TypeIDs::r2Tensor_id ):
+      {
+        return lambda( R2Tensor() );
+      }
+      case ( TypeIDs::r2SymTensor_id ):
+      {
+        return lambda( R2SymTensor() );
+      }
+      case ( TypeIDs::integer_array_id ):
+      {
+        return lambda( integer_array(1) );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1) );
+      }
+      case ( TypeIDs::string_id ):
+      {
+        return lambda( string("") );
+      }
+      default:
+      {
+        GEOS_ERROR( "TypeID not recognized." );
+      }
     }
   }
 
@@ -715,51 +705,42 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array_id ):
-    {
-      return lambda( localIndex_array(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array_id ):
-    {
-      return lambda( globalIndex_array(1) );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1) );
-      break;
-    }
-    case ( TypeIDs::r1_array_id ):
-    {
-      return lambda( r1_array(1) );
-      break;
-    }
-    case ( TypeIDs::r2_array_id ):
-    {
-      return lambda( r2_array(1) );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array_id ):
-    {
-      return lambda( r2Sym_array(1) );
-      break;
-    }
-
-    default:
-    {
-      GEOS_ERROR( "TypeID not recognized." );
-    }
+      case ( TypeIDs::integer_array_id ):
+      {
+        return lambda( integer_array(1) );
+      }
+      case ( TypeIDs::localIndex_array_id ):
+      {
+        return lambda( localIndex_array(1) );
+      }
+      case ( TypeIDs::globalIndex_array_id ):
+      {
+        return lambda( globalIndex_array(1) );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1) );
+      }
+      case ( TypeIDs::r1_array_id ):
+      {
+        return lambda( r1_array(1) );
+      }
+      case ( TypeIDs::r2_array_id ):
+      {
+        return lambda( r2_array(1) );
+      }
+      case ( TypeIDs::r2Sym_array_id ):
+      {
+        return lambda( r2Sym_array(1) );
+      }
+      default:
+      {
+        GEOS_ERROR( "TypeID not recognized." );
+      }
     }
   }
 
@@ -780,118 +761,97 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1), integer(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array_id ):
-    {
-      return lambda( localIndex_array(1), localIndex(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array_id ):
-    {
-      return lambda( globalIndex_array(1), globalIndex() );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1), real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1_array_id ):
-    {
-      return lambda( r1_array(1), R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2_array_id ):
-    {
-      return lambda( r2_array(1), R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array_id ):
-    {
-      return lambda( r2Sym_array(1), R2SymTensor()  );
-      break;
-    }
-    case ( TypeIDs::integer_array2d_id ):
-    {
-      return lambda( integer_array2d(), integer(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array2d_id ):
-    {
-      return lambda( localIndex_array2d(), localIndex(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array2d_id ):
-    {
-      return lambda( globalIndex_array2d(), globalIndex() );
-      break;
-    }
-    case ( TypeIDs::real32_array2d_id ):
-    {
-      return lambda( real32_array2d(), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array2d_id ):
-    {
-      return lambda( real64_array2d(), real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1_array2d_id ):
-    {
-      return lambda( r1_array2d(), R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2_array2d_id ):
-    {
-      return lambda( r2_array2d(), R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array2d_id ):
-    {
-      return lambda( r2Sym_array2d(), R2SymTensor()  );
-      break;
-    }
-    case ( TypeIDs::integer_array3d_id ):
-    {
-      return lambda( integer_array3d(), integer(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array3d_id ):
-    {
-      return lambda( localIndex_array3d(), localIndex(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array3d_id ):
-    {
-      return lambda( globalIndex_array3d(), globalIndex() );
-      break;
-    }
-    case ( TypeIDs::real32_array3d_id ):
-    {
-      return lambda( real32_array3d(), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array3d_id ):
-    {
-      return lambda( real64_array3d(), real64(1) );
-      break;
-    }
-    default:
-    {
-      if( errorIfTypeNotFound )
+      case ( TypeIDs::integer_array_id ):
       {
-        GEOS_ERROR( "TypeID not recognized." );
+        return lambda( integer_array(1), integer(1) );
       }
-    }
+      case ( TypeIDs::localIndex_array_id ):
+      {
+        return lambda( localIndex_array(1), localIndex(1) );
+      }
+      case ( TypeIDs::globalIndex_array_id ):
+      {
+        return lambda( globalIndex_array(1), globalIndex() );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1), real32(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1), real64(1) );
+      }
+      case ( TypeIDs::r1_array_id ):
+      {
+        return lambda( r1_array(1), R1Tensor() );
+      }
+      case ( TypeIDs::r2_array_id ):
+      {
+        return lambda( r2_array(1), R2Tensor() );
+      }
+      case ( TypeIDs::r2Sym_array_id ):
+      {
+        return lambda( r2Sym_array(1), R2SymTensor()  );
+      }
+      case ( TypeIDs::integer_array2d_id ):
+      {
+        return lambda( integer_array2d(), integer(1) );
+      }
+      case ( TypeIDs::localIndex_array2d_id ):
+      {
+        return lambda( localIndex_array2d(), localIndex(1) );
+      }
+      case ( TypeIDs::globalIndex_array2d_id ):
+      {
+        return lambda( globalIndex_array2d(), globalIndex() );
+      }
+      case ( TypeIDs::real32_array2d_id ):
+      {
+        return lambda( real32_array2d(), real32(1) );
+      }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( real64_array2d(), real64(1) );
+      }
+      case ( TypeIDs::r1_array2d_id ):
+      {
+        return lambda( r1_array2d(), R1Tensor() );
+      }
+      case ( TypeIDs::r2_array2d_id ):
+      {
+        return lambda( r2_array2d(), R2Tensor() );
+      }
+      case ( TypeIDs::r2Sym_array2d_id ):
+      {
+        return lambda( r2Sym_array2d(), R2SymTensor()  );
+      }
+      case ( TypeIDs::integer_array3d_id ):
+      {
+        return lambda( integer_array3d(), integer(1) );
+      }
+      case ( TypeIDs::localIndex_array3d_id ):
+      {
+        return lambda( localIndex_array3d(), localIndex(1) );
+      }
+      case ( TypeIDs::globalIndex_array3d_id ):
+      {
+        return lambda( globalIndex_array3d(), globalIndex() );
+      }
+      case ( TypeIDs::real32_array3d_id ):
+      {
+        return lambda( real32_array3d(), real32(1) );
+      }
+      case ( TypeIDs::real64_array3d_id ):
+      {
+        return lambda( real64_array3d(), real64(1) );
+      }
+      default:
+      {
+        if( errorIfTypeNotFound )
+        {
+          GEOS_ERROR( "TypeID not recognized." );
+        }
+      }
     }
   }
 
@@ -909,161 +869,131 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_id ):
-    {
-      return lambda( integer(1) );
-      break;
-    }
-    case ( TypeIDs::real32_id ):
-    {
-      return lambda( real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_id ):
-    {
-      return lambda( real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1Tensor_id ):
-    {
-      return lambda( R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Tensor_id ):
-    {
-      return lambda( R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2SymTensor_id ):
-    {
-      return lambda( R2SymTensor() );
-      break;
-    }
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array_id ):
-    {
-      return lambda( localIndex_array(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array_id ):
-    {
-      return lambda( globalIndex_array(1) );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1) );
-      break;
-    }
-    case ( TypeIDs::r1_array_id ):
-    {
-      return lambda( r1_array(1) );
-      break;
-    }
-    case ( TypeIDs::r2_array_id ):
-    {
-      return lambda( r2_array(1) );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array_id ):
-    {
-      return lambda( r2Sym_array(1) );
-      break;
-    }
-    case ( TypeIDs::integer_array2d_id ):
-    {
-      return lambda( integer_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array2d_id ):
-    {
-      return lambda( localIndex_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array2d_id ):
-    {
-      return lambda( globalIndex_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::real32_array2d_id ):
-    {
-      return lambda( real32_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::real64_array2d_id ):
-    {
-      return lambda( real64_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::r1_array2d_id ):
-    {
-      return lambda( r1_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::r2_array2d_id ):
-    {
-      return lambda( r2_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array2d_id ):
-    {
-      return lambda( r2Sym_array2d(1, 1) );
-      break;
-    }
-    case ( TypeIDs::integer_array3d_id ):
-    {
-      return lambda( integer_array3d(1, 1, 1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array3d_id ):
-    {
-      return lambda( localIndex_array3d(1, 1, 1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array3d_id ):
-    {
-      return lambda( globalIndex_array3d(1, 1, 1) );
-      break;
-    }
-    case ( TypeIDs::real32_array3d_id ):
-    {
-      return lambda( real32_array3d(1, 1, 1) );
-      break;
-    }
-    case ( TypeIDs::real64_array3d_id ):
-    {
-      return lambda( real64_array3d(1, 1, 1) );
-      break;
-    }
-    case ( TypeIDs::string_id ):
-    {
-      return lambda( string("") );
-      break;
-    }
-    case ( TypeIDs::string_array_id ):
-    {
-      return lambda( string_array(1) );
-      break;
-    }
-    case ( TypeIDs::mapPair_array_id ):
-    {
-      return lambda( mapPair_array() );
-      break;
-    }
-    default:
-    {
-      GEOS_ERROR( "TypeID not recognized." );
-      return lambda( double(1) );
-    }
+      case ( TypeIDs::integer_id ):
+      {
+        return lambda( integer(1) );
+      }
+      case ( TypeIDs::real32_id ):
+      {
+        return lambda( real32(1) );
+      }
+      case ( TypeIDs::real64_id ):
+      {
+        return lambda( real64(1) );
+      }
+      case ( TypeIDs::r1Tensor_id ):
+      {
+        return lambda( R1Tensor() );
+      }
+      case ( TypeIDs::r2Tensor_id ):
+      {
+        return lambda( R2Tensor() );
+      }
+      case ( TypeIDs::r2SymTensor_id ):
+      {
+        return lambda( R2SymTensor() );
+      }
+      case ( TypeIDs::integer_array_id ):
+      {
+        return lambda( integer_array(1) );
+      }
+      case ( TypeIDs::localIndex_array_id ):
+      {
+        return lambda( localIndex_array(1) );
+      }
+      case ( TypeIDs::globalIndex_array_id ):
+      {
+        return lambda( globalIndex_array(1) );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1) );
+      }
+      case ( TypeIDs::r1_array_id ):
+      {
+        return lambda( r1_array(1) );
+      }
+      case ( TypeIDs::r2_array_id ):
+      {
+        return lambda( r2_array(1) );
+      }
+      case ( TypeIDs::r2Sym_array_id ):
+      {
+        return lambda( r2Sym_array(1) );
+      }
+      case ( TypeIDs::integer_array2d_id ):
+      {
+        return lambda( integer_array2d(1, 1) );
+      }
+      case ( TypeIDs::localIndex_array2d_id ):
+      {
+        return lambda( localIndex_array2d(1, 1) );
+      }
+      case ( TypeIDs::globalIndex_array2d_id ):
+      {
+        return lambda( globalIndex_array2d(1, 1) );
+      }
+      case ( TypeIDs::real32_array2d_id ):
+      {
+        return lambda( real32_array2d(1, 1) );
+      }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( real64_array2d(1, 1) );
+      }
+      case ( TypeIDs::r1_array2d_id ):
+      {
+        return lambda( r1_array2d(1, 1) );
+      }
+      case ( TypeIDs::r2_array2d_id ):
+      {
+        return lambda( r2_array2d(1, 1) );
+      }
+      case ( TypeIDs::r2Sym_array2d_id ):
+      {
+        return lambda( r2Sym_array2d(1, 1) );
+      }
+      case ( TypeIDs::integer_array3d_id ):
+      {
+        return lambda( integer_array3d(1, 1, 1) );
+      }
+      case ( TypeIDs::localIndex_array3d_id ):
+      {
+        return lambda( localIndex_array3d(1, 1, 1) );
+      }
+      case ( TypeIDs::globalIndex_array3d_id ):
+      {
+        return lambda( globalIndex_array3d(1, 1, 1) );
+      }
+      case ( TypeIDs::real32_array3d_id ):
+      {
+        return lambda( real32_array3d(1, 1, 1) );
+      }
+      case ( TypeIDs::real64_array3d_id ):
+      {
+        return lambda( real64_array3d(1, 1, 1) );
+      }
+      case ( TypeIDs::string_id ):
+      {
+        return lambda( string("") );
+      }
+      case ( TypeIDs::string_array_id ):
+      {
+        return lambda( string_array(1) );
+      }
+      case ( TypeIDs::mapPair_array_id ):
+      {
+        return lambda( mapPair_array() );
+      }
+      default:
+      {
+        GEOS_ERROR( "TypeID not recognized." );
+        return lambda( double(1) );
+      }
     }
   }
 
@@ -1082,96 +1012,78 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_id ):
-    {
-      return lambda( integer(1), integer(1) );
-      break;
-    }
-    case ( TypeIDs::real32_id ):
-    {
-      return lambda( real32(1), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_id ):
-    {
-      return lambda( real64(1), real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1Tensor_id ):
-    {
-      return lambda( R1Tensor(), R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Tensor_id ):
-    {
-      return lambda( R2Tensor(), R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2SymTensor_id ):
-    {
-      return lambda( R2SymTensor(), R2SymTensor() );
-      break;
-    }
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1), integer(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array_id ):
-    {
-      return lambda( localIndex_array(1), localIndex(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array_id ):
-    {
-      return lambda( globalIndex_array(1), globalIndex(1) );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1), real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1_array_id ):
-    {
-      return lambda( r1_array(1), R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2_array_id ):
-    {
-      return lambda( r2_array(1), R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Sym_array_id ):
-    {
-      return lambda( r2Sym_array(1), R2SymTensor() );
-      break;
-    }
-    case ( TypeIDs::string_id ):
-    {
-      return lambda( string(""), string("") );
-      break;
-    }
-    case ( TypeIDs::string_array_id ):
-    {
-      return lambda( string_array(1), string("") );
-      break;
-    }
-//    case ( TypeIDs::mapPair_array_id ):
-//    {
-//      return lambda( mapPair_array(1), mapPair({}) );
-//      break;
-//    }
-
-    default:
-    {
-      GEOS_ERROR( "TypeID not recognized." );
-    }
+      case ( TypeIDs::integer_id ):
+      {
+        return lambda( integer(1), integer(1) );
+      }
+      case ( TypeIDs::real32_id ):
+      {
+        return lambda( real32(1), real32(1) );
+      }
+      case ( TypeIDs::real64_id ):
+      {
+        return lambda( real64(1), real64(1) );
+      }
+      case ( TypeIDs::r1Tensor_id ):
+      {
+        return lambda( R1Tensor(), R1Tensor() );
+      }
+      case ( TypeIDs::r2Tensor_id ):
+      {
+        return lambda( R2Tensor(), R2Tensor() );
+      }
+      case ( TypeIDs::r2SymTensor_id ):
+      {
+        return lambda( R2SymTensor(), R2SymTensor() );
+      }
+      case ( TypeIDs::integer_array_id ):
+      {
+        return lambda( integer_array(1), integer(1) );
+      }
+      case ( TypeIDs::localIndex_array_id ):
+      {
+        return lambda( localIndex_array(1), localIndex(1) );
+      }
+      case ( TypeIDs::globalIndex_array_id ):
+      {
+        return lambda( globalIndex_array(1), globalIndex(1) );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1), real32(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1), real64(1) );
+      }
+      case ( TypeIDs::r1_array_id ):
+      {
+        return lambda( r1_array(1), R1Tensor() );
+      }
+      case ( TypeIDs::r2_array_id ):
+      {
+        return lambda( r2_array(1), R2Tensor() );
+      }
+      case ( TypeIDs::r2Sym_array_id ):
+      {
+        return lambda( r2Sym_array(1), R2SymTensor() );
+      }
+      case ( TypeIDs::string_id ):
+      {
+        return lambda( string(""), string("") );
+      }
+      case ( TypeIDs::string_array_id ):
+      {
+        return lambda( string_array(1), string("") );
+      }
+      // case ( TypeIDs::mapPair_array_id ):
+      // {
+      //   return lambda( mapPair_array(1), mapPair({}) );
+      // }
+      default:
+      {
+        GEOS_ERROR( "TypeID not recognized." );
+      }
     }
   }
 
@@ -1190,96 +1102,78 @@ public:
   {
     switch( type )
     {
-    case ( TypeIDs::integer_id ):
-    {
-      return lambda( integer(1), integer(1) );
-      break;
-    }
-    case ( TypeIDs::real32_id ):
-    {
-      return lambda( real32(1), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_id ):
-    {
-      return lambda( real64(1), real64(1) );
-      break;
-    }
-    case ( TypeIDs::r1Tensor_id ):
-    {
-      return lambda( R1Tensor(), R1Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2Tensor_id ):
-    {
-      return lambda( R2Tensor(), R2Tensor() );
-      break;
-    }
-    case ( TypeIDs::r2SymTensor_id ):
-    {
-      return lambda( R2SymTensor(), R2SymTensor() );
-      break;
-    }
-    case ( TypeIDs::integer_array_id ):
-    {
-      return lambda( integer_array(1), integer(1) );
-      break;
-    }
-    case ( TypeIDs::real32_array_id ):
-    {
-      return lambda( real32_array(1), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array_id ):
-    {
-      return lambda( real64_array(1), real64(1) );
-      break;
-    }
-    case ( TypeIDs::string_id ):
-    {
-      return lambda( string(""), string("") );
-      break;
-    }
-    case ( TypeIDs::string_array_id ):
-    {
-      return lambda( string_array(1), string("") );
-      break;
-    }
-    case ( TypeIDs::integer_array2d_id ):
-    {
-      return lambda( integer_array2d(), integer(1) );
-      break;
-    }
-    case ( TypeIDs::localIndex_array2d_id ):
-    {
-      return lambda( localIndex_array2d(), localIndex(1) );
-      break;
-    }
-    case ( TypeIDs::globalIndex_array2d_id ):
-    {
-      return lambda( globalIndex_array2d(), globalIndex() );
-      break;
-    }
-    case ( TypeIDs::real32_array2d_id ):
-    {
-      return lambda( real32_array2d(), real32(1) );
-      break;
-    }
-    case ( TypeIDs::real64_array2d_id ):
-    {
-      return lambda( real64_array2d(), real64(1) );
-      break;
-    }
-
-//    case ( TypeIDs::mapPair_array_id ):
-//    {
-//      return lambda( mapPair_array(1), mapPair({}) );
-//      break;
-//    }
-    default:
-    {
-      GEOS_ERROR( "TypeID not recognized." );
-    }
+      case ( TypeIDs::integer_id ):
+      {
+        return lambda( integer(1), integer(1) );
+      }
+      case ( TypeIDs::real32_id ):
+      {
+        return lambda( real32(1), real32(1) );
+      }
+      case ( TypeIDs::real64_id ):
+      {
+        return lambda( real64(1), real64(1) );
+      }
+      case ( TypeIDs::r1Tensor_id ):
+      {
+        return lambda( R1Tensor(), R1Tensor() );
+      }
+      case ( TypeIDs::r2Tensor_id ):
+      {
+        return lambda( R2Tensor(), R2Tensor() );
+      }
+      case ( TypeIDs::r2SymTensor_id ):
+      {
+        return lambda( R2SymTensor(), R2SymTensor() );
+      }
+      case ( TypeIDs::integer_array_id ):
+      {
+        return lambda( integer_array(1), integer(1) );
+      }
+      case ( TypeIDs::real32_array_id ):
+      {
+        return lambda( real32_array(1), real32(1) );
+      }
+      case ( TypeIDs::real64_array_id ):
+      {
+        return lambda( real64_array(1), real64(1) );
+      }
+      case ( TypeIDs::string_id ):
+      {
+        return lambda( string(""), string("") );
+      }
+      case ( TypeIDs::string_array_id ):
+      {
+        return lambda( string_array(1), string("") );
+      }
+      case ( TypeIDs::integer_array2d_id ):
+      {
+        return lambda( integer_array2d(), integer(1) );
+      }
+      case ( TypeIDs::localIndex_array2d_id ):
+      {
+        return lambda( localIndex_array2d(), localIndex(1) );
+      }
+      case ( TypeIDs::globalIndex_array2d_id ):
+      {
+        return lambda( globalIndex_array2d(), globalIndex() );
+      }
+      case ( TypeIDs::real32_array2d_id ):
+      {
+        return lambda( real32_array2d(), real32(1) );
+      }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( real64_array2d(), real64(1) );
+      }
+    //  case ( TypeIDs::mapPair_array_id ):
+    //  {
+    //    return lambda( mapPair_array(1), mapPair({}) );
+    //  }
+      default:
+      {
+        GEOS_ERROR( "TypeID not recognized." );
+      }
     }
   }
 

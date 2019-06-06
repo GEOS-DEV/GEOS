@@ -30,20 +30,12 @@
 
 //This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
+#include "MeshDataWriters/Writer.hpp"
 
 #include "MeshGeneratorBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const filePath = "file";
-}
-}
-
 
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
@@ -55,6 +47,13 @@ public:
 
   static string CatalogName() { return "PAMELAMeshGenerator"; }
 
+  struct viewKeyStruct
+  {
+    constexpr static auto filePathString = "file";
+    constexpr static auto scaleString = "scale";
+    constexpr static auto fieldsToImportString = "fieldsToImport";
+    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
+  };
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
@@ -77,6 +76,17 @@ private:
 
   /// Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+
+  /// Names of the fields to be copied from PAMELA to GEOSX data structure
+  string_array m_fieldsToImport;
+
+  /// Path to the mesh file
+  string m_filePath;
+
+  /// Scale factor that will be applied to the point coordinates
+  real64 m_scale;
+
+  string_array m_fieldNamesInGEOSX;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =

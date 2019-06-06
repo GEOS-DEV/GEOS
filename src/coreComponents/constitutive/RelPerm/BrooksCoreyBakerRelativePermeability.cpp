@@ -114,18 +114,18 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
                 << (expected) << " expected)"); \
   }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction,  NP,   viewKeyStruct::phaseMinVolumeFractionString );
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction,  NP,   viewKeyStruct::phaseMinVolumeFractionString )
 
   if (m_phaseOrder[PhaseType::WATER] >= 0)
     {
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString );
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString );
+      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString )
+      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString )
     }
 
   if (m_phaseOrder[PhaseType::GAS] >=0)
     {
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   2, viewKeyStruct::gasOilRelPermExponentString );
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString );
+      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   2, viewKeyStruct::gasOilRelPermExponentString )
+      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString )
     }
 
 #undef COREY_CHECK_INPUT_LENGTH
