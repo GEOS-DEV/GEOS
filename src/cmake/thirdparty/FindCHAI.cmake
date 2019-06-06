@@ -8,37 +8,46 @@
 
 # first Check for CHAI_DIR
 
-if(NOT CHAI_DIR)
-    MESSAGE(FATAL_ERROR "Could not find CHAI. CHAI support needs explicit CHAI_DIR")
+if (NOT EXISTS ${CHAI_DIR})
+    message(INFO ": Using chai from thirdPartyLibs")
+    set(CHAI_DIR "${GEOSX_TPL_DIR}/chai" CACHE PATH "")
 endif()
 
-#find includes
-find_path( CHAI_INCLUDE_DIRS chai/ManagedArray.hpp
-           PATHS  ${CHAI_DIR}/include
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
+if (EXISTS ${CHAI_DIR})
+    message(INFO ": Using chai found at ${CHAI_DIR}")
+    
+    find_library( CHAI_LIBRARY NAMES chai libchai libumpire libumpire_op libumpire_resource libumpire_strategy libumpire_tpl_judy libumpire_util
+                  PATHS ${CHAI_DIR}/lib
+                  NO_DEFAULT_PATH
+                  NO_CMAKE_ENVIRONMENT_PATH
+                  NO_CMAKE_PATH
+                  NO_SYSTEM_ENVIRONMENT_PATH
+                  NO_CMAKE_SYSTEM_PATH)
 
-find_library( CHAI_LIBRARY NAMES chai libchai
-              PATHS ${CHAI_DIR}/lib
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
+    include("${CHAI_DIR}/share/umpire/cmake/umpire-targets.cmake")
+    include("${CHAI_DIR}/share/chai/cmake/chai-targets.cmake")
 
+    # handle the QUIETLY and REQUIRED arguments and set CHAI_FOUND to TRUE
+    # if all listed variables are TRUE
+    set(CHAI_INCLUDE_DIRS ${CHAI_DIR}/include)
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args( CHAI  DEFAULT_MSG
+                                        CHAI_INCLUDE_DIRS
+                                        CHAI_LIBRARY )
 
-include(FindPackageHandleStandardArgs)
+    if (NOT CHAI_FOUND)
+        message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+    endif()
 
-include("${CHAI_DIR}/share/umpire/cmake/umpire-targets.cmake")
-include("${CHAI_DIR}/share/chai/cmake/chai-targets.cmake")
+    blt_register_library( NAME chai
+                          INCLUDES ${CHAI_INCLUDE_DIRS}
+                          LIBRARIES ${CHAI_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 
-# handle the QUIETLY and REQUIRED arguments and set CHAI_FOUND to TRUE
-# if all listed variables are TRUE
-set(CHAI_FOUND TRUE)
-
-find_package_handle_standard_args(CHAI  DEFAULT_MSG
-                                  CHAI_INCLUDE_DIRS
-                                  CHAI_LIBRARY )
+    set(ENABLE_CHAI ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} chai)
+else()
+    set(CHAI_FOUND FALSE)
+    set(ENABLE_CHAI OFF CACHE BOOL "")
+    message(INFO ": Not using chai")
+endif()

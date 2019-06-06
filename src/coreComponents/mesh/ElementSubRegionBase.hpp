@@ -150,14 +150,14 @@ void ElementSubRegionBase::CalculateCellVolumes( LEAF & leaf,
 {
   if( indices.empty() )
   {
-    forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+    forall_in_range<RAJA::loop_exec>( 0, this->size(), [&]( localIndex const k )
     {
       leaf.CalculateCellVolumesKernel( k, X );
     });
   }
   else
   {
-    forall_in_set<elemPolicy>( indices.data(), indices.size(), GEOSX_LAMBDA ( localIndex const k )
+    forall_in_set<RAJA::loop_exec>( indices.data(), indices.size(), [&]( localIndex const k )
     {
       leaf.CalculateCellVolumesKernel( k, X );
     });

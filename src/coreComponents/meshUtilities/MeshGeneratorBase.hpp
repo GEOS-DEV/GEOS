@@ -49,12 +49,6 @@ public:
 
   static string CatalogName() { return "MeshGeneratorBase"; }
 
-  MeshGeneratorBase() = default;
-  MeshGeneratorBase( MeshGeneratorBase const & ) = default;
-  MeshGeneratorBase( MeshGeneratorBase &&) = default;
-  MeshGeneratorBase& operator=( MeshGeneratorBase const & ) = default;
-  MeshGeneratorBase& operator=( MeshGeneratorBase&& ) = default;
-
   virtual void GenerateElementRegions( DomainPartition& domain ) = 0;
 
   virtual void GenerateMesh( DomainPartition * const domain ) = 0;
