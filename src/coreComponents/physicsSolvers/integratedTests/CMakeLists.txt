@@ -4,6 +4,7 @@
 
 set(testPhysicsSolverPackage1
     testSolidMechanicsLagrangianFEM.cpp
+    testLaplaceFEM.cpp
    )
 
 #
