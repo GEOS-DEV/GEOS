@@ -553,6 +553,12 @@
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<!--file => path to the mesh file-->
 		<xsd:attribute name="file" type="string" use="required" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
+		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="" />
+		<!--scale => Scale the coordinates of the vertices-->
+		<xsd:attribute name="scale" type="real64" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
