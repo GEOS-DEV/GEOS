@@ -207,17 +207,44 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString );
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString );
+
+
     nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
-      setDescription( "The total displacement vector.");
+      setDescription( "An array that holds the total displacements on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->setPlotLevel(PlotLevel::LEVEL_2);
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
-    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0);
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
+      setPlotLevel(PlotLevel::LEVEL_3)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the current velocity on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
+                      "to hold the summation of nodal forces resulting from the governing equations.");
+
+    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
+        setPlotLevel(PlotLevel::LEVEL_0)->
+        setRegisteringObjects(this->getName())->
+        setDescription( "An array that holds the mass on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
+      setPlotLevel(PlotLevel::NOPLOT)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the velocity predictors on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
+      setPlotLevel(PlotLevel::NOPLOT)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the incremental displacement predictors on the nodes.");
+
     nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::globalDofNumberString )->setPlotLevel(PlotLevel::LEVEL_1);
 
   }
