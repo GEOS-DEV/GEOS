@@ -20,10 +20,12 @@ set(MPI_Communications_sources
     SpatialPartition.cpp
    )
 
+set( dependencyList fileIO common trilinos )
+
 blt_add_library( NAME                  MPI_Communications
                  SOURCES               ${MPI_Communications_sources}
                  HEADERS               ${MPI_Communications_headers}
-                 DEPENDS_ON            fileIO common trilinos
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

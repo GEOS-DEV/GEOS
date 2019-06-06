@@ -58,7 +58,7 @@ public:
   }
 
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X )
+                                          array1d<R1Tensor> const & X ) const
   {
     m_elementArea[k] = 1;
     m_elementCenter[k] = 1;
