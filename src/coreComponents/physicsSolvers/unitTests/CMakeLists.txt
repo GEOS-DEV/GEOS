@@ -3,12 +3,16 @@
 #
 
 if(ENABLE_PVTPackage)
-set( gtest_geosx_tests_with_PVT
-     testCompMultiphaseFlow.cpp
-     testCompMultiphaseFlowCapPressure.cpp )
-endif(ENABLE_PVTPackage)
+    set( gtest_geosx_tests
+         testCompMultiphaseFlow.cpp
+         testCompMultiphaseFlowCapPressure.cpp
+       )
+endif()
+
+set( dependencyList geosx_core gtest )
 
 set( gtest_geosx_tests
+     ${gtest_geosx_tests}
      testLaplaceFEM.cpp )
 
 set( nranks 2 )
@@ -38,7 +42,6 @@ foreach(test ${gtest_geosx_tests})
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON geosx_core gtest )
-
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name}
                 NUM_MPI_TASKS ${nranks} )

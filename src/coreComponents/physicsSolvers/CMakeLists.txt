@@ -34,6 +34,8 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
+set( dependencyList ${dependencyList} dataRepository systemSolverInterface )
+
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
   message("adding GEOSX_PTP to physics solver dependencies")
