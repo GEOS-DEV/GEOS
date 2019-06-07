@@ -16,11 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
 
 #include "SetSignalHandling.hpp"
@@ -484,7 +479,3 @@ int main(int argc, char** argv)
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#endif

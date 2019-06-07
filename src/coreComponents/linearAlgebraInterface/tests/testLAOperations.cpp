@@ -20,15 +20,6 @@
  * @file testLAOperations.cpp
  */
 
-// #ifdef __clang__
-// #pragma clang diagnostic push
-// #pragma clang diagnostic ignored "-Wglobal-constructors"
-// #pragma clang diagnostic ignored "-Wexit-time-destructors"
-// #if __clang_major__ >= 5 && !defined(__APPLE__)
-// #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-// #endif
-// #endif
-
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -588,15 +579,6 @@ void testRectangularMatrixOperations()
 
 //@}
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
-
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
@@ -640,8 +622,6 @@ TEST(testLAOperations,testEpetraLAOperations)
 
 //@}
 
-#include <omp.h>
-
 int main( int argc, char* argv[] )
 {
   geosx::basicSetup( argc, argv );
@@ -653,7 +633,3 @@ int main( int argc, char* argv[] )
 
   return result;
 }
-
-// #ifdef __clang__
-// #pragma clang diagnostic pop
-// #endif
