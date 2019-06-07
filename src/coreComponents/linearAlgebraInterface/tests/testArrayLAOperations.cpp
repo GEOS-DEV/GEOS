@@ -20,22 +20,17 @@
  * @file testDenseLAOperations.cpp
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
-
 #include <gtest/gtest.h>
-
-#include "common/DataTypes.hpp"
-
 #include <random>
 
-#include <BlasLapackLA.hpp>
+#include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
+
+#include "BlasLapackLA.hpp"
+
+#ifdef GEOSX_USE_OPENMP
+#include <omp.h>
+#endif
 
 /**
  * \file testDenseLAOperations.cpp
@@ -628,36 +623,87 @@ void testArray2dInverseLA()
 
 // END_RST_NARRATIVE
 
-//@}
+template<typename LAI>
+void performanceTest()
+{
+  constexpr localIndex MAX_SIZE = 1024 * 8;
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
+  array2d<double> a(MAX_SIZE, MAX_SIZE);
+  array2d<double> b(MAX_SIZE, MAX_SIZE);
+  array2d<double> c(MAX_SIZE, MAX_SIZE);
+
+  std::default_random_engine generator;
+  std::uniform_real_distribution<real64> distribution( -1.0, 1.0 );
+
+  for (localIndex size = 3; size <= MAX_SIZE; size = localIndex(size * 1.5 + 1))
+  {
+    a.resize(size, size);
+    b.resize(size, size);
+    c.resize(size, size);
+
+    matrixRand( a, distribution, generator );
+    matrixRand( b, distribution, generator );
+
+    std::chrono::duration<double> multiplicationTime {};
+    localIndex const nIter = MAX_SIZE / (size + 1) + 1;
+    for (localIndex iter = 0; iter < nIter; ++iter)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      LAI::matrixMatrixMultiply(a, b, c, 1.0, 1.0);
+      auto end = std::chrono::high_resolution_clock::now();
+      multiplicationTime += end - start;
+    }
+
+    GEOS_LOG(std::setiosflags(std::ios::scientific) << std::setprecision(5) <<
+             "size = " << size << ",\tniter : " << nIter << ",\ttime : " << multiplicationTime.count() <<
+             ",\tscaled time : " << multiplicationTime.count() / (size * size * size));
+  }
+}
+
+//@}
 
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
 //@{
-/*! @function testLapackDenseLAOperations.
- * @brief Runs all tests using the Lapack interface.
- */
-TEST(testDenseLAOperations,testLapackDenseLAOperations)
+
+TEST(testDenseLAOperations, testArray1d)
 {
-
   testArray1dLA<BlasLapackLA>();
-  testArray2dLA<BlasLapackLA>();
-  testArray2dArray1dLA<BlasLapackLA>();
-  testArray2dInverseLA<BlasLapackLA>();
+}
 
+TEST(testDenseLAOperations, testArray2d)
+{
+  testArray2dLA<BlasLapackLA>();
+}
+
+TEST(testDenseLAOperations, testArray2dArray1dLA)
+{
+  testArray2dArray1dLA<BlasLapackLA>();
+}
+
+TEST(testDenseLAOperations, testArray2dInverseLA)
+{
+  testArray2dInverseLA<BlasLapackLA>();
+}
+
+TEST(testDenseLAOperations, performanceTest)
+{
+  // performanceTest<BlasLapackLA>();
+  SUCCEED();
 }
 
 //@}
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+int main( int argc, char** argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
+  return result;
+}

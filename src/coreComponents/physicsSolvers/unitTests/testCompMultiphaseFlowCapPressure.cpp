@@ -18,16 +18,10 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
 #pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -492,5 +486,5 @@ int main(int argc, char** argv)
 }
 
 #ifdef __clang__
-#pragma clang diagnostic pop
+#pragma clang diagnostic push
 #endif
