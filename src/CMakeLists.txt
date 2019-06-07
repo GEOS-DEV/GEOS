@@ -95,7 +95,7 @@ target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 add_custom_target( geosx_update_rst_tables
                    ALL
-                   COMMAND bash ../scripts/updateRstTables.bash
+                   COMMAND bash ../scripts/updateRstTables.bash > /dev/null 2>&1
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    DEPENDS geosx
                  )
