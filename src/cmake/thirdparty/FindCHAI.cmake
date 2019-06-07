@@ -9,12 +9,12 @@
 # first Check for CHAI_DIR
 
 if (NOT EXISTS ${CHAI_DIR})
-    message(INFO ": Using chai from thirdPartyLibs")
+    message(STATUS "Using chai from thirdPartyLibs")
     set(CHAI_DIR "${GEOSX_TPL_DIR}/chai" CACHE PATH "")
 endif()
 
 if (EXISTS ${CHAI_DIR})
-    message(INFO ": Using chai found at ${CHAI_DIR}")
+    message(STATUS "Using chai found at ${CHAI_DIR}")
     
     find_library( CHAI_LIBRARY NAMES chai libchai libumpire libumpire_op libumpire_resource libumpire_strategy libumpire_tpl_judy libumpire_util
                   PATHS ${CHAI_DIR}/lib
@@ -36,7 +36,7 @@ if (EXISTS ${CHAI_DIR})
                                         CHAI_LIBRARY )
 
     if (NOT CHAI_FOUND)
-        message(FATAL_ERROR ": CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
+        message(FATAL_ERROR "CHAI not found in ${CHAI_DIR}. Maybe you need to build it")
     endif()
 
     blt_register_library( NAME chai
@@ -49,5 +49,5 @@ if (EXISTS ${CHAI_DIR})
 else()
     set(CHAI_FOUND FALSE)
     set(ENABLE_CHAI OFF CACHE BOOL "")
-    message(INFO ": Not using chai")
+    message(STATUS "Not using chai")
 endif()
