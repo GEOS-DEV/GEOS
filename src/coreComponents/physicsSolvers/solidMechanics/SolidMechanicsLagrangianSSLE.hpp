@@ -145,6 +145,7 @@ public:
             arrayView1d< real64 const > const & fluidPressure,
             arrayView1d< real64 const > const & deltaFluidPressure,
             arrayView1d< real64 const > const & biotCoefficient,
+            arrayView2d<R1Tensor> const & nodalForceFromElement,
             timeIntegrationOption const tiOption,
             real64 const stiffnessDamping,
             real64 const massDamping,
@@ -286,6 +287,7 @@ ImplicitElementKernelWrapper::Launch(
     arrayView1d< real64 const > const & fluidPressure,
     arrayView1d< real64 const > const & deltaFluidPressure,
     arrayView1d< real64 const > const & biotCoefficient,
+    arrayView2d<R1Tensor> const & nodalForceFromElement,
     timeIntegrationOption const tiOption,
     real64 const stiffnessDamping,
     real64 const massDamping,
@@ -491,6 +493,14 @@ ImplicitElementKernelWrapper::Launch(
 
       globalResidual->SumIntoGlobalValues( elementLocalDofIndex,
                                 R);
+
+      for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+      {
+        for( int i=0 ; i<dim ; ++i )
+        {
+          nodalForceFromElement[k][a][i] = R(a*dim+i);
+        }
+      }
     }
   }
   return maxForce;

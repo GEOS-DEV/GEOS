@@ -281,6 +281,7 @@ public:
       arrayView1d< real64 const > const & fluidPressure,\
       arrayView1d< real64 const > const & deltaFluidPressure,\
       arrayView1d< real64 const > const & biotCoefficient,\
+      arrayView2d<R1Tensor> const & nodalForceFromElement, \
       timeIntegrationOption const tiOption,\
       real64 const stiffnessDamping,\
       real64 const massDamping,\
@@ -309,6 +310,7 @@ public:
                                            fluidPressure,\
                                            deltaFluidPressure,\
                                            biotCoefficient,\
+                                           nodalForceFromElement,\
                                            tiOption,\
                                            stiffnessDamping,\
                                            massDamping,\
@@ -416,6 +418,7 @@ public:
             arrayView1d< real64 const > const & fluidPressure,
             arrayView1d< real64 const > const & deltaFluidPressure,
             arrayView1d< real64 const > const & biotCoefficient,
+            arrayView2d<R1Tensor> const & nodalForceFromElement,
             timeIntegrationOption const tiOption,
             real64 const stiffnessDamping,
             real64 const massDamping,
@@ -685,6 +688,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
         arrayView1d< real64 const > const & fluidPressure,
         arrayView1d< real64 const > const & deltaFluidPressure,
         arrayView1d< real64 const > const & biotCoefficient,
+        arrayView2d<R1Tensor> const & nodalForceFromElement,
         timeIntegrationOption const tiOption,
         real64 const stiffnessDamping,
         real64 const massDamping,
