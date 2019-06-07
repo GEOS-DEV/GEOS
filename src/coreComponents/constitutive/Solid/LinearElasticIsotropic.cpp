@@ -48,18 +48,26 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
-
-  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
+  RegisterViewWrapper( viewKeyStruct::poissonRatio0String, &m_defaultPoissonRatio, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Elastic Young's Modulus.");
+    setDescription("Poisson ratio Parameter");
 
-  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
+  RegisterViewWrapper( viewKeyStruct::youngsModulus0String, &m_defaultYoungsModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Poisson's ratio");
+    setDescription("Elastic Young's Modulus Parameter");
 
 
+//  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
+//    setApplyDefaultValue(-1)->
+//    setInputFlag(InputFlags::OPTIONAL)->
+//    setDescription("Elastic Young's Modulus.");
+//
+//  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
+//    setApplyDefaultValue(-1)->
+//    setInputFlag(InputFlags::OPTIONAL)->
+//    setDescription("Poisson's ratio");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
@@ -68,6 +76,14 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
+
+  RegisterViewWrapper( viewKeyStruct::poissonRatioString, &m_poissonRatio, 0 )->
+    setApplyDefaultValue(-1)->
+    setDescription("Poisson ratio Field");
+
+  RegisterViewWrapper( viewKeyStruct::youngsModulusString, &m_youngsModulus, 0 )->
+    setApplyDefaultValue(-1)->
+    setDescription("Yound's Modulus Field");
 
 }
 
@@ -95,6 +111,10 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_density = m_density;
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
+  newConstitutiveRelation->m_defaultPoissonRatio = m_defaultPoissonRatio;
+  newConstitutiveRelation->m_defaultYoungsModulus = m_defaultYoungsModulus;
+  newConstitutiveRelation->m_poissonRatio = m_poissonRatio;
+  newConstitutiveRelation->m_youngsModulus = m_youngsModulus;
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
@@ -108,16 +128,22 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   this->resize( parent->size() );
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
+  m_poissonRatio.resize( parent->size() );
+  m_youngsModulus.resize( parent->size() );
 
   m_bulkModulus = m_defaultBulkModulus;
   m_shearModulus = m_defaultShearModulus;
+  m_poissonRatio = m_defaultPoissonRatio;
+  m_youngsModulus = m_defaultYoungsModulus;
 
 }
 
 void LinearElasticIsotropic::PostProcessInput()
 {
-  real64 & nu = getReference<real64>( viewKeyStruct::poissonRatioString );
-  real64 & E  = getReference<real64>( viewKeyStruct::youngsModulus0String );
+//  real64 & nu = getReference<real64>( viewKeyStruct::poissonRatioString );
+//  real64 & E  = getReference<real64>( viewKeyStruct::youngsModulus0String );
+  real64 & nu = m_defaultPoissonRatio;
+  real64 & E  = m_defaultYoungsModulus;
   real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
