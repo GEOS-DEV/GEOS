@@ -518,6 +518,12 @@ void ProblemManager::GenerateDocumentation()
     // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
 
+    MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+    DomainPartition * domain  = getDomainPartition();
+    meshManager->GenerateMeshLevels(domain);
+
+    RegisterDataOnMeshRecursive(nullptr);
+
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
 
