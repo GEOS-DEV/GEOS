@@ -18,21 +18,14 @@
 
 #ifdef __clang__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
 #pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
 #include "gtest/gtest.h"
 
-#ifdef __clang__
-#define __null nullptr
-#endif
-
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/initialization.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/EventManager.hpp"
@@ -816,38 +809,15 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
                          });
 }
 
-int main(int argc, char** argv)
+int main( int argc, char** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-  if (argc < 2)
-  {
-    std::cerr << "Usage: testCompMultiphaseFlow <path/to/xml/dir>";
-    return 1;
-  }
-
-#ifdef GEOSX_USE_MPI
-  int rank = 0;
-  int nranks = 1;
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-
-  MPI_Comm_size(MPI_COMM_GEOSX, &nranks);
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
+  global_argv = new char*[static_cast<unsigned int>( global_argc )];
+  for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
   }
@@ -855,17 +825,12 @@ int main(int argc, char** argv)
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  
+  geosx::basicCleanup();
 
   return result;
 }
 
 #ifdef __clang__
-#pragma clang diagnostic pop
+#pragma clang diagnostic push
 #endif

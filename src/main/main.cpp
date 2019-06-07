@@ -16,121 +16,76 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include "common/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
-#include "SetFPE.hpp"
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
 #include "managers/ProblemManager.hpp"
-
-#ifdef GEOSX_USE_OPENMP
-#include <omp.h>
-#endif
 
 using namespace geosx;
 
-//static int TV_ttf_display_type( geosx::dataRepository::ViewWrapperBase const * wrapper);
 
 int main( int argc, char *argv[] )
 {
-  timeval tim;
-  gettimeofday(&tim, nullptr);
-  real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
-#ifdef GEOSX_USE_MPI
-  int rank = 0;
-  int nranks = 1;
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-
-  MPI_Comm_size(MPI_COMM_GEOSX, &nranks);
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger():
-#endif
+  basicSetup( argc, argv );
 
   printTypeSummary();
 
-#ifdef GEOSX_USE_OPENMP
   {
-    GEOS_LOG_RANK_0("Number of threads: " << omp_get_max_threads());
-  }
-#endif
+    timeval tim;
+    gettimeofday(&tim, nullptr);
+    real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-  cxx_utilities::SetFPE();
-
-  std::string restartFileName;
-  bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
-  if (restart) {
-    GEOS_LOG_RANK_0("Loading restart file " << restartFileName);
-    dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
-  }
-
-  ProblemManager problemManager( "Problem", nullptr );
-
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput( argc, argv );
-
-  if ( !problemManager.getSchemaFileName().empty() )
-  {
-    problemManager.GenerateDocumentation();
-  }
-  else
-  {
-    problemManager.ParseInputFile();
-
-    problemManager.ProblemSetup();
-
+    std::string restartFileName;
+    bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
     if (restart) {
-      problemManager.ReadRestartOverwrite( restartFileName );
+      GEOS_LOG_RANK_0("Loading restart file " << restartFileName);
+      dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
     }
 
-    MPI_Barrier(MPI_COMM_GEOSX);
-    GEOS_LOG_RANK_0("Running simulation");
+    ProblemManager problemManager( "Problem", nullptr );
 
-    gettimeofday(&tim, nullptr);
-    const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    problemManager.InitializePythonInterpreter();
+    problemManager.ParseCommandLineInput( argc, argv );
 
-    problemManager.RunSimulation();
+    if ( !problemManager.getSchemaFileName().empty() )
+    {
+      problemManager.GenerateDocumentation();
+    }
+    else
+    {
+      problemManager.ParseInputFile();
 
-    gettimeofday(&tim, nullptr);
-    const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+      problemManager.ProblemSetup();
 
-    GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
-                    "s, run time = " << t_run-t_initialize << "s");
+      if (restart) {
+        problemManager.ReadRestartOverwrite( restartFileName );
+      }
+
+      MPI_Barrier(MPI_COMM_GEOSX);
+      GEOS_LOG_RANK_0("Running simulation");
+
+      gettimeofday(&tim, nullptr);
+      const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+      problemManager.RunSimulation();
+
+      gettimeofday(&tim, nullptr);
+      const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
+
+      GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+                      "s, run time = " << t_run-t_initialize << "s");
+    }
+    
+
+    problemManager.ClosePythonInterpreter();
   }
-  
 
-  problemManager.ClosePythonInterpreter();
-
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  basicCleanup();
 
 
   return 0;
 }
 
-//int TV_ttf_display_type( geosx::dataRepository::ViewWrapperBase const * wrapper)
-//{
-//  int rval = 0;
-//  if( wrapper!=nullptr )
-//  {
-//    std::cout<<"displaying ViewWrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
-//    rval = TV_ttf_add_row("casted_this", wrapper->totalviewTypeName().c_str(), wrapper);
-//    std::cout<<rval<<std::endl;
-//  }
-//  return rval;
-//}
-//
