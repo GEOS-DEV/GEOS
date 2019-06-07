@@ -35,6 +35,10 @@ The following attributes are supported in the input block for `SolidMechanics_La
 
 .. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
 
+The following data are allocated and used by the solver:
+
+.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
+
 
 Theory
 =========================

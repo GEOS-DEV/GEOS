@@ -38,7 +38,8 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
   m_restart_flags(RestartFlags::WRITE_AND_READ),
   m_plotLevel(PlotLevel::LEVEL_3),
   m_inputFlag(InputFlags::INVALID),
-  m_description()
+  m_description(),
+  m_registeringObjects()
 #ifdef GEOSX_USE_ATK
   ,m_sidreView(nullptr)
 #endif
