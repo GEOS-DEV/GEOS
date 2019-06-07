@@ -18,10 +18,14 @@ set( nranks 2 )
 # Add gtest C++ based tests
 #
 
-set( dependencyList gtest linearAlgebraInterface )
+set( dependencyList gtest linearAlgebraInterface geosx_core )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
+endif()
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
 endif()
 
 foreach(test ${LAI_tests})
@@ -38,11 +42,6 @@ foreach(test ${LAI_tests})
                 NUM_MPI_TASKS ${nranks} )
 
 endforeach()
-
-# 
-#  Add tests requiring input xml
-#
-set( dependencyList ${dependencyList} geosx_core )
 
 foreach(test ${LAI_tests_with_xml})
   get_filename_component( test_name ${test} NAME_WE )

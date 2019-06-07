@@ -6,15 +6,17 @@ set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
     GeosxMacros.hpp
-    TimingMacros.hpp )
+    TimingMacros.hpp
+    initialization.hpp )
 
 #
 # Specify all sources
 #
 set(common_sources
-    DataTypes.cpp )
+    DataTypes.cpp
+    initialization.cpp)
 
-set( dependencyList cxx-utilities mpi )
+set( dependencyList cxx-utilities managers mpi pugixml trilinos )
 
 if( ATK_FOUND )
   set( dependencyList ${dependencyList} conduit )
@@ -22,6 +24,14 @@ endif()
 
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
+endif()
+
+if( ENABLE_RAJA )
+  set( dependencyList ${dependencyList} RAJA )
+endif()
+
+if( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
 endif()
 
 #set( dependencyList2 mpi )
