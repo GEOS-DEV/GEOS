@@ -1,7 +1,7 @@
 
 import os
 import re
-import numpy as np
+#import numpy as np
 from xml.etree import ElementTree as etree
 
 
@@ -14,7 +14,19 @@ class TreeBuilderWithComments(etree.TreeBuilder):
 
 def writeTableRST(file_name, values):
   L = [[len(x) for x in row] for row in values]
-  M = tuple(np.amax(np.array(L), axis=0))
+#  M = tuple(np.amax(np.array(L), axis=0))
+
+  # np isn't in the docker images for travisCI
+  MAX = [None] * len(L[0])
+  for ii in range(0, len(L[0])):
+    MAX[ii] = 0
+    for jj in range(0, len(L) ):
+      MAX[ii] = max(MAX[ii],L[jj][ii])
+
+  M = tuple( MAX )
+
+
+
 
   # Build column formats (the final column is allowed to use multiple lines)
   single_row_format = ('{:<%is} ' * len(M) + '\n') % M
@@ -55,7 +67,7 @@ def writeTableRST(file_name, values):
     f.write('\n\n')
 
 
-def format_value(x):
+def format_type_data(x):
   # Make sure that there are spaces within angled brackets
   # This allows for easier table line-breaks
   x = re.sub(r"<([a-zA-Z])", r"< \1", x)
@@ -67,57 +79,137 @@ def format_value(x):
   return(x)
 
 
-def parseSchemaNode(node, link_string='XML', include_defaults=True):
-  type_name = child_node.get('name')[:-4]
-  table_values = [['Name', 'Type', 'Default', 'Description']]
+def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
+  attribute_map = {}
 
-  # Parse comments
-  attribute_comments = {}
-  for comment_node in child_node.iter(etree.Comment):
-    tmp = comment_node.text.split(' = ', 1)
-    attribute_comments[tmp[0]] = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
+  # Build forward maps on the first pass (name, type, default, use, description, registered_by)
+  for child_node in root_node.findall(xsd + 'complexType'):
+    type_name = child_node.get('name')[:-4]
+    attribute_map[type_name] = {}
 
-  # Parse attributes
-  for attribute_node in child_node.findall(xsd + 'attribute'):
-    table_row = [format_value(attribute_node.get(v, default=' ')) for v in ['name', 'type', 'default']]
-    useValue = attribute_node.get('use')
-    if useValue:
-      table_row[2] = useValue
+    # Read the values supported by the xsd format (name, type, default, use)
+    for attribute_node in child_node.findall(xsd + 'attribute'):
+      att_name = attribute_node.get('name')
+      att_type = format_type_data(attribute_node.get('type', default=' '))
+      att_default = attribute_node.get('default', default=' ')
+
+      # Handle the special case for required values
+      useValue = attribute_node.get('use')
+      if useValue:
+        att_default = useValue
+
+      attribute_map[type_name][att_name] = {'Type': att_type, 'Default': att_default}
+
+    # Parse nodes
+    for choice_node in child_node.findall(xsd + 'choice'):
+      for sub_node in choice_node.findall(xsd + 'element'):
+        sub_name = sub_node.get('name')
+        sub_required = sub_node.get('minOccurs')
+        sub_unique = sub_node.get('maxOccurs')
+        node_use = ''
+        if sub_required:
+          if sub_unique:
+            node_use = 'unique, required'
+          else:
+            node_use = 'required'
+        elif (sub_unique):
+          node_use = 'unique'
+
+        attribute_map[type_name][sub_name] = {'Type': 'node',
+                                              'Default': node_use}
+
+    # Read the remaining values stored in comments (description, registered_by)
+    for comment_node in child_node.iter(etree.Comment):
+      tmp = comment_node.text.split(' => ')
+      att_name = tmp[0]
+      att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
+      attribute_map[type_name][att_name]['Description'] = att_description
+      if (len(tmp) > 2):
+       attribute_map[type_name][att_name]['Registered By'] = [x for x in tmp[2].split(', ')]
+
+  # Build the reverse maps on the second pass (registered_on)
+  for ka in attribute_map.keys():
+    for kb in attribute_map[ka].keys():
+      if ('Registered By' in attribute_map[ka][kb]):
+        for kc in attribute_map[ka][kb]['Registered By']:
+          attribute_map[kc][kb] = attribute_map[ka][kb].copy()
+          attribute_map[kc][kb]['Registered On'] = [ka]
+          del attribute_map[kc][kb]['Registered By']
+
+  return attribute_map
+
+
+def buildTableValues(type_map,
+                     link_string='XML',
+                     include_defaults=True):
+  table_headers = ['Name', 'Type', 'Default', 'Registered On', 'Registered By', 'Description']
+  optional_headers = ['Default', 'Registered On', 'Registered By']
+
+  # Sort the keys
+  akeys = []
+  rb_keys = []
+  ro_keys = []
+  node_keys = []
+  for k in sorted(type_map.keys()):
+    if ('Registered By' in type_map[k]):
+      rb_keys.append(k)
+    elif ('Registered On' in type_map[k]):
+      ro_keys.append(k)
+    elif (type_map[k]['Type'] == 'node'):
+      node_keys.append(k)
+    else:
+      akeys.append(k)
+  akeys.extend(rb_keys)
+  akeys.extend(ro_keys)
+  akeys.extend(node_keys)
+
+  # Remove any unused headers
+  for ii in range(0, len(optional_headers)):
+    header_count = 0
+    for k in akeys:
+      if (optional_headers[ii] in type_map[k]):
+        header_count += 1
+    if (header_count == 0):
+      table_headers.remove(optional_headers[ii])
+
+  if not include_defaults:
+    if 'Default' in table_headers:
+      table_headers.remove('Default')
+
+  # Setup the empty table
+  N_rows = len(akeys)
+  N_cols = len(table_headers)
+  table_values = [[' ' for jj in range(0, N_cols)] for ii in range(0, N_rows+1)]
+  table_values[0] = table_headers
+
+  if (N_rows > 0):
+    # Add values to the table
+    for ii in range(0, N_rows):
+      # Get the row, set the name
+      att_name = akeys[ii]
+      table_row = table_values[ii+1]
+      table_row[0] = att_name
+
+      # Set the other parameters
+      for jj in range(1, len(table_headers)):
+        k = table_headers[jj]
+        if k in type_map[att_name]:
+          table_row[jj] = type_map[att_name][k]
+
+          # Format any registration entries as links
+          if ('Registered' in k):
+            table_row[jj] = ", ".join([':ref:`%s_%s`' % (link_string, x) for x in table_row[jj]])
+
+      # Set the link if the target is a node
+      if (table_row[1] == 'node'):
+        table_row[-1] = ':ref:`%s_%s`' % (link_string, table_row[0])
+  else:
+    # Case for an empty table
+    table_row = [' ' for x in table_headers]
+    table_row[-1] = '(no documentation available)'
     table_values.append(table_row)
 
-    k = table_values[-1][0]
-    if k in attribute_comments:
-      table_values[-1].append(attribute_comments[k])
-    else:
-      table_values[-1].append('\-')
-
-  # Parse nodes
-  for choice_node in child_node.findall(xsd + 'choice'):
-    for sub_node in choice_node.findall(xsd + 'element'):
-      sub_name = sub_node.get('name')
-      sub_required = sub_node.get('minOccurs')
-      sub_unique = sub_node.get('maxOccurs')
-      node_use = ''
-      if sub_required:
-        if sub_unique:
-          node_use = 'unique, required'
-        else:
-          node_use = 'required'
-      elif (sub_unique):
-        node_use = 'unique'
-
-      table_values.append([sub_name, 'node', node_use, ':ref:`%s_%s`' % (link_string, sub_name)])
-
-  # Handle empty tables
-  if (len(table_values) == 1):
-    table_values.append(['\-', '\-', '\-', '(no documentation available)'])
-
-  # Remove default values if not needed
-  if not include_defaults:
-    for ii in range(0, len(table_values)):
-      table_values[ii].pop(2)
-
-  return type_name, table_values
+  return table_values
 
 
 # Config
@@ -129,63 +221,75 @@ sphinx_path = '../../coreComponents/fileIO/schema/docs'
 xsd = '{http://www.w3.org/2001/XMLSchema}'
 
 
-# Parse the schema, build documentation tables
-os.system('mkdir -p %s' % (output_folder))
+# Parse the input/non-input schemas
+parser = etree.XMLParser(target=TreeBuilderWithComments())
+include_tree = etree.parse(schema_name, parser=parser)
+include_root = include_tree.getroot()
+input_attribute_map = buildAttributeMap(include_root)
 
+parser = etree.XMLParser(target=TreeBuilderWithComments())
+include_tree = etree.parse(additional_documentation_name, parser=parser)
+include_root = include_tree.getroot()
+other_attribute_map = buildAttributeMap(include_root)
+
+
+# Check for non-unique (ignoring case) links
+input_keys = sorted(input_attribute_map.keys())
+input_keys_lower = [k.lower() for k in input_keys]
+input_keys_count = [input_keys_lower.count(k) for k in input_keys_lower]
+input_repeated_keys = [input_keys[ii] for ii in range(0, len(input_keys)) if input_keys_count[ii] > 1]
+
+other_keys = sorted(other_attribute_map.keys())
+other_keys_lower = [k.lower() for k in other_keys]
+other_keys_count = [other_keys_lower.count(k) for k in other_keys_lower]
+other_repeated_keys = [other_keys[ii] for ii in range(0, len(other_keys)) if other_keys_count[ii] > 1]
+
+if ((len(input_repeated_keys) > 0) | (len(other_repeated_keys) > 0)):
+  print('Repeated input keys:')
+  print(input_repeated_keys)
+  print('Repeated other keys:')
+  print(other_repeated_keys)
+  # raise ValueError('Repeated keys in the GEOSX data structure are not allowed!')
+
+
+# Build documentation tables
+os.system('mkdir -p %s' % (output_folder))
 with open('%s.rst' % (complete_output), 'w') as output_handle:
   # Write the file header
   output_handle.write('======================\n')
   output_handle.write('GEOSX Data Structure\n')
   output_handle.write('======================\n\n')
 
-  # Parse the schema definitions
+  # Parse the input schema definitions
   output_handle.write('********************************\n')
   output_handle.write('Input Schema Definitions\n')
   output_handle.write('********************************\n\n')
 
-  parser = etree.XMLParser(target=TreeBuilderWithComments())
-  include_tree = etree.parse(schema_name, parser=parser)
-  include_root = include_tree.getroot()
-
-  for child_node in include_root.findall(xsd + 'complexType'):
-    # Parse schema into a list of key parameters
-    type_name, table_values = parseSchemaNode(child_node)
-
-    # Write table
+  for type_name in sorted(input_attribute_map.keys()):
+    # Write the individual tables
+    table_values = buildTableValues(input_attribute_map[type_name])
     writeTableRST('%s/%s.rst' % (output_folder, type_name), table_values)
 
+    # Write to the master list
     element_header = 'Element: %s' % (type_name)
     output_handle.write('\n.. _XML_%s:\n\n' % (type_name))
     output_handle.write('%s\n' % (element_header))
     output_handle.write('='*len(element_header) + '\n')
     output_handle.write('.. include:: %s/%s.rst\n\n' % (sphinx_path, type_name))
 
-
-  # Parse the non-schema definitions
+  # Parse the non-input schema definitions
   output_handle.write('********************************\n')
   output_handle.write('Datastructure Definitions\n')
   output_handle.write('********************************\n\n')
 
-  include_tree = etree.parse(additional_documentation_name)
-  include_root = include_tree.getroot()
-  all_links = []
-
-  for child_node in include_root.findall(xsd + 'complexType'):
-    # The additional documentation uses the same format as the schema
-    type_name, table_values = parseSchemaNode(child_node, link_string='DATASTRUCTURE', include_defaults=False)
-    type_name_lower = type_name.lower()
-
-    # Write table
+  for type_name in sorted(other_attribute_map.keys()):
+    # Write the individual tables
+    table_values = buildTableValues(other_attribute_map[type_name], link_string='DATASTRUCTURE', include_defaults=False)
     writeTableRST('%s/%s_other.rst' % (output_folder, type_name), table_values)
 
+    # Write to the master list
     element_header = 'Datastructure: %s' % (type_name)
-
-    # There are some names in the GEOSX datastructure that only vary by case.
-    # This can break the documentation, so skip link tags if necessary
-    if (type_name_lower not in all_links):
-      output_handle.write('\n.. _DATASTRUCTURE_%s:\n\n' % (type_name))
-      all_links.append(type_name.lower())
-
+    output_handle.write('\n.. _DATASTRUCTURE_%s:\n\n' % (type_name))
     output_handle.write('%s\n' % (element_header))
     output_handle.write('='*len(element_header) + '\n')
     output_handle.write('.. include:: %s/%s_other.rst\n\n' % (sphinx_path, type_name))

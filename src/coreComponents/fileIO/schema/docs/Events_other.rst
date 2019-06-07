@@ -3,14 +3,14 @@
 =============== ======= ================================== 
 Name            Type    Description                        
 =============== ======= ================================== 
-time            real64  Current simulation time.           
-dt              real64  Current simulation timestep.       
-cycle           integer Current simulation cycle number.   
-currentSubEvent integer index of the current subevent.     
 currentMaxDt    real64  Maximum dt request for event loop. 
+currentSubEvent integer index of the current subevent.     
+cycle           integer Current simulation cycle number.   
+dt              real64  Current simulation timestep.       
+time            real64  Current simulation time.           
 HaltEvent       node    :ref:`DATASTRUCTURE_HaltEvent`     
-SoloEvent       node    :ref:`DATASTRUCTURE_SoloEvent`     
 PeriodicEvent   node    :ref:`DATASTRUCTURE_PeriodicEvent` 
+SoloEvent       node    :ref:`DATASTRUCTURE_SoloEvent`     
 =============== ======= ================================== 
 
 
