@@ -218,6 +218,28 @@ private:
    * @param nodeManager
    * @param edgeManager
    * @param faceManager
+   * @param elementManager
+   * @param vecTipNorm
+   * @param vecTip
+   * @return
+   */
+  realT CalculateElementForcesOnEdge ( DomainPartition * domain,
+                           const localIndex edgeID,
+                           localIndex& trailFaceID,
+                           NodeManager & nodeManager,
+                           EdgeManager & edgeManager,
+                           FaceManager & faceManager,
+                           ElementRegionManager & elementManager,
+                           R1Tensor& vecTipNorm,
+                           R1Tensor& vecTip );
+
+  /**
+   * @brief
+   * @param edgeID
+   * @param trailFaceID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
    * @param vecTipNorm
    * @param vecTip
    * @param modifiedObjects
