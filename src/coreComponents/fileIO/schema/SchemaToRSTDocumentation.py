@@ -1,7 +1,7 @@
 
 import os
 import re
-import numpy as np
+#import numpy as np
 from xml.etree import ElementTree as etree
 
 
@@ -14,7 +14,19 @@ class TreeBuilderWithComments(etree.TreeBuilder):
 
 def writeTableRST(file_name, values):
   L = [[len(x) for x in row] for row in values]
-  M = tuple(np.amax(np.array(L), axis=0))
+#  M = tuple(np.amax(np.array(L), axis=0))
+
+  # np isn't in the docker images for travisCI
+  MAX = [None] * len(L[0])
+  for ii in range(0, len(L[0])):
+    MAX[ii] = 0
+    for jj in range(0, len(L) ):
+      MAX[ii] = max(MAX[ii],L[jj][ii])
+
+  M = tuple( MAX )
+
+
+
 
   # Build column formats (the final column is allowed to use multiple lines)
   single_row_format = ('{:<%is} ' * len(M) + '\n') % M
