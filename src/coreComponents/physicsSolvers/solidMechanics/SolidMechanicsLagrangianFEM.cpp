@@ -1121,6 +1121,9 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
 
+  ElementRegionManager::ElementViewAccessor<arrayView2d<R1Tensor>> nodalForceFromElement =
+      elemManager->ConstructViewAccessor<array2d<R1Tensor>, arrayView2d<R1Tensor>>(SurfaceGenerator::viewKeyStruct::nodalForceFromElementString);
+
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,
                                                               BlockIDs::displacementBlock );
   Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
@@ -1191,6 +1194,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
                                                         fluidPres[er][esr],
                                                         dPres[er][esr],
                                                         biotCoefficient[er][esr],
+                                                        nodalForceFromElement[er][esr],
                                                         m_timeIntegrationOption,
                                                         this->m_stiffnessDamping,
                                                         this->m_massDamping,

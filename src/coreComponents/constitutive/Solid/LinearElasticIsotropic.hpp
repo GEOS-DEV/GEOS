@@ -77,12 +77,14 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     static constexpr auto bulkModulus0String  = "defaultBulkModulus";
-    static constexpr auto poissonRatioString =  "defaultPoissonRatio" ;
+    static constexpr auto poissonRatio0String =  "defaultPoissonRatio" ;
     static constexpr auto shearModulus0String = "defaultShearModulus";
     static constexpr auto youngsModulus0String =  "defaultYoungsModulus" ;
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
+    static constexpr auto poissonRatioString =  "PoissonRatio" ;
+    static constexpr auto youngsModulusString =  "YoungsModulus" ;
   };
 
 
@@ -107,8 +109,13 @@ private:
 
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
+  real64 m_defaultPoissonRatio;
+  real64 m_defaultYoungsModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
+  array1d<real64> m_poissonRatio;
+  array1d<real64> m_youngsModulus;
+
 
 };
 
