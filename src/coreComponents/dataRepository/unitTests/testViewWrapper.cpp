@@ -18,12 +18,6 @@
 
 #include <gtest/gtest.h>
 
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
-
 #include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 using namespace geosx;
