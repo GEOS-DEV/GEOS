@@ -841,6 +841,7 @@
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 		</xsd:choice>
 		<!--blockSystemRepository => (no description available)-->
 		<xsd:attribute name="blockSystemRepository" type="geosx::systemSolverInterface::EpetraBlockSystem" />
@@ -927,6 +928,15 @@
 		<xsd:attribute name="failCriterion" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
