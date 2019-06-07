@@ -20,22 +20,22 @@
  * @file testLAOperations.cpp
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
+// #ifdef __clang__
+// #pragma clang diagnostic push
+// #pragma clang diagnostic ignored "-Wglobal-constructors"
+// #pragma clang diagnostic ignored "-Wexit-time-destructors"
+// #if __clang_major__ >= 5 && !defined(__APPLE__)
+// #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+// #endif
+// #endif
 
 #include <gtest/gtest.h>
 
 #include <iostream>
-#include <vector>
 #include <mpi.h>
 
 #include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
@@ -607,13 +607,11 @@ void testRectangularMatrixOperations()
  */
 TEST(testLAOperations,testEpetraLAOperations)
 {
-  MPI_Init( nullptr, nullptr );
   testInterfaceSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
   testMatrixMatrixOperations<TrilinosInterface>();
   testRectangularMatrixOperations<TrilinosInterface>();
-  MPI_Finalize();
 }
 
 /*! @function testHypreLAOperations.
@@ -642,6 +640,20 @@ TEST(testLAOperations,testEpetraLAOperations)
 
 //@}
 
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+#include <omp.h>
+
+int main( int argc, char* argv[] )
+{
+  geosx::basicSetup( argc, argv );
+
+  testing::InitGoogleTest( &argc, argv );
+  int result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
+  return result;
+}
+
+// #ifdef __clang__
+// #pragma clang diagnostic pop
+// #endif

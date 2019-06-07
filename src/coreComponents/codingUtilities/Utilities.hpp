@@ -28,8 +28,6 @@
 #include <sys/resource.h>
 #include <map>
 #include <algorithm>
-#include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
