@@ -138,6 +138,9 @@ public:
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
 
+
+  int Test ( int test);
+
   //wu40: Since the field nodalForceFromElement is used in another solver (SolidMechanicsLagrangianFEM), I have to make the viewKeyStruct public here.
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -212,26 +215,31 @@ private:
                            R1Tensor& vecTip );
 
   /**
-   * @brief
+   * @brief Function to calculate f_disconnect and f_u.
    * @param edgeID
-   * @param trailFaceID
+   * @param edgeLength
+   * @param nodeIndices
    * @param nodeManager
    * @param edgeManager
-   * @param faceManager
    * @param elementManager
    * @param vecTipNorm
-   * @param vecTip
-   * @return
+   * @param fNode
+   * @param GdivBeta
+   * @param threeNodesPinched
+   * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
    */
-  realT CalculateElementForcesOnEdge ( DomainPartition * domain,
+  int CalculateElementForcesOnEdge ( DomainPartition * domain,
                            const localIndex edgeID,
-                           localIndex& trailFaceID,
+                           realT edgeLength,
+                           localIndex_array & nodeIndices,
                            NodeManager & nodeManager,
                            EdgeManager & edgeManager,
-                           FaceManager & faceManager,
                            ElementRegionManager & elementManager,
                            R1Tensor& vecTipNorm,
-                           R1Tensor& vecTip );
+                           R1Tensor& fNode,
+                           realT& GdivBeta,
+                           bool threeNodesPinched,
+                           bool calculatef_u);
 
   /**
    * @brief

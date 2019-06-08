@@ -426,7 +426,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
 
 
-
   if( !prefrac )
   {
 
@@ -2452,7 +2451,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
                                           FaceManager & faceManager,
                                           ElementRegionManager & elementManager,
                                           R1Tensor& vecTipNorm,
-                                          R1Tensor& vecTip )
+                                          R1Tensor& vecTip)
 {
   realT rval;
   localIndex nExternalFaces = 0;
@@ -2660,17 +2659,37 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   }
 
 
-  //TODO: Turn this into a separate function
   // Calculate element forces acting on this edge.  Need to add nodal forces from two nodes up.
   //An element has to be within the range of this edge to be included.
   //For the threeNodesPinched case, we only use the force on the node at the convex point, not the concave point.  The
   // force at the former is usually greater, so we just pick the great one instead of doing a geometrical check.
-
   R1Tensor fNodeO = static_cast<R1Tensor>(0.0);
-  realT GdivBeta = 0;  // Need this for opening-based SIF
+  realT GdivBeta = 0.0;  // Need this for opening-based SIF
+
+  localIndex_array nodeIndices;
+
+  if( !threeNodesPinched )
+  {
+    for( localIndex a=0 ; a<edgesToNodes.size( 1 ) ; ++a )
+    {
+      nodeIndices.push_back( edgesToNodes( edgeID, a ) );
+    }
+
+    CalculateElementForcesOnEdge (domain, edgeID, edgeLength, nodeIndices,
+                                  nodeManager, edgeManager, elementManager, vecTipNorm, fNodeO, GdivBeta, threeNodesPinched, false);
+
+  }
+  else
+  {
+    nodeIndices.push_back(convexCorner);
+
+    CalculateElementForcesOnEdge (domain, edgeID, edgeLength, nodeIndices,
+                                  nodeManager, edgeManager, elementManager, vecTipNorm, fNodeO, GdivBeta, threeNodesPinched, false);
+  }
 
 
-  localIndex nElemEachSide[2];
+
+  /*localIndex nElemEachSide[2];
 
   nElemEachSide[0] = 0;
   nElemEachSide[1] = 0;
@@ -2681,18 +2700,18 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
   //wu40: Get the elements that contribute to the nodal force. Note that this is only used for the non-threeNodesPinched scenario.
   //This will cause problems for tet mesh.
-  /*std::set<std::pair<CellElementSubRegion *, localIndex >> relevantElements;
-  for( auto iface : edgesToFaces[edgeID] )
-  {
-    for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )//wu40: need careful check when debugging
-    {
-      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( facesToElementRegions[iface][k] )->
-          GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iface][k] );
-      localIndex iEle = facesToElementIndex[iface][k];
-
-      relevantElements.insert(std::make_pair(elementSubRegion, iEle));
-    }
-  }*/
+//  std::set<std::pair<CellElementSubRegion *, localIndex >> relevantElements;
+//  for( auto iface : edgesToFaces[edgeID] )
+//  {
+//    for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )//wu40: need careful check when debugging
+//    {
+//      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( facesToElementRegions[iface][k] )->
+//          GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iface][k] );
+//      localIndex iEle = facesToElementIndex[iface][k];
+//
+//      relevantElements.insert(std::make_pair(elementSubRegion, iEle));
+//    }
+//  }
 
   if( !threeNodesPinched )
   {
@@ -2704,9 +2723,6 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
       {
         R1Tensor xEle;
-
-//        CellElementSubRegion * elementSubRegion = k->first;
-//        localIndex iEle = k->second;
         CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
                                              GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
         localIndex iEle = nodesToElementIndex[nodeID][k];
@@ -2815,7 +2831,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   //We have contributions from both sides.  The two sizes are the two sides of the fracture plane.  If the fracture face
   // is on domain boundary, it's possible to have just one side.
   if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
-    GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
+    GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);*/
 
 
   localIndex tipFaces[2];
@@ -2953,7 +2969,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
       }
     }
 
-    for( localIndex iR = 0 ; iR < trailingNodes.size() ; ++iR )
+    CalculateElementForcesOnEdge (domain, edgeID, edgeLength, trailingNodes,
+                                  nodeManager, edgeManager, elementManager, vecTipNorm, fFaceA[i], GdivBeta, threeNodesPinched, true);
+
+    /*for( localIndex iR = 0 ; iR < trailingNodes.size() ; ++iR )
     {
       localIndex iNd = trailingNodes[iR];
       R1Tensor fNode = static_cast<R1Tensor>(0.0);
@@ -2990,7 +3009,11 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
           {
             if (elementsToNodes[iEle][n] == iNd)
             {
-              fNode += nodalForceFromElement[er][esr][iEle][n];
+              R1Tensor temp;
+
+              temp = nodalForceFromElement[er][esr][iEle][n];
+              temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              fNode += temp;
             }
           }
         }
@@ -2998,18 +3021,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
       fFaceA[i] += fNode;
 
-      // I am merging this logic into one that unified the ghost situation and the intersection situation
-//      if (nGhostElem == nValidElements)
-//      {
-//        // This is a conservative criterion. It's possible that the all elements connected to trailing edge are ghost
-// but the trailing edge still have complete topological information in the local partition.
-//        incompleteTrailingEdgeTopology = true;
-//      }
-
     }
     //If we only find one node behind the tip, we do the following as a rough compensation.
     if( trailingNodes.size() == 1 && !threeNodesPinched )
-      fFaceA[i] *= 2.0;
+      fFaceA[i] *= 2.0;*/
 
   }
 
@@ -3084,14 +3099,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     SIF_III[edgeID] = 0.0;;
   }
 
-
   if( tipForce[1] < 0.0 )
   {
     SIF_II[edgeID] *= -1.0;
   }
-
-//  std::cout<<"          edge, tipOpening, tipForce = "<<edgeID<<", "<<tipOpening[0]<<", "<<tipForce[0]<<std::endl;
-//  std::cout<<"     SIF_I[edgeID] =  = "<<SIF_I[edgeID]<<std::endl;
 
   if( SIF_I[edgeID] > 0.0 )
   {
@@ -3103,601 +3114,148 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   }
 
   return rval;
-
- /* if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
-    fNodeO /= 2.0;
-  //We have contributions from both sides.  The two sizes are the two sides of the fracture plane.  If the fracture face
-  // is on domain boundary, it's possible to have just one side.
-  if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
-    GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
-
-  localIndex tipFaces[2];
-  tipFaces[0] = faceA;
-  tipFaces[1] = faceAp;*/
-
- /* real64 temp;
-  R1Tensor r1Temp;
-  R1Tensor faceCenterA;
-  R1Tensor faceCenterAp;
-  computationalGeometry::
-  Centroid_3DPolygon( facesToNodes[faceA],
-                      X,
-                      faceCenterA,
-                      vecTipNorm );
-
-  computationalGeometry::
-  Centroid_3DPolygon( facesToNodes[faceAp],
-                      X,
-                      faceCenterAp,
-                      r1Temp );
-
-  vecTipNorm = faceNormal[faceA];
-  vecTipNorm -= faceNormal[faceAp];
-  vecTipNorm.Normalize();
-
-  R1Tensor vecEdge;
-  computationalGeometry::
-  VectorDifference( X,
-                    edgesToNodes[edgeID][0],
-                    edgesToNodes[edgeID][1],
-                    vecEdge );
-  vecEdge.Normalize();
-
-  vecTip.Cross( vecTipNorm, vecEdge );
-  vecTip.Normalize();
-  R1Tensor v0, v1;
-  computationalGeometry::VectorMean<2>( X, edgesToNodes[edgeID], v0 );
-  v0 -= faceCenterA;
-
-  if( Dot( v0, vecTip ) < 0 )
-    vecTip *= -1.0;
-  if( Dot( Cross( vecTip, vecTipNorm ), vecEdge ) < 0 )
-  {
-    vecTipNorm *= -1;
-    faceA = faceInvolved[1];
-    faceAp = faceInvolved[0];
-  }
+}
 
 
-  //Now we need to figure out if a special situation applies to this edge
-  // where the fracture face is a quad and three of the nodes are still pinched
-  // We use a different algorithm for this special situation.
+int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
+                                          const localIndex edgeID,
+                                          realT edgeLength,
+                                          localIndex_array & nodeIndices,
+                                          NodeManager & nodeManager,
+                                          EdgeManager & edgeManager,
+                                          ElementRegionManager & elementManager,
+                                          R1Tensor& vecTipNorm,
+                                          R1Tensor& fNode,
+                                          realT& GdivBeta,
+                                          bool threeNodesPinched,
+                                          bool calculatef_u)
+{
+  array1d< set<localIndex> > const & nodesToEdges = nodeManager.edgeList();
+  array1d<localIndex_array> const & nodesToElementRegion = nodeManager.elementRegionList();
+  array1d<localIndex_array> const & nodesToElementSubRegion = nodeManager.elementSubRegionList();
+  array1d<localIndex_array> const & nodesToElementIndex = nodeManager.elementList();
 
-  bool threeNodesPinched( false );
-  localIndex_array openNodeID;
+  arrayView2d<localIndex> const & edgesToNodes = edgeManager.nodeList();
 
-  if( facesToNodes[faceA].size() == 4 )  // Only quads have this problem
-  {
-    int numSharedNodes = 2;
-    localIndex_array lNodeFaceA, lNodeFaceAp;
+  array1d<R1Tensor> const & X = nodeManager.referencePosition();
 
-    lNodeFaceA = facesToNodes[faceA];
-    lNodeFaceAp = facesToNodes[faceAp];
+  ElementRegionManager::ElementViewAccessor<array2d<R1Tensor>> const nodalForceFromElement =
+      elementManager.ConstructViewAccessor<array2d<R1Tensor>, array2d<R1Tensor>>(viewKeyStruct::nodalForceFromElementString);
 
+  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveBase const * const solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidMaterialName );
+  GEOS_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
+  m_solidMaterialFullIndex = solid->getIndexInParent();
 
-    //We remove all the shared nodes and the one remains should be the open one.
-    lNodeFaceAp.erase( std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][0] ));
-    lNodeFaceAp.erase( std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), edgesToNodes[edgeID][1] ));
-    lNodeFaceA.erase( std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][0] ));
-    lNodeFaceA.erase( std::find( lNodeFaceA.begin(), lNodeFaceA.end(), edgesToNodes[edgeID][1] ));
+  ConstitutiveManager * const constitutiveManager =
+      domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-    for( auto j : facesToNodes[faceA] )
-    {
-      localIndex iNd = j;
-      if( iNd != edgesToNodes[edgeID][0] && iNd != edgesToNodes[edgeID][1] )
-      {
-        if( std::find( facesToNodes[faceAp].begin(), facesToNodes[faceAp].end(), iNd ) != facesToNodes[faceAp].end())
-        {
-          numSharedNodes++;
-          lNodeFaceA.erase( std::find( lNodeFaceA.begin(), lNodeFaceA.end(), iNd ));
-          lNodeFaceAp.erase( std::find( lNodeFaceAp.begin(), lNodeFaceAp.end(), iNd ));
-        }
-      }
-    }
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
+      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
 
-    if( numSharedNodes == 4 )
-    {
-      GEOS_ERROR( "Error.  The fracture face has four shared nodes with its child.  This should not happen." );
-    }
-    else if( numSharedNodes == 3 )
-    {
-      threeNodesPinched = true;
-      if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
-      {
-        GEOS_ERROR( "Error. These two faces share three nodes but the number of remaining nodes is not one.  Something is wrong" );
-      }
-      else
-      {
-        openNodeID.push_back( lNodeFaceA[0] );
-        openNodeID.push_back( lNodeFaceAp[0] );
-      }
-    }
-  }
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const poissonRatio =
+      elementManager.ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "PoissonRatio", constitutiveManager);
 
-  // Now we need to identify which node on the edge is the convex point and which one is the concave corner.  The convex
-  // node must share an edge with the open node.
-  localIndex convexCorner( std::numeric_limits<localIndex>::max());
-  if( threeNodesPinched )
-  {
-    localIndex iNd, jNd;
-    iNd = edgesToNodes[edgeID][0];
-    jNd = edgesToNodes[edgeID][1];
-    for( auto const j : facesToEdges[faceA] )
-    {
-      localIndex edge = j;
-      if((openNodeID[0] == edgesToNodes[edge][0] && iNd == edgesToNodes[edge][1]) ||
-         (openNodeID[0] == edgesToNodes[edge][1] && iNd == edgesToNodes[edge][0])
-         )
-      {
-        convexCorner = iNd;
-        break;
-      }
-      if((openNodeID[0] == edgesToNodes[edge][0] && jNd == edgesToNodes[edge][1]) ||
-         (openNodeID[0] == edgesToNodes[edge][1] && jNd == edgesToNodes[edge][0])
-         )
-      {
-        convexCorner = jNd;
-        break;
-      }
-    }
-
-    if( convexCorner == std::numeric_limits<localIndex>::max())
-      GEOS_ERROR( "Error.  This is a three-node-pinched edge but I cannot find the convex corner" );
-
-  }
+  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const youndsModulus =
+      elementManager.ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "YoungsModulus", constitutiveManager);
 
 
-
-  // Calculate element forces acting on this edge.  Need to add nodal forces from two nodes up.
-  //An element has to be within the range of this edge to be included.
-  //For the threeNodesPinched case, we only use the force on the node at the convex point, not the concave point.  The
-  // force at the former is ususally greater, so we just pick the great one instead of doing a geometrical check.
-
-  localIndex nElemEachSide[2], nGhostElem;
-  R1Tensor fNodeO = static_cast<R1Tensor>(0.0);
+  localIndex nElemEachSide[2];
   nElemEachSide[0] = 0;
   nElemEachSide[1] = 0;
+
   R1Tensor xEdge;
-  computationalGeometry::VectorMean<2>( X, edgesToNodes[edgeID], xEdge );
 
-  realT GdivBeta = 0;  // Need this for opening-based SIF
-
-  if( !threeNodesPinched )
+  if (!calculatef_u)
   {
-    for( localIndex a=0 ; a<edgesToNodes.size( 1 ) ; ++a ) // Loop through the two nodes
-    {
-      localIndex nodeID = edgesToNodes( edgeID, a );
-
-      for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
-      {
-
-        CellElementSubRegion * elementRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
-                                             GetSubRegion( nodesToElementSubRegion[nodeID][k] );
-        localIndex iEle = nodesToElementIndex[nodeID][k];
-        R1Tensor fN, xEle;
-
-
-        xEle = elementRegion->GetElementCenter( iEle, nodeManager );
-
-        //Comment: use the edge to face relation loop
-
-        realT ndist, udist, segmentLength;
-        R1Tensor ptPrj;
-        GeometryUtilities::ProjectPointToLineSegment( X[nodeID],
-                                                      X[edgesToNodes( edgeID, 1-a )],
-                                                      xEle,
-                                                      ndist, udist, segmentLength,
-                                                      ptPrj );
-        if( udist <= edgeManager.EdgeLength( nodeManager, edgeID ) && udist > 0.0 )
-        {
-          elementRegion->CalculateNodalForcesFromOneElement( nodeID, iEle, nodeManager, fN );
-          GdivBeta += elementRegion->ElementGDivBeta( iEle );
-
-          xEle -= xEdge;
-
-          if( Dot( xEle, vecTipNorm ) > 0 )
-          {
-            nElemEachSide[0] += 1;
-            fNodeO += fN;
-          }
-          else
-          {
-            nElemEachSide[1] +=1;
-            fNodeO -= fN;
-          }
-        }
-      } // Loop through all elements connected to this node
-
-    }  // loop over two nodes on the edge
-  }
-  else
-  {
-
-    localIndex nodeID = convexCorner;
-    fNodeO = 0.0;
-
-    for( std::set< std::pair<CellElementSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[nodeID].begin() ;
-         k!=nodeManager.m_toElementsRelation[nodeID].end() ; ++k )
-    {
-      CellElementSubRegion * elementRegion = k->first;
-      localIndex iEle = k->second;
-      R1Tensor fN, xEle;
-
-      xEle = elementRegion->GetElementCenter( iEle, nodeManager );
-
-      {
-        elementRegion->CalculateNodalForcesFromOneElement( nodeID, iEle, nodeManager, fN );
-        GdivBeta += elementRegion->ElementGDivBeta( iEle );
-
-        xEle -= xEdge;
-
-        if( Dot( xEle, vecTipNorm ) > 0 )
-        {
-          nElemEachSide[0] += 1;
-          fNodeO += fN;
-        }
-        else
-        {
-          nElemEachSide[1] +=1;
-          fNodeO -= fN;
-        }
-      }
-    } // Loop through all elements connected to this node
+    edgeManager.calculateCenter( edgeID, X, xEdge );
   }
 
-  if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
-    fNodeO /= 2.0;
-  //We have contributions from both sides.  The two sizes are the two sides of the fracture plane.  If the fracture face
-  // is on domain boundary, it's possible to have just one side.
-  if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
-    GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
-
-  localIndex tipFaces[2];
-  tipFaces[0] = faceA;
-  tipFaces[1] = faceAp;
-
-  // We have to subtract the nodal force at other nodes (trailing nodes) on these two open faces to take into account
-  // the effects of surface traction along the fracture.
-  // Finding the two trailing nodes on a hex mesh is pretty straightforward, while it is cumbersome to do in tet mesh
-  // For the threeNodesPinched case, this should be the open node.
-  R1Tensor fFaceA[2];
-  // fFaceA is actually the average nodal force on each face.  Assuming homogeneous meshing.
-
-
-  // If the two external faces connected to a trailing edge are not coplanar, then we have the risk of incomplete
-  // topology.
-  // In that case, we use a displacement/opening based method, not VCCT.
-  bool incompleteTrailingEdgeTopology = 0;
-
-#if 1
-  for( localIndex i=0 ; i<2 ; ++i )
+  for (localIndex i=0; i < nodeIndices.size() ; ++i)
   {
-    integer_array trailingNodes;
-    localIndex trailingEdge;
-    trailingNodes.clear();
-    if( threeNodesPinched )
+    localIndex nodeID = nodeIndices(i);
+    for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
     {
-      trailingNodes.push_back( openNodeID[i] );
-    }
-    else
-    {
-      localIndex faceID = tipFaces[i];
-      nGhostElem = 0;
-      fFaceA[i] = 0.0;
+      R1Tensor xEle;
+      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
+          GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
+      localIndex iEle = nodesToElementIndex[nodeID][k];
 
-      for( auto j : facesToNodes[faceID] )
+      ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
+      string const elementRegionName = elementRegion->getName();
+      localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
+      localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+
+      xEle = elementSubRegion->getElementCenter()[iEle];
+
+      realT udist;
+      R1Tensor x0_x1(X[edgesToNodes[edgeID][0]]), x0_xEle(xEle);
+      x0_x1 -= X[edgesToNodes[edgeID][1]];
+      x0_x1.Normalize();
+      x0_xEle -= X[edgesToNodes[edgeID][1]];
+      udist = Dot(x0_x1, x0_xEle);
+
+
+      if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
-        if( j != edgesToNodes( edgeID, 0 ) && j != edgesToNodes( edgeID, 1 ) ) // This is not a node along the tip edge
+        arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+        for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
         {
-          trailingNodes.push_back( j );
-        }
-      }
-
-      if( trailingNodes.size() > 2 || trailingNodes.size() == 0 )
-      {
-        GEOS_ERROR( "Fatal error in finding nodes behind tip edge." );
-      }
-      else if( trailingNodes.size() == 1 )  // Need some work to find the other node
-      {
-        // First find a edge that is connected to this node and parallel to the tip edge
-        realT maxCosAngle = 0.0;
-        localIndex pickedTrailingEdge = std::numeric_limits<localIndex>::max();
-        for( auto iedge : nodesToEdges[trailingNodes[0]] )
-        {
-          R1Tensor xTrailingEdge;
-          edgeManager.EdgeCenter( nodeManager, *iedge, xTrailingEdge );
-
-          realT ndist, udist, segmentLength;
-          R1Tensor ptPrj;
-          GeometryUtilities::ProjectPointToLineSegment( (*nodeManager.m_refposition)[edgesToNodes[edgeID][0]],
-                                                        (*nodeManager.m_refposition)[edgesToNodes[edgeID][1]],
-                                                        xTrailingEdge,
-                                                        ndist, udist, segmentLength,
-                                                        ptPrj );
-          if( udist <= edgeManager.EdgeLength( nodeManager, edgeID ) && udist > 0.0 )
+          if (elementsToNodes[iEle][n] == nodeID)
           {
-            R1Tensor vEdge;
-            edgeManager.EdgeVector( nodeManager, *iedge, vEdge );
-            vEdge /= edgeManager.EdgeLength( nodeManager, *iedge );
-            realT cosEdge = std::fabs( Dot( vEdge, vecEdge ));
-            if( cosEdge > maxCosAngle )
+            R1Tensor temp;
+
+            //wu40: the nodal force need to be weighted by Young's modulus so we multiply force and E here.
+            temp = nodalForceFromElement[er][esr][iEle][n];
+            temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
+
+            if (!calculatef_u)
             {
-              maxCosAngle = cosEdge;
-              pickedTrailingEdge = *iedge;
+              xEle -= xEdge;
+              if( Dot( xEle, vecTipNorm ) > 0 )
+              {
+                nElemEachSide[0] += 1;
+                fNode += temp;
+              }
+              else
+              {
+                nElemEachSide[1] +=1;
+                fNode -= temp;
+              }
+            }
+            else
+            {
+              fNode += temp;
             }
           }
         }
-        if( maxCosAngle > 0.75 )
-          trailingNodes.push_back( edgesToNodes[pickedTrailingEdge][0] + edgesToNodes[pickedTrailingEdge][1] - trailingNodes[0] );
-      }
-    }
 
-    if( trailingNodes.size() == 2 )
-    {
-      trailingEdge = edgeManager.FindEdgeFromNodeIDs( trailingNodes[0], trailingNodes[1], nodeManager );
-      if( trailingEdge > edgeManager.DataLengths())
-      {
-        // GEOS_ERROR("Error: I have two trailing nodes but cannot find a trailing edge.");
-        int rank=0;
-        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-        std::cout << "Cannot find trailing edge (edge=" << edgeID << ", rank=" << rank <<   "  )" << std::endl;
-        return 0.0;
-      }
-
-
-      localIndex_array extFacesOnTrailingEdge;
-      for( auto iface : edgesToFaces[trailingEdge] )
-      {
-        if( faceManager.m_isExternal[iface] >= 1 )
-          extFacesOnTrailingEdge.push_back( iface );
-      }
-
-      if( extFacesOnTrailingEdge.size() != 2 )
-      {
-        incompleteTrailingEdgeTopology = 1;
-      }
-      else
-      {
-        R1Tensor extFaceNormal[2];
-        for( localIndex j = 0 ; j < 2 ; ++j )
+        if (!calculatef_u)
         {
-          extFaceNormal[j] = faceManager.FaceNormal( nodeManager, extFacesOnTrailingEdge[j], true );
-        }
-
-        if( std::fabs( Dot( extFaceNormal[0], extFaceNormal[1] )) < 0.9 ) //The two faces are not coplanar.
-        {
-          incompleteTrailingEdgeTopology = 1;
-        }
-      }
-    }
-
-    for( localIndex iR = 0 ; iR < trailingNodes.size() ; ++iR )
-    {
-      localIndex iNd = trailingNodes[iR];
-      nGhostElem = 0;
-      localIndex nValidElements = 0;
-      R1Tensor fNode = static_cast<R1Tensor>(0.0);
-
-      // The unbalanced force from a summation of element contributions should be the external forces, could be fluid
-      // pressure or try traction.
-      // In this way, we don't need to worry about the how the traction inside a fracture was applied.
-      for( std::set< std::pair<CellElementSubRegion *, localIndex> >::const_iterator k=nodeManager.m_toElementsRelation[iNd].begin() ;
-           k!=nodeManager.m_toElementsRelation[iNd].end() ; ++k )
-      {
-        CellElementSubRegion * elementRegion = k->first;
-        localIndex iEle = k->second;
-        integer_array& elem_is_ghost = elementRegion->getReference<FieldInfo::ghostRank>();
-        R1Tensor fN, xEle;
-
-        xEle = elementRegion->GetElementCenter( iEle, nodeManager );
-
-        realT ndist, udist, segmentLength;
-        R1Tensor ptPrj;
-        GeometryUtilities::ProjectPointToLineSegment( (*nodeManager.m_refposition)[edgesToNodes[edgeID][0]],
-                                                      (*nodeManager.m_refposition)[edgesToNodes[edgeID][1]],
-                                                      xEle,
-                                                      ndist, udist, segmentLength,
-                                                      ptPrj );
-        if(  ( udist <= edgeManager.EdgeLength( nodeManager, edgeID ) && udist > 0.0 ) || threeNodesPinched )
-        {
-          elementRegion->CalculateNodalForcesFromOneElement( iNd, iEle, nodeManager, fN );
-          fNode += fN;
-          nValidElements++;
-          if( elem_is_ghost[iEle] >= 0 )
-            nGhostElem +=1;
-        }
-
-      }
-
-      fFaceA[i] += fNode;
-
-      // I am merging this logic into one that unified the ghost situation and the intersection situation
-//      if (nGhostElem == nValidElements)
-//      {
-//        // This is a conservative criterion. It's possible that the all elements connected to trailing edge are ghost
-// but the trailing edge still have complete topological information in the local partition.
-//        incompleteTrailingEdgeTopology = true;
-//      }
-
-    }
-    //If we only find one node behind the tip, we do the following as a rough compensation.
-    if( trailingNodes.size() == 1 && !threeNodesPinched )
-      fFaceA[i] *= 2.0;
-
-
-  }
-#else
-
-  R1Tensor fFaceB[2];
-
-  if( ppFlowPressure != nullptr )
-  {
-    localIndex const faceID = tipFaces[0];
-
-    const R1Tensor N[2] = { faceManager.FaceNormal( nodeManager, tipFaces[0] ),
-                            faceManager.FaceNormal( nodeManager, tipFaces[1] )};
-    R1Tensor Nbar = N[0];
-    Nbar -= N[1];
-    Nbar.Normalize();
-
-    fFaceB[0] = Nbar;
-    fFaceB[0] *= (*ppFlowPressure)[faceID] * faceArea[faceID] * 2 / facesToNodes[faceID].size();
-
-//    std::cout<<"     facePressure["<<faceID<<"] = "<<(*ppFlowPressure)[faceID]<<std::endl;
-
-    realT ElasticModulus = 0.0;
-    Array1dT< std::pair< CellElementSubRegion *, localIndex > > toElements = faceManager.m_toElementsRelation[faceID];
-    for( Array1dT< std::pair< CellElementSubRegion *, localIndex > >::iterator iterRegion=toElements.begin() ;
-         iterRegion!=toElements.end() ; ++iterRegion )
-    {
-      ElementRegionT const & elemRegion = *(iterRegion->first);
-      localIndex const element = iterRegion->second;
-
-      const localIndex paramIndex = elemRegion.m_mat->NumParameterIndex0() > 1 ? element : 0;
-      ElasticModulus += elemRegion.m_mat->ParameterData( paramIndex )->E;
-    }
-    ElasticModulus /= toElements.size();
-
-    fFaceB[0] *= ElasticModulus;
-    fFaceB[1] = fFaceA[0];
-    fFaceB[1] *= -1;
-  }
-
-
-#endif
-
-  R1Tensor tipForce;
-  tipForce[0] = Dot( fNodeO, vecTipNorm ) + Dot( fFaceA[0], vecTipNorm ) / 2.0 - Dot( fFaceA[1], vecTipNorm ) /2.0;
-  tipForce[1] = Dot( fNodeO, vecTip ) + Dot( fFaceA[0], vecTip ) / 2.0 - Dot( fFaceA[1], vecTip ) /2.0;
-  tipForce[2] = Dot( fNodeO, vecEdge ) + Dot( fFaceA[0], vecEdge ) / 2.0 - Dot( fFaceA[1], vecEdge ) /2.0;
-
-//  tipForce[0] = Dot(fNodeO, vecTipNorm) + ( Dot(fFaceA[0], vecTipNorm) - Dot(fFaceA[1], vecTipNorm) ) /2.0;
-//  tipForce[1] = Dot(fNodeO, vecTip)     + ( Dot(fFaceA[0], vecTip)     - Dot(fFaceA[1], vecTip) ) /2.0;
-//  tipForce[2] = Dot(fNodeO, vecEdge)    + ( Dot(fFaceA[0], vecEdge)    - Dot(fFaceA[1], vecEdge) ) /2.0;
-
-//  std::cout<<"     edgeID = "<<edgeID<<std::endl;
-//  std::cout<<"     Dot(fNodeO, vecTipNorm) = "<<Dot(fNodeO, vecTipNorm)<<std::endl;
-//  std::cout<<"     Dot(fFaceA[0], vecTipNorm) = "<<( Dot(fFaceA[0], vecTipNorm) - Dot(fFaceA[1], vecTipNorm) )
-// /2.0<<std::endl;
-//  std::cout<<"     Dot(fFaceB[0], vecTipNorm) = "<<( Dot(fFaceB[0], vecTipNorm) - Dot(fFaceB[1], vecTipNorm) )
-// /2.0<<std::endl;
-
-  R1Tensor tipDisplacement, tipOpening, tipFaceDisplacement[2];
-
-  if( !threeNodesPinched )
-  {
-    for( localIndex i=0 ; i<2 ; ++i )
-    {
-      localIndex faceID = tipFaces[i];
-      tipFaceDisplacement[i] = 0.0;
-
-      for( localIndex_array::iterator j = facesToNodes[faceID].begin() ;
-           j!=facesToNodes[faceID].end() ; ++j )
-      {
-        localIndex iNd = *j;
-        if( iNd != edgesToNodes( edgeID, 0 ) && iNd != edgesToNodes( edgeID, 1 ) )
-        {
-          tipFaceDisplacement[i] += (*nodeManager.m_displacement)[iNd];
+          GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
         }
       }
 
-      tipFaceDisplacement[i] /= (facesToNodes[faceID].size() - 2);
     }
-    tipDisplacement = tipFaceDisplacement[1];
-    tipDisplacement -= tipFaceDisplacement[0];
-  }
-  else
-  {
-    tipDisplacement = (*nodeManager.m_displacement)[openNodeID[1]];
-    tipDisplacement -= (*nodeManager.m_displacement)[openNodeID[0]];
 
-
-// This is Randy's old algorithm to handle the three-pinched situation.  I am keeping it because it's quite clever in
-// how it matched the node pairs across the two fracture faces.
-//    const localIndex numNodes = facesToNodes[tipFaces[0]].size();
-//
-//    for( localIndex a=0 ; a<numNodes ; ++a )
-//    {
-//      const localIndex aa = a == 0 ? a : numNodes - a;
-//
-//      const localIndex nodeID0 = facesToNodes[tipFaces[0]][a];
-//      const localIndex nodeID1 = facesToNodes[tipFaces[1]][aa];
-//
-//      if ( nodeID0 != edgesToNodes(edgeID,0) && nodeID0 != edgesToNodes(edgeID,1) &&
-//           nodeID1 != edgesToNodes(edgeID,0) && nodeID1 != edgesToNodes(edgeID,1) )
-//      {
-//        tipDisplacement = (*nodeManager.m_displacement)[nodeID1];
-//        tipDisplacement -= (*nodeManager.m_displacement)[nodeID0];
-//
-//        if( tipDisplacement.L2_Norm() > maxTipDisplacement.L2_Norm() )
-//        {
-//          maxTipDisplacement = tipDisplacement;
-//        }
-//      }
-//    }
-  }
-
-
-  tipOpening[0] = Dot( tipDisplacement, vecTipNorm );
-  tipOpening[1] = Dot( tipDisplacement, vecTip );
-  tipOpening[2] = Dot( tipDisplacement, vecEdge );
-
-  //if (Dot(Cross(vecTip, vecTipNorm),vecEdge) < 0.0) tipOpening[1] *= -1.0;
-
-
-
-  realT tipArea;
-  tipArea = faceManager.SurfaceArea( nodeManager, faceA, true );
-  if( facesToNodes[faceA].size() == 3 )
-  {
-    tipArea *= 2.0;
-  }
-
-  if( !incompleteTrailingEdgeTopology && !m_displacementBasedSIF && tipOpening[0] * tipForce[0] > 0.0 )
-  {
-    SIF_I[edgeID] = pow( fabs( tipForce[0] * tipOpening[0] / 2.0 / tipArea ), 0.5 );
-    SIF_II[edgeID] = pow( fabs( tipForce[1] * tipOpening[1] / 2.0 / tipArea ), 0.5 );
-    SIF_III[edgeID] = pow( fabs( tipForce[2] * tipOpening[2] / 2.0 / tipArea ), 0.5 );
-
-    if( tipOpening[0] < 0 )
+    //If we only find one node behind the tip for the non-threeNodesPinched scenario, we do the following as a rough compensation for f_u.
+    if (calculatef_u && nodeIndices.size() == 1 && !threeNodesPinched)
     {
-      // We don't need this for the case of incomplete trailing edge topology.  Sign in that case should be taken care
-      // of automatically because there is no sqrt involved.
-      SIF_I( edgeID ) *= -1.0;
+      fNode *= 2.0;
     }
-
   }
-  else
+
+  if (!calculatef_u)
   {
-    // Opening-based SIF, based on
-    // Equation 1 in Fu et al. 2012, DOI::10.1016/j.engfracmech.2012.04.010
-    realT r = tipArea / edgeManager.EdgeLength( nodeManager, edgeID );
-    // if (facesToNodes[faceA].size() == 3) r *= 2.0;
-    // tipArea is already twice the triangle area so we don't need this.
-    SIF_I[edgeID] = tipOpening[0] / 2.0 * GdivBeta / pow( r/6.28, 0.5 );
-    SIF_II[edgeID] = 0.0;  // SIF is not accurate in this scenario anyway.  Let's not worry about turning.
-    SIF_III[edgeID] = 0.0;;
+    if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
+      fNode /= 2.0;
+    //We have contributions from both sides. The two sizes are the two sides of the fracture plane.  If the fracture face
+    // is on domain boundary, it's possible to have just one side.
+    if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
+      GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
   }
 
-
-  if( tipForce[1] < 0.0 )
-  {
-    SIF_II[edgeID] *= -1.0;
-  }
-
-//  std::cout<<"          edge, tipOpening, tipForce = "<<edgeID<<", "<<tipOpening[0]<<", "<<tipForce[0]<<std::endl;
-//  std::cout<<"     SIF_I[edgeID] =  = "<<SIF_I[edgeID]<<std::endl;
-
-  if( SIF_I[edgeID] > 0.0 )
-  {
-    rval = pow( SIF_I[edgeID]*SIF_I[edgeID]+SIF_II[edgeID]*SIF_II[edgeID]+SIF_III[edgeID]*SIF_III[edgeID], 0.5 );
-  }
-  else
-  {
-    rval = -1.0;
-  }
-
-  return rval;*/
+  return 0;
 }
 
 int SurfaceGenerator::CheckOrphanElement ( ElementRegionManager & elementManager,
