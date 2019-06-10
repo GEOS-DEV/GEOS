@@ -671,6 +671,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   MPI_Barrier(MPI_COMM_GEOSX);
   GEOSX_MARK_END("MPI_Barrier");
 
+  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
+  static real64 maxTimes[10] = {0.0};
+
   minTimes[0] = std::min( minTimes[0], t2-t1 );
   minTimes[1] = std::min( minTimes[1], t4-t3 );
   minTimes[2] = std::min( minTimes[2], tf-t0 );
