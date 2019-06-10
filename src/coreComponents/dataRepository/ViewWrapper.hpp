@@ -39,6 +39,7 @@
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
+#include "cxx-utilities/src/src/StringUtilities.hpp"
 
 
 #ifdef GEOSX_USE_ATK
@@ -54,6 +55,9 @@ namespace geosx
 
 namespace dataRepository
 {
+
+//template< typename U >
+//static void totalViewType( char * const dataType );
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
@@ -127,6 +131,7 @@ public:
     {
       delete m_data;
     }
+    //tvTemplateInstantiation();
   }
 
   /**
@@ -1351,6 +1356,23 @@ public:
 
   ///@}
 
+  virtual string totalviewTypeName() const override final
+  {
+    return cxx_utilities::demangle( typeid( ViewWrapper<T> ).name() );
+  }
+
+  virtual int setTotalviewDisplay() const override final
+  {
+    //std::cout<<"executing ViewWrapper::setTotalviewDisplay()"<<std::endl;
+    ViewWrapperBase::setTotalviewDisplay();
+    TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData);
+    TV_ttf_add_row( "m_data", totalview::typeName<T>().c_str(), m_data);
+    TV_ttf_add_row( "m_default", totalview::typeName< DefaultValue<T> >().c_str(), &m_default );
+    return 0;
+  }
+
+//  void tvTemplateInstantiation();
+
 private:
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
@@ -1368,5 +1390,21 @@ private:
 
 }
 } /* namespace geosx */
+
+//template< typename T >
+//int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<T> const * wrapper)
+//{
+//  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
+//  return TV_ttf_format_raw;
+//}
+//
+//template int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<int> const * wrapper );
+//
+//template< typename T >
+//void geosx::dataRepository::ViewWrapper<T>::tvTemplateInstantiation()
+//{
+//  TV_ttf_display_type<T>(this);
+//}
+
 
 #endif /* CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_ */
