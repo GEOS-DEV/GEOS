@@ -81,7 +81,7 @@ void ViewWrapperBase::resize()
 }
 
 
-
+#ifndef NDEBUG
 int ViewWrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing ViewWrapperBase::setTotalviewDisplay()"<<std::endl;
@@ -100,11 +100,13 @@ int ViewWrapperBase::setTotalviewDisplay() const
 
   return 0;
 }
+#endif
 
 
 }
 } /* namespace geosx */
 
+#ifndef NDEBUG
 /**
  * @brief Global function correlated with ViewWrapperBase to be called by Totalview when displaying
  *        a ViewWrapperBase as a VieWrapper<T>
@@ -122,3 +124,4 @@ int TV_ttf_display_type( const geosx::dataRepository::ViewWrapperBase * wrapper)
   }
   return 0;
 }
+#endif
