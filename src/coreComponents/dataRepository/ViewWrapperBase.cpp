@@ -105,6 +105,12 @@ int ViewWrapperBase::setTotalviewDisplay() const
 }
 } /* namespace geosx */
 
+/**
+ * @brief Global function correlated with ViewWrapperBase to be called by Totalview when displaying
+ *        a ViewWrapperBase as a VieWrapper<T>
+ * @param wrapper A pointer to the wrapper that will be displayed.
+ * @return 0
+ */
 int TV_ttf_display_type( const geosx::dataRepository::ViewWrapperBase * wrapper)
 {
   if( wrapper!=nullptr )

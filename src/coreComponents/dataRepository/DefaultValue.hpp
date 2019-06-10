@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * WrapperDefaultValueHelper.hpp
- *
- *  Created on: Dec 17, 2018
- *      Author: settgast
+/**
+ * @file WrapperDefaultValueHelper.hpp
  */
 
 #ifndef CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
