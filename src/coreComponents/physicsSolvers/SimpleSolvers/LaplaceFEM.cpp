@@ -297,6 +297,13 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   CommunicationTools::
   SynchronizeFields( fieldNames, mesh,
                      domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+  if( dofManager.needDoubleSync() )
+  {
+    CommunicationTools::
+    SynchronizeFields( fieldNames, mesh,
+                       domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+  }
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,

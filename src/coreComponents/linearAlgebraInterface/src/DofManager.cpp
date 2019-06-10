@@ -502,7 +502,7 @@ void DofManager::addField( string const & field,
 
 // .... DOF MANAGER :: CREATE INDEX ARRAY
 void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
-                                                     localIndex_array const & activeRegionsInput ) const
+                                                     localIndex_array const & activeRegionsInput )
 {
   // step 0. register an index array with default = LocationStatus::notAssigned
   ObjectManagerBase *
@@ -613,7 +613,8 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   // step 3. adjust local values to reflect processor offset
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
   {
-    if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) )
+    if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) and
+      indexArray[n] != static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
     {
       indexArray[n] += field.firstLocalRow;
     }
@@ -641,12 +642,26 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   field.firstLocalRow *= field.numComponents;
 
   // Replace LocationStatus::notMyGhostLocation with LocationStatus::notAssigned (if any)
+  localIndex notAssignedSum = 0;
   for( localIndex i = 0 ; i < indexArray.size() ; ++i )
   {
     if( indexArray[i] == static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
     {
       indexArray[i] = static_cast<globalIndex>( LocationStatus::notAssigned );
+      ++notAssignedSum;
     }
+  }
+
+  CommunicationTools::allGather( notAssignedSum, localGather );
+
+  // Check if in the whole mesh there are notAssigned DoFs
+  if( std::accumulate( localGather.begin(), localGather.end(), 0.0 ) > 0 )
+  {
+    // Need of a second sync
+    m_doubleSync = true;
+    CommunicationTools::
+    SynchronizeFields( fieldNames, m_meshLevel,
+                       m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
   }
 }
 
@@ -1157,7 +1172,7 @@ void DofManager::copyFieldToVector( ParallelVector const & vector,
 // Just an interface to allow only three parameters
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
-                              Connectivity const connectivity ) const
+                              Connectivity const connectivity )
 {
   addCoupling( rowField, colField, connectivity, string_array(), true );
 }
@@ -1166,7 +1181,7 @@ void DofManager::addCoupling( string const & rowField,
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
-                              string_array const & regions = string_array() ) const
+                              string_array const & regions = string_array() )
 {
   addCoupling( rowField, colField, connectivity, regions, true );
 }
@@ -1175,7 +1190,7 @@ void DofManager::addCoupling( string const & rowField,
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
-                              bool const symmetric ) const
+                              bool const symmetric )
 {
   addCoupling( rowField, colField, connectivity, string_array(), symmetric );
 }
@@ -1185,7 +1200,7 @@ void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
                               string_array const & regions,
-                              bool const symmetric ) const
+                              bool const symmetric )
 {
   // check if the row field name is already added
   GEOS_ERROR_IF( !keyInUse( rowField ), "addCoupling: requested field name must be already existing." );
@@ -1491,7 +1506,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
                                               localIndex const & colFieldIndex,
                                               localIndex_array const & rowActiveRegions,
                                               localIndex_array const & colActiveRegions,
-                                              Connectivity const connectivity ) const
+                                              Connectivity const connectivity )
 {
   // Row field description
   FieldDescription const & rowFieldDesc = m_fields[rowFieldIndex];
@@ -1561,7 +1576,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
 void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                          localIndex const & fieldIdx,
                                          Connectivity const connectivity,
-                                         localIndex_array const & activeRegionsInput ) const
+                                         localIndex_array const & activeRegionsInput )
 {
   // get field description
   FieldDescription const & fieldDesc = m_fields[fieldIdx];

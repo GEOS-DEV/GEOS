@@ -23,6 +23,7 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_DOFMANAGER_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_DOFMANAGER_HPP_
 
+#include <numeric>
 #include "common/DataTypes.hpp"
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
@@ -221,7 +222,7 @@ public:
    */
   void addCoupling( string const & rowField,
                     string const & colField,
-                    Connectivity const connectivity ) const;
+                    Connectivity const connectivity );
 
   /**
    * Just another interface to allow four parameters (no symmetry)
@@ -229,7 +230,7 @@ public:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    string_array const & regions ) const;
+                    string_array const & regions );
 
   /**
    * Just another interface to allow four parameters (no regions)
@@ -237,7 +238,7 @@ public:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    bool const symmetric ) const;
+                    bool const symmetric );
 
   /**
    * The real function, allowing the creation of coupling blocks
@@ -246,7 +247,7 @@ public:
                     string const & colField,
                     Connectivity const connectivity,
                     string_array const & regions,
-                    bool const symmetric ) const;
+                    bool const symmetric );
 
   /**
    * Get key.
@@ -370,6 +371,13 @@ public:
    */
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
+  /**
+   * Getter for m_doubleSync
+   */
+  inline bool needDoubleSync() const {
+    return m_doubleSync;
+  }
+
 private:
   /**
    * Verbosity level
@@ -390,6 +398,11 @@ private:
    * Pointer to corresponding MeshLevel
    */
   MeshLevel * m_meshLevel = nullptr;
+
+  /**
+   * To fix the case when a processor handles just one layer of cells
+   */
+  bool m_doubleSync = false;
 
   /**
    * Field description
@@ -462,7 +475,7 @@ private:
    * Create index array
    */
   void createIndexArray_NodeOrFaceVersion( FieldDescription & field,
-                                           localIndex_array const & activeRegionsInput = localIndex_array() ) const;
+                                           localIndex_array const & activeRegionsInput = localIndex_array() );
 
   /**
    * Create element index array
@@ -476,7 +489,7 @@ private:
   void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                localIndex const & fieldIdx,
                                Connectivity const connectivity,
-                               localIndex_array const & activeRegionsInput = localIndex_array() ) const;
+                               localIndex_array const & activeRegionsInput = localIndex_array() );
 
   /**
    * Create sparsity pattern for two fields (extra-diagonal entries in the
@@ -488,7 +501,7 @@ private:
                                     localIndex const & colFieldIndex,
                                     localIndex_array const & rowActiveRegions,
                                     localIndex_array const & colActiveRegions,
-                                    Connectivity const connectivity ) const;
+                                    Connectivity const connectivity );
 
   /**
    * Definifion for entries of sparse matrix in COO format
