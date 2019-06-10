@@ -586,7 +586,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   }
 
   // Check if matrix is singular
-  GEOS_ASSERT_MSG( std::fabs(detA) >
+  GEOS_ASSERT_MSG( std::abs(detA) >
                    std::numeric_limits<real64>::epsilon() *
                    matrixNormFrobenius(A),
                    "Matrix is singular" );
@@ -739,5 +739,53 @@ void BlasLapackLA::vectorRand( array1d<real64> & X,
   return;
 }
 
+void BlasLapackLA::matrixRand( array1d<int> const & ISEED,
+                               array2d<real64> & A,
+                               int const IDIST)
+{
+  GEOS_ASSERT_MSG( ISEED.size() >= 4,
+                   "Seed array must have size at least four");
+
+  GEOS_ASSERT_MSG( 0 <= ISEED(0) && ISEED(0) <= 4095 &&
+                   0 <= ISEED(1) && ISEED(1) <= 4095 &&
+                   0 <= ISEED(2) && ISEED(2) <= 4095 &&
+                   0 <= ISEED(3) && ISEED(3) <= 4095,
+                   "Seed array integer entries must be in the range [0,4095]");
+
+  GEOS_ASSERT_MSG( ISEED(3) % 2 > 0,
+                   "Seed array 4th element must be odd");
+
+  GEOS_ASSERT_MSG( 1 <= IDIST && IDIST <= 3,
+                   "Integer IDIST must be in the range [1,3]");
+
+  int const NN = static_cast<int>( A.size() );
+
+  GEOS_ASSERT_MSG( NN > 0,
+                   "The vector cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED.data(),
+           &NN,
+           A.data());
+
+  return;
+}
+
+void BlasLapackLA::matrixRand( array2d<real64> & A,
+                               int const IDIST)
+{
+
+  array1d<int> ISEED(4);
+  ISEED[0] = 12;
+  ISEED[1] = 34;
+  ISEED[2] = 56;
+  ISEED[3] = 7;
+
+  matrixRand( ISEED,
+              A,
+              IDIST);
+
+  return;
+}
 
 } // end geosx namespace

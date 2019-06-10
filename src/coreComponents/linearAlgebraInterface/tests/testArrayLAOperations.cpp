@@ -16,95 +16,198 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/**
- * @file testDenseLAOperations.cpp
- */
+//#ifdef __clang__
+//#pragma clang diagnostic push
+//#pragma clang diagnostic ignored "-Wglobal-constructors"
+//#pragma clang diagnostic ignored "-Wexit-time-destructors"
+//#if __clang_major__ >= 5 && !defined(__APPLE__)
+//#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+//#endif
+//#endif
+//
+//#include <gtest/gtest.h>
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wglobal-constructors"
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
+#pragma clang diagnostic ignored "-Wused-but-marked-unused"
 #endif
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#define __null nullptr
+#endif
 
 #include "common/DataTypes.hpp"
-
 #include <random>
-
 #include <BlasLapackLA.hpp>
-
-/**
- * \file testDenseLAOperations.cpp
- * \brief This test file is part of the ctest suite and tests Lapack- and
- * MAGMA-based dense linear algebra operations.
- */
 
 using namespace geosx;
 
-// Generate random vector
-void vectorRand( array1d<real64> & x,
-                 std::uniform_real_distribution<real64> & distribution,
-                 std::default_random_engine & generator )
+extern "C"
 {
-  for( int i = 0 ; i < x.size() ; ++i )
-  {
-    x( i ) = distribution( generator );
-  }
-  return;
+  #include "BlasLapackFunctions.hpp"
 }
 
-// Generate random matrix
+using INDEX_TYPE = std::ptrdiff_t;
+
+// Generate a random GEOSX array1d
+void vectorRand( array1d<real64> & x,
+                 std::uniform_real_distribution<real64> & distribution,
+                 std::default_random_engine & generator );
+
+// Generate a random GEOSX array2d
 void matrixRand( array2d<real64> & A,
                  std::uniform_real_distribution<real64> & distribution,
-                 std::default_random_engine & generator )
-{
-  for( int i = 0 ; i < A.size( 0 ) ; ++i )
-  {
-    for( int j = 0 ; j < A.size( 1 ) ; ++j )
-    {
-      A( i, j ) = distribution( generator );
-    }
-  }
-  return;
-}
+                 std::default_random_engine & generator );
 
 static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 
-/*! @name Ctest tests.
- * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
- */
+//////////////////////////////////////////////////////////
+//
+//namespace internal
+//{
+//template<typename LAI>
+//void vectorNorm1_test()
+//{
+//
+//}
+//
+//}
 
-/*! @name Utility functions.
- * @brief Functions used to construct useful matrices in the test files.
- */
-//@{
-/**
- * @brief Compute an identity matrix
- *
- * \param comm MPI communicator.
- * \param N global size of the square identity matrix.
- */
+template<typename LAI>
+void VectorNorm1_Test()
+{
+  array1d<real64> v;
+  INDEX_TYPE N = 24;
+  v.resize( N );
 
-// BEGIN_RST_NARRATIVE testDenseLAOperations.rst
-// ==============================
-// Test Linear Algebra Operations
-// ==============================
-// In these 3 functions we test the linear algebra operations, the native solvers from the
-// libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
-// on both monolithic and block matrices.
-// -------------------------------------
-// Test libraries operations and solvers
-// -------------------------------------
-// We start by testing the linear algebra operations. We fill two matrices (one will be a
-// preconditioner) and make sure the sparse storage is behaving properly. We then test the
-// iterative and direct solvers available.
-//------------------------------
-// Test matrix constructor
-//------------------------------
+  // Populate vector with random coefficients
+  int IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  // Compute norm1
+  real64 norm1 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    norm1 += std::abs(v(i));
+  }
+
+  // Check
+  EXPECT_NEAR( norm1,
+               LAI::vectorNorm1( v ),
+               norm1 * machinePrecision );
+}
+
+template<typename LAI>
+void VectorNorm2_Test()
+{
+  array1d<real64> v;
+  INDEX_TYPE N = 24;
+  v.resize( N );
+
+  // Populate vector with random coefficients
+  int IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  // Compute norm2
+  real64 norm2 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    norm2 += v(i)*v(i);
+  }
+  norm2 = std::sqrt(norm2);
+
+  // Check
+  EXPECT_NEAR( norm2,
+               LAI::vectorNorm2( v ),
+               norm2 * machinePrecision );
+}
+
+template<typename LAI>
+void VectorNormInf_Test()
+{
+  array1d<real64> v;
+  INDEX_TYPE N = 24;
+  v.resize( N );
+
+  // Populate vector with random coefficients
+  int IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  // Compute normInf
+  real64 normInf = std::abs(v(0));
+
+  if (N > 1)
+  {
+    for( INDEX_TYPE i = 1 ; i < N ; ++i )
+    {
+      normInf = std::max( normInf, std::abs(v(i)) );
+    }
+  }
+
+  // Check
+  EXPECT_NEAR( normInf,
+               LAI::vectorNormInf( v ),
+               normInf * machinePrecision );
+}
+
+template<typename LAI>
+void MatrixNormFrobenius_Test()
+{
+  array2d<real64> A;
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  A.resize( M, N );
+
+  // Populate matrix with random coefficients
+  int IDIST = 2;
+  LAI::matrixRand(A, IDIST);
+
+  // Compute nornormFrobeniusm2
+  real64 normFrobenius = 0.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      normFrobenius += A(i,j)*A(i,j);
+    }
+  }
+  normFrobenius = std::sqrt(normFrobenius);
+
+  // Check
+  EXPECT_NEAR( normFrobenius,
+               LAI::matrixNormFrobenius( A ),
+               normFrobenius * machinePrecision );
+}
+
+TEST( Array1D, VectorNorm1)
+{
+  VectorNorm1_Test<BlasLapackLA>();
+}
+
+TEST( Array1D, VectorNorm2)
+{
+  VectorNorm2_Test<BlasLapackLA>();
+}
+
+TEST( Array1D, VectorNormInf)
+{
+  VectorNormInf_Test<BlasLapackLA>();
+}
+
+TEST( Array2D, MatrixNormFrobenius)
+{
+  MatrixNormFrobenius_Test<BlasLapackLA>();
+}
+
+/////////////////////////////////////////////////////////
+
+
+
 template<typename LAI>
 void testArray1dLA()
 {
@@ -146,7 +249,7 @@ void testArray1dLA()
     LAI::vectorVectorAdd( v1, v2, alfa );
 
     // e.
-    LAI::vectorScale( v1, alfa );
+    LAI::vectorScale( alfa, v1 );
 
     // f.
     LAI::vectorCopy( v1, v3 );
@@ -184,7 +287,7 @@ void testArray2dLA()
 
   localIndex MA, NA, MB, NB, ND, K;
 
-  // Test 2: repeat the following step for vectors of increasing size:
+  // Repeat the following step for vectors of increasing size:
   //
   // a. compute LHS = ( alfa*A*B + beta*C ) * D
   // b. compute RHS = alfa*A*(B*D) + beta*C*D
@@ -257,7 +360,7 @@ void testArray2dLA()
       }
     }
   }
-  // Test 3: repeat the following step for vectors of increasing size:
+  // Repeat the following step for vectors of increasing size:
   //
   // a. compute LHS = ( alfa*A^T*B + beta*C ) * D
   // b. compute RHS = alfa*A^T*(B*D) + beta*C*D
@@ -336,7 +439,7 @@ void testArray2dLA()
     }
   }
 
-  // Test 3: repeat the following step for vectors of increasing size:
+  // Repeat the following step for vectors of increasing size:
   //
   // a. compute LHS = ( alfa*A*B^T + beta*C ) * D
   // b. compute RHS = alfa*A*(B^T*D) + beta*C*D
@@ -413,7 +516,7 @@ void testArray2dLA()
     }
   }
 
-  // Test 4: repeat the following step for vectors of increasing size:
+  // Repeat the following step for vectors of increasing size:
   //
   // a. compute LHS = ( alfa*A^T*B^T + beta*C ) * D
   // b. compute RHS = alfa*A^T*(B^T*D) + beta*C*D
@@ -502,7 +605,7 @@ void testArray2dArray1dLA()
   array2d<real64> A, yT, tmp;
   array1d<real64> x, y, yTT;
 
-  // Test 5: repeat the following step for vectors of increasing size:
+  // Repeat the following step for vectors of increasing size:
   //
   // a. compute y = A*x
   // b. compute compute yT = x^T * A^T
@@ -581,7 +684,7 @@ void testArray2dInverseLA()
   array2d<real64> Einv;
   array2d<real64> EinvXE;
 
-  // Test 5: repeat the following step for matrices of increasing size:
+  // Repeat the following step for matrices of increasing size:
   // a. Construct matrix E (1d discrete Laplacian)
   // b. Compute Einv = E^-1
   // c. Compute EinvXE = Einv*E
@@ -626,38 +729,58 @@ void testArray2dInverseLA()
 
 }
 
-// END_RST_NARRATIVE
+// -----------------------------------------------------------------------------
 
-//@}
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
-
-/*! @name Ctest tests.
- * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
- */
-//@{
-/*! @function testLapackDenseLAOperations.
- * @brief Runs all tests using the Lapack interface.
- */
-TEST(testDenseLAOperations,testLapackDenseLAOperations)
+// --- Aggregate
+TEST(BlasLapackLA,testArray1dLA)
 {
-
   testArray1dLA<BlasLapackLA>();
-  testArray2dLA<BlasLapackLA>();
-  testArray2dArray1dLA<BlasLapackLA>();
-  testArray2dInverseLA<BlasLapackLA>();
-
 }
 
-//@}
+TEST(BlasLapackLA,testArray2dLA)
+{
+  testArray2dLA<BlasLapackLA>();
+}
+
+TEST(BlasLapackLA,testArray2dArray1dLA)
+{
+  testArray2dArray1dLA<BlasLapackLA>();
+}
+
+TEST(BlasLapackLA,testArray2dInverseLA)
+{
+  testArray2dInverseLA<BlasLapackLA>();
+}
 
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
+
+// Generate a random GEOSX array1d
+void vectorRand( array1d<real64> & x,
+                 std::uniform_real_distribution<real64> & distribution,
+                 std::default_random_engine & generator )
+{
+  for( int i = 0 ; i < x.size() ; ++i )
+  {
+    x( i ) = distribution( generator );
+  }
+  return;
+}
+
+// Generate a random GEOSX array2d
+void matrixRand( array2d<real64> & A,
+                 std::uniform_real_distribution<real64> & distribution,
+                 std::default_random_engine & generator )
+{
+  for( int i = 0 ; i < A.size( 0 ) ; ++i )
+  {
+    for( int j = 0 ; j < A.size( 1 ) ; ++j )
+    {
+      A( i, j ) = distribution( generator );
+    }
+  }
+  return;
+}
+
