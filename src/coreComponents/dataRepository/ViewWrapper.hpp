@@ -1356,6 +1356,7 @@ public:
 
   ///@}
 
+#ifndef NDEBUG
   virtual string totalviewTypeName() const override final
   {
     return cxx_utilities::demangle( typeid( ViewWrapper<T> ).name() );
@@ -1370,8 +1371,8 @@ public:
     TV_ttf_add_row( "m_default", totalview::typeName< DefaultValue<T> >().c_str(), &m_default );
     return 0;
   }
-
 //  void tvTemplateInstantiation();
+#endif
 
 private:
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
