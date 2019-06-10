@@ -69,7 +69,7 @@ static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 //////////////////////////////////////////////////////////
 
 template<typename LAI>
-void VectorNorm1_Test()
+void vector_norm1_test()
 {
   array1d<real64> v;
   INDEX_TYPE N = 24;
@@ -93,7 +93,7 @@ void VectorNorm1_Test()
 }
 
 template<typename LAI>
-void VectorNorm2_Test()
+void vector_norm2_test()
 {
   array1d<real64> v;
   INDEX_TYPE N = 24;
@@ -118,7 +118,7 @@ void VectorNorm2_Test()
 }
 
 template<typename LAI>
-void VectorNormInf_Test()
+void vector_normInf_test()
 {
   array1d<real64> v;
   INDEX_TYPE N = 24;
@@ -146,7 +146,7 @@ void VectorNormInf_Test()
 }
 
 template<typename LAI>
-void Determinant_Test()
+void determinant_test()
 {
   array2d<real64> Laplacian1d;
   real64 determinant;
@@ -180,7 +180,7 @@ void Determinant_Test()
 }
 
 template<typename LAI>
-void MatrixNormInf_Test()
+void matrix_normInf_test()
 {
   array2d<real64> A;
   INDEX_TYPE M = 6;
@@ -210,7 +210,7 @@ void MatrixNormInf_Test()
 }
 
 template<typename LAI>
-void MatrixNorm1_Test()
+void matrix_norm1_test()
 {
   array2d<real64> A;
   INDEX_TYPE M = 6;
@@ -245,7 +245,7 @@ void MatrixNorm1_Test()
 }
 
 template<typename LAI>
-void MatrixNormFrobenius_Test()
+void matrix_normFrobenius_test()
 {
   array2d<real64> A;
   INDEX_TYPE M = 6;
@@ -274,75 +274,673 @@ void MatrixNormFrobenius_Test()
 }
 
 template<typename LAI>
-void VectorVectorAdd_Test()
+void vector_vector_add_test()
 {
-  array1d<real64> v1;
-  array1d<real64> v2;
   INDEX_TYPE N = 24;
-  v.resize( N );
+  array1d<real64> v1(N);
+  array1d<real64> v2(N);
+  array1d<real64> vSum(N);
 
-  // Populate vector with random coefficients
-  int IDIST = 2;
-  LAI::vectorRand(v, IDIST);
+  // Populate vectors with random coefficients
+  int IDIST;
+  IDIST = 1;
+  LAI::vectorRand(v1, IDIST);
+  IDIST = 2;
+  LAI::vectorRand(v2, IDIST);
 
-  // Compute normInf
-  real64 normInf = std::abs(v(0));
-
-  if (N > 1)
+  // Compute vector sum vSum = alpha*v1 + v2
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
   {
-    for( INDEX_TYPE i = 1 ; i < N ; ++i )
+    vSum(i) = alpha*v1(i) + v2(i);
+  }
+
+  // Compute v2 = alpha*v1 + v2
+  LAI::vectorVectorAdd( v1,
+                        v2,
+                        alpha );
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( v2(i),
+                 vSum(i),
+                 machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrix_matrix_add_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> m1(M,N);
+  array2d<real64> m2(M,N);
+  array2d<real64> mSum(M,N);
+
+  // Populate vectors with random coefficients
+  int IDIST;
+  IDIST = 1;
+  LAI::matrixRand(m1, IDIST);
+  IDIST = 2;
+  LAI::matrixRand(m2, IDIST);
+
+  // Compute vector sum mSum = alpha*m1 + m2
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
     {
-      normInf = std::max( normInf, std::abs(v(i)) );
+      mSum(i,j) = alpha*m1(i,j) + m2(i,j);
     }
   }
 
+  // Compute m2 = alpha*m1 + m2
+  LAI::matrixMatrixAdd( m1,
+                        m2,
+                        alpha );
+
   // Check
-  EXPECT_NEAR( normInf,
-               LAI::vectorNormInf( v ),
-               normInf * machinePrecision );
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      EXPECT_NEAR( m2(i,j),
+                   mSum(i,j),
+                   machinePrecision);
+    }
+  }
 }
 
-TEST( Array1D, VectorNorm1)
+template<typename LAI>
+void vector_scale_test()
 {
-  VectorNorm1_Test<BlasLapackLA>();
+  INDEX_TYPE N = 24;
+  array1d<real64> v(N);
+  array1d<real64> vScaled(N);
+
+  // Populate vectors with random coefficients
+  int IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  // Compute vector v_scaled = alpha*v
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    vScaled(i) = alpha*v(i);
+  }
+
+  // Compute v = alpha*v
+  LAI::vectorScale( alpha,
+                        v);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( v(i),
+                 vScaled(i),
+                 machinePrecision);
+  }
 }
 
-TEST( Array1D, VectorNorm2)
+template<typename LAI>
+void matrix_scale_test()
 {
-  VectorNorm2_Test<BlasLapackLA>();
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> m(M,N);
+  array2d<real64> mScaled(M,N);
+
+  // Populate vectors with random coefficients
+  int IDIST = 2;
+  LAI::matrixRand(m, IDIST);
+
+  // Compute vector v_scaled = alpha*v
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      mScaled(i,j) = alpha*m(i,j);
+    }
+  }
+
+  // Compute v = alpha*v
+  LAI::matrixScale( alpha,
+                        m);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      EXPECT_NEAR( m(i,j),
+                   mScaled(i,j),
+                   machinePrecision);
+    }
+  }
 }
 
-TEST( Array1D, VectorNormInf)
+template<typename LAI>
+void vector_dot_test()
 {
-  VectorNormInf_Test<BlasLapackLA>();
+  INDEX_TYPE N = 6;
+  array1d<real64> v1(N);
+  array1d<real64> v2(N);
+
+  // Populate vectors with random coefficients
+  int IDIST;
+  IDIST = 1;
+  LAI::vectorRand(v1, IDIST);
+  IDIST = 2;
+  LAI::vectorRand(v2, IDIST);
+
+  // Compute vector v1_dot_v2 = v1^t*v2
+  real64 v1_dot_v2 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    v1_dot_v2 += v1(i)*v2(i);
+  }
+
+  // Check
+  EXPECT_NEAR( v1_dot_v2,
+               LAI::vectorDot( v1,
+                               v2),
+               static_cast<real64>(N)*machinePrecision);
 }
 
-TEST( Array2D, MatrixNormInf)
+template<typename LAI>
+void matrix_vector_multiply_test()
 {
-  MatrixNormInf_Test<BlasLapackLA>();
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> A(M,N);
+  array1d<real64> X(N);
+  array1d<real64> Y(M);
+  array1d<real64> v_result(M);
+
+  // Populate matrix and vectors with random coefficients
+  int IDIST;
+  IDIST = 1;
+  LAI::matrixRand(A, IDIST);
+  IDIST = 2;
+  LAI::vectorRand(X, IDIST);
+  IDIST = 3;
+  LAI::vectorRand(Y, IDIST);
+
+  // Compute vector v_result = alpha*A*X + beta*Y
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    v_result(i) = beta*Y(i);
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      v_result(i) += alpha*A(i,j)*X(j);
+    }
+  }
+
+  // Compute Y = alpha*A*X + beta*Y
+  LAI::matrixVectorMultiply( A,
+                             X,
+                             Y,
+                             alpha,
+                             beta);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    EXPECT_NEAR( v_result(i),
+                 Y(i),
+                 static_cast<real64>(N+1)*machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrixT_vector_multiply_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> A(M,N);
+  array1d<real64> X(M);
+  array1d<real64> Y(N);
+  array1d<real64> v_result(N);
+
+  // Populate matrix and vectors with random coefficients
+  int IDIST;
+  IDIST = 1;
+  LAI::matrixRand(A, IDIST);
+  IDIST = 2;
+  LAI::vectorRand(X, IDIST);
+  IDIST = 3;
+  LAI::vectorRand(Y, IDIST);
+
+  // Compute vector v_result = alpha*transpose(A)*X + beta*Y
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    v_result(i) = beta*Y(i);
+    for( INDEX_TYPE j = 0 ; j < M ; ++j )
+    {
+      v_result(i) += alpha*A(j,i)*X(j);
+    }
+  }
+
+  // Compute Y = alpha*A*X + beta*Y
+  LAI::matrixTVectorMultiply( A,
+                              X,
+                              Y,
+                              alpha,
+                              beta);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( v_result(i),
+                 Y(i),
+                 static_cast<real64>(N+1)*machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrix_matrix_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces(3);
+  M_indeces(0) = 1;
+  M_indeces(1) = 6;
+  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> result;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(M,K);
+        B.resize(K,N);
+        C.resize(M,N);
+        result.resize(M,N);
+
+        // Populate matrices with random coefficients
+        IDIST = 1;
+        LAI::matrixRand(A, IDIST);
+        IDIST = 2;
+        LAI::matrixRand(B, IDIST);
+        IDIST = 3;
+        LAI::matrixRand(C, IDIST);
+
+        // Compute matrix result = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            result(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              result(i,j) += alpha*A(i,l)*B(l,j);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixMatrixMultiply( A,
+                                   B,
+                                   C,
+                                   alpha,
+                                   beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         result(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
+
+template<typename LAI>
+void matrixT_matrix_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces(3);
+  M_indeces(0) = 1;
+  M_indeces(1) = 6;
+  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> result;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(K,M);
+        B.resize(K,N);
+        C.resize(M,N);
+        result.resize(K,N);
+
+        // Populate matrices with random coefficients
+        IDIST = 1;
+        LAI::matrixRand(A, IDIST);
+        IDIST = 2;
+        LAI::matrixRand(B, IDIST);
+        IDIST = 3;
+        LAI::matrixRand(C, IDIST);
+
+        // Compute matrix result = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            result(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              result(i,j) += alpha*A(l,i)*B(l,j);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixTMatrixMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         result(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
+
+template<typename LAI>
+void matrix_matrixT_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces(3);
+  M_indeces(0) = 1;
+  M_indeces(1) = 6;
+  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> result;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(M,K);
+        B.resize(N,K);
+        C.resize(M,N);
+        result.resize(M,N);
+
+        // Populate matrices with random coefficients
+        IDIST = 1;
+        LAI::matrixRand(A, IDIST);
+        IDIST = 2;
+        LAI::matrixRand(B, IDIST);
+        IDIST = 3;
+        LAI::matrixRand(C, IDIST);
+
+        // Compute matrix result = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            result(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              result(i,j) += alpha*A(i,l)*B(j,l);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixMatrixTMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         result(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
+
+template<typename LAI>
+void matrixT_matrixT_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces(3);
+  M_indeces(0) = 1;
+  M_indeces(1) = 6;
+  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> result;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(K,M);
+        B.resize(N,K);
+        C.resize(M,N);
+        result.resize(M,N);
+
+        // Populate matrices with random coefficients
+        IDIST = 1;
+        LAI::matrixRand(A, IDIST);
+        IDIST = 2;
+        LAI::matrixRand(B, IDIST);
+        IDIST = 3;
+        LAI::matrixRand(C, IDIST);
+
+        // Compute matrix result = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            result(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              result(i,j) += alpha*A(l,i)*B(j,l);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixTMatrixTMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         result(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
+
+TEST( Array1D, vectorNorm1)
+{
+  vector_norm1_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorNorm2)
+{
+  vector_norm2_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorNormInf)
+{
+  vector_normInf_test<BlasLapackLA>();
 }
 
 TEST( Array2D, determinant)
 {
-  Determinant_Test<BlasLapackLA>();
+  determinant_test<BlasLapackLA>();
 }
 
-TEST( Array2D, MatrixNorm1)
+TEST( Array2D, matrixNormInf)
 {
-  MatrixNorm1_Test<BlasLapackLA>();
+  matrix_normInf_test<BlasLapackLA>();
 }
 
-TEST( Array2D, MatrixNormFrobenius)
+TEST( Array2D, matrixNorm1)
 {
-  MatrixNormFrobenius_Test<BlasLapackLA>();
+  matrix_norm1_test<BlasLapackLA>();
 }
 
-TEST( Array1D, VectorVectorAdd)
+TEST( Array2D, matrixNormFrobenius)
 {
-  VectorVectorAdd_Test<BlasLapackLA>();
+  matrix_normFrobenius_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorVectorAdd)
+{
+  vector_vector_add_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixAdd)
+{
+  matrix_matrix_add_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorScale)
+{
+  vector_scale_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixScale)
+{
+  matrix_scale_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorDot)
+{
+  vector_dot_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixVectorMultiply)
+{
+  matrix_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTVectorMultiply)
+{
+  matrixT_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixMultiply)
+{
+  matrix_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTMatrixMultiply)
+{
+  matrixT_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixTMultiply)
+{
+  matrix_matrixT_multiply_test<BlasLapackLA>();
+}
+
+
+TEST( Array2D, matrixTMatrixTMultiply)
+{
+  matrixT_matrixT_multiply_test<BlasLapackLA>();
 }
 
 /////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
 
 
 
