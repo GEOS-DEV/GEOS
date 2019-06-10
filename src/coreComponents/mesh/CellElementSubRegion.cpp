@@ -62,8 +62,9 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   source->forExternalProperties([&]( const dataRepository::ViewWrapperBase * vw )->void
   {
     std::type_index typeIndex = std::type_index( vw->get_typeid());
-    rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-                                    [&]( auto type ) -> void
+    rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                    true,
+                                    [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
       const dataRepository::ViewWrapper<fieldType> & field = dataRepository::ViewWrapper< fieldType >::cast( *vw );
