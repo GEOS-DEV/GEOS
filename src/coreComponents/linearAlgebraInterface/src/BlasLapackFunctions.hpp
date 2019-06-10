@@ -77,6 +77,10 @@ double dlange_( char const * NORM,
                 double const * A,
                 int const * LDA,
                 double * WORK );
+void dlarnv_( int const * IDIST,
+              int const * ISEED,
+              int const * N,
+              double * X );
 double dnrm2_( int const * N,
                double const * X,
                int const * INCX );

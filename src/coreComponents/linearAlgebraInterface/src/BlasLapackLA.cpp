@@ -240,8 +240,8 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
   return;
 }
 
-void BlasLapackLA::vectorScale( array1d<real64> & X,
-                                real64 alpha )
+void BlasLapackLA::vectorScale( real64 alpha,
+                                array1d<real64> & X )
 {
 
   int const INCX = 1;
@@ -254,8 +254,8 @@ void BlasLapackLA::vectorScale( array1d<real64> & X,
   return;
 }
 
-void BlasLapackLA::matrixScale( array2d<real64> & A,
-                                real64 alpha )
+void BlasLapackLA::matrixScale( real64 alpha,
+                                array2d<real64> & A )
 {
 
   int const INCX = 1;
@@ -442,8 +442,8 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
-                       C.size( 1 ) == B.size( 0 ) &&
-                       A.size( 1 ) == B.size( 1 ),
+                   C.size( 1 ) == B.size( 0 ) &&
+                   A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
 
   int const M = integer_conversion<int>( A.size( 0 ) );
@@ -689,5 +689,55 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
 
   return;
 }
+
+void BlasLapackLA::vectorRand( array1d<int> const & ISEED,
+                               array1d<real64> & X,
+                               int const IDIST)
+{
+  GEOS_ASSERT_MSG( ISEED.size() >= 4,
+                   "Seed array must have size at least four");
+
+  GEOS_ASSERT_MSG( 0 <= ISEED(0) && ISEED(0) <= 4095 &&
+                   0 <= ISEED(1) && ISEED(1) <= 4095 &&
+                   0 <= ISEED(2) && ISEED(2) <= 4095 &&
+                   0 <= ISEED(3) && ISEED(3) <= 4095,
+                   "Seed array integer entries must be in the range [0,4095]");
+
+  GEOS_ASSERT_MSG( ISEED(3) % 2 > 0,
+                   "Seed array 4th element must be odd");
+
+  GEOS_ASSERT_MSG( 1 <= IDIST && IDIST <= 3,
+                   "Integer IDIST must be in the range [1,3]");
+
+  int const N = static_cast<int>( X.size() );
+
+  GEOS_ASSERT_MSG( N > 0,
+                   "The vector cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED.data(),
+           &N,
+           X.data());
+
+  return;
+}
+
+void BlasLapackLA::vectorRand( array1d<real64> & X,
+                               int const IDIST)
+{
+
+  array1d<int> ISEED(4);
+  ISEED[0] = 12;
+  ISEED[1] = 34;
+  ISEED[2] = 56;
+  ISEED[3] = 7;
+
+  vectorRand( ISEED,
+              X,
+              IDIST);
+
+  return;
+}
+
 
 } // end geosx namespace
