@@ -67,16 +67,6 @@ void matrixRand( array2d<real64> & A,
 static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 
 //////////////////////////////////////////////////////////
-//
-//namespace internal
-//{
-//template<typename LAI>
-//void vectorNorm1_test()
-//{
-//
-//}
-//
-//}
 
 template<typename LAI>
 void VectorNorm1_Test()
@@ -156,6 +146,105 @@ void VectorNormInf_Test()
 }
 
 template<typename LAI>
+void Determinant_Test()
+{
+  array2d<real64> Laplacian1d;
+  real64 determinant;
+
+  for (INDEX_TYPE N = 1; N <= 6; ++ N)
+  {
+    // Construct 1d Laplacian
+    Laplacian1d.resize( N, N );
+    Laplacian1d = 0;
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
+      {
+        if( i == j )
+        {
+          Laplacian1d( i, i ) = 2;
+        }
+        else if( std::abs( i - j ) == 1 )
+        {
+          Laplacian1d( i, j ) = -1;
+        }
+      }
+    }
+
+    // Check
+    determinant = static_cast<real64>(N+1);
+    EXPECT_NEAR( determinant,
+                 LAI::determinant( Laplacian1d ),
+                 determinant * machinePrecision );
+  }
+}
+
+template<typename LAI>
+void MatrixNormInf_Test()
+{
+  array2d<real64> A;
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  A.resize( M, N );
+
+  // Populate matrix with random coefficients
+  int IDIST = 2;
+  LAI::matrixRand(A, IDIST);
+
+  // Compute normInf
+  real64 normInf = 0.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    real64 tmp = 0.0;
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      tmp += std::abs( A(i,j) );
+    }
+    normInf = std::max( normInf, tmp);
+  }
+
+  // Check
+  EXPECT_NEAR( normInf,
+               LAI::matrixNormInf( A ),
+               normInf * machinePrecision );
+}
+
+template<typename LAI>
+void MatrixNorm1_Test()
+{
+  array2d<real64> A;
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  A.resize( M, N );
+
+  // Populate matrix with random coefficients
+  int IDIST = 2;
+  LAI::matrixRand(A, IDIST);
+
+  // Compute norm1
+  array1d<real64> tmp(N);
+  tmp = 0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      tmp(j) += std::abs( A(i,j) );
+    }
+  }
+  real64 norm1 = tmp(0);
+  for( INDEX_TYPE j = 0 ; j < N ; ++j )
+  {
+    norm1 = std::max( norm1, tmp(j)) ;
+  }
+
+
+  // Check
+  EXPECT_NEAR( norm1,
+               LAI::matrixNorm1( A ),
+               norm1 * machinePrecision );
+}
+
+template<typename LAI>
 void MatrixNormFrobenius_Test()
 {
   array2d<real64> A;
@@ -167,7 +256,7 @@ void MatrixNormFrobenius_Test()
   int IDIST = 2;
   LAI::matrixRand(A, IDIST);
 
-  // Compute nornormFrobeniusm2
+  // Compute normFrobeniusm
   real64 normFrobenius = 0.0;
   for( INDEX_TYPE i = 0 ; i < M ; ++i )
   {
@@ -182,6 +271,35 @@ void MatrixNormFrobenius_Test()
   EXPECT_NEAR( normFrobenius,
                LAI::matrixNormFrobenius( A ),
                normFrobenius * machinePrecision );
+}
+
+template<typename LAI>
+void VectorVectorAdd_Test()
+{
+  array1d<real64> v1;
+  array1d<real64> v2;
+  INDEX_TYPE N = 24;
+  v.resize( N );
+
+  // Populate vector with random coefficients
+  int IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  // Compute normInf
+  real64 normInf = std::abs(v(0));
+
+  if (N > 1)
+  {
+    for( INDEX_TYPE i = 1 ; i < N ; ++i )
+    {
+      normInf = std::max( normInf, std::abs(v(i)) );
+    }
+  }
+
+  // Check
+  EXPECT_NEAR( normInf,
+               LAI::vectorNormInf( v ),
+               normInf * machinePrecision );
 }
 
 TEST( Array1D, VectorNorm1)
@@ -199,9 +317,29 @@ TEST( Array1D, VectorNormInf)
   VectorNormInf_Test<BlasLapackLA>();
 }
 
+TEST( Array2D, MatrixNormInf)
+{
+  MatrixNormInf_Test<BlasLapackLA>();
+}
+
+TEST( Array2D, determinant)
+{
+  Determinant_Test<BlasLapackLA>();
+}
+
+TEST( Array2D, MatrixNorm1)
+{
+  MatrixNorm1_Test<BlasLapackLA>();
+}
+
 TEST( Array2D, MatrixNormFrobenius)
 {
   MatrixNormFrobenius_Test<BlasLapackLA>();
+}
+
+TEST( Array1D, VectorVectorAdd)
+{
+  VectorVectorAdd_Test<BlasLapackLA>();
 }
 
 /////////////////////////////////////////////////////////
