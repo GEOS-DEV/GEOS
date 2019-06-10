@@ -413,7 +413,7 @@ public:
     return m_description;
   }
 
-
+#ifndef NDEBUG
   /**
    * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
    *                represented by a ViewWrapperBase *.
@@ -428,6 +428,7 @@ public:
    */
   virtual int setTotalviewDisplay() const;
 //  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
+#endif
 
 private:
 
