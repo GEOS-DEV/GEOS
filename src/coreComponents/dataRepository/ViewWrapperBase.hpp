@@ -414,6 +414,9 @@ public:
   }
 
 
+  virtual string totalviewTypeName() const = 0;
+  virtual int setTotalviewDisplay() const;
+//  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
 
 private:
 
