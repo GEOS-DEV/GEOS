@@ -2442,7 +2442,6 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
 
 }
 
-//TODO: I add an argument "domain" to this function since I need parameters from constitutive manager. Need to check with Randy.
 realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
                                           const localIndex edgeID,
                                           localIndex& trailFaceID,
@@ -2461,10 +2460,6 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   real64_array& SIF_III = edgeManager.getReference<real64_array>( "SIF_III" );
 
   array1d< set<localIndex> > const & nodesToEdges = nodeManager.edgeList();
-  array1d<localIndex_array> const & nodesToElementRegion = nodeManager.elementRegionList();
-  array1d<localIndex_array> const & nodesToElementSubRegion = nodeManager.elementSubRegionList();
-  array1d<localIndex_array> const & nodesToElementIndex = nodeManager.elementList();
-
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
   arrayView1d<R1Tensor> const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
 
@@ -2474,33 +2469,10 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   localIndex_array const & faceParentIndex = faceManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
   array1d< localIndex_array > const & facesToNodes = faceManager.nodeList();
   array1d< localIndex_array > const & facesToEdges = faceManager.edgeList();
-  arrayView2d<localIndex> const & facesToElementRegions = faceManager.elementRegionList();
-  arrayView2d<localIndex> const & facesToElementSubRegions = faceManager.elementSubRegionList();
-  arrayView2d<localIndex> const & facesToElementIndex = faceManager.elementList();
 
   arrayView1d<R1Tensor> const & faceNormal = faceManager.faceNormal();
   arrayView1d<R1Tensor> const & faceCenter = faceManager.faceCenter();
   array1d<real64> const & faceArea = faceManager.faceArea();
-
-  ElementRegionManager::ElementViewAccessor<array2d<R1Tensor>> const nodalForceFromElement =
-      elementManager.ConstructViewAccessor<array2d<R1Tensor>, array2d<R1Tensor>>(viewKeyStruct::nodalForceFromElementString);
-
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
-  ConstitutiveBase const * const solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidMaterialName );
-  GEOS_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
-  m_solidMaterialFullIndex = solid->getIndexInParent();
-
-  ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const shearModulus =
-      elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "ShearModulus", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const poissonRatio =
-      elementManager.ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "PoissonRatio", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const youndsModulus =
-      elementManager.ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "YoungsModulus", constitutiveManager);
 
 
   SIF_I[edgeID] = 0.0;
@@ -2550,8 +2522,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
                     edgesToNodes[edgeID][0],
                     edgesToNodes[edgeID][1],
                     vecEdge );
-  edgeLength = vecEdge.L2_Norm();
-  vecEdge.Normalize();
+  edgeLength = vecEdge.Normalize();
 
   vecTip.Cross( vecTipNorm, vecEdge );
   vecTip.Normalize();
@@ -2659,7 +2630,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   }
 
 
-  // Calculate element forces acting on this edge.  Need to add nodal forces from two nodes up.
+  // Calculate element forces acting on this edge, i.e., f_disconnect.  Need to add nodal forces from two nodes up.
   //An element has to be within the range of this edge to be included.
   //For the threeNodesPinched case, we only use the force on the node at the convex point, not the concave point.  The
   // force at the former is usually greater, so we just pick the great one instead of doing a geometrical check.
@@ -2674,180 +2645,27 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     {
       nodeIndices.push_back( edgesToNodes( edgeID, a ) );
     }
-
-    CalculateElementForcesOnEdge (domain, edgeID, edgeLength, nodeIndices,
-                                  nodeManager, edgeManager, elementManager, vecTipNorm, fNodeO, GdivBeta, threeNodesPinched, false);
-
   }
   else
   {
     nodeIndices.push_back(convexCorner);
-
-    CalculateElementForcesOnEdge (domain, edgeID, edgeLength, nodeIndices,
-                                  nodeManager, edgeManager, elementManager, vecTipNorm, fNodeO, GdivBeta, threeNodesPinched, false);
   }
 
-
-
-  /*localIndex nElemEachSide[2];
-
-  nElemEachSide[0] = 0;
-  nElemEachSide[1] = 0;
-  R1Tensor xEdge;
-  edgeManager.calculateCenter( edgeID, X, xEdge );
-
-
-
-  //wu40: Get the elements that contribute to the nodal force. Note that this is only used for the non-threeNodesPinched scenario.
-  //This will cause problems for tet mesh.
-//  std::set<std::pair<CellElementSubRegion *, localIndex >> relevantElements;
-//  for( auto iface : edgesToFaces[edgeID] )
-//  {
-//    for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )//wu40: need careful check when debugging
-//    {
-//      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( facesToElementRegions[iface][k] )->
-//          GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iface][k] );
-//      localIndex iEle = facesToElementIndex[iface][k];
-//
-//      relevantElements.insert(std::make_pair(elementSubRegion, iEle));
-//    }
-//  }
-
-  if( !threeNodesPinched )
-  {
-    for( localIndex a=0 ; a<edgesToNodes.size( 1 ) ; ++a ) // Loop through the two nodes
-    {
-      localIndex nodeID = edgesToNodes( edgeID, a );
-
-      //for( std::set< std::pair<CellElementSubRegion*, localIndex> >::const_iterator k=relevantElements.begin() ; k!=relevantElements.end() ; ++k )
-      for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
-      {
-        R1Tensor xEle;
-        CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
-                                             GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
-        localIndex iEle = nodesToElementIndex[nodeID][k];
-
-        ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
-        string const elementRegionName = elementRegion->getName();
-        localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-        localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-
-        xEle = elementSubRegion->getElementCenter()[iEle];
-
-        realT udist;
-        R1Tensor x0_x1(X[nodeID]), x0_xEle(xEle);
-        x0_x1 -= X[edgesToNodes(edgeID, 1-a)];
-        x0_x1.Normalize();
-        x0_xEle -= X[edgesToNodes(edgeID, 1-a)];
-        udist = Dot(x0_x1, x0_xEle);
-
-        if (udist <= edgeLength && udist > 0.0)
-        {
-          xEle -= xEdge;
-
-          //wu40: since nodalForceFromElement take the local index of a node in an element, we need to get the local node index from its global index.
-          //TODO: check with Randy if there is a more straightforward way to do this.
-          arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
-          for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
-          {
-            if (elementsToNodes[iEle][n] == nodeID)
-            {
-              R1Tensor temp;
-              if( Dot( xEle, vecTipNorm ) > 0 )
-              {
-                nElemEachSide[0] += 1;
-
-                //wu40: the nodal force need to be weighted by Young's modulus so we multiply force and E here.
-                temp = nodalForceFromElement[er][esr][iEle][n];
-                temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
-                fNodeO += temp;
-              }
-              else
-              {
-                nElemEachSide[1] +=1;
-                temp = nodalForceFromElement[er][esr][iEle][n];
-                temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
-                fNodeO -= temp;
-              }
-            }
-
-          }
-
-          GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
-        }
-      }
-    }  // loop over two nodes on the edge
-  }
-  else
-  {
-    localIndex nodeID = convexCorner;
-    fNodeO = 0.0;
-
-    for( localIndex k=0 ; k<nodesToElementRegion[nodeID].size() ; ++k )
-    {
-      R1Tensor xEle;
-
-      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodesToElementRegion[nodeID][k] )->
-                                           GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
-      localIndex iEle = nodesToElementIndex[nodeID][k];
-
-      ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
-      string const elementRegionName = elementRegion->getName();
-      localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-      localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-
-      xEle = elementSubRegion->getElementCenter()[iEle];
-      xEle -= xEdge;
-
-      arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
-      for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
-      {
-        if (elementsToNodes[iEle][n] == nodeID)
-        {
-          R1Tensor temp;
-          if( Dot( xEle, vecTipNorm ) > 0 )
-          {
-            nElemEachSide[0] += 1;
-            temp = nodalForceFromElement[er][esr][iEle][n];
-            temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
-            fNodeO += temp;
-          }
-          else
-          {
-            nElemEachSide[1] +=1;
-            temp = nodalForceFromElement[er][esr][iEle][n];
-            temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
-            fNodeO -= temp;
-          }
-        }
-      }
-
-      GdivBeta += shearModulus[er][esr][m_solidMaterialFullIndex][iEle]/2/(1-poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
-    } // Loop through all elements connected to this node
-  }
-
-  if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
-    fNodeO /= 2.0;
-  //We have contributions from both sides.  The two sizes are the two sides of the fracture plane.  If the fracture face
-  // is on domain boundary, it's possible to have just one side.
-  if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
-    GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);*/
+  CalculateElementForcesOnEdge (domain, edgeID, edgeLength, nodeIndices,
+                                nodeManager, edgeManager, elementManager, vecTipNorm, fNodeO, GdivBeta, threeNodesPinched, false);
 
 
   localIndex tipFaces[2];
   tipFaces[0] = faceA;
   tipFaces[1] = faceAp;
 
-  // We have to subtract the nodal force at other nodes (trailing nodes) on these two open faces to take into account
+  // Now calculate f_u. We have to subtract the nodal force at other nodes (trailing nodes) on these two open faces to take into account
   // the effects of surface traction along the fracture.
   // Finding the two trailing nodes on a hex mesh is pretty straightforward, while it is cumbersome to do in tet mesh
   // For the threeNodesPinched case, this should be the open node.
   R1Tensor fFaceA[2];
-  // fFaceA is actually the average nodal force on each face.  Assuming homogeneous meshing.
 
-
-  // If the two external faces connected to a trailing edge are not coplanar, then we have the risk of incomplete
-  // topology.
+  // If the two external faces connected to a trailing edge are not coplanar, then we have the risk of incomplete topology.
   // In that case, we use a displacement/opening based method, not VCCT.
   bool incompleteTrailingEdgeTopology = 0;
 
@@ -2972,60 +2790,6 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     CalculateElementForcesOnEdge (domain, edgeID, edgeLength, trailingNodes,
                                   nodeManager, edgeManager, elementManager, vecTipNorm, fFaceA[i], GdivBeta, threeNodesPinched, true);
 
-    /*for( localIndex iR = 0 ; iR < trailingNodes.size() ; ++iR )
-    {
-      localIndex iNd = trailingNodes[iR];
-      R1Tensor fNode = static_cast<R1Tensor>(0.0);
-
-      // The unbalanced force from a summation of element contributions should be the external forces, could be fluid
-      // pressure or try traction.
-      // In this way, we don't need to worry about the how the traction inside a fracture was applied.
-      for( localIndex k=0 ; k<nodesToElementRegion[iNd].size() ; ++k )
-      {
-        R1Tensor xEle;
-
-        CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodesToElementRegion[iNd][k] )->
-                                             GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[iNd][k] );
-        localIndex iEle = nodesToElementIndex[iNd][k];
-
-        ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
-        string const elementRegionName = elementRegion->getName();
-        localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-        localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-
-        xEle = elementSubRegion->getElementCenter()[iEle];
-
-        realT udist;
-        R1Tensor x0_x1(X[edgesToNodes[edgeID][0]]), x0_xEle(xEle);
-        x0_x1 -= X[edgesToNodes[edgeID][1]];
-        x0_x1.Normalize();
-        x0_xEle -= X[edgesToNodes[edgeID][1]];
-        udist = Dot(x0_x1, x0_xEle);
-
-        if(  ( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
-        {
-          arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
-          for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
-          {
-            if (elementsToNodes[iEle][n] == iNd)
-            {
-              R1Tensor temp;
-
-              temp = nodalForceFromElement[er][esr][iEle][n];
-              temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
-              fNode += temp;
-            }
-          }
-        }
-      }
-
-      fFaceA[i] += fNode;
-
-    }
-    //If we only find one node behind the tip, we do the following as a rough compensation.
-    if( trailingNodes.size() == 1 && !threeNodesPinched )
-      fFaceA[i] *= 2.0;*/
-
   }
 
 
@@ -3092,8 +2856,6 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
     // Opening-based SIF, based on
     // Equation 1 in Fu et al. 2012, DOI::10.1016/j.engfracmech.2012.04.010
     realT r = tipArea / edgeLength;
-    // if (facesToNodes[faceA].size() == 3) r *= 2.0;
-    // tipArea is already twice the triangle area so we don't need this.
     SIF_I[edgeID] = tipOpening[0] / 2.0 * GdivBeta / pow( r/6.28, 0.5 );
     SIF_II[edgeID] = 0.0;  // SIF is not accurate in this scenario anyway.  Let's not worry about turning.
     SIF_III[edgeID] = 0.0;;
@@ -3205,9 +2967,10 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
           {
             R1Tensor temp;
 
-            //wu40: the nodal force need to be weighted by Young's modulus so we multiply force and E here.
+            //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio so we multiply force and E here.
             temp = nodalForceFromElement[er][esr][iEle][n];
             temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
+            temp /= (1 - poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]*poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
 
             if (!calculatef_u)
             {
@@ -3346,8 +3109,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
                     edgesToNodes[edgeID][0],
                     edgesToNodes[edgeID][1],
                     vecEdge );
-  edgeLength = vecEdge.L2_Norm();
-  vecEdge.Normalize();
+  edgeLength = vecEdge.Normalize();
 
   edgeManager.calculateCenter( edgeID, X, edgeCenter );
 
