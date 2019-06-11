@@ -413,7 +413,22 @@ public:
     return m_description;
   }
 
+#ifndef NDEBUG
+  /**
+   * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
+   *                represented by a ViewWrapperBase *.
+   * @return A string that contains the typename for use in totalview.
+   */
+  virtual string totalviewTypeName() const = 0;
 
+  /**
+   * @brief Function to execute the TV_tff_add_row() calls that represent each data member that
+   *        will be displayed.
+   * @return 0
+   */
+  virtual int setTotalviewDisplay() const;
+//  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
+#endif
 
 private:
 
