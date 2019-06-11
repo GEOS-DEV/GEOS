@@ -662,6 +662,7 @@
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 		</xsd:choice>
 		<!--gravityVector => (no description available)-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="0 0 0" />
@@ -840,10 +841,33 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--fractureRegion => (no description available)-->
+		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
+		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
+		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--couplingTypeOption => Coupling option: (FixedStress, TightlyCoupled)-->
+		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
@@ -979,6 +1003,10 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
+		<!--defaultDensity => Default value for density.-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultViscosity => Default value for viscosity.-->
+		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
 		<!--compressibility => Fluid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
@@ -1269,8 +1297,6 @@
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--cellBlocks => (no description available)-->
 		<xsd:attribute name="cellBlocks" type="string_array" default="" />
-		<!--fractureSet => (no description available)-->
-		<xsd:attribute name="fractureSet" type="string_array" default="" />
 		<!--coarseningRatio => (no description available)-->
 		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

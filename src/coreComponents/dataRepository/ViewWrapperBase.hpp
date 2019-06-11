@@ -76,6 +76,8 @@ public:
   ViewWrapperBase( ViewWrapperBase&& source );
 
 
+  virtual void CopyWrapperAttributes( ViewWrapperBase const & source );
+
   /**
    * @brief Virtual function to return the typeid of T.
    * @return type_info of the wrapped type "typeid(T)"
