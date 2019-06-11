@@ -22,6 +22,7 @@
   
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="3"
+                      fractureRegion="Fracture"
                       targetRegions="Region2">
     </SurfaceGenerator>
   </Solvers>
@@ -83,6 +84,7 @@
 
   <ElementRegions>
     <ElementRegion name="Region2" cellBlocks="cb1" materialList="granite" />
+    <FaceElementRegion name="Fracture" materialList="granite"/>
   </ElementRegions>
 
   <Constitutive>

@@ -486,127 +486,196 @@ public:
    */
   localIndex numSubGroups() const { return m_subGroups.size(); }
 
-  template< typename T = ManagedGroup, typename LAMBDA >
+  /**
+   * @name FUNCTION GROUP for applyLambdaToGroup()
+   * @brief These functions apply the specified lambda function to a container if the container can be
+   *        casted to the templated type/s.
+   * @tparam CASTTYPE the first type that will be used in the attempted casting of container.
+   * @tparam CASTTYPES a variadic list of types that will be used in the attempted casting of
+   *                    container.
+   * @tparam LAMBDA the type of lambda function to call in the function
+   * @param[in] container A pointer to the container which will be passed to the lambda function
+   * @param[in] lambda the lambda function to call in the function
+   * @return A boolean to indicate whether the lambda was successfully applied to the container.
+   *
+   * This function is useful when trying to apply a lambda that passes a pointer to an container,
+   * but it is desired that the lambda is only executed if the container can be casted to a certain
+   * type. The variadic list consisting of CASTTYPE/S will be used recursively to check if the
+   * container is able to be casted to the one of these types. The first type in the CASTTYPE/S list
+   * will be used to execute the lambda, and the function will return true.
+   */
+  ///@{
+
+  /** \cond SKIPME */
+  template< typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const group, LAMBDA&& lambda )
+  { return false; }
+
+  template< typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE * const group, LAMBDA&& lambda )
+  { return false; }
+  /** \endcond */
+
+  template< typename CONTAINERTYPE, typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const container, LAMBDA&& lambda )
+  {
+    bool rval = false;
+    CASTTYPE const * const castedContainer = dynamic_cast<CASTTYPE const *>( container );
+    if( castedContainer!= nullptr )
+    {
+      lambda( castedContainer );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+
+  template< typename CONTAINERTYPE,typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE * const container, LAMBDA&& lambda )
+  {
+    bool rval = false;
+    CASTTYPE * const castedContainer = dynamic_cast<CASTTYPE *>( container );
+    if( castedContainer!= nullptr )
+    {
+      lambda( castedContainer );
+      rval = true;
+    }
+    else
+    {
+      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward<LAMBDA>(lambda) );
+    }
+    return rval;
+  }
+  ///@}
+
+
+  /**
+   * @name FUNCTION GROUP for forSubGroups()
+   * @brief These functions apply the specified lambda function to a group if the group can be
+   *        casted to the templated type/s.
+   * @tparam GROUPTYPE The first type that will be used in the attempted casting of group.
+   * @tparam GROUPTYPES A variadic list of types that will be used in the attempted casting of
+   *                    group.
+   * @tparam LAMBDA The type of lambda function to call in the function
+   * @param[in] lambda The lambda function to call in the function
+   * @param[in] subgroupNames Optional list of subgroup names to apply the lambda to
+   *
+   * These functions loop over sub-groups and executes a lambda that uses the sub-group as an
+   * argument. The lambda is only executed if the group can be casted to a certain type specified
+   * by the GROUPTYPE/S pack. The variadic list consisting of GROUPTYPE/S will be used recursively
+   * to check if the group is able to be casted to the one of these types. The first type in the
+   * GROUPTYPE/S list will be used to execute the lambda, and the next sub-group will be processed.
+   */
+  ///@{
+  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
     for( auto& subGroupIter : m_subGroups )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T * subGroup = dynamic_cast<T *>( subGroupIter.second );
-#else
-      T * subGroup = static_cast<T *>( subGroupIter.second );
-#endif
-      lambda( subGroup );
+      applyLambdaToContainer< ManagedGroup, GROUPTYPE,GROUPTYPES...>( subGroupIter.second, [&]( auto * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
 
-  /**
-   *
-   * @param lambda
-   */
-  template< typename T = ManagedGroup, typename LAMBDA >
+  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T const * subGroup = dynamic_cast<T const *>( subGroupIter.second );
-#else
-      T const * subGroup = static_cast<T const *>( subGroupIter.second );
-#endif
-      lambda( subGroup );
+      applyLambdaToContainer<ManagedGroup, GROUPTYPE,GROUPTYPES...>( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
 
-  /**
-   * @brief Apply a given functor to a subset of subgroups (non-const version)
-   * @tparam T subgroup type
-   * @tparam LAMBDA functor type
-   * @param subgroupNames list of subgroup names to apply the functor to
-   * @param lambda the functor
-   */
-  template< typename T = ManagedGroup, typename LAMBDA >
+  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( string_array const & subgroupNames, LAMBDA lambda )
   {
     for( string const & subgroupName : subgroupNames )
     {
-      T * subGroup = GetGroup<T>( subgroupName );
-      GEOS_ERROR_IF( subGroup == nullptr, "Subgroup does not exist: " << subgroupName );
-      lambda( subGroup );
+      applyLambdaToContainer<ManagedGroup, GROUPTYPE,GROUPTYPES...>( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
 
-  /**
-   * @brief Apply a given functor to a subset of subgroups (const version)
-   * @tparam T subgroup type
-   * @tparam LAMBDA functor type
-   * @param subgroupNames list of subgroup names to apply the functor to
-   * @param lambda the functor
-   */
-  template< typename T = ManagedGroup, typename LAMBDA >
+
+  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( string_array const & subgroupNames, LAMBDA lambda ) const
   {
     for( string const & subgroupName : subgroupNames )
     {
-      T const * subGroup = GetGroup<T>( subgroupName );
-      GEOS_ERROR_IF( subGroup == nullptr, "Subgroup does not exist: " << subgroupName );
-      lambda( subGroup );
+      applyLambdaToContainer<ManagedGroup, GROUPTYPE,GROUPTYPES...>( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      });
     }
   }
+  ///@}
 
-  template< typename T = ViewWrapperBase, typename LAMBDA >
+  /**
+   * @name FUNCTION GROUP for forViewWrappers()
+   * @brief These functions apply the specified lambda function to a Wrapper if the Wrapper can be
+   *        casted to the templated type/s.
+   * @tparam TYPE The first type that will be used in the attempted casting of Wrapper.
+   * @tparam TYPES A variadic list of types that will be used in the attempted casting of Wrapper.
+   * @tparam LAMBDA The type of lambda function to call in the function
+   * @param[in] lambda The lambda function to call in the function
+   *
+   * These functions loop over the Wrappers contained in this group, and executes a lambda that
+   * uses the Wrapper as an argument. The lambda is only executed if the Wrapper can be casted to
+   * a certain type specified by the TYPE/S pack. The variadic list consisting of
+   * TYPE/S will be used recursively to check if the Wrapper is able to be casted to the
+   * one of these types. The first type in the WRAPPERTYPE/S list will be used to execute the
+   * lambda, and the next Wrapper will be processed.
+   */
+  ///@{
+  template< typename LAMBDA >
   void forViewWrappers( LAMBDA lambda )
   {
-    for( auto& wrapperIter : m_wrappers )
+    for( auto & wrapperIter : m_wrappers )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T & wrapper = dynamic_cast<T &>( *wrapperIter.second );
-#else
-      T & wrapper = static_cast<T &>( *wrapperIter.second );
-#endif
-      lambda( wrapper );
+      lambda( *wrapperIter.second );
     }
   }
 
-  template< typename T = ViewWrapperBase, typename LAMBDA >
+  template< typename LAMBDA >
   void forViewWrappers( LAMBDA lambda ) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-#ifdef USE_DYNAMIC_CASTING
-      T const & wrapper = dynamic_cast<T const &>( *wrapperIter.second );
-#else
-      T const & wrapper = static_cast<T const &>( *wrapperIter.second );
-#endif
-      lambda( wrapper );
+      lambda( *wrapperIter.second );
     }
   }
 
-  template< typename Wrapped, typename LAMBDA >
-  void forViewWrappersByType(LAMBDA lambda)
+  template< typename TYPE, typename ... TYPES, typename LAMBDA >
+  void forViewWrappers(LAMBDA lambda)
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      ViewWrapper<Wrapped> * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
-      if ( wrapper != nullptr )
-      {
-        lambda(*wrapper);
-      }
+      applyLambdaToContainer<ViewWrapperBase, ViewWrapper<TYPE>, ViewWrapper<TYPES>...>( wrapperIter.second,
+                                                                                         std::forward<LAMBDA>(lambda));
     }
   }
 
-  template< typename Wrapped, typename LAMBDA >
-  void forViewWrappersByType(LAMBDA lambda) const
+  template< typename TYPE, typename ... TYPES, typename LAMBDA >
+  void forViewWrappers(LAMBDA lambda) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      ViewWrapper<Wrapped> const * const wrapper = ViewWrapper<Wrapped>::cast(wrapperIter.second);
-      if ( wrapper != nullptr )
-      {
-        lambda(*wrapper);
-      }
+      applyLambdaToContainer<ViewWrapperBase, ViewWrapper<TYPE>, ViewWrapper<TYPES>...>( wrapperIter.second,
+                                                                                         std::forward<LAMBDA>(lambda));
     }
   }
+  ///@}
+
 
   void Initialize( ManagedGroup * const group );
 
