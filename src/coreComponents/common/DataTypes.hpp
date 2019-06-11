@@ -296,6 +296,8 @@ constexpr static localIndex unmappedLocalIndexValue = -1;
 
 //***** END LEGACY TYPEDEFS *****
 
+
+void printTypeSummary();
 /**
  * @class rtTypes
  * class to manage the type selection of types at runtime
