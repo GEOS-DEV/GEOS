@@ -145,38 +145,34 @@ void DomainPartition::GenerateSets(  )
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
-  for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
+  elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
   {
-    ElementRegion * const elementRegion = subGroup.second->group_cast<ElementRegion *>();
-    elementRegion->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    dataRepository::ManagedGroup * elementSets = subRegion->sets();
+    std::map< string, integer_array > numNodesInSet;
+
+    for( auto & setName : setNames )
     {
-      dataRepository::ManagedGroup * elementSets = subRegion->sets();
-      std::map< string, integer_array > numNodesInSet;
 
-      for( auto & setName : setNames )
+      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-
-        set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
-        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
+        localIndex const numNodes = subRegion->numNodesPerElement( k );
+        integer count = 0;
+        for( localIndex a = 0 ; a<numNodes ; ++a )
         {
-          arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
-          localIndex const numNodes = subRegion->numNodesPerElement( k );
-          integer count = 0;
-          for( localIndex a = 0 ; a<numNodes ; ++a )
+          if( nodeInSet[setName][elemToNodes[a]] == 1 )
           {
-            if( nodeInSet[setName][elemToNodes[a]] == 1 )
-            {
-              ++count;
-            }
-          }
-          if( count == numNodes )
-          {
-            targetSet.insert(k);
+            ++count;
           }
         }
+        if( count == numNodes )
+        {
+          targetSet.insert(k);
+        }
       }
-    });
-  }
+    }
+  });
 }
 
 
