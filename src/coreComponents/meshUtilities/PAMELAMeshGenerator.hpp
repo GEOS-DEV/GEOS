@@ -30,6 +30,7 @@
 
 //This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
+#include "MeshDataWriters/Writer.hpp"
 
 #include "MeshGeneratorBase.hpp"
 

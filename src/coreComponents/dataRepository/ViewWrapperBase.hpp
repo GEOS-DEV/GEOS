@@ -393,6 +393,17 @@ public:
     return this;
   }
 
+  std::vector<string> const & getRegisteringObjects() const
+  {
+    return m_registeringObjects;
+  }
+
+  ViewWrapperBase * setRegisteringObjects( string const & objectName )
+  {
+    m_registeringObjects.push_back( objectName );
+    return this;
+  }
+
   /**
    *
    * @return
@@ -402,7 +413,22 @@ public:
     return m_description;
   }
 
+#ifndef NDEBUG
+  /**
+   * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
+   *                represented by a ViewWrapperBase *.
+   * @return A string that contains the typename for use in totalview.
+   */
+  virtual string totalviewTypeName() const = 0;
 
+  /**
+   * @brief Function to execute the TV_tff_add_row() calls that represent each data member that
+   *        will be displayed.
+   * @return 0
+   */
+  virtual int setTotalviewDisplay() const;
+//  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
+#endif
 
 private:
 
@@ -426,6 +452,8 @@ private:
 
   /// a string description of the wrapped object
   string m_description;
+
+  std::vector<string> m_registeringObjects;
 
   #ifdef GEOSX_USE_ATK
   /// a pointer to the corrosponding sidre view
