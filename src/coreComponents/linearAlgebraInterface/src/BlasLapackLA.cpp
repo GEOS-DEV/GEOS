@@ -701,7 +701,7 @@ void BlasLapackLA::vectorRand( array1d<int> const & ISEED,
                    0 <= ISEED(1) && ISEED(1) <= 4095 &&
                    0 <= ISEED(2) && ISEED(2) <= 4095 &&
                    0 <= ISEED(3) && ISEED(3) <= 4095,
-                   "Seed array integer entries must be in the range [0,4095]");
+                   "Seed array integer entries must be in interval [0,4095]");
 
   GEOS_ASSERT_MSG( ISEED(3) % 2 > 0,
                    "Seed array 4th element must be odd");
@@ -756,7 +756,7 @@ void BlasLapackLA::matrixRand( array1d<int> const & ISEED,
                    "Seed array 4th element must be odd");
 
   GEOS_ASSERT_MSG( 1 <= IDIST && IDIST <= 3,
-                   "Integer IDIST must be in the range [1,3]");
+                   "Integer IDIST must be in interval [1,3]");
 
   int const NN = static_cast<int>( A.size() );
 

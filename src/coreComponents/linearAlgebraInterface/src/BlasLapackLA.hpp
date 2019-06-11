@@ -414,9 +414,9 @@ public:
    * @param [out]    X     GEOSX array1d.
    * @param [in]     IDIST Optional integer specifying the distribution of
    *                       the random numbers:
-   *                       \li \c = 1: uniform distribution in interval (0,1);
-   *                       \li \c = 2: uniform distribution in interval (-1,1);
-   *                       \li \c = 3: normal distribution in interval (0,1).
+   *                       \li \c = 1: uniform distribution (0,1);
+   *                       \li \c = 2: uniform distribution (-1,1);
+   *                       \li \c = 3: normal distribution (0,1).
    */
   static void vectorRand( array1d<int> const & ISEED,
                           array1d<real64> & X,
@@ -431,9 +431,9 @@ public:
    * @param [out]    X     GEOSX array1d.
    * @param [in]     IDIST Optional integer specifying the distribution of
    *                       the random numbers:
-   *                       \li \c = 1: uniform distribution in interval (0,1);
-   *                       \li \c = 2: uniform distribution in interval (-1,1);
-   *                       \li \c = 3: normal distribution in interval (0,1).
+   *                       \li \c = 1: uniform distribution (0,1);
+   *                       \li \c = 2: uniform distribution (-1,1);
+   *                       \li \c = 3: normal distribution (0,1).
    */
   static void vectorRand( array1d<real64> & X,
                           int const IDIST=1) ;

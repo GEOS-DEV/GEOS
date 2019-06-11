@@ -988,164 +988,60 @@ template<typename LAI>
 void vector_rand_test()
 {
   array1d<real64> v;
-  INDEX_TYPE N = 3;
+  INDEX_TYPE N = 10000;
   v.resize( N );
 
   // Populate vector with random coefficients
 
-  // --- uniform distribution in interval (0,1);
+  // --- uniform distribution (0,1);
   int IDIST = 1;
   LAI::vectorRand(v, IDIST);
+  real64 *v_max = std::max_element(v.begin(), v.end());
+  real64 *v_min = std::min_element(v.begin(), v.end());
+  EXPECT_TRUE(0.0 <= *v_min && *v_max <= 1.0);
 
-  for( INDEX_TYPE i = 0 ; i < N ; ++i )
-  {
-    EXPECT_TRUE(0.0 <= v(i) && v(i) <= 1.0);
-  }
-
-  // --- uniform distribution in interval (-1,1);
+  // --- uniform distribution (-1,1);
   IDIST = 2;
   LAI::vectorRand(v, IDIST);
+  v_max = std::max_element(v.begin(), v.end());
+  v_min = std::min_element(v.begin(), v.end());
+  EXPECT_TRUE(-1.0 <= *v_min && *v_max <= 1.0);
 
-  for( INDEX_TYPE i = 0 ; i < N ; ++i )
-  {
-    EXPECT_TRUE(-1.0 <= v(i) && v(i) <= 1.0);
-  }
-
-  // --- normal distribution in interval (0,1);
-  IDIST = 3;
-  LAI::vectorRand(v, IDIST);
-
-  for( INDEX_TYPE i = 0 ; i < N ; ++i )
-  {
-    std::cout << v(i) <<"\n";
-    EXPECT_TRUE(0.0 <= v(i) && v(i) <= 1.0);
-  }
-
+  // --- normal distribution (0,1);
+  // IDIST = 3;
+  // TODO: Add normality test
 
 }
 
-TEST( Array1D, vectorNorm1)
+template<typename LAI>
+void matrix_rand_test()
 {
-  vector_norm1_test<BlasLapackLA>();
+  array2d<real64> A;
+  INDEX_TYPE M =  99;
+  INDEX_TYPE N = 101;
+  A.resize( M, N );
+
+  // Populate vector with random coefficients
+
+  // --- uniform distribution (0,1);
+  int IDIST = 1;
+  LAI::matrixRand(A, IDIST);
+  real64 *A_max = std::max_element(A.begin(), A.end());
+  real64 *A_min = std::min_element(A.begin(), A.end());
+  EXPECT_TRUE(0.0 <= *A_min && *A_max <= 1.0);
+
+  // --- uniform distribution (-1,1);
+  IDIST = 2;
+  LAI::matrixRand(A, IDIST);
+  A_max = std::max_element(A.begin(), A.end());
+  A_min = std::min_element(A.begin(), A.end());
+  EXPECT_TRUE(-1.0 <= *A_min && *A_max <= 1.0);
+
+  // --- normal distribution (0,1);
+  // IDIST = 3;
+  // TODO: Add normality test
+
 }
-
-TEST( Array1D, vectorNorm2)
-{
-  vector_norm2_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorNormInf)
-{
-  vector_normInf_test<BlasLapackLA>();
-}
-
-TEST( Array2D, determinant)
-{
-  determinant_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixNormInf)
-{
-  matrix_normInf_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixNorm1)
-{
-  matrix_norm1_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixNormFrobenius)
-{
-  matrix_normFrobenius_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorVectorAdd)
-{
-  vector_vector_add_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixMatrixAdd)
-{
-  matrix_matrix_add_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorScale)
-{
-  vector_scale_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixScale)
-{
-  matrix_scale_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorDot)
-{
-  vector_dot_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixVectorMultiply)
-{
-  matrix_vector_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixTVectorMultiply)
-{
-  matrixT_vector_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixMatrixMultiply)
-{
-  matrix_matrix_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixTMatrixMultiply)
-{
-  matrixT_matrix_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixMatrixTMultiply)
-{
-  matrix_matrixT_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixTMatrixTMultiply)
-{
-  matrixT_matrixT_multiply_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixInverse)
-{
-  matrix_inverse_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorCopy)
-{
-  vector_copy_test<BlasLapackLA>();
-}
-
-TEST( Array2D, matrixCopy)
-{
-  matrix_copy_test<BlasLapackLA>();
-}
-
-TEST( Array1D, vectorRand)
-{
-  vector_rand_test<BlasLapackLA>();
-}
-/////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
 
 template<typename LAI>
 void testArray1dLA()
@@ -1670,24 +1566,141 @@ void testArray2dInverseLA()
 
 // -----------------------------------------------------------------------------
 
+// Unit tests
 
-// --- Aggregate
-TEST(BlasLapackLA,testArray1dLA)
+TEST( Array1D, vectorNorm1)
+{
+  vector_norm1_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorNorm2)
+{
+  vector_norm2_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorNormInf)
+{
+  vector_normInf_test<BlasLapackLA>();
+}
+
+TEST( Array2D, determinant)
+{
+  determinant_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixNormInf)
+{
+  matrix_normInf_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixNorm1)
+{
+  matrix_norm1_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixNormFrobenius)
+{
+  matrix_normFrobenius_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorVectorAdd)
+{
+  vector_vector_add_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixAdd)
+{
+  matrix_matrix_add_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorScale)
+{
+  vector_scale_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixScale)
+{
+  matrix_scale_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorDot)
+{
+  vector_dot_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixVectorMultiply)
+{
+  matrix_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTVectorMultiply)
+{
+  matrixT_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixMultiply)
+{
+  matrix_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTMatrixMultiply)
+{
+  matrixT_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixTMultiply)
+{
+  matrix_matrixT_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTMatrixTMultiply)
+{
+  matrixT_matrixT_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixInverse)
+{
+  matrix_inverse_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorCopy)
+{
+  vector_copy_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixCopy)
+{
+  matrix_copy_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorRand)
+{
+  vector_rand_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixRand)
+{
+  matrix_rand_test<BlasLapackLA>();
+}
+
+
+// Aggregated tests
+TEST( BlasLapackLA, aggregated_Array1dLA)
 {
   testArray1dLA<BlasLapackLA>();
 }
 
-TEST(BlasLapackLA,testArray2dLA)
+TEST( BlasLapackLA, aggregated_Array2dLA)
 {
   testArray2dLA<BlasLapackLA>();
 }
 
-TEST(BlasLapackLA,testArray2dArray1dLA)
+TEST(BlasLapackLA, aggregated_Array2dArray1dLA)
 {
   testArray2dArray1dLA<BlasLapackLA>();
 }
 
-TEST(BlasLapackLA,testArray2dInverseLA)
+TEST(BlasLapackLA, aggregated_Array2dInverseLA)
 {
   testArray2dInverseLA<BlasLapackLA>();
 }
