@@ -1128,10 +1128,10 @@ void testArray2dLA()
   // b. compute RHS = alfa*A*(B*D) + beta*C*D
   // c. check that (norm(LHS) == norm(RHS, type)), with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
 
-  MA = 10;
-  NB = 10;
-  ND = 10;
-  K = 20;
+  MA = 5;
+  NB = 5;
+  ND = 5;
+  K = 7;
 
   for( localIndex mA = 1 ; mA <= MA ; ++mA )
   {
@@ -1202,10 +1202,10 @@ void testArray2dLA()
   // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
   //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
 
-  NA = 10;
-  NB = 10;
-  ND = 10;
-  K = 20;
+  NA = 5;
+  NB = 5;
+  ND = 5;
+  K = 7;
 
   for( localIndex nA = 1 ; nA <= NA ; ++nA )
   {
@@ -1281,10 +1281,10 @@ void testArray2dLA()
   // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
   //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
 
-  MA = 10;
-  MB = 10;
-  ND = 10;
-  K = 20;
+  MA = 5;
+  MB = 5;
+  ND = 5;
+  K = 7;
 
   for( localIndex mA = 1 ; mA <= MA ; ++mA )
   {
@@ -1358,10 +1358,10 @@ void testArray2dLA()
   // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
   //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
 
-  NA = 10;
-  MB = 10;
-  ND = 10;
-  K = 20;
+  NA = 5;
+  MB = 5;
+  ND = 5;
+  K = 7;
 
   for( localIndex nA = 1 ; nA <= NA ; ++nA )
   {
