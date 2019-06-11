@@ -126,7 +126,6 @@ void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup)
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
-//    std::cout<<"a, dPres, pres, density = "<<a<<", "<<dPres[a]<<", "<<pres[a]<<", "<<density[a]<<std::endl;
   });
   //fluid->BatchUpdate( pres, temp, compFrac );
 }

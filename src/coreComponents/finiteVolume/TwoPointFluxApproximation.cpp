@@ -277,38 +277,35 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       R1Tensor cellToFaceVec;
       R1Tensor faceConormal;
 
-      //          if( regionFilter.contains(elemRegionList[kfe][0]) && regionFilter.contains(elemRegionList[kfe][1]) )
+      // remove cell-to-cell connections from cell stencil and add in new connections
+      if( cellStencil.zero( faceMap[kfe][0] ) )
       {
-        // remove cell-to-cell connections from cell stencil and add in new connections
-        if( cellStencil.zero( faceMap[kfe][0] ) )
+        for (localIndex ke = 0; ke < numElems; ++ke)
         {
-          for (localIndex ke = 0; ke < numElems; ++ke)
-          {
-            localIndex const faceIndex = faceMap[kfe][ke];
-            localIndex const er  = elemRegionList[kfe][ke];
-            localIndex const esr = elemSubRegionList[kfe][ke];
-            localIndex const ei  = elemList[kfe][ke];
+          localIndex const faceIndex = faceMap[kfe][ke];
+          localIndex const er  = elemRegionList[kfe][ke];
+          localIndex const esr = elemSubRegionList[kfe][ke];
+          localIndex const ei  = elemList[kfe][ke];
 
-            cellToFaceVec = faceCenter[faceIndex];
-            cellToFaceVec -= elemCenter[er][esr][ei];
+          cellToFaceVec = faceCenter[faceIndex];
+          cellToFaceVec -= elemCenter[er][esr][ei];
 
-            real64 const c2fDistance = cellToFaceVec.Normalize();
+          real64 const c2fDistance = cellToFaceVec.Normalize();
 
-            // assemble full coefficient tensor from principal axis/components
-            makeFullTensor(coefficient[er][esr][ei], coefTensor);
+          // assemble full coefficient tensor from principal axis/components
+          makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
-            faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
-            real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
+          faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
+          real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
-            // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
-            stencilCells[0] = { er, esr, ei};
-            stencilWeights[0] =  ht ;
+          // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
+          stencilCells[0] = { er, esr, ei};
+          stencilWeights[0] =  ht ;
 
-            stencilCells[1] = { fractureRegionIndex, 0, kfe};
-            stencilWeights[1] = -ht ;
+          stencilCells[1] = { fractureRegionIndex, 0, kfe};
+          stencilWeights[1] = -ht ;
 
-            cellStencil.add( 2, stencilCells.data(), stencilWeights.data(), faceIndex );
-          }
+          cellStencil.add( 2, stencilCells.data(), stencilWeights.data(), faceIndex );
         }
       }
     }
