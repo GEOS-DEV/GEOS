@@ -41,8 +41,9 @@
 #define __null nullptr
 #endif
 
-#include "common/DataTypes.hpp"
+#include <numeric>
 #include <random>
+#include "common/DataTypes.hpp"
 #include <BlasLapackLA.hpp>
 
 using namespace geosx;
@@ -661,7 +662,7 @@ void matrixT_matrix_multiply_test()
         A.resize(K,M);
         B.resize(K,N);
         C.resize(M,N);
-        result.resize(K,N);
+        result.resize(M,N);
 
         // Populate matrices with random coefficients
         IDIST = 1;
