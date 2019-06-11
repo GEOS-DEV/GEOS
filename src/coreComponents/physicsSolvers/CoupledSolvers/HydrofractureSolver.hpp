@@ -33,25 +33,29 @@ class HydrofractureSolver : public SolverBase
 {
 public:
   HydrofractureSolver( const std::string& name,
-                     ManagedGroup * const parent );
+                       ManagedGroup * const parent );
+
   ~HydrofractureSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "Hydrofracture"; }
+  static string CatalogName()
+  {
+    return "Hydrofracture";
+  }
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem) override final;
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override final;
 
   virtual void ImplicitStepComplete( real64 const& time_n,
                                      real64 const& dt,
-                                     DomainPartition * const domain) override final;
+                                     DomainPartition * const domain ) override final;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
@@ -70,16 +74,13 @@ public:
   real64 SplitOperatorStep( real64 const& time_n,
                             real64 const& dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain);
-
+                            DomainPartition * const domain );
 
   enum class couplingTypeOption : int
   {
     FixedStress,
     TightlyCoupled
   };
-
-
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -93,12 +94,11 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
   } HydrofractureSolverViewKeys;
 
-
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
-
+  virtual void
+  InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
 
 private:
 

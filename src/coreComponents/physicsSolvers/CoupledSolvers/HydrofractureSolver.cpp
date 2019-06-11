@@ -70,9 +70,9 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * con
 }
 
 void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
-                                           real64 const& dt,
-                                           DomainPartition * const domain,
-                                           systemSolverInterface::EpetraBlockSystem * const blockSystem)
+                                             real64 const& dt,
+                                             DomainPartition * const domain,
+                                             systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   SolverBase & solidSolver =
     *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
@@ -177,9 +177,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           temp -= u[nodelist1[a]];
         }
         area[kfe] = faceArea[kfe];
+        // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace+0.0001;
         volume[kfe] = aperture[kfe] * area[kfe];
-        std::cout<<"kfe, area, aperture, volume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<std::endl;
+        //std::cout<<"kfe, area, aperture, volume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<std::endl;
       }
 
     });

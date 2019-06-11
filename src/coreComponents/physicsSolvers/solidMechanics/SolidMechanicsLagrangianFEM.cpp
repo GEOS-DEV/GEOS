@@ -381,7 +381,6 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       for( localIndex k=0 ; k < elemsToNodes.size(0) ; ++k )
       {
 
-        arrayView2d<real64 > & blah = rho[er][esr][m_solidMaterialFullIndex];
         // TODO this integration needs to be be carried out properly.
         real64 elemMass = 0;
         for( localIndex q=0 ; q<fe->n_quadrature_points() ; ++q )
@@ -1313,15 +1312,12 @@ ApplyBoundaryConditions( DomainPartition * const domain,
           localIndex const faceIndex = faceMap[kfe][kf];
           localIndex const numNodes = facesToNodes[faceIndex].size();
 
-//          std::cout<<faceIndex<<", "<<numNodes<<std::endl;
-
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
             for( int component=0 ; component<3 ; ++component )
             {
               nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
               nodeRHS[3*a+component] = - (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
-//              std::cout<<nodeDOF[3*a+component]<<", "<<nodeRHS[3*a+component]<<std::endl;
             }
           }
 
