@@ -64,7 +64,8 @@ void matrixRand( array2d<real64> & A,
                  std::uniform_real_distribution<real64> & distribution,
                  std::default_random_engine & generator );
 
-static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+static real64 const machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+static real64 const pi = std::atan(1.0)*4.0;
 
 //////////////////////////////////////////////////////////
 
@@ -151,9 +152,15 @@ void determinant_test()
   array2d<real64> Laplacian1d;
   real64 determinant;
 
-  for (INDEX_TYPE N = 1; N <= 6; ++ N)
+  real64 theta;
+  real64 lambda_max;
+  real64 lambda_min;
+  real64 N_real;
+
+  for (INDEX_TYPE N = 1; N <= 100; ++ N)
   {
-    // Construct 1d Laplacian
+    // Construct 1d discrete Laplacian with Dirichlet boundary conditions
+    // at both ends
     Laplacian1d.resize( N, N );
     Laplacian1d = 0;
     for( INDEX_TYPE i = 0 ; i < N ; ++i )
@@ -172,10 +179,17 @@ void determinant_test()
     }
 
     // Check
-    determinant = static_cast<real64>(N+1);
+
+    N_real = static_cast<real64>(N);
+    theta = pi*0.5/( 2.0*N_real + 1 );
+    lambda_min = std::pow(2.0*std::sin(theta), 2);
+    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
+    lambda_max = std::pow(2.0*std::sin(theta), 2);
+
+    determinant = N_real + 1.0; // Exact determinant
     EXPECT_NEAR( determinant,
                  LAI::determinant( Laplacian1d ),
-                 determinant * machinePrecision );
+                 (lambda_max/lambda_min) * machinePrecision );
   }
 }
 
@@ -546,10 +560,11 @@ void matrixT_vector_multiply_test()
 template<typename LAI>
 void matrix_matrix_multiply_test()
 {
-  array1d<INDEX_TYPE> M_indeces(3);
-  M_indeces(0) = 1;
-  M_indeces(1) = 6;
-  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
   array1d<INDEX_TYPE> N_indeces(M_indeces);
   array1d<INDEX_TYPE> K_indeces(M_indeces);
 
@@ -620,10 +635,11 @@ void matrix_matrix_multiply_test()
 template<typename LAI>
 void matrixT_matrix_multiply_test()
 {
-  array1d<INDEX_TYPE> M_indeces(3);
-  M_indeces(0) = 1;
-  M_indeces(1) = 6;
-  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
   array1d<INDEX_TYPE> N_indeces(M_indeces);
   array1d<INDEX_TYPE> K_indeces(M_indeces);
 
@@ -694,10 +710,11 @@ void matrixT_matrix_multiply_test()
 template<typename LAI>
 void matrix_matrixT_multiply_test()
 {
-  array1d<INDEX_TYPE> M_indeces(3);
-  M_indeces(0) = 1;
-  M_indeces(1) = 6;
-  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
   array1d<INDEX_TYPE> N_indeces(M_indeces);
   array1d<INDEX_TYPE> K_indeces(M_indeces);
 
@@ -768,10 +785,11 @@ void matrix_matrixT_multiply_test()
 template<typename LAI>
 void matrixT_matrixT_multiply_test()
 {
-  array1d<INDEX_TYPE> M_indeces(3);
-  M_indeces(0) = 1;
-  M_indeces(1) = 6;
-  M_indeces(2) = 24;
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
   array1d<INDEX_TYPE> N_indeces(M_indeces);
   array1d<INDEX_TYPE> K_indeces(M_indeces);
 
@@ -836,6 +854,173 @@ void matrixT_matrixT_multiply_test()
       }
     }
   }
+}
+
+template<typename LAI>
+void matrix_inverse_test()
+{
+  array2d<real64> Laplacian1d;
+  array2d<real64> Laplacian1dInv;
+  real64 exact_entry;
+  real64 theta;
+  real64 lambda_max;
+  real64 lambda_min;
+  real64 N_real;
+
+  for (INDEX_TYPE N = 1; N <= 100; ++ N)
+  {
+    // Construct 1d discrete Laplacian with Dirichlet boundary conditions
+    // at both ends
+    Laplacian1d.resize( N, N );
+    Laplacian1d = 0;
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
+      {
+        if( i == j )
+        {
+          Laplacian1d( i, i ) = 2;
+        }
+        else if( std::abs( i - j ) == 1 )
+        {
+          Laplacian1d( i, j ) = -1;
+        }
+      }
+    }
+
+    // Compute inverse of Laplacian1d
+    Laplacian1dInv.resize( N, N );
+    LAI::matrixInverse( Laplacian1d,
+                        Laplacian1dInv);
+
+    // Check
+    N_real = static_cast<real64>(N);
+    theta = pi*0.5/( 2.0*N_real + 1 );
+    lambda_min = std::pow(2.0*std::sin(theta), 2);
+    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
+    lambda_max = std::pow(2.0*std::sin(theta), 2);
+
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
+      {
+        exact_entry = static_cast<real64>((1+std::min(i,j))*(N+1-(1+std::max(i,j)))) /
+                      static_cast<real64>(( N + 1 ));
+
+        EXPECT_NEAR( Laplacian1dInv(i,j),
+                     exact_entry,
+                     (lambda_max / lambda_min)*machinePrecision);
+      }
+    }
+  }
+}
+
+template<typename LAI>
+void vector_copy_test()
+{
+  array1d<INDEX_TYPE> N_indeces;
+  N_indeces.push_back(1);
+  N_indeces.push_back(6);
+  N_indeces.push_back(24);
+  N_indeces.push_back(100);
+
+  array1d<real64> src;
+  array1d<real64> dst;
+  int IDIST = 2;
+
+  for (INDEX_TYPE N : N_indeces)
+  {
+    src.resize(N);
+    dst.resize(N);
+
+    // Populate src vector with random coefficients
+    LAI::vectorCopy(src, dst);
+
+    // Check
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      EXPECT_NEAR( src(i),
+                   dst(i),
+                   machinePrecision);
+    }
+  }
+}
+
+template<typename LAI>
+void matrix_copy_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+
+  array2d<real64> src;
+  array2d<real64> dst;
+  int IDIST = 2;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      src.resize(M,N);
+      dst.resize(M,N);
+
+      // Populate src matrix with random coefficients
+      LAI::matrixCopy(src, dst);
+
+      // Check
+      for( INDEX_TYPE i = 0 ; i < M ; ++i )
+      {
+        for( INDEX_TYPE j = 0 ; j < N ; ++j )
+        {
+          EXPECT_NEAR( src(i,j),
+                       dst(i,j),
+                       machinePrecision);
+        }
+      }
+    }
+  }
+}
+
+template<typename LAI>
+void vector_rand_test()
+{
+  array1d<real64> v;
+  INDEX_TYPE N = 3;
+  v.resize( N );
+
+  // Populate vector with random coefficients
+
+  // --- uniform distribution in interval (0,1);
+  int IDIST = 1;
+  LAI::vectorRand(v, IDIST);
+
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_TRUE(0.0 <= v(i) && v(i) <= 1.0);
+  }
+
+  // --- uniform distribution in interval (-1,1);
+  IDIST = 2;
+  LAI::vectorRand(v, IDIST);
+
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_TRUE(-1.0 <= v(i) && v(i) <= 1.0);
+  }
+
+  // --- normal distribution in interval (0,1);
+  IDIST = 3;
+  LAI::vectorRand(v, IDIST);
+
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    std::cout << v(i) <<"\n";
+    EXPECT_TRUE(0.0 <= v(i) && v(i) <= 1.0);
+  }
+
 
 }
 
@@ -924,12 +1109,30 @@ TEST( Array2D, matrixMatrixTMultiply)
   matrix_matrixT_multiply_test<BlasLapackLA>();
 }
 
-
 TEST( Array2D, matrixTMatrixTMultiply)
 {
   matrixT_matrixT_multiply_test<BlasLapackLA>();
 }
 
+TEST( Array2D, matrixInverse)
+{
+  matrix_inverse_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorCopy)
+{
+  vector_copy_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixCopy)
+{
+  matrix_copy_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorRand)
+{
+  vector_rand_test<BlasLapackLA>();
+}
 /////////////////////////////////////////////////////////
 
 
