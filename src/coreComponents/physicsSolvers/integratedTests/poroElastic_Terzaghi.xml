@@ -127,6 +127,8 @@
                                 />
 
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="2.125e6"
                                   referenceDensity="1000"
                                   compressibility="1e-19"

@@ -6,6 +6,7 @@ Name                         Type              Description
 blockSystemRepository        EpetraBlockSystem (no description available)                        
 CompositionalMultiphaseFlow  node              :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`  
 DummySolver                  node              :ref:`DATASTRUCTURE_DummySolver`                  
+Hydrofracture                node              :ref:`DATASTRUCTURE_Hydrofracture`                
 LaplaceFEM                   node              :ref:`DATASTRUCTURE_LaplaceFEM`                   
 Poroelastic                  node              :ref:`DATASTRUCTURE_Poroelastic`                  
 SinglePhaseFlow              node              :ref:`DATASTRUCTURE_SinglePhaseFlow`              
