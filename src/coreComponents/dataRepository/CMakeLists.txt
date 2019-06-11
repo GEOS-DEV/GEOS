@@ -14,7 +14,8 @@ set(dataRepository_headers
     SidreWrapper.hpp
     ViewWrapper.hpp
     ViewWrapperBase.hpp
-    RestartFlags.hpp )
+    RestartFlags.hpp
+    )
 
 #
 # Specify all sources
@@ -23,8 +24,8 @@ set(dataRepository_sources
     ManagedGroup.cpp
     SidreWrapper.cpp
     ViewWrapper.cpp
-    ViewWrapperBase.cpp )
-    
+    ViewWrapperBase.cpp
+    )
 
 
 set( extraComponentsLinkList "")
@@ -53,7 +54,6 @@ blt_add_library( NAME                  dataRepository
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-
 
 geosx_add_code_checks(PREFIX dataRepository )
 
