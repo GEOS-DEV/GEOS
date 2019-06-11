@@ -217,6 +217,13 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
+.. _XML_Hydrofracture:
+
+Element: Hydrofracture
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture.rst
+
+
 .. _XML_Included:
 
 Element: Included
@@ -702,6 +709,13 @@ Datastructure: Geometry
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_Hydrofracture:
+
+Datastructure: Hydrofracture
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture_other.rst
 
 
 .. _DATASTRUCTURE_Included:
