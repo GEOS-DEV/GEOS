@@ -812,6 +812,23 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         localFluxJacobian[0][ke] =   dt * dFlux_dP[ke];
         localFluxJacobian[1][ke] = - dt * dFlux_dP[ke];
       }
+      for (localIndex i = 0; i < stencilSize; ++i)
+      {
+        FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+
+        localIndex const er  = entry.index.region;
+        localIndex const esr = entry.index.subRegion;
+        localIndex const ei  = entry.index.index;
+        if( ei == 0 )
+        {
+          std::cout <<"@@@@@ 0 < " << eqnRowIndices << " - " << dofColIndices<< std::endl;
+          std::cout << localFluxJacobian[0][0] << std::endl;
+          std::cout << localFluxJacobian[0][1] << std::endl;
+          std::cout << localFluxJacobian[1][0] << std::endl;
+          std::cout << localFluxJacobian[1][1] << std::endl;
+          std::cout <<"@@@@@ 0" << std::endl;
+        }
+      }
 
       // Add to global residual/jacobian
       jacobian->SumIntoGlobalValues( integer_conversion<int>(numElems),
