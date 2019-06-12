@@ -459,6 +459,29 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
 
 #endif
 
+
+
+    elementManager.forElementSubRegions<FaceElementSubRegion>( [&]( auto * const subRegion )
+    {
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+      FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+      OrderedVariableOneToManyRelation const & facesToNodesMap = faceManager.nodeList();
+
+      for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
+      {
+        arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceMap[kfe][0]];
+        arrayView1d<localIndex const> const & faceToNodesMap1 = facesToNodesMap[faceMap[kfe][1]];
+        for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
+        {
+          localIndex const aa = a < 2 ? a : faceToNodesMap0.size() - a + 1;
+          localIndex const bb = aa == 0 ? aa : faceToNodesMap0.size() - aa;
+
+          // TODO HACK need to generalize to something other than quads
+          nodeMap[kfe][a]   = faceToNodesMap0[aa];
+          nodeMap[kfe][a+4] = faceToNodesMap1[bb];
+        }
+      }
+    });
 //    CalculateKinkAngles(faceManager, edgeManager, nodeManager, modifiedObjects, false);
 //    MarkBirthTime(faceManager, modifiedObjects, time);
   }
@@ -3447,6 +3470,29 @@ void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
     object.m_globalToLocalMap[newGlobalIndex] = newLocalIndex;
 
     object.m_maxGlobalIndex = newGlobalIndex;
+  }
+}
+
+void SurfaceGenerator::
+AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+                              std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
+{
+  for( auto const & iter : newElems )
+  {
+    localIndex const er = iter.first.first;
+    localIndex const esr = iter.first.second;
+    std::set<localIndex> const & indexList = iter.second;
+
+    ElementSubRegionBase * const subRegion = elementManager.GetRegion(er)->GetSubRegion(esr);
+    for( localIndex const newLocalIndex : indexList )
+    {
+      globalIndex const newGlobalIndex = elementManager.m_maxGlobalIndex + 1;
+
+      subRegion->m_localToGlobalMap[newLocalIndex] = newGlobalIndex;
+      subRegion->m_globalToLocalMap[newGlobalIndex] = newLocalIndex;
+
+      elementManager.m_maxGlobalIndex = newGlobalIndex;
+    }
   }
 }
 
