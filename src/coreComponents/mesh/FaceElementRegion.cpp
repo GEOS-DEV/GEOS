@@ -103,11 +103,12 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   nodeMap[kfe].resize( faceToNodesMap0.size() * 2 );
   for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
   {
-    const localIndex aa = a == 0 ? a : faceToNodesMap0.size() - a;
+    localIndex const aa = a < 2 ? a : faceToNodesMap0.size() - a + 1;
+    localIndex const bb = aa == 0 ? aa : faceToNodesMap0.size() - aa;
 
     // TODO HACK need to generalize to something other than quads
-    nodeMap[kfe][a]   = faceToNodesMap0[a];
-    nodeMap[kfe][a+4] = faceToNodesMap1[aa];
+    nodeMap[kfe][a]   = faceToNodesMap0[aa];
+    nodeMap[kfe][a+4] = faceToNodesMap1[bb];
   }
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
