@@ -407,7 +407,7 @@ public:
    * Sets vector entries to random real numbers from a uniform or normal
    * distribution.
    *
-   * @param [in,out] ISEED GEOSX integer array1d, dimension (4).
+   * @param [in,out] ISEED Integer array, dimension (4).
    *                       On entry, the seed of the random number generator;
    *                       the array elements must be between 0 and 4095, and
    *                       ISEED(4) must be odd. On exit, the seed is updated.
@@ -418,7 +418,7 @@ public:
    *                       \li \c = 2: uniform distribution (-1,1);
    *                       \li \c = 3: normal distribution (0,1).
    */
-  static void vectorRand( array1d<int> const & ISEED,
+  static void vectorRand( array1d<int> & ISEED,
                           array1d<real64> & X,
                           int const IDIST=1) ;
 
@@ -444,7 +444,7 @@ public:
    * Sets matrix entries to random real numbers from a uniform or normal
    * distribution.
    *
-   * @param [in,out] ISEED GEOSX integer array1d, dimension (4).
+   * @param [in,out] ISEED Integer array, dimension (4).
    *                       On entry, the seed of the random number generator;
    *                       the array elements must be between 0 and 4095, and
    *                       ISEED(4) must be odd. On exit, the seed is updated.
@@ -455,7 +455,7 @@ public:
    *                       \li \c = 2: uniform distribution in interval (-1,1);
    *                       \li \c = 3: normal distribution in interval (0,1).
    */
-  static void matrixRand( array1d<int> const & ISEED,
+  static void matrixRand( array1d<int> & ISEED,
                           array2d<real64> & A,
                           int const IDIST=1) ;
 

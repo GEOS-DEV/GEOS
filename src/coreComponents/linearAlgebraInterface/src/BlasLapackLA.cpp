@@ -26,7 +26,7 @@
 // BLAS and LAPACK function declaration
 extern "C"
 {
-  #include "BlasLapackFunctions.hpp"
+  #include "BlasLapackFunctions.h"
 }
 
 // Put everything under the geosx namespace.
@@ -690,7 +690,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
   return;
 }
 
-void BlasLapackLA::vectorRand( array1d<int> const & ISEED,
+void BlasLapackLA::vectorRand( array1d<int> & ISEED,
                                array1d<real64> & X,
                                int const IDIST)
 {
@@ -725,12 +725,11 @@ void BlasLapackLA::vectorRand( array1d<int> const & ISEED,
 void BlasLapackLA::vectorRand( array1d<real64> & X,
                                int const IDIST)
 {
-
-  array1d<int> ISEED(4);
-  ISEED[0] = 12;
-  ISEED[1] = 34;
-  ISEED[2] = 56;
-  ISEED[3] = 7;
+  array1d<int> ISEED;
+  ISEED.push_back(1);
+  ISEED.push_back(3);
+  ISEED.push_back(5);
+  ISEED.push_back(7);
 
   vectorRand( ISEED,
               X,
@@ -739,7 +738,7 @@ void BlasLapackLA::vectorRand( array1d<real64> & X,
   return;
 }
 
-void BlasLapackLA::matrixRand( array1d<int> const & ISEED,
+void BlasLapackLA::matrixRand( array1d<int> & ISEED,
                                array2d<real64> & A,
                                int const IDIST)
 {
@@ -775,11 +774,11 @@ void BlasLapackLA::matrixRand( array2d<real64> & A,
                                int const IDIST)
 {
 
-  array1d<int> ISEED(4);
-  ISEED[0] = 12;
-  ISEED[1] = 34;
-  ISEED[2] = 56;
-  ISEED[3] = 7;
+  array1d<int> ISEED;
+  ISEED.push_back(1);
+  ISEED.push_back(3);
+  ISEED.push_back(5);
+  ISEED.push_back(7);
 
   matrixRand( ISEED,
               A,
