@@ -56,10 +56,10 @@
     <InternalMesh name="mesh1"
                   elementTypes="C3D8" 
                   xCoords="-1, 1"
-                  yCoords="0, 2"
+                  yCoords="0, 1"
                   zCoords="0, 1"
                   nx="2"
-                  ny="2"
+                  ny="1"
                   nz="1"
                   cellBlockNames="cb1"/>
   </Mesh>
@@ -207,12 +207,16 @@
                scale="0.0"
                setNames="xpos"/>
 
+    <SourceFlux name="sourceTerm"
+               objectPath="ElementRegions/Fracture"
+               scale="-0.00001"
+               setNames="source"/>
 
-    <FieldSpecification name="source"
+    <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="1.0e6"
-               setNames="source"/>
+               setNames="source"/-->
   </FieldSpecifications>
 
   <Functions>

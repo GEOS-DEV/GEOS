@@ -1455,12 +1455,12 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
     nodeOrdering.resize(8);
     nodeOrdering[0] = 0;
     nodeOrdering[1] = 1;
-    nodeOrdering[2] = 3;
-    nodeOrdering[3] = 2;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 3;
     nodeOrdering[4] = 4;
     nodeOrdering[5] = 5;
-    nodeOrdering[6] = 7;
-    nodeOrdering[7] = 6;
+    nodeOrdering[6] = 6;
+    nodeOrdering[7] = 7;
   }
   else if (!elementType.compare(0, 4, "C3D6"))
   {

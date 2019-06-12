@@ -70,37 +70,37 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     else if (localFaceIndex == 1)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
     }
     else if (localFaceIndex == 2)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
-      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
-      nodeIndicies[3] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
     }
     else if (localFaceIndex == 3)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
-      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
-      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
     }
     else if (localFaceIndex == 4)
     {
-      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
-      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
-      nodeIndicies[3] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
+      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
     }
     else if (localFaceIndex == 5)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][4];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][5];
-      nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
-      nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[2] = m_toNodesRelation[elementIndex][6];
+      nodeIndicies[3] = m_toNodesRelation[elementIndex][7];
     }
 
   }

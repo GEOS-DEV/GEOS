@@ -270,36 +270,36 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
 
 real64 HexVolume( R1Tensor const * const X )
 {
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
+  R1Tensor X6_X1( X[6] );
+  X6_X1 -= X[1];
 
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
+  R1Tensor X7_X0( X[7] );
+  X7_X0 -= X[0];
 
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
+  R1Tensor X6_X3( X[6] );
+  X6_X3 -= X[3];
 
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
+  R1Tensor X2_X0( X[2] );
+  X2_X0 -= X[0];
 
   R1Tensor X5_X0( X[5] );
   X5_X0 -= X[0];
 
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
+  R1Tensor X6_X4( X[6] );
+  X6_X4 -= X[4];
 
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
+  R1Tensor X6_X1plusX7_X0( X6_X1 );
+  X6_X1plusX7_X0 += X7_X0;
 
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
+  R1Tensor X6_X3plusX5_X0( X6_X3 );
+  X6_X3plusX5_X0 += X5_X0;
 
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
+  R1Tensor X6_X4plusX2_X0( X6_X4 );
+  X6_X4plusX2_X0 += X2_X0;
 
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+  return 1.0/13.0 * ( Dot( X6_X1plusX7_X0, Cross( X6_X3, X2_X0 ) ) +
+                      Dot( X7_X0, Cross( X6_X3plusX5_X0, X6_X4 ) ) +
+                      Dot( X6_X1, Cross( X5_X0, X6_X4plusX2_X0 ) ) );
 }
 
 real64 TetVolume( R1Tensor const * const X ) {

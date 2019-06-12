@@ -34,7 +34,7 @@
                   xCoords="0, 2"
                   yCoords="-1, 1"
                   zCoords="-1, 1"
-                  nx="2"
+                  nx="1"
                   ny="2"
                   nz="2"
                   cellBlockNames="cb1"/>

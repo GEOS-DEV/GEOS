@@ -992,22 +992,22 @@ void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * c
 
   // create trilinos dof indexing
 
-  globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  globalIndex_array& globalDofNumber = nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
   integer_array& is_ghost       = nodeManager->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
-  trilinos_index = -1;
+  globalDofNumber = -1;
 
   integer local_count = 0;
-  for(integer r=0 ; r<trilinos_index.size() ; ++r )
+  for(integer r=0 ; r<globalDofNumber.size() ; ++r )
   {
     if(is_ghost[r] < 0)
     {
-      trilinos_index[r] = first_local_row+local_count+offset;
+      globalDofNumber[r] = first_local_row+local_count+offset;
       local_count++;
     }
     else
     {
-      trilinos_index[r] = -INT_MAX;
+      globalDofNumber[r] = -INT_MAX;
     }
   }
 
@@ -1322,8 +1322,8 @@ ApplyBoundaryConditions( DomainPartition * const domain,
               nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
               nodeRHS[3*a+component] = - (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
             }
+            std::cout<<"node["<<facesToNodes[faceIndex][a]<<"] = "<<- (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * Nbar[0] * faceArea[faceIndex] / numNodes<<std::endl;
           }
-
           rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
         }
       });

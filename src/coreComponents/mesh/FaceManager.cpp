@@ -231,7 +231,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
 
 
-  real64_array & faceArea  = getReference<real64_array>( viewKeyStruct::
+  arrayView1d<real64> const & faceArea  = getReference<real64_array>( viewKeyStruct::
                                                          faceAreaString);
 
   r1_array & faceNormal = getReference<r1_array>( viewKeyStruct::

@@ -734,7 +734,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
@@ -932,12 +931,12 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   {
     nodeIDInBox[0] = 0;
     nodeIDInBox[1] = 1;
-    nodeIDInBox[2] = 3;
-    nodeIDInBox[3] = 2;
+    nodeIDInBox[2] = 2;
+    nodeIDInBox[3] = 3;
     nodeIDInBox[4] = 4;
     nodeIDInBox[5] = 5;
-    nodeIDInBox[6] = 7;
-    nodeIDInBox[7] = 6;
+    nodeIDInBox[6] = 6;
+    nodeIDInBox[7] = 7;
   }
   else if( ( elementType == "C3D6" ) && ( m_trianglePattern == 0 ) )
   {
