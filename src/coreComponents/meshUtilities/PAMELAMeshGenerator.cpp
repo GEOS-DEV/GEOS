@@ -130,9 +130,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     localIndex vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex vertexGlobalIndex = verticesIterator->get_globalIndex();
     real64 * const pointData = X[verticesIterator->get_localIndex()].Data();
-    pointData[0] = verticesIterator->get_coordinates().x;
-    pointData[1] = verticesIterator->get_coordinates().y;
-    pointData[2] = verticesIterator->get_coordinates().z * zReverseFactor;
+    pointData[0] = verticesIterator->get_coordinates().x * m_scale;
+    pointData[1] = verticesIterator->get_coordinates().y * m_scale;
+    pointData[2] = verticesIterator->get_coordinates().z * m_scale * zReverseFactor;
     nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
     for( int i = 0; i < 3 ; i++ )
     {
@@ -327,10 +327,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
-            array2d< real64 > & property = cellBlock->AddProperty< array2d< real64 > >( m_fieldNamesInGEOSX[fieldIndex] );
-            property.resizeDimension<1>( static_cast< localIndex >( dimension ) );
-            GEOS_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
-                "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+            array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
+            GEOS_ERROR_IF(property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
+                "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
                 << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
             {
