@@ -138,6 +138,10 @@ public:
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
 
+  void
+  AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+                                std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
+
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
 
