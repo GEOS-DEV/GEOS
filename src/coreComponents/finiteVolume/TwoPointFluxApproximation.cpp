@@ -141,7 +141,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         // assemble full coefficient tensor from principal axis/components
         makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
-        faceConormal.AijBj(coefTensor, cellToFaceVec);
+        faceConormal.AijBj(coefTensor, faceNormal);
         real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
 
         faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
