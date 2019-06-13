@@ -300,8 +300,6 @@ ApplyFieldValue( real64 const time,
                                string const & fieldName,
                                LAMBDA && lambda ) const
 {
-  FieldSpecificationBase const * fsBase = nullptr;
-  set<localIndex> const * targetSetCopy = nullptr;
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
         string const &,

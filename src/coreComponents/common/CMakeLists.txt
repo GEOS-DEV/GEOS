@@ -5,6 +5,7 @@
 set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
+    GeosxMacros.hpp
     TimingMacros.hpp )
 
 #
@@ -12,7 +13,6 @@ set(common_headers
 #
 set(common_sources
     DataTypes.cpp )
-
 
 set( dependencyList cxx-utilities mpi )
 
@@ -41,7 +41,6 @@ blt_add_library( NAME                  common
                
                
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-#target_include_directories( common PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../include)
                
 geosx_add_code_checks(PREFIX common )
 

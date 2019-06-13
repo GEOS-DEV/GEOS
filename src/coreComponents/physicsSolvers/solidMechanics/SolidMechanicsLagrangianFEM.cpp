@@ -207,13 +207,44 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString );
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString );
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->setPlotLevel(PlotLevel::LEVEL_0);
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->setPlotLevel(PlotLevel::LEVEL_2);
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->setPlotLevel(PlotLevel::LEVEL_0);
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1);
-    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0);
+
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the total displacements on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
+      setPlotLevel(PlotLevel::LEVEL_3)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the current velocity on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->setPlotLevel(PlotLevel::LEVEL_1)->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
+                      "to hold the summation of nodal forces resulting from the governing equations.");
+
+    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
+        setPlotLevel(PlotLevel::LEVEL_0)->
+        setRegisteringObjects(this->getName())->
+        setDescription( "An array that holds the mass on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
+      setPlotLevel(PlotLevel::NOPLOT)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the velocity predictors on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
+      setPlotLevel(PlotLevel::NOPLOT)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the incremental displacement predictors on the nodes.");
+
     nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::globalDofNumberString )->setPlotLevel(PlotLevel::LEVEL_1);
 
   }
@@ -405,6 +436,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
+    int locallyFractured = 0;
+    int globallyFractured = 0;
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
       ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
@@ -414,19 +447,18 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
       {
         if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
         {
-          solveIter=m_maxNumResolves;
+          locallyFractured = 1;
         }
-        int temp = solveIter;
-        MPI_Allreduce( &temp,
-                       &solveIter,
+        MPI_Allreduce( &locallyFractured,
+                       &globallyFractured,
                        1,
                        MPI_INT,
                        MPI_MAX,
                        MPI_COMM_GEOSX);
       }
-      else
+      if( globallyFractured == 0 )
       {
-        solveIter=m_maxNumResolves;
+        break;
       }
     }
     ImplicitStepComplete( time_n, dt,  domain );
@@ -443,9 +475,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   updateIntrinsicNodalData(domain);
   GEOSX_MARK_FUNCTION;
-
-  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
-  static real64 maxTimes[10] = {0.0};
 
   GEOSX_GET_TIME( t0 );
 
@@ -642,6 +671,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   MPI_Barrier(MPI_COMM_GEOSX);
   GEOSX_MARK_END("MPI_Barrier");
 
+  static real64 minTimes[10] = {1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9,1.0e9};
+  static real64 maxTimes[10] = {0.0};
+
   minTimes[0] = std::min( minTimes[0], t2-t1 );
   minTimes[1] = std::min( minTimes[1], t4-t3 );
   minTimes[2] = std::min( minTimes[2], tf-t0 );
@@ -680,13 +712,14 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                      string const fieldName )->void
     {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual>( targetSet,
-                                                 time,
-                                                 targetGroup,
-                                                 fieldName,
-                                                 viewKeyStruct::globalDofNumberString,
-                                                 3,
-                                                 &blockSystem,
-                                                 BlockIDs::displacementBlock );
+                                                                 false,
+                                                                 time,
+                                                                 targetGroup,
+                                                                 fieldName,
+                                                                 viewKeyStruct::globalDofNumberString,
+                                                                 3,
+                                                                 &blockSystem,
+                                                                 BlockIDs::displacementBlock );
   });
 }
 
@@ -727,7 +760,6 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
 
     if( functionName.empty() )
     {
-      integer counter=0;
       for( auto kf : targetSet )
       {
         localIndex const numNodes = facesToNodes[kf].size();
@@ -768,7 +800,6 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( DomainPartition * const domai
           result.resize( targetSet.size() );
           function->Evaluate( faceManager, time, targetSet, result );
 
-          integer counter=0;
           for( auto kf : targetSet )
           {
             localIndex const numNodes = facesToNodes[kf].size();
@@ -935,10 +966,6 @@ void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * c
                                                                  localIndex_array& localIndices,
                                                                  localIndex offset )
 {
-//  dim =
-// domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
-  int dim = 3;
-
   int n_mpi_processes;
   MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
 
@@ -1155,7 +1182,6 @@ void SolidMechanicsLagrangianFEM::AssembleSystem ( DomainPartition * const  doma
 
 
       // space for element matrix and rhs
-      int dim = 3;
       m_maxForce = ImplicitElementKernelLaunchSelector( numNodesPerElement,
                                                         fe->n_quadrature_points(),
                                                         constitutiveRelations[er][esr][m_solidMaterialFullIndex],
@@ -1210,6 +1236,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
 
   FaceManager * const faceManager = mesh->getFaceManager();
   NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 //  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
@@ -1226,6 +1253,7 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( targetSet,
+                                                               false,
                                                                time_n+dt,
                                                                targetGroup,
                                                                keys::TotalDisplacement, // TODO fix use of dummy name for
@@ -1249,6 +1277,58 @@ ApplyBoundaryConditions( DomainPartition * const domain,
   {
     fsManager->ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
     ApplyChomboPressure( domain, *blockSystem );
+  }
+
+  {
+  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(solidMechanicsViewKeys.globalDofNumber);
+  Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+    if( subRegion->hasView("pressure") )
+    {
+      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+
+      FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
+
+      forall_in_range<elemPolicy>( 0,
+                                   subRegion->size(),
+                                   GEOSX_LAMBDA ( localIndex const kfe )
+      {
+
+        R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
+        Nbar -= faceNormal[faceMap[kfe][1]];
+        Nbar.Normalize();
+//        std::cout<<Nbar<<std::endl;
+
+        globalIndex nodeDOF[20];
+        real64 nodeRHS[20];
+
+        for( localIndex kf=0 ; kf<2 ; ++kf )
+        {
+          localIndex const faceIndex = faceMap[kfe][kf];
+          localIndex const numNodes = facesToNodes[faceIndex].size();
+
+          for( localIndex a=0 ; a<numNodes ; ++a )
+          {
+            for( int component=0 ; component<3 ; ++component )
+            {
+              nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
+              nodeRHS[3*a+component] = - (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * Nbar[component] * faceArea[faceIndex] / numNodes;
+            }
+          }
+
+          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
+        }
+      });
+    }
+  });
   }
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( BlockIDs::displacementBlock,

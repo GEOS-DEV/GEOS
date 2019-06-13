@@ -3,7 +3,6 @@
 ============== ====== ======== ============================================================================== 
 Name           Type   Default  Description                                                                    
 ============== ====== ======== ============================================================================== 
-defaultDensity real64 required Default Material Density                                                       
 c11            real64 required Default for the 11 component of the Elastic Stiffness Tensor in Voigt notation 
 c12            real64 required Default for the 12 component of the Elastic Stiffness Tensor in Voigt notation 
 c13            real64 required Default for the 13 component of the Elastic Stiffness Tensor in Voigt notation 
@@ -40,6 +39,7 @@ c63            real64 required Default for the 63 component of the Elastic Stiff
 c64            real64 required Default for the 64 component of the Elastic Stiffness Tensor in Voigt notation 
 c65            real64 required Default for the 65 component of the Elastic Stiffness Tensor in Voigt notation 
 c66            real64 required Default for the 66 component of the Elastic Stiffness Tensor in Voigt notation 
+defaultDensity real64 required Default Material Density                                                       
 name           string required A name is required for any non-unique nodes                                    
 ============== ====== ======== ============================================================================== 
 

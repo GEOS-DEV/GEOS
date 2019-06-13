@@ -39,6 +39,7 @@
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
+#include "cxx-utilities/src/src/StringUtilities.hpp"
 
 
 #ifdef GEOSX_USE_ATK
@@ -54,6 +55,9 @@ namespace geosx
 
 namespace dataRepository
 {
+
+//template< typename U >
+//static void totalViewType( char * const dataType );
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
@@ -72,7 +76,8 @@ public:
                         ManagedGroup * const parent ):
     ViewWrapperBase(name, parent),
     m_ownsData( true ),
-    m_data( new T() )
+    m_data( new T() ),
+    m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -90,7 +95,8 @@ public:
                         std::unique_ptr<T> object ):
     ViewWrapperBase(name, parent),
   m_ownsData( true ),
-  m_data( object.release() )
+  m_data( object.release() ),
+  m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -110,7 +116,8 @@ public:
                         bool takeOwnership):
     ViewWrapperBase(name,parent),
     m_ownsData( takeOwnership ),
-    m_data( object )
+    m_data( object ),
+    m_default()
   {
     if( traits::is_tensorT<T> || std::is_arithmetic<T>::value || traits::is_string<T> )
     {
@@ -127,6 +134,7 @@ public:
     {
       delete m_data;
     }
+    //tvTemplateInstantiation();
   }
 
   /**
@@ -135,7 +143,9 @@ public:
    */
   ViewWrapper( ViewWrapper const & source ):
     ViewWrapperBase("copy_constructor_test", nullptr),
-    m_data(source.m_data)
+    m_ownsData(source.m_ownsData),
+    m_data(source.m_data),
+    m_default(source.m_default)
   {}
 
   /**
@@ -144,7 +154,9 @@ public:
    */
   ViewWrapper( ViewWrapper&& source ):
     ViewWrapperBase(source),
-    m_data( std::move(source.m_data) )
+    m_ownsData(source.m_ownsData),
+    m_data( std::move(source.m_data) ),
+    m_default( source.m_default )
   {}
 
   /**
@@ -192,9 +204,19 @@ public:
   {
     std::unique_ptr<ViewWrapperBase>
     clonedWrapper = std::make_unique<ViewWrapper<T> >( name, parent, this->m_data, false );
+    clonedWrapper->CopyWrapperAttributes( *this );
 
     return clonedWrapper;
   }
+
+  virtual void CopyWrapperAttributes( ViewWrapperBase const & source ) override
+  {
+    ViewWrapperBase::CopyWrapperAttributes( source );
+    ViewWrapper<T> const & castedSource = *cast(&source);
+    m_ownsData = castedSource.m_ownsData;
+    m_default = castedSource.m_default;
+  }
+
 
   virtual const std::type_info& get_typeid() const noexcept override final
   {
@@ -1351,6 +1373,24 @@ public:
 
   ///@}
 
+#ifndef NDEBUG
+  virtual string totalviewTypeName() const override final
+  {
+    return cxx_utilities::demangle( typeid( ViewWrapper<T> ).name() );
+  }
+
+  virtual int setTotalviewDisplay() const override final
+  {
+    //std::cout<<"executing ViewWrapper::setTotalviewDisplay()"<<std::endl;
+    ViewWrapperBase::setTotalviewDisplay();
+    TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData);
+    TV_ttf_add_row( "m_data", totalview::typeName<T>().c_str(), m_data);
+    TV_ttf_add_row( "m_default", totalview::typeName< DefaultValue<T> >().c_str(), &m_default );
+    return 0;
+  }
+//  void tvTemplateInstantiation();
+#endif
+
 private:
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
@@ -1368,5 +1408,21 @@ private:
 
 }
 } /* namespace geosx */
+
+//template< typename T >
+//int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<T> const * wrapper)
+//{
+//  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
+//  return TV_ttf_format_raw;
+//}
+//
+//template int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<int> const * wrapper );
+//
+//template< typename T >
+//void geosx::dataRepository::ViewWrapper<T>::tvTemplateInstantiation()
+//{
+//  TV_ttf_display_type<T>(this);
+//}
+
 
 #endif /* CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_ */

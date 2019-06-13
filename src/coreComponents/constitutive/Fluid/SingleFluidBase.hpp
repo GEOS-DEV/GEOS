@@ -41,6 +41,10 @@ public:
 
   // *** ConstitutiveBase interface
 
+  virtual void DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
+
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -96,9 +100,11 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr auto defaultDensityString      = "defaultDensity";
     static constexpr auto densityString      = "density";
     static constexpr auto dDens_dPresString  = "dPressure_dDensity";
 
+    static constexpr auto defaultViscosityString    = "defaultViscosity";
     static constexpr auto viscosityString    = "viscosity";
     static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
 
@@ -166,6 +172,9 @@ protected:
   template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
   void BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
                                    ARGS && ... args );
+
+  real64 m_defaultDensity;
+  real64 m_defaultViscosity;
 
   array2d<real64> m_density;
   array2d<real64> m_dDensity_dPressure;

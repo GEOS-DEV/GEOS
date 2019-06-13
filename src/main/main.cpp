@@ -32,6 +32,7 @@
 
 using namespace geosx;
 
+//static int TV_ttf_display_type( geosx::dataRepository::ViewWrapperBase const * wrapper);
 
 int main( int argc, char *argv[] )
 {
@@ -55,6 +56,8 @@ int main( int argc, char *argv[] )
 #else
   logger::InitializeLogger():
 #endif
+
+  printTypeSummary();
 
 #ifdef GEOSX_USE_OPENMP
   {
@@ -115,5 +118,19 @@ int main( int argc, char *argv[] )
   MPI_Finalize();
 #endif
 
+
   return 0;
 }
+
+//int TV_ttf_display_type( geosx::dataRepository::ViewWrapperBase const * wrapper)
+//{
+//  int rval = 0;
+//  if( wrapper!=nullptr )
+//  {
+//    std::cout<<"displaying ViewWrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
+//    rval = TV_ttf_add_row("casted_this", wrapper->totalviewTypeName().c_str(), wrapper);
+//    std::cout<<rval<<std::endl;
+//  }
+//  return rval;
+//}
+//
