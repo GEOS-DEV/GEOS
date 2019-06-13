@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
 
 #include "ArrayUtilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
 #include "pugixml.hpp"
@@ -65,14 +66,16 @@ public:
   template< typename T >
   static void StringToInputVariable( T& target, string value );
 
-  template< typename T >
-  static void StringToInputVariable( array1d<T> & target, string value );
-
-  template< typename T >
-  static void StringToInputVariable( array2d<T> & target, string value );
+//  template< typename T >
+//  static void StringToInputVariable( array1d<T> & target, string value );
+//
+//  template< typename T >
+//  static void StringToInputVariable( array2d<T> & target, string value );
 
   static void StringToInputVariable( R1Tensor & target, string value );
 
+  template< typename T, int NDIM >
+  static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str );
 //  static void StringToInputVariable( R2Tensor & target, string value );
 //
 //  static void StringToInputVariable( R2SymTensor & target, string value );
@@ -125,40 +128,40 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
   ss>>target;
 }
 
-template< typename T >
-void xmlWrapper::StringToInputVariable( array1d<T> & target, string inputValue )
-{
-  string csvstr = inputValue;
-  std::istringstream ss( csvstr );
-
-  T value;
-
-  while( ss.peek() == ',' || ss.peek() == ' ' )
-  {
-    ss.ignore();
-  }
-  while( !((ss>>value).fail()) )
-  {
-    target.push_back( value );
-    while( ss.peek() == ',' || ss.peek() == ' ' )
-    {
-      ss.ignore();
-    }
-  }
-}
-
-template< typename T >
-void xmlWrapper::StringToInputVariable( array2d<T> & target, string inputValue )
-{
-  array1d<T> temp;
-  StringToInputVariable( temp, inputValue );
-
-  target.resize(1,temp.size());
-  for( localIndex i=0 ; i<temp.size() ; ++i )
-  {
-    target[0][i] = temp[i];
-  }
-}
+//template< typename T >
+//void xmlWrapper::StringToInputVariable( array1d<T> & target, string inputValue )
+//{
+//  string csvstr = inputValue;
+//  std::istringstream ss( csvstr );
+//
+//  T value;
+//
+//  while( ss.peek() == ',' || ss.peek() == ' ' )
+//  {
+//    ss.ignore();
+//  }
+//  while( !((ss>>value).fail()) )
+//  {
+//    target.push_back( value );
+//    while( ss.peek() == ',' || ss.peek() == ' ' )
+//    {
+//      ss.ignore();
+//    }
+//  }
+//}
+//
+//template< typename T >
+//void xmlWrapper::StringToInputVariable( array2d<T> & target, string inputValue )
+//{
+//  array1d<T> temp;
+//  StringToInputVariable( temp, inputValue );
+//
+//  target.resize(1,temp.size());
+//  for( localIndex i=0 ; i<temp.size() ; ++i )
+//  {
+//    target[0][i] = temp[i];
+//  }
+//}
 
 
 template< typename T >
@@ -192,7 +195,81 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
   }
 }
 
+template< typename T, int NDIM >
+void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str )
+{
+  string str_nospace( str );
+  str_nospace.erase(std::remove(str_nospace.begin(), str_nospace.end(), ' '), str_nospace.end());
 
+
+  string const openDelim("{");
+  string const closeDelim("}");
+  size_t openPos = 0;
+  size_t closePos = 0;
+
+
+  size_t const numOpen = std::count( str_nospace.begin(), str_nospace.end(), '{' );
+  size_t const numClose = std::count( str_nospace.begin(), str_nospace.end(), '}' );
+
+  GEOS_ERROR_IF( numOpen != numClose,
+                 "Number of opening { not equal to number of } in processing of string for filling"
+                 " an Array. Given string is: \n"<<str_nospace);
+
+
+  int ndims = 0;
+  int dimLevel = -1;
+  localIndex dims[NDIM] = {0};
+  for( int i=0 ; i<NDIM ; ++i ) dims[i]=1;
+  bool dimSet[NDIM] = {false};
+  bool reachedClose = false;
+
+  for( char const & c : str_nospace )
+  {
+    if( c=='{')
+    {
+      if( reachedClose==false )
+      {
+        ++ndims;
+      }
+      ++dimLevel;
+    }
+    else if( c=='}')
+    {
+      dimSet[dimLevel] = true;
+      --dimLevel;
+      reachedClose = true;
+    }
+    else if( c==',' )
+    {
+      if( dimSet[dimLevel]==false )
+      {
+        ++dims[dimLevel];
+      }
+    }
+  }
+
+  GEOS_ERROR_IF( ndims!=NDIM, "number of dimensions in string ("<<ndims<<") does not match dimensions of array("<<NDIM<<")");
+  array.resize( NDIM, dims );
+
+  T * arrayData = array.data();
+  std::istringstream strstream(str_nospace);
+
+  ndims = 0;
+  dimLevel = -1;
+  while( strstream )
+  {
+    int c = strstream.peek();
+
+    if( c=='{' || c== '}' || c==',')
+    {
+      strstream.ignore();
+    }
+    else
+    {
+      strstream>>*(arrayData++);
+    }
+  }
+}
 
 
 } /* namespace geosx */
