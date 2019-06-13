@@ -677,6 +677,7 @@ protected:
 
   static void SetUpTestCase()
   {
+    problemManager = new ProblemManager("Problem", nullptr);
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
@@ -692,26 +693,27 @@ protected:
       buf[1]
     };
 
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput( argc, argv );
-    problemManager.ParseInputFile();
+    problemManager->InitializePythonInterpreter();
+    problemManager->ParseCommandLineInput( argc, argv );
+    problemManager->ParseInputFile();
 
-    problemManager.ProblemSetup();
+    problemManager->ProblemSetup();
 
-    solver = problemManager.GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
+    solver = problemManager->GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseFlow>( "compflow" );
   }
 
   static void TearDownTestCase()
   {
-
+    delete problemManager;
+    problemManager = nullptr;
+    solver = nullptr;
   }
 
-  static ProblemManager problemManager;
+  static ProblemManager * problemManager;
   static CompositionalMultiphaseFlow * solver;
-
 };
 
-ProblemManager CompositionalMultiphaseFlowTest::problemManager("Problem", nullptr);
+ProblemManager * CompositionalMultiphaseFlowTest::problemManager = nullptr;
 CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 
 TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)
@@ -719,7 +721,7 @@ TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 1e-4;
 
-  DomainPartition * domain = problemManager.getDomainPartition();
+  DomainPartition * domain = problemManager->getDomainPartition();
 
   testCompositionNumericalDerivatives( solver, domain, eps, tol );
 }
@@ -729,7 +731,7 @@ TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFrac
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 5e-2; // 5% error margin
 
-  DomainPartition * domain = problemManager.getDomainPartition();
+  DomainPartition * domain = problemManager->getDomainPartition();
 
   testPhaseVolumeFractionNumericalDerivatives(solver, domain, eps, tol);
 }
@@ -739,7 +741,7 @@ TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility)
   real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
   real64 const tol = 5e-2; // 5% error margin
 
-  DomainPartition * domain = problemManager.getDomainPartition();
+  DomainPartition * domain = problemManager->getDomainPartition();
 
   testPhaseMobilityNumericalDerivatives(solver, domain, eps, tol);
 }
@@ -752,7 +754,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager.getDomainPartition();
+  DomainPartition   * domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );
@@ -775,7 +777,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager.getDomainPartition();
+  DomainPartition   * domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );
@@ -799,7 +801,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager.getDomainPartition();
+  DomainPartition   * domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );

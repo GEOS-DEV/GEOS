@@ -67,6 +67,17 @@ matrix:
     - IMG=gcc8-ubuntu18
     - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
     - CMAKE_BUILD_TYPE=Debug
+git:
+  submodules: false
+before_install:
+  - git submodule update --init --recursive src/coreComponents/cxx-utilities
+  - git submodule update --init --recursive src/cmake/blt
+  - git submodule update --init --recursive src/externalComponents/PVTPackage
+  - git submodule update --init --recursive src/externalComponents/PAMELA
+  - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
+    fi
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       pwd;
@@ -79,9 +90,5 @@ script:
       cd ../GEOSX;
       bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
     else
-      docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
       docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     fi
-
-#- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx
-#- docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh
