@@ -807,14 +807,17 @@ T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
 // The code below should work with any subscriptable vector/matrix types
 
 template<typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void copy( localIndex N, VEC1 && v1, VEC2 && v2 )
+inline RAJA_HOST_DEVICE void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
 {
   for (localIndex i = 0; i < N; ++i)
     v2[i] = v1[i];
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx )
+inline RAJA_HOST_DEVICE void applyChainRule( localIndex N,
+                                             MATRIX const & dy_dx,
+                                             VEC1 const & df_dy,
+                                             VEC2 const & df_dx )
 {
   // this could use some dense linear algebra
   for (localIndex i = 0; i < N; ++i)
@@ -828,7 +831,10 @@ inline RAJA_HOST_DEVICE void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void applyChainRuleInPlace( localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
+inline RAJA_HOST_DEVICE void applyChainRuleInPlace( localIndex N,
+                                                    MATRIX const & dy_dx,
+                                                    VEC1 const & df_dxy,
+                                                    VEC2 & work )
 {
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );
