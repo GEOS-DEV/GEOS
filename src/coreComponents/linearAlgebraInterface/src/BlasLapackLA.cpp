@@ -23,6 +23,8 @@
 // Include the corresponding header file.
 #include "BlasLapackLA.hpp"
 
+#include <random>
+
 // BLAS and LAPACK function declaration
 extern "C"
 {
@@ -725,15 +727,21 @@ void BlasLapackLA::vectorRand( array1d<int> & ISEED,
 void BlasLapackLA::vectorRand( array1d<real64> & X,
                                int const IDIST)
 {
-  array1d<int> ISEED;
-  ISEED.push_back(1);
-  ISEED.push_back(3);
-  ISEED.push_back(5);
-  ISEED.push_back(7);
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dis(0, 4095);
+  std::uniform_int_distribution<int> disOdd(0, 2047);
+  int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
 
-  vectorRand( ISEED,
-              X,
-              IDIST);
+  int const N = static_cast<int>( X.size() );
+
+  GEOS_ASSERT_MSG( N > 0,
+                   "The vector cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED,
+           &N,
+           X.data());
 
   return;
 }
@@ -760,7 +768,7 @@ void BlasLapackLA::matrixRand( array1d<int> & ISEED,
   int const NN = static_cast<int>( A.size() );
 
   GEOS_ASSERT_MSG( NN > 0,
-                   "The vector cannot be empty");
+                   "The matrix cannot be empty");
 
   dlarnv_( &IDIST,
            ISEED.data(),
@@ -773,16 +781,21 @@ void BlasLapackLA::matrixRand( array1d<int> & ISEED,
 void BlasLapackLA::matrixRand( array2d<real64> & A,
                                int const IDIST)
 {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dis(0, 4095);
+  std::uniform_int_distribution<int> disOdd(0, 2047);
+  int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
 
-  array1d<int> ISEED;
-  ISEED.push_back(1);
-  ISEED.push_back(3);
-  ISEED.push_back(5);
-  ISEED.push_back(7);
+  int const NN = static_cast<int>( A.size() );
 
-  matrixRand( ISEED,
-              A,
-              IDIST);
+  GEOS_ASSERT_MSG( NN > 0,
+                   "The matrix cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED,
+           &NN,
+           A.data());
 
   return;
 }

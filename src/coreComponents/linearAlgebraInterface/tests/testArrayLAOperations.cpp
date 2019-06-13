@@ -51,8 +51,9 @@ using INDEX_TYPE = std::ptrdiff_t;
 
 static real64 const machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 static real64 const pi = std::atan(1.0)*4.0;
-static array1d<int> randomNumberGeneratorSeed(4);
 enum struct distribution { UNIFORM_01 = 1, UNIFORM_m1p1 = 2, NORMAL_01 = 3 };
+
+#include <random>
 
 template<typename LAI>
 void vector_norm1_test()
@@ -61,8 +62,7 @@ void vector_norm1_test()
   array1d<real64> vec(N);
 
   // Populate vector with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute norm1
@@ -85,8 +85,7 @@ void vector_norm2_test()
   array1d<real64> vec(N);
 
   // Populate vector with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute norm2
@@ -110,8 +109,7 @@ void vector_normInf_test()
   array1d<real64> vec(N);
 
   // Populate vector with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute normInf
@@ -185,8 +183,7 @@ void matrix_normInf_test()
   array2d<real64> mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_m1p1));
 
   // Compute normInf
@@ -215,8 +212,7 @@ void matrix_norm1_test()
   array2d<real64> mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_m1p1));
 
   // Compute norm1
@@ -245,8 +241,7 @@ void matrix_normFrobenius_test()
   array2d<real64> mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_m1p1));
 
   // Compute normFrobeniusm
@@ -275,11 +270,9 @@ void vector_vector_add_test()
   array1d<real64> vecSum(N);
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec1,
+  LAI::vectorRand( vec1,
                    static_cast<int>(distribution::UNIFORM_01) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec2,
+  LAI::vectorRand( vec2,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute vector sum vecSum = alpha*vec1 + vec2
@@ -314,12 +307,10 @@ void matrix_matrix_add_test()
 
   // Populate vectors with random coefficients
   // Populate matrix with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat1,
+  LAI::matrixRand( mat1,
                    static_cast<int>(distribution::UNIFORM_01));
   // Populate matrix with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat2,
+  LAI::matrixRand( mat2,
                    static_cast<int>(distribution::UNIFORM_m1p1));
 
   // Compute vector sum matSum = alpha*mat1 + mat2
@@ -357,8 +348,7 @@ void vector_scale_test()
   array1d<real64> vecScaled(N);
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute vector vecScaled = alpha*vec
@@ -390,8 +380,7 @@ void matrix_scale_test()
   array2d<real64> matScaled(M,N);
 
   // Populate vectors with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute vector matScaled = alpha*mat
@@ -428,11 +417,9 @@ void vector_dot_test()
   array1d<real64> vec2(N);
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec1,
+  LAI::vectorRand( vec1,
                    static_cast<int>(distribution::UNIFORM_01) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec2,
+  LAI::vectorRand( vec2,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
 
   // Compute vector vec1_dot_v2 = vec1^t*vec2
@@ -460,14 +447,11 @@ void matrix_vector_multiply_test()
   array1d<real64> vecResult(M);
 
   // Populate matrix and vectors with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   A,
+  LAI::matrixRand( A,
                    static_cast<int>(distribution::UNIFORM_01) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   X,
+  LAI::vectorRand( X,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   Y,
+  LAI::vectorRand( Y,
                    static_cast<int>(distribution::NORMAL_01) );
 
   // Compute vector vecResults = alpha*A*X + beta*Y
@@ -509,14 +493,11 @@ void matrixT_vector_multiply_test()
   array1d<real64> vecResult(N);
 
   // Populate matrix and vectors with random coefficients
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   A,
+  LAI::matrixRand( A,
                    static_cast<int>(distribution::UNIFORM_01) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   X,
+  LAI::vectorRand( X,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   Y,
+  LAI::vectorRand( Y,
                    static_cast<int>(distribution::NORMAL_01) );
 
   // Compute vector vecResults = alpha*transpose(A)*X + beta*Y
@@ -579,14 +560,11 @@ void matrix_matrix_multiply_test()
         matResult.resize(M,N);
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         A,
+        LAI::matrixRand( A,
                          static_cast<int>(distribution::UNIFORM_01) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         B,
+        LAI::matrixRand( B,
                          static_cast<int>(distribution::UNIFORM_m1p1) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         C,
+        LAI::matrixRand( C,
                          static_cast<int>(distribution::NORMAL_01) );
 
         // Compute matrix matResult = alpha*A*B + beta*C
@@ -657,14 +635,11 @@ void matrixT_matrix_multiply_test()
         matResult.resize(M,N);
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         A,
+        LAI::matrixRand( A,
                          static_cast<int>(distribution::UNIFORM_01) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         B,
+        LAI::matrixRand( B,
                          static_cast<int>(distribution::UNIFORM_m1p1) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         C,
+        LAI::matrixRand( C,
                          static_cast<int>(distribution::NORMAL_01) );
 
         // Compute matrix matResult = alpha*A*B + beta*C
@@ -735,14 +710,11 @@ void matrix_matrixT_multiply_test()
         matResult.resize(M,N);
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         A,
+        LAI::matrixRand( A,
                          static_cast<int>(distribution::UNIFORM_01) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         B,
+        LAI::matrixRand( B,
                          static_cast<int>(distribution::UNIFORM_m1p1) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         C,
+        LAI::matrixRand( C,
                          static_cast<int>(distribution::NORMAL_01) );
 
         // Compute matrix matResult = alpha*A*B + beta*C
@@ -813,14 +785,11 @@ void matrixT_matrixT_multiply_test()
         matResult.resize(M,N);
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         A,
+        LAI::matrixRand( A,
                          static_cast<int>(distribution::UNIFORM_01) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         B,
+        LAI::matrixRand( B,
                          static_cast<int>(distribution::UNIFORM_m1p1) );
-        LAI::matrixRand( randomNumberGeneratorSeed,
-                         C,
+        LAI::matrixRand( C,
                          static_cast<int>(distribution::NORMAL_01) );
 
         // Compute matrix matResult = alpha*A*B + beta*C
@@ -936,8 +905,7 @@ void vector_copy_test()
     dst.resize(N);
 
     // Populate src vector with random coefficients
-    LAI::vectorRand( randomNumberGeneratorSeed,
-                     src,
+    LAI::vectorRand( src,
                      static_cast<int>(distribution::NORMAL_01) );
 
     // Copy vector, dst = src
@@ -976,8 +944,7 @@ void matrix_copy_test()
       dst.resize(M,N);
 
       // Populate src matrix with random coefficients
-      LAI::matrixRand( randomNumberGeneratorSeed,
-                       src,
+      LAI::matrixRand( src,
                        static_cast<int>(distribution::NORMAL_01) );
 
       // Copy matrix, dst = src
@@ -1007,16 +974,14 @@ void vector_rand_test()
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_01) );
   real64 *v_max = std::max_element(vec.begin(), vec.end());
   real64 *v_min = std::min_element(vec.begin(), vec.end());
   EXPECT_TRUE(0.0 <= *v_min && *v_max <= 1.0);
 
   // --- uniform distribution (-1,1);
-  LAI::vectorRand( randomNumberGeneratorSeed,
-                   vec,
+  LAI::vectorRand( vec,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
   v_max = std::max_element(vec.begin(), vec.end());
   v_min = std::min_element(vec.begin(), vec.end());
@@ -1038,16 +1003,14 @@ void matrix_rand_test()
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_01) );
   real64 *A_max = std::max_element(mat.begin(), mat.end());
   real64 *A_min = std::min_element(mat.begin(), mat.end());
   EXPECT_TRUE(0.0 <= *A_min && *A_max <= 1.0);
 
   // --- uniform distribution (-1,1);
-  LAI::matrixRand( randomNumberGeneratorSeed,
-                   mat,
+  LAI::matrixRand( mat,
                    static_cast<int>(distribution::UNIFORM_m1p1) );
   A_max = std::max_element(mat.begin(), mat.end());
   A_min = std::min_element(mat.begin(), mat.end());
@@ -1176,14 +1139,6 @@ TEST( Array2D, matrixRand)
 
 int main( int argc, char* argv[] )
 {
-
-  // Initialized the integer array with the seed for the random
-  // number generator
-  randomNumberGeneratorSeed(0) = 1;
-  randomNumberGeneratorSeed(1) = 3;
-  randomNumberGeneratorSeed(2) = 5;
-  randomNumberGeneratorSeed(3) = 7;
-
   int result = 0;
   testing::InitGoogleTest( &argc, argv );
   result = RUN_ALL_TESTS();
