@@ -26,10 +26,7 @@
 #include <random>
 
 // BLAS and LAPACK function declaration
-extern "C"
-{
-  #include "BlasLapackFunctions.h"
-}
+#include "BlasLapackFunctions.h"
 
 // Put everything under the geosx namespace.
 namespace geosx
