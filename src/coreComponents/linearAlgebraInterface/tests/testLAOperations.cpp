@@ -589,11 +589,14 @@ void testRectangularMatrixOperations()
  */
 TEST(testLAOperations,testEpetraLAOperations)
 {
+  MPI_Init( nullptr, nullptr );
+  geosx::setupMKL();
   testInterfaceSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
   testMatrixMatrixOperations<TrilinosInterface>();
   testRectangularMatrixOperations<TrilinosInterface>();
+  MPI_Finalize();
 }
 
 /*! @function testHypreLAOperations.
@@ -621,15 +624,3 @@ TEST(testLAOperations,testEpetraLAOperations)
 //}
 
 //@}
-
-int main( int argc, char* argv[] )
-{
-  geosx::basicSetup( argc, argv );
-
-  testing::InitGoogleTest( &argc, argv );
-  int result = RUN_ALL_TESTS();
-
-  geosx::basicCleanup();
-
-  return result;
-}
