@@ -216,23 +216,23 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
 
   applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion )
   {
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::globalCompDensityString).resizeDimension<1>(NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::deltaGlobalCompDensityString).resizeDimension<1>(NC);
 
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::globalCompFractionString).resizeDimension<1>(NC);
-    subRegion->getReference<array3d<real64>>(viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString).resizeDimension<1,2>(NC, NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::globalCompFractionString).resizeDimension<1>(NC);
+    subRegion->getReference< array3d<real64> >(viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString).resizeDimension<1,2>(NC, NC);
 
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionString).resizeDimension<1>(NP);
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dPressureString).resizeDimension<1>(NP);
-    subRegion->getReference<array3d<real64>>(viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::phaseVolumeFractionString).resizeDimension<1>(NP);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::dPhaseVolumeFraction_dPressureString).resizeDimension<1>(NP);
+    subRegion->getReference< array3d<real64> >(viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
 
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseMobilityString).resizeDimension<1>(NP);
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::dPhaseMobility_dPressureString).resizeDimension<1>(NP);
-    subRegion->getReference<array3d<real64>>(viewKeyStruct::dPhaseMobility_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::phaseMobilityString).resizeDimension<1>(NP);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::dPhaseMobility_dPressureString).resizeDimension<1>(NP);
+    subRegion->getReference< array3d<real64> >(viewKeyStruct::dPhaseMobility_dGlobalCompDensityString).resizeDimension<1,2>(NP, NC);
 
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseVolumeFractionOldString).resizeDimension<1>(NP);
-    subRegion->getReference<array2d<real64>>(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
-    subRegion->getReference<array3d<real64>>(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::phaseVolumeFractionOldString).resizeDimension<1>(NP);
+    subRegion->getReference< array2d<real64> >(viewKeyStruct::phaseDensityOldString).resizeDimension<1>(NP);
+    subRegion->getReference< array3d<real64> >(viewKeyStruct::phaseComponentFractionOldString).resizeDimension<1,2>(NP, NC);
   });
 }
 
@@ -243,18 +243,18 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const 
   // outputs
 
   arrayView2d<real64> const & compFrac =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::globalCompFractionString );
 
   arrayView3d<real64> const & dCompFrac_dCompDens =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   // inputs
 
   arrayView2d<real64 const> const & compDens =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::globalCompDensityString );
 
   arrayView2d<real64 const> const & dCompDens =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
   KernelLaunchSelector1<ComponentFractionKernel>( m_numComponents,
                                                   0, dataGroup->size(),
@@ -283,44 +283,44 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * cons
   // outputs
 
   arrayView2d<real64> const & phaseVolFrac =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::phaseVolumeFractionString );
 
   arrayView2d<real64> const & dPhaseVolFrac_dPres =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
   arrayView3d<real64> const & dPhaseVolFrac_dComp =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
   // inputs
 
   arrayView3d<real64 const> const & dCompFrac_dCompDens =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   arrayView2d<real64 const> const & compDens =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::globalCompDensityString );
 
   arrayView2d<real64 const> const & dCompDens =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
   MultiFluidBase * fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
   arrayView3d<real64 const> const & phaseFrac =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseFractionString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::phaseFractionString );
 
   arrayView3d<real64 const> const & dPhaseFrac_dPres =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dPressureString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseFraction_dPressureString );
 
   arrayView4d<real64 const> const & dPhaseFrac_dComp =
-    fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dGlobalCompFractionString );
+    fluid->getReference< array4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseFraction_dGlobalCompFractionString );
 
   arrayView3d<real64 const> const & phaseDens =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::phaseDensityString );
 
   arrayView3d<real64 const> const & dPhaseDens_dPres =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
 
   arrayView4d<real64 const> const & dPhaseDens_dComp =
-    fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
+    fluid->getReference< array4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
   KernelLaunchSelector2<PhaseVolumeFractionKernel>( m_numComponents, m_numPhases,
                                                     0, dataGroup->size(),
@@ -365,52 +365,52 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const data
   // outputs
 
   arrayView2d<real64> const & phaseMob =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseMobilityString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::phaseMobilityString );
 
   arrayView2d<real64> const & dPhaseMob_dPres =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::dPhaseMobility_dPressureString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::dPhaseMobility_dPressureString );
 
   arrayView3d<real64> const & dPhaseMob_dComp =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
 
   // inputs
 
   arrayView2d<real64 const> const & dPhaseVolFrac_dPres =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
   arrayView3d<real64 const> const & dPhaseVolFrac_dComp =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
   arrayView3d<real64 const> const & dCompFrac_dCompDens =
-    dataGroup->getReference<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    dataGroup->getReference< array3d<real64> >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   MultiFluidBase const * fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
   arrayView3d<real64 const> const & phaseDens =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::phaseDensityString );
 
   arrayView3d<real64 const> const & dPhaseDens_dPres =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
 
   arrayView4d<real64 const> const & dPhaseDens_dComp =
-    fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
+    fluid->getReference< array4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString );
 
   arrayView3d<real64 const> const & phaseVisc =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::phaseViscosityString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::phaseViscosityString );
 
   arrayView3d<real64 const> const & dPhaseVisc_dPres =
-    fluid->getReference<array3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
+    fluid->getReference< array3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
 
   arrayView4d<real64 const> const & dPhaseVisc_dComp =
-    fluid->getReference<array4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString );
+    fluid->getReference< array4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString );
 
   RelativePermeabilityBase const * relperm = GetConstitutiveModel<RelativePermeabilityBase>( dataGroup, m_relPermName );
 
   arrayView3d<real64 const> const & phaseRelPerm =
-    relperm->getReference<array3d<real64>>( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString );
+    relperm->getReference< array3d<real64> >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString );
 
   arrayView4d<real64 const> const & dPhaseRelPerm_dPhaseVolFrac =
-    relperm->getReference<array4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
+    relperm->getReference< array4d<real64> >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
   KernelLaunchSelector2<PhaseMobilityKernel>( m_numComponents, m_numPhases,
                                               0, dataGroup->size(),
@@ -458,9 +458,9 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
 
   MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( dataGroup, m_fluidName );
 
-  arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-  arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-  arrayView2d<real64 const> const & compFrac = dataGroup->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
+  arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
+  arrayView2d<real64 const> const & compFrac = dataGroup->getReference< array2d<real64> >( viewKeyStruct::globalCompFractionString );
 
   // TODO replace with batch update (need up-to-date pressure and temperature fields)
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
@@ -476,8 +476,8 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
 
   ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( dataGroup, m_solidName );
 
-  arrayView1d<real64 const> const & pres  = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-  arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
+  arrayView1d<real64 const> const & pres  = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
   forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
   {
@@ -492,7 +492,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   RelativePermeabilityBase * const relPerm = GetConstitutiveModel<RelativePermeabilityBase>( dataGroup, m_relPermName );
 
   arrayView2d<real64> const & phaseVolFrac =
-    dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+    dataGroup->getReference< array2d<real64> >( viewKeyStruct::phaseVolumeFractionString );
 
   relPerm->BatchUpdate( phaseVolFrac );
 }
@@ -504,7 +504,7 @@ void CompositionalMultiphaseFlow::UpdateCapPressureModel( ManagedGroup * dataGro
     CapillaryPressureBase * const capPressure = GetConstitutiveModel<CapillaryPressureBase>( dataGroup, m_capPressureName );
 
     arrayView2d<real64> const & phaseVolFrac =
-      dataGroup->getReference<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+      dataGroup->getReference< array2d<real64> >( viewKeyStruct::phaseVolumeFractionString );
 
     capPressure->BatchUpdate( phaseVolFrac );
   }
@@ -701,8 +701,8 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
                                                                 globalIndex & numGlobalRows,
                                                                 localIndex offset )
 {
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber     = m_dofNumber;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>>     const & elemGhostRank = m_elemGhostRank;
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber     = m_dofNumber;
+  ElementRegionManager::ElementViewAccessor< arrayView1d<integer> >     const & elemGhostRank = m_elemGhostRank;
 
   int numMpiProcesses;
   MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
@@ -762,11 +762,11 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber =
-    elementRegionManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber =
+    elementRegionManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> const & elemGhostRank =
-    elementRegionManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<integer> > const & elemGhostRank =
+    elementRegionManager->ConstructViewAccessor< array1d<integer>, arrayView1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   NumericalMethodsManager const * numericalMethodManager = domain->
     getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
@@ -1041,57 +1041,55 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      if (elemGhostRank[ei] >= 0)
+      if (elemGhostRank[ei] < 0)
       {
-        return;
+        stackArray1d<long long, maxNumDof>           localAccumDOF( NDOF );
+        stackArray1d<real64, maxNumComp>             localAccum( NC );
+        stackArray2d<real64, maxNumComp * maxNumDof> localAccumJacobian( NC, NDOF );
+
+        AccumulationKernel::Compute( NC, NP,
+                                     volume[ei],
+                                     porosityOld[ei],
+                                     porosityRef[ei],
+                                     pvMult[ei][0],
+                                     dPvMult_dPres[ei][0],
+                                     dCompFrac_dCompDens[ei],
+                                     phaseVolFracOld[ei],
+                                     phaseVolFrac[ei],
+                                     dPhaseVolFrac_dPres[ei],
+                                     dPhaseVolFrac_dCompDens[ei],
+                                     phaseDensOld[ei],
+                                     phaseDens[ei][0],
+                                     dPhaseDens_dPres[ei][0],
+                                     dPhaseDens_dComp[ei][0],
+                                     phaseCompFracOld[ei],
+                                     phaseCompFrac[ei][0],
+                                     dPhaseCompFrac_dPres[ei][0],
+                                     dPhaseCompFrac_dComp[ei][0],
+                                     localAccum,
+                                     localAccumJacobian );
+
+        // set DOF indices for this block
+        globalIndex const offset = NDOF * dofNumber[ei];
+        for (localIndex idof = 0; idof < NDOF; ++idof)
+        {
+          localAccumDOF[idof] = integer_conversion<long long>(offset + idof);
+        }
+
+        // TODO: apply equation/variable change transformation(s)
+
+        // add contribution to global residual and dRdP
+        residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                       localAccumDOF.data(),
+                                       localAccum.data() );
+
+        jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
+                                       localAccumDOF.data(),
+                                       integer_conversion<int>( NDOF ),
+                                       localAccumDOF.data(),
+                                       localAccumJacobian.data(),
+                                       Epetra_FECrsMatrix::ROW_MAJOR );
       }
-
-      stackArray1d<long long, maxNumDof>           localAccumDOF( NDOF );
-      stackArray1d<real64, maxNumComp>             localAccum( NC );
-      stackArray2d<real64, maxNumComp * maxNumDof> localAccumJacobian( NC, NDOF );
-
-      AccumulationKernel::Compute( NC, NP,
-                                   volume[ei],
-                                   porosityOld[ei],
-                                   porosityRef[ei],
-                                   pvMult[ei][0],
-                                   dPvMult_dPres[ei][0],
-                                   dCompFrac_dCompDens[ei],
-                                   phaseVolFracOld[ei],
-                                   phaseVolFrac[ei],
-                                   dPhaseVolFrac_dPres[ei],
-                                   dPhaseVolFrac_dCompDens[ei],
-                                   phaseDensOld[ei],
-                                   phaseDens[ei][0],
-                                   dPhaseDens_dPres[ei][0],
-                                   dPhaseDens_dComp[ei][0],
-                                   phaseCompFracOld[ei],
-                                   phaseCompFrac[ei][0],
-                                   dPhaseCompFrac_dPres[ei][0],
-                                   dPhaseCompFrac_dComp[ei][0],
-                                   localAccum,
-                                   localAccumJacobian );
-
-      // set DOF indices for this block
-      globalIndex const offset = NDOF * dofNumber[ei];
-      for (localIndex idof = 0; idof < NDOF; ++idof)
-      {
-        localAccumDOF[idof] = integer_conversion<long long>(offset + idof);
-      }
-
-      // TODO: apply equation/variable change transformation(s)
-
-      // add contribution to global residual and dRdP
-      residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                     localAccumDOF.data(),
-                                     localAccum.data() );
-
-      jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                     localAccumDOF.data(),
-                                     integer_conversion<int>( NDOF ),
-                                     localAccumDOF.data(),
-                                     localAccumJacobian.data(),
-                                     Epetra_FECrsMatrix::ROW_MAJOR );
     });
   });
 }
@@ -1112,26 +1110,26 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  FluxKernel::ElementView<arrayView1d<globalIndex>> const & blockLocalDofNumber = m_dofNumber.toViewConst();
+  FluxKernel::ElementView< arrayView1d<globalIndex> > const & blockLocalDofNumber = m_dofNumber.toViewConst();
 
-  FluxKernel::ElementView<arrayView1d<real64 const>> const & pres                = m_pressure.toViewConst();
-  FluxKernel::ElementView<arrayView1d<real64 const>> const & dPres               = m_deltaPressure.toViewConst();
-  FluxKernel::ElementView<arrayView1d<real64 const>> const & gravDepth           = m_gravDepth.toViewConst();
-  FluxKernel::ElementView<arrayView2d<real64 const>> const & phaseMob            = m_phaseMob.toViewConst();
-  FluxKernel::ElementView<arrayView2d<real64 const>> const & dPhaseMob_dPres     = m_dPhaseMob_dPres.toViewConst();
-  FluxKernel::ElementView<arrayView3d<real64 const>> const & dPhaseMob_dComp     = m_dPhaseMob_dCompDens.toViewConst();
-  FluxKernel::ElementView<arrayView2d<real64 const>> const & dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres.toViewConst();
-  FluxKernel::ElementView<arrayView3d<real64 const>> const & dPhaseVolFrac_dComp = m_dPhaseVolFrac_dCompDens.toViewConst();
-  FluxKernel::ElementView<arrayView3d<real64 const>> const & dCompFrac_dCompDens = m_dCompFrac_dCompDens.toViewConst();
+  FluxKernel::ElementView< arrayView1d<real64 const> > const & pres                = m_pressure.toViewConst();
+  FluxKernel::ElementView< arrayView1d<real64 const> > const & dPres               = m_deltaPressure.toViewConst();
+  FluxKernel::ElementView< arrayView1d<real64 const> > const & gravDepth           = m_gravDepth.toViewConst();
+  FluxKernel::ElementView< arrayView2d<real64 const> > const & phaseMob            = m_phaseMob.toViewConst();
+  FluxKernel::ElementView< arrayView2d<real64 const> > const & dPhaseMob_dPres     = m_dPhaseMob_dPres.toViewConst();
+  FluxKernel::ElementView< arrayView3d<real64 const> > const & dPhaseMob_dComp     = m_dPhaseMob_dCompDens.toViewConst();
+  FluxKernel::ElementView< arrayView2d<real64 const> > const & dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres.toViewConst();
+  FluxKernel::ElementView< arrayView3d<real64 const> > const & dPhaseVolFrac_dComp = m_dPhaseVolFrac_dCompDens.toViewConst();
+  FluxKernel::ElementView< arrayView3d<real64 const> > const & dCompFrac_dCompDens = m_dCompFrac_dCompDens.toViewConst();
 
-  FluxKernel::MaterialView<arrayView3d<real64 const>> const & phaseDens                   = m_phaseDens.toViewConst();
-  FluxKernel::MaterialView<arrayView3d<real64 const>> const & dPhaseDens_dPres            = m_dPhaseDens_dPres.toViewConst();
-  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseDens_dComp            = m_dPhaseDens_dComp.toViewConst();
-  FluxKernel::MaterialView<arrayView4d<real64 const>> const & phaseCompFrac               = m_phaseCompFrac.toViewConst();
-  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseCompFrac_dPres        = m_dPhaseCompFrac_dPres.toViewConst();
-  FluxKernel::MaterialView<arrayView5d<real64 const>> const & dPhaseCompFrac_dComp        = m_dPhaseCompFrac_dComp.toViewConst();
-  FluxKernel::MaterialView<arrayView3d<real64 const>> const & phaseCapPres                = m_phaseCapPressure.toViewConst();
-  FluxKernel::MaterialView<arrayView4d<real64 const>> const & dPhaseCapPres_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac.toViewConst();
+  FluxKernel::MaterialView< arrayView3d<real64 const> > const & phaseDens                   = m_phaseDens.toViewConst();
+  FluxKernel::MaterialView< arrayView3d<real64 const> > const & dPhaseDens_dPres            = m_dPhaseDens_dPres.toViewConst();
+  FluxKernel::MaterialView< arrayView4d<real64 const> > const & dPhaseDens_dComp            = m_dPhaseDens_dComp.toViewConst();
+  FluxKernel::MaterialView< arrayView4d<real64 const> > const & phaseCompFrac               = m_phaseCompFrac.toViewConst();
+  FluxKernel::MaterialView< arrayView4d<real64 const> > const & dPhaseCompFrac_dPres        = m_dPhaseCompFrac_dPres.toViewConst();
+  FluxKernel::MaterialView< arrayView5d<real64 const> > const & dPhaseCompFrac_dComp        = m_dPhaseCompFrac_dComp.toViewConst();
+  FluxKernel::MaterialView< arrayView3d<real64 const> > const & phaseCapPres                = m_phaseCapPressure.toViewConst();
+  FluxKernel::MaterialView< arrayView4d<real64 const> > const & dPhaseCapPres_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac.toViewConst();
 
   localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
   localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
@@ -1347,7 +1345,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 {
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  unordered_map<string, array1d<bool>> bcStatusMap; // map to check consistent application of BC
+  unordered_map< string, array1d<bool> > bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
   fsManager->Apply( time_n + dt,
@@ -1422,16 +1420,16 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   {
     MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
 
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference<array1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
-    arrayView1d<real64 const> const & pres      = subRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-    arrayView1d<real64 const> const & dPres     = subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-    arrayView1d<real64 const> const & bcPres    = subRegion->getReference<array1d<real64>>( viewKeyStruct::bcPressureString );
-    arrayView2d<real64 const> const & compFrac  = subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompFractionString );
-    arrayView2d<real64 const> const & compDens  = subRegion->getReference<array2d<real64>>( viewKeyStruct::globalCompDensityString );
-    arrayView2d<real64 const> const & dCompDens = subRegion->getReference<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    arrayView1d<real64 const> const & pres      = subRegion->getReference< array1d<real64> >( viewKeyStruct::pressureString );
+    arrayView1d<real64 const> const & dPres     = subRegion->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
+    arrayView1d<real64 const> const & bcPres    = subRegion->getReference< array1d<real64> >( viewKeyStruct::bcPressureString );
+    arrayView2d<real64 const> const & compFrac  = subRegion->getReference< array2d<real64> >( viewKeyStruct::globalCompFractionString );
+    arrayView2d<real64 const> const & compDens  = subRegion->getReference< array2d<real64> >( viewKeyStruct::globalCompDensityString );
+    arrayView2d<real64 const> const & dCompDens = subRegion->getReference< array2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
-    arrayView2d<real64> const & totalDens = fluid->getReference<array2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString );
+    arrayView2d<real64> const & totalDens = fluid->getReference< array2d<real64> >( MultiFluidBase::viewKeyStruct::totalDensityString );
 
     Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
@@ -1737,100 +1735,100 @@ void CompositionalMultiphaseFlow::ResetViews(DomainPartition * const domain)
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_dofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
+    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
   m_pressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::pressureString );
   m_deltaPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::deltaPressureString );
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::deltaPressureString );
   m_globalCompDensity =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::globalCompDensityString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::globalCompDensityString );
   m_deltaGlobalCompDensity =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
   m_compFrac =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::globalCompFractionString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::globalCompFractionString );
   m_dCompFrac_dCompDens =
-    elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    elemManager->ConstructViewAccessor< array3d<real64>, arrayView3d<real64> >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
   m_phaseVolFrac =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::phaseVolumeFractionString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::phaseVolumeFractionString );
   m_dPhaseVolFrac_dPres =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
   m_dPhaseVolFrac_dCompDens =
-    elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    elemManager->ConstructViewAccessor< array3d<real64>, arrayView3d<real64> >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
   m_phaseMob =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::phaseMobilityString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::phaseMobilityString );
   m_dPhaseMob_dPres =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::dPhaseMobility_dPressureString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::dPhaseMobility_dPressureString );
   m_dPhaseMob_dCompDens =
-    elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+    elemManager->ConstructViewAccessor< array3d<real64>, arrayView3d<real64> >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
 
   m_porosityOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::porosityOldString );
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::porosityOldString );
   m_phaseVolFracOld =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::phaseVolumeFractionOldString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::phaseVolumeFractionOldString );
   m_phaseDensOld =
-    elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::phaseDensityOldString );
+    elemManager->ConstructViewAccessor< array2d<real64>, arrayView2d<real64> >( viewKeyStruct::phaseDensityOldString );
   m_phaseCompFracOld =
-    elemManager->ConstructViewAccessor<array3d<real64>, arrayView3d<real64>>( viewKeyStruct::phaseComponentFractionOldString );
+    elemManager->ConstructViewAccessor< array3d<real64>, arrayView3d<real64> >( viewKeyStruct::phaseComponentFractionOldString );
 
   m_pvMult =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
                                                                                       constitutiveManager );
   m_dPvMult_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
                                                                                       constitutiveManager );
   m_phaseFrac =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::phaseFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::phaseFractionString,
                                                                                       constitutiveManager );
   m_dPhaseFrac_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dPressureString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseFraction_dPressureString,
                                                                                       constitutiveManager );
   m_dPhaseFrac_dComp =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseFraction_dGlobalCompFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseFraction_dGlobalCompFractionString,
                                                                                       constitutiveManager );
   m_phaseDens =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::phaseDensityString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::phaseDensityString,
                                                                                       constitutiveManager );
   m_dPhaseDens_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString,
                                                                                       constitutiveManager );
   m_dPhaseDens_dComp =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dGlobalCompFractionString,
                                                                                       constitutiveManager );
   m_phaseVisc =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::phaseViscosityString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::phaseViscosityString,
                                                                                       constitutiveManager );
   m_dPhaseVisc_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString,
                                                                                       constitutiveManager );
   m_dPhaseVisc_dComp =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString,
                                                                                       constitutiveManager );
   m_phaseCompFrac =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( MultiFluidBase::viewKeyStruct::phaseCompFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( MultiFluidBase::viewKeyStruct::phaseCompFractionString,
                                                                                       constitutiveManager );
   m_dPhaseCompFrac_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dPressureString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dPressureString,
                                                                                       constitutiveManager );
   m_dPhaseCompFrac_dComp =
-    elemManager->ConstructFullMaterialViewAccessor<array5d<real64>, arrayView5d<real64>>( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array5d<real64>, arrayView5d<real64> >( MultiFluidBase::viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString,
                                                                                       constitutiveManager );
   m_totalDens =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( MultiFluidBase::viewKeyStruct::totalDensityString,
+    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >( MultiFluidBase::viewKeyStruct::totalDensityString,
                                                                                       constitutiveManager );
   m_phaseRelPerm =
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString,
+    elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString,
                                                                                       constitutiveManager );
   m_dPhaseRelPerm_dPhaseVolFrac =
-    elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
+    elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString,
                                                                                       constitutiveManager );
   if (m_capPressureFlag)
   {
     m_phaseCapPressure =
-      elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64>>( CapillaryPressureBase::viewKeyStruct::phaseCapPressureString,
+      elemManager->ConstructFullMaterialViewAccessor< array3d<real64>, arrayView3d<real64> >( CapillaryPressureBase::viewKeyStruct::phaseCapPressureString,
                                                                                         constitutiveManager );
     m_dPhaseCapPressure_dPhaseVolFrac =
-      elemManager->ConstructFullMaterialViewAccessor<array4d<real64>, arrayView4d<real64>>( CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString,
+      elemManager->ConstructFullMaterialViewAccessor< array4d<real64>, arrayView4d<real64> >( CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString,
                                                                                         constitutiveManager );
   }
 }
