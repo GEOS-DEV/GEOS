@@ -148,15 +148,29 @@ public:
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( ManagedGroup * dataGroup );
+  void UpdateComponentFraction( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute component fractions from primary variables (component densities)
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdateComponentFraction( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup );
+  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdatePhaseVolumeFraction( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -186,7 +200,14 @@ public:
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( ManagedGroup * dataGroup );
+  void UpdatePhaseMobility( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Recompute phase mobility from constitutive and primary variables
+   * @param er region index
+   * @param esr subregion index
+   */
+  void UpdatePhaseMobility( localIndex er, localIndex esr ) const;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -256,8 +277,8 @@ public:
     static constexpr auto relPermNameString  = "relPermName";
     static constexpr auto relPermIndexString = "relPermIndex";
     static constexpr auto capPressureNameString  = "capPressureName";
-    static constexpr auto capPressureIndexString = "capPressureIndex"; 
-    
+    static constexpr auto capPressureIndexString = "capPressureIndex";
+
     static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
 
     // primary solution field
@@ -293,7 +314,7 @@ public:
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     // inputs
@@ -350,11 +371,10 @@ public:
 protected:
 
   virtual void PostProcessInput() override;
-  
+
   virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
 
 private:
 
@@ -459,7 +479,7 @@ private:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_capPressureFlag;
-  
+
   /// name of the cap pressure constitutive model
   string m_capPressureName;
 
@@ -527,6 +547,7 @@ private:
   ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
+
 
 } // namespace geosx
 
