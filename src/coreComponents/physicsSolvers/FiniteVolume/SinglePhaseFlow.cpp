@@ -92,6 +92,8 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
         setDefaultValue(1.0);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldPorosityString )->
@@ -961,9 +963,6 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
   {
     for (auto kf : targetSet)
     {
-      if (faceGhostRank[kf] >= 0)
-        continue;
-
       // since we don't have models on faces yet, we take them from an adjacent cell
       integer ke;
       for (ke = 0; ke < 2; ++ke)
