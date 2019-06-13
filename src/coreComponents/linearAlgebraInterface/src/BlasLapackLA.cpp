@@ -37,11 +37,11 @@ namespace geosx
 
 // Random device and random number generator seed integer array used
 // to populate a vector/matrix with random coefficients
-std::random_device rd;
-std::mt19937 gen(rd());
-std::uniform_int_distribution<int> dis(0, 4095);
-std::uniform_int_distribution<int> disOdd(0, 2047);
-int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
+static std::random_device rd;
+static std::mt19937 gen(rd());
+static std::uniform_int_distribution<int> dis(0, 4095);
+static std::uniform_int_distribution<int> disOdd(0, 2047);
+static int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
   
 real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
