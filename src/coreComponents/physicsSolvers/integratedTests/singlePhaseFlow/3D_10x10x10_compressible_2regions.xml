@@ -79,6 +79,8 @@
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"

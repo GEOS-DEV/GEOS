@@ -13,7 +13,11 @@ set( linearAlgebraInterface_headers
      NativeCG.hpp
      NativeBICGSTAB.hpp
      TrilinosSolver.hpp
-     TrilinosInterface.hpp) 
+     TrilinosInterface.hpp
+     HypreInterface.hpp 
+     LinearSolverParameters.hpp
+     BlasLapackLA.hpp
+     BlasLapackFunctions.hpp)
 
 #
 # Specify all sources
@@ -24,9 +28,12 @@ set( linearAlgebraInterface_sources
      DofManager.cpp
      EpetraMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp )
+     TrilinosSolver.cpp
+     BlockVectorView.cpp
+     BlockMatrixView.cpp
+     BlasLapackLA.cpp)
 
-set( dependencyList common trilinos hypre mpi managers)
+set( dependencyList common trilinos hypre raja hdf5 pugixml mpi )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )

@@ -3,11 +3,11 @@
 ==================== ====== ======== =========================================== 
 Name                 Type   Default  Description                                 
 ==================== ====== ======== =========================================== 
-defaultDensity       real64 required Default Material Density                    
 defaultBulkModulus   real64 -1       Elastic Bulk Modulus Parameter              
+defaultDensity       real64 required Default Material Density                    
+defaultPoissonRatio  real64 -1       Poisson's ratio                             
 defaultShearModulus  real64 -1       Elastic Shear Modulus Parameter             
 defaultYoungsModulus real64 -1       Elastic Young's Modulus.                    
-defaultPoissonRatio  real64 -1       Poisson's ratio                             
 name                 string required A name is required for any non-unique nodes 
 ==================== ====== ======== =========================================== 
 

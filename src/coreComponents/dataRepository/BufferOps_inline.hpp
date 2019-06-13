@@ -364,7 +364,7 @@ template< bool DO_PACKING, typename T >
 localIndex Pack( char *& buffer, set<T> const & var )
 {
   const localIndex length = integer_conversion<localIndex>(var.size());
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );;
+  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
 
   for( typename set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
@@ -490,12 +490,6 @@ localIndex Pack( char *& buffer,
 }
 
 
-
-
-
-
-
-
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
 typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
 Pack( char*& buffer,
@@ -503,10 +497,8 @@ Pack( char*& buffer,
 {
   localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, var.dims(), NDIM );
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
-
+  
   const localIndex length = var.size();
-  localIndex sizeOfPackedArrayChars = length * sizeof(T);
-
   T const * const data = var.data();
   sizeOfPackedChars += Pack<DO_PACKING>( buffer, data, length );
 

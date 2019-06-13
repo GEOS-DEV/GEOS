@@ -1,7 +1,4 @@
-
-
 set(CONFIG_NAME "toss_3_x86_64_ib-gcc@8.1.0" CACHE PATH "") 
-
 
 set(CMAKE_C_COMPILER "/usr/tce/packages/gcc/gcc-8.1.0/bin/gcc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/tce/packages/gcc/gcc-8.1.0/bin/g++" CACHE PATH "")
@@ -30,12 +27,6 @@ set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
 set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
 set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
-
-#######################################
-# RAJA/CHAI SETUP
-#######################################
-#set(RAJA_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/raja/" CACHE PATH "" FORCE )
-#set(CHAI_DIR "/usr/gapps/GEOS/geosx/cab/gcc-4.9.3/chai/" CACHE PATH "" FORCE )
 
 option( RAJA_ENABLE_TBB "" OFF)
 
