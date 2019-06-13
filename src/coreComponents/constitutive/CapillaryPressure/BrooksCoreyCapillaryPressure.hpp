@@ -72,8 +72,8 @@ public:
                               arraySlice1d<real64  const> const & phaseMinVolumeFraction,
                               arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
                               arraySlice1d<real64  const> const & phaseEntryPressure,
-                              real64 const & capPressureEpsilon,
-                              real64 const & volFracScale );
+                              real64 const capPressureEpsilon,
+                              real64 const volFracScale );
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
@@ -94,13 +94,13 @@ public:
 protected:
   virtual void PostProcessInput() override;
   
-  inline static void EvaluateBrooksCoreyFunction( real64 const & scaledWettingVolFrac,
-                                                  real64 const & dScaledWettingPhaseVolFrac_dVolFrac,
+  inline static void EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
+                                                  real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                                   real64 & phaseCapPressure,
                                                   real64 & dPhaseCapPressure_dVolFrac,
-                                                  real64 const & exponentInv,
-                                                  real64 const & entryPressure,
-                                                  real64 const & eps );
+                                                  real64 const exponentInv,
+                                                  real64 const entryPressure,
+                                                  real64 const eps );
   
   array1d<real64> m_phaseMinVolumeFraction;
   array1d<real64> m_phaseCapPressureExponentInv;
@@ -120,8 +120,8 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
                                        arraySlice1d<real64  const> const & phaseMinVolumeFraction,
                                        arraySlice1d<real64  const> const & phaseCapPressureExponentInv,
                                        arraySlice1d<real64  const> const & phaseEntryPressure,
-                                       real64 const & capPressureEpsilon, 
-                                       real64 const & volFracScale )
+                                       real64 const capPressureEpsilon, 
+                                       real64 const volFracScale )
 {
 
   for (localIndex ip = 0; ip < NP; ++ip)
@@ -186,13 +186,13 @@ BrooksCoreyCapillaryPressure::Compute( localIndex const NP,
 
 
 inline void
-BrooksCoreyCapillaryPressure::EvaluateBrooksCoreyFunction( real64 const & scaledWettingVolFrac,
-                                                           real64 const & dScaledWettingPhaseVolFrac_dVolFrac,
+BrooksCoreyCapillaryPressure::EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
+                                                           real64 const dScaledWettingPhaseVolFrac_dVolFrac,
                                                            real64 & phaseCapPressure,
                                                            real64 & dPhaseCapPressure_dVolFrac,
-                                                           real64 const & exponentInv,
-                                                           real64 const & entryPressure,
-                                                           real64 const & eps )
+                                                           real64 const exponentInv,
+                                                           real64 const entryPressure,
+                                                           real64 const eps )
 {
   real64 const exponent = 1 / exponentInv; // div by 0 taken care of by initialization check
   
