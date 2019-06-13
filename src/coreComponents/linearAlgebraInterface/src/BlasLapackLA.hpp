@@ -40,6 +40,18 @@ class BlasLapackLA
 public:
 
   /**
+    * \enum  RandomNumberDistribution
+    * \brief This enum class specifies the type of distribution for
+    *        generating random real numbers.
+    */
+  enum class RandomNumberDistribution : int
+  {
+    UNIFORM_01 = 1,   /**< uniform distribution (0,1); */
+    UNIFORM_m1p1 = 2, /**< uniform distribution (-1,1); */
+    NORMAL_01 = 3     /**< normal distribution (0,1); */
+  };
+
+  /**
    * @brief Returns the 1-norm of the vector.
    *
    * @param [in] X GEOSX array1d.
@@ -402,25 +414,19 @@ public:
                           array2d<real64> & B ) ;
 
   /**
-   * @brief Sets vector entries to random real numbers.
+   * @brief Set the random number generator seed.
    *
-   * Sets vector entries to random real numbers from a uniform or normal
-   * distribution.
-   *
-   * @param [in,out] ISEED Integer array, dimension (4).
-   *                       On entry, the seed of the random number generator;
-   *                       the array elements must be between 0 and 4095, and
-   *                       ISEED(4) must be odd. On exit, the seed is updated.
-   * @param [out]    X     GEOSX array1d.
-   * @param [in]     IDIST Optional integer specifying the distribution of
-   *                       the random numbers:
-   *                       \li \c = 1: uniform distribution (0,1);
-   *                       \li \c = 2: uniform distribution (-1,1);
-   *                       \li \c = 3: normal distribution (0,1).
+   * @param [in] seed GEOSX array1d, dimension (4). The elements must be
+   *             between 0 and 4095, and seed(4) must be odd.
    */
-  static void vectorRand( array1d<int> & ISEED,
-                          array1d<real64> & X,
-                          int const IDIST=1) ;
+  static void setRandomNumberGeneratorSeed( array1d<int> const & seed);
+
+  /**
+   * @brief Get the random number generator seed.
+   *
+   * @param [out] seed GEOSX array1d, dimension (4).
+   */
+  static void getRandomNumberGeneratorSeed( array1d<int> & seed);
 
   /**
    * @brief Sets vector entries to random real numbers.
@@ -429,35 +435,11 @@ public:
    * distribution without specifying the seed of the random number generator.
    *
    * @param [out]    X     GEOSX array1d.
-   * @param [in]     IDIST Optional integer specifying the distribution of
-   *                       the random numbers:
-   *                       \li \c = 1: uniform distribution (0,1);
-   *                       \li \c = 2: uniform distribution (-1,1);
-   *                       \li \c = 3: normal distribution (0,1).
+   * @param [in]     idist Optional RandomNumberDistribution enum value
+   *                       specifying the distribution of the random numbers.
    */
   static void vectorRand( array1d<real64> & X,
-                          int const IDIST=1) ;
-
-  /**
-   * @brief Sets matrix entries to random real numbers.
-   *
-   * Sets matrix entries to random real numbers from a uniform or normal
-   * distribution.
-   *
-   * @param [in,out] ISEED Integer array, dimension (4).
-   *                       On entry, the seed of the random number generator;
-   *                       the array elements must be between 0 and 4095, and
-   *                       ISEED(4) must be odd. On exit, the seed is updated.
-   * @param [out]    A     GEOSX array2d.
-   * @param [in]     IDIST Optional integer specifying the distribution of
-   *                       the random numbers:
-   *                       \li \c = 1: uniform distribution in interval (0,1);
-   *                       \li \c = 2: uniform distribution in interval (-1,1);
-   *                       \li \c = 3: normal distribution in interval (0,1).
-   */
-  static void matrixRand( array1d<int> & ISEED,
-                          array2d<real64> & A,
-                          int const IDIST=1) ;
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
 
   /**
    * @brief Sets matrix entries to random real numbers.
@@ -466,14 +448,11 @@ public:
    * distribution without specifying the seed of the random number generator.
    *
    * @param [out]    X     GEOSX array1d.
-   * @param [in]     IDIST Optional integer specifying the distribution of
-   *                       the random numbers:
-   *                       \li \c = 1: uniform distribution in interval (0,1);
-   *                       \li \c = 2: uniform distribution in interval (-1,1);
-   *                       \li \c = 3: normal distribution in interval (0,1).
+   * @param [in]     idist Optional RandomNumberDistribution enum value
+   *                       specifying the distribution of the random numbers.
    */
   static void matrixRand( array2d<real64> & A,
-                          int const IDIST=1) ;
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
 
 };
 

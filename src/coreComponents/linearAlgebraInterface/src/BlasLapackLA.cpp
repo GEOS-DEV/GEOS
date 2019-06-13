@@ -35,23 +35,13 @@ extern "C"
 namespace geosx
 {
 
+// Random device and random number generator seed integer array used
+// to populate a vector/matrix with random coefficients
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_int_distribution<int> dis(0, 4095);
 std::uniform_int_distribution<int> disOdd(0, 2047);
 int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
-  
-enum class Distribution { UNIFORM_01 = 1, UNIFORM_m1p1 = 2, NORMAL_01 = 3 };
-
-  
-void BlasLapackLA::setSeed( array1d<int> seed)
-{
-  //error checking
-  for (int i = 0; i < 4; ++i)
-  {
-    ISEED[i] = seed[i];
-  }
-}
   
 real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
@@ -710,42 +700,45 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
   return;
 }
 
-// void BlasLapackLA::vectorRand( array1d<int> & ISEED,
-//                                array1d<real64> & X,
-//                                int const IDIST)
-// {
-//   GEOS_ASSERT_MSG( ISEED.size() >= 4,
-//                    "Seed array must have size at least four");
+void BlasLapackLA::setRandomNumberGeneratorSeed( array1d<int> const & seed)
+{
+  // Error checking
+  GEOS_ASSERT_MSG( seed.size() >= 4,
+                   "Seed array must have size at least four");
 
-//   GEOS_ASSERT_MSG( 0 <= ISEED(0) && ISEED(0) <= 4095 &&
-//                    0 <= ISEED(1) && ISEED(1) <= 4095 &&
-//                    0 <= ISEED(2) && ISEED(2) <= 4095 &&
-//                    0 <= ISEED(3) && ISEED(3) <= 4095,
-//                    "Seed array integer entries must be in interval [0,4095]");
+  GEOS_ASSERT_MSG( 0 <= seed(0) && seed(0) <= 4095 &&
+                   0 <= seed(1) && seed(1) <= 4095 &&
+                   0 <= seed(2) && seed(2) <= 4095 &&
+                   0 <= seed(3) && seed(3) <= 4095,
+                  "Seed array integer entries must be in interval [0,4095]");
 
-//   GEOS_ASSERT_MSG( ISEED(3) % 2 > 0,
-//                    "Seed array 4th element must be odd");
+  GEOS_ASSERT_MSG( seed(3) % 2 > 0,
+                   "Seed array 4th element must be odd");
 
-//   GEOS_ASSERT_MSG( 1 <= IDIST && IDIST <= 3,
-//                    "Integer IDIST must be in the range [1,3]");
+  for (int i = 0; i < 4; ++i)
+  {
+    ISEED[i] = seed[i];
+  }
+}
 
-//   int const N = static_cast<int>( X.size() );
+void BlasLapackLA::getRandomNumberGeneratorSeed( array1d<int> & seed)
+{
+  // Error checking
+  GEOS_ASSERT_MSG( seed.size() >= 4,
+                   "Seed array must have size at least four");
 
-//   GEOS_ASSERT_MSG( N > 0,
-//                    "The vector cannot be empty");
-
-//   dlarnv_( &IDIST,
-//            ISEED.data(),
-//            &N,
-//            X.data());
-
-//   return;
-// }
+  for (int i = 0; i < 4; ++i)
+  {
+    seed[i] = ISEED[i];
+  }
+}
 
 void BlasLapackLA::vectorRand( array1d<real64> & X,
-                               int const IDIST)
+                               RandomNumberDistribution const & idist)
 {
- int const N = static_cast<int>( X.size() );
+
+  int IDIST = static_cast<int>(idist);
+  int const N = static_cast<int>( X.size() );
 
   GEOS_ASSERT_MSG( N > 0,
                    "The vector cannot be empty");
@@ -758,46 +751,9 @@ void BlasLapackLA::vectorRand( array1d<real64> & X,
   return;
 }
 
-// void BlasLapackLA::matrixRand( array1d<int> & ISEED,
-//                                array2d<real64> & A,
-//                                int const IDIST)
-// {
-//   GEOS_ASSERT_MSG( ISEED.size() >= 4,
-//                    "Seed array must have size at least four");
-
-//   GEOS_ASSERT_MSG( 0 <= ISEED(0) && ISEED(0) <= 4095 &&
-//                    0 <= ISEED(1) && ISEED(1) <= 4095 &&
-//                    0 <= ISEED(2) && ISEED(2) <= 4095 &&
-//                    0 <= ISEED(3) && ISEED(3) <= 4095,
-//                    "Seed array integer entries must be in the range [0,4095]");
-
-//   GEOS_ASSERT_MSG( ISEED(3) % 2 > 0,
-//                    "Seed array 4th element must be odd");
-
-//   GEOS_ASSERT_MSG( 1 <= IDIST && IDIST <= 3,
-//                    "Integer IDIST must be in interval [1,3]");
-
-//   int const NN = static_cast<int>( A.size() );
-
-//   GEOS_ASSERT_MSG( NN > 0,
-//                    "The matrix cannot be empty");
-
-//   dlarnv_( &IDIST,
-//            ISEED.data(),
-//            &NN,
-//            A.data());
-
-//   return;
-// }
-
 void BlasLapackLA::matrixRand( array2d<real64> & A,
-                               Distribution idist)
+                               RandomNumberDistribution const & idist)
 {
-//   std::random_device rd;
-//   std::mt19937 gen(rd());
-//   std::uniform_int_distribution<int> dis(0, 4095);
-//   std::uniform_int_distribution<int> disOdd(0, 2047);
-//   int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
 
   int IDIST = static_cast<int>(idist);
   int const NN = static_cast<int>( A.size() );
