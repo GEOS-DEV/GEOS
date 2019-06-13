@@ -2,8 +2,13 @@
 # Specify list of tests
 #
 
+set( gtest_geosx_tests
+     testSinglePhaseFlowKernels.cpp
+   )
+
 if(ENABLE_PVTPackage)
     set( gtest_geosx_tests
+         ${gtest_geosx_tests}
          testCompMultiphaseFlow.cpp
          testCompMultiphaseFlowCapPressure.cpp
        )
