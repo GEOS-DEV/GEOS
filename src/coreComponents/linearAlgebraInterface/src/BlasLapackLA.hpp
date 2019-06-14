@@ -29,39 +29,53 @@
 namespace geosx
 {
 
+/**
+ * \class BlasLapackLA
+ * \brief This class contains a collection of BLAS and LAPACK linear
+ *        algebra operations for GEOSX array1d and array2d
+ */
 class BlasLapackLA
 {
-  /**
-   * \class BlasLapackLA
-   * \brief This class contains a collection of BLAS and LAPACK linear
-   *        algebra operations (dense) for GEOSX array1d and array2d
-   */
 
 public:
 
-  //----------------------------------------------------------------------------
-  //! @name Mathematical methods
-  //@{
+  /**
+    * \enum  RandomNumberDistribution
+    * \brief This enum class specifies the type of distribution for
+    *        generating random real numbers.
+    */
+  enum class RandomNumberDistribution : int
+  {
+    UNIFORM_01 = 1,   /**< uniform distribution (0,1); */
+    UNIFORM_m1p1 = 2, /**< uniform distribution (-1,1); */
+    NORMAL_01 = 3     /**< normal distribution (0,1); */
+  };
 
   /**
    * @brief Returns the 1-norm of the vector.
+   *
+   * @param [in] X GEOSX array1d.
    */
   static real64 vectorNorm1( array1d<real64> const & X ) ;
 
   /**
    * @brief Returns the two norm of the vector.
+   *
+   * @param [in] X GEOSX array1d.
    */
   static real64 vectorNorm2( array1d<real64> const & X ) ;
 
   /**
-   * @brief Infinity-norm of the vector.
+   * @brief Returns the infinity-norm of the vector.
+   *
+   * @param [in] X GEOSX array1d.
    */
   static real64 vectorNormInf( array1d<real64> const & X ) ;
 
   /**
-   * @brief Computes matrix determinant.
+   * @brief Returns the determinant of a square matrix.
    *
-   * The matrix must be square.
+   * @param [in] A GEOSX array2d.
    *
    * @note
    * This function is hardcoded for square matrices up to order four.
@@ -76,6 +90,8 @@ public:
   /**
    * @brief Returns the infinity norm of the matrix.
    *
+   * @param [in] A GEOSX array2d.
+   *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
    * routines are using a column major ordering (Fortran), the infinity
@@ -86,6 +102,8 @@ public:
 
   /**
    * @brief Returns the one norm of the matrix.
+   *
+   * @param [in] A GEOSX array2d.
    *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
@@ -98,6 +116,8 @@ public:
   /**
    * @brief Returns the Frobenius norm of the matrix.
    *
+   * @param [in] A GEOSX array2d.
+   *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
    * routines are using a column major ordering (Fortran), the one norm
@@ -108,21 +128,17 @@ public:
 
   /**
    * @brief Vector-Vector sum;
-   * <tt>y</tt> = alpha*<tt>x</tt> + <tt>y</tt>.
+   * \p Y = \p alpha*\p X + \p Y.
    *
-   * Computes (alpha*<tt>x</tt> + <tt>y</tt>) and overwrites the result on
-   * <tt>y</tt>, with optional scaling.
+   * Computes (\p alpha*\p X + \p Y) and overwrites the result on
+   * \p Y, with optional scaling.
    *
-   * \param IN
-   * <tt>x</tt> - GEOSX array1d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>Vec</tt>.
-   *
-   * \param INOUT
-   * <tt>y</tt> - GEOSX array1d.
+   * @param [in]     X     GEOSX array1d.
+   * @param [in,out] Y     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with \p X.
    *
    * @warning
-   * Assumes that <tt>x</tt> and <tt>y</tt> have the same size.
+   * Assumes that \p X and \p Y have the same size.
    */
   static void vectorVectorAdd( array1d<real64> const & X,
                                array1d<real64> & Y,
@@ -130,21 +146,17 @@ public:
 
   /**
    * @brief Matrix-Matrix sum;
-   * <tt>B</tt> = alpha*<tt>A</tt> + <tt>B</tt>.
+   * \p B = \p alpha*\p A + \p B.
    *
-   * Computes (alpha*<tt>A</tt> + <tt>B</tt>) and overwrites the result on
-   * <tt>B</tt>, with optional scaling.
+   * Computes (\p alpha*\p A + \p B) and overwrites the result on p B, with
+   * optional scaling.
    *
-   * \param IN
-   * <tt>A</tt> -  GEOSX array2d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A</tt>.
-   *
-   * \param INout
-   * <tt>B</tt> -  GEOSX array2d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in,out] B     GEOSX array2d.
+   * @param [in]     alpha Optional scalar to multiply with \p A.
    *
    * @warning
-   * Assumes that <tt>A</tt> and <tt>B</tt> have the same size.
+   * Assumes that \p A and \p B have the same size.
    */
   static void matrixMatrixAdd( array2d<real64> const & A,
                                array2d<real64> & B,
@@ -152,31 +164,29 @@ public:
 
   /**
    * @brief In-place scalar-vector product;
-   * <tt>x</tt> = alpha*<tt>x<tt>
+   * \p X = \p alpha*\p X.
    *
-   * \param IN
-   * scalarThis - Scalar to multiply with \a this.
+   * @param [in]     alpha Scalar to multiply with \p X.
+   * @param [in,out] X     GEOSX array1d.
    */
-  static void vectorScale( array1d<real64> & X,
-                           real64 alpha ) ;
+  static void vectorScale( real64 alpha,
+                           array1d<real64> & X ) ;
 
   /**
    * @brief In-place scalar-matrix product;
-   * <tt>A</tt> = alpha*<tt>A<tt>
+   * \p A = \p alpha*\p A.
    *
-   * \param IN
-   * alpha - Scalar to multiply with <tt>A</tt>.
+   * @param [in]     alpha Scalar to multiply with <tt>A</tt>.
+   * @param [in,out] A     GEOSX array2d.
    */
-  static void matrixScale( array2d<real64> & A,
-                           real64 alpha) ;
+  static void matrixScale( real64 alpha,
+                           array2d<real64> & A ) ;
 
   /**
-   * @brief Dot product of two vectors.
+   * @brief Returns the dot product of two vectors.
    *
-   * \param IN
-   * <tt>x</tt> - GEOSX array1d.
-   * \param IN
-   * <tt>y</tt> - GEOSX array1d.
+   * @param [in] X GEOSX array1d.
+   * @param [in] Y GEOSX array1d.
    *
    */
   static real64 vectorDot( array1d<real64> const & X,
@@ -184,23 +194,18 @@ public:
 
   /**
    * @brief Matrix-Vector product;
-   * <tt>Y</tt> = alpha*<tt>A</tt>*<tt>X</tt> + beta*<tt>Y<tt>.
+   * \p Y = \p alpha*\p A*\p X + \p beta*\p Y.
    *
    * Computes matrix-vector product with optional scaling and accumulation.
    *
-   * \param IN
-   * <tt>X</tt> - GEOSX array1d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A</tt>*<tt>X</tt>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>Y</tt> - GEOSX array1d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     X     GEOSX array1d.
+   * @param [in,out] Y     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with \p A*\p X.
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>X</tt> and <tt>X</tt> have compatible sizes
-   * with <tt>A<tt>.
+   * Assumes that \p X and \p Y have compatible sizes with \p A.
    */
   static void matrixVectorMultiply(array2d<real64> const & A,
                                    array1d<real64> const & X,
@@ -210,23 +215,20 @@ public:
 
   /**
    * @brief transpose(Matrix)-Vector product;
-   * <tt>Y</tt> = alpha*<tt>A</tt><sup>T</sup>*<tt>X</tt> + beta*<tt>Y<tt>.
+   * \p Y = \p alpha*\p transpose(A)*\p X + \p beta*\p Y.
    *
-   * Computes transpose(matrix)-vector product with optional scaling and accumulation.
+   * Computes transpose(matrix)-vector product with optional scaling and
+   * accumulation.
    *
-   * \param IN
-   * <tt>X</tt> - GEOSX array1d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A</tt><sup>T</sup>*<tt>X</tt>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>Y</tt> - GEOSX array1d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     X     GEOSX array1d.
+   * @param [in,out] Y     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with
+   *                       \p transpose(A)*\p X.
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>X</tt> and <tt>X</tt> have compatible sizes
-   * with <tt>A<tt><sup>T</sup>.
+   * Assumes that \p X and \p Y have compatible sizes with \p transpose(A).
    */
   static void matrixTVectorMultiply(array2d<real64> const & A,
                                     array1d<real64> const & X,
@@ -236,25 +238,19 @@ public:
 
   /**
    * @brief Matrix-Matrix product;
-   * * <tt>C</tt> = alpha*<tt>A<tt>*<tt>B<tt> + beta**<tt>C<tt>.
+   * \p C = \p alpha*\p A*\p B + \p beta*\p C.
    *
    * Computes matrix-matrix product with optional scaling and accumulation.
    *
-   * \param IN
-   * <tt>A<tt> - Source GEOSX array2d.
-   * \param IN
-   * <tt>B<tt> - Source GEOSX array2d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A<tt>*<tt>B<tt>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>C</tt> - Destination GEOSX array2d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     B     GEOSX array2d.
+   * @param [in,out] C     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with \p A*\p B.
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>A<tt> and <tt>B<tt> have compatible sizes and that
-   * <tt>C<tt> already has the right size.
+   * Assumes that \p A and \p B have compatible sizes and that \p C already
+   * has the right size.
    *
    */
   static void matrixMatrixMultiply( array2d<real64> const & A,
@@ -265,25 +261,21 @@ public:
 
   /**
    * @brief transpose(Matrix)-Matrix product;
-   * * <tt>C</tt> = alpha*<tt>A<tt><sup>T</sup>*<tt>B<tt> + beta**<tt>C<tt>.
+   * \p C = \p alpha*\p transpose(A)*\p B + \p beta*\p C.
    *
-   * Computes transpose(matrix)-matrix product with optional scaling and accumulation.
+   * Computes transpose(matrix)-matrix product with optional scaling
+   * and accumulation.
    *
-   * \param IN
-   * <tt>A<tt> - Source GEOSX array2d.
-   * \param IN
-   * <tt>B<tt> - Source GEOSX array2d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A<tt><sup>T</sup>*<tt>B<tt>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>C</tt> - Destination GEOSX array2d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     B     GEOSX array2d.
+   * @param [in,out] C     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with
+   *                       \p transpose(A)*\p B.
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>A<tt><sup>T</sup> and <tt>B<tt> have compatible sizes and that
-   * <tt>C<tt> already has the right size.
+   * Assumes that \p transpose(A) and \p B have compatible sizes and that
+   * \p C already has the right size.
    *
    */
   static void matrixTMatrixMultiply( array2d<real64> const & A,
@@ -294,25 +286,21 @@ public:
 
   /**
    * @brief Matrix-transpose(Matrix) product;
-   * * <tt>C</tt> = alpha*<tt>A<tt>*<tt>B<tt><sup>T</sup> + beta**<tt>C<tt>.
+   * \p C = \p alpha*\p A*\p transpose(B) + \p beta*\p C.
    *
-   * Computes matrix-transpose(matrix) product with optional scaling and accumulation.
+   * Computes matrix-transpose(matrix) product with optional scaling
+   * and accumulation.
    *
-   * \param IN
-   * <tt>A<tt> - Source GEOSX array2d.
-   * \param IN
-   * <tt>B<tt> - Source GEOSX array2d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A<tt>*<tt>B<tt><sup>T</sup>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>C</tt> - Destination GEOSX array2d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     B     GEOSX array2d.
+   * @param [in,out] C     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with
+   *                       \p A*transpose(B).
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>A<tt> and <tt>B<tt><sup>T</sup> have compatible sizes and that
-   * <tt>C<tt> already has the right size.
+   * Assumes that \p A and \p transpose(B) have compatible sizes and that
+   * \p C already has the right size.
    *
    */
   static void matrixMatrixTMultiply( array2d<real64> const & A,
@@ -323,27 +311,21 @@ public:
 
   /**
    * @brief transpose(Matrix)-transpose(Matrix) product;
-   * * <tt>C</tt> = alpha*<tt>A<tt><sup>T</sup>*<tt>B<tt><sup>T</sup>
-   *                + beta**<tt>C<tt>.
+   * \p C = \p alpha*\p transpose(A)*\p transpose(B) + \p beta*\p C.
    *
    * Computes transpose(matrix)-transpose(matrix) product with optional
    * scaling and accumulation.
    *
-   * \param IN
-   * <tt>A<tt> - Source GEOSX array2d.
-   * \param IN
-   * <tt>B<tt> - Source GEOSX array2d.
-   * \param [IN]
-   * alpha - Optional scalar to multiply with <tt>A<tt><sup>T</sup>*<tt>B<tt><sup>T</sup>.
-   * \param [IN]
-   * beta - Optional parameter to control the accumulation.
-   *
-   * \param INOUT
-   * <tt>C</tt> - Destination GEOSX array2d.
+   * @param [in]     A     GEOSX array2d.
+   * @param [in]     B     GEOSX array2d.
+   * @param [in,out] C     GEOSX array1d.
+   * @param [in]     alpha Optional scalar to multiply with
+   *                       \p tranpose(A)*transpose(B).
+   * @param [in]     beta  Optional parameter to control the accumulation.
    *
    * @warning
-   * Assumes that <tt>A<tt><sup>T</sup> and <tt>B<tt><sup>T</sup> have compatible sizes and that
-   * <tt>C<tt> already has the right size.
+   * Assumes that \p tranpose(A) and \p transpose(B) have compatible sizes
+   * and that \p C already has the right size.
    *
    */
   static void matrixTMatrixTMultiply( array2d<real64> const & A,
@@ -353,23 +335,21 @@ public:
                                       real64 const beta=0.) ;
 
   /**
-   * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
+   * @brief Computes the inverse matrix;
+   * \p Ainv = \p inverse(A).
    *
-   * Assign the inverse of the given square matrix <tt>A<tt> to <tt>Ainv<tt>.
+   * Computes the inverse of the square matrix \p A and stores it in \p Ainv.
    *
-   * \param IN
-   * <tt>A</tt> - GEOSX array2d.
-   *
-   * \param INOUT
-   * <tt>Ainv</tt> - GEOSX array2d.
+   * @param [in]  A    GEOSX array2d.
+   * @param [out] Ainv GEOSX array2d.
    *
    * @warning
-   * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
+   * Assumes \p Ainv already has the same size as \p A.
    *
    * @note This function is hardcoded for matrices up to order three.
    * For dimensions larger than three, the function calls LAPACK
    * functions DGETRF and DGETRI. Because of the row major
-   * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
+   * ordering used by GEOSX array2d, the inverse of \p A is practically
    * computed as the transpose matrix of the transpose matrix inverse using
    * lapack operation based on column-major ordering. This removes the need
    * for any copy/transposition that would be required operating with the
@@ -379,27 +359,23 @@ public:
                              array2d<real64> & Ainv ) ;
 
   /**
-   * @brief Compute inverse; <tt>Ainv<tt> = <tt>A</tt><sup>-1</sup>.
+   * @brief Computes the inverse matrix;
+   * \p Ainv = \p inverse(A).
    *
-   * Assign the inverse of the given matrix <tt>A<tt> to <tt>Ainv<tt> and
-   * return also the determinant of <tt>A<tt>.
+   * Computes the inverse of the square matrix \p A and stores it in \p Ainv,
+   * and also returns the determinant of \p A.
    *
-   * \param IN
-   * <tt>A</tt> - GEOSX array2d.
-   *
-   * \param INOUT
-   * <tt>Ainv</tt> - GEOSX array2d.
-   *
-   * \param INOUT
-   * <tt>detA</tt> - Determinant of input matrix <tt>A</tt>
+   * @param [in]  A    GEOSX array2d.
+   * @param [out] Ainv GEOSX array2d.
+   * @param [out] detA Determinant of matrix \p A.
    *
    * @warning
-   * Assumes <tt>Ainv<tt> already has the same size as <tt>A</tt>.
+   * Assumes \p Ainv already has the same size as \p A.
    *
    * @note This function is hardcoded for matrices up to order three.
    * For dimensions larger than three, the function calls LAPACK
    * functions DGETRF and DGETRI. Because of the row major
-   * ordering used by GEOSX array2d, the inverse of <tt>A<tt> is practically
+   * ordering used by GEOSX array2d, the inverse of \p A is practically
    * computed as the transpose matrix of the transpose matrix inverse using
    * lapack operation based on column-major ordering. This removes the need
    * for any copy/transposition that would be required operating with the
@@ -411,54 +387,72 @@ public:
 
   /**
    * @brief Vector copy;
-   * <tt>y</tt> = <tt>x<tt>
+   * \p Y = \p X.
    *
-   * \param IN
-   * <tt>x</tt> - GEOSX array1d.
-   *
-   * \param INOUT
-   * <tt>y</tt> - GEOSX array1d.
+   * @param [in]  X GEOSX array1d.
+   * @param [out] Y GEOSX array1d.
    *
    * @warning
-   * Assumes that <tt>x</tt> and <tt>y</tt> have the same size.
+   * Assumes that \p X and \p Y have the same size.
    *
    */
   static void vectorCopy( array1d<real64> const & X,
                           array1d<real64> & Y ) ;
 
   /**
-   * @brief Vector copy;
-   * <tt>B</tt> = <tt>A<tt>
+   * @brief Matrix copy;
+   * \p B = \p A.
    *
-   * \param IN
-   * <tt>A</tt> - GEOSX array2d.
-   *
-   * \param INOUT
-   * <tt>B</tt> - GEOSX array2d.
+   * @param [in]  A GEOSX array2d.
+   * @param [out] B GEOSX array2d.
    *
    * @warning
-   * Assumes that <tt>A</tt> and <tt>B</tt> have the same size.
+   * Assumes that \p A and \p B have the same size.
    *
    */
   static void matrixCopy( array2d<real64> const & A,
                           array2d<real64> & B ) ;
-  //@}
-
-  //----------------------------------------------------------------------------
-  //! @name I/O methods
-  //@{
 
   /**
-   * @brief Print service method for GEOSX array1d.
+   * @brief Set the random number generator seed.
+   *
+   * @param [in] seed GEOSX array1d, dimension (4). The elements must be
+   *             between 0 and 4095, and seed(4) must be odd.
    */
-  static void printVector(array1d<real64> const & X) ;
+  static void setRandomNumberGeneratorSeed( array1d<int> const & seed);
 
   /**
-   * @brief Print service method for GEOSX array2d.
+   * @brief Get the random number generator seed.
+   *
+   * @param [out] seed GEOSX array1d, dimension (4).
    */
-  static void printMatrix(array2d<real64> const & A) ;
+  static void getRandomNumberGeneratorSeed( array1d<int> & seed);
 
-  //@}
+  /**
+   * @brief Sets vector entries to random real numbers.
+   *
+   * Sets vector entries to random real numbers from a uniform or normal
+   * distribution without specifying the seed of the random number generator.
+   *
+   * @param [out]    X     GEOSX array1d.
+   * @param [in]     idist Optional RandomNumberDistribution enum value
+   *                       specifying the distribution of the random numbers.
+   */
+  static void vectorRand( array1d<real64> & X,
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
+
+  /**
+   * @brief Sets matrix entries to random real numbers.
+   *
+   * Sets matrix entries to random real numbers from a uniform or normal
+   * distribution without specifying the seed of the random number generator.
+   *
+   * @param [out]    X     GEOSX array1d.
+   * @param [in]     idist Optional RandomNumberDistribution enum value
+   *                       specifying the distribution of the random numbers.
+   */
+  static void matrixRand( array2d<real64> & A,
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
 
 };
 

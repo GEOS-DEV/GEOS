@@ -17,7 +17,7 @@ set( linearAlgebraInterface_headers
      HypreInterface.hpp 
      LinearSolverParameters.hpp
      BlasLapackLA.hpp
-     BlasLapackFunctions.hpp)
+     BlasLapackFunctions.h)
 
 #
 # Specify all sources
