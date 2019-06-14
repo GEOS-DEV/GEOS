@@ -51,7 +51,7 @@ endif()
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
-                 DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
+                 DEPENDS_ON            dataRepository systemSolverInterface linearAlgebraInterface ${externalComponentDeps}
                )
                
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
