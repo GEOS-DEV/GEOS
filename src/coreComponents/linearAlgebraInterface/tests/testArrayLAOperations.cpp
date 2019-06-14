@@ -20,611 +20,1014 @@
  * @file testDenseLAOperations.cpp
  */
 
-#include <gtest/gtest.h>
-#include <random>
+#include "gtest/gtest.h"
+#include <numeric>
 
 #include "common/DataTypes.hpp"
 #include "common/initialization.hpp"
 
-#include "BlasLapackLA.hpp"
+#include <BlasLapackLA.hpp>
 
 #ifdef GEOSX_USE_OPENMP
 #include <omp.h>
 #endif
 
-/**
- * \file testDenseLAOperations.cpp
- * \brief This test file is part of the ctest suite and tests Lapack- and
- * MAGMA-based dense linear algebra operations.
- */
-
 using namespace geosx;
 
-// Generate random vector
-void vectorRand( array1d<real64> & x,
-                 std::uniform_real_distribution<real64> & distribution,
-                 std::default_random_engine & generator )
-{
-  for( int i = 0 ; i < x.size() ; ++i )
-  {
-    x( i ) = distribution( generator );
-  }
-  return;
-}
+using INDEX_TYPE = std::ptrdiff_t;
 
-// Generate random matrix
-void matrixRand( array2d<real64> & A,
-                 std::uniform_real_distribution<real64> & distribution,
-                 std::default_random_engine & generator )
-{
-  for( int i = 0 ; i < A.size( 0 ) ; ++i )
-  {
-    for( int j = 0 ; j < A.size( 1 ) ; ++j )
-    {
-      A( i, j ) = distribution( generator );
-    }
-  }
-  return;
-}
+static real64 const machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+static real64 const pi = std::atan(1.0)*4.0;
 
-static real64 machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
-
-/*! @name Ctest tests.
- * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
- */
-
-/*! @name Utility functions.
- * @brief Functions used to construct useful matrices in the test files.
- */
-//@{
-/**
- * @brief Compute an identity matrix
- *
- * \param comm MPI communicator.
- * \param N global size of the square identity matrix.
- */
-
-// BEGIN_RST_NARRATIVE testDenseLAOperations.rst
-// ==============================
-// Test Linear Algebra Operations
-// ==============================
-// In these 3 functions we test the linear algebra operations, the native solvers from the
-// libraries as well as the re-implemented GEOSX solvers for CG and BiCGSTAB. We run these
-// on both monolithic and block matrices.
-// -------------------------------------
-// Test libraries operations and solvers
-// -------------------------------------
-// We start by testing the linear algebra operations. We fill two matrices (one will be a
-// preconditioner) and make sure the sparse storage is behaving properly. We then test the
-// iterative and direct solvers available.
-//------------------------------
-// Test matrix constructor
-//------------------------------
 template<typename LAI>
-void testArray1dLA()
+void vector_norm1_test()
 {
+  INDEX_TYPE N = 24;
+  array1d<real64> vec(N);
 
-  // Repeat the following step for vectors of increasing size:
-  //
-  // a. Resize vectors v1, v2, and v3 to be of equal size
-  //    (not initialized to 0)
-  // b. Fill v1 with random coefficient
-  // c. Initialize v2 to have zero coefficients
-  // d. Compute v2 = v2 + alfa*v1
-  // e. Compute v1 = alfa*v1
-  // f. Copy v1 in v3
-  // g. Check that (norm(v2, type) == norm(v3, type)), type = \{1-norm, 2-norm, Infinity-norm)
-  // h. check that ( (norm(v2, norm-2) - sqrt(v2_dot_v2)) / norm(v2, norm-2)) < epsilon
+  // Populate vector with random coefficients
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
-  array1d<real64> v1, v2, v3;
-  std::default_random_engine generator;
-  std::uniform_real_distribution<real64> distribution( 0.0, 1.0 );
-  real64 alfa = distribution( generator );
-
-  for( int iSize = 1 ; iSize <= 10 ; ++iSize )
+  // Compute norm1
+  real64 norm1 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < vec.size() ; ++i )
   {
-    // a.
-    v1.resize( iSize );
-    v2.resize( iSize );
-    v3.resize( iSize );
-
-    // b.
-    for( int i = 0 ; i < iSize ; ++i )
-    {
-      v1[i] = distribution( generator );
-    }
-
-    // c.
-    v2 = 0.0;
-
-    // d.
-    LAI::vectorVectorAdd( v1, v2, alfa );
-
-    // e.
-    LAI::vectorScale( v1, alfa );
-
-    // f.
-    LAI::vectorCopy( v1, v3 );
-
-    // g.
-    EXPECT_NEAR( LAI::vectorNorm1( v2 ),
-                 LAI::vectorNorm1( v3 ),
-                 machinePrecision * LAI::vectorNorm1( v2 ) );
-    EXPECT_NEAR( LAI::vectorNorm2( v2 ),
-                 LAI::vectorNorm2( v3 ),
-                 machinePrecision * LAI::vectorNorm2( v2 ) );
-    EXPECT_NEAR( LAI::vectorNormInf( v2 ),
-                 LAI::vectorNormInf( v3 ),
-                 machinePrecision * LAI::vectorNormInf( v2 ) );
-
-    // i.
-    real64 beta = LAI::vectorDot( v2, v2 );
-    EXPECT_NEAR( std::sqrt( LAI::vectorDot( v2, v2 ) ),
-                 LAI::vectorNorm2( v2 ),
-                 machinePrecision * LAI::vectorNorm2( v2 ) );
-
+    norm1 += std::abs(vec(i));
   }
 
+  // Check
+  EXPECT_NEAR( norm1,
+               LAI::vectorNorm1( vec ),
+               norm1 * machinePrecision );
 }
 
 template<typename LAI>
-void testArray2dLA()
+void vector_norm2_test()
 {
+  INDEX_TYPE N = 24;
+  array1d<real64> vec(N);
 
-  array2d<real64> A, B, C, D, LHS, RHS;
-  std::default_random_engine generator;
-  std::uniform_real_distribution<real64> distribution( 0.0, 1.0 );
-  real64 alfa = distribution( generator );
-  real64 beta = distribution( generator );
+  // Populate vector with random coefficients
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
-  localIndex MA, NA, MB, NB, ND, K;
-
-  // Test 2: repeat the following step for vectors of increasing size:
-  //
-  // a. compute LHS = ( alfa*A*B + beta*C ) * D
-  // b. compute RHS = alfa*A*(B*D) + beta*C*D
-  // c. check that (norm(LHS) == norm(RHS, type)), with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
-
-  MA = 10;
-  NB = 10;
-  ND = 10;
-  K = 20;
-
-  for( localIndex mA = 1 ; mA <= MA ; ++mA )
+  // Compute norm2
+  real64 norm2 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
   {
-    for( localIndex nB = 1 ; nB <= NB ; ++nB )
-    {
-      for( localIndex nD = 1 ; nD <= ND ; ++nD )
-      {
-        for( localIndex k = 1 ; k <= K ; ++k )
-        {
-          // Resize matrix operators
-          A.resize( mA, k );
-          B.resize( k, nB );
-          C.resize( A.size( 0 ), B.size( 1 ) );
-          D.resize( B.size( 1 ), nD );
-          LHS.resize( A.size( 0 ), D.size( 1 ) );
-          RHS.resize( A.size( 0 ), D.size( 1 ) );
-
-          // Populate A, B, C, and D with uniformly distributed random
-          // coefficients
-          matrixRand( A,
-                      distribution,
-                      generator );
-          matrixRand( B,
-                      distribution,
-                      generator );
-          matrixRand( C,
-                      distribution,
-                      generator );
-          matrixRand( D,
-                      distribution,
-                      generator );
-
-          // Compute tmp1 = ( alfa*A*B + beta*C )
-          array2d<real64> tmp1( C );
-          LAI::matrixMatrixMultiply( A, B, tmp1, alfa, beta );
-
-          // Compute LHS = tmp1*D
-          LAI::matrixMatrixMultiply( tmp1, D, LHS );
-
-          // Compute tmp2 = B*D
-          array2d<real64> tmp2( B.size( 0 ), D.size( 1 ) );
-          LAI::matrixMatrixMultiply( B, D, tmp2 );
-
-          // Compute RHS = alfa*A*tmp2
-          LAI::matrixMatrixMultiply( A, tmp2, RHS, alfa );
-
-          // Compute RHS = RHS + beta*C*D
-          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
-
-          // Check norms
-          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
-                       LAI::matrixNormInf( RHS ),
-                       LAI::matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
-                       LAI::matrixNorm1( RHS ),
-                       LAI::matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
-                       LAI::matrixNormFrobenius( RHS ),
-                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
-        }
-      }
-    }
+    norm2 += std::pow(vec(i), 2);
   }
-  // Test 3: repeat the following step for vectors of increasing size:
-  //
-  // a. compute LHS = ( alfa*A^T*B + beta*C ) * D
-  // b. compute RHS = alfa*A^T*(B*D) + beta*C*D
-  // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
-  //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
+  norm2 = std::sqrt(norm2);
 
-  NA = 10;
-  NB = 10;
-  ND = 10;
-  K = 20;
-
-  for( localIndex nA = 1 ; nA <= NA ; ++nA )
-  {
-    for( localIndex nB = 1 ; nB <= NB ; ++nB )
-    {
-      for( localIndex nD = 1 ; nD <= ND ; ++nD )
-      {
-        for( localIndex k = 1 ; k <= K ; ++k )
-        {
-
-          // Resize matrix operators
-          A.resize( k, nA );
-          B.resize( k, nB );
-          C.resize( A.size( 1 ), B.size( 1 ) );
-          D.resize( B.size( 1 ), nD );
-          LHS.resize( A.size( 1 ), D.size( 1 ) );
-          RHS.resize( A.size( 1 ), D.size( 1 ) );
-
-          // Populate A, B, C, and D with uniformly distributed random
-          // coefficients
-          // Populate A, B, C, and D with uniformly distributed random
-          // coefficients
-          matrixRand( A,
-                      distribution,
-                      generator );
-          matrixRand( B,
-                      distribution,
-                      generator );
-          matrixRand( C,
-                      distribution,
-                      generator );
-          matrixRand( D,
-                      distribution,
-                      generator );
-
-          // Compute tmp1 = ( alfa*A^T*B + beta*C )
-          array2d<real64> tmp1( C );
-          LAI::matrixTMatrixMultiply( A, B, tmp1, alfa, beta );
-
-          // Compute LHS = tmp*D
-          LAI::matrixMatrixMultiply( tmp1, D, LHS );
-
-          // Compute tmp2 = B*D
-          array2d<real64> tmp2( B.size( 0 ), D.size( 1 ) );
-          LAI::matrixMatrixMultiply( B, D, tmp2 );
-
-          // Compute RHS = alfa*A^T*tmp2
-          LAI::matrixTMatrixMultiply( A, tmp2, RHS, alfa );
-
-          // Compute RHS = RHS + beta*C*D
-          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
-
-          // Check norms
-          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
-                       LAI::matrixNormInf( RHS ),
-                       LAI::matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
-                       LAI::matrixNorm1( RHS ),
-                       LAI::matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
-                       LAI::matrixNormFrobenius( RHS ),
-                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
-
-        }
-      }
-    }
-  }
-
-  // Test 3: repeat the following step for vectors of increasing size:
-  //
-  // a. compute LHS = ( alfa*A*B^T + beta*C ) * D
-  // b. compute RHS = alfa*A*(B^T*D) + beta*C*D
-  // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
-  //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
-
-  MA = 10;
-  MB = 10;
-  ND = 10;
-  K = 20;
-
-  for( localIndex mA = 1 ; mA <= MA ; ++mA )
-  {
-    for( localIndex mB = 1 ; mB <= MB ; ++mB )
-    {
-      for( localIndex nD = 1 ; nD <= ND ; ++nD )
-      {
-        for( localIndex k = 1 ; k <= K ; ++k )
-        {
-
-          // Resize matrix operators
-          A.resize( mA, k );
-          B.resize( mB, k );
-          C.resize( A.size( 0 ), B.size( 0 ) );
-          D.resize( B.size( 0 ), nD );
-          LHS.resize( A.size( 0 ), D.size( 1 ) );
-          RHS.resize( A.size( 0 ), D.size( 1 ) );
-
-          // Populate A, B, C, and D with uniformly distributed random
-          // coefficients
-          matrixRand( A,
-                      distribution,
-                      generator );
-          matrixRand( B,
-                      distribution,
-                      generator );
-          matrixRand( C,
-                      distribution,
-                      generator );
-          matrixRand( D,
-                      distribution,
-                      generator );
-
-          // Compute tmp1 = ( alfa*A*B^T + beta*C )
-          array2d<real64> tmp1( C );
-          LAI::matrixMatrixTMultiply( A, B, tmp1, alfa, beta );
-
-          // Compute LHS = tmp*D
-          LAI::matrixMatrixMultiply( tmp1, D, LHS );
-
-          // Compute tmp2 = B^T*D
-          array2d<real64> tmp2( B.size( 1 ), D.size( 1 ) );
-          LAI::matrixTMatrixMultiply( B, D, tmp2 );
-
-          // Compute RHS = alfa*A*tmp2
-          LAI::matrixMatrixMultiply( A, tmp2, RHS, alfa );
-
-          // Compute RHS = RHS + beta*C*D
-          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
-
-          // Check norms
-          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
-                       LAI::matrixNormInf( RHS ),
-                       LAI::matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
-                       LAI::matrixNorm1( RHS ),
-                       LAI::matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
-                       LAI::matrixNormFrobenius( RHS ),
-                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
-
-        }
-      }
-    }
-  }
-
-  // Test 4: repeat the following step for vectors of increasing size:
-  //
-  // a. compute LHS = ( alfa*A^T*B^T + beta*C ) * D
-  // b. compute RHS = alfa*A^T*(B^T*D) + beta*C*D
-  // c. check that (norm(LHS - RHS, type) / norm(LHS, type)) < epsilon
-  //    with type = \{Infinity-norm, 1-norm, Frobenius-norm, )
-
-  NA = 10;
-  MB = 10;
-  ND = 10;
-  K = 20;
-
-  for( localIndex nA = 1 ; nA <= NA ; ++nA )
-  {
-    for( localIndex mB = 1 ; mB <= MB ; ++mB )
-    {
-      for( localIndex nD = 1 ; nD <= ND ; ++nD )
-      {
-        for( localIndex k = 1 ; k <= K ; ++k )
-        {
-
-          // Resize matrix operators
-          A.resize( k, nA );
-          B.resize( mB, k );
-          C.resize( A.size( 1 ), B.size( 0 ) );
-          D.resize( B.size( 0 ), nD );
-          LHS.resize( A.size( 1 ), D.size( 1 ) );
-          RHS.resize( A.size( 1 ), D.size( 1 ) );
-
-          // Populate A, B, C, and D with uniformly distributed random
-          // coefficients
-          matrixRand( A,
-                      distribution,
-                      generator );
-          matrixRand( B,
-                      distribution,
-                      generator );
-          matrixRand( C,
-                      distribution,
-                      generator );
-          matrixRand( D,
-                      distribution,
-                      generator );
-
-          // Compute tmp1 = ( alfa*A^T*B^T + beta*C )
-          array2d<real64> tmp1( C );
-          LAI::matrixTMatrixTMultiply( A, B, tmp1, alfa, beta );
-
-          // Compute LHS = tmp*D
-          LAI::matrixMatrixMultiply( tmp1, D, LHS );
-
-          // Compute tmp2 = B^T*D
-          array2d<real64> tmp2( B.size( 1 ), D.size( 1 ) );
-          LAI::matrixTMatrixMultiply( B, D, tmp2 );
-
-          // Compute RHS = alfa*A^T*tmp2
-          LAI::matrixTMatrixMultiply( A, tmp2, RHS, alfa );
-
-          // Compute RHS = RHS + beta*C*D
-          LAI::matrixMatrixMultiply( C, D, RHS, beta, 1. );
-
-          // Check norms
-          EXPECT_NEAR( LAI::matrixNormInf( LHS ),
-                       LAI::matrixNormInf( RHS ),
-                       LAI::matrixNormInf( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNorm1( LHS ),
-                       LAI::matrixNorm1( RHS ),
-                       LAI::matrixNorm1( LHS ) * machinePrecision );
-          EXPECT_NEAR( LAI::matrixNormFrobenius( LHS ),
-                       LAI::matrixNormFrobenius( RHS ),
-                       LAI::matrixNormFrobenius( LHS ) * machinePrecision );
-
-        }
-      }
-    }
-  }
-
+  // Check
+  EXPECT_NEAR( norm2,
+               LAI::vectorNorm2( vec ),
+               norm2 * machinePrecision );
 }
 
 template<typename LAI>
-void testArray2dArray1dLA()
+void vector_normInf_test()
 {
+  INDEX_TYPE N = 24;
+  array1d<real64> vec(N);
 
-  std::default_random_engine generator;
-  std::uniform_real_distribution<real64> distribution( 0.0, 1.0 );
+  // Populate vector with random coefficients
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
-  array2d<real64> A, yT, tmp;
-  array1d<real64> x, y, yTT;
+  // Compute normInf
+  real64 normInf = std::abs(vec(0));
 
-  // Test 5: repeat the following step for vectors of increasing size:
-  //
-  // a. compute y = A*x
-  // b. compute compute yT = x^T * A^T
-  // c. check that (norm(y, 2-norm) / norm(yT, Frobenius-norm)) < epsilon
-  // d. create vector yTT = yT^T
-  // e. compute beta = sqrt(yTT dot y);
-  // f. check that ( (norm(y, norm-2) - sqrt(yTT_dot_y)) / norm(y, norm-2)) < epsilon
-
-  localIndex MA = 10;
-  localIndex NA = 10;
-  real64 alfa, beta;
-
-  for( localIndex mA = 1 ; mA <= MA ; ++mA )
+  if (N > 1)
   {
-    for( localIndex nA = 1 ; nA <= NA ; ++nA )
+    for( INDEX_TYPE i = 1 ; i < N ; ++i )
     {
-      // Resize matrices and vectors
-      A.resize( mA, nA );
-      x.resize( nA );
-      y.resize( mA );
-
-      // Populate matrix A and vector x with uniformly distributed random
-      // coefficients
-      matrixRand( A,
-                  distribution,
-                  generator );
-      vectorRand( x,
-                  distribution,
-                  generator );
-
-      // a.
-      LAI::matrixVectorMultiply( A, x, y );
-
-      // b.
-      // --- construct tmp = x^T
-      tmp.resize( 1, x.size() );
-      for( int i = 0 ; i < x.size() ; ++i )
-      {
-        tmp( 0, i ) = x( i );
-      }
-
-      // -- compute yT = tmp * A^T
-      yT.resize( 1, A.size( 0 ) );
-      LAI::matrixMatrixTMultiply( tmp, A, yT );
-
-      // c.
-      alfa = LAI::vectorNorm2( y );
-      beta = LAI::matrixNormFrobenius( yT );
-      EXPECT_NEAR( alfa,
-                   beta,
-                   alfa * machinePrecision );
-
-      // d.
-      yTT.resize( yT.size( 1 ) );
-      for( int i = 0 ; i < yT.size( 1 ) ; ++i )
-      {
-        yTT( i ) = yT( 0, i );
-      }
-
-      // e.
-      beta = std::sqrt( LAI::vectorDot( y, yTT ) );
-
-      // f. check that ( (norm(y, norm-2) == sqrt(yTT_dot_y))
-      EXPECT_NEAR( alfa,
-                   beta,
-                   alfa * machinePrecision );
+      normInf = std::max( normInf, std::abs(vec(i)) );
     }
   }
+
+  // Check
+  EXPECT_NEAR( normInf,
+               LAI::vectorNormInf( vec ),
+               normInf * machinePrecision );
 }
 
 template<typename LAI>
-void testArray2dInverseLA()
+void determinant_test()
 {
+  array2d<real64> Laplacian1d;
+  real64 determinant;
 
-  array2d<real64> E;
-  array2d<real64> Einv;
-  array2d<real64> EinvXE;
+  real64 theta;
+  real64 lambda_max;
+  real64 lambda_min;
+  real64 N_real;
 
-  // Test 5: repeat the following step for matrices of increasing size:
-  // a. Construct matrix E (1d discrete Laplacian)
-  // b. Compute Einv = E^-1
-  // c. Compute EinvXE = Einv*E
-  // d. Check that det(EinvXE) = 1.
-
-  real64 det;
-  localIndex max_dim = 10;
-
-  for( int order = 1 ; order <= max_dim ; ++order )
+  for (INDEX_TYPE N = 1; N <= 100; ++ N)
   {
-    // a.
-    E.resize( order, order );
-    E = 0;
-    for( int i = 0 ; i < E.size(0) ; ++i )
+    // Construct 1d discrete Laplacian with Dirichlet boundary conditions
+    // at both ends
+    Laplacian1d.resize( N, N );
+    Laplacian1d = 0.0;
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
     {
-      for( int j = 0 ; j < E.size(1) ; ++j )
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
       {
         if( i == j )
         {
-          E( i, i ) = 2;
+          Laplacian1d( i, i ) = 2;
         }
         else if( std::abs( i - j ) == 1 )
         {
-          E( i, j ) = -1;
+          Laplacian1d( i, j ) = -1;
         }
       }
     }
 
-    // b.
-    Einv.resize( E.size(0), E.size(1) );
-    LAI::matrixInverse(E, Einv, det );
+    // Check
+    N_real = static_cast<real64>(N);
+    theta = pi*0.5/( 2.0*N_real + 1 );
+    lambda_min = std::pow(2.0*std::sin(theta), 2);
+    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
+    lambda_max = std::pow(2.0*std::sin(theta), 2);
 
-    // c.
-    EinvXE.resize( E.size(0), E.size(1) );
-    LAI::matrixMatrixMultiply( Einv, E, EinvXE );
+    determinant = N_real + 1.0; // Exact determinant
+    EXPECT_NEAR( determinant,
+                 LAI::determinant( Laplacian1d ),
+                 (lambda_max/lambda_min) * machinePrecision );
+  }
+}
 
-    // d.
-    EXPECT_NEAR( LAI::determinant(EinvXE),
-                 1.,
-                 machinePrecision );
+template<typename LAI>
+void matrix_normInf_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> mat( M, N );
+
+  // Populate matrix with random coefficients
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1);
+
+  // Compute normInf
+  real64 normInf = 0.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    real64 tmp = 0.0;
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      tmp += std::abs( mat(i,j) );
+    }
+    normInf = std::max( normInf, tmp);
+  }
+
+  // Check
+  EXPECT_NEAR( normInf,
+               LAI::matrixNormInf( mat ),
+               normInf * machinePrecision );
+}
+
+template<typename LAI>
+void matrix_norm1_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> mat( M, N );
+
+  // Populate matrix with random coefficients
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1);
+
+  // Compute norm1
+  array1d<real64> tmp(N);
+  tmp = 0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      tmp(j) += std::abs( mat(i,j) );
+    }
+  }
+  real64 *norm1 = std::max_element(tmp.begin(), tmp.end());
+
+  // Check
+  EXPECT_NEAR( *norm1,
+               LAI::matrixNorm1( mat ),
+               *norm1 * machinePrecision );
+}
+
+template<typename LAI>
+void matrix_normFrobenius_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> mat( M, N );
+
+  // Populate matrix with random coefficients
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1);
+
+  // Compute normFrobeniusm
+  real64 normFrobenius = 0.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      normFrobenius += std::pow( mat(i,j), 2);
+    }
+  }
+  normFrobenius = std::sqrt(normFrobenius);
+
+  // Check
+  EXPECT_NEAR( normFrobenius,
+               LAI::matrixNormFrobenius( mat ),
+               normFrobenius * machinePrecision );
+}
+
+template<typename LAI>
+void vector_vector_add_test()
+{
+  INDEX_TYPE N = 24;
+  array1d<real64> vec1(N);
+  array1d<real64> vec2(N);
+  array1d<real64> vecSum(N);
+
+  // Populate vectors with random coefficients
+  LAI::vectorRand( vec1,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( vec2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+
+  // Compute vector sum vecSum = alpha*vec1 + vec2
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    vecSum(i) = alpha*vec1(i) + vec2(i);
+  }
+
+  // Compute v2 = alpha*vec1 + vec2
+  LAI::vectorVectorAdd( vec1,
+                        vec2,
+                        alpha );
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( vec2(i),
+                 vecSum(i),
+                 machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrix_matrix_add_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> mat1(M,N);
+  array2d<real64> mat2(M,N);
+  array2d<real64> matSum(M,N);
+
+  // Populate vectors with random coefficients
+  // Populate matrix with random coefficients
+  LAI::matrixRand( mat1,
+                   LAI::RandomNumberDistribution::UNIFORM_01);
+  // Populate matrix with random coefficients
+  LAI::matrixRand( mat2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1);
+
+  // Compute vector sum matSum = alpha*mat1 + mat2
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      matSum(i,j) = alpha*mat1(i,j) + mat2(i,j);
+    }
+  }
+
+  // Compute mat2 = alpha*mat1 + mat2
+  LAI::matrixMatrixAdd( mat1,
+                        mat2,
+                        alpha );
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      EXPECT_NEAR( mat2(i,j),
+                   matSum(i,j),
+                   machinePrecision);
+    }
+  }
+}
+
+template<typename LAI>
+void vector_scale_test()
+{
+  INDEX_TYPE N = 24;
+  array1d<real64> vec(N);
+  array1d<real64> vecScaled(N);
+
+  // Populate vectors with random coefficients
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+
+  // Compute vector vecScaled = alpha*vec
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    vecScaled(i) = alpha*vec(i);
+  }
+
+  // Compute vec = alpha*vec
+  LAI::vectorScale( alpha,
+                    vec);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( vec(i),
+                 vecScaled(i),
+                 machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrix_scale_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> mat(M,N);
+  array2d<real64> matScaled(M,N);
+
+  // Populate vectors with random coefficients
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+
+  // Compute vector matScaled = alpha*mat
+  real64 alpha = 3.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      matScaled(i,j) = alpha*mat(i,j);
+    }
+  }
+
+  // Compute mat = alpha*mat
+  LAI::matrixScale( alpha,
+                    mat);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      EXPECT_NEAR( mat(i,j),
+                   matScaled(i,j),
+                   machinePrecision);
+    }
+  }
+}
+
+template<typename LAI>
+void vector_dot_test()
+{
+  INDEX_TYPE N = 6;
+  array1d<real64> vec1(N);
+  array1d<real64> vec2(N);
+
+  // Populate vectors with random coefficients
+  LAI::vectorRand( vec1,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( vec2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+
+  // Compute vector vec1_dot_v2 = vec1^t*vec2
+  real64 vec1DotVec2 = 0.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    vec1DotVec2 += vec1(i)*vec2(i);
+  }
+
+  // Check
+  EXPECT_NEAR( vec1DotVec2,
+               LAI::vectorDot( vec1,
+                               vec2),
+               static_cast<real64>(N)*machinePrecision);
+}
+
+template<typename LAI>
+void matrix_vector_multiply_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> A(M,N);
+  array1d<real64> X(N);
+  array1d<real64> Y(M);
+  array1d<real64> vecResult(M);
+
+  // Populate matrix and vectors with random coefficients
+  LAI::matrixRand( A,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( X,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( Y,
+                   LAI::RandomNumberDistribution::NORMAL_01 );
+
+  // Compute vector vecResults = alpha*A*X + beta*Y
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    vecResult(i) = beta*Y(i);
+    for( INDEX_TYPE j = 0 ; j < N ; ++j )
+    {
+      vecResult(i) += alpha*A(i,j)*X(j);
+    }
+  }
+
+  // Compute Y = alpha*A*X + beta*Y
+  LAI::matrixVectorMultiply( A,
+                             X,
+                             Y,
+                             alpha,
+                             beta);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < M ; ++i )
+  {
+    EXPECT_NEAR( vecResult(i),
+                 Y(i),
+                 static_cast<real64>(N+1)*machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrixT_vector_multiply_test()
+{
+  INDEX_TYPE M = 6;
+  INDEX_TYPE N = 24;
+  array2d<real64> A(M,N);
+  array1d<real64> X(M);
+  array1d<real64> Y(N);
+  array1d<real64> vecResult(N);
+
+  // Populate matrix and vectors with random coefficients
+  LAI::matrixRand( A,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( X,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( Y,
+                   LAI::RandomNumberDistribution::NORMAL_01 );
+
+  // Compute vector vecResults = alpha*transpose(A)*X + beta*Y
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    vecResult(i) = beta*Y(i);
+    for( INDEX_TYPE j = 0 ; j < M ; ++j )
+    {
+      vecResult(i) += alpha*A(j,i)*X(j);
+    }
+  }
+
+  // Compute Y = alpha*A*X + beta*Y
+  LAI::matrixTVectorMultiply( A,
+                              X,
+                              Y,
+                              alpha,
+                              beta);
+
+  // Check
+  for( INDEX_TYPE i = 0 ; i < N ; ++i )
+  {
+    EXPECT_NEAR( vecResult(i),
+                 Y(i),
+                 static_cast<real64>(N+1)*machinePrecision);
+  }
+}
+
+template<typename LAI>
+void matrix_matrix_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> matResult;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(M,K);
+        B.resize(K,N);
+        C.resize(M,N);
+        matResult.resize(M,N);
+
+        // Populate matrices with random coefficients
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
+
+        // Compute matrix matResult = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            matResult(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              matResult(i,j) += alpha*A(i,l)*B(l,j);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixMatrixMultiply( A,
+                                   B,
+                                   C,
+                                   alpha,
+                                   beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         matResult(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
   }
 
 }
 
-// END_RST_NARRATIVE
+template<typename LAI>
+void matrixT_matrix_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> matResult;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(K,M);
+        B.resize(K,N);
+        C.resize(M,N);
+        matResult.resize(M,N);
+
+        // Populate matrices with random coefficients
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
+
+        // Compute matrix matResult = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            matResult(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              matResult(i,j) += alpha*A(l,i)*B(l,j);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixTMatrixMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         matResult(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
 
 template<typename LAI>
-void performanceTest()
+void matrix_matrixT_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> matResult;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(M,K);
+        B.resize(N,K);
+        C.resize(M,N);
+        matResult.resize(M,N);
+
+        // Populate matrices with random coefficients
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
+
+        // Compute matrix matResult = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            matResult(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              matResult(i,j) += alpha*A(i,l)*B(j,l);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixMatrixTMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         matResult(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+
+}
+
+template<typename LAI>
+void matrixT_matrixT_multiply_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+  array1d<INDEX_TYPE> K_indeces(M_indeces);
+
+  array2d<real64> A;
+  array2d<real64> B;
+  array2d<real64> C;
+  array2d<real64> matResult;
+  real64 alpha = 3.0;
+  real64 beta = 7.0;
+  int IDIST;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      for (INDEX_TYPE K : K_indeces)
+      {
+        // Resize matrices
+        A.resize(K,M);
+        B.resize(N,K);
+        C.resize(M,N);
+        matResult.resize(M,N);
+
+        // Populate matrices with random coefficients
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
+
+        // Compute matrix matResult = alpha*A*B + beta*C
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            matResult(i,j) = beta*C(i,j);
+            for( INDEX_TYPE l = 0 ; l < K ; ++l )
+            {
+              matResult(i,j) += alpha*A(l,i)*B(j,l);
+            }
+          }
+        }
+
+        // Compute C = alpha*A*B + beta*C
+        LAI::matrixTMatrixTMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta);
+
+        // Check
+        for( INDEX_TYPE i = 0 ; i < M ; ++i )
+        {
+          for( INDEX_TYPE j = 0 ; j < N ; ++j )
+          {
+            EXPECT_NEAR( C(i,j),
+                         matResult(i,j),
+                         static_cast<real64>(K+1)*machinePrecision);
+          }
+        }
+      }
+    }
+  }
+}
+
+template<typename LAI>
+void matrix_inverse_test()
+{
+  array2d<real64> Laplacian1d;
+  array2d<real64> Laplacian1dInv;
+  real64 exact_entry;
+  real64 theta;
+  real64 lambda_max;
+  real64 lambda_min;
+  real64 N_real;
+
+  for (INDEX_TYPE N = 1; N <= 100; ++ N)
+  {
+    // Construct 1d discrete Laplacian with Dirichlet boundary conditions
+    // at both ends
+    Laplacian1d.resize( N, N );
+    Laplacian1d = 0;
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
+      {
+        if( i == j )
+        {
+          Laplacian1d( i, i ) = 2;
+        }
+        else if( std::abs( i - j ) == 1 )
+        {
+          Laplacian1d( i, j ) = -1;
+        }
+      }
+    }
+
+    // Compute inverse of Laplacian1d
+    Laplacian1dInv.resize( N, N );
+    LAI::matrixInverse( Laplacian1d,
+                        Laplacian1dInv);
+
+    // Check
+    N_real = static_cast<real64>(N);
+    theta = pi*0.5/( 2.0*N_real + 1 );
+    lambda_min = std::pow(2.0*std::sin(theta), 2);
+    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
+    lambda_max = std::pow(2.0*std::sin(theta), 2);
+
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      for( INDEX_TYPE j = 0 ; j < N ; ++j )
+      {
+        exact_entry = static_cast<real64>((1+std::min(i,j))*(N+1-(1+std::max(i,j)))) /
+                      static_cast<real64>(( N + 1 ));
+
+        EXPECT_NEAR( Laplacian1dInv(i,j),
+                     exact_entry,
+                     (lambda_max / lambda_min)*machinePrecision);
+      }
+    }
+  }
+}
+
+template<typename LAI>
+void vector_copy_test()
+{
+  array1d<INDEX_TYPE> N_indeces;
+  N_indeces.push_back(1);
+  N_indeces.push_back(6);
+  N_indeces.push_back(24);
+  N_indeces.push_back(100);
+
+  array1d<real64> src;
+  array1d<real64> dst;
+  int IDIST = 2;
+
+  for (INDEX_TYPE N : N_indeces)
+  {
+    src.resize(N);
+    dst.resize(N);
+
+    // Populate src vector with random coefficients
+    LAI::vectorRand( src,
+                     LAI::RandomNumberDistribution::NORMAL_01 );
+
+    // Copy vector, dst = src
+    LAI::vectorCopy(src,
+                    dst);
+
+    // Check
+    for( INDEX_TYPE i = 0 ; i < N ; ++i )
+    {
+      EXPECT_NEAR( src(i),
+                   dst(i),
+                   machinePrecision);
+    }
+  }
+}
+
+template<typename LAI>
+void matrix_copy_test()
+{
+  array1d<INDEX_TYPE> M_indeces;
+  M_indeces.push_back(1);
+  M_indeces.push_back(6);
+  M_indeces.push_back(24);
+  M_indeces.push_back(100);
+  array1d<INDEX_TYPE> N_indeces(M_indeces);
+
+  array2d<real64> src;
+  array2d<real64> dst;
+  int IDIST = 2;
+
+  for (INDEX_TYPE M : M_indeces)
+  {
+    for (INDEX_TYPE N : N_indeces)
+    {
+      src.resize(M,N);
+      dst.resize(M,N);
+
+      // Populate src matrix with random coefficients
+      LAI::matrixRand( src,
+                       LAI::RandomNumberDistribution::NORMAL_01 );
+
+      // Copy matrix, dst = src
+      LAI::matrixCopy(src,
+                      dst);
+
+      // Check
+      for( INDEX_TYPE i = 0 ; i < M ; ++i )
+      {
+        for( INDEX_TYPE j = 0 ; j < N ; ++j )
+        {
+          EXPECT_NEAR( src(i,j),
+                       dst(i,j),
+                       machinePrecision);
+        }
+      }
+    }
+  }
+}
+
+template<typename LAI>
+void vector_rand_test()
+{
+  INDEX_TYPE N = 10000;
+  array1d<real64> vec(N);
+
+  // Populate vector with random coefficients
+
+  // --- uniform distribution (0,1);
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  real64 *v_max = std::max_element(vec.begin(), vec.end());
+  real64 *v_min = std::min_element(vec.begin(), vec.end());
+  EXPECT_TRUE(0.0 <= *v_min && *v_max <= 1.0);
+
+  // --- uniform distribution (-1,1);
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  v_max = std::max_element(vec.begin(), vec.end());
+  v_min = std::min_element(vec.begin(), vec.end());
+  EXPECT_TRUE(-1.0 <= *v_min && *v_max <= 1.0);
+
+  // --- normal distribution (0,1);
+  // IDIST = 3;
+  // TODO: Add normality test
+
+}
+
+template<typename LAI>
+void matrix_rand_test()
+{
+  INDEX_TYPE M =  99;
+  INDEX_TYPE N = 101;
+  array2d<real64> mat( M, N );
+
+  // Populate vector with random coefficients
+
+  // --- uniform distribution (0,1);
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  real64 *A_max = std::max_element(mat.begin(), mat.end());
+  real64 *A_min = std::min_element(mat.begin(), mat.end());
+  EXPECT_TRUE(0.0 <= *A_min && *A_max <= 1.0);
+
+  // --- uniform distribution (-1,1);
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  A_max = std::max_element(mat.begin(), mat.end());
+  A_min = std::min_element(mat.begin(), mat.end());
+  EXPECT_TRUE(-1.0 <= *A_min && *A_max <= 1.0);
+
+  // --- normal distribution (0,1);
+  // IDIST = 3;
+  // TODO: Add normality test
+
+}
+
+template<typename LAI>
+void set_get_random_number_generator_seed_test()
+{
+  array1d<int> seedSet(4);
+  seedSet(0) = 1;
+  seedSet(1) = 2;
+  seedSet(2) = 3;
+  seedSet(3) = 7; // must be odd
+  LAI::setRandomNumberGeneratorSeed(seedSet);
+
+  array1d<int> seedGet(4);
+  LAI::getRandomNumberGeneratorSeed(seedGet);
+
+  // Check
+  for (INDEX_TYPE i = 0; i< seedSet.size(); ++i)
+  {
+    EXPECT_EQ( seedSet(i), seedGet(i) );
+  }
+}
+
+template<typename LAI>
+void performance_test()
 {
   constexpr localIndex MAX_SIZE = 1024 * 8;
 
@@ -632,17 +1035,16 @@ void performanceTest()
   array2d<double> b(MAX_SIZE, MAX_SIZE);
   array2d<double> c(MAX_SIZE, MAX_SIZE);
 
-  std::default_random_engine generator;
-  std::uniform_real_distribution<real64> distribution( -1.0, 1.0 );
-
   for (localIndex size = 3; size <= MAX_SIZE; size = localIndex(size * 1.5 + 1))
   {
     a.resize(size, size);
     b.resize(size, size);
     c.resize(size, size);
 
-    matrixRand( a, distribution, generator );
-    matrixRand( b, distribution, generator );
+    LAI::matrixRand( a,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+    LAI::matrixRand( b,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
     std::chrono::duration<double> multiplicationTime {};
     localIndex const nIter = MAX_SIZE / (size + 1) + 1;
@@ -660,40 +1062,131 @@ void performanceTest()
   }
 }
 
-//@}
-
-/*! @name Ctest tests.
- * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
- */
-//@{
-
-TEST(testDenseLAOperations, testArray1d)
+TEST( Array1D, vectorNorm1)
 {
-  testArray1dLA<BlasLapackLA>();
+  vector_norm1_test<BlasLapackLA>();
 }
 
-TEST(testDenseLAOperations, testArray2d)
+TEST( Array1D, vectorNorm2)
 {
-  testArray2dLA<BlasLapackLA>();
+  vector_norm2_test<BlasLapackLA>();
 }
 
-TEST(testDenseLAOperations, testArray2dArray1dLA)
+TEST( Array1D, vectorNormInf)
 {
-  testArray2dArray1dLA<BlasLapackLA>();
+  vector_normInf_test<BlasLapackLA>();
 }
 
-TEST(testDenseLAOperations, testArray2dInverseLA)
+TEST( Array2D, determinant)
 {
-  testArray2dInverseLA<BlasLapackLA>();
+  determinant_test<BlasLapackLA>();
 }
 
-TEST(testDenseLAOperations, performanceTest)
+TEST( Array2D, matrixNormInf)
 {
-  // performanceTest<BlasLapackLA>();
+  matrix_normInf_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixNorm1)
+{
+  matrix_norm1_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixNormFrobenius)
+{
+  matrix_normFrobenius_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorVectorAdd)
+{
+  vector_vector_add_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixAdd)
+{
+  matrix_matrix_add_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorScale)
+{
+  vector_scale_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixScale)
+{
+  matrix_scale_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorDot)
+{
+  vector_dot_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixVectorMultiply)
+{
+  matrix_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTVectorMultiply)
+{
+  matrixT_vector_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixMultiply)
+{
+  matrix_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTMatrixMultiply)
+{
+  matrixT_matrix_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixMatrixTMultiply)
+{
+  matrix_matrixT_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixTMatrixTMultiply)
+{
+  matrixT_matrixT_multiply_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixInverse)
+{
+  matrix_inverse_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorCopy)
+{
+  vector_copy_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixCopy)
+{
+  matrix_copy_test<BlasLapackLA>();
+}
+
+TEST( Array1D, vectorRand)
+{
+  vector_rand_test<BlasLapackLA>();
+}
+
+TEST( Array2D, matrixRand)
+{
+  matrix_rand_test<BlasLapackLA>();
+}
+
+TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed)
+{
+  set_get_random_number_generator_seed_test<BlasLapackLA>();
+}
+
+TEST( DenseLAInterface, performanceTest)
+{
+  //performance_test<BlasLapackLA>();
   SUCCEED();
 }
-
-//@}
 
 int main( int argc, char** argv )
 {
