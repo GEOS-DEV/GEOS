@@ -177,11 +177,11 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
 
   int dimLevel = -1;
   localIndex dims[NDIM] = {0};
-  localIndex otherDims[NDIM] = {0};
+  localIndex currentDims[NDIM] = {0};
   for( int i=0 ; i<NDIM ; ++i )
   {
     dims[i]=1;
-    otherDims[i] = 1;
+    currentDims[i] = 1;
   }
   bool dimSet[NDIM] = {false};
 
@@ -197,13 +197,13 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
     else if( c=='}')
     {
       dimSet[dimLevel] = true;
-      GEOS_ERROR_IF( dims[dimLevel]!=otherDims[dimLevel],
+      GEOS_ERROR_IF( dims[dimLevel]!=currentDims[dimLevel],
                      "Dimension "<<dimLevel<<" is inconsistent across the expression. "
                      "The first set value of the dimension is "<<dims[dimLevel]<<
-                     " while the current value of the dimension is"<<otherDims[dimLevel]<<
+                     " while the current value of the dimension is"<<currentDims[dimLevel]<<
                      ". The values that have been parsed prior to the error are:\n"<<
                      collapsedStr.substr(0,charCount+1) );
-      otherDims[dimLevel] = 1;
+      currentDims[dimLevel] = 1;
       --dimLevel;
       GEOS_ERROR_IF( dimLevel<0 && charCount<(collapsedStr.size()-1),
                      "In parsing the input string, the current dimension of the array has dropped "
@@ -220,7 +220,7 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
       {
         ++(dims[dimLevel]);
       }
-      ++(otherDims[dimLevel]);
+      ++(currentDims[dimLevel]);
 
     }
 
