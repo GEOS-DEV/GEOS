@@ -16,22 +16,12 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
 
-#ifdef __clang__
-#define __null nullptr
-#endif
+#include <numeric>
 
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -64,24 +54,28 @@ protected:
 
   static void SetUpTestCase()
   {
-    problemManager.InitializePythonInterpreter();
-    problemManager.ParseCommandLineInput( global_argc, global_argv );
-    problemManager.ParseInputFile();
-    problemManager.ProblemSetup();
+    problemManager = new ProblemManager("Problem", nullptr);
+
+    problemManager->InitializePythonInterpreter();
+    problemManager->ParseCommandLineInput( global_argc, global_argv );
+    problemManager->ParseInputFile();
+    problemManager->ProblemSetup();
   }
 
   static void TearDownTestCase()
   {
+    delete problemManager;
+    problemManager = nullptr;
   }
 
-  static ProblemManager problemManager;
+  static ProblemManager * problemManager;
 };
 
-ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
+ProblemManager * DofManagerTest::problemManager = nullptr;
 
 TEST_F(DofManagerTest, TestOne)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -280,14 +274,8 @@ TEST_F(DofManagerTest, TestOne)
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-#ifdef GEOSX_USE_MPI
-  MPI_Init( &argc, &argv );
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  logger::InitializeLogger( MPI_COMM_GEOSX );
-#else
-  logger::InitializeLogger():
-#endif
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+
+  geosx::basicSetup( argc, argv );
 
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>( global_argc )];
@@ -299,15 +287,8 @@ int main( int argc, char** argv )
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-  logger::FinalizeLogger();
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  
+  geosx::basicCleanup();
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

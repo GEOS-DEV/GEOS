@@ -43,8 +43,13 @@ FieldSpecificationManager::FieldSpecificationManager( string const & name, Manag
 
 FieldSpecificationManager * FieldSpecificationManager::get()
 {
-  static FieldSpecificationManager bcman( "FieldSpecifications", nullptr );
-  return &bcman;
+  static FieldSpecificationManager * bcman = new FieldSpecificationManager( "FieldSpecifications", nullptr );
+  return bcman;
+}
+
+void FieldSpecificationManager::finalize()
+{
+  delete get();
 }
 
 

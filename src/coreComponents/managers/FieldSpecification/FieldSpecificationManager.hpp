@@ -55,6 +55,8 @@ public:
    */
   static FieldSpecificationManager * get();
 
+  static void finalize();
+
   /**
    * @brief create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
@@ -300,8 +302,6 @@ ApplyFieldValue( real64 const time,
                                string const & fieldName,
                                LAMBDA && lambda ) const
 {
-  FieldSpecificationBase const * fsBase = nullptr;
-  set<localIndex> const * targetSetCopy = nullptr;
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
         string const &,

@@ -22,6 +22,7 @@
 #cmakedefine GEOSX_USE_PVT_PACKAGE
 #cmakedefine GEOSX_USE_RAJA
 #cmakedefine GEOSX_USE_TIMERS
+#cmakedefine GEOSX_USE_MKL
 
 
 

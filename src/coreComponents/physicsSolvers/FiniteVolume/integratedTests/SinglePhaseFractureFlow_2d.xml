@@ -18,6 +18,13 @@
                               newtonTol="1.0e-8"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>
+    
+    <SurfaceGenerator name="SurfaceGen"
+                      verboseLevel="0"
+                      fractureRegion="Fracture"
+                      targetRegions="Fracture">
+    </SurfaceGenerator>
+    
   </Solvers>
   
   <Mesh>
@@ -43,6 +50,10 @@
 
 
   <Events maxTime="50.0">
+   <SoloEvent name="preFracture"
+              target="/Solvers/SurfaceGen"/>
+   
+  
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -77,14 +88,15 @@
                    cellBlocks="cb1"
                    materialList="water rock"/>
                    
-    <ElementRegion name="Fracture"
-                   fractureSet="fracture"
-                   materialList="water rock"/>
+    <FaceElementRegion name="Fracture"
+                       materialList="water rock"/>
                    
   </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
@@ -102,24 +114,15 @@
 
   <FieldSpecifications>
 
-    <FieldSpecification name="aperture"
-               component="0"
+    <FieldSpecification name="frac"
                initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/elementRegions/Fracture/elementSubRegions/fracture"
-               fieldName="elementAperture"
-               scale="1.0e-4"/>
-
-
-    <FieldSpecification name="referencePorosityF"
-               initialCondition="1"
-               setNames="all"
-               objectPath="ElementRegions/Fracture/fracture"
-               fieldName="referencePorosity"
-               scale="0.05"/>
+               setNames="fracture"
+               objectPath="faceManager"
+               fieldName="ruptureState"
+               scale="1"/>
                
     <FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture/fracture"
+               objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="1.0e7"
                setNames="source"/>

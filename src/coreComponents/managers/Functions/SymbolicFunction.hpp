@@ -24,7 +24,10 @@
 #define SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
+
+#ifdef GEOSX_USE_MATHPRESSO
 #include <mathpresso/mathpresso.h>
+#endif
 
 namespace geosx
 {
@@ -71,13 +74,20 @@ public:
    */
   inline real64 Evaluate( real64 const * const input ) const override final
   {
+#ifdef GEOSX_USE_MATHPRESSO
     return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
+#else
+    GEOS_ERROR("GEOSX was not built with mathpresso!");
+    return 0;
+#endif
   }
 
 private:
-  /// Symbolic math driver objects
+  // Symbolic math driver objects
+#ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
+#endif
 };
 
 

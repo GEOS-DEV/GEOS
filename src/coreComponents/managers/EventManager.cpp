@@ -140,7 +140,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
   // Setup MPI communication
   integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
-  integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );;
+  integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );
   real64 send_buffer[2];
   array1d<real64> receive_buffer(2 * comm_size);
 

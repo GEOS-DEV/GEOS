@@ -393,6 +393,17 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
 
+void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                     FaceManager const & facemanager )
+{
+  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+
+  forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+  {
+    CalculateCellVolumesKernel( k, X );
+  });
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
 

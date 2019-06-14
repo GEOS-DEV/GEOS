@@ -16,23 +16,21 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
+/**
+ * @file testDenseLAOperations.cpp
+ */
 
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
-
 #include <numeric>
+
 #include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
+
 #include <BlasLapackLA.hpp>
+
+#ifdef GEOSX_USE_OPENMP
+#include <omp.h>
+#endif
 
 using namespace geosx;
 
@@ -40,8 +38,6 @@ using INDEX_TYPE = std::ptrdiff_t;
 
 static real64 const machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
 static real64 const pi = std::atan(1.0)*4.0;
-
-#include <random>
 
 template<typename LAI>
 void vector_norm1_test()
@@ -1011,7 +1007,7 @@ void matrix_rand_test()
 }
 
 template<typename LAI>
-void set_get_random_number_generator_seed()
+void set_get_random_number_generator_seed_test()
 {
   array1d<int> seedSet(4);
   seedSet(0) = 1;
@@ -1028,7 +1024,42 @@ void set_get_random_number_generator_seed()
   {
     EXPECT_EQ( seedSet(i), seedGet(i) );
   }
+}
 
+template<typename LAI>
+void performance_test()
+{
+  constexpr localIndex MAX_SIZE = 1024 * 8;
+
+  array2d<double> a(MAX_SIZE, MAX_SIZE);
+  array2d<double> b(MAX_SIZE, MAX_SIZE);
+  array2d<double> c(MAX_SIZE, MAX_SIZE);
+
+  for (localIndex size = 3; size <= MAX_SIZE; size = localIndex(size * 1.5 + 1))
+  {
+    a.resize(size, size);
+    b.resize(size, size);
+    c.resize(size, size);
+
+    LAI::matrixRand( a,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+    LAI::matrixRand( b,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+
+    std::chrono::duration<double> multiplicationTime {};
+    localIndex const nIter = MAX_SIZE / (size + 1) + 1;
+    for (localIndex iter = 0; iter < nIter; ++iter)
+    {
+      auto start = std::chrono::high_resolution_clock::now();
+      LAI::matrixMatrixMultiply(a, b, c, 1.0, 1.0);
+      auto end = std::chrono::high_resolution_clock::now();
+      multiplicationTime += end - start;
+    }
+
+    GEOS_LOG(std::setiosflags(std::ios::scientific) << std::setprecision(5) <<
+             "size = " << size << ",\tniter : " << nIter << ",\ttime : " << multiplicationTime.count() <<
+             ",\tscaled time : " << multiplicationTime.count() / (size * size * size));
+  }
 }
 
 TEST( Array1D, vectorNorm1)
@@ -1148,19 +1179,24 @@ TEST( Array2D, matrixRand)
 
 TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed)
 {
-  set_get_random_number_generator_seed<BlasLapackLA>();
+  set_get_random_number_generator_seed_test<BlasLapackLA>();
 }
 
-int main( int argc, char* argv[] )
+TEST( DenseLAInterface, performanceTest)
 {
-  int result = 0;
-  testing::InitGoogleTest( &argc, argv );
-  result = RUN_ALL_TESTS();
+  //performance_test<BlasLapackLA>();
+  SUCCEED();
+}
+
+int main( int argc, char** argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-

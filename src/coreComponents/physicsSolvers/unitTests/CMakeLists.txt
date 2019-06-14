@@ -2,12 +2,19 @@
 # Specify list of tests
 #
 
-if(ENABLE_PVTPackage)
 set( gtest_geosx_tests
-    testCompMultiphaseFlow.cpp
-    testCompMultiphaseFlowCapPressure.cpp
+     testSinglePhaseFlowKernels.cpp
    )
-endif(ENABLE_PVTPackage)
+
+if(ENABLE_PVTPackage)
+    set( gtest_geosx_tests
+         ${gtest_geosx_tests}
+         testCompMultiphaseFlow.cpp
+         testCompMultiphaseFlowCapPressure.cpp
+       )
+endif()
+
+set( dependencyList geosx_core gtest )
 
 #
 # Add gtest C++ based tests
@@ -18,11 +25,12 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-            DEPENDS_ON geosx_core gtest
+            DEPENDS_ON ${dependencyList}
             )
 
     blt_add_test( NAME ${test_name}
-            COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
+                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
+                  NUM_MPI_TASKS 1
             )
 
 endforeach()

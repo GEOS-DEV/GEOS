@@ -187,11 +187,6 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
                                                localIndex_array& localIndices,
                                                localIndex offset )
 {
-//  dim =
-// domain.m_feElementManager.m_ElementRegions.begin()->second.m_ElementDimension;
-  int dim = 1;
-
-
   int n_mpi_processes;
   MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
 
@@ -217,10 +212,8 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
   }
 
   // create trilinos dof indexing
-
   globalIndex_array& trilinos_index = nodeManager->getReference<globalIndex_array>(laplaceFEMViewKeys.blockLocalDofNumber);
   integer_array const & is_ghost       = nodeManager->getReference<integer_array>(NodeManager::viewKeyStruct::ghostRankString);
-
 
   trilinos_index = -1;
 
@@ -238,9 +231,7 @@ void LaplaceFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
     }
   }
 
-  assert(local_count == numLocalRows );
-
-
+  GEOS_ASSERT(local_count == numLocalRows);
 }
 
 
@@ -315,39 +306,37 @@ void LaplaceFEM::SetSparsityPattern( DomainPartition const * const domain,
   for( localIndex elemRegIndex=0 ; elemRegIndex<elemManager->numRegions() ; ++elemRegIndex )
   {
     ElementRegion const * const elementRegion = elemManager->GetRegion( elemRegIndex );
-      auto const & numMethodName = m_discretizationName;
 
-      elementRegion->forElementSubRegions([&]( auto const * const elementSubRegion )
+    elementRegion->forElementSubRegions([&]( auto const * const elementSubRegion )
+    {
+      localIndex const numElems = elementSubRegion->size();
+      TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      globalIndex_array elementLocalDofIndex (numNodesPerElement);
+
+      array1d<integer> const & elemGhostRank = elementSubRegion->m_ghostRank;
+
+      for( localIndex k=0 ; k<numElems ; ++k )
       {
-        localIndex const numElems = elementSubRegion->size();
-        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
-        localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-        globalIndex_array elementLocalDofIndex (numNodesPerElement);
-
-        array1d<integer> const & elemGhostRank = elementSubRegion->m_ghostRank;
-
-        for( localIndex k=0 ; k<numElems ; ++k )
+        //if( elemGhostRank[k] < 0 )
         {
-          //if( elemGhostRank[k] < 0 )
+          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
           {
-            for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+            for(localIndex i=0 ; i<numNodesPerElement ; ++i)
             {
-              for(localIndex i=0 ; i<numNodesPerElement ; ++i)
-              {
-                elementLocalDofIndex[i] = trilinos_index[elemsToNodes[k][i]];
-              }
-
-              sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
-                                            elementLocalDofIndex.data(),
-                                            integer_conversion<int>(elementLocalDofIndex.size()),
-                                            elementLocalDofIndex.data());
+              elementLocalDofIndex[i] = trilinos_index[elemsToNodes[k][i]];
             }
-          }
 
+            sparsity->InsertGlobalIndices(integer_conversion<int>(elementLocalDofIndex.size()),
+                                          elementLocalDofIndex.data(),
+                                          integer_conversion<int>(elementLocalDofIndex.size()),
+                                          elementLocalDofIndex.data());
+          }
         }
-      });
-    }
+      }
+    });
+  }
 }
 
 
