@@ -66,25 +66,11 @@ public:
   template< typename T >
   static void StringToInputVariable( T& target, string value );
 
-//  template< typename T >
-//  static void StringToInputVariable( array1d<T> & target, string value );
-//
-//  template< typename T >
-//  static void StringToInputVariable( array2d<T> & target, string value );
 
   static void StringToInputVariable( R1Tensor & target, string value );
 
   template< typename T, int NDIM >
   static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str );
-//  static void StringToInputVariable( R2Tensor & target, string value );
-//
-//  static void StringToInputVariable( R2SymTensor & target, string value );
-
-//  template< typename T >
-//  static T StringToInputVariable( xmlNode const & node, string const name, T defValue
-// );
-
-//  static R1Tensor StringToInputVariable( xmlNode const & node, string const name, R1Tensor defValue );
 
 
   template< typename T >
@@ -127,41 +113,6 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
   std::istringstream ss( inputValue );
   ss>>target;
 }
-
-//template< typename T >
-//void xmlWrapper::StringToInputVariable( array1d<T> & target, string inputValue )
-//{
-//  string csvstr = inputValue;
-//  std::istringstream ss( csvstr );
-//
-//  T value;
-//
-//  while( ss.peek() == ',' || ss.peek() == ' ' )
-//  {
-//    ss.ignore();
-//  }
-//  while( !((ss>>value).fail()) )
-//  {
-//    target.push_back( value );
-//    while( ss.peek() == ',' || ss.peek() == ' ' )
-//    {
-//      ss.ignore();
-//    }
-//  }
-//}
-//
-//template< typename T >
-//void xmlWrapper::StringToInputVariable( array2d<T> & target, string inputValue )
-//{
-//  array1d<T> temp;
-//  StringToInputVariable( temp, inputValue );
-//
-//  target.resize(1,temp.size());
-//  for( localIndex i=0 ; i<temp.size() ; ++i )
-//  {
-//    target[0][i] = temp[i];
-//  }
-//}
 
 
 template< typename T >
@@ -248,10 +199,17 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
     }
   }
 
-  GEOS_ERROR_IF( ndims!=NDIM, "number of dimensions in string ("<<ndims<<") does not match dimensions of array("<<NDIM<<")");
+  GEOS_ERROR_IF( ndims!=NDIM,
+                 "number of dimensions in string ("<<ndims<<
+                 ") does not match dimensions of array("<<NDIM<<
+                 "). Original string is:/n"<<str );
   array.resize( NDIM, dims );
 
   T * arrayData = array.data();
+
+  // we need this because array<string> will capture the } in the value.
+  std::replace( str_nospace.begin(), str_nospace.end(), '}', ' ');
+  std::replace( str_nospace.begin(), str_nospace.end(), ',', ' ');
   std::istringstream strstream(str_nospace);
 
   ndims = 0;
@@ -260,7 +218,7 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
   {
     int c = strstream.peek();
 
-    if( c=='{' || c== '}' || c==',')
+    if( c=='{' || c== ' ' )
     {
       strstream.ignore();
     }
