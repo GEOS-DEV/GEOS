@@ -533,6 +533,11 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
                                  ElementRegion * const region,
                                  ElementSubRegionBase * const subRegion )
   {
+    {
+      arrayView2d<real64 const> const & totalDens = m_totalDens[er][esr][m_fluidIndex];
+      GEOS_LOG("InitializeFluidState before totalDens :\n" << std::setprecision(16) << totalDens << std::endl);
+    }
+
     // 1. Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
     UpdateFluidModel( subRegion );
@@ -550,6 +555,8 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
     });
+
+    GEOS_LOG("InitializeFluidState after totalDens :\n" << std::setprecision(16) << totalDens << std::endl);
 
     // 3. Calculate phase saturations
     UpdatePhaseVolumeFraction( subRegion );
@@ -1478,7 +1485,6 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
                                                     rhsContribution.data() );
     }
   });
-
 }
 
 void

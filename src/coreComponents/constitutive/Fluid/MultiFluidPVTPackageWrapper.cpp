@@ -282,6 +282,20 @@ void MultiFluidPVTPackageWrapper::Compute( localIndex const NC, localIndex const
     }
   }
 
+  for (localIndex ip = 0; ip < NP; ++ip)
+  {
+    GEOS_LOG("MultiFluidPVTPackageWrapper::Compute phaseDens.value[ip] : " << std::setprecision(16) << phaseDens.value[ip]);
+  }
+
+  GEOS_LOG("");
+
+  for (localIndex ip = 0; ip < NP; ++ip)
+  {
+    GEOS_LOG("MultiFluidPVTPackageWrapper::Compute phaseFrac.value[ip] : " << std::setprecision(16) << phaseFrac.value[ip]);
+  }
+
+  GEOS_LOG("");
+
   // 4. if mass variables used instead of molar, perform the conversion
   if (useMass)
   {
