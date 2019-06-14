@@ -149,76 +149,106 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 template< typename T, int NDIM >
 void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str )
 {
-  string str_nospace( str );
-  str_nospace.erase(std::remove(str_nospace.begin(), str_nospace.end(), ' '), str_nospace.end());
+  string collapsedStr( str );
+  collapsedStr.erase(std::remove(collapsedStr.begin(), collapsedStr.end(), ' '), collapsedStr.end());
 
-
-  string const openDelim("{");
-  string const closeDelim("}");
   size_t openPos = 0;
   size_t closePos = 0;
 
+  GEOS_ERROR_IF( collapsedStr[0]!='{',
+                 "First non-space character of input string for an array must be {" );
 
-  size_t const numOpen = std::count( str_nospace.begin(), str_nospace.end(), '{' );
-  size_t const numClose = std::count( str_nospace.begin(), str_nospace.end(), '}' );
+  GEOS_ERROR_IF( collapsedStr.find("{}")!=string::npos,
+                 "Cannot have an empty dimension of an array, i.e. {}" );
+
+  size_t const numOpen = std::count( collapsedStr.begin(), collapsedStr.end(), '{' );
+  size_t const numClose = std::count( collapsedStr.begin(), collapsedStr.end(), '}' );
 
   GEOS_ERROR_IF( numOpen != numClose,
                  "Number of opening { not equal to number of } in processing of string for filling"
-                 " an Array. Given string is: \n"<<str_nospace);
+                 " an Array. Given string is: \n"<<collapsedStr);
 
+  // get the number of dimensions from the number of { characters that begin the input string
+  int const ndims = integer_conversion<int>(collapsedStr.find_first_not_of('{'));
+  GEOS_ERROR_IF( ndims!=NDIM,
+                 "number of dimensions in string ("<<ndims<<
+                 ") does not match dimensions of array("<<NDIM<<
+                 "). Original string is:/n"<<str );
 
-  int ndims = 0;
   int dimLevel = -1;
   localIndex dims[NDIM] = {0};
-  for( int i=0 ; i<NDIM ; ++i ) dims[i]=1;
-  bool dimSet[NDIM] = {false};
-  bool reachedClose = false;
-
-  for( char const & c : str_nospace )
+  localIndex otherDims[NDIM] = {0};
+  for( int i=0 ; i<NDIM ; ++i )
   {
+    dims[i]=1;
+    otherDims[i] = 1;
+  }
+  bool dimSet[NDIM] = {false};
+
+  char lastChar = 0;
+
+  for( size_t charCount = 0; charCount<collapsedStr.size() ; ++charCount )
+  {
+    char const c = collapsedStr[charCount];
     if( c=='{')
     {
-      if( reachedClose==false )
-      {
-        ++ndims;
-      }
       ++dimLevel;
     }
     else if( c=='}')
     {
       dimSet[dimLevel] = true;
+      GEOS_ERROR_IF( dims[dimLevel]!=otherDims[dimLevel],
+                     "Dimension "<<dimLevel<<" is inconsistent across the expression. "
+                     "The first set value of the dimension is "<<dims[dimLevel]<<
+                     " while the current value of the dimension is"<<otherDims[dimLevel]<<
+                     ". The values that have been parsed prior to the error are:\n"<<
+                     collapsedStr.substr(0,charCount+1) );
+      otherDims[dimLevel] = 1;
       --dimLevel;
-      reachedClose = true;
+      GEOS_ERROR_IF( dimLevel<0 && charCount<(collapsedStr.size()-1),
+                     "In parsing the input string, the current dimension of the array has dropped "
+                     "below 0. This means that there are more '}' than '{' at some point in the"
+                     " parsing. The values that have been parsed prior to the error are:\n"<<
+                     collapsedStr.substr(0,charCount+1) );
+
     }
     else if( c==',' )
     {
+      GEOS_ERROR_IF( lastChar=='{' || lastChar==',',
+                     "character of ',' follows '"<<lastChar<<"'. Comma must follow an array value.");
       if( dimSet[dimLevel]==false )
       {
-        ++dims[dimLevel];
+        ++(dims[dimLevel]);
       }
-    }
-  }
+      ++(otherDims[dimLevel]);
 
-  GEOS_ERROR_IF( ndims!=NDIM,
-                 "number of dimensions in string ("<<ndims<<
-                 ") does not match dimensions of array("<<NDIM<<
-                 "). Original string is:/n"<<str );
+    }
+
+    lastChar = c;
+  }
+  GEOS_ERROR_IF( dimLevel!=-1,
+                 "Expression fails to close all '{' with a corresponding '}'. Check your input:"<<
+                 collapsedStr );
+
+
   array.resize( NDIM, dims );
 
   T * arrayData = array.data();
 
-  // we need this because array<string> will capture the } in the value.
-  std::replace( str_nospace.begin(), str_nospace.end(), '}', ' ');
-  std::replace( str_nospace.begin(), str_nospace.end(), ',', ' ');
-  std::istringstream strstream(str_nospace);
+  // In order to use the stringstream facility to read in values of a Array<string>,
+  // we need to replace all {}, with spaces.
+  std::replace( collapsedStr.begin(), collapsedStr.end(), '{', ' ' );
+  std::replace( collapsedStr.begin(), collapsedStr.end(), '}', ' ' );
+  std::replace( collapsedStr.begin(), collapsedStr.end(), ',', ' ' );
+  std::istringstream strstream(collapsedStr);
 
-  ndims = 0;
-  dimLevel = -1;
+  // iterate through the stream and insert values into array in a linear fashion. This will be
+  // incorrect if we ever have Array with a permuted index capability.
   while( strstream )
   {
     int c = strstream.peek();
 
-    if( c=='{' || c== ' ' )
+    if( c== ' ' )
     {
       strstream.ignore();
     }
