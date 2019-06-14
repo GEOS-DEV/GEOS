@@ -23,7 +23,7 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_TESTS_CREATECONNLOCPATTERN_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_TESTS_CREATECONNLOCPATTERN_HPP_
 
-#include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
+//#include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
 #include "DofManager.hpp"
 
 namespace geosx
@@ -116,13 +116,13 @@ void createConnLocPattern( DomainPartition * const domain,
                            localIndex const numComponents,
                            ParallelMatrix & connLocPattern );
 
-/**
- * Create the location-location pattern for the Laplace equation with FEM
- */
-void createLocLocPattern( DomainPartition * const domain,
-                          localIndex const meshBodyIndex,
-                          localIndex const meshLevelIndex,
-                          ParallelMatrix & locLocPattern );
+///**
+// * Create the location-location pattern for the Laplace equation with FEM
+// */
+//void createLocLocPattern( DomainPartition * const domain,
+//                          localIndex const meshBodyIndex,
+//                          localIndex const meshLevelIndex,
+//                          ParallelMatrix & locLocPattern );
 
 } /* namespace geosx */
 
