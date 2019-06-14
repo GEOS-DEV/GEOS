@@ -20,15 +20,16 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
+#ifndef _FILEIO_XMLWRAPPER_HPP_
+#define _FILEIO_XMLWRAPPER_HPP_
 
-#include "ArrayUtilities.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include <algorithm>
+#include <sstream>
+
+#include "pugixml.hpp"
+
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "pugixml.hpp"
-#include <sstream>
 
 namespace geosx
 {
@@ -39,19 +40,48 @@ class ManagedGroup;
 }
 
 
+/**
+ * @class xmlWrapper
+ *
+ * This class wraps/provides facilities to process entries from an xml file into the appropriate
+ * data types. xmlWrapper provides some aliases that will wrap the underlying xml package being
+ * used to extract data from the xml file, and a set of static member functions that facilitate
+ * the parsing of string data from the xml into the variables that will hold those values in the
+ * code.
+ */
 class xmlWrapper
 {
 public:
+  /// @typedef alias for the type of xml document
   using xmlDocument = pugi::xml_document;
+
+  /// @typedef alias for the type of the result from an xml parse attempt
   using xmlResult = pugi::xml_parse_result;
+
+  /// @typedef alias for the type of an xml node
   using xmlNode = pugi::xml_node;
+
+  /// @typedef alias for the type of an xml attribute
   using xmlAttribute = pugi::xml_attribute;
+
+  /// @typedef alias for the type variant of an xml node
   using xmlTypes = pugi::xml_node_type;
 
+  /// constexpr variable to hold name for inserting the file path into the xml file. This is used
+  /// because we would like the option to hold the file path in the xml structure.
   static constexpr auto filePathString = "filePath";
 
-  xmlWrapper();
-  virtual ~xmlWrapper();
+  /**
+  * @name FUNCTION GROUP for rule of five functions...which are all deleted in this case.
+   */
+  ///@{
+  xmlWrapper() = delete;
+  ~xmlWrapper() = delete;
+  xmlWrapper( xmlWrapper const & ) = delete;
+  xmlWrapper( xmlWrapper && ) = delete;
+  xmlWrapper & operator=( xmlWrapper const & ) = delete;
+  xmlWrapper & operator=( xmlWrapper && ) = delete;
+  ///@}
 
   /**
    * Function to add xml nodes from included files.
@@ -63,15 +93,41 @@ public:
    */
   static void addIncludedXML( xmlNode & targetNode );
 
+  /**
+   * @name FUNCTION GROUP for StringToInputVariable()
+   * @brief Functions to parse a string, and fill a variable with the value/s in the string.
+   * @tparam T the type of variable fill with string value
+   * @param[out] target the object to read values into
+   * @param[in] value the string that contains the data to be parsed into target
+   *
+   * This function takes in @p value and parses that string based on the type of
+   * @p target. The function implementation should provide sufficient error
+   * checking in the case that @p value is formatted incorrectly for the type specified in
+   * @p target.
+   */
+  ///@{
   template< typename T >
   static void StringToInputVariable( T& target, string value );
-
 
   static void StringToInputVariable( R1Tensor & target, string value );
 
   template< typename T, int NDIM >
-  static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str );
+  static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string value );
+  ///@}
 
+
+  /**
+   * @name FUNCTION GROUP for ReadAttributeAsType()
+   * @brief Functions to extract attributes in an xml tree, and translate those values into a
+   *        typed variable.
+   * @tparam T the type of variable fill with xml attribute.
+   * @tparam T_DEF the default value of T.
+   * @param rval the variable to fill.
+   * @param name the name of the xml attribute to process
+   * @param targetNode The xml node that should contain the attribute
+   * @param required whether or not the value is required
+   */
+  ///@{
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,
@@ -104,6 +160,8 @@ public:
   {
     ReadAttributeAsType(rval, name, targetNode, defVal.value );
   }
+  ///@}
+
 };
 
 
@@ -114,66 +172,33 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
   ss>>target;
 }
 
-
-template< typename T >
-void xmlWrapper::ReadAttributeAsType( T & rval,
-                                      string const & name,
-                                      xmlNode const & targetNode,
-                                      bool const required  )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-
-  GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
-
-  StringToInputVariable( rval, xmlatt.value() );
-}
-
-
-template< typename T, typename T_DEF >
-void xmlWrapper::ReadAttributeAsType( T & rval,
-                                      string const & name,
-                                      xmlNode const & targetNode,
-                                      T_DEF const & defVal )
-{
-  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
-  if( !xmlatt.empty() )
-  {
-    StringToInputVariable( rval, xmlatt.value() );
-  }
-  else
-  {
-    rval = defVal;
-  }
-}
-
 template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string const & str )
+void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string valueString )
 {
-  string collapsedStr( str );
-  collapsedStr.erase(std::remove(collapsedStr.begin(), collapsedStr.end(), ' '), collapsedStr.end());
+  valueString.erase(std::remove(valueString.begin(), valueString.end(), ' '), valueString.end());
 
   size_t openPos = 0;
   size_t closePos = 0;
 
-  GEOS_ERROR_IF( collapsedStr[0]!='{',
+  GEOS_ERROR_IF( valueString[0]!='{',
                  "First non-space character of input string for an array must be {" );
 
-  GEOS_ERROR_IF( collapsedStr.find("{}")!=string::npos,
+  GEOS_ERROR_IF( valueString.find("{}")!=string::npos,
                  "Cannot have an empty dimension of an array, i.e. {}" );
 
-  size_t const numOpen = std::count( collapsedStr.begin(), collapsedStr.end(), '{' );
-  size_t const numClose = std::count( collapsedStr.begin(), collapsedStr.end(), '}' );
+  size_t const numOpen = std::count( valueString.begin(), valueString.end(), '{' );
+  size_t const numClose = std::count( valueString.begin(), valueString.end(), '}' );
 
   GEOS_ERROR_IF( numOpen != numClose,
                  "Number of opening { not equal to number of } in processing of string for filling"
-                 " an Array. Given string is: \n"<<collapsedStr);
+                 " an Array. Given string is: \n"<<valueString);
 
   // get the number of dimensions from the number of { characters that begin the input string
-  int const ndims = integer_conversion<int>(collapsedStr.find_first_not_of('{'));
+  int const ndims = integer_conversion<int>(valueString.find_first_not_of('{'));
   GEOS_ERROR_IF( ndims!=NDIM,
                  "number of dimensions in string ("<<ndims<<
                  ") does not match dimensions of array("<<NDIM<<
-                 "). Original string is:/n"<<str );
+                 "). String is:/n"<<valueString );
 
   int dimLevel = -1;
   localIndex dims[NDIM] = {0};
@@ -187,9 +212,9 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
 
   char lastChar = 0;
 
-  for( size_t charCount = 0; charCount<collapsedStr.size() ; ++charCount )
+  for( size_t charCount = 0; charCount<valueString.size() ; ++charCount )
   {
-    char const c = collapsedStr[charCount];
+    char const c = valueString[charCount];
     if( c=='{')
     {
       ++dimLevel;
@@ -202,14 +227,14 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
                      "The first set value of the dimension is "<<dims[dimLevel]<<
                      " while the current value of the dimension is"<<currentDims[dimLevel]<<
                      ". The values that have been parsed prior to the error are:\n"<<
-                     collapsedStr.substr(0,charCount+1) );
+                     valueString.substr(0,charCount+1) );
       currentDims[dimLevel] = 1;
       --dimLevel;
-      GEOS_ERROR_IF( dimLevel<0 && charCount<(collapsedStr.size()-1),
+      GEOS_ERROR_IF( dimLevel<0 && charCount<(valueString.size()-1),
                      "In parsing the input string, the current dimension of the array has dropped "
                      "below 0. This means that there are more '}' than '{' at some point in the"
                      " parsing. The values that have been parsed prior to the error are:\n"<<
-                     collapsedStr.substr(0,charCount+1) );
+                     valueString.substr(0,charCount+1) );
 
     }
     else if( c==',' )
@@ -228,7 +253,7 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
   }
   GEOS_ERROR_IF( dimLevel!=-1,
                  "Expression fails to close all '{' with a corresponding '}'. Check your input:"<<
-                 collapsedStr );
+                 valueString );
 
 
   array.resize( NDIM, dims );
@@ -237,10 +262,10 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
 
   // In order to use the stringstream facility to read in values of a Array<string>,
   // we need to replace all {}, with spaces.
-  std::replace( collapsedStr.begin(), collapsedStr.end(), '{', ' ' );
-  std::replace( collapsedStr.begin(), collapsedStr.end(), '}', ' ' );
-  std::replace( collapsedStr.begin(), collapsedStr.end(), ',', ' ' );
-  std::istringstream strstream(collapsedStr);
+  std::replace( valueString.begin(), valueString.end(), '{', ' ' );
+  std::replace( valueString.begin(), valueString.end(), '}', ' ' );
+  std::replace( valueString.begin(), valueString.end(), ',', ' ' );
+  std::istringstream strstream(valueString);
 
   // iterate through the stream and insert values into array in a linear fashion. This will be
   // incorrect if we ever have Array with a permuted index capability.
@@ -259,7 +284,43 @@ void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & arr
   }
 }
 
+template< typename T >
+void xmlWrapper::ReadAttributeAsType( T & rval,
+                                      string const & name,
+                                      xmlNode const & targetNode,
+                                      bool const required  )
+{
+  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
+
+  GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
+
+  // parse the string/attribute into a value
+  StringToInputVariable( rval, xmlatt.value() );
+}
+
+
+template< typename T, typename T_DEF >
+void xmlWrapper::ReadAttributeAsType( T & rval,
+                                      string const & name,
+                                      xmlNode const & targetNode,
+                                      T_DEF const & defVal )
+{
+  pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
+  if( !xmlatt.empty() )
+  {
+    // parse the string/attribute into a value
+    StringToInputVariable( rval, xmlatt.value() );
+  }
+  else
+  {
+    // set the value to the default value
+    rval = defVal;
+  }
+}
+
+
+
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_ */
+#endif /*_FILEIO_XMLWRAPPER_HPP_ */
