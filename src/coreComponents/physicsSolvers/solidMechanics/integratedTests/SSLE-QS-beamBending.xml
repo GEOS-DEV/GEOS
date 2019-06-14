@@ -13,8 +13,8 @@
                                   >
       <SystemSolverParameters useMLPrecond="1"
                               scalingOption="0"
-                              krylovTol="1.0e-8"
-                              newtonTol="1.0e-4"
+                              krylovTol="1.0e-10"
+                              newtonTol="1.0e-6"
                               maxIterNewton="8"
                               verbosityFlag="0"/>
      </SolidMechanicsLagrangianSSLE>

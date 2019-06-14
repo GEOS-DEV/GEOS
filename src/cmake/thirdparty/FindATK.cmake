@@ -50,12 +50,12 @@
 #  If found, the conduit CMake targets will also be imported
 
 if (NOT EXISTS ${ATK_DIR})
-    message(INFO ": Using axom from thirdPartyLibs")
+    message(STATUS "Using axom from thirdPartyLibs")
     set(ATK_DIR "${GEOSX_TPL_DIR}/axom" CACHE PATH "")
 endif()
 
 if (EXISTS ${ATK_DIR})
-    message(INFO ": Using axom found at ${ATK_DIR}")
+    message(STATUS "Using axom found at ${ATK_DIR}")
 
     set(ATK_FOUND TRUE)
     set(ATK_INCLUDE_DIRS ${ATK_DIR}/include)
@@ -75,7 +75,7 @@ if (EXISTS ${ATK_DIR})
                               TREAT_INCLUDES_AS_SYSTEM ON )
         set(thirdPartyLibs ${thirdPartyLibs} sidre )
     else()
-        message(INFO ": Conduit not found turning off sidre")
+        message("Conduit not found turning off sidre")
     endif()
 
     blt_register_library( NAME slic
@@ -91,5 +91,5 @@ if (EXISTS ${ATK_DIR})
     set(thirdPartyLibs ${thirdPartyLibs} slic lumberjack )
 else()
     set(ATK_FOUND FALSE)
-    message(INFO ": Not using axom")
+    message("Not using axom")
 endif()

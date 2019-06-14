@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
 
 #include <numeric>
@@ -34,6 +27,7 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
 #include "common/TimingMacros.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
@@ -41,6 +35,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "createConnLocPattern.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 #include "DofManager.hpp"
 
@@ -612,20 +607,18 @@ TEST_F(DofManagerTest, TestWithTimes)
   }
 
   // Fake check
-  EXPECT_EQ( 1, 1 );
+  SUCCEED();
 }
 
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-#ifdef GEOSX_USE_MPI
-  MPI_Init( &argc, &argv );
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  logger::InitializeLogger( MPI_COMM_GEOSX );
-#else
-  logger::InitializeLogger():
-#endif
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+
+  // Global call will not work because CXXUtils has already been initialized in problemManager
+  //geosx::basicSetup( argc, argv );
+  setupMPI(argc, argv);
+  setupOpenMP();
+  setupMKL();
 
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>( global_argc )];
@@ -637,15 +630,12 @@ int main( int argc, char** argv )
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-  logger::FinalizeLogger();
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+
+  // Global call will not work because CXXUtils will be destructed by problemManager
+  //geosx::basicCleanup();
+  FieldSpecificationManager::finalize();
+  NewFunctionManager::finalize();
+  finalizeMPI();
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

@@ -18,10 +18,14 @@ set( nranks 2 )
 # Add gtest C++ based tests
 #
 
-set( dependencyList gtest linearAlgebraInterface )
+set( dependencyList gtest linearAlgebraInterface geosx_core )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
+endif()
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
 endif()
 
 foreach(test ${LAI_tests})

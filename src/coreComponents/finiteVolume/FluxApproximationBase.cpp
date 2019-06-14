@@ -80,9 +80,9 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
 
   computeCellStencil( domain, getStencil() );
 
-  computeFractureStencil( domain,
-                          this->getReference<CellStencil>(viewKeyStruct::fractureStencilString),
-                          getStencil() );
+//  computeFractureStencil( domain,
+//                          this->getReference<CellStencil>(viewKeyStruct::fractureStencilString),
+//                          getStencil() );
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
