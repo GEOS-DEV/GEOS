@@ -26,12 +26,6 @@
  * further review from Lawrence Livermore National Laboratory.
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#define __null nullptr
-#endif
-
 #include <gtest/gtest.h>
 
 #include "fileIO/xmlWrapper.hpp"
@@ -173,8 +167,4 @@ int main( int argc, char* argv[] )
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
