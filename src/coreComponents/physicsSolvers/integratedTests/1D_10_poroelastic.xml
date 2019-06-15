@@ -11,7 +11,7 @@
                  fluidSolverName="SinglePhaseFlow"
                  couplingTypeOption="FixedStress"
                  verboseLevel="1"
-                 targetRegions="Region2">
+                 targetRegions="{Region2}">
       <SystemSolverParameters maxIterNewton="40"
                               verbosityFlag="2"/>
     </Poroelastic>
@@ -20,7 +20,8 @@
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="1"
-                                  targetRegions="Region2">
+                                  solidMaterialName="shale"
+                                  targetRegions="{Region2}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="5"
@@ -33,7 +34,7 @@
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="shale"
-                     targetRegions="Region2">
+                     targetRegions="{Region2}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -42,14 +43,14 @@
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="0, 42"
-                  yCoords="0, 1"
-                  zCoords="0, 1"
-                  nx="21"
-                  ny="1"
-                  nz="1"
-                  cellBlockNames="cb1"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 42}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{21}"
+                  ny="{1}"
+                  nz="{1}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
@@ -104,7 +105,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" materialList="shale water" />
+    <ElementRegion name="Region2" cellBlocks="{cb1}"  materialList="{shale, water}" />
   </ElementRegions>
 
   <Constitutive>
@@ -113,12 +114,11 @@
                               defaultDensity="2700"
                               defaultBulkModulus="61.9e6"
                               defaultShearModulus="28.57e6"
-                              BiotCoefficient="1"
-                              referencePressure="2.125e6"
-                              compressibility="3e-10"
                               />
 
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="2.125e6"
                                   referenceDensity="1000"
                                   compressibility="1e-19"
@@ -133,7 +133,7 @@
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
@@ -141,7 +141,7 @@
     <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
@@ -149,21 +149,21 @@
     <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="permeability"
                scale="4.963e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="referencePorosity"
                scale="0.3"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="2.125e6"/>
@@ -173,40 +173,40 @@
                fieldName="TotalDisplacement"  
                component="0" 
                scale="0.0" 
-               setNames="xneg"/>
+               setNames="{xneg}"/>
 
     <FieldSpecification name="yconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement"  
                component="1" 
                scale="0.0" 
-               setNames="yneg ypos"/>
+               setNames="{yneg, ypos}"/>
                
     <FieldSpecification name="zconstraint"    
                objectPath="nodeManager" 
                fieldName="TotalDisplacement"  
                component="2" 
                scale="0.0" 
-               setNames="zneg zpos"/>
+               setNames="{zneg, zpos}"/>
                
     <FieldSpecification name="xposconstraint" 
                objectPath="faceManager" 
                fieldName="Traction"  
                component="0" 
                scale="-2.125e6" 
-               setNames="xpos"
+               setNames="{xpos}"
                functionName="timeFunction"/>
 
     <FieldSpecification name="boundaryPressure"
                objectPath="ElementRegions/elementRegions/Region2/elementSubRegions/cb1"
                fieldName="pressure"
                scale="2.125e6"
-               setNames="boundaryBot boundaryTop"/>  
+               setNames="{boundaryBot, boundaryTop}"/>  
 
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction     name="timeFunction"         inputVarNames="time" coordinates="1.0, 2.0, 6e4" values="1.0, 2.0, 2.0" />
+    <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
     <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition" variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
     <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>

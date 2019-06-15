@@ -90,7 +90,7 @@ TEST( testXmlWrapper, array3d_errors )
   {
     input = " { { {0,1,2}}{ } }";
     LvArray::Array<int,3,localIndex> array;
-    xmlWrapper::StringToInputVariable( array, input );
+    EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
 
