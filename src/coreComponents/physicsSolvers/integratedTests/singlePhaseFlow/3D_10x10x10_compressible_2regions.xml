@@ -12,7 +12,7 @@
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
-                     targetRegions="Region1 Region2">
+                     targetRegions="{Region1, Region2}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -21,14 +21,14 @@
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="0, 10"
-                  yCoords="0, 10"
-                  zCoords="0, 5, 10"
-                  nx="10"
-                  ny="10"
-                  nz="5 , 10"
-                  cellBlockNames="cb1 cb2"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 10}"
+                  yCoords="{0, 10}"
+                  zCoords="{0, 5, 10}"
+                  nx="{10}"
+                  ny="{10}"
+                  nz="{5, 10}"
+                  cellBlockNames="{cb1, cb2}"/>
   </Mesh>
 
   <Geometry>
@@ -70,11 +70,11 @@
 
   <ElementRegions>
     <ElementRegion name="Region1"
-                   cellBlocks="cb1"
-                   materialList="water rock"/>
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
     <ElementRegion name="Region2"
-                   cellBlocks="cb2"
-                   materialList="water rock"/>
+                   cellBlocks="{cb2}"
+                   materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -96,7 +96,7 @@
     <FieldSpecification name="permx1"
                component="0"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
@@ -104,7 +104,7 @@
     <FieldSpecification name="permy1"
                component="1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
@@ -112,21 +112,21 @@
     <FieldSpecification name="permz1"
                component="2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region1"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region1/elementSubRegions/cb1"
                fieldName="pressure"
                scale="5e6"/>
@@ -135,24 +135,24 @@
                objectPath="ElementRegions"
                fieldName="pressure"
                scale="1e7"
-               setNames="source"/>
+               setNames="{source}"/>
 
     <FieldSpecification name="sinkTerm1"
                objectPath="ElementRegions/Region1/cb1"
                fieldName="pressure"
                scale="0.0"
-               setNames="sink"/>
+               setNames="{sink}"/>
 
     <FieldSpecification name="referencePorosity2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="referencePorosity"
                scale="0.07"/>
 
     <FieldSpecification name="initialPressure2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="pressure"
                scale="5e6"/>
@@ -161,7 +161,7 @@
                objectPath="ElementRegions/Region2/cb2"
                fieldName="pressure"
                scale="0.0"
-               setNames="sink"/>
+               setNames="{sink}"/>
   </FieldSpecifications>
 
   <Functions>
