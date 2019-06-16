@@ -42,7 +42,7 @@ The first is the main repository, which may be cloned and initialized by the fol
    cd thirdPartyLibs
    git submodule init
    git submodule update
-   git-lfs pull
+   git lfs pull
    cd ..
 
 
