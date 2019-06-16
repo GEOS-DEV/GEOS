@@ -42,6 +42,7 @@ The first is the main repository, which may be cloned and initialized by the fol
    cd thirdPartyLibs
    git submodule init
    git submodule update
+   git-lfs pull
    cd ..
 
 
@@ -63,7 +64,6 @@ Note that the 'make' step should be run serially, as the indiviudal package buil
    cd thirdPartyLibs
    python scripts/config-build.py -hc ../GEOSX/host-configs/your-platform.cmake -bt Release
    cd build-your-platform-release
-   make hdf5
    make -j1
 
 The next step is to compile the main code.
