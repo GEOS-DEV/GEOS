@@ -64,7 +64,7 @@
   <ElementRegions>
     <ElementRegion name="Region1"
                    cellBlocks="{cb1}"
-                   materialList="{}"/>
+                   materialList="{water, rock}"/>
     <ElementRegion name="Region2"
                    cellBlocks="{cb2}"
                    materialList="{water, rock}"/>
