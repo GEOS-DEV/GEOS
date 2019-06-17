@@ -122,7 +122,8 @@ public:
    * @brief Functions to extract attributes in an xml tree, and translate those values into a
    *        typed variable.
    * @tparam T the type of variable fill with xml attribute.
-   * @tparam T_DEF the default value of T.
+   * @tparam T_DEF the default value of @p T, or in the case where @p T is an array,
+   *                the entries of T.
    * @param rval the variable to fill.
    * @param name the name of the xml attribute to process
    * @param targetNode The xml node that should contain the attribute
