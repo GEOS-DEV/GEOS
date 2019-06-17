@@ -65,7 +65,7 @@
 
 
   <ElementRegions>
-    <ElementRegion name="Top" cellBlocks="{0_TETRA}" materialList="{water, rock}"/>
+    <ElementRegion name="Top" cellBlocks="{0_TETRA}" materialList="{}"/>
     <ElementRegion name="Bot" cellBlocks="{1_TETRA}" materialList="{water, rock}"/>
   </ElementRegions>
 
