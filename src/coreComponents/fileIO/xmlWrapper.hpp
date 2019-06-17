@@ -30,6 +30,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
+#include "ArrayUtilities.hpp"
 
 namespace geosx
 {
@@ -175,113 +176,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 template< typename T, int NDIM >
 void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string valueString )
 {
-  valueString.erase(std::remove(valueString.begin(), valueString.end(), ' '), valueString.end());
-
-  size_t openPos = 0;
-  size_t closePos = 0;
-
-  GEOS_ERROR_IF( valueString[0]!='{',
-                 "First non-space character of input string for an array must be {" );
-
-  GEOS_ERROR_IF( valueString.find("{}")!=string::npos,
-                 "Cannot have an empty dimension of an array, i.e. {}" );
-
-  size_t const numOpen = std::count( valueString.begin(), valueString.end(), '{' );
-  size_t const numClose = std::count( valueString.begin(), valueString.end(), '}' );
-
-  GEOS_ERROR_IF( numOpen != numClose,
-                 "Number of opening { not equal to number of } in processing of string for filling"
-                 " an Array. Given string is: \n"<<valueString);
-
-  // get the number of dimensions from the number of { characters that begin the input string
-  int const ndims = integer_conversion<int>(valueString.find_first_not_of('{'));
-  GEOS_ERROR_IF( ndims!=NDIM,
-                 "number of dimensions in string ("<<ndims<<
-                 ") does not match dimensions of array("<<NDIM<<
-                 "). String is:/n"<<valueString );
-
-  int dimLevel = -1;
-  localIndex dims[NDIM] = {0};
-  localIndex currentDims[NDIM] = {0};
-  for( int i=0 ; i<NDIM ; ++i )
-  {
-    dims[i]=1;
-    currentDims[i] = 1;
-  }
-  bool dimSet[NDIM] = {false};
-
-  char lastChar = 0;
-
-  for( size_t charCount = 0; charCount<valueString.size() ; ++charCount )
-  {
-    char const c = valueString[charCount];
-    if( c=='{')
-    {
-      ++dimLevel;
-    }
-    else if( c=='}')
-    {
-      dimSet[dimLevel] = true;
-      GEOS_ERROR_IF( dims[dimLevel]!=currentDims[dimLevel],
-                     "Dimension "<<dimLevel<<" is inconsistent across the expression. "
-                     "The first set value of the dimension is "<<dims[dimLevel]<<
-                     " while the current value of the dimension is"<<currentDims[dimLevel]<<
-                     ". The values that have been parsed prior to the error are:\n"<<
-                     valueString.substr(0,charCount+1) );
-      currentDims[dimLevel] = 1;
-      --dimLevel;
-      GEOS_ERROR_IF( dimLevel<0 && charCount<(valueString.size()-1),
-                     "In parsing the input string, the current dimension of the array has dropped "
-                     "below 0. This means that there are more '}' than '{' at some point in the"
-                     " parsing. The values that have been parsed prior to the error are:\n"<<
-                     valueString.substr(0,charCount+1) );
-
-    }
-    else if( c==',' )
-    {
-      GEOS_ERROR_IF( lastChar=='{' || lastChar==',',
-                     "character of ',' follows '"<<lastChar<<"'. Comma must follow an array value.");
-      if( dimSet[dimLevel]==false )
-      {
-        ++(dims[dimLevel]);
-      }
-      ++(currentDims[dimLevel]);
-
-    }
-
-    lastChar = c;
-  }
-  GEOS_ERROR_IF( dimLevel!=-1,
-                 "Expression fails to close all '{' with a corresponding '}'. Check your input:"<<
-                 valueString );
-
-
-  array.resize( NDIM, dims );
-
-  T * arrayData = array.data();
-
-  // In order to use the stringstream facility to read in values of a Array<string>,
-  // we need to replace all {}, with spaces.
-  std::replace( valueString.begin(), valueString.end(), '{', ' ' );
-  std::replace( valueString.begin(), valueString.end(), '}', ' ' );
-  std::replace( valueString.begin(), valueString.end(), ',', ' ' );
-  std::istringstream strstream(valueString);
-
-  // iterate through the stream and insert values into array in a linear fashion. This will be
-  // incorrect if we ever have Array with a permuted index capability.
-  while( strstream )
-  {
-    int c = strstream.peek();
-
-    if( c== ' ' )
-    {
-      strstream.ignore();
-    }
-    else
-    {
-      strstream>>*(arrayData++);
-    }
-  }
+  cxx_utilities::stringToArray( array, valueString );
 }
 
 template< typename T >
