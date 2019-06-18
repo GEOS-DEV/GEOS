@@ -10,7 +10,7 @@
                      verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
-                     targetRegions="Fracture"
+                     targetRegions="{Fracture}"
                      fluidName="water"
                      solidName="rock">
       <SystemSolverParameters name="SystemSolverParameters"
@@ -22,21 +22,21 @@
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="0"
                       fractureRegion="Fracture"
-                      targetRegions="Fracture">
+                      targetRegions="{Fracture}">
     </SurfaceGenerator>
     
   </Solvers>
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="-1, 1"
-                  yCoords="0, 10"
-                  zCoords="0, 1"
-                  nx="2"
-                  ny="10"
-                  nz="1"
-                  cellBlockNames="cb1"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{-1, 1}"
+                  yCoords="{0, 10}"
+                  zCoords="{0, 1}"
+                  nx="{2}"
+                  ny="{10}"
+                  nz="{1}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
@@ -85,11 +85,11 @@
 
   <ElementRegions>
     <ElementRegion name="Region2"
-                   cellBlocks="cb1"
-                   materialList="water rock"/>
+                   cellBlocks="{cb1}"
+                   materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       materialList="water rock"/>
+                       materialList="{water, rock}"/>
                    
   </ElementRegions>
 
@@ -116,7 +116,7 @@
 
     <FieldSpecification name="frac"
                initialCondition="1"
-               setNames="fracture"
+               setNames="{fracture}"
                objectPath="faceManager"
                fieldName="ruptureState"
                scale="1"/>
@@ -125,7 +125,7 @@
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="1.0e7"
-               setNames="source"/>
+               setNames="{source}"/>
   </FieldSpecifications>
 
   <Functions>

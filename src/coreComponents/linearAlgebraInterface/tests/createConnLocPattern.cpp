@@ -510,6 +510,7 @@ void createConnLocPattern( DomainPartition * const domain,
   regionPtrs.clear();
 }
 
+/*
 // Create the location-location pattern for the Laplace equation with FEM
 void createLocLocPattern( DomainPartition * const domain,
                           localIndex const meshBodyIndex,
@@ -553,5 +554,6 @@ void createLocLocPattern( DomainPartition * const domain,
   locLocPattern.create( sparsity );
   locLocPattern.unwrappedPointer()->PutScalar( 1.0 );
 }
+*/
 
 }

@@ -20,31 +20,11 @@
  * @file xmlWrapper.cpp
  */
 
-#include "ArrayUtilities.hpp"
-#include "common/DataTypes.hpp"
 #include "xmlWrapper.hpp"
-#include "IntegerConversion.hpp"
-#include "dataRepository/ViewWrapper.hpp"
-#include "dataRepository/ManagedGroup.hpp"
-#include "codingUtilities/StringUtilities.hpp"
-#include "fileIO/utils/utils.hpp"
-
-using namespace cxx_utilities;
 
 namespace geosx
 {
 using namespace dataRepository;
-
-xmlWrapper::xmlWrapper()
-{
-  // TODO Auto-generated constructor stub
-
-}
-
-xmlWrapper::~xmlWrapper()
-{
-  // TODO Auto-generated destructor stub
-}
 
 void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
 {

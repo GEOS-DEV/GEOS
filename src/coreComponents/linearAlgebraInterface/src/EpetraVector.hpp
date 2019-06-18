@@ -73,6 +73,14 @@ public:
   //@{
 
   /**
+   * @brief Create a vector based on a previous vector.
+   *
+   * \param vector an already formed EpetraVector.
+   *
+   */
+  void create( EpetraVector const & src );
+
+  /**
    * @brief Create a vector based on local number of elements.
    *
    * Create a vector based on local number of elements.  Global size is
@@ -348,7 +356,18 @@ public:
   /**
    * @brief Write the vector to a matlab-compatible file
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
+
+  /**
+   * Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * Extract a view of the local portion of the array
+   */
+  void extractLocalVector( real64 ** localVector ) const;
 
   //@}
 
