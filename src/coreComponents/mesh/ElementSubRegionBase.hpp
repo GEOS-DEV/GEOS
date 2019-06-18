@@ -14,7 +14,9 @@ namespace geosx
 {
 
 class NodeManager;
+class FaceManager;
 class MeshLevel;
+class DomainPartition;
 
 class ElementSubRegionBase : public ObjectManagerBase
 {
@@ -26,13 +28,8 @@ public:
                                                    const NodeManager& nodeManager,
                                                    const bool useReferencePos = true) const = 0;
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) = 0;
-
-  template< typename LEAF >
-  void CalculateCellVolumes( LEAF & leaf,
-                             array1d<localIndex> const & indices,
-                             array1d<R1Tensor> const & X ) const;
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & faceManager ) = 0;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
 
@@ -140,29 +137,6 @@ protected:
 //  template< LAMBDA lambda >
 //  void numNodesPerElemSwitchyard() const;
 };
-
-
-
-template< typename LEAF >
-void ElementSubRegionBase::CalculateCellVolumes( LEAF & leaf,
-                                     array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) const
-{
-  if( indices.empty() )
-  {
-    forall_in_range<RAJA::loop_exec>( 0, this->size(), [&]( localIndex const k )
-    {
-      leaf.CalculateCellVolumesKernel( k, X );
-    });
-  }
-  else
-  {
-    forall_in_set<RAJA::loop_exec>( indices.data(), indices.size(), [&]( localIndex const k )
-    {
-      leaf.CalculateCellVolumesKernel( k, X );
-    });
-  }
-}
 
 
 } /* namespace geosx */

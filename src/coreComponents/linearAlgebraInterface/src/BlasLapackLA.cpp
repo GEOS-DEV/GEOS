@@ -17,24 +17,29 @@
  */
 
 /**
- * @file BlasLapack.hpp
+ * @file BlasLapack.cpp
  */
 
 // Include the corresponding header file.
 #include "BlasLapackLA.hpp"
 
+#include <random>
+
 // BLAS and LAPACK function declaration
-extern "C"
-{
-  #include "BlasLapackFunctions.hpp"
-}
+#include "BlasLapackFunctions.h"
 
 // Put everything under the geosx namespace.
 namespace geosx
 {
 
-//-------------------------------------------------------Mathematical methods---
-
+// Random device and random number generator seed integer array used
+// to populate a vector/matrix with random coefficients
+static std::random_device rd;
+static std::mt19937 gen(rd());
+static std::uniform_int_distribution<int> dis(0, 4095);
+static std::uniform_int_distribution<int> disOdd(0, 2047);
+static int ISEED[] = {dis(gen), dis(gen), dis(gen), disOdd(gen)*2 + 1};
+  
 real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
   int const INCX = 1;
@@ -242,8 +247,8 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
   return;
 }
 
-void BlasLapackLA::vectorScale( array1d<real64> & X,
-                                real64 alpha )
+void BlasLapackLA::vectorScale( real64 alpha,
+                                array1d<real64> & X )
 {
 
   int const INCX = 1;
@@ -256,8 +261,8 @@ void BlasLapackLA::vectorScale( array1d<real64> & X,
   return;
 }
 
-void BlasLapackLA::matrixScale( array2d<real64> & A,
-                                real64 alpha )
+void BlasLapackLA::matrixScale( real64 alpha,
+                                array2d<real64> & A )
 {
 
   int const INCX = 1;
@@ -444,8 +449,8 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
 {
 
   GEOS_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
-                       C.size( 1 ) == B.size( 0 ) &&
-                       A.size( 1 ) == B.size( 1 ),
+                   C.size( 1 ) == B.size( 0 ) &&
+                   A.size( 1 ) == B.size( 1 ),
                    "Matrix dimensions not compatible for product" );
 
   int const M = integer_conversion<int>( A.size( 0 ) );
@@ -588,7 +593,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
   }
 
   // Check if matrix is singular
-  GEOS_ASSERT_MSG( std::fabs(detA) >
+  GEOS_ASSERT_MSG( std::abs(detA) >
                    std::numeric_limits<real64>::epsilon() *
                    matrixNormFrobenius(A),
                    "Matrix is singular" );
@@ -692,28 +697,73 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
   return;
 }
 
-//----------------------------------------------------------------I/O methods---
-// vector nice output
-void BlasLapackLA::printVector( array1d<real64> const & X )
+void BlasLapackLA::setRandomNumberGeneratorSeed( array1d<int> const & seed)
 {
-  for( int i = 0 ; i < X.size() ; ++i )
+  // Error checking
+  GEOS_ASSERT_MSG( seed.size() >= 4,
+                   "Seed array must have size at least four");
+
+  GEOS_ASSERT_MSG( 0 <= seed(0) && seed(0) <= 4095 &&
+                   0 <= seed(1) && seed(1) <= 4095 &&
+                   0 <= seed(2) && seed(2) <= 4095 &&
+                   0 <= seed(3) && seed(3) <= 4095,
+                  "Seed array integer entries must be in interval [0,4095]");
+
+  GEOS_ASSERT_MSG( seed(3) % 2 > 0,
+                   "Seed array 4th element must be odd");
+
+  for (int i = 0; i < 4; ++i)
   {
-    printf( "%10.2e ", X[i] );
-    printf( "\n" );
+    ISEED[i] = seed[i];
   }
 }
 
-// vector nice output
-void BlasLapackLA::printMatrix( array2d<real64> const & A )
+void BlasLapackLA::getRandomNumberGeneratorSeed( array1d<int> & seed)
 {
-  for( int i = 0 ; i < A.size( 0 ) ; ++i )
+  // Error checking
+  GEOS_ASSERT_MSG( seed.size() >= 4,
+                   "Seed array must have size at least four");
+
+  for (int i = 0; i < 4; ++i)
   {
-    for( int j = 0 ; j < A.size( 1 ) ; ++j )
-    {
-      printf( "%10.2e ", A( i, j ) );
-    }
-    printf( "\n" );
+    seed[i] = ISEED[i];
   }
+}
+
+void BlasLapackLA::vectorRand( array1d<real64> & X,
+                               RandomNumberDistribution const & idist)
+{
+
+  int IDIST = static_cast<int>(idist);
+  int const N = static_cast<int>( X.size() );
+
+  GEOS_ASSERT_MSG( N > 0,
+                   "The vector cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED,
+           &N,
+           X.data());
+
+  return;
+}
+
+void BlasLapackLA::matrixRand( array2d<real64> & A,
+                               RandomNumberDistribution const & idist)
+{
+
+  int IDIST = static_cast<int>(idist);
+  int const NN = static_cast<int>( A.size() );
+
+  GEOS_ASSERT_MSG( NN > 0,
+                   "The matrix cannot be empty");
+
+  dlarnv_( &IDIST,
+           ISEED,
+           &NN,
+           A.data());
+
+  return;
 }
 
 } // end geosx namespace
