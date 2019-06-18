@@ -160,16 +160,16 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
         // Note: this is necessary because the order that objects
         //       are registered to catalogs may vary by compiler
         std::vector<string> subGroupNames;
-        for( auto & subGroup : group->GetSubGroups())
+        for( auto & subGroupPair : group->GetSubGroups())
         {
-          subGroupNames.push_back(subGroup.first);
+          subGroupNames.push_back(subGroupPair.first);
         }
         std::sort(subGroupNames.begin(), subGroupNames.end());
 
         // Add children of the group
         for ( auto & subName : subGroupNames )
         {
-          ManagedGroup * subGroup = group->GetGroup(subName);
+          ManagedGroup * const subGroup = group->GetGroup(subName);
           SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
         }
 
