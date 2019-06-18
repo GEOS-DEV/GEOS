@@ -110,13 +110,8 @@ public:
                                            const NodeManager& nodeManager,
                                            const bool useReferencePos = true) const override;
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) override
-  {
-    ElementSubRegionBase::CalculateCellVolumes<CellBlock>( *this,
-                                               indices,
-                                               X );
-  }
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & facemanager ) override;
 
   inline void CalculateCellVolumesKernel( localIndex const k,
                                           array1d<R1Tensor> const & X ) const

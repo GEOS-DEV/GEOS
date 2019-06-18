@@ -17,12 +17,11 @@
  */
 
 /**
- * @file BlasLapackFunctions.hpp
+ * @file BlasLapackFunctions.h
  */
-
-#ifndef CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASLAPACKFUNCTIONS_HPP_
-#define CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASLAPACKFUNCTIONS_HPP_
-
+#ifdef __cplusplus
+extern "C"
+{
 double dasum_( int const * N,
                double const * DX,
                int const * INCX );
@@ -77,6 +76,10 @@ double dlange_( char const * NORM,
                 double const * A,
                 int const * LDA,
                 double * WORK );
+void dlarnv_( int const * IDIST,
+              int * ISEED,
+              int const * N,
+              double * X );
 double dnrm2_( int const * N,
                double const * X,
                int const * INCX );
@@ -84,5 +87,5 @@ void dscal_( int const * N,
              double const * DA,
              double * DX,
              int const * INCX );
-
-#endif /* CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLASLAPACKFUNCTIONS_HPP_ */
+}
+#endif

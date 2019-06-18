@@ -27,6 +27,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           SUPERLU_DIST
                           TIMERS
                           TRILINOS
+                          MKL
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
