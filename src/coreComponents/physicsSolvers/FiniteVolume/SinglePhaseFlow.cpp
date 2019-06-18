@@ -41,6 +41,9 @@
 
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlowKernels.hpp"
 
+// Shouldn't be here
+#include <EpetraExt_RowMatrixOut.h>
+
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
@@ -612,8 +615,8 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::AssembleAccumulationTerms");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    //GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    //GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 
 
@@ -625,8 +628,8 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::AssembleSystem");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    //GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    //GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 }
 
@@ -863,18 +866,15 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
 
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
-  if (verboseLevel() >= 2)
+  if( verboseLevel() >= 2 )
   {
-
+    GEOS_LOG_RANK("In SinglePhaseFlow::ApplyBoundaryConditions => printing matrix");
     Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                   BlockIDs::fluidPressureBlock );
-    Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::fluidPressureBlock );
-
-    GEOS_LOG_RANK( "After SinglePhaseFlow::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
-    GEOS_LOG_RANK( "\nResidual\n" << *residual );
+    string filename = "matrix_" + std::to_string( time_n ) + ".mtx";
+    // Should use LinearAlgebraInterface
+    EpetraExt::RowMatrixToMatrixMarketFile( filename.c_str(), *jacobian );
   }
-
 }
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
@@ -1267,7 +1267,7 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::SolveSystem");
-    GEOS_LOG_RANK("\nsolution\n" << *solution);
+    //GEOS_LOG_RANK("\nsolution\n" << *solution);
   }
 
 }
