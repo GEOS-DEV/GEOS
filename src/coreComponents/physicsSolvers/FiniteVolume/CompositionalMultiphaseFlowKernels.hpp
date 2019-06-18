@@ -43,13 +43,13 @@ struct ComponentFractionKernel
 {
 
   template<localIndex NC>
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( arraySlice1d<real64 const> compDens,
            arraySlice1d<real64 const> dCompDens,
            arraySlice1d<real64> compFrac,
            arraySlice2d<real64> dCompFrac_dCompDens );
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex NC,
            arraySlice1d<real64 const> compDens,
            arraySlice1d<real64 const> dCompDens,
@@ -117,7 +117,7 @@ struct PhaseVolumeFractionKernel
 {
 
   template<localIndex NC, localIndex NP>
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( arraySlice1d<real64 const> compDens,
            arraySlice1d<real64 const> dCompDens,
            arraySlice2d<real64 const> dCompFrac_dCompDens,
@@ -131,7 +131,7 @@ struct PhaseVolumeFractionKernel
            arraySlice1d<real64> dPhaseVolFrac_dPres,
            arraySlice2d<real64> dPhaseVolFrac_dComp );
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex NC, localIndex NP,
            arraySlice1d<real64 const> compDens,
            arraySlice1d<real64 const> dCompDens,
@@ -267,7 +267,7 @@ struct PhaseMobilityKernel
 {
 
   template<localIndex NC, localIndex NP>
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( arraySlice2d<real64 const> dCompFrac_dCompDens,
            arraySlice1d<real64 const> phaseDens,
            arraySlice1d<real64 const> dPhaseDens_dPres,
@@ -283,7 +283,7 @@ struct PhaseMobilityKernel
            arraySlice1d<real64> dPhaseMob_dPres,
            arraySlice2d<real64> dPhaseMob_dComp );
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex NC, localIndex NP,
            arraySlice2d<real64 const> dCompFrac_dCompDens,
            arraySlice1d<real64 const> phaseDens,
@@ -432,7 +432,7 @@ INST_PhaseMobilityKernel(5,3);
 struct AccumulationKernel
 {
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex const NC, localIndex const NP,
            real64 const & volume,
            real64 const & porosityOld,
@@ -532,7 +532,7 @@ struct AccumulationKernel
   }
 
   template<localIndex NC, localIndex NP>
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( real64 const & volume,
            real64 const & porosityOld,
            real64 const & porosityRef,
@@ -658,7 +658,7 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex const NC, localIndex const NP,
            localIndex const stencilSize,
            FluxApproximationBase::CellStencil::Entry const * const stencil,
@@ -969,7 +969,7 @@ struct FluxKernel
 struct VolumeBalanceKernel
 {
 
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( localIndex const NC, localIndex const NP,
            real64 const & volume,
            real64 const & porosityRef,
@@ -1017,7 +1017,7 @@ struct VolumeBalanceKernel
   }
 
   template<localIndex NC, localIndex NP>
-  static inline RAJA_HOST_DEVICE void
+  static inline void
   Compute( real64 const & volume,
            real64 const & porosityRef,
            real64 const & pvMult,
@@ -1126,7 +1126,7 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
   helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
   {
     run2 =
-    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&] ( auto NP )
+    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&args...] ( auto NP )
     {
       // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
       auto constexpr NC_ = decltype(NC)::value;

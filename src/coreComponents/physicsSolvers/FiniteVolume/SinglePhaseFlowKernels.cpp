@@ -30,7 +30,7 @@ namespace SinglePhaseFlowKernels
 
 /******************************** MobilityKernel ********************************/
 
-RAJA_HOST_DEVICE void
+void
 MobilityKernel::Compute( real64 const & dens,
                          real64 const & dDens_dPres,
                          real64 const & visc,
@@ -42,7 +42,7 @@ MobilityKernel::Compute( real64 const & dens,
   dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
 }
 
-RAJA_HOST_DEVICE void
+void
 MobilityKernel::Compute( real64 const & dens,
                          real64 const & visc,
                          real64 & mob )

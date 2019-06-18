@@ -28,6 +28,10 @@
 #include <mkl.h>
 #endif
 
+#ifdef GEOSX_USE_OPENMP
+#include <omp.h>
+#endif
+
 namespace geosx
 {
 

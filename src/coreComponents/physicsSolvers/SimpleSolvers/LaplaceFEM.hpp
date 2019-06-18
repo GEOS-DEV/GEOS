@@ -16,13 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewtonianMechanics.hpp
- *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
- */
-
 #ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
