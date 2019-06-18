@@ -24,6 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 using namespace geosx;
 using namespace geosx::constitutive;

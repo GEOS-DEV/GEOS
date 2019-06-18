@@ -194,30 +194,23 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
     {
 
       real64 p_stress[6] = {0};
-//      real64 p_Cdamp[6] = {0};
       for( localIndex a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
       {
         R1Tensor const & v_a = v_local[a];
 
         const R1Tensor& dNdXb = dNdX[k][q][a];
-        const realT v0_x_dNdXb0 = v_a[0]*dNdXb[0];
-        const realT v1_x_dNdXb1 = v_a[1]*dNdXb[1];
-        const realT v2_x_dNdXb2 = v_a[2]*dNdXb[2];
+        const realT v0_x_dNdXb0 = v_a[0] * dNdXb[0];
+        const realT v1_x_dNdXb1 = v_a[1] * dNdXb[1];
+        const realT v2_x_dNdXb2 = v_a[2] * dNdXb[2];
 
-        p_stress[0] += ( v0_x_dNdXb0*c[0][0] + v1_x_dNdXb1*c[0][1] + v2_x_dNdXb2*c[0][2] ) * dt;
-        p_stress[1] += ( v0_x_dNdXb0*c[1][0] + v1_x_dNdXb1*c[1][1] + v2_x_dNdXb2*c[1][2] ) * dt;
-        p_stress[2] += ( v0_x_dNdXb0*c[2][0] + v1_x_dNdXb1*c[2][1] + v2_x_dNdXb2*c[2][2] ) * dt;
-        p_stress[3] += ( v_a[2]*dNdXb[1] + v_a[1]*dNdXb[2] )*c[3][3] * dt;
-        p_stress[4] += ( v_a[2]*dNdXb[0] + v_a[0]*dNdXb[2] )*c[4][4] * dt;
-        p_stress[5] += ( v_a[1]*dNdXb[0] + v_a[0]*dNdXb[1] )*c[5][5] * dt;
-
-//        p_Cdamp[0] += v0_x_dNdXb0*c[0][0] + v1_x_dNdXb1*c[0][1] + v2_x_dNdXb2*c[0][2];
-//        p_Cdamp[1] += v0_x_dNdXb0*c[1][0] + v1_x_dNdXb1*c[1][1] + v2_x_dNdXb2*c[1][2];
-//        p_Cdamp[2] += v0_x_dNdXb0*c[2][0] + v1_x_dNdXb1*c[2][1] + v2_x_dNdXb2*c[2][2];
-//        p_Cdamp[3] += ( v_a[2]*dNdXb[1] + v_a[1]*dNdXb[2] )*c[3][3];
-//        p_Cdamp[4] += ( v_a[2]*dNdXb[0] + v_a[0]*dNdXb[2] )*c[4][4];
-//        p_Cdamp[5] += ( v_a[1]*dNdXb[0] + v_a[0]*dNdXb[1] )*c[5][5];
+        p_stress[1] += ( v0_x_dNdXb0 * c[1][0] + v1_x_dNdXb1 * c[1][1] + v2_x_dNdXb2*c[1][2] ) * dt;
+        p_stress[0] += ( v0_x_dNdXb0 * c[0][0] + v1_x_dNdXb1 * c[0][1] + v2_x_dNdXb2*c[0][2] ) * dt;
+        p_stress[2] += ( v0_x_dNdXb0 * c[2][0] + v1_x_dNdXb1 * c[2][1] + v2_x_dNdXb2*c[2][2] ) * dt;
+        p_stress[3] += ( v_a[2] * dNdXb[1] + v_a[1] * dNdXb[2] ) * c[3][3] * dt;
+        p_stress[4] += ( v_a[2] * dNdXb[0] + v_a[0] * dNdXb[2] ) * c[4][4] * dt;
+        p_stress[5] += ( v_a[1] * dNdXb[0] + v_a[0] * dNdXb[1] ) * c[5][5] * dt;
       }
+
       real64 const dMeanStress = ( p_stress[0] + p_stress[1] + p_stress[2] )/3.0;
       meanStress[k][q] += dMeanStress;
 
@@ -237,9 +230,9 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
       {
         const R1Tensor& dNdXa = dNdX[k][q][a];
 
-        f_local[a][0] -= ( p_devStress[1]*dNdXa[1]
-                      + p_devStress[3]*dNdXa[2]
-                      + dNdXa[0]*(p_devStress[0] + meanStress[k][q]) ) * detJ[k][q];
+        f_local[a][0] -= ( p_devStress[1] * dNdXa[1]
+                         + p_devStress[3] * dNdXa[2]
+                         + dNdXa[0] * ( p_devStress[0] + meanStress[k][q] ) ) * detJ[k][q];
         f_local[a][1] -= ( p_devStress[1]*dNdXa[0]
                       + p_devStress[4]*dNdXa[2]
                       + dNdXa[1]*(p_devStress[2] + meanStress[k][q]) ) * detJ[k][q];
