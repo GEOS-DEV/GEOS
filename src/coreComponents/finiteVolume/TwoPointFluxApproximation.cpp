@@ -143,7 +143,12 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
         faceConormal.AijBj(coefTensor, faceNormal);
-        real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+        real64 ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+        if( ht < 0.0 )
+        {
+          faceConormal.AijBj(coefTensor, cellToFaceVec);
+          ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+        }
 
         faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
       }
@@ -151,9 +156,12 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
     faceWeight = 1.0 / faceWeightInv; // XXX: safeguard against div by zero?
 
-    // ensure consistent normal orientation
+    GEOS_ASSERT( Dot(cellToFaceVec, faceNormal) > 0 );
+    /*
+    // ensure consistent normal orientation 
     if (Dot(cellToFaceVec, faceNormal) < 0)
       faceWeight *= -1;
+    */
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
