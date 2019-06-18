@@ -146,16 +146,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
 
         faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
-        if( elemList[kf][0] == 0 && elemList[kf][1] == 1 )
-        {
-          std::cout << "===== BEGIN ==== "<< std::endl;
-          std::cout << "cellToFaceVec : "<< cellToFaceVec << std::endl;
-          std::cout << "faceNormal : "<< faceNormal << std::endl;
-          std::cout << "faceCoNormal : "<< faceConormal << std::endl;
-          std::cout << "faceArea : "<< faceArea << std::endl;
-          std::cout << "ht : " << ht << std::endl;
-          std::cout << "===== END ==== "<< std::endl;
-        }
       }
     }
 
