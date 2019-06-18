@@ -38,7 +38,7 @@ namespace SinglePhaseFlowKernels
 
 struct MobilityKernel
 {
-  static RAJA_HOST_DEVICE void
+  static void
   Compute( real64 const & dens,
            real64 const & dDens_dPres,
            real64 const & visc,
@@ -46,7 +46,7 @@ struct MobilityKernel
            real64 & mob,
            real64 & dMob_dPres );
 
-  static RAJA_HOST_DEVICE void
+  static void
   Compute( real64 const & dens,
            real64 const & visc,
            real64 & mob );
@@ -129,7 +129,7 @@ struct AccumulationKernel
 {
 
   template<bool COUPLED>
-  inline static RAJA_HOST_DEVICE void
+  inline static void
   Compute( real64 const & dPres,
            real64 const & densNew,
            real64 const & densOld,
@@ -203,7 +203,7 @@ struct FluxKernel
    * This is a general version that assumes different element regions.
    * See below for a specialized version for fluxes within a region.
    */
-  inline static RAJA_HOST_DEVICE void
+  inline static void
   Compute( localIndex const stencilSize,
            FluxApproximationBase::CellStencil::Entry const * const stencil,
            ElementView <arrayView1d<real64 const>> const & pres,
@@ -303,7 +303,7 @@ struct FluxKernel
    * This is a specialized version for fluxes within the same region.
    * See above for a general version.
    */
-  inline static RAJA_HOST_DEVICE void
+  inline static void
   Compute( localIndex const stencilSize,
            FluxApproximationBase::CellStencil::Entry const * const stencil,
            arrayView1d<real64 const> const & pres,
