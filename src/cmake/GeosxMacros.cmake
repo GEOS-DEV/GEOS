@@ -49,9 +49,12 @@ macro(geosx_add_code_checks)
 
     blt_add_code_checks( PREFIX    ${arg_PREFIX}
                          SOURCES   ${_sources}
-                        UNCRUSTIFY_CFG_FILE ${PROJECT_SOURCE_DIR}/uncrustify.cfg)
-#                         UNCRUSTIFY_CFG_FILE ${arg_UNCRUSTIFY_CFG_FILE}
-#                        )
+                         ASTYLE_CFG_FILE ${PROJECT_SOURCE_DIR}/geosx_astyle.ini
+                       )
 
+    blt_add_code_checks( PREFIX    ${arg_PREFIX}
+                         SOURCES   ${_sources}
+                         UNCRUSTIFY_CFG_FILE ${PROJECT_SOURCE_DIR}/uncrustify.cfg
+                       )
 
 endmacro(geosx_add_code_checks)
