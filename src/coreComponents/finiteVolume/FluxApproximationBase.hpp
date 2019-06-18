@@ -119,6 +119,10 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
 
+  virtual void addToFractureStencil( DomainPartition const & domain,
+                                     string const & faceElementRegionName ) {}
+
+
   struct viewKeyStruct
   {
     static constexpr auto fieldNameString             = "fieldName";
@@ -146,10 +150,6 @@ protected:
   virtual void computeCellStencil( DomainPartition const & domain,
                                    CellStencil & stencil ) = 0;
 
-  virtual void computeFractureStencil( DomainPartition const & domain,
-                                       CellStencil & fractureStencil,
-                                       CellStencil & cellStencil ) = 0;
-
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        set<localIndex> const & faceSet,
@@ -175,18 +175,18 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappersByType<CellStencil>([&] (auto const & vw) -> void
+  this->forViewWrappers<CellStencil>([&] (auto const * const vw) -> void
   {
-    lambda(vw.reference());
+    lambda(vw->reference());
   });
 }
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappersByType<BoundaryStencil>([&] (auto const & vw) -> void
+  this->forViewWrappers<BoundaryStencil>([&] (auto const * const vw) -> void
   {
-    lambda(vw.reference());
+    lambda(vw->reference());
   });
 }
 

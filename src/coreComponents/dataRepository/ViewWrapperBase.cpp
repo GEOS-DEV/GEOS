@@ -60,7 +60,8 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
 
 
 ViewWrapperBase::~ViewWrapperBase()
-{}
+{
+}
 
 
 ViewWrapperBase::ViewWrapperBase( ViewWrapperBase&& source ):
@@ -79,6 +80,54 @@ void ViewWrapperBase::resize()
   resize(m_parent->size());
 }
 
+void ViewWrapperBase::CopyWrapperAttributes( ViewWrapperBase const & source )
+{
+  m_name = source.m_name;
+  m_sizedFromParent = source.m_sizedFromParent;
+  m_restart_flags = source.m_restart_flags;
+}
+
+#ifndef NDEBUG
+int ViewWrapperBase::setTotalviewDisplay() const
+{
+  //std::cout<<"exectuing ViewWrapperBase::setTotalviewDisplay()"<<std::endl;
+//  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
+  TV_ttf_add_row( "m_name", totalview::typeName<string>().c_str(), &m_name);
+  TV_ttf_add_row( "m_parent", totalview::typeName<ManagedGroup>().c_str(), m_parent);
+  TV_ttf_add_row( "m_sizedFromParent", "int", &m_sizedFromParent);
+  TV_ttf_add_row( "m_restart_flags", totalview::typeName<RestartFlags>().c_str(), &m_restart_flags);
+  TV_ttf_add_row( "m_plotLevel", totalview::typeName<PlotLevel>().c_str(), &m_plotLevel);
+  TV_ttf_add_row( "m_inputFlag", totalview::typeName<InputFlags>().c_str(), &m_inputFlag);
+  TV_ttf_add_row( "m_description", totalview::typeName<string>().c_str(), &m_description);
+  size_t junk = m_registeringObjects.size();
+  TV_ttf_add_row( "m_registeringObjects",
+                  totalview::format<string, size_t>( 1 , &junk ).c_str(),
+                  m_registeringObjects.data() );
+
+  return 0;
+}
+#endif
+
 
 }
 } /* namespace geosx */
+
+#ifndef NDEBUG
+/**
+ * @brief Global function correlated with ViewWrapperBase to be called by Totalview when displaying
+ *        a ViewWrapperBase as a VieWrapper<T>
+ * @param wrapper A pointer to the wrapper that will be displayed.
+ * @return 0
+ */
+int TV_ttf_display_type( const geosx::dataRepository::ViewWrapperBase * wrapper)
+{
+  if( wrapper!=nullptr )
+  {
+    //std::cout<<"displaying ViewWrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
+// keep this and try to make it work later on.
+//    rval = TV_ttf_add_row( "casted_this", wrapper->totalviewTypeName().c_str(), wrapper );
+    wrapper->setTotalviewDisplay();
+  }
+  return 0;
+}
+#endif
