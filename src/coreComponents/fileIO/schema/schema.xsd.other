@@ -588,6 +588,12 @@
 		<xsd:attribute name="faceCenter" type="r1_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
+		<!--parentIndex => Parent index of the face.-->
+		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--childIndex => child index of the face.-->
+		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
+		<xsd:attribute name="ruptureState" type="integer_array" />
 		<!--gravityDepth => (no description available)-->
 		<xsd:attribute name="gravityDepth" type="real64_array" />
 		<!--facePressure => (no description available)-->
@@ -598,12 +604,6 @@
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 		<!--mobility => (no description available)-->
 		<xsd:attribute name="mobility" type="real64_array" />
-		<!--parentIndex => Parent index of the face.-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--childIndex => child index of the face.-->
-		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
-		<xsd:attribute name="ruptureState" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -632,6 +632,10 @@
 		<xsd:attribute name="elemSubRegionList" type="LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt;" />
+		<!--parentIndex => Parent index of node.-->
+		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--degreeFromCrack => connectivity distance from crack.-->
+		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="r1_array" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
@@ -652,10 +656,6 @@
 		<xsd:attribute name="" type="real64_array" />
 		<!--blockLocalDofNumber_Laplace => Global DOF numbers for the primary field variable-->
 		<xsd:attribute name="blockLocalDofNumber_Laplace" type="globalIndex_array" />
-		<!--parentIndex => Parent index of node.-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--degreeFromCrack => connectivity distance from crack.-->
-		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
