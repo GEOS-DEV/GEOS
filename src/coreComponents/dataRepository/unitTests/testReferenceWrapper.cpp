@@ -17,19 +17,7 @@
  */
 
 
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
-
 #include <gtest/gtest.h>
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
 
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "Array.hpp"

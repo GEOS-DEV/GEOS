@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Utilities.h
- *
- *  Created on: Sep 13, 2010
- *      Author: settgast1
+/**
+ * @file Utilities.hpp
  */
 
 #ifndef UTILITIES_H_
@@ -31,8 +28,6 @@
 #include <sys/resource.h>
 #include <map>
 #include <algorithm>
-#include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
@@ -510,6 +505,20 @@ const T2& stlMapLookup( const std::map<T1,T2>& Map, const T1& key)
   return (stlMapLookup( const_cast<std::map<T1,T2>&>(Map), key ));
 }
 
+template< typename T1, typename T2, typename LAMBDA >
+bool executeOnMapValue( std::map<T1,T2> const & Map, const T1& key, LAMBDA&& lambda )
+{
+  bool rval = false;
+  typename std::map<T1,T2>::const_iterator MapIter = Map.find( key );
+  if( MapIter!=Map.end()  )
+  {
+    rval = true;
+    lambda(MapIter->second);
+  }
+
+  return rval;
+}
+
 
 /*
  * Initialize map values.
@@ -793,18 +802,20 @@ T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
   return rvalue;
 }
 
-// The code below should work with any subscriptable vector type, including 'array_view1d' and 'double *'
-// (so regardless of whether GEOSX_USE_ARRAY_BOUNDS_CHECK is defined)
+// The code below should work with any subscriptable vector/matrix types
 
 template<typename VEC1, typename VEC2>
-inline void copy( localIndex N, VEC1 && v1, VEC2 && v2 )
+inline RAJA_HOST_DEVICE void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
 {
   for (localIndex i = 0; i < N; ++i)
     v2[i] = v1[i];
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 && df_dx )
+inline RAJA_HOST_DEVICE void applyChainRule( localIndex N,
+                                             MATRIX const & dy_dx,
+                                             VEC1 const & df_dy,
+                                             VEC2 const & df_dx )
 {
   // this could use some dense linear algebra
   for (localIndex i = 0; i < N; ++i)
@@ -818,7 +829,10 @@ inline void applyChainRule( localIndex N, MATRIX && dy_dx, VEC1 && df_dy, VEC2 &
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline void applyChainRuleInPlace( localIndex N, MATRIX && dy_dx, VEC1 && df_dxy, VEC2 && work )
+inline RAJA_HOST_DEVICE void applyChainRuleInPlace( localIndex N,
+                                                    MATRIX const & dy_dx,
+                                                    VEC1 const & df_dxy,
+                                                    VEC2 & work )
 {
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );

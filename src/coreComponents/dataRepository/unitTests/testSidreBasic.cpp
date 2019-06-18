@@ -16,13 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-
 #include <gtest/gtest.h>
-
 
 #include <mpi.h>
 #include "dataRepository/ManagedGroup.hpp"
@@ -127,7 +121,3 @@ int main(int argc, char* argv[]) {
 
 } /* end namespace dataRepository */
 } /* end namespace goesx */
-
-#if __clang_major__ >= 5
-#pragma clang diagnostic pop
-#endif

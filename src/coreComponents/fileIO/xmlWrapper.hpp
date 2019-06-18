@@ -20,14 +20,17 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_
+#ifndef _FILEIO_XMLWRAPPER_HPP_
+#define _FILEIO_XMLWRAPPER_HPP_
 
-#include "ArrayUtilities.hpp"
+#include <algorithm>
+#include <sstream>
+
+#include "pugixml.hpp"
+
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "pugixml.hpp"
-#include <sstream>
+#include "ArrayUtilities.hpp"
 
 namespace geosx
 {
@@ -38,19 +41,48 @@ class ManagedGroup;
 }
 
 
+/**
+ * @class xmlWrapper
+ *
+ * This class wraps/provides facilities to process entries from an xml file into the appropriate
+ * data types. xmlWrapper provides some aliases that will wrap the underlying xml package being
+ * used to extract data from the xml file, and a set of static member functions that facilitate
+ * the parsing of string data from the xml into the variables that will hold those values in the
+ * code.
+ */
 class xmlWrapper
 {
 public:
+  /// @typedef alias for the type of xml document
   using xmlDocument = pugi::xml_document;
+
+  /// @typedef alias for the type of the result from an xml parse attempt
   using xmlResult = pugi::xml_parse_result;
+
+  /// @typedef alias for the type of an xml node
   using xmlNode = pugi::xml_node;
+
+  /// @typedef alias for the type of an xml attribute
   using xmlAttribute = pugi::xml_attribute;
+
+  /// @typedef alias for the type variant of an xml node
   using xmlTypes = pugi::xml_node_type;
 
+  /// constexpr variable to hold name for inserting the file path into the xml file. This is used
+  /// because we would like the option to hold the file path in the xml structure.
   static constexpr auto filePathString = "filePath";
 
-  xmlWrapper();
-  virtual ~xmlWrapper();
+  /**
+  * @name FUNCTION GROUP for rule of five functions...which are all deleted in this case.
+   */
+  ///@{
+  xmlWrapper() = delete;
+  ~xmlWrapper() = delete;
+  xmlWrapper( xmlWrapper const & ) = delete;
+  xmlWrapper( xmlWrapper && ) = delete;
+  xmlWrapper & operator=( xmlWrapper const & ) = delete;
+  xmlWrapper & operator=( xmlWrapper && ) = delete;
+  ///@}
 
   /**
    * Function to add xml nodes from included files.
@@ -62,27 +94,42 @@ public:
    */
   static void addIncludedXML( xmlNode & targetNode );
 
+  /**
+   * @name FUNCTION GROUP for StringToInputVariable()
+   * @brief Functions to parse a string, and fill a variable with the value/s in the string.
+   * @tparam T the type of variable fill with string value
+   * @param[out] target the object to read values into
+   * @param[in] value the string that contains the data to be parsed into target
+   *
+   * This function takes in @p value and parses that string based on the type of
+   * @p target. The function implementation should provide sufficient error
+   * checking in the case that @p value is formatted incorrectly for the type specified in
+   * @p target.
+   */
+  ///@{
   template< typename T >
   static void StringToInputVariable( T& target, string value );
 
-  template< typename T >
-  static void StringToInputVariable( array1d<T> & target, string value );
-
-  template< typename T >
-  static void StringToInputVariable( array2d<T> & target, string value );
-
   static void StringToInputVariable( R1Tensor & target, string value );
 
-//  static void StringToInputVariable( R2Tensor & target, string value );
-//
-//  static void StringToInputVariable( R2SymTensor & target, string value );
+  template< typename T, int NDIM >
+  static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string value );
+  ///@}
 
-//  template< typename T >
-//  static T StringToInputVariable( xmlNode const & node, string const name, T defValue
-// );
 
-//  static R1Tensor StringToInputVariable( xmlNode const & node, string const name, R1Tensor defValue );
-
+  /**
+   * @name FUNCTION GROUP for ReadAttributeAsType()
+   * @brief Functions to extract attributes in an xml tree, and translate those values into a
+   *        typed variable.
+   * @tparam T the type of variable fill with xml attribute.
+   * @tparam T_DEF the default value of @p T, or in the case where @p T is an array,
+   *                the entries of T.
+   * @param rval the variable to fill.
+   * @param name the name of the xml attribute to process
+   * @param targetNode The xml node that should contain the attribute
+   * @param required whether or not the value is required
+   */
+  ///@{
 
   template< typename T >
   static void ReadAttributeAsType( T & rval,
@@ -115,6 +162,8 @@ public:
   {
     ReadAttributeAsType(rval, name, targetNode, defVal.value );
   }
+  ///@}
+
 };
 
 
@@ -125,41 +174,11 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
   ss>>target;
 }
 
-template< typename T >
-void xmlWrapper::StringToInputVariable( array1d<T> & target, string inputValue )
+template< typename T, int NDIM >
+void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string valueString )
 {
-  string csvstr = inputValue;
-  std::istringstream ss( csvstr );
-
-  T value;
-
-  while( ss.peek() == ',' || ss.peek() == ' ' )
-  {
-    ss.ignore();
-  }
-  while( !((ss>>value).fail()) )
-  {
-    target.push_back( value );
-    while( ss.peek() == ',' || ss.peek() == ' ' )
-    {
-      ss.ignore();
-    }
-  }
+  cxx_utilities::stringToArray( array, valueString );
 }
-
-template< typename T >
-void xmlWrapper::StringToInputVariable( array2d<T> & target, string inputValue )
-{
-  array1d<T> temp;
-  StringToInputVariable( temp, inputValue );
-
-  target.resize(1,temp.size());
-  for( localIndex i=0 ; i<temp.size() ; ++i )
-  {
-    target[0][i] = temp[i];
-  }
-}
-
 
 template< typename T >
 void xmlWrapper::ReadAttributeAsType( T & rval,
@@ -171,6 +190,7 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 
   GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
 
+  // parse the string/attribute into a value
   StringToInputVariable( rval, xmlatt.value() );
 }
 
@@ -184,10 +204,12 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
   if( !xmlatt.empty() )
   {
+    // parse the string/attribute into a value
     StringToInputVariable( rval, xmlatt.value() );
   }
   else
   {
+    // set the value to the default value
     rval = defVal;
   }
 }
@@ -197,4 +219,4 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FILEIO_XMLWRAPPER_HPP_ */
+#endif /*_FILEIO_XMLWRAPPER_HPP_ */

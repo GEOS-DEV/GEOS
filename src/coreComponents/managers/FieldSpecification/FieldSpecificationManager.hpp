@@ -55,6 +55,8 @@ public:
    */
   static FieldSpecificationManager * get();
 
+  static void finalize();
+
   /**
    * @brief create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create

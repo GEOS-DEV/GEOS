@@ -270,10 +270,6 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
-		<!-- => Primary field variable-->
-		<xsd:attribute name="" type="real64_array" />
-		<!--blockLocalDofNumber_Laplace => Global DOF numbers for the primary field variable-->
-		<xsd:attribute name="blockLocalDofNumber_Laplace" type="globalIndex_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="r1_array" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
@@ -290,6 +286,10 @@
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--trilinosIndex => (no description available)-->
 		<xsd:attribute name="trilinosIndex" type="globalIndex_array" />
+		<!-- => Primary field variable-->
+		<xsd:attribute name="" type="real64_array" />
+		<!--blockLocalDofNumber_Laplace => Global DOF numbers for the primary field variable-->
+		<xsd:attribute name="blockLocalDofNumber_Laplace" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -355,9 +355,11 @@
 		<!--facePressure => (no description available)-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--density => (no description available)-->
-		<xsd:attribute name="density" type="real64_array" />
+		<xsd:attribute name="density" type="real64_array2d" />
 		<!--viscosity => (no description available)-->
-		<xsd:attribute name="viscosity" type="real64_array" />
+		<xsd:attribute name="viscosity" type="real64_array2d" />
+		<!--mobility => (no description available)-->
+		<xsd:attribute name="mobility" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElementRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -835,9 +837,10 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="DummySolver" type="DummySolverType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
-			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
-			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
+			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
@@ -865,24 +868,6 @@
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="LaplaceFEMType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroelasticType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -893,6 +878,33 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
 		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::SolidMechanicsLagrangianFEM::timeIntegrationOption" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroelasticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="LaplaceFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="HydrofractureType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
