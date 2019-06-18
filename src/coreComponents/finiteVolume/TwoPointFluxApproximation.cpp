@@ -106,7 +106,10 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size(), 2);
-  real64 const areaTolerance = pow( meshBody->getGlobalLengthScale() * this->m_areaRelTol, 2 );
+
+  real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   for (localIndex kf = 0; kf < faceManager->size(); ++kf)
   {
@@ -134,8 +137,16 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         cellToFaceVec = faceCenter;
         cellToFaceVec -= elemCenter[er][esr][ei];
 
+        // ensure normal orientation outward of first cell
+        if (ke == 0 && Dot(cellToFaceVec, faceNormal) < 0.0)
+        {
+          faceNormal *= -1;
+        }
+
         if (ke == 1)
+        {
           cellToFaceVec *= -1.0;
+        }
 
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
@@ -143,25 +154,24 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
         faceConormal.AijBj(coefTensor, faceNormal);
-        real64 ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
-        if( ht < 0.0 )
+        real64 halfWeight = Dot(cellToFaceVec, faceConormal);
+
+        // correct negative weight issue arising from non-K-orthogonal grids
+        if( halfWeight < 0.0 )
         {
           faceConormal.AijBj(coefTensor, cellToFaceVec);
-          ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+          halfWeight = Dot(cellToFaceVec, faceConormal);
         }
 
-        faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
+        halfWeight *= faceArea / c2fDistance;
+        halfWeight = std::max( halfWeight, weightTolerance );
+
+        faceWeightInv += 1.0 / halfWeight;
       }
     }
 
-    faceWeight = 1.0 / faceWeightInv; // XXX: safeguard against div by zero?
-
-    GEOS_ASSERT( Dot(cellToFaceVec, faceNormal) > 0 );
-    /*
-    // ensure consistent normal orientation 
-    if (Dot(cellToFaceVec, faceNormal) < 0)
-      faceWeight *= -1;
-    */
+    GEOS_ASSERT( faceWeightInv > 0.0 );
+    faceWeight = 1.0 / faceWeightInv;
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
@@ -183,7 +193,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
+  //OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
   elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
                                                                                                viewKeyStruct::
@@ -364,7 +374,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   stackArray1d<PointDescriptor, numElems> stencilPoints(numElems);
   stackArray1d<real64, numElems> stencilWeights(numElems);
 
-  real64 const areaTolerance = pow( meshBody->getGlobalLengthScale() * this->m_areaRelTol, 2 );
+  real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceSet.size(), 2);
@@ -380,7 +392,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       if (elemRegionList[kf][ke] < 0)
         continue;
 
-      if (!regionFilter.empty() && !regionFilter.contains(elemRegionList[kf][ke]))
+      if (!regionFilter.contains(elemRegionList[kf][ke]))
         continue;
 
       localIndex const er  = elemRegionList[kf][ke];
@@ -390,17 +402,29 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       cellToFaceVec = faceCenter;
       cellToFaceVec -= elemCenter[er][esr][ei];
 
+      // ensure normal orientation outward of the cell
+      if (Dot(cellToFaceVec, faceNormal) < 0.0)
+      {
+        faceNormal *= -1;
+      }
+
       real64 const c2fDistance = cellToFaceVec.Normalize();
 
       // assemble full coefficient tensor from principal axis/components
       makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
       faceConormal.AijBj(coefTensor, faceNormal);
-      faceWeight = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+      faceWeight = Dot(cellToFaceVec, faceConormal);
 
-      // ensure consistent normal orientation
-      if (Dot(cellToFaceVec, faceNormal) < 0)
-        faceWeight *= -1;
+      // correct negative weight issue arising from non-K-orthogonal grids
+      if (faceWeight < 0.0)
+      {
+        faceConormal.AijBj(coefTensor, cellToFaceVec);
+        faceWeight = Dot(cellToFaceVec, faceConormal);
+      }
+      
+      faceWeight *= faceArea / c2fDistance;
+      faceWeight = std::max( faceWeight, weightTolerance );
 
       stencilPoints[0].tag = PointDescriptor::Tag::CELL;
       stencilPoints[0].cellIndex = { er, esr, ei };
