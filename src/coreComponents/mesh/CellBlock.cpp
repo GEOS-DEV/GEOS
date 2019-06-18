@@ -26,11 +26,11 @@
 
 #include "NodeManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
-//using namespace constitutive;
-
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ElementSubRegionBase( name, parent ),

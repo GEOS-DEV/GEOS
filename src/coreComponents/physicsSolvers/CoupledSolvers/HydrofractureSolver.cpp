@@ -33,7 +33,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
