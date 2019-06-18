@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {

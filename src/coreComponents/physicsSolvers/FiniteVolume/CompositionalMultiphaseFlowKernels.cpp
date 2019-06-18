@@ -31,7 +31,7 @@ namespace CompositionalMultiphaseFlowKernels
 /******************************** ComponentFractionKernel ********************************/
 
 template<localIndex NC>
-inline RAJA_HOST_DEVICE void
+inline void
 ComponentFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
                                   arraySlice1d<real64 const> const dCompDens,
                                   arraySlice1d<real64> const compFrac,
@@ -57,7 +57,7 @@ ComponentFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
   }
 }
 
-inline RAJA_HOST_DEVICE void
+inline void
 ComponentFractionKernel::Compute( localIndex const NC,
                                   arraySlice1d<real64 const> const compDens,
                                   arraySlice1d<real64 const> const dCompDens,
@@ -175,7 +175,7 @@ INST_ComponentFractionKernel(5);
 /******************************** PhaseVolumeFractionKernel ********************************/
 
 template<localIndex NC, localIndex NP>
-inline RAJA_HOST_DEVICE void
+inline void
 PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
                                     arraySlice1d<real64 const> const dCompDens,
                                     arraySlice2d<real64 const> const dCompFrac_dCompDens,
@@ -231,7 +231,7 @@ PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
   }
 }
 
-inline RAJA_HOST_DEVICE void
+inline void
 PhaseVolumeFractionKernel::Compute( localIndex const NC, localIndex const NP,
                                     arraySlice1d<real64 const> const compDens,
                                     arraySlice1d<real64 const> const dCompDens,
@@ -473,7 +473,7 @@ INST_PhaseVolumeFractionKernel(5,3);
 /******************************** PhaseMobilityKernel ********************************/
 
 template<localIndex NC, localIndex NP>
-inline RAJA_HOST_DEVICE void
+inline void
 PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDens,
                               arraySlice1d<real64 const> const phaseDens,
                               arraySlice1d<real64 const> const dPhaseDens_dPres,
@@ -533,7 +533,7 @@ PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDe
   }
 }
 
-inline RAJA_HOST_DEVICE void
+inline void
 PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
                               arraySlice2d<real64 const> const dCompFrac_dCompDens,
                               arraySlice1d<real64 const> const phaseDens,

@@ -28,7 +28,6 @@
 #include <sys/resource.h>
 #include <map>
 #include <algorithm>
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
 /////////////////////////////////////////////////
@@ -340,63 +339,6 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLoc
     localField2[a] = globalField2[ globalToLocalRelation[a] ];
     localField3[a] = globalField3[ globalToLocalRelation[a] ];
     localField4[a] = globalField4[ globalToLocalRelation[a] ];
-  }
-}
-
-template< typename T , typename atomicPol=atomicPolicy>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
-                              arraySlice1d< T const > const & localField,
-                              arraySlice1d< T const >& globalField,
-                              localIndex const N )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
-  }
-}
-
-template< typename atomicPol=atomicPolicy>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
-                              arraySlice1d<R1Tensor const> const & localField,
-                              arraySlice1d<R1Tensor>& globalField,
-                              localIndex const N )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
-    real64 const * __restrict__ const lData = localField[a].Data();
-    atomicAdd<atomicPol>( &gData[0], lData[0] );
-    atomicAdd<atomicPol>( &gData[1], lData[1] );
-    atomicAdd<atomicPol>( &gData[2], lData[2] );
-  }
-}
-
-template< localIndex N, typename atomicPol=atomicPolicy>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
-                              R1Tensor const * const restrict localField,
-                              arraySlice1d<R1Tensor> & globalField )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
-    real64 const * __restrict__ const lData = localField[a].Data();
-    atomicAdd<atomicPol>( &gData[0], lData[0] );
-    atomicAdd<atomicPol>( &gData[1], lData[1] );
-    atomicAdd<atomicPol>( &gData[2], lData[2] );
-  }
-}
-template< typename T, typename atomicPol=atomicPolicy >
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
-                              arraySlice1d< T const > const & localField1,
-                              arraySlice1d< T const > const & localField2,
-                              arraySlice1d< T > & globalField1,
-                              arraySlice1d< T > & globalField2,
-                              localIndex const N )
-{
-  for( localIndex a=0 ; a<N ; ++a )
-  {
-    atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
-    atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
   }
 }
 
@@ -805,14 +747,14 @@ T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
 // The code below should work with any subscriptable vector/matrix types
 
 template<typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
+inline void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
 {
   for (localIndex i = 0; i < N; ++i)
     v2[i] = v1[i];
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void applyChainRule( localIndex N,
+inline void applyChainRule( localIndex N,
                                              MATRIX const & dy_dx,
                                              VEC1 const & df_dy,
                                              VEC2 const & df_dx )
@@ -829,7 +771,7 @@ inline RAJA_HOST_DEVICE void applyChainRule( localIndex N,
 }
 
 template<typename MATRIX, typename VEC1, typename VEC2>
-inline RAJA_HOST_DEVICE void applyChainRuleInPlace( localIndex N,
+inline void applyChainRuleInPlace( localIndex N,
                                                     MATRIX const & dy_dx,
                                                     VEC1 const & df_dxy,
                                                     VEC2 & work )
