@@ -48,12 +48,12 @@ class NumericalMethodsManager : public dataRepository::ManagedGroup
 {
 public:
   NumericalMethodsManager() = delete;
-  NumericalMethodsManager(string const & name, ManagedGroup * const parent);
+  NumericalMethodsManager( string const & name, ManagedGroup * const parent );
   virtual ~NumericalMethodsManager() override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  dataRepository::ManagedGroup const * FindNumericalMethodByName(string const & name) const;
+  dataRepository::ManagedGroup const * FindNumericalMethodByName( string const & name ) const;
 
 
 };

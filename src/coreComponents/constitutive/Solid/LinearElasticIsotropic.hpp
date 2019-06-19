@@ -92,10 +92,10 @@ public:
   real64 defaultShearModulus() const { return m_defaultShearModulus; }
   real64 & defaultShearModulus()     { return m_defaultShearModulus; }
 
-  arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
+  arrayView1d<real64> const    &    bulkModulus()       { return m_bulkModulus; }
   arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
 
-  arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
+  arrayView1d<real64> const    &    shearModulus()       { return m_shearModulus; }
   arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
 
 

@@ -99,8 +99,8 @@ struct AssembleAccumulationTermsHelper<true>
                   real64 const pvmult,
                   real64 const dPVMult_dPres )
   {
-    dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
-    poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
+    dPoro_dPres = ( biotCoefficient - poroOld ) / bulkModulus;
+    poro = poroOld + dPoro_dPres * ( totalMeanStress - oldTotalMeanStress + dPres );
   }
 };
 
@@ -169,7 +169,7 @@ struct AccumulationKernel
     localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    localAccumJacobian = ( dPoro_dPres * densNew + dDens_dPres * poroNew ) * volNew;
   }
 };
 
@@ -222,9 +222,9 @@ struct FluxKernel
     localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
     localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-    stackArray1d<real64, numElems>   densWeight(numElems);
-    stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
-    stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
+    stackArray1d<real64, numElems>   densWeight( numElems );
+    stackArray1d<real64, maxStencil> dDensMean_dP( stencilSize );
+    stackArray1d<real64, maxStencil> dFlux_dP( stencilSize );
 
     // clear working arrays
     dDensMean_dP = 0.0;
@@ -234,7 +234,7 @@ struct FluxKernel
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
-    for (localIndex ke = 0; ke < numElems; ++ke)
+    for( localIndex ke = 0; ke < numElems; ++ke )
     {
       CellDescriptor const & cell = stencil[ke].index;
 
@@ -249,7 +249,7 @@ struct FluxKernel
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       CellDescriptor const & cell = stencil[ke].index;
       localIndex const er  = cell.region;
@@ -262,12 +262,12 @@ struct FluxKernel
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
       real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
 
-      potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-      dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
+      potDif += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm );
+      dFlux_dP[ke] = weight * ( 1.0 - dGrav_dP );
     }
 
     // upwinding of fluid properties (make this an option?)
-    localIndex const k_up = (potDif >= 0) ? 0 : 1;
+    localIndex const k_up = ( potDif >= 0 ) ? 0 : 1;
 
     CellDescriptor const & cell_up = stencil[k_up].index;
     localIndex er_up  = cell_up.region;
@@ -279,7 +279,7 @@ struct FluxKernel
 
     // compute the final flux and derivatives
     real64 const fluxVal = mobility * potDif;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       dFlux_dP[ke] *= mobility;
     }
@@ -290,7 +290,7 @@ struct FluxKernel
     flux[0] = dt * fluxVal;
     flux[1] = -flux[0];
 
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       fluxJacobian[0][ke] = dt * dFlux_dP[ke];
       fluxJacobian[1][ke] = -fluxJacobian[0][ke];
@@ -322,9 +322,9 @@ struct FluxKernel
     localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
     localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-    stackArray1d<real64, numElems> densWeight(numElems);
-    stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
-    stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
+    stackArray1d<real64, numElems> densWeight( numElems );
+    stackArray1d<real64, maxStencil> dDensMean_dP( stencilSize );
+    stackArray1d<real64, maxStencil> dFlux_dP( stencilSize );
 
     // clear working arrays
     dDensMean_dP = 0.0;
@@ -334,7 +334,7 @@ struct FluxKernel
 
     // calculate quantities on primary connected cells
     real64 densMean = 0.0;
-    for (localIndex i = 0; i < numElems; ++i)
+    for( localIndex i = 0; i < numElems; ++i )
     {
       CellDescriptor const & cell = stencil[i].index;
 
@@ -349,7 +349,7 @@ struct FluxKernel
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       CellDescriptor const & cell = stencil[ke].index;
       localIndex const ei = cell.index;
@@ -360,12 +360,12 @@ struct FluxKernel
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
       real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
 
-      potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
-      dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
+      potDif += weight * ( pres[ei] + dPres[ei] - gravTerm );
+      dFlux_dP[ke] = weight * ( 1.0 - dGrav_dP );
     }
 
     // upwinding of fluid properties (make this an option?)
-    localIndex const k_up = (potDif >= 0) ? 0 : 1;
+    localIndex const k_up = ( potDif >= 0 ) ? 0 : 1;
 
     CellDescriptor const & cell_up = stencil[k_up].index;
     localIndex ei_up  = cell_up.index;
@@ -375,7 +375,7 @@ struct FluxKernel
 
     // compute the final flux and derivatives
     real64 const fluxVal = mobility * potDif;
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       dFlux_dP[ke] *= mobility;
     }
@@ -386,7 +386,7 @@ struct FluxKernel
     flux[0] = dt * fluxVal;
     flux[1] = -flux[0];
 
-    for (localIndex ke = 0; ke < stencilSize; ++ke)
+    for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
       fluxJacobian[0][ke] = dt * dFlux_dP[ke];
       fluxJacobian[1][ke] = -fluxJacobian[0][ke];

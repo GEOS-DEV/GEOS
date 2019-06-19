@@ -48,8 +48,8 @@ struct Dof_SparsityPattern
 {
   // Set default values (empty matrix)
   Dof_SparsityPattern() :
-      nRows( 0 ),
-      nCols( 0 )
+    nRows( 0 ),
+    nCols( 0 )
   {
   }
   localIndex nRows; //<! number of rows
@@ -374,7 +374,8 @@ public:
   /**
    * Getter for m_doubleSync
    */
-  inline bool needDoubleSync() const {
+  inline bool needDoubleSync() const
+  {
     return m_doubleSync;
   }
 
@@ -411,7 +412,7 @@ private:
   {
     string name; //!< field name
     array1d<string> regionNames; //!< active element regions
-    array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
+    array1d<ElementRegion *> regionPtrs; //!< saved pointers to active regions
     Location location; //!< support location
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
@@ -423,7 +424,7 @@ private:
     globalIndex firstLocalRow; //!< first row on this processor (without field offset)
     globalIndex fieldOffset; //!< global row offset for multi-field problems
     globalIndex firstLocalConnectivity; //!< first connector on this processor
-    ParallelMatrix* connLocPattern; //!< pattern for the connectivity-location matrix
+    ParallelMatrix * connLocPattern; //!< pattern for the connectivity-location matrix
   };
 
   /**
@@ -439,7 +440,7 @@ private:
   /**
    * Definifion for entries of sparse matrices collection
    */
-  typedef std::pair<ParallelMatrix*, ParallelMatrix*> matrixPair;
+  typedef std::pair<ParallelMatrix *, ParallelMatrix *> matrixPair;
 
   /**
    * Table of sparsity patterns within and between fields
@@ -513,14 +514,20 @@ private:
    */
   struct pairComparison
   {
-    inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+    inline bool operator()( const indexPair & lhs, const indexPair & rhs ) const
     {
       if( std::get<0>( lhs ) < std::get<0>( rhs ) )
+      {
         return true;
+      }
       else if( std::get<0>( lhs ) == std::get<0>( rhs ) )
+      {
         return std::get<1>( lhs ) < std::get<1>( rhs );
+      }
       else
+      {
         return false;
+      }
     }
   };
 
@@ -529,7 +536,7 @@ private:
    */
   struct pairSecondComparison
   {
-    inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+    inline bool operator()( const indexPair & lhs, const indexPair & rhs ) const
     {
       return ( std::get<1>( lhs ) < std::get<1>( rhs ) );
     }

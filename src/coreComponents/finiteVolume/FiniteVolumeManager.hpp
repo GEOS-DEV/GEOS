@@ -37,17 +37,17 @@ class FiniteVolumeManager : public dataRepository::ManagedGroup
 public:
 
   FiniteVolumeManager() = delete;
-  FiniteVolumeManager(string const & name, ManagedGroup * const parent);
+  FiniteVolumeManager( string const & name, ManagedGroup * const parent );
   virtual ~FiniteVolumeManager() override;
 
 
-  virtual ManagedGroup * CreateChild(string const & childKey, string const & childName) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
-  FluxApproximationBase const * getFluxApproximation(string const &name) const;
-  FluxApproximationBase * getFluxApproximation(string const &name);
+  FluxApproximationBase const * getFluxApproximation( string const & name ) const;
+  FluxApproximationBase * getFluxApproximation( string const & name );
 
 private:
 

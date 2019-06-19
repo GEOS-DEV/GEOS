@@ -52,38 +52,38 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
                                       ObjectManagerBase * const nodeManager )
 {
 
-  array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
+  array1d<R1Tensor> & X = nodeManager->getReference<r1_array>( keys::referencePositionString );
   ManagedGroup * sets = nodeManager->sets();
 
-  for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
+  for( int i = 0 ; i < geometries->GetSubGroups().size() ; ++i )
   {
-//    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
-//    if (wrapper!=nullptr)
-//    {
-//      SimpleGeometricObjectBase const & object = wrapper->reference();
-//      string name = wrapper->getName();
-//      set<localIndex> & set = sets->RegisterViewWrapper<set<localIndex>>(name)->reference();
-//      for (localIndex a=0 ; a<X.size() ; ++a)
-//      {
-//        if (object.IsCoordInObject(X[a]))
-//        {
-//          set.insert(a);
-//        }
-//      }
-//    }
-        SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>(i);
-        if (object!=nullptr)
+    //    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
+    //    if (wrapper!=nullptr)
+    //    {
+    //      SimpleGeometricObjectBase const & object = wrapper->reference();
+    //      string name = wrapper->getName();
+    //      set<localIndex> & set = sets->RegisterViewWrapper<set<localIndex>>(name)->reference();
+    //      for (localIndex a=0 ; a<X.size() ; ++a)
+    //      {
+    //        if (object.IsCoordInObject(X[a]))
+    //        {
+    //          set.insert(a);
+    //        }
+    //      }
+    //    }
+    SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>( i );
+    if( object!=nullptr )
+    {
+      string name = object->getName();
+      set<localIndex> & targetSet = sets->RegisterViewWrapper< set<localIndex> >( name )->reference();
+      for( localIndex a=0 ; a<X.size() ; ++a )
+      {
+        if( object->IsCoordInObject( X[a] ) )
         {
-          string name = object->getName();
-          set<localIndex> & targetSet = sets->RegisterViewWrapper< set<localIndex> >(name)->reference();
-          for (localIndex a=0 ; a<X.size() ; ++a)
-          {
-            if (object->IsCoordInObject(X[a]))
-            {
-              targetSet.insert(a);
-            }
-          }
+          targetSet.insert( a );
         }
+      }
+    }
 
   }
 }

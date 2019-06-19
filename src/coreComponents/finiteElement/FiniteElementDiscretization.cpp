@@ -44,12 +44,12 @@ using namespace dataRepository;
 
 
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+  ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
-  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag( InputFlags::REQUIRED );
+  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag( InputFlags::REQUIRED );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -82,40 +82,42 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
 
   //Ensure data is contiguous
-  array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
+  array3d< R1Tensor >  & dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >( keys::dNdX )->reference();
   dNdX.resize( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
-  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
-  constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
+  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >
+                           ( CellElementSubRegion::viewKeyStruct::constitutiveMapString )->reference();
+  constitutiveMap.first.resize( cellBlock->size(), m_quadrature->size() );
+  constitutiveMap.second.resize( cellBlock->size(), m_quadrature->size() );
 
-  array2d< real64 > & detJ = cellBlock->RegisterViewWrapper< array2d< real64 > >(keys::detJ)->reference();
-  detJ.resize(cellBlock->size(), m_quadrature->size() );
+  array2d< real64 > & detJ = cellBlock->RegisterViewWrapper< array2d< real64 > >( keys::detJ )->reference();
+  detJ.resize( cellBlock->size(), m_quadrature->size() );
 }
 
-void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
+void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const  & X,
                                                                    ElementSubRegionBase * const elementSubRegion ) const
 {
-  arrayView3d<R1Tensor> & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-  arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-  FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
+  arrayView3d<R1Tensor> & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >( keys::dNdX );
+  arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >( keys::detJ );
+  FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>
+                                                ( std::string( "nodeList" ) )->reference();
 
   std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
 
   array1d<R1Tensor> X_elemLocal( fe->dofs_per_element() );
   R1Tensor const * const restrict X_ptr = X;
 
-  for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
+  for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
   {
-    CopyGlobalToLocal<R1Tensor>(elemsToNodes[k], X, X_elemLocal);
-    fe->reinit(X_elemLocal);
+    CopyGlobalToLocal<R1Tensor>( elemsToNodes[k], X, X_elemLocal );
+    fe->reinit( X_elemLocal );
 
     for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
     {
-      detJ(k, q) = fe->JxW(q);
-      for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
+      detJ( k, q ) = fe->JxW( q );
+      for( localIndex b = 0 ; b < fe->dofs_per_element() ; ++b )
       {
-        dNdX[k][q][b] =  fe->gradient(b, q);
+        dNdX[k][q][b] =  fe->gradient( b, q );
       }
     }
   }
@@ -123,19 +125,19 @@ void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R
 
 void FiniteElementDiscretization::PostProcessInput()
 {
-  auto const & basisName = this->getReference<string>(keys::basis);
-  auto const & quadratureName = this->getReference<string>(keys::quadrature);
+  auto const & basisName = this->getReference<string>( keys::basis );
+  auto const & quadratureName = this->getReference<string>( keys::quadrature );
 
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  ManagedGroup const *  numericalMethods = this->getParent()->getParent();
-  ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
-  ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
-  
-  m_basis = basisManager->GetGroup<BasisBase>(basisName);
-  m_quadrature = quadratureManager->GetGroup<QuadratureBase>(quadratureName);
-  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0);
+  ManagedGroup const  * numericalMethods = this->getParent()->getParent();
+  ManagedGroup const  * basisManager = numericalMethods->GetGroup( keys::basisFunctions );
+  ManagedGroup const  * quadratureManager = numericalMethods->GetGroup( keys::quadratureRules );
+
+  m_basis = basisManager->GetGroup<BasisBase>( basisName );
+  m_quadrature = quadratureManager->GetGroup<QuadratureBase>( quadratureName );
+  m_finiteElement = new FiniteElement<3>( *m_basis, *m_quadrature, 0 );
 }
 
 

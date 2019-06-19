@@ -31,27 +31,27 @@ using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ExecutableGroup( name, parent),
+  ExecutableGroup( name, parent ),
   m_slaveDirectory(),
-  m_parallelThreads(1)
+  m_parallelThreads( 1 )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("slave directory path");
+  RegisterViewWrapper( viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "slave directory path" );
 
-  RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Number of plot files.");
+  RegisterViewWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
+  setApplyDefaultValue( 1 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Number of plot files." );
 
 }
 
 OutputBase::~OutputBase()
 {}
 
-OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
+OutputBase::CatalogInterface::CatalogType & OutputBase::GetCatalog()
 {
   static OutputBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -70,14 +70,14 @@ void OutputBase::SetupDirectoryStructure()
   string slaveDirectory = m_slaveDirectory;
 
   int rank;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  if (rank  == 0)
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  if( rank  == 0 )
   {
-    if (!slaveDirectory.empty())
+    if( !slaveDirectory.empty() )
     {
       string cmd = "mkdir -p " + slaveDirectory;
-      int ret = std::system(cmd.c_str());
-      GEOS_ERROR_IF(ret != 0, "Command '" << cmd << "' exited with code " << std::to_string(ret));
+      int ret = std::system( cmd.c_str() );
+      GEOS_ERROR_IF( ret != 0, "Command '" << cmd << "' exited with code " << std::to_string( ret ) );
     }
   }
 }

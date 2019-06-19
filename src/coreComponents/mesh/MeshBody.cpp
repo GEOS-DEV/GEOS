@@ -29,8 +29,8 @@ using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
                     ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
-  m_globalLengthScale(0)
+  ManagedGroup( name, parent ),
+  m_globalLengthScale( 0 )
 {
   RegisterViewWrapper<integer>( viewKeys.meshLevels );
 }

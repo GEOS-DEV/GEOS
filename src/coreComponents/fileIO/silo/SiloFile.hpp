@@ -118,17 +118,17 @@ public:
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 
     // char dirname[100];
     if( rank == 0 )
     {
-//      DBGetDir(m_dbBaseFilePtr, dirname );
-      DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
+      //      DBGetDir(m_dbBaseFilePtr, dirname );
+      DBMkDir( m_dbBaseFilePtr, rootdir.c_str() );
     }
 
-//    DBGetDir (m_dbFilePtr, dirname );
-    DBMkDir(m_dbFilePtr, subdir.c_str());
+    //    DBGetDir (m_dbFilePtr, dirname );
+    DBMkDir( m_dbFilePtr, subdir.c_str() );
   }
 
   /**
@@ -151,43 +151,43 @@ public:
    * DBPutZonelist2, and calls those functions to create a silo mesh object. In addition
    * the MultiVar is written in the root file.
    */
-  void WriteMeshObject(string const & meshName,
-                       const localIndex nnodes,
-                       real64* coords[3],
-                       const globalIndex* globalNodeNum,
-                       char const * const ghostNodeName,
-                       char const * const ghostZoneName,
-                       int const numShapes,
-                       int const * shapecnt,
-                       const localIndex* const * const meshConnectivity,
-                       const globalIndex* const * const globalElementNum,
-                       int const * const shapetype,
-                       int const * const shapesize,
-                       int const cycleNumber,
-                       real64 const problemTime);
+  void WriteMeshObject( string const & meshName,
+                        const localIndex nnodes,
+                        real64 * coords[3],
+                        const globalIndex * globalNodeNum,
+                        char const * const ghostNodeName,
+                        char const * const ghostZoneName,
+                        int const numShapes,
+                        int const * shapecnt,
+                        const localIndex * const * const meshConnectivity,
+                        const globalIndex * const * const globalElementNum,
+                        int const * const shapetype,
+                        int const * const shapesize,
+                        int const cycleNumber,
+                        real64 const problemTime );
 
 
-  void WritePolygonMeshObject(const std::string& meshName,
-                                        const localIndex nnodes,
-                                        realT* coords[3],
-                                        const globalIndex*,
-                                        const int numRegions,
-                                        const int* shapecnt,
-                                        const localIndex* const * const meshConnectivity,
-                                        const globalIndex* const * const globalElementNum,
-                                        const int* const * const,
-                                        const int* const shapetype,
-                                        const int* const shapesize,
-                                        const int cycleNumber,
-                                        const realT problemTime,
-                                        const int lnodelist);
-/**
- * @brief write a domain parititon out to silo file
- * @param domain the domain partition to write
- * @param cycleNum the current cycle number
- * @param problemTime the current problem time
- * @param isRestart whether or not we want to write restart only data
- */
+  void WritePolygonMeshObject( const std::string & meshName,
+                               const localIndex nnodes,
+                               realT * coords[3],
+                               const globalIndex *,
+                               const int numRegions,
+                               const int * shapecnt,
+                               const localIndex * const * const meshConnectivity,
+                               const globalIndex * const * const globalElementNum,
+                               const int * const * const,
+                               const int * const shapetype,
+                               const int * const shapesize,
+                               const int cycleNumber,
+                               const realT problemTime,
+                               const int lnodelist );
+  /**
+   * @brief write a domain parititon out to silo file
+   * @param domain the domain partition to write
+   * @param cycleNum the current cycle number
+   * @param problemTime the current problem time
+   * @param isRestart whether or not we want to write restart only data
+   */
   void WriteDomainPartition( DomainPartition const & domain,
                              int const cycleNum,
                              real64 const problemTime,
@@ -216,7 +216,7 @@ public:
    */
   void WritePointMesh( string const & meshName,
                        const localIndex numPoints,
-                       real64* coords[3],
+                       real64 * coords[3],
                        int const cycleNumber,
                        real64 const problemTime );
 
@@ -230,13 +230,13 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh(string const & meshName,
-                     const localIndex nnodes,
-                     real64* coords[3],
-                     const localIndex_array& node1,
-                     const localIndex_array& node2,
-                     int const cycleNumber,
-                     real64 const problemTime);
+  void WriteBeamMesh( string const & meshName,
+                      const localIndex nnodes,
+                      real64 * coords[3],
+                      const localIndex_array & node1,
+                      const localIndex_array & node2,
+                      int const cycleNumber,
+                      real64 const problemTime );
 
   /**
    *
@@ -247,12 +247,12 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh(string const & meshName,
-                     const localIndex nnodes,
-                     real64* coords[3],
-                     integer_array& nodelist,
-                     int const cycleNumber,
-                     real64 const problemTime);
+  void WriteBeamMesh( string const & meshName,
+                      const localIndex nnodes,
+                      real64 * coords[3],
+                      integer_array & nodelist,
+                      int const cycleNumber,
+                      real64 const problemTime );
 
 
   /**
@@ -264,17 +264,17 @@ public:
    * @param problemTime current problem time
    */
   void WriteMaterialMapsCompactStorage( ElementRegionManager const * const elementManager,
-                          constitutive::ConstitutiveManager const * const constitutiveManager,
-                          string const & meshName,
-                          int const cycleNumber,
-                          real64 const problemTime);
+                                        constitutive::ConstitutiveManager const * const constitutiveManager,
+                                        string const & meshName,
+                                        int const cycleNumber,
+                                        real64 const problemTime );
 
 
   void WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
-                          constitutive::ConstitutiveManager const * const constitutiveManager,
-                          string const & meshName,
-                          int const cycleNumber,
-                          real64 const problemTime);
+                                     constitutive::ConstitutiveManager const * const constitutiveManager,
+                                     string const & meshName,
+                                     int const cycleNumber,
+                                     real64 const problemTime );
   /**
    *
    * @param group the group that holds the data to be written to the silo file
@@ -293,7 +293,7 @@ public:
                               int const cycleNum,
                               real64 const problemTime,
                               bool const isRestart,
-                              const localIndex_array& mask );
+                              const localIndex_array & mask );
 
 
 
@@ -323,7 +323,7 @@ public:
                                 real64 const problemTime,
                                 bool const isRestart,
                                 string const & multiRoot,
-                                const localIndex_array& mask );
+                                const localIndex_array & mask );
 
   /**
    *
@@ -338,7 +338,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array1d<TYPE>& field,
+                       const array1d<TYPE> & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -357,7 +357,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array2d<TYPE>& field,
+                       const array2d<TYPE> & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -376,7 +376,7 @@ public:
   template<typename OUTTYPE, typename TYPE>
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array3d<TYPE>& field,
+                       const array3d<TYPE> & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -436,16 +436,20 @@ public:
       // silo directory structure
       // before we can find the mesh.
       char pwd[256];
-      DBGetDir(m_dbFilePtr, pwd);
+      DBGetDir( m_dbFilePtr, pwd );
       for( int i=0 ; i<3 ; ++i )
       {
-        meshType = DBInqMeshtype(m_dbFilePtr,meshName.c_str());
+        meshType = DBInqMeshtype( m_dbFilePtr, meshName.c_str() );
         if( meshType != -1 && meshType != 610 )
+        {
           break;
+        }
         else
-          DBSetDir(m_dbFilePtr,"..");
+        {
+          DBSetDir( m_dbFilePtr, ".." );
+        }
       }
-      DBSetDir(m_dbFilePtr,pwd);
+      DBSetDir( m_dbFilePtr, pwd );
     }
     return meshType;
   }
@@ -461,9 +465,9 @@ public:
    * @param optlist the option list assocaited with the multiXXXX
    */
   template< typename CBF >
-  void WriteMultiXXXX(const DBObjectType type, CBF DBPutMultiCB,
-                      int const centering, string const name, int const cycleNumber,
-                      string const & multiRoot, const DBoptlist* optlist = nullptr);
+  void WriteMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
+                       int const centering, string const name, int const cycleNumber,
+                       string const & multiRoot, const DBoptlist * optlist = nullptr );
 
 
   /**
@@ -474,7 +478,7 @@ public:
    * or multivar object on each domain. This is incorrect, so we must modify the rootfile to remove empty references
    * to the multivar or multimesh objects and replace their path with "EMPTY"
    */
-  void ClearEmptiesFromMultiObjects(int const cycleNum);
+  void ClearEmptiesFromMultiObjects( int const cycleNum );
 
 
   void setNumGroups( int const numGroups )
@@ -484,21 +488,21 @@ public:
 
   void setPlotLevel( int const plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
   }
 private:
 
   /// pointer to the DBfile that this class is working on
-  DBfile* m_dbFilePtr;
+  DBfile * m_dbFilePtr;
 
   /// pointer to the Master DBfile
-  DBfile* m_dbBaseFilePtr;
+  DBfile * m_dbBaseFilePtr;
 
   /// total number of "parallel" files to write out
   int m_numGroups;
 
   /// the pmpio baton. A processor needs this to write to the file.
-  PMPIO_baton_t *m_baton;
+  PMPIO_baton_t * m_baton;
 
   /// which database to use. DB_PDB or DB_HDF5
   int const m_driver;
@@ -527,7 +531,7 @@ private:
    *
    * @return returns the ordering of nodes for a silo zone type.
    */
-  integer_array SiloNodeOrdering(const string & elementType);
+  integer_array SiloNodeOrdering( const string & elementType );
 
 
 
@@ -578,48 +582,48 @@ int GetTensorRank();
  * @return the casted value
  */
 template<typename OUTTYPE, typename TYPE>
-OUTTYPE CastField(const TYPE& field, int const i = 0);     // avoids compiler
-                                                           // warning
+OUTTYPE CastField( const TYPE & field, int const i = 0 );  // avoids compiler
+// warning
 
 template<typename OUTTYPE, typename TYPE>
-OUTTYPE CastField(const TYPE& field, int const i)
+OUTTYPE CastField( const TYPE & field, int const i )
 {
   return field.Data()[i];
 }
 
-template<> inline int CastField<int, int> (const int& field, int const )
+template<> inline int CastField<int, int> ( const int & field, int const )
 {
   return field;
 }
 
 
-template<> inline long int CastField<long int, long int> (const long int& field, int const )
+template<> inline long int CastField<long int, long int> ( const long int & field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long int> (const long int& field, int const )
+template<> inline int CastField<int, long int> ( const long int & field, int const )
 {
-  return integer_conversion<int>(field);
+  return integer_conversion<int>( field );
 }
 
-template<> inline long long int CastField<long long int, long long int> (const long long int& field, int const )
+template<> inline long long int CastField<long long int, long long int> ( const long long int & field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long long int> (const long long int& field, int const )
+template<> inline int CastField<int, long long int> ( const long long int & field, int const )
 {
-  return integer_conversion<int>(field);
+  return integer_conversion<int>( field );
 }
 
-template<> inline real64 CastField<real64, real64> (const real64& field, int const )
+template<> inline real64 CastField<real64, real64> ( const real64 & field, int const )
 {
   return field;
 }
-template<> inline float CastField<float, real64> (const real64& field, int const )
+template<> inline float CastField<float, real64> ( const real64 & field, int const )
 {
-  return static_cast<float>(field);
+  return static_cast<float>( field );
 }
 
 
@@ -635,7 +639,7 @@ template<> inline float CastField<float, real64> (const real64& field, int const
  * with the component of the tensor.
  */
 template<typename TYPE>
-void SetVariableNames(string const & fieldName, string_array& varnamestring, char const* varnames[]);
+void SetVariableNames( string const & fieldName, string_array & varnamestring, char const * varnames[] );
 
 
 }
@@ -649,7 +653,7 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
                                         real64 const problemTime,
                                         bool const isRestart,
                                         string const & multiRoot,
-                                        const localIndex_array& mask )
+                                        const localIndex_array & mask )
 {
 
   // iterate over all entries in the member map
@@ -665,43 +669,43 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       std::type_info const & typeID = wrapper->get_typeid();
 
       // TODO This is wrong. problem with uniqueness
-      if( typeID==typeid(array1d<real64>) )
+      if( typeID==typeid( array1d<real64> ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array1d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(array2d<real64>) )
+      if( typeID==typeid( array2d<real64> ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array2d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(array3d<real64>) )
+      if( typeID==typeid( array3d<real64> ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array3d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(r1_array) )
+      if( typeID==typeid( r1_array ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(integer_array) )
+      if( typeID==typeid( integer_array ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
         this->WriteDataField<integer>( meshname.c_str(), fieldName,
                                        viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(localIndex_array) )
+      if( typeID==typeid( localIndex_array ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
         this->WriteDataField<localIndex>( meshname.c_str(), fieldName,
                                           viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(globalIndex_array) )
+      if( typeID==typeid( globalIndex_array ) )
       {
         auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
         this->WriteDataField<globalIndex>( meshname.c_str(), fieldName,
@@ -724,43 +728,43 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array1d<TYPE>& field,
+                               const array1d<TYPE> & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
-  int nels = integer_conversion<int>(field.size());
+  int nels = integer_conversion<int>( field.size() );
 
   int const meshType = GetMeshType( meshName );
 
 
-  DBoptlist *optlist = DBMakeOptlist(5);
-  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-  DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
+  DBoptlist * optlist = DBMakeOptlist( 5 );
+  DBAddOption( optlist, DBOPT_CYCLE, const_cast<int *>( &cycleNumber ) );
+  DBAddOption( optlist, DBOPT_DTIME, const_cast<real64 *>( &problemTime ) );
 
-  array1d<char const*> varnames(nvars);
-  array1d<void*> vars(nvars);
+  array1d<char const *> varnames( nvars );
+  array1d<void *> vars( nvars );
 
 
-  string_array varnamestring(nvars);
-  array1d< array1d< OUTTYPE > > castedField(nvars);
+  string_array varnamestring( nvars );
+  array1d< array1d< OUTTYPE > > castedField( nvars );
 
 
   for( int i = 0 ; i < nvars ; ++i )
   {
-    if( std::is_same<OUTTYPE,TYPE>::value )
+    if( std::is_same<OUTTYPE, TYPE>::value )
     {
-      vars[i] = const_cast<void*>(static_cast<void const*> (&(field[0])+i));
+      vars[i] = const_cast<void *>( static_cast<void const *>( &( field[0] )+i ) );
     }
     else
     {
-      castedField[i].resize(nels);
-      vars[i] = static_cast<void*> (&(castedField[i][0]));
+      castedField[i].resize( nels );
+      vars[i] = static_cast<void *>( &( castedField[i][0] ) );
       for( int k = 0 ; k < nels ; ++k )
       {
-        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>(field[k], i);
+        castedField[i][k] = SiloFileUtilities::CastField<OUTTYPE>( field[k], i );
       }
     }
   }
@@ -771,15 +775,15 @@ void SiloFile::WriteDataField( string const & meshName,
   if( nels == 0 )
   {
     char pwd[256];
-    DBGetDir(m_dbFilePtr, pwd);
+    DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + fieldName;
-    m_emptyVariables.push_back(emptyObject);
+    m_emptyVariables.push_back( emptyObject );
   }
   else
   {
 
-    SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
+    SiloFileUtilities::SetVariableNames<TYPE>( fieldName, varnamestring, varnames.data() );
 
 
     int err = -2;
@@ -790,13 +794,13 @@ void SiloFile::WriteDataField( string const & meshName,
                          meshName.c_str(),
                          nvars,
                          varnames.data(),
-                         reinterpret_cast<float**>(vars.data()),
+                         reinterpret_cast<float **>( vars.data() ),
                          nels,
                          nullptr,
                          0,
                          SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                          centering,
-                         optlist);
+                         optlist );
     }
     else if( meshType == DB_POINTMESH )
     {
@@ -804,20 +808,20 @@ void SiloFile::WriteDataField( string const & meshName,
                            fieldName.c_str(),
                            meshName.c_str(),
                            nvars,
-                           reinterpret_cast<float**>(vars.data()),
+                           reinterpret_cast<float **>( vars.data() ),
                            nels,
                            SiloFileUtilities::DB_TYPE<OUTTYPE>(),
-                           optlist);
+                           optlist );
     }
     if( err < 0 )
     {
       if( err < -1 )
       {
-        GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
+        GEOS_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
       }
       else
       {
-        GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+        GEOS_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
       }
     }
   }
@@ -825,13 +829,13 @@ void SiloFile::WriteDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   if( rank == 0 )
   {
     int tensorRank = SiloFileUtilities::GetTensorRank<TYPE>();
-    DBAddOption(optlist, DBOPT_TENSOR_RANK, const_cast<int*> (&tensorRank));
-    DBAddOption(optlist, DBOPT_MMESH_NAME, const_cast<char*> (meshName.c_str()));
+    DBAddOption( optlist, DBOPT_TENSOR_RANK, const_cast<int *>( &tensorRank ) );
+    DBAddOption( optlist, DBOPT_MMESH_NAME, const_cast<char *>( meshName.c_str() ) );
 
     DBObjectType vartype = DB_INVALID_OBJECT;
 
@@ -849,22 +853,22 @@ void SiloFile::WriteDataField( string const & meshName,
     }
     else
     {
-      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      GEOS_ERROR( "unhandled case in SiloFile::WriteDataField B\n" );
     }
 
 
-    WriteMultiXXXX(vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
-                   optlist);
+    WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
+                    optlist );
   }
 
-  DBFreeOptlist(optlist);
+  DBFreeOptlist( optlist );
 
 }
 
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array2d<TYPE>& field,
+                               const array2d<TYPE> & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
@@ -879,16 +883,16 @@ void SiloFile::WriteDataField( string const & meshName,
   array1d<TYPE> data( npts );
   localIndex indices[2];
 
-  for (localIndex ivar = 0; ivar < nvar; ++ivar)
+  for( localIndex ivar = 0; ivar < nvar; ++ivar )
   {
     indices[secondaryDimIndex] = ivar;
     // make a copy of the ivar'th slice of data
-    for (localIndex ip = 0; ip < npts; ++ip)
+    for( localIndex ip = 0; ip < npts; ++ip )
     {
       indices[primaryDimIndex] = ip;
       data[ip] = field( indices[0], indices[1] );
     }
-    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar), data,
+    WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string( ivar ), data,
                              centering, cycleNumber, problemTime, multiRoot );
   }
 }
@@ -896,15 +900,15 @@ void SiloFile::WriteDataField( string const & meshName,
 template<typename OUTTYPE, typename TYPE>
 void SiloFile::WriteDataField( string const & meshName,
                                string const & fieldName,
-                               const array3d<TYPE>& field,
+                               const array3d<TYPE> & field,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
                                string const & multiRoot )
 {
   int const primaryDimIndex = field.getSingleParameterResizeIndex();
-  int const secondaryDimIndex1 = (primaryDimIndex < 1) ? 1 : 0;
-  int const secondaryDimIndex2 = (primaryDimIndex < 2) ? 2 : 1;
+  int const secondaryDimIndex1 = ( primaryDimIndex < 1 ) ? 1 : 0;
+  int const secondaryDimIndex2 = ( primaryDimIndex < 2 ) ? 2 : 1;
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -913,19 +917,19 @@ void SiloFile::WriteDataField( string const & meshName,
   array1d<TYPE> data( npts );
   localIndex indices[3];
 
-  for (localIndex ivar = 0; ivar < nvar1; ++ivar)
+  for( localIndex ivar = 0; ivar < nvar1; ++ivar )
   {
     indices[secondaryDimIndex1] = ivar;
-    for (localIndex jvar = 0; jvar < nvar2; ++jvar)
+    for( localIndex jvar = 0; jvar < nvar2; ++jvar )
     {
       indices[secondaryDimIndex2] = jvar;
       // make a copy of the ivar/jvar'th slice of data
-      for (localIndex ip = 0; ip < npts; ++ip)
+      for( localIndex ip = 0; ip < npts; ++ip )
       {
         indices[primaryDimIndex] = ip;
         data[ip] = field( indices[0], indices[1], indices[2] );
       }
-      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar), data,
+      WriteDataField<OUTTYPE>( meshName, fieldName + "_" + std::to_string( ivar ) + "_" + std::to_string( jvar ), data,
                                centering, cycleNumber, problemTime, multiRoot );
     }
   }
@@ -947,11 +951,11 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   int const meshType = GetMeshType( meshName );
   string_array activeMaterialNames;
 
-//  double missingValue = 0.0;
-  DBoptlist *optlist = DBMakeOptlist(5);
-  DBAddOption(optlist, DBOPT_CYCLE, const_cast<int*> (&cycleNumber));
-  DBAddOption(optlist, DBOPT_DTIME, const_cast<real64*> (&problemTime));
-//  DBAddOption(optlist, DBOPT_MISSING_VALUE, &missingValue);
+  //  double missingValue = 0.0;
+  DBoptlist * optlist = DBMakeOptlist( 5 );
+  DBAddOption( optlist, DBOPT_CYCLE, const_cast<int *>( &cycleNumber ) );
+  DBAddOption( optlist, DBOPT_DTIME, const_cast<real64 *>( &problemTime ) );
+  //  DBAddOption(optlist, DBOPT_MISSING_VALUE, &missingValue);
 
   char * regionpnames[ 100 ];
 
@@ -961,26 +965,26 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   if( field.size() == 0 )
   {
     char pwd[256];
-    DBGetDir(m_dbFilePtr, pwd);
+    DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + fieldName;
-    m_emptyVariables.push_back(emptyObject);
+    m_emptyVariables.push_back( emptyObject );
   }
   else
   {
-    string_array varnamestring(nvars);
-    array1d<char const*> varnames(nvars);
+    string_array varnamestring( nvars );
+    array1d<char const *> varnames( nvars );
 
-    SiloFileUtilities::SetVariableNames<TYPE>(fieldName, varnamestring, varnames.data() );
+    SiloFileUtilities::SetVariableNames<TYPE>( fieldName, varnamestring, varnames.data() );
 
     int nels = 0;
     localIndex mixlen = 0;
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-      localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
+      ElementRegion const * const elemRegion = elementManager->GetRegion( er );
+      localIndex const numMatInRegion = integer_conversion<localIndex>( elemRegion->getMaterialList().size() );
 
-      array1d<localIndex> matIndices(numMatInRegion);
+      array1d<localIndex> matIndices( numMatInRegion );
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
         matIndices[a] = constitutiveManager->
@@ -988,7 +992,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                         getIndexInParent();
       }
 
-      elemRegion->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion const * const subRegion )
+      elemRegion->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const * const subRegion )
       {
 
         nels += subRegion->size();
@@ -1001,22 +1005,22 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             mixlen += subRegion->size();
           }
         }
-      });
+      } );
     }
 
-    array1d<void*> vars(nvars);
-    array1d< array1d<OUTTYPE> > varsData(nvars);
+    array1d<void *> vars( nvars );
+    array1d< array1d<OUTTYPE> > varsData( nvars );
 
-    array1d<void*> mixvars(nvars);
-    array1d< array1d<OUTTYPE> > mixvarsData(nvars);
+    array1d<void *> mixvars( nvars );
+    array1d< array1d<OUTTYPE> > mixvarsData( nvars );
 
     for( int a=0 ; a<nvars ; ++a )
     {
-      varsData[a].resize(nels);
-      mixvarsData[a].resize(mixlen);
+      varsData[a].resize( nels );
+      mixvarsData[a].resize( mixlen );
 
-      vars[a] = static_cast<void*>(varsData[a].data());
-      mixvars[a] = static_cast<void*>(mixvarsData[a].data());
+      vars[a] = static_cast<void *>( varsData[a].data() );
+      mixvars[a] = static_cast<void *>( mixvarsData[a].data() );
     }
 
     localIndex mixlen2 = 0;
@@ -1024,18 +1028,18 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
-      localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
+      ElementRegion const * const elemRegion = elementManager->GetRegion( er );
+      localIndex const numMatInRegion = integer_conversion<localIndex>( elemRegion->getMaterialList().size() );
 
-      array1d<localIndex> matIndices(numMatInRegion);
+      array1d<localIndex> matIndices( numMatInRegion );
 
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
         matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
-      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                              CellElementSubRegion const * const subRegion )
+      elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const esr,
+                                                                        CellElementSubRegion const * const subRegion )
       {
 
         if( numMatInRegion == 1 )
@@ -1044,8 +1048,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
           {
             for( localIndex k = 0 ; k < subRegion->size() ; ++k )
             {
-              varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
-              mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+              varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>( field[er][esr][matIndices[0]][k][0], i );
+              mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>( field[er][esr][matIndices[0]][k][0], i );
             }
           }
         }
@@ -1055,9 +1059,9 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
           {
             for( localIndex k = 0 ; k < subRegion->size() ; ++k )
             {
-              if (field[er][esr][matIndices[0]].size() > 0)
+              if( field[er][esr][matIndices[0]].size() > 0 )
               {
-                varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+                varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>( field[er][esr][matIndices[0]][k][0], i );
               }
               else
               {
@@ -1067,7 +1071,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
               {
                 if( field[er][esr][matIndices[a]].size() > 0 )
                 {
-                  mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
+                  mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>( field[er][esr][matIndices[a]][k][0], i );
                 }
                 else
                 {
@@ -1077,15 +1081,15 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             }
           }
         }
-      });
+      } );
     }
-    
+
     for( localIndex a=0 ; a<activeMaterialNames.size() ; ++a )
     {
-      regionpnames[a] = const_cast<char*> (activeMaterialNames[a].c_str());
+      regionpnames[a] = const_cast<char *>( activeMaterialNames[a].c_str() );
     }
     regionpnames[activeMaterialNames.size()] = nullptr;
-    DBAddOption(optlist, DBOPT_REGION_PNAMES, &regionpnames );
+    DBAddOption( optlist, DBOPT_REGION_PNAMES, &regionpnames );
 
     int err = -2;
     if( meshType == DB_UCDMESH )
@@ -1101,7 +1105,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                          mixlen,
                          SiloFileUtilities::DB_TYPE<OUTTYPE>(),
                          centering,
-                         optlist);
+                         optlist );
     }
     else if( meshType == DB_POINTMESH )
     {
@@ -1112,17 +1116,17 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                            vars.data(),
                            nels,
                            SiloFileUtilities::DB_TYPE<OUTTYPE>(),
-                           optlist);
+                           optlist );
     }
     if( err < 0 )
     {
       if( err < -1 )
       {
-        GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
+        GEOS_ERROR( "unhandled case in SiloFile::WriteDataField A\n" );
       }
       else
       {
-        GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+        GEOS_ERROR( "unhandled failure in adding variable during SiloFile::WriteDataField\n" );
       }
     }
   }
@@ -1130,13 +1134,13 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   if( rank == 0 )
   {
     int tensorRank = SiloFileUtilities::GetTensorRank<TYPE>();
-    DBAddOption(optlist, DBOPT_TENSOR_RANK, const_cast<int*> (&tensorRank));
-    DBAddOption(optlist, DBOPT_MMESH_NAME, const_cast<char*> (meshName.c_str()));
+    DBAddOption( optlist, DBOPT_TENSOR_RANK, const_cast<int *>( &tensorRank ) );
+    DBAddOption( optlist, DBOPT_MMESH_NAME, const_cast<char *>( meshName.c_str() ) );
 
     DBObjectType vartype = DB_INVALID_OBJECT;
 
@@ -1154,14 +1158,14 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     }
     else
     {
-      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      GEOS_ERROR( "unhandled case in SiloFile::WriteDataField B\n" );
     }
 
-    WriteMultiXXXX(vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
-                   optlist);
+    WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,
+                    optlist );
   }
 
-  DBFreeOptlist(optlist);
+  DBFreeOptlist( optlist );
 }
 
 template<typename OUTTYPE, typename TYPE>
@@ -1181,21 +1185,21 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
   // resize the container and find the maximum size along 3rd dimension across sub-region data
   localIndex nvar = 0;
-  for (localIndex er = 0; er < field.size(); ++er)
+  for( localIndex er = 0; er < field.size(); ++er )
   {
     fieldCopy[er].resize( field[er].size() );
     fieldView[er].resize( field[er].size() );
-    for (localIndex esr = 0; esr < field[er].size(); ++esr )
+    for( localIndex esr = 0; esr < field[er].size(); ++esr )
     {
       fieldCopy[er][esr].resize( field[er][esr].size() );
       fieldView[er][esr].resize( field[er][esr].size() );
-      for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
       {
         arrayView3d<TYPE> const & fieldData = field[er][esr][matIndex];
-        if (fieldData.size() > 0)
+        if( fieldData.size() > 0 )
         {
-          fieldCopy[er][esr][matIndex].resize( fieldData.size(0), fieldData.size(1) );
-          nvar = std::max( nvar, fieldData.size(2) );
+          fieldCopy[er][esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
+          nvar = std::max( nvar, fieldData.size( 2 ) );
         }
         fieldView[er][esr][matIndex] = fieldCopy[er][esr][matIndex];
       }
@@ -1203,21 +1207,21 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   }
 
   // loop over variables and copy into the container
-  for (localIndex ivar = 0; ivar < nvar; ++ivar)
+  for( localIndex ivar = 0; ivar < nvar; ++ivar )
   {
-    for (localIndex er = 0; er < field.size(); ++er)
+    for( localIndex er = 0; er < field.size(); ++er )
     {
-      for (localIndex esr = 0; esr < field[er].size(); ++esr )
+      for( localIndex esr = 0; esr < field[er].size(); ++esr )
       {
-        for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+        for( localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
         {
           arrayView3d<TYPE> const & fieldData = field[er][esr][matIndex];
-          if (fieldData.size() > 0 && ivar < fieldData.size(2))
+          if( fieldData.size() > 0 && ivar < fieldData.size( 2 ) )
           {
             arrayView2d<TYPE> & fieldCopyData = fieldCopy[er][esr][matIndex];
-            for (localIndex ei = 0; ei < fieldData.size(0); ++ei)
+            for( localIndex ei = 0; ei < fieldData.size( 0 ); ++ei )
             {
-              for (localIndex q = 0; q < fieldData.size(1); ++q)
+              for( localIndex q = 0; q < fieldData.size( 1 ); ++q )
               {
                 fieldCopyData[ei][q] = fieldData[ei][q][ivar];
               }
@@ -1226,7 +1230,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         }
       }
     }
-    WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string(ivar),
+    WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string( ivar ),
                                     fieldView, elementManager, constitutiveManager, centering, cycleNumber,
                                     problemTime, multiRoot, materialNames );
   }
@@ -1251,22 +1255,22 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   // resize the container and find the maximum size along 3rd/4th dimension across sub-region data
   localIndex nvar1 = 0;
   localIndex nvar2 = 0;
-  for (localIndex er = 0; er < field.size(); ++er)
+  for( localIndex er = 0; er < field.size(); ++er )
   {
     fieldCopy[er].resize( field[er].size() );
     fieldView[er].resize( field[er].size() );
-    for (localIndex esr = 0; esr < field[er].size(); ++esr )
+    for( localIndex esr = 0; esr < field[er].size(); ++esr )
     {
       fieldCopy[er][esr].resize( field[er][esr].size() );
       fieldView[er][esr].resize( field[er][esr].size() );
-      for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
       {
         arrayView4d<TYPE> const & fieldData = field[er][esr][matIndex];
-        if (fieldData.size() > 0)
+        if( fieldData.size() > 0 )
         {
-          fieldCopy[er][esr][matIndex].resize( fieldData.size(0), fieldData.size(1) );
-          nvar1 = std::max( nvar1, fieldData.size(2) );
-          nvar2 = std::max( nvar2, fieldData.size(3) );
+          fieldCopy[er][esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
+          nvar1 = std::max( nvar1, fieldData.size( 2 ) );
+          nvar2 = std::max( nvar2, fieldData.size( 3 ) );
         }
         fieldView[er][esr][matIndex] = fieldCopy[er][esr][matIndex];
       }
@@ -1274,23 +1278,23 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
   }
 
   // loop over variables and copy into the container
-  for (localIndex ivar = 0; ivar < nvar1; ++ivar)
+  for( localIndex ivar = 0; ivar < nvar1; ++ivar )
   {
-    for (localIndex jvar = 0; jvar < nvar2; ++jvar)
+    for( localIndex jvar = 0; jvar < nvar2; ++jvar )
     {
-      for (localIndex er = 0; er < field.size(); ++er)
+      for( localIndex er = 0; er < field.size(); ++er )
       {
-        for (localIndex esr = 0; esr < field[er].size(); ++esr)
+        for( localIndex esr = 0; esr < field[er].size(); ++esr )
         {
-          for (localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex)
+          for( localIndex matIndex = 0; matIndex < field[er][esr].size(); ++matIndex )
           {
             arrayView4d<TYPE> const & fieldData = field[er][esr][matIndex];
-            if (fieldData.size() > 0 && ivar < fieldData.size(2) && jvar < fieldData.size(3))
+            if( fieldData.size() > 0 && ivar < fieldData.size( 2 ) && jvar < fieldData.size( 3 ) )
             {
               arrayView2d<TYPE> & fieldCopyData = fieldCopy[er][esr][matIndex];
-              for (localIndex ei = 0; ei < fieldData.size(0); ++ei)
+              for( localIndex ei = 0; ei < fieldData.size( 0 ); ++ei )
               {
-                for (localIndex q = 0; q < fieldData.size(1); ++q)
+                for( localIndex q = 0; q < fieldData.size( 1 ); ++q )
                 {
                   fieldCopyData[ei][q] = fieldData[ei][q][ivar][jvar];
                 }
@@ -1299,7 +1303,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
           }
         }
       }
-      WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string(ivar) + "_" + std::to_string(jvar),
+      WriteMaterialDataField<real64>( meshName, fieldName + "_" + std::to_string( ivar ) + "_" + std::to_string( jvar ),
                                       fieldView, elementManager, constitutiveManager, centering, cycleNumber,
                                       problemTime, multiRoot, materialNames );
     }
@@ -1313,34 +1317,34 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
                                string const name,
                                const int,
                                string const & multiRoot,
-                               const DBoptlist* optlist)
+                               const DBoptlist * optlist )
 {
-  (void)centering;
+  ( void )centering;
 
   int size = 1;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_size(MPI_COMM_GEOSX, &size);
+  MPI_Comm_size( MPI_COMM_GEOSX, &size );
 #endif
 
-  string_array vBlockNames(size);
-  array1d<char*> BlockNames(size);
-  array1d<int> blockTypes(size);
+  string_array vBlockNames( size );
+  array1d<char *> BlockNames( size );
+  array1d<int> blockTypes( size );
   char tempBuffer[1024];
   char currentDirectory[256];
 
-  DBGetDir(m_dbBaseFilePtr, currentDirectory);
-  DBSetDir(m_dbBaseFilePtr, multiRoot.c_str());
+  DBGetDir( m_dbBaseFilePtr, currentDirectory );
+  DBSetDir( m_dbBaseFilePtr, multiRoot.c_str() );
 
 
-  string multiRootString(multiRoot);
-  if( !(multiRootString.compare("/")) )
+  string multiRootString( multiRoot );
+  if( !( multiRootString.compare( "/" ) ) )
   {
     multiRootString.clear();
   }
 
   for( int i = 0 ; i < size ; ++i )
   {
-    int groupRank = PMPIO_GroupRank(m_baton, i);
+    int groupRank = PMPIO_GroupRank( m_baton, i );
 
 
     sprintf( tempBuffer,
@@ -1351,18 +1355,18 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
              groupRank,
              i,
              multiRootString.c_str(),
-             name.c_str());
+             name.c_str() );
 
     vBlockNames[i] = tempBuffer;
-    BlockNames[i] = const_cast<char*>( vBlockNames[i].c_str() );
+    BlockNames[i] = const_cast<char *>( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }
 
   string multiName = name;
-  DBPutMultiCB(m_dbBaseFilePtr, multiName.c_str(), size, BlockNames.data(), blockTypes.data(),
-               const_cast<DBoptlist*> (optlist));
+  DBPutMultiCB( m_dbBaseFilePtr, multiName.c_str(), size, BlockNames.data(), blockTypes.data(),
+                const_cast<DBoptlist *>( optlist ) );
 
-  DBSetDir(m_dbBaseFilePtr, currentDirectory);
+  DBSetDir( m_dbBaseFilePtr, currentDirectory );
 
 }
 

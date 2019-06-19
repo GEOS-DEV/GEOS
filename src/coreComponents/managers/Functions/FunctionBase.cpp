@@ -30,17 +30,17 @@ using namespace dataRepository;
 
 
 
-FunctionBase::FunctionBase( const std::string& name,
+FunctionBase::FunctionBase( const std::string & name,
                             ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
   m_inputVarNames()
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  RegisterViewWrapper( keys::inputVarNames, &m_inputVarNames, 0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setSizedFromParent(0)->
-    setDescription("Name of fields are input to function.");
+  RegisterViewWrapper( keys::inputVarNames, &m_inputVarNames, 0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setSizedFromParent( 0 )->
+  setDescription( "Name of fields are input to function." );
 }
 
 
@@ -51,7 +51,7 @@ integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  localIndex numVars = integer_conversion<localIndex>(inputVarNames.size());
+  localIndex numVars = integer_conversion<localIndex>( inputVarNames.size() );
 
   if( numVars==1 )
   {
@@ -64,7 +64,7 @@ integer FunctionBase::isFunctionOfTime() const
   {
     for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
     {
-      if( inputVarNames[varIndex]=="time")
+      if( inputVarNames[varIndex]=="time" )
       {
         rval = 1;
         break;
@@ -77,21 +77,21 @@ integer FunctionBase::isFunctionOfTime() const
 
 real64_array FunctionBase::EvaluateStats( dataRepository::ManagedGroup const * const group,
                                           real64 const time,
-                                          set<localIndex> const & set) const
+                                          set<localIndex> const & set ) const
 {
   localIndex N = set.size();
-  real64_array sub(N);
+  real64_array sub( N );
   Evaluate( group, time, set, sub );
 
-  real64_array result(3);
+  real64_array result( 3 );
   result[0] = 1e10;   // min
   result[1] = 0.0;    // avg
   result[2] = -1e10;  // max
   for( localIndex ii=0; ii<N; ii++ )
   {
-    result[0] = std::min(result[0], sub[ii]);
+    result[0] = std::min( result[0], sub[ii] );
     result[1] += sub[ii];
-    result[2] = std::max(result[0], sub[ii]);
+    result[2] = std::max( result[0], sub[ii] );
   }
   result[1] /= N;
 

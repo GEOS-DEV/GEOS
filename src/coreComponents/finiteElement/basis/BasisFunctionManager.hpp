@@ -36,11 +36,11 @@ class BasisFunctionManager : public dataRepository::ManagedGroup
 {
 public:
   BasisFunctionManager() = delete;
-  BasisFunctionManager(string const & name, ManagedGroup * const parent);
+  BasisFunctionManager( string const & name, ManagedGroup * const parent );
   virtual ~BasisFunctionManager() override final;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
-  
+
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 

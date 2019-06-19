@@ -37,7 +37,7 @@ class TableFunction : public FunctionBase
 {
 public:
   /// Main constructor
-  TableFunction( const std::string& name,
+  TableFunction( const std::string & name,
                  dataRepository::ManagedGroup * const parent );
 
   /// Destructor
@@ -45,7 +45,7 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "TableFunction"; }
-  
+
   /// Initialize the function
   virtual void InitializeFunction() override;
 
@@ -65,7 +65,7 @@ public:
    * @brief Method to evaluate a function
    * @param input a scalar input
    */
-  virtual real64 Evaluate( real64 const * const input) const override final;
+  virtual real64 Evaluate( real64 const * const input ) const override final;
 
 private:
   /// An array of table axes

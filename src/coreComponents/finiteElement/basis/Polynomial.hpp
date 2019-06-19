@@ -33,7 +33,7 @@ class Polynomial
 {
 public:
 
-  Polynomial(const std::vector<double> _coefficients);
+  Polynomial( const std::vector<double> _coefficients );
 
   Polynomial( Polynomial const & ) = default;
 
@@ -41,12 +41,12 @@ public:
 
   int  Degree();
 
-  double Value(const double x) const;
-  double Deriv(const double x) const;
+  double Value( const double x ) const;
+  double Deriv( const double x ) const;
 
-  void Evaluate(const double x,
-                double &value,
-                double &deriv);
+  void Evaluate( const double x,
+                 double & value,
+                 double & deriv );
 
 private:
 

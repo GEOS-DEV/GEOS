@@ -81,7 +81,7 @@ public:
    * @brief copy constructor
    * @param init the source to copy
    */
-  CellBlock(const CellBlock& init);
+  CellBlock( const CellBlock & init );
 
 
   virtual ~CellBlock() override;
@@ -97,7 +97,7 @@ public:
    */
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
-                     localIndex_array& nodeIndicies) const;
+                     localIndex_array & nodeIndicies ) const;
 
   /**
    * @brief function to return element center. this should be depricated.
@@ -107,8 +107,8 @@ public:
    * @return
    */
   R1Tensor const & calculateElementCenter( localIndex k,
-                                           const NodeManager& nodeManager,
-                                           const bool useReferencePos = true) const override;
+                                           const NodeManager & nodeManager,
+                                           const bool useReferencePos = true ) const override;
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
@@ -121,7 +121,7 @@ public:
 
     R1Tensor Xlocal[10];
 
-    for (localIndex a = 0; a < m_numNodesPerElement; ++a)
+    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
       Xlocal[a] = X[m_toNodesRelation[k][a]];
       center += Xlocal[a];
@@ -130,23 +130,23 @@ public:
 
     if( m_numNodesPerElement == 8 )
     {
-      m_elementVolume[k] = computationalGeometry::HexVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
     }
-    else if( m_numNodesPerElement == 4)
+    else if( m_numNodesPerElement == 4 )
     {
-      m_elementVolume[k] = computationalGeometry::TetVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
     }
-    else if( m_numNodesPerElement == 6)
+    else if( m_numNodesPerElement == 6 )
     {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
     }
-    else if ( m_numNodesPerElement == 5)
+    else if( m_numNodesPerElement == 5 )
     {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume(Xlocal);
+      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
     }
     else
     {
-        GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
+      GEOS_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
     }
   }
 
@@ -188,7 +188,7 @@ public:
   /**
    * @return the element to edge map
    */
-  FixedOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
+  FixedOneToManyRelation    &    edgeList()       { return m_toEdgesRelation; }
 
   /**
    * @return the element to edge map
@@ -198,7 +198,7 @@ public:
   /**
    * @return the element to face map
    */
-  FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  FixedOneToManyRelation    &    faceList()       { return m_toFacesRelation; }
 
   /**
    * @return the element to face map

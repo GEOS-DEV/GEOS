@@ -44,17 +44,17 @@ using namespace geosx;
 namespace
 {
 int global_argc;
-char** global_argv;
+char ** global_argv;
 }
 
 class DofManagerTest : public ::testing::Test
 {
 public:
-  void setTimer( double &time )
+  void setTimer( double & time )
   {
     time = MPI_Wtime();
   }
-  void getElapsedTime( double &time )
+  void getElapsedTime( double & time )
   {
     time = MPI_Wtime() - time;
   }
@@ -64,41 +64,41 @@ protected:
   static void SetUpTestCase()
   {
     string const inputStream =
-    "<?xml version=\"1.0\" ?>"
-    "<Problem xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
-    "  <Mesh>"
-    "    <InternalMesh name=\"mesh1\""
-    "                  elementTypes=\"{C3D8}\""
-    "                  xCoords=\"{0, 1, 2, 3, 4}\""
-    "                  yCoords=\"{0, 1}\""
-    "                  zCoords=\"{0, 1}\""
-    "                  nx=\"{4, 4, 4, 4}\""
-    "                  ny=\"{4}\""
-    "                  nz=\"{5}\""
-    "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
-    "  </Mesh>"
-    "  <ElementRegions>"
-    "    <ElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{dummy_material}\" />"
-    "  </ElementRegions>"
-    "</Problem>";
+      "<?xml version=\"1.0\" ?>"
+      "<Problem xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+      "  <Mesh>"
+      "    <InternalMesh name=\"mesh1\""
+      "                  elementTypes=\"{C3D8}\""
+      "                  xCoords=\"{0, 1, 2, 3, 4}\""
+      "                  yCoords=\"{0, 1}\""
+      "                  zCoords=\"{0, 1}\""
+      "                  nx=\"{4, 4, 4, 4}\""
+      "                  ny=\"{4}\""
+      "                  nz=\"{5}\""
+      "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
+      "  </Mesh>"
+      "  <ElementRegions>"
+      "    <ElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
+      "    <ElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{dummy_material}\" />"
+      "    <ElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{dummy_material}\" />"
+      "    <ElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{dummy_material}\" />"
+      "  </ElementRegions>"
+      "</Problem>";
 
     xmlWrapper::xmlDocument xmlDocument;
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-    if (!xmlResult)
+    if( !xmlResult )
     {
-      GEOS_LOG_RANK_0("XML parsed with errors!");
-      GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-      GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+      GEOS_LOG_RANK_0( "XML parsed with errors!" );
+      GEOS_LOG_RANK_0( "Error description: " << xmlResult.description() );
+      GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
     }
 
     int mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
     dataRepository::ManagedGroup * commandLine =
       problemManager.GetGroup<dataRepository::ManagedGroup>( problemManager.groupKeys.commandLine );
     commandLine->RegisterViewWrapper<integer>( problemManager.viewKeys.xPartitionsOverride.Key() )->
-      setApplyDefaultValue(mpiSize);
+    setApplyDefaultValue( mpiSize );
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
     problemManager.InitializePythonInterpreter();
@@ -107,9 +107,9 @@ protected:
     // Open mesh levels
     DomainPartition * domain  = problemManager.getDomainPartition();
     MeshManager * meshManager = problemManager.GetGroup<MeshManager>( problemManager.groupKeys.meshManager );
-    meshManager->GenerateMeshLevels(domain);
+    meshManager->GenerateMeshLevels( domain );
 
-    ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
+    ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
@@ -126,7 +126,7 @@ protected:
 
 ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
 
-TEST_F(DofManagerTest, TestFEM_partial)
+TEST_F( DofManagerTest, TestFEM_partial )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -151,7 +151,7 @@ TEST_F(DofManagerTest, TestFEM_partial)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
 }
 
-TEST_F(DofManagerTest, TestFEM_all)
+TEST_F( DofManagerTest, TestFEM_all )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -170,7 +170,7 @@ TEST_F(DofManagerTest, TestFEM_all)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
 }
 
-TEST_F(DofManagerTest, TestFVM_partial)
+TEST_F( DofManagerTest, TestFVM_partial )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -194,7 +194,7 @@ TEST_F(DofManagerTest, TestFVM_partial)
   EXPECT_EQ( pattern.globalCols(), nCells );
 }
 
-TEST_F(DofManagerTest, TestFVM_all)
+TEST_F( DofManagerTest, TestFVM_all )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -213,7 +213,7 @@ TEST_F(DofManagerTest, TestFVM_all)
   EXPECT_EQ( pattern.globalCols(), nCells );
 }
 
-TEST_F(DofManagerTest, TestCoupling)
+TEST_F( DofManagerTest, TestCoupling )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -256,7 +256,7 @@ TEST_F(DofManagerTest, TestCoupling)
   EXPECT_DOUBLE_EQ( emptyPattern.normFrobenius(), 0. );
 }
 
-TEST_F(DofManagerTest, TestUserDefinedPattern)
+TEST_F( DofManagerTest, TestUserDefinedPattern )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -283,7 +283,7 @@ TEST_F(DofManagerTest, TestUserDefinedPattern)
   EXPECT_DOUBLE_EQ( pattern.normFrobenius(), userPattern.normFrobenius() );
 }
 
-TEST_F(DofManagerTest, TestFEM_FVM)
+TEST_F( DofManagerTest, TestFEM_FVM )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -306,7 +306,7 @@ TEST_F(DofManagerTest, TestFEM_FVM)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes+nCells );
 }
 
-TEST_F(DofManagerTest, TestMassMatrix)
+TEST_F( DofManagerTest, TestMassMatrix )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -325,10 +325,10 @@ TEST_F(DofManagerTest, TestMassMatrix)
 
   EXPECT_EQ( pattern.globalRows(), nCells );
   EXPECT_EQ( pattern.globalCols(), nCells );
-  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), sqrt(nCells) );
+  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), sqrt( nCells ) );
 }
 
-TEST_F(DofManagerTest, TestIndices)
+TEST_F( DofManagerTest, TestIndices )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -339,7 +339,8 @@ TEST_F(DofManagerTest, TestIndices)
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
 
   constexpr globalIndex indicesDefaultDisp[24] = { 72, 73, 74, 75, 76, 77, 108, 109, 110,
-    111, 112, 113, 78, 79, 80, 81, 82, 83, 114, 115, 116, 117, 118, 119 };
+                                                   111, 112, 113, 78, 79, 80, 81, 82, 83, 114, 115, 116, 117, 118, 119
+                                                 };
   constexpr globalIndex indicesDefaultPres[2] = { 1530, 1550 };
 
   globalIndex_array indicesDisp, indicesPres;
@@ -349,11 +350,11 @@ TEST_F(DofManagerTest, TestIndices)
   int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
   if( mpiRank==0 )
   {
-    for( localIndex i=0; i<std::min(indicesDisp.size(), integer_conversion<localIndex>(24)); ++i )
+    for( localIndex i=0; i<std::min( indicesDisp.size(), integer_conversion<localIndex>( 24 ) ); ++i )
     {
       EXPECT_EQ( indicesDisp[i], indicesDefaultDisp[i] );
     }
-    for( localIndex i=0; i<std::min(indicesPres.size(), integer_conversion<localIndex>(2)); ++i )
+    for( localIndex i=0; i<std::min( indicesPres.size(), integer_conversion<localIndex>( 2 ) ); ++i )
     {
       EXPECT_EQ( indicesPres[i], indicesDefaultPres[i] );
     }
@@ -367,7 +368,7 @@ TEST_F(DofManagerTest, TestIndices)
   }
 }
 
-TEST_F(DofManagerTest, TestPermutation)
+TEST_F( DofManagerTest, TestPermutation )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -410,7 +411,7 @@ TEST_F(DofManagerTest, TestPermutation)
 }
 
 // This last test is always true! It collects time
-TEST_F(DofManagerTest, TestWithTimes)
+TEST_F( DofManagerTest, TestWithTimes )
 {
   DomainPartition * const domain = problemManager.getDomainPartition();
 
@@ -540,11 +541,15 @@ TEST_F(DofManagerTest, TestWithTimes)
   globalIndex_array indices;
   dofManager.getIndices( indices, DofManager::Connectivity::Elem, 1, 0, 10, "displacement" );
   if( indices.size() > 0 )
+  {
     std::cout << mpiRank << " - " << "displacement" << " " << indices << std::endl;
+  }
 
   dofManager.getIndices( indices, DofManager::Connectivity::Face, 30, "pressure" );
   if( indices.size() > 0 )
+  {
     std::cout << mpiRank << " - " << "pressure" << " " << indices << std::endl;
+  }
 
   getElapsedTime( timeGetIndices );
 
@@ -610,18 +615,18 @@ TEST_F(DofManagerTest, TestWithTimes)
   SUCCEED();
 }
 
-int main( int argc, char** argv )
+int main( int argc, char ** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
   // Global call will not work because CXXUtils has already been initialized in problemManager
   //geosx::basicSetup( argc, argv );
-  setupMPI(argc, argv);
+  setupMPI( argc, argv );
   setupOpenMP();
   setupMKL();
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>( global_argc )];
+  global_argv = new char * [static_cast<unsigned int>( global_argc )];
   for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];

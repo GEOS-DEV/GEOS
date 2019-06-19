@@ -39,13 +39,14 @@
  * Base function class
  *
  **/
-Function::Function(TICPP::HierarchicalDataNode* hdn,
-                   const ProblemManagerT* const problemManager  ):
-  m_name(hdn->GetAttributeString("name")){}
+Function::Function( TICPP::HierarchicalDataNode * hdn,
+                    const ProblemManagerT * const problemManager ):
+  m_name( hdn->GetAttributeString( "name" ) ) {}
 
 
-Function::Function(const std::string& name ):
-  m_name(name){
+Function::Function( const std::string & name ):
+  m_name( name )
+{
   /** empty **/
 }
 
@@ -59,15 +60,17 @@ Function::Function(const std::string& name ):
  * @brief A function to represent a constant scalar
  *
  **/
-ConstantFunction::ConstantFunction(TICPP::HierarchicalDataNode* hdn,
-                                   const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+ConstantFunction::ConstantFunction( TICPP::HierarchicalDataNode * hdn,
+                                    const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML: <ConstantFunction name="half" f="0.5">
-void ConstantFunction::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  m_value = hdn->GetAttributeValue<realT>("f");
+void ConstantFunction::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  m_value = hdn->GetAttributeValue<realT>( "f" );
 }
 
 REGISTER_Function( ConstantFunction )
@@ -82,25 +85,30 @@ REGISTER_Function( ConstantFunction )
  * @brief A function to represent a polynomial
  *
  **/
-PolynomialFunction::PolynomialFunction(TICPP::HierarchicalDataNode* hdn,
-                                       const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+PolynomialFunction::PolynomialFunction( TICPP::HierarchicalDataNode * hdn,
+                                        const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML: <PolynomialFunction name="halfXSquared" coeffs="0.0 0.0 0.5">
-void PolynomialFunction::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  std::string coeffsStr = hdn->GetAttributeString("coeffs");
-  string_array csv = Tokenize(coeffsStr," ");
-  coeffs.resize(csv.size() );
+void PolynomialFunction::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  std::string coeffsStr = hdn->GetAttributeString( "coeffs" );
+  string_array csv = Tokenize( coeffsStr, " " );
+  coeffs.resize( csv.size() );
   for( size_t i =0 ; i < csv.size() ; ++i )
-    coeffs[i] = fromString<realT>(csv[i]);
+  {
+    coeffs[i] = fromString<realT>( csv[i] );
+  }
 }
 
-realT PolynomialFunction::operator() (const realT& x) {
+realT PolynomialFunction::operator()( const realT & x )
+{
   realT rv = coeffs.back();
 
-  for(int i = coeffs.size()-2 ; i >= 0 ; --i )
+  for( int i = coeffs.size()-2 ; i >= 0 ; --i )
   {
     rv *= x;
     rv += coeffs[i];
@@ -123,39 +131,42 @@ REGISTER_Function( PolynomialFunction )
  *
  *
  **/
-UniformRandomDistribution::UniformRandomDistribution(TICPP::HierarchicalDataNode* hdn,
-                                                     const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+UniformRandomDistribution::UniformRandomDistribution( TICPP::HierarchicalDataNode * hdn,
+                                                      const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML: <UniformRandomDistribution name="Default" min="0.0" max="1.0">
-void UniformRandomDistribution::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  min = hdn->GetAttributeOrDefault("min",0.0);
-  realT max = hdn->GetAttributeOrDefault("max",1.0);
+void UniformRandomDistribution::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  min = hdn->GetAttributeOrDefault( "min", 0.0 );
+  realT max = hdn->GetAttributeOrDefault( "max", 1.0 );
   df =  max-min;
-  uniqueAcrossProcessors= hdn->GetAttributeOrDefault<bool>("uniqueAcrossProcessors",true);
+  uniqueAcrossProcessors= hdn->GetAttributeOrDefault<bool>( "uniqueAcrossProcessors", true );
 
   rank =0;
-  #ifdef GEOSX_USE_MPI
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  #endif
+#ifdef GEOSX_USE_MPI
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+#endif
 }
 
-realT UniformRandomDistribution::operator() (const realT& x  ) {
-  unsigned int newSeed(0);
+realT UniformRandomDistribution::operator()( const realT & x )
+{
+  unsigned int newSeed( 0 );
   realT rv;
-  if(uniqueAcrossProcessors)
+  if( uniqueAcrossProcessors )
   {
     newSeed = rand(); // record a new seed to resync the random number
-                      // generators (or not if out of sync)
-    srand(rand() + rank); // "uncorrelated" random seed for next number
-    rv = min + df*rand()/(RAND_MAX+1.0);
-    srand(newSeed); // resync random seed
+    // generators (or not if out of sync)
+    srand( rand() + rank ); // "uncorrelated" random seed for next number
+    rv = min + df*rand()/( RAND_MAX+1.0 );
+    srand( newSeed ); // resync random seed
   }
   else
   {
-    rv = min + df*rand()/(RAND_MAX+1.0);
+    rv = min + df*rand()/( RAND_MAX+1.0 );
   }
 
   return rv;
@@ -172,10 +183,11 @@ REGISTER_Function( UniformRandomDistribution )
  * @author walsh24
  * @brief  Class to evaluate a function string using the warp function parser
  **/
-SymbolicFunction::SymbolicFunction(TICPP::HierarchicalDataNode* hdn,
-                                   const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+SymbolicFunction::SymbolicFunction( TICPP::HierarchicalDataNode * hdn,
+                                    const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /**
@@ -190,35 +202,36 @@ SymbolicFunction::SymbolicFunction(TICPP::HierarchicalDataNode* hdn,
  *                      constants="a 1, b 2, k 2.345"
  *                      variables="c d"/>
  **/
-void SymbolicFunction::ReadXML(TICPP::HierarchicalDataNode* hdn){
+void SymbolicFunction::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
 
-  std::string fStr = hdn->GetAttributeString("f");
-  std::string Vars = hdn->GetAttributeStringOrDefault("variables","");
-  std::string constStr = hdn->GetAttributeStringOrDefault("constants","");
+  std::string fStr = hdn->GetAttributeString( "f" );
+  std::string Vars = hdn->GetAttributeStringOrDefault( "variables", "" );
+  std::string constStr = hdn->GetAttributeStringOrDefault( "constants", "" );
 
-  if(constStr !="")
+  if( constStr !="" )
   {
-    std::vector<std::string> constants =  Tokenize(constStr,",");
-    for(std::vector<std::string>::size_type i =0 ; i < constants.size() ; ++i)
+    std::vector<std::string> constants =  Tokenize( constStr, "," );
+    for( std::vector<std::string>::size_type i =0 ; i < constants.size() ; ++i )
     {
-      Trim(constants[i]);
-      std::vector<std::string> keyValue = Split(constants[i]," ");
-      if(keyValue.size()>1)
+      Trim( constants[i] );
+      std::vector<std::string> keyValue = Split( constants[i], " " );
+      if( keyValue.size()>1 )
       {
-        std::string& constant = keyValue[0];
-        double value = fromString<double>(keyValue[1]);
-        m_fParser.AddConstant(constant,value);
+        std::string & constant = keyValue[0];
+        double value = fromString<double>( keyValue[1] );
+        m_fParser.AddConstant( constant, value );
       }
-      else if(keyValue.size()==1)
+      else if( keyValue.size()==1 )
       {
-        std::string& constant = keyValue[0];
-        GEOS_ERROR("SymbolicFunction: Undefined constant " + constant + ".");
+        std::string & constant = keyValue[0];
+        GEOS_ERROR( "SymbolicFunction: Undefined constant " + constant + "." );
       }
     }
   }
 
-  int err  = m_fParser.Parse(fStr.c_str(), Vars);
-  GEOS_ERROR_IF(err >= 0, "Error detected in SymbolicFunction expression: '"+ fStr+ "' at character " + toString(err+1) + "." );
+  int err  = m_fParser.Parse( fStr.c_str(), Vars );
+  GEOS_ERROR_IF( err >= 0, "Error detected in SymbolicFunction expression: '"+ fStr+ "' at character " + toString( err+1 ) + "." );
   m_fParser.Optimize();
 }
 
@@ -233,29 +246,31 @@ REGISTER_Function( SymbolicFunction )
 /**
  * @author walsh24
  */
-Lookup4DTable::Lookup4DTable(TICPP::HierarchicalDataNode* hdn,
-                             const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+Lookup4DTable::Lookup4DTable( TICPP::HierarchicalDataNode * hdn,
+                              const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML:
 ///  <Functions>
 ///    <Lookup4DTable name="porosityFunc" table="porosityTable"/>
 ///  </Functions>
-void Lookup4DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  std::string tableName = hdn->GetAttributeString("table");
+void Lookup4DTable::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  std::string tableName = hdn->GetAttributeString( "table" );
 
-  const TableManager& tableManager = TableManager::Instance();
-  const std::map<std::string,Table4D >& spatialTables = tableManager.Tables<4>();
-  if(isMember(tableName,spatialTables))
+  const TableManager & tableManager = TableManager::Instance();
+  const std::map<std::string, Table4D > & spatialTables = tableManager.Tables<4>();
+  if( isMember( tableName, spatialTables ) )
   {
-    std::map<std::string,Table4D >::const_iterator stItr = spatialTables.find(tableName);
-    m_tablePtr = &(stItr->second);
+    std::map<std::string, Table4D >::const_iterator stItr = spatialTables.find( tableName );
+    m_tablePtr = &( stItr->second );
   }
   else
   {
-    GEOS_ERROR("Lookup4DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR( "Lookup4DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -269,36 +284,38 @@ REGISTER_Function( Lookup4DTable )
 /**
  * @author walsh24
  */
-Lookup3DTable::Lookup3DTable(TICPP::HierarchicalDataNode* hdn,
-                             const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+Lookup3DTable::Lookup3DTable( TICPP::HierarchicalDataNode * hdn,
+                              const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML:
 ///  <Functions>
 ///    <Lookup3DTable name="porosityFunc" table="porosityTable"/>
 ///  </Functions>
-void Lookup3DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  std::string tableName = hdn->GetAttributeString("table");
+void Lookup3DTable::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  std::string tableName = hdn->GetAttributeString( "table" );
 
-  const TableManager& tableManager = TableManager::Instance();
-  const std::map<std::string,Table3D >& spatialTables = tableManager.Tables<3>();
-  if(isMember(tableName,spatialTables))
+  const TableManager & tableManager = TableManager::Instance();
+  const std::map<std::string, Table3D > & spatialTables = tableManager.Tables<3>();
+  if( isMember( tableName, spatialTables ) )
   {
-    std::map<std::string,Table3D >::const_iterator stItr = spatialTables.find(tableName);
-    m_tablePtr = &(stItr->second);
+    std::map<std::string, Table3D >::const_iterator stItr = spatialTables.find( tableName );
+    m_tablePtr = &( stItr->second );
   }
   else
   {
-    GEOS_ERROR("Lookup3DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR( "Lookup3DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
 //realT Lookup3DTable::operator() (const realT& x) {
 //const realT* xPtr = &x;
 //R1Tensor X(xPtr[0],xPtr[1],xPtr[2]);
-//	return m_tablePtr->lookup(&x);
+//  return m_tablePtr->lookup(&x);
 //}
 
 REGISTER_Function( Lookup3DTable )
@@ -311,29 +328,31 @@ REGISTER_Function( Lookup3DTable )
 /**
  * @author walsh24
  */
-Lookup2DTable::Lookup2DTable(TICPP::HierarchicalDataNode* hdn,
-                             const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+Lookup2DTable::Lookup2DTable( TICPP::HierarchicalDataNode * hdn,
+                              const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML:
 ///  <Functions>
 ///    <Lookup2DTable name="appertureFunc" table="appertureTable"/>
 ///  </Functions>
-void Lookup2DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  std::string tableName = hdn->GetAttributeString("table");
+void Lookup2DTable::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  std::string tableName = hdn->GetAttributeString( "table" );
 
-  const TableManager& tableManager = TableManager::Instance();
-  const std::map<std::string,Table2D >& spatialTables = tableManager.Tables<2>();
-  if(isMember(tableName,spatialTables))
+  const TableManager & tableManager = TableManager::Instance();
+  const std::map<std::string, Table2D > & spatialTables = tableManager.Tables<2>();
+  if( isMember( tableName, spatialTables ) )
   {
-    std::map<std::string,Table2D >::const_iterator stItr = spatialTables.find(tableName);
-    m_tablePtr = &(stItr->second);
+    std::map<std::string, Table2D >::const_iterator stItr = spatialTables.find( tableName );
+    m_tablePtr = &( stItr->second );
   }
   else
   {
-    GEOS_ERROR("Lookup2DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR( "Lookup2DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -354,29 +373,31 @@ REGISTER_Function( Lookup2DTable )
 /**
  * @author walsh24
  */
-Lookup1DTable::Lookup1DTable(TICPP::HierarchicalDataNode* hdn,
-                             const ProblemManagerT* const pm):
-  Function(hdn,pm){
-  ReadXML(hdn);
+Lookup1DTable::Lookup1DTable( TICPP::HierarchicalDataNode * hdn,
+                              const ProblemManagerT * const pm ):
+  Function( hdn, pm )
+{
+  ReadXML( hdn );
 }
 
 /// XML:
 ///  <Functions>
 ///    <Lookup1DTable name="signalLookup" table="signalTable"/>
 ///  </Functions>
-void Lookup1DTable::ReadXML(TICPP::HierarchicalDataNode* hdn){
-  std::string tableName = hdn->GetAttributeString("table");
+void Lookup1DTable::ReadXML( TICPP::HierarchicalDataNode * hdn )
+{
+  std::string tableName = hdn->GetAttributeString( "table" );
 
-  const TableManager& tableManager = TableManager::Instance();
-  const std::map<std::string,Table1D >& timeTables = tableManager.Tables<1>();
-  if(isMember(tableName,timeTables))
+  const TableManager & tableManager = TableManager::Instance();
+  const std::map<std::string, Table1D > & timeTables = tableManager.Tables<1>();
+  if( isMember( tableName, timeTables ) )
   {
-    std::map<std::string,Table1D >::const_iterator ttItr = timeTables.find(tableName);
-    m_tablePtr = &(ttItr->second);
+    std::map<std::string, Table1D >::const_iterator ttItr = timeTables.find( tableName );
+    m_tablePtr = &( ttItr->second );
   }
   else
   {
-    GEOS_ERROR("Lookup1DTable: Table '"+ tableName+ "' was not found." );
+    GEOS_ERROR( "Lookup1DTable: Table '"+ tableName+ "' was not found." );
   }
 }
 
@@ -391,12 +412,13 @@ REGISTER_Function( Lookup1DTable )
  *"1-sin(0.5+3.14159/6.0)")
  *
  */
-realT EvaluateStringFunction(const std::string& fString){
+realT EvaluateStringFunction( const std::string & fString )
+{
   FunctionParser fParser;
-  int err = fParser.Parse(fString.c_str(), "");
-  GEOS_ERROR_IF(err >= 0, "Error detected in EvaluateStringFunction expression: '"+ fString+ "' at character " + toString(err+1) + "." );
+  int err = fParser.Parse( fString.c_str(), "" );
+  GEOS_ERROR_IF( err >= 0, "Error detected in EvaluateStringFunction expression: '"+ fString+ "' at character " + toString( err+1 ) + "." );
   const double Dummy=0;
-  return fParser.Eval(&Dummy);
+  return fParser.Eval( &Dummy );
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -406,30 +428,32 @@ realT EvaluateStringFunction(const std::string& fString){
 //
 // Function factory
 
-typedef std::map<std::string, FunctionInitializer*> FunctionCatalogueType;
+typedef std::map<std::string, FunctionInitializer *> FunctionCatalogueType;
 
-FunctionCatalogueType & getFunctionCatalogue(){
+FunctionCatalogueType & getFunctionCatalogue()
+{
   static FunctionCatalogueType theCatalogue;
   return theCatalogue;
 }
 
-void getFunctionNames( std::vector<std::string>& nameList){
-  for(FunctionCatalogueType::const_iterator it = getFunctionCatalogue().begin() ;
-      it != getFunctionCatalogue().end() ; ++it)
+void getFunctionNames( std::vector<std::string> & nameList )
+{
+  for( FunctionCatalogueType::const_iterator it = getFunctionCatalogue().begin() ;
+       it != getFunctionCatalogue().end() ; ++it )
   {
-    nameList.push_back(it->first);
+    nameList.push_back( it->first );
   }
 }
 
-Function* newFunction(const std::string& FunctionName, TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm)
+Function * newFunction( const std::string & FunctionName, TICPP::HierarchicalDataNode * hdn, const ProblemManagerT * const pm )
 {
 
-  FunctionInitializer* FunctionInitializer = getFunctionCatalogue()[FunctionName];
-  Function *theNewFunction = NULL;
+  FunctionInitializer * FunctionInitializer = getFunctionCatalogue()[FunctionName];
+  Function * theNewFunction = NULL;
 
-  GEOS_ERROR_IF(!FunctionInitializer, "Could not create unrecognized Function"+ FunctionName);
+  GEOS_ERROR_IF( !FunctionInitializer, "Could not create unrecognized Function"+ FunctionName );
 
-  theNewFunction = FunctionInitializer->initializeFunction( hdn,pm );
+  theNewFunction = FunctionInitializer->initializeFunction( hdn, pm );
 
 
   return theNewFunction;

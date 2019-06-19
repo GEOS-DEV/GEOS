@@ -37,7 +37,7 @@ using R2SymTensor = R2SymTensorT<3>;
 
 
 template< int T_dim >
-inline void Decompose( const R2TensorT<T_dim>& F, R2TensorT<T_dim>& R, R2SymTensorT<T_dim>& U );
+inline void Decompose( const R2TensorT<T_dim> & F, R2TensorT<T_dim> & R, R2SymTensorT<T_dim> & U );
 
 
 //template< int T_dim >
@@ -45,13 +45,13 @@ inline void Decompose( const R2TensorT<T_dim>& F, R2TensorT<T_dim>& R, R2SymTens
 
 
 template< int T_dim >
-void Decompose( const R2TensorT<T_dim>& F, R2TensorT<T_dim>& R, R2SymTensorT<T_dim>& U )
+void Decompose( const R2TensorT<T_dim> & F, R2TensorT<T_dim> & R, R2SymTensorT<T_dim> & U )
 {
   R2SymTensorT<T_dim> Uinv;
-  U.AjiAjk(F);
+  U.AjiAjk( F );
   U.Sqrt();
-  Uinv.Inverse(U);
-  R.AijBjk(F,Uinv);
+  Uinv.Inverse( U );
+  R.AijBjk( F, Uinv );
 
 }
 

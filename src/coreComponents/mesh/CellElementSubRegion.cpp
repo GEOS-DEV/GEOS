@@ -29,19 +29,19 @@ using namespace constitutive;
 CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
-    setSizedFromParent(0);
+  RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0 )->
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
-                       &m_constitutiveMapView, 0);
+                       &m_constitutiveMapView, 0 );
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
+  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0 );
 
 
   RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
-                       &m_constitutivePointVolumeFraction, 0);
+                       &m_constitutivePointVolumeFraction, 0 );
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
+  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0 )->setSizedFromParent( 1 );
 
 }
 
@@ -52,42 +52,42 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 {
-  this->SetElementType(source->GetElementTypeString());
+  this->SetElementType( source->GetElementTypeString() );
   this->numNodesPerElement() = source->numNodesPerElement();
   this->numFacesPerElement() = source->numFacesPerElement();
-  this->resize(source->size());
+  this->resize( source->size() );
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::ViewWrapperBase * vw )->void
+  source->forExternalProperties( [&]( const dataRepository::ViewWrapperBase * vw )->void
   {
-    std::type_index typeIndex = std::type_index( vw->get_typeid());
+    std::type_index typeIndex = std::type_index( vw->get_typeid() );
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
                                     [&]( auto type, auto baseType ) -> void
     {
-      using fieldType = decltype(type);
+      using fieldType = decltype( type );
       const dataRepository::ViewWrapper<fieldType> & field = dataRepository::ViewWrapper< fieldType >::cast( *vw );
       const fieldType & fieldref = field.reference();
       this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
-    });
-  });
+    } );
+  } );
 }
 
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                                        string const & setName )
+                                                          string const & setName )
 {
-  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >(setName);
-  m_toFacesRelation.resize(0,2);
+  set<localIndex> const & targetSet = faceManager->sets()->getReference<set<localIndex> >( setName );
+  m_toFacesRelation.resize( 0, 2 );
   this->resize( targetSet.size() );
 
 
 }
 
 void CellElementSubRegion::MaterialPassThru( string const & matName,
-                                           string const & setName,
-                                           set<localIndex> & materialSet,
-                                           ManagedGroup * material )
+                                             string const & setName,
+                                             set<localIndex> & materialSet,
+                                             ManagedGroup * material )
 {}
 
 
@@ -96,10 +96,10 @@ void CellElementSubRegion::MaterialPassThru( string const & matName,
 
 void CellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
-  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
-//  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
+  ObjectManagerBase::ViewPackingExclusionList( exclusionList );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ) );
+  //  exclusionList.insert(this->getWrapperIndex(this->viewKeys.edgeListString));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ) );
 }
 
 
@@ -110,15 +110,15 @@ localIndex CellElementSubRegion::PackUpDownMapsSize( arrayView1d<localIndex cons
 }
 
 
-localIndex CellElementSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
-                                               arrayView1d<localIndex const> const & packList ) const
+localIndex CellElementSubRegion::PackUpDownMaps( buffer_unit_type *& buffer,
+                                                 arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
 }
 
 template< bool DOPACK >
-localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                      arrayView1d<localIndex const> const & packList ) const
+localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type *& buffer,
+                                                        arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -140,10 +140,10 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 }
 
 
-localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                 localIndex_array & packList,
-                                                 bool const overwriteUpMaps,
-                                                 bool const overwriteDownMaps )
+localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const *& buffer,
+                                                   localIndex_array & packList,
+                                                   bool const overwriteUpMaps,
+                                                   bool const overwriteDownMaps )
 {
   localIndex unPackedSize = 0;
 

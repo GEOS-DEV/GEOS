@@ -56,29 +56,33 @@ TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters )
 // ----------------------------
 // We switch between different solverTypes here
 
-void TrilinosSolver::solve( EpetraMatrix &mat,
-                            EpetraVector &sol,
-                            EpetraVector &rhs )
+void TrilinosSolver::solve( EpetraMatrix & mat,
+                            EpetraVector & sol,
+                            EpetraVector & rhs )
 {
   if( m_parameters.solverType == "direct" )
+  {
     solve_direct( mat, sol, rhs );
+  }
   else
+  {
     solve_krylov( mat, sol, rhs );
+  }
 }
 
 // ----------------------------
 // Direct solver
 // ----------------------------
 
-void TrilinosSolver::solve_direct( EpetraMatrix &mat,
-                                   EpetraVector &sol,
-                                   EpetraVector &rhs )
+void TrilinosSolver::solve_direct( EpetraMatrix & mat,
+                                   EpetraVector & sol,
+                                   EpetraVector & rhs )
 {
   // Create Epetra linear problem and instantiate solver.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer() );
 
   // Instantiate the Amesos solver.
-  Amesos_BaseSolver* solver;
+  Amesos_BaseSolver * solver;
   Amesos Factory;
 
   // Select KLU solver (only one available as of 9/20/2018)
@@ -104,12 +108,12 @@ void TrilinosSolver::solve_direct( EpetraMatrix &mat,
 // Iterative solver
 // ----------------------------
 
-void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
-                                   EpetraVector &sol,
-                                   EpetraVector &rhs )
+void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
+                                   EpetraVector & sol,
+                                   EpetraVector & rhs )
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer() );
 
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
@@ -129,7 +133,9 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
     solver.SetAztecOption( AZ_solver, AZ_cg );
   }
   else
+  {
     GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+  }
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
@@ -162,29 +168,33 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_overlap, 0 );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-    solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0 ? real64( m_parameters.ilu.fill ) : 1.0));
+    solver.SetAztecParam( AZ_ilut_fill, ( m_parameters.ilu.fill>0 ? real64( m_parameters.ilu.fill ) : 1.0 ) );
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
     Teuchos::ParameterList list;
 
     if( m_parameters.amg.isSymmetric )
+    {
       ML_Epetra::SetDefaults( "SA", list );
+    }
     else
+    {
       ML_Epetra::SetDefaults( "NSSA", list );
+    }
 
     std::map<string, string> translate; // maps GEOSX to ML syntax
 
-    translate.insert( std::make_pair( "V", "MGV" ));
-    translate.insert( std::make_pair( "W", "MGW" ));
-    translate.insert( std::make_pair( "direct", "Amesos-KLU" ));
-    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
-    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ));
-    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ));
-    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
-    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
-    translate.insert( std::make_pair( "ilu", "ILU" ));
-    translate.insert( std::make_pair( "ilut", "ILUT" ));
+    translate.insert( std::make_pair( "V", "MGV" ) );
+    translate.insert( std::make_pair( "W", "MGW" ) );
+    translate.insert( std::make_pair( "direct", "Amesos-KLU" ) );
+    translate.insert( std::make_pair( "jacobi", "Jacobi" ) );
+    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ) );
+    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ) );
+    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ) );
+    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ) );
+    translate.insert( std::make_pair( "ilu", "ILU" ) );
+    translate.insert( std::make_pair( "ilut", "ILUT" ) );
 
     list.set( "ML output", m_parameters.verbosity );
     list.set( "max levels", m_parameters.amg.maxLevels );
@@ -200,11 +210,13 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
     //list.set("null space: vectors",&rigid_body_modes[0]);
     //list.set("null space: dimension", n_rbm);
 
-    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
+    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ) );
     solver.SetPrecOperator( ml_preconditioner.get() );
   }
   else
+  {
     GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+  }
 
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );
@@ -212,16 +224,16 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
   // Control output
   switch( m_parameters.verbosity )
   {
-  case 1:
-    solver.SetAztecOption( AZ_output, AZ_summary );
-    solver.SetAztecOption( AZ_diagnostics, AZ_all );
-    break;
-  case 2:
-    solver.SetAztecOption( AZ_output, AZ_all );
-    solver.SetAztecOption( AZ_diagnostics, AZ_all );
-    break;
-  default:
-    solver.SetAztecOption( AZ_output, AZ_none );
+    case 1:
+      solver.SetAztecOption( AZ_output, AZ_summary );
+      solver.SetAztecOption( AZ_diagnostics, AZ_all );
+      break;
+    case 2:
+      solver.SetAztecOption( AZ_output, AZ_all );
+      solver.SetAztecOption( AZ_diagnostics, AZ_all );
+      break;
+    default:
+      solver.SetAztecOption( AZ_output, AZ_none );
   }
 
   // Actually solve

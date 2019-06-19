@@ -58,7 +58,7 @@ public:
    * @brief default constructor sets m_ref to nullptr
    */
   ReferenceWrapper():
-    m_ref(nullptr)
+    m_ref( nullptr )
   {}
 
 
@@ -67,7 +67,7 @@ public:
    * @param source object to wrap
    */
   ReferenceWrapper( T & source ) noexcept:
-    m_ref(&source)
+    m_ref( &source )
   {}
 
 
@@ -95,7 +95,7 @@ public:
     source.m_ref = nullptr;
   }
 
-  ReferenceWrapper& operator=( ReferenceWrapper const & source )
+  ReferenceWrapper & operator=( ReferenceWrapper const & source )
   {
     m_ref = source.m_ref;
     return *this;
@@ -112,7 +112,7 @@ public:
    */
   template< typename T_RHS, typename U=T >
   inline
-  typename std::enable_if< !std::is_const<U>::value,ReferenceWrapper &>::type
+  typename std::enable_if< !std::is_const<U>::value, ReferenceWrapper &>::type
   operator=( T_RHS const & rhs )
   {
     *m_ref = rhs;
@@ -126,7 +126,7 @@ public:
    */
   inline ReferenceWrapper & operator=( T && source )
   {
-    *m_ref = std::move(source);
+    *m_ref = std::move( source );
     return *this;
   }
 
@@ -150,7 +150,7 @@ public:
    * @brief accessor function to set the address that m_ref points to
    * @param source reference to object that wrapper will refer to
    */
-  inline void set( T & source)
+  inline void set( T & source )
   {
     m_ref = &source;
   }
@@ -159,7 +159,7 @@ public:
    * @brief accessor function to set the address that m_ref points to
    * @param source pointer to object that wrapper will refer to
    */
-  inline void set( T * source)
+  inline void set( T * source )
   {
     m_ref = source;
   }
@@ -207,7 +207,7 @@ public:
   inline decltype( std::declval< U >()[1] )
   operator[]( INDEX_TYPE const i )
   {
-    return (*m_ref)[i];
+    return ( *m_ref )[i];
   }
 
   /**
@@ -220,7 +220,7 @@ public:
   inline decltype( std::declval< U const >()[1] )
   operator[]( INDEX_TYPE const i ) const
   {
-    return (*m_ref)[i];
+    return ( *m_ref )[i];
   }
 
 
@@ -231,10 +231,10 @@ public:
    * @return the return type of T::operator()
    */
   template<typename... ARGS>
-  inline typename std::result_of<T&(ARGS&&...)>::type
-  operator()(ARGS&&... args)
+  inline typename std::result_of<T & ( ARGS && ... )>::type
+  operator()( ARGS && ... args )
   {
-    return m_ref->operator()( std::forward<ARGS>(args)...) ;
+    return m_ref->operator()( std::forward<ARGS>( args )... ) ;
   }
 
   /**
@@ -244,10 +244,10 @@ public:
    * @return the return type of T::operator() const
    */
   template<typename... ARGS>
-  inline typename std::result_of<T const&(ARGS&&...)>::type
-  operator()(ARGS&&... args) const
+  inline typename std::result_of<T const & ( ARGS && ... )>::type
+  operator()( ARGS && ... args ) const
   {
-    return m_ref->operator()( std::forward<ARGS>(args)...) ;
+    return m_ref->operator()( std::forward<ARGS>( args )... ) ;
   }
 
 

@@ -39,14 +39,20 @@ typedef std::pair<localIndex, globalIndex> indexPair;
  */
 struct pairComparison
 {
-  inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+  inline bool operator()( const indexPair & lhs, const indexPair & rhs ) const
   {
     if( lhs.first < rhs.first )
+    {
       return true;
+    }
     else if( lhs.first == rhs.first )
+    {
       return lhs.second < rhs.second;
+    }
     else
+    {
       return false;
+    }
   }
 };
 
@@ -55,7 +61,7 @@ struct pairComparison
  */
 struct pairSecondComparison
 {
-  inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
+  inline bool operator()( const indexPair & lhs, const indexPair & rhs ) const
   {
     return ( lhs.second < rhs.second );
   }
@@ -67,7 +73,7 @@ struct pairSecondComparison
 void createIndexArray_FaceVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
                                    const string & fieldName,
-                                   array1d<ElementRegion*> const & regionPtrs,
+                                   array1d<ElementRegion *> const & regionPtrs,
                                    localIndex const numComponents,
                                    localIndex & numLocalNodes,
                                    localIndex & numLocalRows,
@@ -81,7 +87,7 @@ void createIndexArray_FaceVersion( DomainPartition * const domain,
 void createIndexArray_ElemVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
                                    const string & fieldName,
-                                   array1d<ElementRegion*> const & regionPtrs,
+                                   array1d<ElementRegion *> const & regionPtrs,
                                    localIndex const numComponents,
                                    localIndex & numLocalNodes,
                                    localIndex & numLocalRows,
@@ -104,7 +110,7 @@ void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                              DomainPartition * domain,
                              MeshLevel * meshLevel,
                              const string & fieldName,
-                             array1d<ElementRegion*> const & regionPtrs,
+                             array1d<ElementRegion *> const & regionPtrs,
                              localIndex const numComponents );
 
 /**

@@ -358,8 +358,8 @@ void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressu
                                         arrayView2d<real64 const> const & composition,
                                         ARGS && ... args )
 {
-  localIndex const numElem = m_phaseDensity.size(0);
-  localIndex const numQ    = m_phaseDensity.size(1);
+  localIndex const numElem = m_phaseDensity.size( 0 );
+  localIndex const numQ    = m_phaseDensity.size( 1 );
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
@@ -393,9 +393,9 @@ void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressu
   arrayView2d<real64> const & dTotalDensity_dTemperature = m_dTotalDensity_dTemperature;
   arrayView3d<real64> const & dTotalDensity_dGlobalCompFraction = m_dTotalDensity_dGlobalCompFraction;
 
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA( localIndex const k )
   {
-    for (localIndex q = 0; q < numQ; ++q)
+    for( localIndex q = 0; q < numQ; ++q )
     {
       LEAFCLASS::Compute( NC, NP, useMass,
                           phaseNames,
@@ -425,7 +425,7 @@ void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressu
                           dTotalDensity_dGlobalCompFraction[k][q],
                           args... );
     }
-  });
+  } );
 }
 
 } //namespace constitutive

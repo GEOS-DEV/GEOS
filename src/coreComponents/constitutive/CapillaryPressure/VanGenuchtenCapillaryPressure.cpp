@@ -35,28 +35,28 @@ namespace constitutive
 
 
 VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const & name,
-                                                            ManagedGroup * const parent )
+                                                              ManagedGroup * const parent )
   : CapillaryPressureBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Minimum volume fraction value for each phase");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Minimum volume fraction value for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::phaseCapPressureExponentInvString,   &m_phaseCapPressureExponentInv,   false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Inverse of capillary power law exponent for each phase");
+  setApplyDefaultValue( 0.5 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Inverse of capillary power law exponent for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::phaseCapPressureMultiplierString,   &m_phaseCapPressureMultiplier,   false )->
-    setApplyDefaultValue(1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Entry pressure value for each phase");
+  setApplyDefaultValue( 1.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Entry pressure value for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::capPressureEpsilonString,   &m_capPressureEpsilon,   false )->
-    setApplyDefaultValue(1e-6)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1");
+  setApplyDefaultValue( 1e-6 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1" );
 }
 
 VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
@@ -74,7 +74,7 @@ VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
   newModel->m_phaseNames = this->m_phaseNames;
   newModel->m_phaseTypes = this->m_phaseTypes;
   newModel->m_phaseOrder = this->m_phaseOrder;
-  
+
   newModel->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
   newModel->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
   newModel->m_phaseCapPressureMultiplier  = this->m_phaseCapPressureMultiplier;
@@ -108,22 +108,22 @@ void VanGenuchtenCapillaryPressure::PostProcessInput()
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                    "VanGenuchtenCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 0 || m_phaseCapPressureExponentInv[ip] > 1.0)
-                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+    GEOS_ERROR_IF( ( m_phaseCapPressureExponentInv[ip] < 0 || m_phaseCapPressureExponentInv[ip] > 1.0 )
+                   && ( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE ),
                    "VanGenuchtenCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
-    GEOS_ERROR_IF(    (m_phaseCapPressureMultiplier[ip] < 0.0)
-                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+    GEOS_ERROR_IF( ( m_phaseCapPressureMultiplier[ip] < 0.0 )
+                   && ( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE ),
                    "VanGenuchtenCapillaryPressure: invalid entry pressure: " << m_phaseCapPressureMultiplier[ip] );
 
-    GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
-                   && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
+    GEOS_ERROR_IF( ( m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2 )
+                   && ( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE ),
                    "VanGenuchtenCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }

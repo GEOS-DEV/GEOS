@@ -77,10 +77,10 @@ public:
    * \param b system right hand side.
    * \param M preconditioner.
    */
-  void solve( ParallelMatrix const &A,
-              ParallelVector &x,
-              ParallelVector const &b,
-              ParallelMatrix const &M );
+  void solve( ParallelMatrix const & A,
+              ParallelVector & x,
+              ParallelVector const & b,
+              ParallelMatrix const & M );
 
   /**
    * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
@@ -91,10 +91,10 @@ public:
    * \param b system block right hand side.
    * \param M block preconditioner.
    */
-  void solve( BlockMatrixView<LAI> const &A,
-              BlockVectorView<LAI> &x,
-              BlockVectorView<LAI> const &b,
-              BlockMatrixView<LAI> const &M );
+  void solve( BlockMatrixView<LAI> const & A,
+              BlockVectorView<LAI> & x,
+              BlockVectorView<LAI> const & b,
+              BlockMatrixView<LAI> const & M );
 
 private:
 
@@ -122,10 +122,10 @@ CGsolver<LAI>::CGsolver()
 // Monolithic CG solver
 // ----------------------------
 template< typename LAI >
-void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
-                           typename LAI::ParallelVector &x,
-                           typename LAI::ParallelVector const &b,
-                           typename LAI::ParallelMatrix const &M )
+void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const & A,
+                           typename LAI::ParallelVector & x,
+                           typename LAI::ParallelVector const & b,
+                           typename LAI::ParallelMatrix const & M )
 
 {
 
@@ -212,7 +212,9 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
   // TODO verbosity management
   if( rank == 0 )
+  {
     std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
+  }
   return;
 
 }
@@ -221,10 +223,10 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 // Block CG solver
 // ----------------------------
 template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
-                           BlockVectorView<LAI> &x,
-                           BlockVectorView<LAI> const &b,
-                           BlockMatrixView<LAI> const &M )
+void CGsolver<LAI>::solve( BlockMatrixView<LAI> const & A,
+                           BlockVectorView<LAI> & x,
+                           BlockVectorView<LAI> const & b,
+                           BlockMatrixView<LAI> const & M )
 
 {
   GEOS_ERROR( "Not implemented" );
@@ -318,7 +320,9 @@ void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
 
   // verbose output (TODO verbosity manager?)
   if( rank == 1 )
+  {
     std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
+  }
   return;
 
 #endif

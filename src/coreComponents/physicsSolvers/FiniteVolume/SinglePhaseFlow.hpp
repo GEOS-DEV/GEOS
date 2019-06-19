@@ -52,7 +52,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  SinglePhaseFlow( const std::string& name,
+  SinglePhaseFlow( const std::string & name,
                    ManagedGroup * const parent );
 
 
@@ -82,12 +82,12 @@ public:
    */
   static string CatalogName() { return "SinglePhaseFlow"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
@@ -98,8 +98,8 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition * const domain,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
@@ -115,8 +115,8 @@ public:
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                         DomainPartition * const domain ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -223,8 +223,8 @@ protected:
 
 private:
 
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system

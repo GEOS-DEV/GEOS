@@ -38,7 +38,7 @@ ConstitutiveManager::ConstitutiveManager( string const & name,
                                           ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 ConstitutiveManager::~ConstitutiveManager()
@@ -55,7 +55,7 @@ ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string
 void ConstitutiveManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  for (auto& catalogIter: ConstitutiveBase::GetCatalog())
+  for( auto & catalogIter: ConstitutiveBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

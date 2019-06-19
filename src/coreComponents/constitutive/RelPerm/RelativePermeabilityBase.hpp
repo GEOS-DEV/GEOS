@@ -152,16 +152,16 @@ protected:
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
 void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                                  ARGS&& ... args)
+                                                  ARGS && ... args )
 {
-  localIndex const numElem = m_phaseRelPerm.size(0);
-  localIndex const numQ = m_phaseRelPerm.size(1);
+  localIndex const numElem = m_phaseRelPerm.size( 0 );
+  localIndex const numQ = m_phaseRelPerm.size( 1 );
   localIndex const NP = numFluidPhases();
 
   arrayView3d<real64> const & phaseRelPerm = m_phaseRelPerm;
   arrayView4d<real64> const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
 
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA( localIndex const k )
   {
     for( localIndex q=0 ; q<numQ ; ++q )
     {
@@ -171,7 +171,7 @@ void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d<real64 const> cons
                           dPhaseRelPerm_dPhaseVolFrac[k][q],
                           args... );
     }
-  });
+  } );
 }
 
 } // namespace constitutive

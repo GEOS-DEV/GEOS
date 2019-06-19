@@ -37,19 +37,19 @@ using namespace geosx::constitutive;
 namespace
 {
 int global_argc;
-char** global_argv;
+char ** global_argv;
 }
 
 template<typename T, int NDIM>
-using Array = LvArray::Array<T,NDIM,localIndex>;
+using Array = LvArray::Array<T, NDIM, localIndex>;
 
 // helper struct to represent a var and its derivatives (always with array views, not pointers)
 template<int DIM>
 struct TestCompositionalVarContainer
 {
-  array_slice<real64,DIM>   value; // variable value
-  array_slice<real64,DIM>   dPres; // derivative w.r.t. pressure
-  array_slice<real64,DIM+1> dComp; // derivative w.r.t. composition
+  array_slice<real64, DIM>   value; // variable value
+  array_slice<real64, DIM>   dPres; // derivative w.r.t. pressure
+  array_slice<real64, DIM+1> dComp; // derivative w.r.t. composition
 };
 
 template<typename T>
@@ -57,19 +57,19 @@ template<typename T>
                                                      T v1, T v2, T relTol )
 {
   T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs(v1), std::abs(v2) );
-  
-  if (v2 < 1E-60 && delta < 1E-25)
+  T const value = std::max( std::abs( v1 ), std::abs( v2 ) );
+
+  if( v2 < 1E-60 && delta < 1E-25 )
   {
     return ::testing::AssertionSuccess();
   }
 
-  if (delta > relTol * value)
+  if( delta > relTol * value )
   {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
-                                         << " relative error: " << delta / value
-                                         << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
+    return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
+           << " relative error: " << delta / value
+           << " (" << v1 << " vs " << v2 << "),"
+           << " exceeds " << relTol << std::endl;
   }
   return ::testing::AssertionSuccess();
 }
@@ -83,14 +83,14 @@ void checkRelativeError( T v1, T v2, T relTol )
 template<typename T>
 void checkRelativeError( T v1, T v2, T relTol, string const & name )
 {
-  SCOPED_TRACE(name);
+  SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
 }
 
 template<typename T>
 void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, string const & name, string const & var )
 {
-  T numDeriv = (valueEps - value) / eps;
+  T numDeriv = ( valueEps - value ) / eps;
   checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
 }
 
@@ -104,9 +104,9 @@ checkDerivative( arraySlice1d<T> const & valueEps,
                  string_array const & labels,
                  Args ... label_lists )
 {
-  localIndex const size = labels.size(0);
+  localIndex const size = labels.size( 0 );
 
-  for (localIndex i = 0; i < size; ++i)
+  for( localIndex i = 0; i < size; ++i )
   {
     checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
                      name + "[" + labels[i] + "]", var, label_lists... );
@@ -114,18 +114,18 @@ checkDerivative( arraySlice1d<T> const & valueEps,
 }
 
 template<typename T, int DIM, typename ... Args>
-typename std::enable_if<(DIM > 1), void>::type
-checkDerivative( array_slice<T,DIM> const & valueEps,
-                 array_slice<T,DIM> const & value,
-                 array_slice<T,DIM> const & deriv,
+typename std::enable_if<( DIM > 1 ), void>::type
+checkDerivative( array_slice<T, DIM> const & valueEps,
+                 array_slice<T, DIM> const & value,
+                 array_slice<T, DIM> const & deriv,
                  real64 eps, real64 relTol,
                  string const & name, string const & var,
                  string_array const & labels,
                  Args ... label_lists )
 {
-  const auto size = labels.size(0);
+  const auto size = labels.size( 0 );
 
-  for (localIndex i = 0; i < size; ++i)
+  for( localIndex i = 0; i < size; ++i )
   {
     checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
                      name + "[" + labels[i] + "]", var, label_lists... );
@@ -136,32 +136,38 @@ checkDerivative( array_slice<T,DIM> const & valueEps,
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
 array1d<real64> invertLayout( arraySlice1d<real64 const> const & input, localIndex N )
 {
-  Array<real64,1> output( N );
-  for (int i = 0; i < N; ++i)
+  Array<real64, 1> output( N );
+  for( int i = 0; i < N; ++i )
+  {
     output[i] = input[i];
+  }
 
   return output;
 }
 
 array2d<real64> invertLayout( arraySlice2d<real64 const> const & input, localIndex N1, localIndex N2 )
 {
-  Array<real64,2> output( N2, N1 );
+  Array<real64, 2> output( N2, N1 );
 
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
+  for( int i = 0; i < N1; ++i )
+    for( int j = 0; j < N2; ++j )
+    {
       output[j][i] = input[i][j];
+    }
 
   return output;
 }
 
 array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localIndex N1, localIndex N2, localIndex N3 )
 {
-  Array<real64,3> output( N3, N1, N2 );
+  Array<real64, 3> output( N3, N1, N2 );
 
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
-      for (int k = 0; k < N3; ++k)
+  for( int i = 0; i < N1; ++i )
+    for( int j = 0; j < N2; ++j )
+      for( int k = 0; k < N3; ++k )
+      {
         output[k][i][j] = input[i][j][k];
+      }
 
   return output;
 }
@@ -170,26 +176,26 @@ void compareMatrixRow( int rowNumber, double relTol,
                        int numRowEntries1, int * indices1, double * values1,
                        int numRowEntries2, int * indices2, double * values2 )
 {
-  SCOPED_TRACE("Row " + std::to_string(rowNumber));
+  SCOPED_TRACE( "Row " + std::to_string( rowNumber ) );
 
   EXPECT_EQ( numRowEntries1, numRowEntries2 );
 
-  for (int j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2)
+  for( int j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2 )
   {
-    while (j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2])
+    while( j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2] )
     {
-      while (j1 < numRowEntries1 && indices1[j1] < indices2[j2])
+      while( j1 < numRowEntries1 && indices1[j1] < indices2[j2] )
       {
         ADD_FAILURE() << "column " << indices1[j1] << ") in matrix 1 does not have a match";
       }
-      while (j2 < numRowEntries2 && indices2[j2] < indices1[j1])
+      while( j2 < numRowEntries2 && indices2[j2] < indices1[j1] )
       {
         ADD_FAILURE() << "column " << indices2[j2] << ") in matrix 2 does not have a match";
       }
     }
-    if (j1 < numRowEntries1 && j2 < numRowEntries2)
+    if( j1 < numRowEntries1 && j2 < numRowEntries2 )
     {
-      SCOPED_TRACE("Column " + std::to_string(indices1[j1]) );
+      SCOPED_TRACE( "Column " + std::to_string( indices1[j1] ) );
 
       checkRelativeError( values1[j1], values2[j1], relTol );
     }
@@ -203,7 +209,7 @@ void compareMatrices( Epetra_FECrsMatrix const * matrix1,
   int numLocalRows1 = matrix1->NumMyRows();
   int numLocalRows2 = matrix2->NumMyRows();
 
-  ASSERT_EQ(numLocalRows1, numLocalRows2);
+  ASSERT_EQ( numLocalRows1, numLocalRows2 );
 
   int nnz1, nnz2;
   int * indices1 = nullptr;
@@ -212,7 +218,7 @@ void compareMatrices( Epetra_FECrsMatrix const * matrix1,
   double * row2 = nullptr;
 
   // check the accuracy across local rows
-  for (int i = 0; i < numLocalRows1; ++i)
+  for( int i = 0; i < numLocalRows1; ++i )
   {
     matrix1->ExtractMyRowView( i, nnz1, row1, indices1 );
     matrix2->ExtractMyRowView( i, nnz2, row2, indices2 );
@@ -233,15 +239,15 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   localIndex const NDOF = solver->numDofPerCell();
 
   Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
-  Epetra_FEVector    * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-  Epetra_Map const   * const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+  Epetra_FEVector   *  const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  Epetra_Map const  *  const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
 
   // get a view into local residual vector
   int localSizeInt;
-  double* localResidual = nullptr;
-  residual->ExtractView(&localResidual, &localSizeInt);
+  double * localResidual = nullptr;
+  residual->ExtractView( &localResidual, &localSizeInt );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>( 0 )->getMeshLevel( 0 );
 
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
@@ -251,15 +257,15 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // copy the analytical residual
   auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
   double * localResidualOrig = nullptr;
-  residualOrig->ExtractView(&localResidualOrig, &localSizeInt);
+  residualOrig->ExtractView( &localResidualOrig, &localSizeInt );
 
   // create the numerical jacobian
   auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
   jacobianFD->Scale( 0.0 );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
-                                         ElementSubRegionBase * const subRegion )
+  solver->applyToSubRegions( mesh, [&]( localIndex const er, localIndex const esr,
+                                        ElementRegion * const region,
+                                        ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =
       subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -279,77 +285,79 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
     arrayView2d<real64> & dCompDens =
       subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
     {
-      if (elemGhostRank[ei] >= 0)
+      if( elemGhostRank[ei] >= 0 )
+      {
         continue;
+      }
 
       globalIndex offset = dofNumber[ei] * NDOF;
 
       real64 totalDensity = 0.0;
-      for (localIndex ic = 0; ic < NC; ++ic)
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         totalDensity += compDens[ei][ic];
       }
 
       {
-        solver->ResetStateToBeginningOfStep(domain);
+        solver->ResetStateToBeginningOfStep( domain );
 
-        real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres[ei] = dP;
 
-        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+        solver->applyToSubRegions( mesh, [&]( ElementSubRegionBase * subRegion2 )
         {
           solver->UpdateState( subRegion2 );
-        });
+        } );
 
         residual->Scale( 0.0 );
         assembleFunction( solver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>(offset);
+        long long const dofIndex = integer_conversion<long long>( offset );
 
-        for (int lid = 0; lid < localSizeInt; ++lid)
+        for( int lid = 0; lid < localSizeInt; ++lid )
         {
-          real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
-          if (std::fabs(dRdP) > 0.0)
+          real64 dRdP = ( localResidual[lid] - localResidualOrig[lid] ) / dP;
+          if( std::fabs( dRdP ) > 0.0 )
           {
-            long long gid = rowMap->GID64(lid);
-            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+            long long gid = rowMap->GID64( lid );
+            jacobianFD->ReplaceGlobalValues( gid, 1, &dRdP, &dofIndex );
           }
         }
       }
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
-        solver->ResetStateToBeginningOfStep(domain);
+        solver->ResetStateToBeginningOfStep( domain );
 
         real64 const dRho = perturbParameter * totalDensity;
         dCompDens[ei][jc] = dRho;
 
-        solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+        solver->applyToSubRegions( mesh, [&]( ElementSubRegionBase * subRegion2 )
         {
           solver->UpdateState( subRegion2 );
-        });
+        } );
 
         residual->Scale( 0.0 );
         assembleFunction( solver, domain, jacobian, residual );
 
-        long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
+        long long const dofIndex = integer_conversion<long long>( offset + jc + 1 );
 
-        for (int lid = 0; lid < localSizeInt; ++lid)
+        for( int lid = 0; lid < localSizeInt; ++lid )
         {
-          real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
-          if (std::fabs(dRdRho) > 0.0)
+          real64 dRdRho = ( localResidual[lid] - localResidualOrig[lid] ) / dRho;
+          if( std::fabs( dRdRho ) > 0.0 )
           {
-            long long gid = rowMap->GID64(lid);
-            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+            long long gid = rowMap->GID64( lid );
+            jacobianFD->ReplaceGlobalValues( gid, 1, &dRdRho, &dofIndex );
           }
         }
       }
     }
   } );
 
-  jacobianFD->GlobalAssemble(true);
+  jacobianFD->GlobalAssemble( true );
 
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
@@ -359,10 +367,10 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   compareMatrices( jacobian, jacobianFD.get(), relTol );
 
 #if 0
-  if (::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure())
+  if( ::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure() )
   {
-    jacobian->Print(std::cout);
-    jacobianFD->Print(std::cout);
+    jacobian->Print( std::cout );
+    jacobianFD->Print( std::cout );
   }
 #endif
 }
@@ -374,7 +382,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
 {
   localIndex const NC = solver->numFluidComponents();
 
-  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
@@ -382,9 +390,9 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
-                                         ElementSubRegionBase * const subRegion )
+  solver->applyToSubRegions( mesh, [&]( localIndex const er, localIndex const esr,
+                                        ElementRegion * const region,
+                                        ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
 
@@ -398,31 +406,32 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
       subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString );
 
     arrayView3d<real64> & dCompFrac_dCompDens =
-      subRegion-> template getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+      subRegion-> template getReference<array3d<real64>>
+    ( CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
     solver->ResetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
     array2d<real64> compFracOrig( subRegion->size(), NC );
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
     {
-      for (localIndex ic = 0; ic < NC; ++ic)
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         compFracOrig[ei][ic] = compFrac[ei][ic];
       }
     }
 
     // update component density and check derivatives
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
       solver->ResetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        real64 const dRho = perturbParameter * (compDens[ei][jc] + perturbParameter);
+        real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
         dCompDens[ei][jc] = dRho;
       }
 
@@ -430,9 +439,9 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
       solver->UpdateComponentFraction( subRegion );
 
       // check values in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        SCOPED_TRACE( "Element " + std::to_string(ei) );
+        SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
         auto dZ_dRho = invertLayout( dCompFrac_dCompDens[ei], NC, NC );
         string var = "compDens[" + components[jc] + "]";
@@ -453,7 +462,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   localIndex const NC = solver->numFluidComponents();
   localIndex const NP = solver->numFluidPhases();
 
-  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
@@ -462,9 +471,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
-                                         ElementSubRegionBase * const subRegion )
+  solver->applyToSubRegions( mesh, [&]( localIndex const er, localIndex const esr,
+                                        ElementRegion * const region,
+                                        ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
 
@@ -487,16 +496,17 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
       subRegion-> template getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
     arrayView3d<real64> & dPhaseVolFrac_dCompDens =
-      subRegion-> template getReference<array3d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+      subRegion-> template getReference<array3d<real64>>
+    ( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
     // reset the solver state to zero out variable updates
     solver->ResetStateToBeginningOfStep( domain );
 
     // make a copy of unperturbed values of component fractions
     array2d<real64> phaseVolFracOrig( subRegion->size(), NP );
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
     {
-      for (localIndex ip = 0; ip < NP; ++ip)
+      for( localIndex ip = 0; ip < NP; ++ip )
       {
         phaseVolFracOrig[ei][ip] = phaseVolFrac[ei][ip];
       }
@@ -505,9 +515,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
     // update pressure and check derivatives
     {
       // perturb pressure in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres[ei] = dP;
       }
 
@@ -515,9 +525,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
       solver->UpdateState( subRegion );
 
       // check values in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        SCOPED_TRACE( "Element " + std::to_string(ei) );
+        SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
         checkDerivative( phaseVolFrac[ei], phaseVolFracOrig[ei], dPhaseVolFrac_dPres[ei], dPres[ei], relTol,
                          "phaseVolFrac", "Pres", phases );
@@ -525,15 +535,15 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
     }
 
     // update component density and check derivatives
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
       solver->ResetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        real64 const dRho = perturbParameter * (compDens[ei][jc] + perturbParameter);
+        real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
         dCompDens[ei][jc] = dRho;
       }
 
@@ -541,9 +551,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
       solver->UpdateState( subRegion );
 
       // check values in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        SCOPED_TRACE( "Element " + std::to_string(ei) );
+        SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
         auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei], NP, NC );
         string var = "compDens[" + components[jc] + "]";
@@ -563,7 +573,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   localIndex const NC = solver->numFluidComponents();
   localIndex const NP = solver->numFluidPhases();
 
-  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
   MultiFluidBase * const fluid = constitutiveManager->GetGroup<MultiFluidBase>( solver->fluidIndex() );
@@ -572,9 +582,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
-                                         ElementSubRegionBase * const subRegion )
+  solver->applyToSubRegions( mesh, [&]( localIndex const er, localIndex const esr,
+                                        ElementRegion * const region,
+                                        ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
 
@@ -604,9 +614,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
 
     // make a copy of unperturbed values of component fractions
     array2d<real64> phaseVolFracOrig( subRegion->size(), NP );
-    for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
     {
-      for (localIndex ip = 0; ip < NP; ++ip)
+      for( localIndex ip = 0; ip < NP; ++ip )
       {
         phaseVolFracOrig[ei][ip] = phaseMob[ei][ip];
       }
@@ -615,9 +625,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
     // update pressure and check derivatives
     {
       // perturb pressure in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres[ei] = dP;
       }
 
@@ -625,9 +635,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
       solver->UpdateState( subRegion );
 
       // check values in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        SCOPED_TRACE( "Element " + std::to_string(ei) );
+        SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
         checkDerivative( phaseMob[ei], phaseVolFracOrig[ei], dPhaseMob_dPres[ei], dPres[ei], relTol,
                          "phaseVolFrac", "Pres", phases );
@@ -635,15 +645,15 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
     }
 
     // update component density and check derivatives
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
       solver->ResetStateToBeginningOfStep( domain );
 
       // perturb a single component density in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        real64 const dRho = perturbParameter * (compDens[ei][jc] + perturbParameter);
+        real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
         dCompDens[ei][jc] = dRho;
       }
 
@@ -651,9 +661,9 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
       solver->UpdateState( subRegion );
 
       // check values in each cell
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+      for( localIndex ei = 0; ei < subRegion->size(); ++ei )
       {
-        SCOPED_TRACE( "Element " + std::to_string(ei) );
+        SCOPED_TRACE( "Element " + std::to_string( ei ) );
 
         auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei], NP, NC );
         string var = "compDens[" + components[jc] + "]";
@@ -671,17 +681,18 @@ protected:
 
   static void SetUpTestCase()
   {
-    problemManager = new ProblemManager("Problem", nullptr);
+    problemManager = new ProblemManager( "Problem", nullptr );
     char buf[2][1024];
 
     char const * workdir  = global_argv[1];
     char const * filename = "testCompMultiphaseFlow.xml";
 
-    strcpy(buf[0], "-i");
-    sprintf(buf[1], "%s/%s", workdir, filename);
+    strcpy( buf[0], "-i" );
+    sprintf( buf[1], "%s/%s", workdir, filename );
 
     constexpr int argc = 3;
-    char * argv[argc] = {
+    char * argv[argc] =
+    {
       global_argv[0],
       buf[0],
       buf[1]
@@ -710,9 +721,9 @@ protected:
 ProblemManager * CompositionalMultiphaseFlowTest::problemManager = nullptr;
 CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
 
-TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)
+TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   real64 const tol = 1e-4;
 
   DomainPartition * domain = problemManager->getDomainPartition();
@@ -720,27 +731,27 @@ TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition)
   testCompositionNumericalDerivatives( solver, domain, eps, tol );
 }
 
-TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFraction)
+TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFraction )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   real64 const tol = 5e-2; // 5% error margin
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
-  testPhaseVolumeFractionNumericalDerivatives(solver, domain, eps, tol);
+  testPhaseVolumeFractionNumericalDerivatives( solver, domain, eps, tol );
 }
 
-TEST_F(CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility)
+TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   real64 const tol = 5e-2; // 5% error margin
 
   DomainPartition * domain = problemManager->getDomainPartition();
 
-  testPhaseMobilityNumericalDerivatives(solver, domain, eps, tol);
+  testPhaseMobilityNumericalDerivatives( solver, domain, eps, tol );
 }
 
-TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
+TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
 {
   //real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   //real64 const tol = 1e-1; // 10% error margin
@@ -748,76 +759,76 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager->getDomainPartition();
+  DomainPartition  *  domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );
 
-//  testNumericalJacobian( solver, domain, system, eps, tol,
-//                         [&] ( CompositionalMultiphaseFlow * targetSolver,
-//                               DomainPartition * targetDomain,
-//                               Epetra_FECrsMatrix * const targetJacobian,
-//                               Epetra_FEVector * const targetResidual ) -> void
-//                         {
-//                           targetSolver->AssembleAccumulationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
-//                         });
+  //  testNumericalJacobian( solver, domain, system, eps, tol,
+  //                         [&] ( CompositionalMultiphaseFlow * targetSolver,
+  //                               DomainPartition * targetDomain,
+  //                               Epetra_FECrsMatrix * const targetJacobian,
+  //                               Epetra_FEVector * const targetResidual ) -> void
+  //                         {
+  //                           targetSolver->AssembleAccumulationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+  //                         });
 }
 
-TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
+TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   real64 const tol = 1e-1; // 10% error margin
 
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager->getDomainPartition();
+  DomainPartition  *  domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );
 
   testNumericalJacobian( solver, domain, system, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * const targetSolver,
-                               DomainPartition * const targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
-                         {
-                           targetSolver->AssembleFluxTerms( targetDomain, targetJacobian, targetResidual, time, dt );
-                         });
+                         [&]( CompositionalMultiphaseFlow * const targetSolver,
+                              DomainPartition * const targetDomain,
+                              Epetra_FECrsMatrix * const targetJacobian,
+                              Epetra_FEVector * const targetResidual ) -> void
+  {
+    targetSolver->AssembleFluxTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+  } );
 }
 
 
-TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
+TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits<real64>::epsilon() );
   real64 const tol = 1e-1; // 10% error margin
 
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager->getDomainPartition();
+  DomainPartition  *  domain = problemManager->getDomainPartition();
   EpetraBlockSystem * system = solver->getLinearSystemRepository();
 
   solver->ImplicitStepSetup( time, dt, domain, system );
 
   testNumericalJacobian( solver, domain, system, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * targetSolver,
-                               DomainPartition * targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
-                         {
-                           targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetJacobian, targetResidual, time, dt );
-                         });
+                         [&]( CompositionalMultiphaseFlow * targetSolver,
+                              DomainPartition * targetDomain,
+                              Epetra_FECrsMatrix * const targetJacobian,
+                              Epetra_FEVector * const targetResidual ) -> void
+  {
+    targetSolver->AssembleVolumeBalanceTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+  } );
 }
 
-int main( int argc, char** argv )
+int main( int argc, char ** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
   geosx::basicSetup( argc, argv );
 
   global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>( global_argc )];
+  global_argv = new char * [static_cast<unsigned int>( global_argc )];
   for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
@@ -826,7 +837,7 @@ int main( int argc, char** argv )
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-  
+
   geosx::basicCleanup();
 
   return result;

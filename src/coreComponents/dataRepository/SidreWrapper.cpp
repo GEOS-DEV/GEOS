@@ -45,10 +45,10 @@ SidreWrapper::~SidreWrapper()
 {}
 
 #ifdef GEOSX_USE_ATK
-DataStore& SidreWrapper::dataStore()
+DataStore & SidreWrapper::dataStore()
 {
-//  static DataStore * datastore = new DataStore();
-//  return *datastore;
+  //  static DataStore * datastore = new DataStore();
+  //  return *datastore;
   static DataStore datastore;
   return datastore;
 }
@@ -56,35 +56,35 @@ DataStore& SidreWrapper::dataStore()
 
 
 /* Write out a restart file. */
-void SidreWrapper::writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm) 
+void SidreWrapper::writeTree( int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
-  axom::sidre::IOManager ioManager(comm);
-  ioManager.write(SidreWrapper::dataStore().getRoot(), num_files, path, protocol);
+  axom::sidre::IOManager ioManager( comm );
+  ioManager.write( SidreWrapper::dataStore().getRoot(), num_files, path, protocol );
 #endif
 }
 
 
-void SidreWrapper::reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm) 
+void SidreWrapper::reconstructTree( const std::string & root_path, const std::string & protocol, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ) )
   {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+    SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
   }
-  
-  axom::sidre::IOManager ioManager(comm);
-  ioManager.read(SidreWrapper::dataStore().getRoot(), root_path, protocol);
+
+  axom::sidre::IOManager ioManager( comm );
+  ioManager.read( SidreWrapper::dataStore().getRoot(), root_path, protocol );
 #endif
 }
 
 
 /* Load sidre external data. */
-void SidreWrapper::loadExternalData(const std::string & root_path, MPI_Comm comm)
+void SidreWrapper::loadExternalData( const std::string & root_path, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
-  axom::sidre::IOManager ioManager(comm);
-  ioManager.loadExternalData(SidreWrapper::dataStore().getRoot(), root_path);
+  axom::sidre::IOManager ioManager( comm );
+  ioManager.loadExternalData( SidreWrapper::dataStore().getRoot(), root_path );
 #endif
 }
 

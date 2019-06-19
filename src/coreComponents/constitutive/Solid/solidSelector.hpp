@@ -23,7 +23,7 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
   bool rval = true;
   if( dynamic_cast<LinearElasticIsotropic * >( constitutiveRelation ) )
   {
-    lambda( static_cast<LinearElasticIsotropic & >( *constitutiveRelation) );
+    lambda( static_cast<LinearElasticIsotropic & >( *constitutiveRelation ) );
   }
   else
   {

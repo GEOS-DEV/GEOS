@@ -39,20 +39,20 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
   : RelativePermeabilityBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Minimum volume fraction value for each phase");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Minimum volume fraction value for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
-    setApplyDefaultValue(1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("MinimumRel perm power law exponent for each phase");
+  setApplyDefaultValue( 1.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "MinimumRel perm power law exponent for each phase" );
 
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum rel perm value for each phase");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Maximum rel perm value for each phase" );
 
 }
 
@@ -104,7 +104,7 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_satScale = 1.0;
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
@@ -124,7 +124,7 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
 void BrooksCoreyRelativePermeability::BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction )
 {
 
-  arrayView1d<real64 const> const &  phaseMinVolumeFraction = m_phaseMinVolumeFraction;
+  arrayView1d<real64 const> const  & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
   arrayView1d<real64 const> const & phaseRelPermExponent = m_phaseRelPermExponent;
   arrayView1d<real64 const> const & phaseRelPermMaxValue = m_phaseRelPermMaxValue;
 

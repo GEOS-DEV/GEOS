@@ -33,16 +33,16 @@
 //}
 #include <execinfo.h>
 
-void my_terminate(void);
+void my_terminate( void );
 namespace
 {
 // invoke set_terminate as part of global constant initialization
-static const bool SET_TERMINATE = std::set_terminate(my_terminate);
+static const bool SET_TERMINATE = std::set_terminate( my_terminate );
 }
 void my_terminate()
 {
 
-  cxx_utilities::handler(1,1,1);
+  cxx_utilities::handler( 1, 1, 1 );
 
   static bool tried_throw = false;
 
@@ -55,7 +55,7 @@ void my_terminate()
       throw;
     }
   }
-  catch( const std::exception &e )
+  catch( const std::exception & e )
   {
     std::cerr << __FUNCTION__ << " caught unhandled exception. what(): "
               << e.what()
@@ -84,24 +84,26 @@ void my_terminate()
 
   free( messages );
 
-//  abort();
+  //  abort();
 }
 
 [[ noreturn ]] void throw_exception()
 {
   // throw an unhandled runtime error
-  throw std::runtime_error("RUNTIME ERROR!");
+  throw std::runtime_error( "RUNTIME ERROR!" );
 }
 
-[[ noreturn ]] void foo2() {
+[[ noreturn ]] void foo2()
+{
   throw_exception();
 }
 
-[[ noreturn ]] void foo1() {
+[[ noreturn ]] void foo1()
+{
   foo2();
 }
-TEST(testStackTrace,uncaughtException)
+TEST( testStackTrace, uncaughtException )
 {
 
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
 }

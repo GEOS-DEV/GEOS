@@ -27,7 +27,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, ManagedGroup *const parent ):
+SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, ManagedGroup * const parent ):
   FieldSpecificationBase( name, parent )
 {
   // TODO Auto-generated constructor stub
@@ -41,7 +41,7 @@ SourceFluxBoundaryCondition::~SourceFluxBoundaryCondition()
 
 void SourceFluxBoundaryCondition::InitializePreSubGroups( ManagedGroup * const )
 {
-  this->SetFieldName("FLUX");
+  this->SetFieldName( "FLUX" );
 }
 
 

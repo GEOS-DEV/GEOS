@@ -36,8 +36,8 @@ public:
                                  R2Tensor const & Rot,
                                  integer const updateStiffnessFlag ) = 0;
 
-//  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
-//                            arrayView2d<real64 const> const & Rot )
+  //  virtual void BatchUpdate( arrayView2d<real64 const> const & Dadt,
+  //                            arrayView2d<real64 const> const & Rot )
 
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -62,8 +62,8 @@ public:
 
 protected:
 
-//  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
-//  void BatchUpdateKernel( ARGS && ... args );
+  //  template< typename LEAFCLASS, typename POLICY=materialUpdatePolicy, typename ... ARGS >
+  //  void BatchUpdateKernel( ARGS && ... args );
 
 
   real64 m_defaultDensity;

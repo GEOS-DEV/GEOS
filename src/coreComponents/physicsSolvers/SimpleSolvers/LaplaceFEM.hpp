@@ -59,7 +59,7 @@ using LinearSolver = typename LAI::LinearSolver;
 class LaplaceFEM : public SolverBase
 {
 public:
-  LaplaceFEM( const std::string& name,
+  LaplaceFEM( const std::string & name,
               ManagedGroup * const parent );
 
   virtual ~LaplaceFEM() override;
@@ -68,7 +68,7 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -77,20 +77,20 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
   virtual real64 ExplicitStep( real64 const & time_n,
-                                 real64 const & dt,
-                                 integer const cycleNumber,
-                                 DomainPartition * const domain ) override;
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
 
   virtual void AssembleSystem( DomainPartition * const domain,
@@ -103,8 +103,8 @@ public:
                                         real64 const time,
                                         real64 const dt ) override;
 
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+  //  virtual real64
+  //  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -122,22 +122,22 @@ public:
   /**@}*/
 
 
-  void TimeStepQuasiStatic( real64 const& time_n,
-                            real64 const& dt,
+  void TimeStepQuasiStatic( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition& domain );
+                            DomainPartition & domain );
 
-//  real64 TimeStepImplicit( real64 const & time_n,
-//                           real64 const & dt,
-//                           integer const cycleNumber,
-//                           DomainPartition * const domain );
+  //  real64 TimeStepImplicit( real64 const & time_n,
+  //                           real64 const & dt,
+  //                           integer const cycleNumber,
+  //                           DomainPartition * const domain );
 
   void SetupSystem( DomainPartition * const domain,
                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   // TODO: can I remove this?
-//  void SetupMLPreconditioner( DomainPartition const & domain,
-//                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
+  //  void SetupMLPreconditioner( DomainPartition const & domain,
+  //                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,
@@ -162,11 +162,13 @@ public:
 
   } laplaceFEMViewKeys;
 
-  inline ParallelVector const * getSolution() const {
+  inline ParallelVector const * getSolution() const
+  {
     return & m_solution;
   }
 
-  inline globalIndex getSize() const {
+  inline globalIndex getSize() const
+  {
     return m_matrix.globalRows();
   }
 

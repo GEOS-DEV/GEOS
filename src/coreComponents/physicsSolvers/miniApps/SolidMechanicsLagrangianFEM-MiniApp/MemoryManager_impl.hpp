@@ -43,37 +43,39 @@
 
 /*
   As RAJA does not manage memory we include a general purpose memory
-  manager which may be used to perform c++ style allocation/deallocation 
-  or allocate/deallocate CUDA unified memory. The type of memory allocated 
-  is dependent on how RAJA was configured.  
+  manager which may be used to perform c++ style allocation/deallocation
+  or allocate/deallocate CUDA unified memory. The type of memory allocated
+  is dependent on how RAJA was configured.
 */
-namespace memoryManager{
+namespace memoryManager
+{
 
-  template <typename T>
-  T *allocate(RAJA::Index_type size, size_t &dataAlloc)
-  {
-    T *ptr;
-    dataAlloc += size * sizeof(T);
+template <typename T>
+T * allocate( RAJA::Index_type size, size_t & dataAlloc )
+{
+  T * ptr;
+  dataAlloc += size * sizeof( T );
 #if defined(RAJA_ENABLE_CUDA)
-    cudaErrchk(cudaMallocManaged((void **)&ptr, sizeof(T) * size, cudaMemAttachGlobal));               
+  cudaErrchk( cudaMallocManaged( ( void ** )&ptr, sizeof( T ) * size, cudaMemAttachGlobal ) );
 #else
-    ptr = new T[size];
+  ptr = new T[size];
 #endif
-    return ptr;
-  }
-  
-  template <typename T>
-  void deallocate(T ptr)
+  return ptr;
+}
+
+template <typename T>
+void deallocate( T ptr )
+{
+  if( ptr )
   {
-    if (ptr) {
 #if defined(RAJA_ENABLE_CUDA)
-      cudaFree(ptr);
+    cudaFree( ptr );
 #else
-      delete[] ptr;
+    delete[] ptr;
 #endif
-      ptr = nullptr;
-    }    
+    ptr = nullptr;
   }
-  
+}
+
 }
 #endif

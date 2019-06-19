@@ -71,7 +71,7 @@ public:
   virtual ~CellBlockManager() override;
 
 
-//  void Initialize(  ){}
+  //  void Initialize(  ){}
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -81,24 +81,24 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-//  CellBlock & CreateRegion( string const & regionName,
-//                               string const & elementType,
-//                               integer const & numElements );
+  //  CellBlock & CreateRegion( string const & regionName,
+  //                               string const & elementType,
+  //                               integer const & numElements );
 
   CellBlock * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlocks)->GetGroup<CellBlock>(regionName);
+    return this->GetGroup( dataRepository::keys::cellBlocks )->GetGroup<CellBlock>( regionName );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    ManagedGroup * elementRegions = this->GetGroup( dataRepository::keys::cellBlocks );
     elementRegions->forSubGroups<CellBlock>( lambda );
   }
 private:
-  CellBlockManager( const CellBlockManager& );
-  CellBlockManager& operator=( const CellBlockManager&);
+  CellBlockManager( const CellBlockManager & );
+  CellBlockManager & operator=( const CellBlockManager & );
 
 
 };

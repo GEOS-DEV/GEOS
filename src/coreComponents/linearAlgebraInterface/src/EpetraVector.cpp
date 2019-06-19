@@ -54,10 +54,10 @@ EpetraVector::EpetraVector()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a unique pointer to the raw vector.  The data from the input vector is
 // copied to a new memory location. Checks if the vector to be copied is empty.
-EpetraVector::EpetraVector( EpetraVector const &src )
+EpetraVector::EpetraVector( EpetraVector const & src )
 {
   GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
-  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer() ) );
 }
 
 // ----------------------------
@@ -67,19 +67,19 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from EpetraVector
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraVector::create( EpetraVector const &src )
+void EpetraVector::create( EpetraVector const & src )
 {
   GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
-  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer() ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from an Epetra_Map.
-void EpetraVector::create( Epetra_Map const &map )
+void EpetraVector::create( Epetra_Map const & map )
 {
-  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( map ));
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( map ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -114,9 +114,9 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm 
 // local arrays stitched together.
 void EpetraVector::create( array1d<real64> const & localValues, MPI_Comm const & comm )
 {
-  int localSize = integer_conversion<int, localIndex>( localValues.size());
+  int localSize = integer_conversion<int, localIndex>( localValues.size() );
   Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( comm ) );
-  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double*>(localValues.data()), localSize, 1 ));
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( View, map, const_cast<double *>( localValues.data() ), localSize, 1 ) );
 }
 
 
@@ -159,12 +159,12 @@ void EpetraVector::add( globalIndex const * globalIndices,
 void EpetraVector::set( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  m_vector->ReplaceGlobalValues( integer_conversion<int, localIndex>( values.size()), globalIndices.data(), values.data() );
+  m_vector->ReplaceGlobalValues( integer_conversion<int, localIndex>( values.size() ), globalIndices.data(), values.data() );
 }
 void EpetraVector::add( array1d<globalIndex> const & globalIndices,
                         array1d<real64> const & values )
 {
-  m_vector->SumIntoGlobalValues( integer_conversion<int, localIndex>( values.size()), globalIndices.data(), values.data() );
+  m_vector->SumIntoGlobalValues( integer_conversion<int, localIndex>( values.size() ), globalIndices.data(), values.data() );
 }
 
 //additional convenience options:
@@ -190,7 +190,7 @@ void EpetraVector::rand()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void EpetraVector::open()
 {
-// ... nothing to do here ...
+  // ... nothing to do here ...
 }
 
 void EpetraVector::close()
@@ -216,7 +216,7 @@ void EpetraVector::scale( real64 const scalingFactor )
 // Dot
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Dot product with the vector vec.
-real64 EpetraVector::dot( EpetraVector const &vec )
+real64 EpetraVector::dot( EpetraVector const & vec )
 {
   real64 tmp;
   m_vector.get()->Dot( *vec.unwrappedPointer(), &tmp );
@@ -227,7 +227,7 @@ real64 EpetraVector::dot( EpetraVector const &vec )
 // Copy
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = x.
-void EpetraVector::copy( EpetraVector const &x )
+void EpetraVector::copy( EpetraVector const & x )
 {
   m_vector.get()->Update( 1., *x.unwrappedPointer(), 0. );
 }
@@ -237,7 +237,7 @@ void EpetraVector::copy( EpetraVector const &x )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + this.
 void EpetraVector::axpy( real64 const alpha,
-                         EpetraVector const &x )
+                         EpetraVector const & x )
 {
   m_vector.get()->Update( alpha, *x.unwrappedPointer(), 1. );
 }
@@ -247,7 +247,7 @@ void EpetraVector::axpy( real64 const alpha,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
 void EpetraVector::axpby( real64 const alpha,
-                          EpetraVector const &x,
+                          EpetraVector const & x,
                           real64 const beta )
 {
   m_vector.get()->Update( alpha, *x.unwrappedPointer(), beta );
@@ -350,7 +350,7 @@ Epetra_FEVector const * EpetraVector::unwrappedPointer() const
   return m_vector.get();
 }
 
-Epetra_FEVector* EpetraVector::unwrappedPointer()
+Epetra_FEVector * EpetraVector::unwrappedPointer()
 {
   return m_vector.get();
 }

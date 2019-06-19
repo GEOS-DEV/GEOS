@@ -44,20 +44,20 @@ public:
   };
 
   // choose the reference pressure to be the oil pressure for all models
-  static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
-  
+  static constexpr integer REFERENCE_PHASE = PhaseType::OIL;
+
   CapillaryPressureBase( std::string const & name,
                          dataRepository::ManagedGroup * const parent );
-  
+
   virtual ~CapillaryPressureBase() override;
 
   // *** ManagedGroup interface
-  
+
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** CapillaryPressure-specific interface
-  
+
   /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] phaseVolFraction input phase volume fraction
@@ -85,7 +85,7 @@ public:
     static constexpr auto phaseNamesString = "phaseNames";
     static constexpr auto phaseTypesString = "phaseTypes";
     static constexpr auto phaseOrderString = "phaseOrder";
-    
+
     static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
     static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
 
@@ -102,7 +102,7 @@ public:
 
 protected:
   virtual void PostProcessInput() override;
-  
+
   /**
    * @brief Function to batch process constitutive updates via a kernel launch.
    * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
@@ -127,26 +127,26 @@ protected:
   // phase ordering info
   array1d<integer> m_phaseTypes;
   array1d<integer> m_phaseOrder;
-  
+
   // output quantities
   array3d<real64>  m_phaseCapPressure;
   array4d<real64>  m_dPhaseCapPressure_dPhaseVolFrac;
-  
+
 };
 
 template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
 void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
-                                               ARGS&& ... args )
+                                               ARGS && ... args )
 {
-  localIndex const numElem = m_phaseCapPressure.size(0);
-  localIndex const numQ    = m_phaseCapPressure.size(1);
+  localIndex const numElem = m_phaseCapPressure.size( 0 );
+  localIndex const numQ    = m_phaseCapPressure.size( 1 );
   localIndex const NP      = numFluidPhases();
 
   arrayView3d<real64> const & phaseCapPressure = m_phaseCapPressure;
   arrayView4d<real64> const & dPhaseCapPressure_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac;
   arrayView1d<integer const> const & phaseOrder = m_phaseOrder;
-  
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA( localIndex const k )
   {
     for( localIndex q=0 ; q<numQ ; ++q )
     {
@@ -157,10 +157,10 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
                           phaseOrder,
                           args... );
     }
-  });
+  } );
 }
 
-  
+
 } // namespace constitutive
 
 } // namespace geosx

@@ -28,22 +28,22 @@
 
 namespace FiniteElementUtilities
 {
-void Integrate( const R2SymTensor& fieldvar,
-                const R1Tensor* const dNdX,
-                const realT& detJ,
-                const realT& detF,
-                const R2Tensor& Finv,
+void Integrate( const R2SymTensor & fieldvar,
+                const R1Tensor * const dNdX,
+                const realT & detJ,
+                const realT & detF,
+                const R2Tensor & Finv,
                 const int numPoints,
-                R1Tensor* const result)
+                R1Tensor * const result )
 {
   const realT integrationFactor = detJ * detF;
 
   R2Tensor P;
-  P.AijBkj( fieldvar,Finv);
+  P.AijBkj( fieldvar, Finv );
   P *= integrationFactor;
 
   for( int a=0 ; a<numPoints ; ++a )    // loop through all shape functions in
-                                        // element
+    // element
   {
     result[a].minusAijBj( P, dNdX[a] );
   }
@@ -53,11 +53,11 @@ void Integrate( const R2SymTensor& fieldvar,
 
 //
 //  void Interp(const R1Tensor &globalCoord,
-//	      const array1d<R1Tensor> &nodeCoords,
+//        const array1d<R1Tensor> &nodeCoords,
 //              const array1d<real64> &nodeValues,
 //              BasisBase *basis,
-//	      const unsigned int &ndofs,
-//	      const unsigned int &ndim,
+//        const unsigned int &ndofs,
+//        const unsigned int &ndim,
 //              realT &result)
 //  {
 //
@@ -82,11 +82,11 @@ void Integrate( const R2SymTensor& fieldvar,
 //  // Calcuate dN/dX at a specific position
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const array1d<R1Tensor> &nodeCoords,
-//		  BasisBase *basis,
-//		  const unsigned int &ndofs,
+//      const array1d<R1Tensor> &nodeCoords,
+//      BasisBase *basis,
+//      const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  array1d<R1Tensor> &result)
+//      array1d<R1Tensor> &result)
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
@@ -126,11 +126,11 @@ void Integrate( const R2SymTensor& fieldvar,
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const array1d<R1Tensor> &nodeCoords,
-//		      BasisBase *basis,
-//		      const unsigned int &ndofs,
-//		      const unsigned int &ndim,
-//		      R1Tensor &localCoord)
+//          const array1d<R1Tensor> &nodeCoords,
+//          BasisBase *basis,
+//          const unsigned int &ndofs,
+//          const unsigned int &ndim,
+//          R1Tensor &localCoord)
 //  {
 //
 //    assert(nodeCoords.size() == ndofs);
@@ -156,32 +156,32 @@ void Integrate( const R2SymTensor& fieldvar,
 //
 //      for(unsigned int i = 0; i < ndofs; i++) {
 //
-//	values[i] = basis->value(i, localCoord);
-//	gradients[i] = basis->gradient(i, localCoord);
+//  values[i] = basis->value(i, localCoord);
+//  gradients[i] = basis->gradient(i, localCoord);
 //
 //      }
 //
 //      for(unsigned int i = 0; i < ndim; i++) {
 //
-//	for(unsigned int j = 0; j < ndim; j++) {
+//  for(unsigned int j = 0; j < ndim; j++) {
 //
-//	  A[i][j] = 0.0;
+//    A[i][j] = 0.0;
 //
-//	  for(unsigned int k = 0; k < ndofs; k++) {
+//    for(unsigned int k = 0; k < ndofs; k++) {
 //
-//	    A[i][j] += nodeCoords[k][i] * gradients[k][j];
+//      A[i][j] += nodeCoords[k][i] * gradients[k][j];
 //
-//	  }
+//    }
 //
-//	}
+//  }
 //
-//	resid[i] = -globalCoord[i];
+//  resid[i] = -globalCoord[i];
 //
-//	for(unsigned int j = 0; j < ndofs; j++) {
+//  for(unsigned int j = 0; j < ndofs; j++) {
 //
-//	  resid[i] += nodeCoords[j][i] * values[j];
+//    resid[i] += nodeCoords[j][i] * values[j];
 //
-//	}
+//  }
 //
 //      }
 //
@@ -189,21 +189,21 @@ void Integrate( const R2SymTensor& fieldvar,
 //
 //      for(unsigned int i = 0; i < ndim; i++) {
 //
-//	if(fabs(resid[i]) > maxV)
-//	  maxV = fabs(resid[i]);
+//  if(fabs(resid[i]) > maxV)
+//    maxV = fabs(resid[i]);
 //
 //      }
 //
 //      if(maxV < nrTol) {
-//	converged = 1;
-//	break;
+//  converged = 1;
+//  break;
 //      }
 //
 //      LinSolve_Local(A, x, resid);
 //
 //      for(unsigned int i = 0; i < ndim; i++) {
 //
-//	localCoord[i] -= x[i];
+//  localCoord[i] -= x[i];
 //
 //      }
 //
@@ -216,8 +216,8 @@ void Integrate( const R2SymTensor& fieldvar,
 //    for(unsigned int i = 0; i < ndim; i++) {
 //
 //      if(localCoord[i] < 0.0 || localCoord[i] > 1.0) {
-//	converged = 0;
-//	break;
+//  converged = 0;
+//  break;
 //      }
 //
 //    }

@@ -46,21 +46,21 @@ template<int T_dim>
 class R1TensorT : public TensorBaseT< T_dim >
 {
 
-//**** Overloaded arithmetic operators
-//  ******************************************
+  //**** Overloaded arithmetic operators
+  //  ******************************************
 
-//// Scalar product
-//  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){
-// return V*k; }
-//  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;
-// }
-//// Dot product *
-//  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim>
-// &Vb){return Dot(Va,Vb); }
-//
-//// Division by scalar
-//  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;
-// }
+  //// Scalar product
+  //  friend R1TensorT<T_dim> operator*(realT k, const R1TensorT<T_dim> &V){
+  // return V*k; }
+  //  friend R1TensorT<T_dim> operator*(R1TensorT<T_dim> V, realT k){return V*=k;
+  // }
+  //// Dot product *
+  //  friend realT operator*(const R1TensorT<T_dim> &Va, const R1TensorT<T_dim>
+  // &Vb){return Dot(Va,Vb); }
+  //
+  //// Division by scalar
+  //  friend R1TensorT<T_dim> operator/(R1TensorT<T_dim> V, realT k){return V/=k;
+  // }
 
 
 public:
@@ -75,19 +75,19 @@ public:
    * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
    */
-  explicit R1TensorT( const realT data ): TensorBaseT< T_dim >(data) {}
+  explicit R1TensorT( const realT data ): TensorBaseT< T_dim >( data ) {}
 
   /**
    * @author Randolph Settgast
    * @param[in] data naked array used for initialization of t_data
    */
-  explicit R1TensorT( realT* const data ): TensorBaseT< T_dim >(data) {}
+  explicit R1TensorT( realT * const data ): TensorBaseT< T_dim >( data ) {}
 
   /**
    * @author walsh24
    * @param[in] data use for initialization of t_data
    */
-  explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT(data) ) {}
+  explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT( data ) ) {}
 
   //**** CONSTRUCTORS AND DESTRUCTORS
   // *******************************************
@@ -96,10 +96,10 @@ public:
    * @author Randolph Settgast
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
-  R1TensorT( const R1TensorT< T_dim >& rhs ): TensorBaseT< T_dim > ()
+  R1TensorT( const R1TensorT< T_dim > & rhs ): TensorBaseT< T_dim > ()
   { TensorBaseT< T_dim >::operator=( rhs ); }
 
-  R1TensorT( const TensorBaseT< T_dim >& rhs ): TensorBaseT< T_dim > ()
+  R1TensorT( const TensorBaseT< T_dim > & rhs ): TensorBaseT< T_dim > ()
   { TensorBaseT< T_dim >::operator=( rhs ); }
 
   /**
@@ -108,68 +108,68 @@ public:
    * Explicit constructors - will throw compile-time errors if not called with
    * the correct dimension
    */
-  R1TensorT(realT x,realT y);  //2D only
-  R1TensorT(realT x,realT y, realT z); //3D only
+  R1TensorT( realT x, realT y ); //2D only
+  R1TensorT( realT x, realT y, realT z ); //3D only
 
   /// non-virtual destructor
   ~R1TensorT( void ) {}
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
-  R1TensorT< T_dim >& operator=( const int& rhs );
+  R1TensorT< T_dim > & operator=( const int & rhs );
 
   /// assignment to all data to a realT
-  R1TensorT< T_dim >& operator=( const realT& rhs );
+  R1TensorT< T_dim > & operator=( const realT & rhs );
 
   /// assignment to another R1TensorT
-  R1TensorT< T_dim >& operator=( const R1TensorT< T_dim >& rhs );
+  R1TensorT< T_dim > & operator=( const R1TensorT< T_dim > & rhs );
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
-  inline const realT& operator()( const int i ) const { return this->t_data[i];  }
+  inline const realT & operator()( const int i ) const { return this->t_data[i];  }
 
   /// non-const access to data
-  inline realT& operator()( const int i )             { return this->t_data[i];  }
+  inline realT & operator()( const int i )             { return this->t_data[i];  }
 
   /// const access to data
-  inline const realT& operator[]( const int i ) const { return this->t_data[i];  }
+  inline const realT & operator[]( const int i ) const { return this->t_data[i];  }
 
   /// non-const access to data
-  inline realT& operator[]( const int i )             { return this->t_data[i];  }
+  inline realT & operator[]( const int i )             { return this->t_data[i];  }
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   realT ProductOfSquares() const;
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
-  void minusAijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
-  void minusAijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// multiply (inner product) transpose Rank2 tensor with Rank 1 tensor
 
-  void AijBi( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBi( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// Hadamard product between two Rank1 tensors
-  void AiBi( const R1TensorT< T_dim >& A, const R1TensorT< T_dim >& B );
+  void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// permutation operator contracted on a Rank2 tensor
-  void eijkAjk( const R2TensorT< T_dim >& A );
+  void eijkAjk( const R2TensorT< T_dim > & A );
 
   /// cross product of 2 rank1 tensors
-  void Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b );
+  void Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
 
   /// get a row from a symmetric rank2 tensor
-  void GetRow( const R2SymTensorT< T_dim >& A, const int row );
+  void GetRow( const R2SymTensorT< T_dim > & A, const int row );
 
   /// get a column from a symmetric rank2 tensor (same as GetRow())
-  void GetCol( const R2SymTensorT< T_dim >& A, const int col );
+  void GetCol( const R2SymTensorT< T_dim > & A, const int col );
 
 
   //****** TENSOR OPERATIONS **************************************************
@@ -178,18 +178,18 @@ public:
 
   /// get the unit vector
   R1TensorT< T_dim > UnitVector( void ) const
-  { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
+  { realT n = this->L2_Norm(); return ( n>0.0 ) ? ( *this/n ) : *this; }
 
   /// Normalize the vector
   realT Normalize( void )
-  { realT n = this->L2_Norm(); if(n>0.0) *this /= n; return n; }
+  { realT n = this->L2_Norm(); if( n>0.0 ) *this /= n; return n; }
 
   /// sum the components of the tensor
   inline realT Sum( void ) const;
 
   //***** OUTPUT **************************************************************
   /// output
-  void print( std::ostream& os ) const;
+  void print( std::ostream & os ) const;
 
   //***** FRIEND DECLARATIONS *************************************************
   /// declare R2SymTensorT a friend so that it can access t_data directly
@@ -200,10 +200,10 @@ public:
 
   // define cross product
   friend inline
-  R1TensorT< T_dim > Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b )
+  R1TensorT< T_dim > Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
   {
     R1TensorT< T_dim > c;
-    c.Cross(a,b);
+    c.Cross( a, b );
     return c;
   }
 
@@ -220,7 +220,7 @@ private:
 /// Template specialisation - if templated on another dimension constructor will
 // throw a compile time error.
 template<>
-inline R1TensorT<2>::R1TensorT(realT x,realT y):
+inline R1TensorT<2>::R1TensorT( realT x, realT y ):
   TensorBaseT< 2 >()
 {
   this->t_data[0] = x;
@@ -233,7 +233,7 @@ inline R1TensorT<2>::R1TensorT(realT x,realT y):
 /// Template specialisation - if templated on another dimension constructor will
 // throw a compile time error.
 template<>
-inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z):
+inline R1TensorT<3>::R1TensorT( realT x, realT y, realT z ):
   TensorBaseT< 3 >()
 {
   this->t_data[0] = x;
@@ -244,10 +244,12 @@ inline R1TensorT<3>::R1TensorT(realT x,realT y,realT z):
 
 
 template<int T_dim>
-void R1TensorT< T_dim >::print( std::ostream& os ) const
+void R1TensorT< T_dim >::print( std::ostream & os ) const
 {
-  for (int i = 0 ; i < T_dim ; ++i)
-    os << (*this)( i ) << '\t';
+  for( int i = 0 ; i < T_dim ; ++i )
+  {
+    os << ( *this )( i ) << '\t';
+  }
 }
 
 #include "R2SymTensorT.h"
@@ -267,7 +269,7 @@ void R1TensorT< T_dim >::print( std::ostream& os ) const
  * @return reference to *this
  */
 template<int T_dim>
-inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
+inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const int & rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;
@@ -279,7 +281,7 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
  * @return reference to *this
  */
 template<int T_dim>
-inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
+inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const realT & rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;
@@ -291,7 +293,7 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
  * @return reference to *this
  */
 template<int T_dim>
-inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const R1TensorT< T_dim >& rhs )
+inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const R1TensorT< T_dim > & rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );
   return *this;
@@ -308,8 +310,10 @@ inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 {
   realT norm = 0.0;
 
-  for (int i = 1 ; i <= T_dim ; ++i)
+  for( int i = 1 ; i <= T_dim ; ++i )
+  {
     norm += this->t_data[i - 1] * this->t_data[i - 1];
+  }
   norm = sqrt( norm );
 
   return norm;
@@ -325,8 +329,10 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
 {
   realT sum = 0.0;
 
-  for (int i = 1 ; i <= T_dim ; ++i)
+  for( int i = 1 ; i <= T_dim ; ++i )
+  {
     sum += this->t_data[i - 1];
+  }
 
   return sum;
 }
@@ -342,25 +348,27 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
  * this->t_data.
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
-  if (T_dim == 1)
+  if( T_dim == 1 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0];
   }
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
     this->t_data[1] = A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
     this->t_data[1] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
     this->t_data[2] = A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
   }
   else
+  {
     std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+  }
 }
 
 /**
@@ -372,10 +380,12 @@ inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1Tens
  * Hadamard product
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
-  for(int i = 0 ; i < T_dim ; i++)
+  for( int i = 0 ; i < T_dim ; i++ )
+  {
     this->t_data[i] = A.t_data[i] * B.t_data[i];
+  }
 }
 
 /**
@@ -385,25 +395,25 @@ inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim >& A, const R1Tenso
 template<int T_dim>
 inline realT R1TensorT< T_dim >::ProductOfSquares() const
 {
-  if (T_dim == 1)
+  if( T_dim == 1 )
   {
     return this->t_data[0]*this->t_data[0];
   }
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
-    return (this->t_data[0]*this->t_data[0]) *
-           (this->t_data[1]*this->t_data[1]);
+    return ( this->t_data[0]*this->t_data[0] ) *
+           ( this->t_data[1]*this->t_data[1] );
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
-    return (this->t_data[0]*this->t_data[0]) *
-           (this->t_data[1]*this->t_data[1]) *
-           (this->t_data[2]*this->t_data[2]);
+    return ( this->t_data[0]*this->t_data[0] ) *
+           ( this->t_data[1]*this->t_data[1] ) *
+           ( this->t_data[2]*this->t_data[2] );
   }
   else
   {
     std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-    exit(1);
+    exit( 1 );
   }
 
   return 0.0; // never get here
@@ -419,49 +429,53 @@ inline realT R1TensorT< T_dim >::ProductOfSquares() const
  * this->t_data.
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
-  if (T_dim == 1)
+  if( T_dim == 1 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0];
   }
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
     this->t_data[1] -= A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
     this->t_data[1] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
     this->t_data[2] -= A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
   }
   else
+  {
     std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+  }
 
 }
 
 
 template<int T_dim>
-inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
-  if (T_dim == 1)
+  if( T_dim == 1 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0];
   }
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
     this->t_data[1] -= A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1];
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
     this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[3] * B.t_data[2];
     this->t_data[1] -= A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1] + A.t_data[4] * B.t_data[2];
     this->t_data[2] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
   }
   else
+  {
     std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+  }
 
 }
 /**
@@ -474,21 +488,23 @@ inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim >& A, cons
  * this->t_data.
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::AijBi( const R2TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::AijBi( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[2] * B.t_data[1];
     this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[3] * B.t_data[1];
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[3] * B.t_data[1] + A.t_data[6] * B.t_data[2];
     this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[7] * B.t_data[2];
     this->t_data[2] = A.t_data[2] * B.t_data[0] + A.t_data[5] * B.t_data[1] + A.t_data[8] * B.t_data[2];
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 }
 
 /**
@@ -501,7 +517,7 @@ inline void R1TensorT< T_dim >::AijBi( const R2TensorT< T_dim >& A, const R1Tens
  * this->t_data.
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim >& A, const R1TensorT< T_dim >& B )
+inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
 #ifdef __INTEL_COMPILER
 #pragma warning push
@@ -510,19 +526,21 @@ inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim >& A, const R1T
 #ifdef  __IBMC__
 #pragma report(disable, "1540-2907")
 #endif
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
     this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1];
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
     this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[3] * B.t_data[2];
     this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1] + A.t_data[4] * B.t_data[2];
     this->t_data[2] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 }
 
 /**
@@ -534,16 +552,18 @@ inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim >& A, const R1T
  * rank2 tensor and places the result in this->tdata
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim >& A )
+inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim > & A )
 {
-  if (T_dim == 3)
+  if( T_dim == 3 )
   {
     this->t_data[0] = A.t_data[5] - A.t_data[7];
     this->t_data[1] = A.t_data[6] - A.t_data[2];
     this->t_data[2] = A.t_data[1] - A.t_data[3];
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 
 }
 
@@ -557,16 +577,18 @@ inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim >& A )
  * result into this->tdata
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim >& a, const R1TensorT< T_dim >& b )
+inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
 {
-  if (T_dim == 3)
+  if( T_dim == 3 )
   {
     this->t_data[0] = a.t_data[1] * b.t_data[2] - a.t_data[2] * b.t_data[1];
-    this->t_data[1] = -(a.t_data[0] * b.t_data[2] - a.t_data[2] * b.t_data[0]);
+    this->t_data[1] = -( a.t_data[0] * b.t_data[2] - a.t_data[2] * b.t_data[0] );
     this->t_data[2] = a.t_data[0] * b.t_data[1] - a.t_data[1] * b.t_data[0];
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 
 }
 
@@ -579,24 +601,24 @@ inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim >& a, const R1Tens
  * this function extracts a row from A and places it in this->tdata
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim >& A, const int row )
+inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim > & A, const int row )
 {
 
-  if (T_dim == 3)
+  if( T_dim == 3 )
   {
-    if (row == 1)
+    if( row == 1 )
     {
       this->t_data[0] = A.t_data[0];
       this->t_data[1] = A.t_data[1];
       this->t_data[2] = A.t_data[3];
     }
-    else if (row == 2)
+    else if( row == 2 )
     {
       this->t_data[0] = A.t_data[1];
       this->t_data[1] = A.t_data[2];
       this->t_data[2] = A.t_data[4];
     }
-    else if (row == 3)
+    else if( row == 3 )
     {
       this->t_data[0] = A.t_data[3];
       this->t_data[1] = A.t_data[4];
@@ -604,7 +626,9 @@ inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim >& A, const in
     }
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 }
 
 /**
@@ -616,24 +640,24 @@ inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim >& A, const in
  * this function extracts a column from A and places it in this->tdata
  */
 template<int T_dim>
-inline void R1TensorT< T_dim >::GetCol( const R2SymTensorT< T_dim >& A, const int col )
+inline void R1TensorT< T_dim >::GetCol( const R2SymTensorT< T_dim > & A, const int col )
 {
 
-  if (T_dim == 3)
+  if( T_dim == 3 )
   {
-    if (col == 1)
+    if( col == 1 )
     {
       this->t_data[0] = A.t_data[0];
       this->t_data[1] = A.t_data[1];
       this->t_data[2] = A.t_data[3];
     }
-    else if (col == 2)
+    else if( col == 2 )
     {
       this->t_data[0] = A.t_data[1];
       this->t_data[1] = A.t_data[2];
       this->t_data[2] = A.t_data[4];
     }
-    else if (col == 3)
+    else if( col == 3 )
     {
       this->t_data[0] = A.t_data[3];
       this->t_data[1] = A.t_data[4];
@@ -641,7 +665,9 @@ inline void R1TensorT< T_dim >::GetCol( const R2SymTensorT< T_dim >& A, const in
     }
   }
   else
+  {
     std::cout << "R1TensorT not implemented for nsdof>3";
+  }
 }
 
 #endif

@@ -100,11 +100,11 @@ void ComponentFractionKernel::Launch<NC>( set<localIndex> const & targetSet, \
                                           arrayView2d<real64> const & compFrac, \
                                           arrayView3d<real64> const & dCompFrac_dCompDens )
 
-INST_ComponentFractionKernel(1);
-INST_ComponentFractionKernel(2);
-INST_ComponentFractionKernel(3);
-INST_ComponentFractionKernel(4);
-INST_ComponentFractionKernel(5);
+INST_ComponentFractionKernel( 1 );
+INST_ComponentFractionKernel( 2 );
+INST_ComponentFractionKernel( 3 );
+INST_ComponentFractionKernel( 4 );
+INST_ComponentFractionKernel( 5 );
 
 #undef INST_ComponentFractionKernel
 
@@ -238,23 +238,23 @@ void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> const & targetSet
                                                arrayView2d<real64> const & dPhaseVolFrac_dPres, \
                                                arrayView3d<real64> const & dPhaseVolFrac_dComp )
 
-INST_PhaseVolumeFractionKernel(1,1);
-INST_PhaseVolumeFractionKernel(2,1);
-INST_PhaseVolumeFractionKernel(3,1);
-INST_PhaseVolumeFractionKernel(4,1);
-INST_PhaseVolumeFractionKernel(5,1);
+INST_PhaseVolumeFractionKernel( 1, 1 );
+INST_PhaseVolumeFractionKernel( 2, 1 );
+INST_PhaseVolumeFractionKernel( 3, 1 );
+INST_PhaseVolumeFractionKernel( 4, 1 );
+INST_PhaseVolumeFractionKernel( 5, 1 );
 
-INST_PhaseVolumeFractionKernel(1,2);
-INST_PhaseVolumeFractionKernel(2,2);
-INST_PhaseVolumeFractionKernel(3,2);
-INST_PhaseVolumeFractionKernel(4,2);
-INST_PhaseVolumeFractionKernel(5,2);
+INST_PhaseVolumeFractionKernel( 1, 2 );
+INST_PhaseVolumeFractionKernel( 2, 2 );
+INST_PhaseVolumeFractionKernel( 3, 2 );
+INST_PhaseVolumeFractionKernel( 4, 2 );
+INST_PhaseVolumeFractionKernel( 5, 2 );
 
-INST_PhaseVolumeFractionKernel(1,3);
-INST_PhaseVolumeFractionKernel(2,3);
-INST_PhaseVolumeFractionKernel(3,3);
-INST_PhaseVolumeFractionKernel(4,3);
-INST_PhaseVolumeFractionKernel(5,3);
+INST_PhaseVolumeFractionKernel( 1, 3 );
+INST_PhaseVolumeFractionKernel( 2, 3 );
+INST_PhaseVolumeFractionKernel( 3, 3 );
+INST_PhaseVolumeFractionKernel( 4, 3 );
+INST_PhaseVolumeFractionKernel( 5, 3 );
 
 #undef INST_PhaseVolumeFractionKernel
 
@@ -404,23 +404,23 @@ void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
                                          arrayView2d<real64> const & dPhaseMob_dPres, \
                                          arrayView3d<real64> const & dPhaseMob_dComp )
 
-INST_PhaseMobilityKernel(1,1);
-INST_PhaseMobilityKernel(2,1);
-INST_PhaseMobilityKernel(3,1);
-INST_PhaseMobilityKernel(4,1);
-INST_PhaseMobilityKernel(5,1);
+INST_PhaseMobilityKernel( 1, 1 );
+INST_PhaseMobilityKernel( 2, 1 );
+INST_PhaseMobilityKernel( 3, 1 );
+INST_PhaseMobilityKernel( 4, 1 );
+INST_PhaseMobilityKernel( 5, 1 );
 
-INST_PhaseMobilityKernel(1,2);
-INST_PhaseMobilityKernel(2,2);
-INST_PhaseMobilityKernel(3,2);
-INST_PhaseMobilityKernel(4,2);
-INST_PhaseMobilityKernel(5,2);
+INST_PhaseMobilityKernel( 1, 2 );
+INST_PhaseMobilityKernel( 2, 2 );
+INST_PhaseMobilityKernel( 3, 2 );
+INST_PhaseMobilityKernel( 4, 2 );
+INST_PhaseMobilityKernel( 5, 2 );
 
-INST_PhaseMobilityKernel(1,3);
-INST_PhaseMobilityKernel(2,3);
-INST_PhaseMobilityKernel(3,3);
-INST_PhaseMobilityKernel(4,3);
-INST_PhaseMobilityKernel(5,3);
+INST_PhaseMobilityKernel( 1, 3 );
+INST_PhaseMobilityKernel( 2, 3 );
+INST_PhaseMobilityKernel( 3, 3 );
+INST_PhaseMobilityKernel( 4, 3 );
+INST_PhaseMobilityKernel( 5, 3 );
 
 #undef INST_PhaseMobilityKernel
 
@@ -462,10 +462,10 @@ struct AccumulationKernel
     stackArray1d<real64, maxNumComp> const dPhaseCompFrac_dC( NC );
 
     // reset the local values
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
     {
       localAccum[ic] = 0.0;
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         localAccumJacobian[ic][jc] = 0.0;
       }
@@ -485,18 +485,18 @@ struct AccumulationKernel
     real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
 
     // sum contributions to component accumulation from each phase
-    for (localIndex ip = 0; ip < NP; ++ip)
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
       real64 const phaseAmountNew = poreVolNew * phaseVolFrac[ip] * phaseDens[ip];
       real64 const phaseAmountOld = poreVolOld * phaseVolFracOld[ip] * phaseDensOld[ip];
 
       real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFrac[ip] * phaseDens[ip]
-                                    + poreVolNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                         + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+                                     + poreVolNew * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                      + phaseVolFrac[ip] * dPhaseDens_dPres[ip] );
 
       // assemble density dependence
-      applyChainRule(NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC);
-      for (localIndex jc = 0; jc < NC; ++jc)
+      applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
                               + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
@@ -505,13 +505,13 @@ struct AccumulationKernel
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
-      for (localIndex ic = 0; ic < NC; ++ic)
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
         real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                          + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
+                                           + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
 
         localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
         localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
@@ -520,11 +520,11 @@ struct AccumulationKernel
         // (i.e. col number in local matrix)
 
         // assemble phase composition dependence
-        applyChainRule(NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC);
-        for (localIndex jc = 0; jc < NC; ++jc)
+        applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
-                                           + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
           localAccumJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
       }
@@ -559,10 +559,10 @@ struct AccumulationKernel
     stackArray1d<real64, NC> dPhaseCompFrac_dC( NC );
 
     // reset the local values
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
     {
       localAccum[ic] = 0.0;
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         localAccumJacobian[ic][jc] = 0.0;
       }
@@ -582,33 +582,33 @@ struct AccumulationKernel
     real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
 
     // sum contributions to component accumulation from each phase
-    for (localIndex ip = 0; ip < NP; ++ip)
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
       real64 const phaseAmountNew = poreVolNew * phaseVolFrac[ip] * phaseDens[ip];
       real64 const phaseAmountOld = poreVolOld * phaseVolFracOld[ip] * phaseDensOld[ip];
 
       real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFrac[ip] * phaseDens[ip]
-                                    + poreVolNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                         + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+                                     + poreVolNew * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                      + phaseVolFrac[ip] * dPhaseDens_dPres[ip] );
 
       // assemble density dependence
-      applyChainRule(NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC);
-      for (localIndex jc = 0; jc < NC; ++jc)
+      applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                                  + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
+                              + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
         dPhaseAmount_dC[jc] *= poreVolNew;
       }
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
-      for (localIndex ic = 0; ic < NC; ++ic)
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
         real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                          + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
+                                           + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
 
         localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
         localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
@@ -617,11 +617,11 @@ struct AccumulationKernel
         // (i.e. col number in local matrix)
 
         // assemble phase composition dependence
-        applyChainRule(NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC);
-        for (localIndex jc = 0; jc < NC; ++jc)
+        applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
-                                           + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
           localAccumJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
       }
@@ -721,17 +721,17 @@ struct FluxKernel
     dCompFlux_dP = 0.0;
     dCompFlux_dC = 0.0;
 
-    for (localIndex i = 0; i < numElems * NC; ++i)
+    for( localIndex i = 0; i < numElems * NC; ++i )
     {
       localFlux[i] = 0.0;
-      for (localIndex j = 0; j < stencilSize * NDOF; ++j)
+      for( localIndex j = 0; j < stencilSize * NDOF; ++j )
       {
         localFluxJacobian[i][j] = 0.0;
       }
     }
 
     // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-    for (localIndex ip = 0; ip < NP; ++ip)
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
       // clear working arrays
       real64 densMean = 0.0;
@@ -751,7 +751,7 @@ struct FluxKernel
       dPhaseFlux_dC = 0.0;
 
       // calculate quantities on primary connected cells
-      for (localIndex i = 0; i < numElems; ++i)
+      for( localIndex i = 0; i < numElems; ++i )
       {
         CellDescriptor const & cell = stencil[i].index;
 
@@ -773,7 +773,7 @@ struct FluxKernel
         dDensMean_dP[i] = 0.5 * dDens_dP;
 
         // compositional derivatives
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dDensMean_dC[i][jc] = 0.5 * dDens_dC[jc];
         }
@@ -782,7 +782,7 @@ struct FluxKernel
       //***** calculation of flux *****
 
       // compute potential difference MPFA-style
-      for (localIndex i = 0; i < stencilSize; ++i)
+      for( localIndex i = 0; i < stencilSize; ++i )
       {
         FluxApproximationBase::CellStencil::Entry const & entry = stencil[i];
 
@@ -796,39 +796,39 @@ struct FluxKernel
         real64 dCapPressure_dP = 0.0;
         dCapPressure_dC = 0.0;
 
-        if (capPressureFlag)
+        if( capPressureFlag )
         {
           capPressure = phaseCapPressure[er][esr][capPressureIndex][ei][0][ip];
 
-          for (localIndex jp = 0; jp < NP; ++jp)
+          for( localIndex jp = 0; jp < NP; ++jp )
           {
             real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][capPressureIndex][ei][0][ip][jp];
             dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
-            for (localIndex jc = 0; jc < NC; ++jc)
+            for( localIndex jc = 0; jc < NC; ++jc )
             {
               dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
             }
           }
         }
 
-        presGrad += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - capPressure);
-        dPresGrad_dP[i] += weight * (1 - dCapPressure_dP);
-        for (localIndex jc = 0; jc < NC; ++jc)
+        presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] - capPressure );
+        dPresGrad_dP[i] += weight * ( 1 - dCapPressure_dP );
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dPresGrad_dC[i][jc] += - weight * dCapPressure_dC[jc];
         }
 
-        if (gravityFlag)
+        if( gravityFlag )
         {
           real64 const gravD = weight * gravDepth[er][esr][ei];
           gravHead += densMean * gravD;
 
           // need to add contributions from both cells the mean density depends on
-          for (localIndex j = 0; j < numElems; ++j)
+          for( localIndex j = 0; j < numElems; ++j )
           {
             dGravHead_dP[j] += dDensMean_dP[j] * gravD;
-            for (localIndex jc = 0; jc < NC; ++jc)
+            for( localIndex jc = 0; jc < NC; ++jc )
             {
               dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
             }
@@ -845,7 +845,7 @@ struct FluxKernel
       real64 potGrad = presGrad + gravHead;
 
       // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+      localIndex const k_up = ( potGrad >= 0 ) ? 0 : 1;
 
       CellDescriptor const & cell_up = stencil[k_up].index;
       localIndex er_up  = cell_up.region;
@@ -855,16 +855,16 @@ struct FluxKernel
       real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
       // skip the phase flux if phase not present or immobile upstream
-      if (std::fabs(mobility) < 1e-20) // TODO better constant
+      if( std::fabs( mobility ) < 1e-20 ) // TODO better constant
       {
         continue;
       }
 
       // pressure gradient depends on all points in the stencil
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
         dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
         }
@@ -872,10 +872,10 @@ struct FluxKernel
       }
 
       // gravitational head depends only on the two cells connected (same as mean density)
-      for (localIndex ke = 0; ke < numElems; ++ke)
+      for( localIndex ke = 0; ke < numElems; ++ke )
       {
         dPhaseFlux_dP[ke] += dGravHead_dP[ke];
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dPhaseFlux_dC[ke][jc] += dGravHead_dC[ke][jc];
         }
@@ -883,10 +883,10 @@ struct FluxKernel
 
       // compute the phase flux and derivatives using upstream cell mobility
       phaseFlux = mobility * potGrad;
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
         dPhaseFlux_dP[ke] *= mobility;
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dPhaseFlux_dC[ke][jc] *= mobility;
         }
@@ -897,7 +897,7 @@ struct FluxKernel
 
       // add contribution from upstream cell mobility derivatives
       dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
       }
@@ -908,16 +908,16 @@ struct FluxKernel
       arraySlice2d<real64 const> dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][fluidIndex][ei_up][0][ip];
 
       // compute component fluxes and derivatives using upstream cell composition
-      for (localIndex ic = 0; ic < NC; ++ic)
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         real64 const ycp = phaseCompFracSub[ic];
         compFlux[ic] += phaseFlux * ycp;
 
         // derivatives stemming from phase flux
-        for (localIndex ke = 0; ke < stencilSize; ++ke)
+        for( localIndex ke = 0; ke < stencilSize; ++ke )
         {
           dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
-          for (localIndex jc = 0; jc < NC; ++jc)
+          for( localIndex jc = 0; jc < NC; ++jc )
           {
             dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
           }
@@ -928,7 +928,7 @@ struct FluxKernel
 
         // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component densities
         applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dPhaseCompFrac_dCompDens );
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           dCompFlux_dC[k_up][ic][jc] += phaseFlux * dPhaseCompFrac_dCompDens[jc];
         }
@@ -938,18 +938,18 @@ struct FluxKernel
     // *** end of upwinding
 
     // populate local flux vector and derivatives
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
     {
       localFlux[ic]      =  dt * compFlux[ic];
       localFlux[NC + ic] = -dt * compFlux[ic];
 
-      for (localIndex ke = 0; ke < stencilSize; ++ke)
+      for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * NDOF;
         localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
         localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
 
-        for (localIndex jc = 0; jc < NC; ++jc)
+        for( localIndex jc = 0; jc < NC; ++jc )
         {
           localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
           localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
@@ -990,25 +990,25 @@ struct VolumeBalanceKernel
     real64 const dPoreVol_dP = volume * dPoro_dP;
 
     localVolBalance = 1.0;
-    for (localIndex i = 0; i < NDOF; ++i)
+    for( localIndex i = 0; i < NDOF; ++i )
     {
       localVolBalanceJacobian[i] = 0.0;
     }
 
     // sum contributions to component accumulation from each phase
-    for (localIndex ip = 0; ip < NP; ++ip)
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
       localVolBalance -= phaseVolFrac[ip];
       localVolBalanceJacobian[0] -= dPhaseVolFrac_dPres[ip];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         localVolBalanceJacobian[jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
       }
     }
 
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    for (localIndex idof = 0; idof < NDOF; ++idof)
+    for( localIndex idof = 0; idof < NDOF; ++idof )
     {
       localVolBalanceJacobian[idof] *= poreVol;
     }
@@ -1037,25 +1037,25 @@ struct VolumeBalanceKernel
     real64 const dPoreVol_dP = volume * dPoro_dP;
 
     localVolBalance = 1.0;
-    for (localIndex i = 0; i < NDOF; ++i)
+    for( localIndex i = 0; i < NDOF; ++i )
     {
       localVolBalanceJacobian[i] = 0.0;
     }
 
     // sum contributions to component accumulation from each phase
-    for (localIndex ip = 0; ip < NP; ++ip)
+    for( localIndex ip = 0; ip < NP; ++ip )
     {
       localVolBalance -= phaseVolFrac[ip];
       localVolBalanceJacobian[0] -= dPhaseVolFrac_dPres[ip];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         localVolBalanceJacobian[jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
       }
     }
 
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    for (localIndex idof = 0; idof < NDOF; ++idof)
+    for( localIndex idof = 0; idof < NDOF; ++idof )
     {
       localVolBalanceJacobian[idof] *= poreVol;
     }
@@ -1075,7 +1075,7 @@ bool KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral<T>::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
 
-  switch (value)
+  switch( value )
   {
     case 1:  lambda( std::integral_constant<T, 1>() );  return true;
     case 2:  lambda( std::integral_constant<T, 2>() );  return true;
@@ -1091,7 +1091,7 @@ bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral<T>::value, "KernelLaunchSelectorPhaseSwitch: type should be integral" );
 
-  switch (value)
+  switch( value )
   {
     case 1:  lambda( std::integral_constant<T, 1>() ); return true;
     case 2:  lambda( std::integral_constant<T, 2>() ); return true;
@@ -1106,14 +1106,14 @@ template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
   bool const run =
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] (auto NC)
+    helpers::KernelLaunchSelectorCompSwitch( numComp, [&]( auto NC )
   {
-    KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>(args)... );
-  });
+    KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>( args )... );
+  } );
 
-  if (!run)
+  if( !run )
   {
-    KERNELWRAPPER::Launch( numComp, std::forward<ARGS>(args)... );
+    KERNELWRAPPER::Launch( numComp, std::forward<ARGS>( args )... );
   }
 }
 
@@ -1123,20 +1123,20 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
   bool run2 = false;
   // gcc-7 produces bugged code without explicit capture list here...
   bool const run =
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
+    helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ]( auto NC )
   {
     run2 =
-    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&] ( auto NP )
+      helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&]( auto NP )
     {
       // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
-      auto constexpr NC_ = decltype(NC)::value;
-      KERNELWRAPPER::template Launch<NC_, NP()>( std::forward<ARGS>(args)... );
-    });
-  });
+      auto constexpr NC_ = decltype( NC )::value;
+      KERNELWRAPPER::template Launch<NC_, NP()>( std::forward<ARGS>( args )... );
+    } );
+  } );
 
-  if (!run || !run2)
+  if( !run || !run2 )
   {
-    KERNELWRAPPER::Launch( numComp, numPhase, std::forward<ARGS>(args)... );
+    KERNELWRAPPER::Launch( numComp, numPhase, std::forward<ARGS>( args )... );
   }
 }
 

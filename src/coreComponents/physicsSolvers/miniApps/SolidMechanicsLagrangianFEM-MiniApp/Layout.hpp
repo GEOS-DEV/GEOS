@@ -67,28 +67,28 @@ using geosxIndex = const localIndex * const RAJA_RESTRICT;
 
 
 void printParameters()
-{  
+{
 #if defined(STRUCTURED_GRID)
   std::cout<<"Assuming a structured grid"<<std::endl;
-#endif  
+#endif
 #if defined(COMPUTE_SHAPE_FUN)
   std::cout<<"Computing shape function derivatives at each time step"<<std::endl;
-#endif  
+#endif
 #if defined(THREE_KERNEL_UPDATE)
   std::cout<<"Using a three kernel update"<<std::endl;
-#endif  
+#endif
 #if defined(USE_GPU)
   std::cout<<"computing on the GPU"<<std::endl;
 #endif
 #if defined(ARRAY_OF_OBJECTS_LAYOUT)
-  std::cout<<"Data layout: Array of Objects"<<std::endl;  
+  std::cout<<"Data layout: Array of Objects"<<std::endl;
 #endif
 #if defined(OBJECT_OF_ARRAYS_LAYOUT)
   std::cout<<"Data layout: Object of Arrays"<<std::endl;
 #endif
 #if defined(PRE_COMPUTE_P)
   std::cout<<"Pre-computing P (partial assembly of shape fun derivatives)"<<std::endl;
-#endif  
+#endif
 
 #if defined(SHAPE_FUN_FAST_INDEX_ELEM)
   std::cout<<"SHAPE_FUN_FAST_INDEX_ELEM"<<std::endl;
@@ -96,7 +96,7 @@ void printParameters()
 
 #if defined(STRESS_FUN_FAST_INDEX_ELEM)
   std::cout<<"STRESS_FUN_FAST_INDEX_ELEM"<<std::endl;
-#endif  
+#endif
 
 }
 
@@ -104,7 +104,7 @@ void printParameters()
 #if defined(USE_GPU)
 using kernelPol = RAJA::cuda_exec<256>;
 using atomicPol = RAJA::atomic::cuda_atomic;
-#elif defined(RAJA_ENABLE_OPENMP) 
+#elif defined(RAJA_ENABLE_OPENMP)
 using kernelPol = RAJA::omp_parallel_for_exec;
 using atomicPol = RAJA::atomic::omp_atomic;
 #else

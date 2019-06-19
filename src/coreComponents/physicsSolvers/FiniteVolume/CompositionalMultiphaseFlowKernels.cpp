@@ -39,17 +39,17 @@ ComponentFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
 {
   real64 totalDensity = 0.0;
 
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
     totalDensity += compDens[ic] + dCompDens[ic];
   }
 
   real64 const totalDensityInv = 1.0 / totalDensity;
 
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
-    compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
-    for (localIndex jc = 0; jc < NC; ++jc)
+    compFrac[ic] = ( compDens[ic] + dCompDens[ic] ) * totalDensityInv;
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dCompFrac_dCompDens[ic][jc] = - compFrac[ic] * totalDensityInv;
     }
@@ -66,17 +66,17 @@ ComponentFractionKernel::Compute( localIndex const NC,
 {
   real64 totalDensity = 0.0;
 
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
     totalDensity += compDens[ic] + dCompDens[ic];
   }
 
   real64 const totalDensityInv = 1.0 / totalDensity;
 
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
-    compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
-    for (localIndex jc = 0; jc < NC; ++jc)
+    compFrac[ic] = ( compDens[ic] + dCompDens[ic] ) * totalDensityInv;
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dCompFrac_dCompDens[ic][jc] = - compFrac[ic] * totalDensityInv;
     }
@@ -91,7 +91,7 @@ void ComponentFractionKernel::Launch( localIndex const begin, localIndex const e
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC>( compDens[a],
                  dCompDens[a],
@@ -107,7 +107,7 @@ void ComponentFractionKernel::Launch( localIndex const NC,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC,
              compDens[a],
@@ -124,7 +124,7 @@ void ComponentFractionKernel::Launch( set<localIndex> const & targetSet,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC>( compDens[a],
                  dCompDens[a],
@@ -140,7 +140,7 @@ void ComponentFractionKernel::Launch( localIndex const NC,
                                       arrayView2d<real64> const & compFrac,
                                       arrayView3d<real64> const & dCompFrac_dCompDens )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC,
              compDens[a],
@@ -164,11 +164,11 @@ void ComponentFractionKernel::Launch<NC>( set<localIndex> const & targetSet, \
                                           arrayView2d<real64> const & compFrac, \
                                           arrayView3d<real64> const & dCompFrac_dCompDens )
 
-INST_ComponentFractionKernel(1);
-INST_ComponentFractionKernel(2);
-INST_ComponentFractionKernel(3);
-INST_ComponentFractionKernel(4);
-INST_ComponentFractionKernel(5);
+INST_ComponentFractionKernel( 1 );
+INST_ComponentFractionKernel( 2 );
+INST_ComponentFractionKernel( 3 );
+INST_ComponentFractionKernel( 4 );
+INST_ComponentFractionKernel( 5 );
 
 #undef INST_ComponentFractionKernel
 
@@ -194,12 +194,12 @@ PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
   // compute total density from component partial densities
   real64 totalDensity = 0.0;
   real64 const dTotalDens_dCompDens = 1.0;
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
     totalDensity += compDens[ic] + dCompDens[ic];
   }
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
@@ -208,19 +208,19 @@ PhaseVolumeFractionKernel::Compute( arraySlice1d<real64 const> const compDens,
     phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
 
     dPhaseVolFrac_dPres[ip] =
-      (dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip]) * phaseDensInv;
+      ( dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip] ) * phaseDensInv;
 
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseVolFrac_dComp[ip][jc] =
-        (dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc]) * phaseDensInv;
+        ( dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc] ) * phaseDensInv;
     }
 
     // apply chain rule to convert derivatives from global component fractions to densities
     applyChainRuleInPlace( NC, dCompFrac_dCompDens, dPhaseVolFrac_dComp[ip], work );
 
     // now finalize the computation by multiplying by total density
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseVolFrac_dComp[ip][jc] *= totalDensity;
       dPhaseVolFrac_dComp[ip][jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
@@ -253,12 +253,12 @@ PhaseVolumeFractionKernel::Compute( localIndex const NC, localIndex const NP,
   // compute total density from component partial densities
   real64 totalDensity = 0.0;
   real64 const dTotalDens_dCompDens = 1.0;
-  for (localIndex ic = 0; ic < NC; ++ic)
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
     totalDensity += compDens[ic] + dCompDens[ic];
   }
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
@@ -267,19 +267,19 @@ PhaseVolumeFractionKernel::Compute( localIndex const NC, localIndex const NP,
     phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
 
     dPhaseVolFrac_dPres[ip] =
-      (dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip]) * phaseDensInv;
+      ( dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip] ) * phaseDensInv;
 
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseVolFrac_dComp[ip][jc] =
-        (dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc]) * phaseDensInv;
+        ( dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc] ) * phaseDensInv;
     }
 
     // apply chain rule to convert derivatives from global component fractions to densities
     applyChainRuleInPlace( NC, dCompFrac_dCompDens, dPhaseVolFrac_dComp[ip], work );
 
     // now finalize the computation by multiplying by total density
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseVolFrac_dComp[ip][jc] *= totalDensity;
       dPhaseVolFrac_dComp[ip][jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
@@ -305,7 +305,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const begin, localIndex const
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC, NP>( compDens[a],
                      dCompDens[a],
@@ -337,7 +337,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC, NP,
              compDens[a],
@@ -370,7 +370,7 @@ void PhaseVolumeFractionKernel::Launch( set<localIndex> const & targetSet,
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC, NP>( compDens[a],
                      dCompDens[a],
@@ -402,7 +402,7 @@ void PhaseVolumeFractionKernel::Launch( localIndex const NC, localIndex const NP
                                         arrayView2d<real64> const & dPhaseVolFrac_dPres,
                                         arrayView3d<real64> const & dPhaseVolFrac_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC, NP,
              compDens[a],
@@ -450,23 +450,23 @@ void PhaseVolumeFractionKernel::Launch<NC,NP>( set<localIndex> const & targetSet
                                                arrayView2d<real64> const & dPhaseVolFrac_dPres, \
                                                arrayView3d<real64> const & dPhaseVolFrac_dComp )
 
-INST_PhaseVolumeFractionKernel(1,1);
-INST_PhaseVolumeFractionKernel(2,1);
-INST_PhaseVolumeFractionKernel(3,1);
-INST_PhaseVolumeFractionKernel(4,1);
-INST_PhaseVolumeFractionKernel(5,1);
+INST_PhaseVolumeFractionKernel( 1, 1 );
+INST_PhaseVolumeFractionKernel( 2, 1 );
+INST_PhaseVolumeFractionKernel( 3, 1 );
+INST_PhaseVolumeFractionKernel( 4, 1 );
+INST_PhaseVolumeFractionKernel( 5, 1 );
 
-INST_PhaseVolumeFractionKernel(1,2);
-INST_PhaseVolumeFractionKernel(2,2);
-INST_PhaseVolumeFractionKernel(3,2);
-INST_PhaseVolumeFractionKernel(4,2);
-INST_PhaseVolumeFractionKernel(5,2);
+INST_PhaseVolumeFractionKernel( 1, 2 );
+INST_PhaseVolumeFractionKernel( 2, 2 );
+INST_PhaseVolumeFractionKernel( 3, 2 );
+INST_PhaseVolumeFractionKernel( 4, 2 );
+INST_PhaseVolumeFractionKernel( 5, 2 );
 
-INST_PhaseVolumeFractionKernel(1,3);
-INST_PhaseVolumeFractionKernel(2,3);
-INST_PhaseVolumeFractionKernel(3,3);
-INST_PhaseVolumeFractionKernel(4,3);
-INST_PhaseVolumeFractionKernel(5,3);
+INST_PhaseVolumeFractionKernel( 1, 3 );
+INST_PhaseVolumeFractionKernel( 2, 3 );
+INST_PhaseVolumeFractionKernel( 3, 3 );
+INST_PhaseVolumeFractionKernel( 4, 3 );
+INST_PhaseVolumeFractionKernel( 5, 3 );
 
 #undef INST_PhaseVolumeFractionKernel
 
@@ -493,7 +493,7 @@ PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDe
   stackArray1d<real64, NC> dDens_dC( NC );
   stackArray1d<real64, NC> dVisc_dC( NC );
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     real64 const density = phaseDens[ip];
     real64 const dDens_dP = dPhaseDens_dPres[ip];
@@ -507,12 +507,12 @@ PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDe
     real64 dRelPerm_dP = 0.0;
     dRelPerm_dC = 0.0;
 
-    for (localIndex jp = 0; jp < NP; ++jp)
+    for( localIndex jp = 0; jp < NP; ++jp )
     {
       real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
       dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
       }
@@ -522,13 +522,13 @@ PhaseMobilityKernel::Compute( arraySlice2d<real64 const> const dCompFrac_dCompDe
 
     phaseMob[ip] = mobility;
     dPhaseMob_dPres[ip] = dRelPerm_dP * density / viscosity
-                          + mobility * (dDens_dP / density - dVisc_dP / viscosity);
+                          + mobility * ( dDens_dP / density - dVisc_dP / viscosity );
 
     // compositional derivatives
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
-                                + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
+                                + mobility * ( dDens_dC[jc] / density - dVisc_dC[jc] / viscosity );
     }
   }
 }
@@ -556,7 +556,7 @@ PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
   stackArray1d<real64, maxNC> dDens_dC( NC );
   stackArray1d<real64, maxNC> dVisc_dC( NC );
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     real64 const density = phaseDens[ip];
     real64 const dDens_dP = dPhaseDens_dPres[ip];
@@ -570,12 +570,12 @@ PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
     real64 dRelPerm_dP = 0.0;
     dRelPerm_dC = 0.0;
 
-    for (localIndex jp = 0; jp < NP; ++jp)
+    for( localIndex jp = 0; jp < NP; ++jp )
     {
       real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
       dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
 
-      for (localIndex jc = 0; jc < NC; ++jc)
+      for( localIndex jc = 0; jc < NC; ++jc )
       {
         dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
       }
@@ -585,13 +585,13 @@ PhaseMobilityKernel::Compute( localIndex const NC, localIndex const NP,
 
     phaseMob[ip] = mobility;
     dPhaseMob_dPres[ip] = dRelPerm_dP * density / viscosity
-                          + mobility * (dDens_dP / density - dVisc_dP / viscosity);
+                          + mobility * ( dDens_dP / density - dVisc_dP / viscosity );
 
     // compositional derivatives
-    for (localIndex jc = 0; jc < NC; ++jc)
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
-                                + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
+                                + mobility * ( dDens_dC[jc] / density - dVisc_dC[jc] / viscosity );
     }
   }
 }
@@ -613,7 +613,7 @@ void PhaseMobilityKernel::Launch( localIndex const begin, localIndex const end,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC, NP>( dCompFrac_dCompDens[a],
                      phaseDens[a][0],
@@ -649,7 +649,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
@@ -686,7 +686,7 @@ void PhaseMobilityKernel::Launch( set<localIndex> const & targetSet,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute<NC, NP>( dCompFrac_dCompDens[a],
                      phaseDens[a][0],
@@ -722,7 +722,7 @@ void PhaseMobilityKernel::Launch( localIndex const NC, localIndex const NP,
                                   arrayView2d<real64> const & dPhaseMob_dPres,
                                   arrayView3d<real64> const & dPhaseMob_dComp )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute( NC, NP,
              dCompFrac_dCompDens[a],
@@ -776,23 +776,23 @@ void PhaseMobilityKernel::Launch<NC,NP>( set<localIndex> const & targetSet, \
                                          arrayView2d<real64> const & dPhaseMob_dPres, \
                                          arrayView3d<real64> const & dPhaseMob_dComp )
 
-INST_PhaseMobilityKernel(1,1);
-INST_PhaseMobilityKernel(2,1);
-INST_PhaseMobilityKernel(3,1);
-INST_PhaseMobilityKernel(4,1);
-INST_PhaseMobilityKernel(5,1);
+INST_PhaseMobilityKernel( 1, 1 );
+INST_PhaseMobilityKernel( 2, 1 );
+INST_PhaseMobilityKernel( 3, 1 );
+INST_PhaseMobilityKernel( 4, 1 );
+INST_PhaseMobilityKernel( 5, 1 );
 
-INST_PhaseMobilityKernel(1,2);
-INST_PhaseMobilityKernel(2,2);
-INST_PhaseMobilityKernel(3,2);
-INST_PhaseMobilityKernel(4,2);
-INST_PhaseMobilityKernel(5,2);
+INST_PhaseMobilityKernel( 1, 2 );
+INST_PhaseMobilityKernel( 2, 2 );
+INST_PhaseMobilityKernel( 3, 2 );
+INST_PhaseMobilityKernel( 4, 2 );
+INST_PhaseMobilityKernel( 5, 2 );
 
-INST_PhaseMobilityKernel(1,3);
-INST_PhaseMobilityKernel(2,3);
-INST_PhaseMobilityKernel(3,3);
-INST_PhaseMobilityKernel(4,3);
-INST_PhaseMobilityKernel(5,3);
+INST_PhaseMobilityKernel( 1, 3 );
+INST_PhaseMobilityKernel( 2, 3 );
+INST_PhaseMobilityKernel( 3, 3 );
+INST_PhaseMobilityKernel( 4, 3 );
+INST_PhaseMobilityKernel( 5, 3 );
 
 #undef INST_PhaseMobilityKernel
 

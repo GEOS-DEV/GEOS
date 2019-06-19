@@ -48,14 +48,14 @@ EpetraMatrix::EpetraMatrix()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Copy constructor
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-EpetraMatrix::EpetraMatrix( EpetraMatrix const &src )
+EpetraMatrix::EpetraMatrix( EpetraMatrix const & src )
 {
   GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "Input matrix looks empty" );
   //TODO GEOS_ERROR_IF( !src.isClosed(), "Input matrix hasn't been properly closed before copy");
 
   m_matrix  = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( *src.unwrappedPointer() ) );
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap()));
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap()));
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap() ) );
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap() ) );
 }
 
 // -----------------------------
@@ -66,11 +66,11 @@ EpetraMatrix::EpetraMatrix( EpetraMatrix const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from an Epetra_FECrsGraph.
 // """""""""""""""""""""""""""""""""""""""""""""""
-void EpetraMatrix::create( Epetra_FECrsGraph const &graph )
+void EpetraMatrix::create( Epetra_FECrsGraph const & graph )
 {
   m_matrix  = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, graph ) );
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap()));
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap()));
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap() ) );
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap() ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -88,9 +88,10 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
                                          localIndex const maxEntriesPerRow,
                                          MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalRows, 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalRows, 0, Epetra_MpiComm( comm ) ) );
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ) );
+  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map,
+                                                                          integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
 }
 
 void EpetraMatrix::createWithLocalSize( localIndex const localSize,
@@ -105,9 +106,12 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ), integer_conversion<int, localIndex>( localRows ), 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ), integer_conversion<int, localIndex>( localCols ), 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
+  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ),
+                                                           integer_conversion<int, localIndex>( localRows ), 0, Epetra_MpiComm( comm ) ) );
+  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( integer_conversion<globalIndex>( -1 ),
+                                                           integer_conversion<int, localIndex>( localCols ), 0, Epetra_MpiComm( comm ) ) );
+  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map,
+                                                                          integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -198,24 +202,24 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 
 // 1xN array1d style
 void EpetraMatrix::add( globalIndex const rowIndex,
-                        array1d<globalIndex> const &colIndices,
-                        array1d<real64> const &values )
+                        array1d<globalIndex> const & colIndices,
+                        array1d<real64> const & values )
 {
-  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size()), values.data(), colIndices.data() );
+  m_matrix->SumIntoGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size() ), values.data(), colIndices.data() );
 }
 
 void EpetraMatrix::set( globalIndex const rowIndex,
-                        array1d<globalIndex> const &colIndices,
-                        array1d<real64> const &values )
+                        array1d<globalIndex> const & colIndices,
+                        array1d<real64> const & values )
 {
-  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size()), values.data(), colIndices.data() );
+  m_matrix->ReplaceGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size() ), values.data(), colIndices.data() );
 }
 
 void EpetraMatrix::insert( globalIndex const rowIndex,
-                           array1d<globalIndex> const &colIndices,
-                           array1d<real64> const &values )
+                           array1d<globalIndex> const & colIndices,
+                           array1d<real64> const & values )
 {
-  m_matrix->InsertGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size()), values.data(), colIndices.data() );
+  m_matrix->InsertGlobalValues( rowIndex, integer_conversion<int, localIndex>( colIndices.size() ), values.data(), colIndices.data() );
 }
 
 // MxN array2d style
@@ -223,8 +227,8 @@ void EpetraMatrix::add( array1d<globalIndex> const & rowIndices,
                         array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
-  m_matrix->SumIntoGlobalValues( integer_conversion<int, localIndex>( rowIndices.size()), rowIndices.data(),
-                                 integer_conversion<int, localIndex>( colIndices.size()), colIndices.data(),
+  m_matrix->SumIntoGlobalValues( integer_conversion<int, localIndex>( rowIndices.size() ), rowIndices.data(),
+                                 integer_conversion<int, localIndex>( colIndices.size() ), colIndices.data(),
                                  values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
@@ -232,8 +236,8 @@ void EpetraMatrix::set( array1d<globalIndex> const & rowIndices,
                         array1d<globalIndex> const & colIndices,
                         array2d<real64> const & values )
 {
-  m_matrix->ReplaceGlobalValues( integer_conversion<int, localIndex>( rowIndices.size()), rowIndices.data(),
-                                 integer_conversion<int, localIndex>( colIndices.size()), colIndices.data(),
+  m_matrix->ReplaceGlobalValues( integer_conversion<int, localIndex>( rowIndices.size() ), rowIndices.data(),
+                                 integer_conversion<int, localIndex>( colIndices.size() ), colIndices.data(),
                                  values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
@@ -241,8 +245,8 @@ void EpetraMatrix::insert( array1d<globalIndex> const & rowIndices,
                            array1d<globalIndex> const & colIndices,
                            array2d<real64> const & values )
 {
-  m_matrix->InsertGlobalValues( integer_conversion<int, localIndex>( rowIndices.size()), rowIndices.data(),
-                                integer_conversion<int, localIndex>( colIndices.size()), colIndices.data(),
+  m_matrix->InsertGlobalValues( integer_conversion<int, localIndex>( rowIndices.size() ), rowIndices.data(),
+                                integer_conversion<int, localIndex>( colIndices.size() ), colIndices.data(),
                                 values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
@@ -254,8 +258,8 @@ void EpetraMatrix::insert( array1d<globalIndex> const & rowIndices,
 // Matrix/vector multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-vector product A*src = dst.
-void EpetraMatrix::multiply( EpetraVector const &src,
-                             EpetraVector &dst ) const
+void EpetraMatrix::multiply( EpetraVector const & src,
+                             EpetraVector & dst ) const
 {
   m_matrix->Multiply( false, *src.unwrappedPointer(), *dst.unwrappedPointer() );
 }
@@ -264,16 +268,16 @@ void EpetraMatrix::multiply( EpetraVector const &src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*src = dst.
-void EpetraMatrix::multiply( EpetraMatrix const &src,
-                             EpetraMatrix &dst ) const
+void EpetraMatrix::multiply( EpetraMatrix const & src,
+                             EpetraMatrix & dst ) const
 {
-  int err = EpetraExt::MatrixMatrix::Multiply(*m_matrix,
-                                              false,//don't use transpose
-                                              *src.unwrappedPointer(),
-                                              false,//don't use tranpose,
-                                              *dst.unwrappedPointer());
+  int err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
+                                               false,//don't use transpose
+                                               *src.unwrappedPointer(),
+                                               false,//don't use tranpose,
+                                               *dst.unwrappedPointer() );
 
-  GEOS_ERROR_IF(err != 0,"Error thrown in matrix/matrix multiply routine");
+  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
 }
 
 
@@ -281,9 +285,9 @@ void EpetraMatrix::multiply( EpetraMatrix const &src,
 // Compute residual.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute res = b - Ax (residual form).
-void EpetraMatrix::residual( EpetraVector const &x,
-                             EpetraVector const &b,
-                             EpetraVector &r ) const
+void EpetraMatrix::residual( EpetraVector const & x,
+                             EpetraVector const & b,
+                             EpetraVector & r ) const
 {
   m_matrix->Multiply( false, *x.unwrappedPointer(), *r.unwrappedPointer() );
   r.axpby( 1.0, b, -1.0 );
@@ -294,9 +298,9 @@ void EpetraMatrix::residual( EpetraVector const &x,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
 void EpetraMatrix::gemv( real64 const alpha,
-                         EpetraVector const &x,
+                         EpetraVector const & x,
                          real64 const beta,
-                         EpetraVector &y,
+                         EpetraVector & y,
                          bool useTranspose )
 {
   EpetraVector Ax( y );
@@ -316,18 +320,18 @@ void EpetraMatrix::scale( real64 const scalingFactor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Left and right scaling
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void EpetraMatrix::leftScale( EpetraVector const &vec )
+void EpetraMatrix::leftScale( EpetraVector const & vec )
 {
-  m_matrix->LeftScale( *(*vec.unwrappedPointer())( 0 ) );
+  m_matrix->LeftScale( *( *vec.unwrappedPointer() )( 0 ) );
 }
 
-void EpetraMatrix::rightScale( EpetraVector const &vec )
+void EpetraMatrix::rightScale( EpetraVector const & vec )
 {
-  m_matrix->RightScale( *(*vec.unwrappedPointer())( 0 ) );
+  m_matrix->RightScale( *( *vec.unwrappedPointer() )( 0 ) );
 }
 
-void EpetraMatrix::leftRightScale( EpetraVector const &vecLeft,
-                                   EpetraVector const &vecRight )
+void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
+                                   EpetraVector const & vecRight )
 {
   leftScale( vecLeft );
   rightScale( vecRight );
@@ -349,7 +353,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   values.resize( length );
   colIndices.resize( length );
 
-  array1d<int> local_indices ( length );
+  array1d<int> local_indices( length );
 
   int localRow = m_matrix->LRID( globalRow );
   int err = m_matrix->ExtractMyRowCopy( localRow, n_entries, n_entries, values.data(), local_indices.data() );
@@ -357,7 +361,9 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
                  "getRowCopy failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called." );
 
   for( localIndex i=0 ; i<length ; ++i )
+  {
     colIndices[i] = m_matrix->GCID64( local_indices[i] );
+  }
 }
 
 
@@ -369,7 +375,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
 void EpetraMatrix::clearRow( globalIndex const globalRow,
                              real64 const diagValue )
 {
-  double *values = nullptr;
+  double * values = nullptr;
   int length;
 
   int err = m_matrix->ExtractGlobalRowView( globalRow, length, values );
@@ -377,7 +383,9 @@ void EpetraMatrix::clearRow( globalIndex const globalRow,
                  "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called." );
 
   for( int j=0 ; j<length ; ++j )
+  {
     values[j] = 0.0;
+  }
 
   set( globalRow, globalRow, diagValue );
 }
@@ -507,9 +515,9 @@ bool EpetraMatrix::isAssembled() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*src = dst.
 void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
-                                         EpetraMatrix const &B,
+                                         EpetraMatrix const & B,
                                          bool const transB,
-                                         EpetraMatrix &C,
+                                         EpetraMatrix & C,
                                          bool const call_FillComplete ) const
 {
   int

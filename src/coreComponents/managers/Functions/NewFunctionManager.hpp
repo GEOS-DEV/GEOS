@@ -37,16 +37,16 @@ namespace geosx
 class NewFunctionManager : public dataRepository::ManagedGroup
 {
 public:
-  NewFunctionManager( const std::string& name,
+  NewFunctionManager( const std::string & name,
                       dataRepository::ManagedGroup * const parent );
   virtual ~NewFunctionManager() override;
 
   static NewFunctionManager * Instance()
   {
     static NewFunctionManager * theFunctionManager = nullptr;
-    if (theFunctionManager == nullptr)
+    if( theFunctionManager == nullptr )
     {
-      theFunctionManager = new NewFunctionManager("Functions", nullptr); 
+      theFunctionManager = new NewFunctionManager( "Functions", nullptr );
     }
     return theFunctionManager;
   }
@@ -61,7 +61,7 @@ public:
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
-  
+
 };
 
 

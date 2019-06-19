@@ -34,15 +34,15 @@ namespace geosx
 using namespace dataRepository;
 
 template <int dim>
-GaussQuadrature<dim>::GaussQuadrature(std::string const & name, ManagedGroup * const parent)
+GaussQuadrature<dim>::GaussQuadrature( std::string const & name, ManagedGroup * const parent )
   :
-  QuadratureBase(name, parent),
-  m_degree(0),
-  m_n_gauss_points(0)
+  QuadratureBase( name, parent ),
+  m_degree( 0 ),
+  m_n_gauss_points( 0 )
 {
   RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Quadrature degree");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Quadrature degree" );
 }
 
 
@@ -73,7 +73,9 @@ R1Tensor GaussQuadrature<dim>::integration_point( const int index ) const
 
   R1Tensor point;
   for( int d = 0 ; d < dim ; ++d )
+  {
     point[d] = m_points_1d[indices[d]];
+  }
 
   return point;
 }
@@ -90,7 +92,9 @@ double GaussQuadrature<dim>::integration_weight( const int index ) const
 
   double weight = 1.0;
   for( int d = 0 ; d < dim ; ++d )
+  {
     weight *= m_weights_1d[indices[d]];
+  }
 
   return weight;
 }
@@ -127,8 +131,7 @@ void GaussQuadrature<dim>::PostProcessInput()
       }
       pp = m_degree * ( z * p1 - p2 ) / ( z * z - 1 );
       z = z - p1 / pp;
-    }
-    while( std::fabs( p1 / pp ) > tolerance );
+    } while( std::fabs( p1 / pp ) > tolerance );
 
     double x = 0.5 * z;
 
@@ -148,9 +151,12 @@ void GaussQuadrature<dim>::PostProcessInput()
 
 namespace
 {
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature1;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature2;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature3;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, ManagedGroup * const >
+catEntry_GaussQuadrature1;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, ManagedGroup * const >
+catEntry_GaussQuadrature2;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, ManagedGroup * const >
+catEntry_GaussQuadrature3;
 }
 
 }

@@ -37,56 +37,56 @@ SolverBase::SolverBase( std::string const & name,
   m_cflFactor(),
   m_maxStableDt{1e99}
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   this->RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, 0 );
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 );
-//  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
+  //  this->RegisterViewWrapper( viewKeyStruct::blockLocalDofNumberString, &m_blockLocalDofNumber, 0 );
 
   // This sets a flag to indicate that this object increments time
-  this->SetTimestepBehavior(1);
+  this->SetTimestepBehavior( 1 );
 
 
-  RegisterViewWrapper(viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
-                   " simulations, this should remain at 0.");
+  RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
+  setApplyDefaultValue( 0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
+                  " simulations, this should remain at 0." );
 
-  RegisterViewWrapper(viewKeyStruct::cflFactorString, &m_cflFactor, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
-                    " when calculating the maximum allowable time step. Values should be in the interval (0,1] ");
+  RegisterViewWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+  setApplyDefaultValue( 0.5 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
+                  " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  RegisterViewWrapper(viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
-    setApplyDefaultValue(0.5)->
-    setInputFlag(InputFlags::FALSE)->
-    setDescription( "Value of the Maximum Stable Timestep for this solver.");
+  RegisterViewWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+  setApplyDefaultValue( 0.5 )->
+  setInputFlag( InputFlags::FALSE )->
+  setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
-    setApplyDefaultValue("none")->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, "
-                    "if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. "
-                    "If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be"
-                    "specified.");
+  setApplyDefaultValue( "none" )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, "
+                  "if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. "
+                  "If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be"
+                  "specified." );
 
-  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Allowable regions that the solver may be applied to. Note that this does not indicate that "
-                   "the solver will be applied to these regions, only that allocation will occur such that the "
-                   "solver may be applied to these regions. The decision about what regions this solver will be"
-                   "applied to rests in the EventManager.");
+  RegisterViewWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                  "the solver will be applied to these regions, only that allocation will occur such that the "
+                  "solver may be applied to these regions. The decision about what regions this solver will be"
+                  "applied to rests in the EventManager." );
 
 }
 
 SolverBase::~SolverBase()
 {
-//  delete m_linearSolverWrapper;
+  //  delete m_linearSolverWrapper;
 }
 
-SolverBase::CatalogInterface::CatalogType& SolverBase::GetCatalog()
+SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -101,7 +101,7 @@ ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & 
   }
   else
   {
-    GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
+    GEOS_ERROR( childKey<<" is an invalid key to SolverBase child group." );
   }
   return rval;
 }
@@ -120,8 +120,8 @@ void SolverBase::PostProcessInput()
 }
 
 
-real64 SolverBase::SolverStep( real64 const& time_n,
-                               real64 const& dt,
+real64 SolverBase::SolverStep( real64 const & time_n,
+                               real64 const & dt,
                                const integer cycleNumber,
                                DomainPartition * domain )
 {
@@ -141,15 +141,15 @@ void SolverBase::Execute( real64 const time_n,
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer const maxSubSteps = solverParams->maxSubSteps();
 
-  for (integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep)
+  for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
-    real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
+    real64 const dtAccepted = SolverStep( time_n + ( dt - dtRemaining ),
                                           dtRemaining,
                                           cycleNumber,
                                           domain->group_cast<DomainPartition *>() );
     dtRemaining -= dtAccepted;
 
-    if (m_verboseLevel >= 1 && dtRemaining > 0.0)
+    if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
     {
       GEOS_LOG_RANK_0( getName() << ": sub-step = " << subStep
                        << ", accepted dt = " << dtAccepted
@@ -286,8 +286,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   for( int dtAttempt = 0 ; dtAttempt<maxNumberDtCuts ; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
-    if (dtAttempt > 0)
+    if( dtAttempt > 0 )
+    {
       ResetStateToBeginningOfStep( domain );
+    }
 
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
@@ -306,14 +308,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( blockSystem, domain );
 
-      if ( m_verboseLevel >= 1 )
+      if( m_verboseLevel >= 1 )
       {
         GEOS_LOG_RANK_0( "Attempt: " << dtAttempt  << ", Newton: " << newtonIter << ", R = " << residualNorm );
       }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if ( residualNorm < newtonTol )
+      if( residualNorm < newtonTol )
       {
         isConverged = 1;
         break;
@@ -337,7 +339,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call the default linear solver on the system
       SolveSystem( blockSystem, getSystemSolverParameters() );
 
-      if ( !CheckSystemSolution( blockSystem, 1.0, domain ) )
+      if( !CheckSystemSolution( blockSystem, 1.0, domain ) )
       {
         // TODO try chopping (similar to line search)
         GEOS_LOG_RANK_0( "Solution check failed. Newton loop terminated." );
@@ -361,11 +363,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     }
   }
 
-  if ( !isConverged )
+  if( !isConverged )
   {
     GEOS_LOG_RANK_0( "Convergence not achieved." );
 
-    if ( allowNonConverged )
+    if( allowNonConverged )
     {
       GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
     }
@@ -388,8 +390,8 @@ real64 SolverBase::ExplicitStep( real64 const & time_n,
   return 0;
 }
 
-void SolverBase::ImplicitStepSetup( real64 const& time_n,
-                                    real64 const& dt,
+void SolverBase::ImplicitStepSetup( real64 const & time_n,
+                                    real64 const & dt,
                                     DomainPartition * const domain,
                                     systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
@@ -414,7 +416,7 @@ void SolverBase::ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 SolverBase::
-CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        DomainPartition * const domain )
 {
   GEOS_ERROR( "SolverBase::CalculateResidualNorm called!. Should be overridden." );
@@ -477,7 +479,7 @@ R1Tensor const * SolverBase::globalGravityVector() const
   R1Tensor const * rval = nullptr;
   if( getParent()->getName() == "Solvers" )
   {
-    rval = &(getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ));
+    rval = &( getParent()->getReference<R1Tensor>( viewKeyStruct::gravityVectorString ) );
   }
 
   return rval;

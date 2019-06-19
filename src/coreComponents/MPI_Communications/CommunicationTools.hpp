@@ -70,16 +70,16 @@ public:
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                                    array1d<NeighborCommunicator> & allNeighbors );
 
-  static void SynchronizeFields( const std::map<string, string_array >& fieldNames,
+  static void SynchronizeFields( const std::map<string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
                                  array1d<NeighborCommunicator> & allNeighbors );
 
-  static void SynchronizePackSendRecvSizes( const std::map<string, string_array >& fieldNames,
+  static void SynchronizePackSendRecvSizes( const std::map<string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
                                             array1d<NeighborCommunicator> & neighbors,
                                             MPI_iCommData & icomm );
 
-  static void SynchronizePackSendRecv( const std::map<string, string_array >& fieldNames,
+  static void SynchronizePackSendRecv( const std::map<string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
                                        array1d<NeighborCommunicator> & allNeighbors,
                                        MPI_iCommData & icomm );
@@ -99,9 +99,9 @@ class MPI_iCommData
 public:
 
   MPI_iCommData():
-    size(0),
-    commID(-1),
-    sizeCommID(-1),
+    size( 0 ),
+    commID( -1 ),
+    sizeCommID( -1 ),
     fieldNames(),
     mpiSendBufferRequest(),
     mpiRecvBufferRequest(),
@@ -116,12 +116,12 @@ public:
   {
     if( commID >= 0 )
     {
-      CommunicationTools::releaseCommID(commID);
+      CommunicationTools::releaseCommID( commID );
     }
 
     if( sizeCommID >= 0 )
     {
-      CommunicationTools::releaseCommID(sizeCommID);
+      CommunicationTools::releaseCommID( sizeCommID );
     }
 
   }
@@ -136,7 +136,7 @@ public:
     mpiSizeRecvBufferRequest.resize( numMessages );
     mpiSizeSendBufferStatus.resize( numMessages );
     mpiSizeRecvBufferStatus.resize( numMessages );
-    size = static_cast<int>(numMessages);
+    size = static_cast<int>( numMessages );
   }
 
   int size;
@@ -173,7 +173,7 @@ void CommunicationTools::allGather( T const myValue, array1d<T> & allValues )
   MPI_Allgather( &myValue, 1, MPI_TYPE, allValues.data(), 1, MPI_TYPE, MPI_COMM_GEOSX );
 
 #else
-  allValues.resize(1);
+  allValues.resize( 1 );
   allValues[0] = myValue;
 #endif
 }

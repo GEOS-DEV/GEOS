@@ -58,7 +58,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
                              arrayView1d<real64> const & mob,
                              arrayView1d<real64> const & dMob_dPres )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute( dens[a][0],
              dDens_dPres[a][0],
@@ -77,7 +77,7 @@ void MobilityKernel::Launch( set<localIndex> targetSet,
                              arrayView1d<real64> const & mob,
                              arrayView1d<real64> const & dMob_dPres )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute( dens[a][0],
              dDens_dPres[a][0],
@@ -93,7 +93,7 @@ void MobilityKernel::Launch( localIndex begin, localIndex end,
                              arrayView2d<real64 const> const & visc,
                              arrayView1d<real64> const & mob )
 {
-  forall_in_range( begin, end, GEOSX_LAMBDA ( localIndex const a )
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex const a )
   {
     Compute( dens[a][0],
              visc[a][0],
@@ -106,7 +106,7 @@ void MobilityKernel::Launch( set<localIndex> targetSet,
                              arrayView2d<real64 const> const & visc,
                              arrayView1d<real64> const & mob )
 {
-  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA ( localIndex const a )
+  forall_in_set( targetSet.values(), targetSet.size(), GEOSX_LAMBDA( localIndex const a )
   {
     Compute( dens[a][0],
              visc[a][0],

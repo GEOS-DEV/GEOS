@@ -87,7 +87,7 @@ public:
   string m_basisName;
   string m_quadratureName;
 
-  BasisBase const *    m_basis    = nullptr;
+  BasisBase const   *  m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;
   FiniteElementBase * m_finiteElement = nullptr;
 protected:

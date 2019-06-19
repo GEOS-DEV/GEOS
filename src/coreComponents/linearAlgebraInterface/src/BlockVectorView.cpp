@@ -79,11 +79,13 @@ BlockVectorView<LAI>::BlockVectorView( localIndex const nBlocks )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Copy the input block vector pointers
 template< typename LAI >
-void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const &src )
+void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const & src )
 {
-  m_vectors.resize( src.blockSize()  );
+  m_vectors.resize( src.blockSize() );
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
-    m_vectors[i] = &(src.block( i ));
+  {
+    m_vectors[i] = &( src.block( i ) );
+  }
 }
 
 
@@ -93,7 +95,7 @@ void BlockVectorView<LAI>::shallowCopy( BlockVectorView<LAI> const &src )
 // Setter for block.
 template< typename LAI >
 void BlockVectorView<LAI>::set( localIndex const blockIndex,
-                                ParallelVector &vector )
+                                ParallelVector & vector )
 {
   m_vectors[blockIndex] = &vector;
 }
@@ -111,7 +113,9 @@ template< typename LAI >
 void BlockVectorView<LAI>::scale( real64 const factor )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     m_vectors[i]->scale( factor );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -119,12 +123,12 @@ void BlockVectorView<LAI>::scale( real64 const factor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform a dot product.
 template< typename LAI >
-real64 BlockVectorView<LAI>::dot( BlockVectorView<LAI> const &src ) const
+real64 BlockVectorView<LAI>::dot( BlockVectorView<LAI> const & src ) const
 {
   real64 accum = 0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
   {
-    real64 temp = m_vectors[i]->dot( src.block( i ));
+    real64 temp = m_vectors[i]->dot( src.block( i ) );
     accum = accum + temp;
   }
   return accum;
@@ -159,7 +163,9 @@ real64 BlockVectorView<LAI>::normInf() const
   {
     temp = m_vectors[i]->normInf();
     if( temp > result )
+    {
       result = temp;
+    }
   }
   return result;
 }
@@ -170,10 +176,12 @@ real64 BlockVectorView<LAI>::normInf() const
 // Update the whole block vector with y = alpha*x + y
 template< typename LAI >
 void BlockVectorView<LAI>::axpy( real64 const alpha,
-                                 BlockVectorView<LAI> const &x )
+                                 BlockVectorView<LAI> const & x )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     m_vectors[i]->axpby( alpha, x.block( i ), 1. );
+  }
 }
 
 
@@ -183,11 +191,13 @@ void BlockVectorView<LAI>::axpy( real64 const alpha,
 // Update the whole block vector with y = alpha*x + beta*y
 template< typename LAI >
 void BlockVectorView<LAI>::axpby( real64 const alpha,
-                                  BlockVectorView<LAI> const &x,
+                                  BlockVectorView<LAI> const & x,
                                   real64 const beta )
 {
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     m_vectors[i]->axpby( alpha, x.block( i ), beta );
+  }
 }
 
 
@@ -210,11 +220,13 @@ localIndex BlockVectorView<LAI>::blockSize() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for global size across blocks
 template< typename LAI >
-globalIndex BlockVectorView<LAI>::globalSize(  ) const
+globalIndex BlockVectorView<LAI>::globalSize( ) const
 {
   globalIndex size = 0;
   for( localIndex i = 0 ; i < m_vectors.size() ; i++ )
+  {
     size = m_vectors[i]->globalSize() + size;
+  }
   return size;
 }
 

@@ -30,7 +30,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const Events("Events");
+string const Events( "Events" );
 }
 }
 
@@ -63,7 +63,7 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(dataRepository::ManagedGroup * domain);
+  void Run( dataRepository::ManagedGroup * domain );
 
   struct viewKeyStruct
   {
@@ -89,7 +89,7 @@ public:
 
   /// Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
 protected:
   virtual void PostProcessInput() override;

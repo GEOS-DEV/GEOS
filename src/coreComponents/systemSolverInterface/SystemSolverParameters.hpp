@@ -39,7 +39,7 @@ public:
   SystemSolverParameters( std::string const & name,
                           ManagedGroup * const parent );
 
-  SystemSolverParameters(SystemSolverParameters &&) = default;
+  SystemSolverParameters( SystemSolverParameters && ) = default;
 
   virtual ~SystemSolverParameters() override = default;
 

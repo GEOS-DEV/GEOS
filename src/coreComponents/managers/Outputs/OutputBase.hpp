@@ -52,7 +52,7 @@ public:
 
   /// Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   struct viewKeysStruct
   {

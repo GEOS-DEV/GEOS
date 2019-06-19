@@ -85,16 +85,16 @@ public:
                         real64 & dViscosity_dPressure ) const = 0;
 
   array2d<real64> const & density() const { return m_density; }
-  array2d<real64>       & density()       { return m_density; }
+  array2d<real64>    &    density()       { return m_density; }
 
   array2d<real64> const & dPressure_dDensity() const { return m_dDensity_dPressure; }
-  array2d<real64>       & dPressure_dDensity()       { return m_dDensity_dPressure; }
+  array2d<real64>    &    dPressure_dDensity()       { return m_dDensity_dPressure; }
 
   array2d<real64> const & viscosity() const { return m_viscosity; }
-  array2d<real64>       & viscosity()       { return m_viscosity; }
+  array2d<real64>    &    viscosity()       { return m_viscosity; }
 
   array2d<real64> const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
-  array2d<real64>       & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
+  array2d<real64>    &    dViscosity_dDensity()       { return m_dViscosity_dPressure; }
 
   // *** Data repository keys
 
@@ -188,12 +188,12 @@ protected:
 template< typename POLICY, typename LAMBDA >
 void SingleFluidBase::LaunchKernel( LAMBDA && lambda )
 {
-  localIndex const numElem = m_density.size(0);
-  localIndex const numQuad = m_density.size(1);
+  localIndex const numElem = m_density.size( 0 );
+  localIndex const numQuad = m_density.size( 1 );
 
-  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<POLICY>( 0, numElem, GEOSX_LAMBDA( localIndex const k )
   {
-    for (localIndex q = 0; q < numQuad; ++q)
+    for( localIndex q = 0; q < numQuad; ++q )
     {
       lambda( k, q );
     }
@@ -209,7 +209,7 @@ void SingleFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & press
   arrayView2d<real64> const & viscosity = m_viscosity;
   arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
 
-  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  LaunchKernel<POLICY>( GEOSX_LAMBDA( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         density[k][q],
@@ -227,7 +227,7 @@ void SingleFluidBase::BatchDensityUpdateKernel( arrayView1d<real64 const> const 
   arrayView2d<real64> const & density = m_density;
   arrayView2d<real64> const & dDensity_dPressure = m_dDensity_dPressure;
 
-  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  LaunchKernel<POLICY>( GEOSX_LAMBDA( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         density[k][q],
@@ -243,7 +243,7 @@ void SingleFluidBase::BatchViscosityUpdateKernel( arrayView1d<real64 const> cons
   arrayView2d<real64> const & viscosity = m_viscosity;
   arrayView2d<real64> const & dViscosity_dPressure = m_dViscosity_dPressure;
 
-  LaunchKernel<POLICY>( GEOSX_LAMBDA ( localIndex const k, localIndex const q )
+  LaunchKernel<POLICY>( GEOSX_LAMBDA( localIndex const k, localIndex const q )
   {
     LEAFCLASS::Compute( pressure[k],
                         viscosity[k][q],

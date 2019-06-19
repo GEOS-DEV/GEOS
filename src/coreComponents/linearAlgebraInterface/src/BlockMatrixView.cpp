@@ -64,13 +64,13 @@ BlockMatrixView<LAI>::BlockMatrixView( localIndex const nRows,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Apply the block matrix to a block vector and compute the result.
 template< typename LAI >
-void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
-                                     BlockVectorView<LAI> &b ) const
+void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const & x,
+                                     BlockVectorView<LAI> & b ) const
 {
   for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
     b.block( row ).zero();
-    ParallelVector temp( b.block( row ));
+    ParallelVector temp( b.block( row ) );
     for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
@@ -88,14 +88,14 @@ void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute the residual r = b - Ax.
 template< typename LAI >
-void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
-                                     BlockVectorView<LAI> const &b,
-                                     BlockVectorView<LAI> &r ) const
+void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const & x,
+                                     BlockVectorView<LAI> const & b,
+                                     BlockVectorView<LAI> & r ) const
 {
   for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
   {
-    r.block( row ).copy( b.block( row ));
-    ParallelVector temp( b.block( row ));
+    r.block( row ).copy( b.block( row ) );
+    ParallelVector temp( b.block( row ) );
     for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
     {
       if( m_matrices[row][col] != nullptr )
@@ -152,7 +152,7 @@ typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( localIndex const blo
 template< typename LAI >
 void BlockMatrixView<LAI>::set( localIndex const blockRowIndex,
                                 localIndex const blockColIndex,
-                                typename LAI::ParallelMatrix &matrix )
+                                typename LAI::ParallelMatrix & matrix )
 {
   m_matrices[blockRowIndex][blockColIndex] = &matrix;
 }

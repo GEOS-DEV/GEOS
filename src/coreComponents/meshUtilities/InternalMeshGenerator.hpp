@@ -61,18 +61,18 @@ class DomainPartition;
 class InternalMeshGenerator : public MeshGeneratorBase
 {
 public:
-  InternalMeshGenerator( const std::string& name,
+  InternalMeshGenerator( const std::string & name,
                          ManagedGroup * const parent );
 
   virtual ~InternalMeshGenerator() override;
 
   static string CatalogName() { return "InternalMesh"; }
 
-//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
-//
-//
+  //  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+  //
+  //
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+  virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -81,15 +81,15 @@ public:
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                             const int index[],
-                                             const int& iEle,
-                                             int nodeIDInBox[],
-                                             const int size) override;
+  virtual void GetElemToNodesRelationInBox( const std::string & elementType,
+                                            const int index[],
+                                            const int & iEle,
+                                            int nodeIDInBox[],
+                                            const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
+  virtual void RemapMesh( dataRepository::ManagedGroup * const domain ) override;
 
-//  int m_delayMeshDeformation;
+  //  int m_delayMeshDeformation;
 
 protected:
   void PostProcessInput() override final;
@@ -115,25 +115,25 @@ private:
 
 
 
-//  realT m_wExtensionMin[3];
-//  realT m_wExtensionMax[3];
-//  int m_nExtensionLayersMin[3];
-//  int m_nExtensionLayersMax[3];
-//  realT m_extendedMin[3];
-//  realT m_extendedMax[3]; // This is the domain size after we apply n layers
-// of elements which are of the same size as the core elements.  We will move
-// these nodes to where they should be later when we finish the meshing.
+  //  realT m_wExtensionMin[3];
+  //  realT m_wExtensionMax[3];
+  //  int m_nExtensionLayersMin[3];
+  //  int m_nExtensionLayersMax[3];
+  //  realT m_extendedMin[3];
+  //  realT m_extendedMax[3]; // This is the domain size after we apply n layers
+  // of elements which are of the same size as the core elements.  We will move
+  // these nodes to where they should be later when we finish the meshing.
   int m_numElemsTotal[3];
-//  realT m_commonRatioMin[3];
-//  realT m_commonRatioMax[3];
+  //  realT m_commonRatioMin[3];
+  //  realT m_commonRatioMax[3];
 
   string_array m_elementType;
 
   array1d<integer> m_numElePerBox;
 
   int m_trianglePattern;   // In pattern 0, half nodes have 4 edges and the
-                           // other half have 8; for Pattern 1, every node has
-                           // 6.
+  // other half have 8; for Pattern 1, every node has
+  // 6.
 
   realT m_fPerturb=0.0;
   int m_randSeed;
@@ -146,7 +146,7 @@ private:
   realT m_meshRact;
 
   realT m_skewAngle = 0;
-  R1Tensor m_skewCenter = {0,0,0};
+  R1Tensor m_skewCenter = {0, 0, 0};
 
   std::string m_meshDx, m_meshDy, m_meshDz;
 
@@ -154,7 +154,7 @@ private:
   {
     globalIndex rval = 0;
 
-    rval = index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
+    rval = index[0]*( m_numElemsTotal[1]+1 )*( m_numElemsTotal[2]+1 ) + index[1]*( m_numElemsTotal[2]+1 ) + index[2];
     return rval;
   }
 
@@ -169,10 +169,10 @@ private:
   inline R1Tensor NodePosition( const int a[3], int trianglePattern )
   {
     R1Tensor X;
-    realT xInterval(0);
+    realT xInterval( 0 );
 
     int xPosIndex = 0;
-    if (trianglePattern == 1)
+    if( trianglePattern == 1 )
     {
       int startingIndex = 0;
       int endingIndex = 0;
@@ -204,24 +204,26 @@ private:
       realT max = m_vertices[i][block+1];
 
 
-      X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
+      X[i] = min + ( max-min ) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
+      if( m_useBias && ( !isZero( m_nElemBias[i][block] ) ) & ( m_nElems[i][block]>1 ) )
       {
-        GEOS_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
+        GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
         realT len = max -  min;
         realT xmean = len / m_nElems[i][block];
         realT x0 = xmean * double( a[i] - startingIndex );
-        realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+        realT chi = m_nElemBias[i][block]/( xmean/len - 1.0 );
         realT dx = -x0*chi + x0*x0*chi/len;
         X[i] += dx;
       }
 
       // This is for creating regular triangle pattern
-      if (i==0) xInterval = (max-min) / m_nElems[i][block];
-      if (trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex)
+      if( i==0 ) { xInterval = ( max-min ) / m_nElems[i][block]; }
+      if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
+      {
         X[0] -= xInterval * 0.5;
+      }
     }
 
     return X;
@@ -233,7 +235,7 @@ private:
 
     for( int i=0 ; i<3 ; ++i )
     {
-      X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
+      X[i] = m_min[i] + ( m_max[i]-m_min[i] ) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
 
     return X;
@@ -242,7 +244,7 @@ private:
 public:
   inline bool isRadial()
   {
-    bool rval = (m_mapToRadial > 0);
+    bool rval = ( m_mapToRadial > 0 );
     return rval;
   }
 

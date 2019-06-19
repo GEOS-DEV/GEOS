@@ -28,9 +28,9 @@
  * Constructor.  Takes a vector of coefficients
  */
 
-Polynomial :: Polynomial(const std::vector<double> _coefficients)
+Polynomial :: Polynomial( const std::vector<double> _coefficients )
   :
-  m_coefficients(_coefficients)
+  m_coefficients( _coefficients )
 {}
 
 
@@ -46,9 +46,9 @@ Polynomial :: ~Polynomial()
  * Return polynomial degree
  */
 
-int Polynomial :: Degree ()
+int Polynomial :: Degree()
 {
-  return static_cast<int>(m_coefficients.size());
+  return static_cast<int>( m_coefficients.size() );
 }
 
 
@@ -57,15 +57,17 @@ int Polynomial :: Degree ()
  * function value p(x).
  */
 
-double Polynomial :: Value (const double x) const
+double Polynomial :: Value( const double x ) const
 {
   std::vector<double>::const_reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
+  it     = m_coefficients.rbegin(),
+  end_it = m_coefficients.rend();
 
   double val = 0;
-  for( ; it != end_it ; ++it)
+  for( ; it != end_it ; ++it )
+  {
     val = *it + val*x;
+  }
 
   return val;
 }
@@ -76,17 +78,17 @@ double Polynomial :: Value (const double x) const
  * function derivative p'(x).
  */
 
-double Polynomial :: Deriv (const double x) const
+double Polynomial :: Deriv( const double x ) const
 {
   std::vector<double>::const_reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
+  it     = m_coefficients.rbegin(),
+  end_it = m_coefficients.rend();
 
   double value = *it;
   double deriv = 0;
   ++it;
 
-  for( ; it != end_it ; ++it)
+  for( ; it != end_it ; ++it )
   {
     deriv = value + deriv*x;
     value = *it + value*x;
@@ -102,19 +104,19 @@ double Polynomial :: Deriv (const double x) const
  * maximize efficiency.
  */
 
-void Polynomial :: Evaluate (const double x,
-                             double &value,
-                             double &deriv)
+void Polynomial :: Evaluate( const double x,
+                             double & value,
+                             double & deriv )
 {
   std::vector<double>::reverse_iterator
-    it     = m_coefficients.rbegin(),
-    end_it = m_coefficients.rend();
+  it     = m_coefficients.rbegin(),
+  end_it = m_coefficients.rend();
 
   value = *it;
   deriv = 0;
   ++it;
 
-  for( ; it != end_it ; ++it)
+  for( ; it != end_it ; ++it )
   {
     deriv = value + deriv*x;
     value = *it + value*x;

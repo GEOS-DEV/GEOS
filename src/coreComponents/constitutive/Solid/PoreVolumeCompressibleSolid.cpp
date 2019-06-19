@@ -36,15 +36,15 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
   ConstitutiveBase( name, parent )
 {
   RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Solid compressibility");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Solid compressibility" );
 
   RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Reference pressure for fluid compressibility");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Reference pressure for fluid compressibility" );
 
   RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false )->
-    setDefaultValue(1.0);
+  setDefaultValue( 1.0 );
   RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
 }
 
@@ -82,8 +82,8 @@ void PoreVolumeCompressibleSolid::PostProcessInput()
 {
   if( m_compressibility < 0.0 )
   {
-    string const message = "An invalid value of fluid bulk modulus (" + std::to_string(m_compressibility) + ") is specified";
-    GEOS_ERROR(message);
+    string const message = "An invalid value of fluid bulk modulus (" + std::to_string( m_compressibility ) + ") is specified";
+    GEOS_ERROR( message );
   }
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 

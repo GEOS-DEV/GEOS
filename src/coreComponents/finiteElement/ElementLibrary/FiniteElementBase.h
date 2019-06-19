@@ -44,9 +44,9 @@ public:
 
   static string CatalogName() { return "FiniteElementBase"; }
   using CatalogInterface = cxx_utilities::CatalogInterface< FiniteElementBase, BasisBase const &,
-                                                                               QuadratureBase const &,
-                                                                               const int >;
-  static CatalogInterface::CatalogType& GetCatalog()
+        QuadratureBase const &,
+        const int >;
+  static CatalogInterface::CatalogType & GetCatalog()
   {
     static FiniteElementBase::CatalogInterface::CatalogType catalog;
     return catalog;
@@ -92,7 +92,7 @@ public:
         return "POLYTOPE";
       case ElementType::INVALID:
       default:
-        GEOS_ERROR("Invalid Element Type specified");
+        GEOS_ERROR( "Invalid Element Type specified" );
         return "INVALID";
     }
   }
@@ -100,74 +100,88 @@ public:
   static ElementType StringToElementType( string const & type )
   {
     if( type=="C3D4" )
+    {
       return ElementType::Tetrahedal;
+    }
     else if( type=="C3D5" )
+    {
       return ElementType::Pyramid;
+    }
     else if( type=="C3D6" )
+    {
       return ElementType::Prism;
+    }
     else if( type=="C3D8" )
+    {
       return ElementType::Hexahedral;
+    }
     else if( type=="POLYHEDRAL" )
+    {
       return ElementType::Polyhedral;
+    }
     else if( type=="POLYTOPE" )
+    {
       return ElementType::Polytope;
+    }
     else
+    {
       return ElementType::INVALID;
+    }
   }
 
-  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points) = 0;
+  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points ) = 0;
 
 
-//  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
-//                                         const realT& volume,
-//                                         const array1d<R1Tensor>& x,
-//                                         const array1d<R1Tensor>& vel,
-//                                         const realT& dampcoef,
-//                                         const realT& stiffcoef,
-//                                         const realT& rho,
-//                                         const realT& modulus,
-//                                         const realT& dt,
-//                                         array1d<R1Tensor>& Qstiffness,
-//                                         array1d<R1Tensor>& force ) {}
+  //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
+  //                                         const realT& volume,
+  //                                         const array1d<R1Tensor>& x,
+  //                                         const array1d<R1Tensor>& vel,
+  //                                         const realT& dampcoef,
+  //                                         const realT& stiffcoef,
+  //                                         const realT& rho,
+  //                                         const realT& modulus,
+  //                                         const realT& dt,
+  //                                         array1d<R1Tensor>& Qstiffness,
+  //                                         array1d<R1Tensor>& force ) {}
 
-  virtual void zero_energy_mode_control( const array1d<R1Tensor>&,
-                                         const realT&,
-                                         const array1d<R1Tensor>&,
-                                         const array1d<R1Tensor>&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         const realT&,
-                                         array1d<R1Tensor>&,
-                                         array1d<R1Tensor>&  ) {}
+  virtual void zero_energy_mode_control( const array1d<R1Tensor> &,
+                                         const realT &,
+                                         const array1d<R1Tensor> &,
+                                         const array1d<R1Tensor> &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         const realT &,
+                                         array1d<R1Tensor> &,
+                                         array1d<R1Tensor> & ) {}
 
 
-  double value(const int shape_index,
-               const int q_index) const
+  double value( const int shape_index,
+                const int q_index ) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    assert( q_index < n_q_points );
+    assert( shape_index < n_dofs );
     return data[q_index].parent_values[shape_index];
   }
 
   std::vector<double> const & values( const int q_index ) const
   {
-    assert(q_index < n_q_points);
+    assert( q_index < n_q_points );
     return data[q_index].parent_values;
   }
 
   R1Tensor gradient( const localIndex shape_index,
                      const localIndex q_index ) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    assert( q_index < n_q_points );
+    assert( shape_index < n_dofs );
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const localIndex q_index) const
+  double JxW( const localIndex q_index ) const
   {
-    assert(q_index < n_q_points);
+    assert( q_index < n_q_points );
     return data[q_index].jacobian_determinant *
            data[q_index].parent_q_weight;
   }
@@ -204,7 +218,7 @@ private:
 
 
   FiniteElementBase();
-  FiniteElementBase( const FiniteElementBase& );
+  FiniteElementBase( const FiniteElementBase & );
 
 
 };

@@ -47,7 +47,7 @@ NodeManager::NodeManager( std::string const & name,
   ObjectManagerBase( name, parent ),
   m_referencePosition()
 {
-  RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
+  RegisterViewWrapper( viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
 
   this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
@@ -55,15 +55,15 @@ NodeManager::NodeManager( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
-                             &(elementRegionList()),
+                             &( elementRegionList() ),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
-                             &(elementSubRegionList()),
+                             &( elementSubRegionList() ),
                              false );
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
-                             &(elementList()),
+                             &( elementList() ),
                              false );
 
 }
@@ -96,11 +96,11 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   /// <ol>
   for( localIndex ke=0 ; ke<numEdges ; ++ke )
   {
-    localIndex const numNodes = edgeToNodes.size(1);
+    localIndex const numNodes = edgeToNodes.size( 1 );
     /// <li> Loop over all nodes for each edge
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      m_toEdgesRelation[edgeToNodes[ke][a]].insert(ke);
+      m_toEdgesRelation[edgeToNodes[ke][a]].insert( ke );
     }
   }
   /// </ol>
@@ -120,7 +120,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     localIndex const numNodes = faceToNodes[ke].size();
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      m_toFacesRelation[faceToNodes[ke][a]].insert(ke);
+      m_toFacesRelation[faceToNodes[ke][a]].insert( ke );
     }
   }
   m_toFacesRelation.SetRelatedObject( faceManager );
@@ -141,16 +141,16 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     toElementList[a].clear();
   }
 
-  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
+  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
+    ElementRegion const * const elemRegion = elementRegionManager->GetRegion( kReg );
 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
                                                                       CellElementSubRegion const * const subRegion )
     {
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
-        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList( ke );
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodes[a];
@@ -159,7 +159,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
           toElementList[nodeIndex].push_back( ke );
         }
       }
-    });
+    } );
   }
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
@@ -168,16 +168,16 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 //**************************************************************************************************
 void NodeManager::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
 {
-  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementRegionListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementSubRegionListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::elementListString));
+  ObjectManagerBase::ViewPackingExclusionList( exclusionList );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ) );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ) );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString ) );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString ) );
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString ) );
 
   if( this->hasView( "usedFaces" ) )
   {
-    exclusionList.insert(this->getWrapperIndex("usedFaces"));
+    exclusionList.insert( this->getWrapperIndex( "usedFaces" ) );
   }
 }
 
@@ -189,7 +189,7 @@ localIndex NodeManager::PackUpDownMapsSize( arrayView1d<localIndex const> const 
 }
 
 //**************************************************************************************************
-localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex NodeManager::PackUpDownMaps( buffer_unit_type *& buffer,
                                         arrayView1d<localIndex const> const & packList ) const
 {
   return PackUpDownMapsPrivate<true>( buffer, packList );
@@ -197,28 +197,28 @@ localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
 
 //**************************************************************************************************
 template< bool DOPACK >
-localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type *& buffer,
                                                arrayView1d<localIndex const> const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string( viewKeyStruct::edgeListString ) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toEdgesRelation,
-                                       m_unmappedGlobalIndicesInToEdges,
-                                       packList,
-                                       this->m_localToGlobalMap,
-                                       m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toEdgesRelation,
+                                         m_unmappedGlobalIndicesInToEdges,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string( viewKeyStruct::faceListString ) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toFacesRelation,
-                                       m_unmappedGlobalIndicesInToFaces,
-                                       packList,
-                                       this->m_localToGlobalMap,
-                                       m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toFacesRelation,
+                                         m_unmappedGlobalIndicesInToFaces,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string( viewKeyStruct::elementListString ) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
                                          this->m_toElements,
                                          packList,
@@ -227,7 +227,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 }
 
 //**************************************************************************************************
-localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const *& buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
                                           bool const )
@@ -236,32 +236,32 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
+  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "" );
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toEdgesRelation,
-                                   packList,
-                                   m_unmappedGlobalIndicesInToEdges,
-                                   this->m_globalToLocalMap,
-                                   m_toEdgesRelation.RelatedObjectGlobalToLocal(),
-                                   overwriteUpMaps );
+                                     m_toEdgesRelation,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToEdges,
+                                     this->m_globalToLocalMap,
+                                     m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+                                     overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
+  GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "" );
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toFacesRelation,
-                                   packList,
-                                   m_unmappedGlobalIndicesInToFaces,
-                                   this->m_globalToLocalMap,
-                                   m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                   overwriteUpMaps );
+                                     m_toFacesRelation,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToFaces,
+                                     this->m_globalToLocalMap,
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
+  GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "" );
   unPackedSize += bufferOps::Unpack( buffer,
-                                   this->m_toElements,
-                                   packList,
-                                   m_toElements.getElementRegionManager(),
-                                   overwriteUpMaps );
+                                     this->m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager(),
+                                     overwriteUpMaps );
 
   return unPackedSize;
 }
@@ -289,19 +289,19 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
   for( auto const & targetIndex : receivedNodes )
   {
-    std::set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
+    std::set<std::tuple<localIndex, localIndex, localIndex> > eraseList;
     for( localIndex k=0 ; k<m_toElements.m_toElementRegion[targetIndex].size() ; ++k )
     {
       localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
       localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
       localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
 
-      CellElementSubRegion const * subRegion = elemRegionManager.GetRegion(elemRegionIndex)->
-                                               GetSubRegion<CellElementSubRegion>(elemSubRegionIndex);
+      CellElementSubRegion const * subRegion = elemRegionManager.GetRegion( elemRegionIndex )->
+                                               GetSubRegion<CellElementSubRegion>( elemSubRegionIndex );
       array2d<localIndex> const & downmap = subRegion->nodeList();
       bool hasTargetIndex = false;
 
-      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      for( localIndex a=0 ; a<downmap.size( 1 ) ; ++a )
       {
         localIndex const compositeLocalIndex = downmap[elemIndex][a];
         if( compositeLocalIndex==targetIndex )
@@ -311,12 +311,12 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
       }
       if( !hasTargetIndex )
       {
-        eraseList.insert(std::make_tuple(elemRegionIndex, elemSubRegionIndex, elemIndex) );
+        eraseList.insert( std::make_tuple( elemRegionIndex, elemSubRegionIndex, elemIndex ) );
       }
     }
     for( auto const & val : eraseList )
     {
-      erase( m_toElements, targetIndex, std::get<0>(val), std::get<1>(val), std::get<2>(val) );
+      erase( m_toElements, targetIndex, std::get<0>( val ), std::get<1>( val ), std::get<2>( val ) );
     }
   }
 }

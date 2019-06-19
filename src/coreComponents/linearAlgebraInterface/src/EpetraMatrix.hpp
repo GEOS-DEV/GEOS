@@ -63,7 +63,7 @@ public:
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
-  EpetraMatrix( EpetraMatrix const &src );
+  EpetraMatrix( EpetraMatrix const & src );
 
   /**
    * @brief Virtual destructor.
@@ -81,7 +81,7 @@ public:
    *
    * \param Epetra_FECrsGraph existing graph.
    */
-  void create( Epetra_FECrsGraph const &graph );
+  void create( Epetra_FECrsGraph const & graph );
 
   /**
    * @brief Create a square matrix from local number of rows.
@@ -342,8 +342,8 @@ public:
    * \param dst Output vector (b).
    *
    */
-  void multiply( EpetraVector const &src,
-                 EpetraVector &dst ) const;
+  void multiply( EpetraVector const & src,
+                 EpetraVector & dst ) const;
 
 
   /**
@@ -359,8 +359,8 @@ public:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-  void multiply( EpetraMatrix const &src,
-                 EpetraMatrix &dst ) const;
+  void multiply( EpetraMatrix const & src,
+                 EpetraMatrix & dst ) const;
 
 
   /**
@@ -371,9 +371,9 @@ public:
    * \param r Output residual.
    *
    */
-  void residual( EpetraVector const &x,
-                 EpetraVector const &b,
-                 EpetraVector &r ) const;
+  void residual( EpetraVector const & x,
+                 EpetraVector const & b,
+                 EpetraVector & r ) const;
 
   /**
    * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
@@ -388,9 +388,9 @@ public:
    *
    */
   void gemv( real64 const alpha,
-             EpetraVector const &x,
+             EpetraVector const & x,
              real64 const beta,
-             EpetraVector &y,
+             EpetraVector & y,
              bool useTranspose=false );
 
   /**
@@ -407,7 +407,7 @@ public:
    * \param vec Vector to pre-multiply with.
    *
    */
-  void leftScale( EpetraVector const &vec );
+  void leftScale( EpetraVector const & vec );
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
@@ -415,7 +415,7 @@ public:
    * \param vec Vector to post-multiply with.
    *
    */
-  void rightScale( EpetraVector const &vec );
+  void rightScale( EpetraVector const & vec );
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
@@ -425,8 +425,8 @@ public:
    * \param vec vecRight to post-multiply with.
    *
    */
-  void leftRightScale( EpetraVector const &vecLeft,
-                       EpetraVector const &vecRight );
+  void leftRightScale( EpetraVector const & vecLeft,
+                       EpetraVector const & vecRight );
 
   /**
    * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
@@ -454,7 +454,7 @@ public:
   /**
    * @brief Returns a pointer to the underlying matrix.
    */
-  Epetra_FECrsMatrix* unwrappedPointer() const;
+  Epetra_FECrsMatrix * unwrappedPointer() const;
 
   /**
    * @brief Returns the number of global rows.
@@ -518,9 +518,9 @@ public:
    * @brief Performe a matrix matrix product with Parallel Matrix
    */
   void MatrixMatrixMultiply( bool const transA,
-                             EpetraMatrix const &B,
+                             EpetraMatrix const & B,
                              bool const transB,
-                             EpetraMatrix &C,
+                             EpetraMatrix & C,
                              bool const call_FillComplete = true ) const;
 
   /**

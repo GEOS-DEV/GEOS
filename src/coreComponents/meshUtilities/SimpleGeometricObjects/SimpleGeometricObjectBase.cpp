@@ -35,7 +35,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( std::string const & name,
                                                       ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 
@@ -43,7 +43,7 @@ SimpleGeometricObjectBase::~SimpleGeometricObjectBase()
 {}
 
 
-SimpleGeometricObjectBase::CatalogInterface::CatalogType& SimpleGeometricObjectBase::GetCatalog()
+SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::GetCatalog()
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -77,7 +77,7 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType& SimpleGeometricObjectB
 //SimpleGeometricObjectBase* SimpleGeometricObjectBase::Allocate( const Types
 // type )
 //{
-//	// need to replace this with a proper factory
+//  // need to replace this with a proper factory
 //  SimpleGeometricObjectBase* object = NULL;
 //  if( type==box )
 //    object = new Box;
@@ -108,12 +108,12 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType& SimpleGeometricObjectB
 //
 //SimpleGeometricObjectBase* SimpleGeometricObjectBase::Allocate(
 // TICPP::HierarchicalDataNode* hdn){
-//	std::string geomTypeStr = hdn->Heading();
-//	SimpleGeometricObjectBase::Types type = fromString<Types>(geomTypeStr);
-//	SimpleGeometricObjectBase* object = SimpleGeometricObjectBase::Allocate(
+//  std::string geomTypeStr = hdn->Heading();
+//  SimpleGeometricObjectBase::Types type = fromString<Types>(geomTypeStr);
+//  SimpleGeometricObjectBase* object = SimpleGeometricObjectBase::Allocate(
 // type );
-//	object->ReadXML(*hdn);
-//	return object;
+//  object->ReadXML(*hdn);
+//  return object;
 //}
 //
 //void SimpleGeometricObjectBase::Deallocate( SimpleGeometricObjectBase* object

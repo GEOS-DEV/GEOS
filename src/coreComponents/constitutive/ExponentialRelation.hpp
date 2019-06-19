@@ -145,21 +145,22 @@ struct ExponentApproximationTypeWrapper
  * @param lambda user-provided generic lambda to be called with an instance of EAT wrapper type
  */
 template<typename T, typename LAMBDA>
-void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha, LAMBDA && lambda )
+void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha,
+                                           LAMBDA && lambda )
 {
   switch( type )
   {
     case ExponentApproximationType::Full:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Full>(x0, y0, alpha) );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Full>( x0, y0, alpha ) );
     }
     case ExponentApproximationType::Quadratic:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Quadratic>(x0, y0, alpha) );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Quadratic>( x0, y0, alpha ) );
     }
     case ExponentApproximationType::Linear:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Linear>(x0, y0, alpha) );
+      return lambda( ExponentialRelation<T, ExponentApproximationType::Linear>( x0, y0, alpha ) );
     }
     default:
     {
@@ -183,7 +184,7 @@ void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & y0, T const & alpha,
                               LAMBDA && lambda )
 {
-  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move(lambda));
+  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move( lambda ) );
 }
 
 namespace detail
@@ -209,12 +210,12 @@ struct ExponentialCompute<T, ExponentApproximationType::Full, false>
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
-    y = y0 * exp( alpha * (x - x0));
+    y = y0 * exp( alpha * ( x - x0 ) );
   }
 
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
-    y = y0 * exp( alpha * (x - x0));
+    y = y0 * exp( alpha * ( x - x0 ) );
     dy_dx = alpha * y;
   }
 };
@@ -240,14 +241,14 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic, false>
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
-    const T z = T( 1.0 ) + alpha * (x - x0);
-    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
+    const T z = T( 1.0 ) + alpha * ( x - x0 );
+    y = y0 / T( 2.0 ) * ( T( 1.0 ) + z * z );
   }
 
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
-    const T z = T( 1.0 ) + alpha * (x - x0);
-    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
+    const T z = T( 1.0 ) + alpha * ( x - x0 );
+    y = y0 / T( 2.0 ) * ( T( 1.0 ) + z * z );
     dy_dx = alpha * y0 * z;
   }
 };
@@ -257,16 +258,16 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic, true>
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
-    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
-    x = x0 + (z - 1) / alpha;
+    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ) );
+    x = x0 + ( z - 1 ) / alpha;
   }
 
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
-    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
-    x = x0 + alpha_inv * (z - 1);
-    dx_dy = alpha_inv / (y0 * z);
+    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ) );
+    x = x0 + alpha_inv * ( z - 1 );
+    dx_dy = alpha_inv / ( y0 * z );
   }
 };
 
@@ -275,12 +276,12 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear, false>
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
-    y = y0 * (T( 1.0 ) + alpha * (x - x0));
+    y = y0 * ( T( 1.0 ) + alpha * ( x - x0 ) );
   }
 
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
   {
-    y = y0 * (T( 1.0 ) + alpha * (x - x0));
+    y = y0 * ( T( 1.0 ) + alpha * ( x - x0 ) );
     dy_dx = alpha * y0;
   }
 };
@@ -290,13 +291,13 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear, true>
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
-    x = x0 + (y / y0 - 1) / alpha;
+    x = x0 + ( y / y0 - 1 ) / alpha;
   }
 
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
   {
     const T alpha_inv = T( 1.0 ) / alpha;
-    x = x0 + alpha_inv * (y / y0 - 1);
+    x = x0 + alpha_inv * ( y / y0 - 1 );
     dx_dy = alpha_inv / y0;
   }
 };
@@ -305,7 +306,7 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear, true>
 
 template<typename T, ExponentApproximationType EAT>
 ExponentialRelation<T, EAT>::ExponentialRelation()
-  : ExponentialRelation(T(0), T(1), T(1))
+  : ExponentialRelation( T( 0 ), T( 1 ), T( 1 ) )
 {
 
 }

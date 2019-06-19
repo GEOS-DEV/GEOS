@@ -42,40 +42,40 @@ public:
   /**
     * @name Static Factory Catalog Functions
     */
-   ///@{
+  ///@{
 
-   static const string CatalogName()
-   { return "EdgeManager"; }
+  static const string CatalogName()
+  { return "EdgeManager"; }
 
-   virtual const string getCatalogName() const override final
-   { return EdgeManager::CatalogName(); }
+  virtual const string getCatalogName() const override final
+  { return EdgeManager::CatalogName(); }
 
 
-   ///@}
+  ///@}
 
 
   EdgeManager( std::string const & name,
                ManagedGroup * const parent );
   ~EdgeManager() override;
 
-//  void Initialize() {}
+  //  void Initialize() {}
 
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr);
+  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
   void SetIsExternal( FaceManager const * const faceManager );
-//  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-//                                                         array<globalIndex_array>& objectToCompositionObject );
+  //  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
+  //                                                         array<globalIndex_array>& objectToCompositionObject );
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
 
   void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+                                                        array1d<globalIndex_array> & edgesToNodes ) override final;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type *& buffer,
                                      arrayView1d<localIndex const> const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const *& buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
@@ -85,21 +85,21 @@ public:
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
                          array1d< array1d< localIndex > > const & facesToEdges );
 
-  void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                      const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                      const std::map<globalIndex,localIndex>& faceGlobalToLocal );
+  void ConnectivityFromGlobalToLocal( const set<localIndex> & indices,
+                                      const std::map<globalIndex, localIndex> & nodeGlobalToLocal,
+                                      const std::map<globalIndex, localIndex> & faceGlobalToLocal );
 
-//  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const set<localIndex>& newEdgeIndices,
-//                                     const set<localIndex>& modifiedEdgeIndices );
+  //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
+  //                                     const set<localIndex>& newEdgeIndices,
+  //                                     const set<localIndex>& modifiedEdgeIndices );
 
   void AddToEdgeToFaceMap( const FaceManager * faceManager,
-                           const localIndex_array& newFaceIndices );
+                           const localIndex_array & newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
-                  array1d<set<localIndex>>& nodesToEdges );
+                  array1d<set<localIndex>> & nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
@@ -111,14 +111,14 @@ public:
                         arraySlice1d<R1Tensor const> const & X,
                         R1Tensor & center ) const;
 
-//  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
-// nodeB, const NodeManager& nodeManager);
+  //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
+  // nodeB, const NodeManager& nodeManager);
 
-//  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
+  //  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
 
 
-//  FixedOneToManyRelation& m_toNodesRelation;
-//  UnorderedVariableOneToManyRelation& m_toFacesRelation;
+  //  FixedOneToManyRelation& m_toNodesRelation;
+  //  UnorderedVariableOneToManyRelation& m_toFacesRelation;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -141,20 +141,20 @@ public:
   {} groupKeys;
 
 
-  FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
+  FixedOneToManyRelation    &    nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
 
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
   {
-    return m_toNodesRelation(edgeIndex, nodeIndex);
+    return m_toNodesRelation( edgeIndex, nodeIndex );
   }
   localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
   {
-    return m_toNodesRelation(edgeIndex, nodeIndex);
+    return m_toNodesRelation( edgeIndex, nodeIndex );
   }
 
 
-  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation    &    faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
@@ -167,7 +167,7 @@ private:
 
 
   template<bool DOPACK>
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type *& buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
 };

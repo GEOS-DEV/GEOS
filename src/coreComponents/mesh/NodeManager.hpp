@@ -89,16 +89,16 @@ public:
 
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
 
-//  void Initialize();
+  //  void Initialize();
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type *& buffer,
                                      arrayView1d<localIndex const> const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const *& buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
@@ -159,28 +159,28 @@ public:
   UnorderedVariableOneToManyRelation & edgeList()
   { return m_toEdgesRelation; }
 
-  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
+  UnorderedVariableOneToManyRelation    &    faceList()       { return m_toFacesRelation; }
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array1d<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  array1d<localIndex_array>    &    elementRegionList()       { return m_toElements.m_toElementRegion; }
   array1d<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array1d<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  array1d<localIndex_array>    &    elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
   array1d<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  array1d<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
+  array1d<localIndex_array>     &    elementList()       { return m_toElements.m_toElementIndex; }
   array1d<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-//  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-//
-//  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-//  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
-//
-//  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
+  //  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  //  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  //
+  //  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  //  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  //
+  //  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
+  //  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
 
 
   /**
@@ -209,10 +209,10 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type *& buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-   /// reference position of the nodes
+  /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
 
   /// nodeToEdge relation
@@ -234,10 +234,10 @@ private:
   NodeManager() = delete;
 
   /// deleted copy constructor
-  NodeManager( const NodeManager& init ) = delete;
+  NodeManager( const NodeManager & init ) = delete;
 
   /// deleted assignement operator
-  NodeManager& operator=( const NodeManager&) = delete;
+  NodeManager & operator=( const NodeManager & ) = delete;
 
 };
 }

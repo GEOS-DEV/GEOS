@@ -39,31 +39,31 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
   : RelativePermeabilityBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Minimum volume fraction value for each phase");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Minimum volume fraction value for each phase" );
 
 
   RegisterViewWrapper( viewKeyStruct::waterOilRelPermExponentString,   &m_waterOilRelPermExponent,   false )->
-    setApplyDefaultValue(1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation");
+  setApplyDefaultValue( 1.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation" );
 
   RegisterViewWrapper( viewKeyStruct::waterOilRelPermMaxValueString,   &m_waterOilRelPermMaxValue,   false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation" );
 
 
   RegisterViewWrapper( viewKeyStruct::gasOilRelPermExponentString,   &m_gasOilRelPermExponent,   false )->
-    setApplyDefaultValue(1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation");
+  setApplyDefaultValue( 1.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation" );
 
   RegisterViewWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation");
+  setApplyDefaultValue( 0.0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
 
 }
 
@@ -73,8 +73,8 @@ BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 }
 
 void
-BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name, 
-                                                    ManagedGroup * const parent, 
+BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name,
+                                                    ManagedGroup * const parent,
                                                     std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BrooksCoreyBakerRelativePermeability > newModel = std::make_unique<BrooksCoreyBakerRelativePermeability>( name, parent );
@@ -103,7 +103,8 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-  GEOS_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0 , "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
+  GEOS_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
+                 "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
 
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
@@ -116,22 +117,22 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction,  NP,   viewKeyStruct::phaseMinVolumeFractionString )
 
-  if (m_phaseOrder[PhaseType::WATER] >= 0)
-    {
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString )
-      COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString )
-    }
+  if( m_phaseOrder[PhaseType::WATER] >= 0 )
+  {
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString )
+    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString )
+  }
 
-  if (m_phaseOrder[PhaseType::GAS] >=0)
-    {
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   2, viewKeyStruct::gasOilRelPermExponentString )
-      COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString )
-    }
+  if( m_phaseOrder[PhaseType::GAS] >=0 )
+  {
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent,   2, viewKeyStruct::gasOilRelPermExponentString )
+    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue,   2, viewKeyStruct::gasOilRelPermMaxValueString )
+  }
 
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                    "BrooksCoreyBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
@@ -140,29 +141,29 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
   GEOS_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
 
 
-  for (localIndex ip = 0; ip < 2; ++ip)
+  for( localIndex ip = 0; ip < 2; ++ip )
   {
-    if (m_phaseOrder[PhaseType::WATER] >= 0)
-      {
-        GEOS_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
-                       "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
-        GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
-                       "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
-      }
+    if( m_phaseOrder[PhaseType::WATER] >= 0 )
+    {
+      GEOS_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
+                     "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
+      GEOS_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
+                     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+    }
 
-    if (m_phaseOrder[PhaseType::GAS] >= 0)
-      {
-        GEOS_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
-                       "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
-        GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
-                       "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
-      }
+    if( m_phaseOrder[PhaseType::GAS] >= 0 )
+    {
+      GEOS_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
+                     "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
+      GEOS_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
+                     "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+    }
   }
 
-  if (m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0)
+  if( m_phaseOrder[PhaseType::WATER] >= 0 && m_phaseOrder[PhaseType::GAS] >= 0 )
   {
     real64 const mean = 0.5 * ( m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]
-                              + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
+                                + m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] );
     m_gasOilRelPermMaxValue[GasOilPairPhaseType::OIL]     = mean;
     m_waterOilRelPermMaxValue[WaterOilPairPhaseType::OIL] = mean;
   }

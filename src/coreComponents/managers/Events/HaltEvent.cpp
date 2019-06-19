@@ -29,21 +29,21 @@ namespace geosx
 using namespace dataRepository;
 
 
-HaltEvent::HaltEvent( const std::string& name,
+HaltEvent::HaltEvent( const std::string & name,
                       ManagedGroup * const parent ):
-  EventBase(name,parent),
+  EventBase( name, parent ),
   m_startTime(),
   m_lastTime(),
   m_realDt()
 {
   timeval tim;
-  gettimeofday(&tim, nullptr);
-  m_startTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
-  m_lastTime = m_startTime;  
+  gettimeofday( &tim, nullptr );
+  m_startTime = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
+  m_lastTime = m_startTime;
 
   RegisterViewWrapper<real64>( haltEventViewKeys.maxRuntime.Key() )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription( "max runtime" );
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "max runtime" );
 }
 
 
@@ -51,35 +51,35 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::EstimateEventTiming(real64 const time,
-                                     real64 const dt, 
+void HaltEvent::EstimateEventTiming( real64 const time,
+                                     real64 const dt,
                                      integer const cycle,
-                                     ManagedGroup * domain)
+                                     ManagedGroup * domain )
 {
-  real64 const maxRuntime = this->getReference<real64>(haltEventViewKeys.maxRuntime);
-  
+  real64 const maxRuntime = this->getReference<real64>( haltEventViewKeys.maxRuntime );
+
   // Check run time
   timeval tim;
-  gettimeofday(&tim, nullptr);
-  real64 currentTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  gettimeofday( &tim, nullptr );
+  real64 currentTime = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
 
   // Update values
   m_realDt = currentTime - m_lastTime;
   m_lastTime = currentTime;
-  integer forecast = static_cast<integer>((maxRuntime - (currentTime - m_startTime)) / m_realDt);
-  
+  integer forecast = static_cast<integer>( ( maxRuntime - ( currentTime - m_startTime ) ) / m_realDt );
+
   // The timing for the ranks may differ slightly, so synchronize
 #ifdef GEOSX_USE_MPI
-    integer forecast_global;
-    MPI_Allreduce(&forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-    forecast = forecast_global;
+  integer forecast_global;
+  MPI_Allreduce( &forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
+  forecast = forecast_global;
 #endif
 
-  SetForecast(forecast);
+  SetForecast( forecast );
 
-  if (this->GetForecast() <= 0)
+  if( this->GetForecast() <= 0 )
   {
-    this->SetExitFlag(1);
+    this->SetExitFlag( 1 );
   }
 }
 

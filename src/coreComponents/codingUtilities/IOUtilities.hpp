@@ -48,25 +48,25 @@ public:
 template< typename T >
 void IOUtilities::parse_file( array1d<T> & target, std::string filename, char delimiter )
 {
-  std::ifstream inputStream(filename.c_str());
+  std::ifstream inputStream( filename.c_str() );
   std::string lineString;
   T value;
 
-  if (inputStream)
+  if( inputStream )
   {
-    while (!inputStream.eof())
+    while( !inputStream.eof() )
     {
-      std::getline(inputStream, lineString);
+      std::getline( inputStream, lineString );
       std::istringstream ss( lineString );
 
-      while(ss.peek() == delimiter || ss.peek() == ' ')
+      while( ss.peek() == delimiter || ss.peek() == ' ' )
       {
         ss.ignore();
       }
       while( ss>>value )
       {
         target.push_back( value );
-        while(ss.peek() == delimiter || ss.peek() == ' ')
+        while( ss.peek() == delimiter || ss.peek() == ' ' )
         {
           ss.ignore();
         }
@@ -77,7 +77,7 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
   }
   else
   {
-    GEOS_ERROR("Could not read input file!");
+    GEOS_ERROR( "Could not read input file!" );
   }
 }
 

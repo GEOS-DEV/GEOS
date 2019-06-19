@@ -28,28 +28,28 @@ PoroElastic<BASE>::PoroElastic( string const & name, ManagedGroup * const parent
   m_poreVolumeRelation()
 {
   this->RegisterViewWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient, 0 )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Biot's coefficient");
+  setApplyDefaultValue( 0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Biot's coefficient" );
 
   this->RegisterViewWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Fluid Compressibilty");
+  setApplyDefaultValue( -1 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Fluid Compressibilty" );
 
   this->RegisterViewWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("ReferencePressure");
+  setApplyDefaultValue( 0 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "ReferencePressure" );
 
 
   this->RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("");
+  setApplyDefaultValue( -1 )->
+  setDescription( "" );
 
   this->RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("");
+  setApplyDefaultValue( -1 )->
+  setDescription( "" );
 }
 
 template< typename BASE >
@@ -62,10 +62,10 @@ void PoroElastic<BASE>::PostProcessInput()
 {
   //    m_compressibility = 1 / K;
 
-  if (m_compressibility <= 0)
+  if( m_compressibility <= 0 )
   {
-//    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
-//    GEOS_ERROR( message );
+    //    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
+    //    GEOS_ERROR( message );
   }
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 
@@ -81,7 +81,7 @@ void PoroElastic<BASE>::DeliverClone( string const & name,
     clone = std::make_unique<PoroElastic<BASE> >( name, parent );
   }
   BASE::DeliverClone( name, parent, clone );
-  PoroElastic<BASE> * const newConstitutiveRelation = dynamic_cast<PoroElastic<BASE> *>(clone.get());
+  PoroElastic<BASE> * const newConstitutiveRelation = dynamic_cast<PoroElastic<BASE> *>( clone.get() );
 
   newConstitutiveRelation->m_compressibility      = m_compressibility;
   newConstitutiveRelation->m_referencePressure    = m_referencePressure;

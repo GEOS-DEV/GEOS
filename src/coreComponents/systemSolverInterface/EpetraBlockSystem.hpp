@@ -57,31 +57,31 @@ enum class BlockIDs
   invalidBlock
 };
 
-static double ClearRow ( Epetra_FECrsMatrix * matrix,
-                         globalIndex const row,
-                         const double factor )
+static double ClearRow( Epetra_FECrsMatrix * matrix,
+                        globalIndex const row,
+                        const double factor )
 {
-  long long int rowTmp = static_cast<long long int>(row);
-  int local_row = matrix->LRID(rowTmp);
+  long long int rowTmp = static_cast<long long int>( row );
+  int local_row = matrix->LRID( rowTmp );
   double LARGE = 0.0;
 
-  if (local_row >= 0)
+  if( local_row >= 0 )
   {
-    double *values = nullptr;
-    int *col_indices = nullptr;
+    double * values = nullptr;
+    int * col_indices = nullptr;
     int num_entries;
 
-    matrix->ExtractMyRowView( local_row, num_entries, values, col_indices);
+    matrix->ExtractMyRowView( local_row, num_entries, values, col_indices );
 
 
     if( values!=nullptr && col_indices!=nullptr && num_entries>0 )
     {
-      int* diag_find = std::find(col_indices,col_indices+num_entries-1, local_row);
-      long int diag_index = (diag_find - col_indices);
+      int * diag_find = std::find( col_indices, col_indices+num_entries-1, local_row );
+      long int diag_index = ( diag_find - col_indices );
 
-      for (int j=0 ; j<num_entries ; ++j)
+      for( int j=0 ; j<num_entries ; ++j )
       {
-        if (diag_index != j )
+        if( diag_index != j )
         {
           values[j] = 0.;
         }
@@ -90,7 +90,7 @@ static double ClearRow ( Epetra_FECrsMatrix * matrix,
       LARGE = values[diag_index];
     }
   }
-  return (LARGE);
+  return ( LARGE );
 }
 
 /**
@@ -114,15 +114,15 @@ public:
       case BlockIDs::displacementBlock:
         rval = "displacementBlock";
         break;
-    case BlockIDs::fluidPressureBlock:
-      rval = "fluidPressureBlock";
-      break;
-    case BlockIDs::temperatureBlock:
-      rval = "temperatureBlock";
-      break;
-    default:
-      rval = "invalidBlock";
-      break;
+      case BlockIDs::fluidPressureBlock:
+        rval = "fluidPressureBlock";
+        break;
+      case BlockIDs::temperatureBlock:
+        rval = "temperatureBlock";
+        break;
+      default:
+        rval = "invalidBlock";
+        break;
     }
     return rval;
   }
@@ -132,25 +132,25 @@ public:
 
   EpetraBlockSystem( EpetraBlockSystem const & ) = delete;
   EpetraBlockSystem( EpetraBlockSystem && ) = delete;
-  EpetraBlockSystem& operator=( EpetraBlockSystem const & ) = delete;
-  EpetraBlockSystem& operator=( EpetraBlockSystem && ) = delete;
+  EpetraBlockSystem & operator=( EpetraBlockSystem const & ) = delete;
+  EpetraBlockSystem & operator=( EpetraBlockSystem && ) = delete;
 
 
   ~EpetraBlockSystem();
 
 
 
-  void SetBlockID( const BlockIDs id, std::string const& name )
+  void SetBlockID( const BlockIDs id, std::string const & name )
   {
 
-    if( m_blockIndex.find(id) == m_blockIndex.end() )
+    if( m_blockIndex.find( id ) == m_blockIndex.end() )
     {
       m_blockIndex[id] = m_numBlocks;
     }
     else
     {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
-                 std::to_string(m_blockIndex[id]) );
+      GEOS_ERROR( "error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString( id )+") has already been registered to index "+
+                  std::to_string( m_blockIndex[id] ) );
     }
 
     if( m_blockID[m_numBlocks] == BlockIDs::invalidBlock )
@@ -159,8 +159,8 @@ public:
     }
     else
     {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString(id)+") has already been registered to index "+
-                 std::to_string(m_numBlocks) );
+      GEOS_ERROR( "error in EpetraBlockSystem::SetBlockID(). BlockIDs ("+BlockIDString( id )+") has already been registered to index "+
+                  std::to_string( m_numBlocks ) );
     }
 
 
@@ -170,21 +170,21 @@ public:
     }
     else
     {
-      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Block ("+std::to_string(
-                   m_numBlocks)+") has already been used to register a solver named "+ m_solverNames[m_numBlocks] );
+      GEOS_ERROR( "error in EpetraBlockSystem::SetBlockID(). Block ("+std::to_string(
+                    m_numBlocks )+") has already been used to register a solver named "+ m_solverNames[m_numBlocks] );
     }
 
 
-    m_solverNameMap.emplace(name, m_numBlocks);
+    m_solverNameMap.emplace( name, m_numBlocks );
 
-//    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
-//    {
-//      m_solverNameMap[name] = m_numBlocks;
-//    }
-//    else
-//    {
-//      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
-//    }
+    //    if( m_solverNameMap.find(name)==m_solverNameMap.end() )
+    //    {
+    //      m_solverNameMap[name] = m_numBlocks;
+    //    }
+    //    else
+    //    {
+    //      GEOS_ERROR("error in EpetraBlockSystem::SetBlockID(). Solver Name ("+name+") has already been used to register index "+ std::to_string(m_numBlocks) );
+    //    }
 
 
     ++m_numBlocks;
@@ -198,7 +198,7 @@ public:
 
   int GetIndex( BlockIDs id ) const
   {
-    return this->m_blockIndex.at(id);
+    return this->m_blockIndex.at( id );
   }
 
   std::string GetSolverName( int index ) const
@@ -211,26 +211,26 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetRowMap():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetRowMap():m_blockID isn't set \n" );
     }
     return m_rowMap[ index ].get();
   }
 
   Epetra_Map * GetRowMap( const int index )
   {
-    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(index) );
+    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>( this )->GetRowMap( index ) );
   }
 
 
   Epetra_Map const * GetRowMap( const BlockIDs dofID ) const
   {
-    int const index = m_blockIndex.find(dofID)->second;
-    return GetRowMap(index);
+    int const index = m_blockIndex.find( dofID )->second;
+    return GetRowMap( index );
   }
 
   Epetra_Map * GetRowMap( const BlockIDs dofID )
   {
-    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>(this)->GetRowMap(dofID) );
+    return const_cast<Epetra_Map *>( const_cast<EpetraBlockSystem const *>( this )->GetRowMap( dofID ) );
   }
 
 
@@ -247,26 +247,26 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSolutionVector():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetSolutionVector():m_blockID isn't set \n" );
     }
     return m_solution[ index ].get();
   }
 
   Epetra_FEVector * GetSolutionVector( int const index )
   {
-    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(index) );
+    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>( this )->GetSolutionVector( index ) );
   }
 
 
   Epetra_FEVector const * GetSolutionVector( const BlockIDs dofID ) const
   {
-    int const index = m_blockIndex.find(dofID)->second;
-    return GetSolutionVector(index);
+    int const index = m_blockIndex.find( dofID )->second;
+    return GetSolutionVector( index );
   }
 
   Epetra_FEVector * GetSolutionVector( BlockIDs const dofID )
   {
-    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>(this)->GetSolutionVector(dofID) );
+    return const_cast<Epetra_FEVector *>( const_cast<EpetraBlockSystem const *>( this )->GetSolutionVector( dofID ) );
   }
 
 
@@ -283,7 +283,7 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n" );
     }
     return m_rhs[ index ].get();
   }
@@ -291,19 +291,19 @@ public:
   {
     if( m_blockID[index]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetResidualVector():m_blockID isn't set \n" );
     }
     return m_rhs[ index ].get();
   }
   Epetra_FEVector * GetResidualVector( const BlockIDs dofID )
   {
     int index = m_blockIndex[dofID];
-    return GetResidualVector(index);
+    return GetResidualVector( index );
   }
   Epetra_FEVector const * GetResidualVector( const BlockIDs dofID ) const
   {
-    int index = m_blockIndex.at(dofID);
-    return GetResidualVector(index);
+    int index = m_blockIndex.at( dofID );
+    return GetResidualVector( index );
   }
 
   Epetra_FEVector * SetResidualVector( const BlockIDs dofID, std::unique_ptr<Epetra_FEVector> rhs )
@@ -320,7 +320,7 @@ public:
   {
     if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetSparsity():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetSparsity():m_blockID isn't set \n" );
     }
     return m_sparsity[ rowIndex ][ colIndex ].get();
   }
@@ -350,7 +350,7 @@ public:
   {
     if( m_blockID[rowIndex]==BlockIDs::invalidBlock && m_blockID[colIndex]==BlockIDs::invalidBlock )
     {
-      GEOS_ERROR("SolverBase.h:EpetraBlockSystem::GetMatrix():m_blockID isn't set \n");
+      GEOS_ERROR( "SolverBase.h:EpetraBlockSystem::GetMatrix():m_blockID isn't set \n" );
     }
     return m_matrix[ rowIndex ][ colIndex ].get();
   }
@@ -374,9 +374,9 @@ public:
     return m_matrix[rowIndex][colIndex].get();
   }
 
-  double ClearSystemRow ( int const blockRow,
-                          globalIndex const rowIndex,
-                          const double factor )
+  double ClearSystemRow( int const blockRow,
+                         globalIndex const rowIndex,
+                         const double factor )
   {
     double LARGE = 0;
     for( int col=0 ; col<m_numBlocks ; ++col )
@@ -393,12 +393,12 @@ public:
         }
       }
     }
-    return (LARGE);
+    return ( LARGE );
   }
 
-  double ClearSystemRow ( const BlockIDs rowDofID,
-                          globalIndex const rowIndex,
-                          const double factor )
+  double ClearSystemRow( const BlockIDs rowDofID,
+                         globalIndex const rowIndex,
+                         const double factor )
   {
     int rowBlockIndex = m_blockIndex[rowDofID];
     return ClearSystemRow( rowBlockIndex, rowIndex, factor );
@@ -424,8 +424,8 @@ private:
   std::unique_ptr<Epetra_FECrsMatrix> m_matrix[MAX_NUM_BLOCKS][MAX_NUM_BLOCKS];
 
 
-  EpetraBlockSystem( EpetraBlockSystem& );
-  EpetraBlockSystem& operator=(EpetraBlockSystem&);
+  EpetraBlockSystem( EpetraBlockSystem & );
+  EpetraBlockSystem & operator=( EpetraBlockSystem & );
 
 };
 

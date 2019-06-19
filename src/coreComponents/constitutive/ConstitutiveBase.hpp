@@ -45,7 +45,7 @@ public:
    * @param name actual field name
    * @return prefixed field name that is used to access data
    */
-  inline static string makeFieldName(string const & prefix, string const & name) { return prefix + "_" + name; }
+  inline static string makeFieldName( string const & prefix, string const & name ) { return prefix + "_" + name; }
 
 
   ConstitutiveBase( string const & name,
@@ -76,7 +76,7 @@ public:
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
-  static typename CatalogInterface::CatalogType& GetCatalog();
+  static typename CatalogInterface::CatalogType & GetCatalog();
 
   /**
    * @brief function to return the catalog name of the derived class

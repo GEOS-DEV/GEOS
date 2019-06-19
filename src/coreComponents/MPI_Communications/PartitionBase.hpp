@@ -56,56 +56,56 @@ public:
   void SetDomain( DomainPartition * domain );
 
 
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
-  virtual bool IsCoordInPartition( const R1Tensor& elemCenter,
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter ) = 0;
+  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
                                    const int numDistPartition ) = 0;
-  virtual bool IsCoordInPartition( const realT& coord, const int dir ) = 0;
+  virtual bool IsCoordInPartition( const realT & coord, const int dir ) = 0;
 
-  virtual void setSizes( const R1Tensor& min, const R1Tensor& max ) = 0;
+  virtual void setSizes( const R1Tensor & min, const R1Tensor & max ) = 0;
 
   virtual void setPartitions( unsigned int xPartitions,
                               unsigned int yPartitions,
                               unsigned int zPartitions ) = 0;
 
-  virtual bool IsCoordInContactGhostRange( const R1Tensor& elemCenter ) = 0;
+  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter ) = 0;
 
-//  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
+  //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
   //virtual void AssignGlobalIndices( DomainPartition * domain );
 
-//  virtual void FindMatchedBoundaryIndices( string const & key,
-//                                           const ObjectManagerBase& object );
+  //  virtual void FindMatchedBoundaryIndices( string const & key,
+  //                                           const ObjectManagerBase& object );
 
 
-//  virtual void SetUpNeighborLists( DomainPartition * domain,
-//                                   const bool contactActive );
+  //  virtual void SetUpNeighborLists( DomainPartition * domain,
+  //                                   const bool contactActive );
 
   void SetRankOfNeighborNeighbors();
 
-//  virtual void ResetNeighborLists( PhysicalDomainT& domain,
-//                                   const int elementGhostingDepth );
+  //  virtual void ResetNeighborLists( PhysicalDomainT& domain,
+  //                                   const int elementGhostingDepth );
 
-//  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
+  //  virtual void ModifyGhostsAndNeighborLists( const ModifiedObjectLists& modifiedObjects );
 
   template< typename T >
-  void SendReceive( const array1d<array1d<T> >& sendArray, array1d<array1d<T> >& recvArray );
+  void SendReceive( const array1d<array1d<T> > & sendArray, array1d<array1d<T> > & recvArray );
 
-//  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
-//                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
+  //  void SynchronizeFields( const std::map<std::string, string_array >& fieldNames,
+  //                          const CommRegistry::commID commID = CommRegistry::genericComm01 );
 
-  void SetOwnedByRank( const std::map< std::string, globalIndex_array>& localBoundaryGlobalIndices,
-                       std::map<std::string, std::map< globalIndex, int > >& boundaryOwnership );
+  void SetOwnedByRank( const std::map< std::string, globalIndex_array> & localBoundaryGlobalIndices,
+                       std::map<std::string, std::map< globalIndex, int > > & boundaryOwnership );
 
   void SetGhostArrays( DomainPartition * domain );
 
   localIndex_array GetFaceSendIndices();
 
   virtual void SetContactGhostRange( const double bufferSize ) = 0;
-//
-//  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
-//                       const CommRegistry::commID commID  );
-//
-//  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
+  //
+  //  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
+  //                       const CommRegistry::commID commID  );
+  //
+  //  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
 
   int m_size;
   int m_sizeMetis;
@@ -116,9 +116,9 @@ public:
   int Color() const {return m_color;}
   int NumColor() const {return m_numColors;}
 
-//  void WriteSilo( SiloFile& siloFile );
-//
-//  void ReadSilo( const SiloFile& siloFile );
+  //  void WriteSilo( SiloFile& siloFile );
+  //
+  //  void ReadSilo( const SiloFile& siloFile );
   void DeleteExcessNeighbors();
   void GraphBasedColoring();
 
@@ -128,7 +128,7 @@ protected:
 
   virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
 
-//
+  //
   array1d<NeighborCommunicator> m_neighbors;
 
   array1d<MPI_Request> m_mpiRequest;
@@ -158,14 +158,14 @@ public:
   int m_ghostDepth;
 
 private:
-//  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT&
-// compositionObject );
+  //  virtual void AssignGlobalIndices( ObjectDataStructureBaseT& object, const ObjectDataStructureBaseT&
+  // compositionObject );
 
   void CommunicateRequiredObjectIndices();
 
-//  virtual void WriteSiloDerived( SiloFile& siloFile ) = 0;
-//
-//  virtual void ReadSiloDerived( const SiloFile& siloFile ) = 0;
+  //  virtual void WriteSiloDerived( SiloFile& siloFile ) = 0;
+  //
+  //  virtual void ReadSiloDerived( const SiloFile& siloFile ) = 0;
 
 
 };

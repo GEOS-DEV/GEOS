@@ -41,7 +41,7 @@ namespace geosx
  * performance to an index lookup after the first use of a keyIndex.
  */
 template< typename T,
-          typename T_PTR=T*,
+          typename T_PTR=T *,
           typename KEY_TYPE=std::string,
           typename INDEX_TYPE = int >
 class MappedVector
@@ -99,7 +99,7 @@ public:
   using const_reverse_iterator = typename const_valueContainer::const_reverse_iterator;
 
   /// aliwas for the KeyIndex itself
-  using KeyIndex = KeyIndexT<KEY_TYPE const,INDEX_TYPE>;
+  using KeyIndex = KeyIndexT<KEY_TYPE const, INDEX_TYPE>;
 
 
   /// deleted default constructor
@@ -140,7 +140,7 @@ public:
   inline T const * operator[]( INDEX_TYPE index ) const
   {
     return ( index>KeyIndex::invalid_index &&
-             index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr;
+             index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>( &( *( m_values[index].second ) ) ) : nullptr;
   }
 
   /**
@@ -149,7 +149,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( INDEX_TYPE index )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) ); }
+  { return const_cast<T *>( const_cast< MappedVector<T, T_PTR, KEY_TYPE, INDEX_TYPE> const * >( this )->operator[]( index ) ); }
 
   /**
    *
@@ -158,7 +158,7 @@ public:
    */
   inline T const * operator[]( KEY_TYPE const & keyName ) const
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( keyName );
     return ( iter!=m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
   }
 
@@ -168,7 +168,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KEY_TYPE const & keyName )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyName) ); }
+  { return const_cast<T *>( const_cast< MappedVector<T, T_PTR, KEY_TYPE, INDEX_TYPE> const * >( this )->operator[]( keyName ) ); }
 
   /**
    *
@@ -182,13 +182,13 @@ public:
     if( index==KeyIndex::invalid_index )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
 #ifdef MAPPED_VECTOR_RANGE_CHECKING
-    else if (m_values[index].first!=keyIndex.Key() )
+    else if( m_values[index].first!=keyIndex.Key() )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
 #endif
 
@@ -201,7 +201,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KeyIndex & keyIndex )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+  { return const_cast<T *>( const_cast< MappedVector<T, T_PTR, KEY_TYPE, INDEX_TYPE> const * >( this )->operator[]( keyIndex ) ); }
 
 
 
@@ -212,23 +212,23 @@ public:
    */
   inline T const * operator[]( KeyIndex const & keyIndex ) const
   {
-//    INDEX_TYPE index = keyIndex.Index();
-//
-//    if( index==KeyIndex::invalid_index )
-//    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// invalid key index passed as const into accessor function\n");
-//    }
-//#if RANGE_CHECKING==1
-//    else if (m_values[index].first!=keyIndex.Key() )
-//    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// inconsistent key passed as const into accessor function\n")
-//    }
-//#endif
-//
-//    return this->operator[]( index );
-    return this->operator[]( const_cast<KeyIndex&>(keyIndex) );
+    //    INDEX_TYPE index = keyIndex.Index();
+    //
+    //    if( index==KeyIndex::invalid_index )
+    //    {
+    //      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+    // invalid key index passed as const into accessor function\n");
+    //    }
+    //#if RANGE_CHECKING==1
+    //    else if (m_values[index].first!=keyIndex.Key() )
+    //    {
+    //      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+    // inconsistent key passed as const into accessor function\n")
+    //    }
+    //#endif
+    //
+    //    return this->operator[]( index );
+    return this->operator[]( const_cast<KeyIndex &>( keyIndex ) );
   }
 
   /**
@@ -237,7 +237,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KeyIndex const & keyIndex )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+  { return const_cast<T *>( const_cast< MappedVector<T, T_PTR, KEY_TYPE, INDEX_TYPE> const * >( this )->operator[]( keyIndex ) ); }
 
 
   ///@}
@@ -299,7 +299,7 @@ public:
    */
   inline INDEX_TYPE getIndex( KEY_TYPE const & key ) const
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
     return ( iter!=m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
   }
 
@@ -374,10 +374,10 @@ public:
    */
   void erase( KEY_TYPE const & key )
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
     if( iter!=m_keyLookup.end() )
     {
-      erase(iter->second);
+      erase( iter->second );
     }
     return;
   }
@@ -393,10 +393,10 @@ public:
   {
     INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
+    if( ( index==KeyIndex::invalid_index ) || ( m_values[index].first!=keyIndex.Key() ) )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
     erase( index );
   }
@@ -409,7 +409,7 @@ public:
     for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
     {
       //TODO this needs to be a safe conversion
-      erase(static_cast<INDEX_TYPE>(a));
+      erase( static_cast<INDEX_TYPE>( a ) );
     }
     m_keyLookup.clear();
     m_values.clear();
@@ -425,7 +425,7 @@ public:
   inline INDEX_TYPE size() const
   {
     //TODO this needs to be a safe conversion
-    return static_cast<INDEX_TYPE>(m_values.size());
+    return static_cast<INDEX_TYPE>( m_values.size() );
   }
 
   /**
@@ -465,13 +465,13 @@ private:
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
-                                                                 T_PTR source,
-                                                                 bool takeOwnership,
-                                                                 bool overwrite )
+T * MappedVector<T, T_PTR, KEY_TYPE, INDEX_TYPE>::insert( KEY_TYPE const & keyName,
+                                                          T_PTR source,
+                                                          bool takeOwnership,
+                                                          bool overwrite )
 {
   INDEX_TYPE index = KeyIndex::invalid_index;
-  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
+  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
 
   // if the key was not found, make DataObject<T> and insert
@@ -480,15 +480,15 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
     m_values.push_back( std::move( newEntry ) );
     //TODO this needs to be a safe conversion
-    index = static_cast<INDEX_TYPE>(m_values.size()) - 1;
+    index = static_cast<INDEX_TYPE>( m_values.size() ) - 1;
     m_ownsValues.resize( index + 1 );
     if( takeOwnership )
     {
       m_ownsValues[index] = true;
     }
 
-    m_keyLookup.insert( std::make_pair(keyName,index) );
-    m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );
+    m_keyLookup.insert( std::make_pair( keyName, index ) );
+    m_constValues.push_back( std::make_pair( keyName, &( *( m_values[index].second ) ) ) );
 
   }
   // if key was found
@@ -505,21 +505,21 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     if( m_values[index].second==nullptr )
     {
       m_values[index].second = std::move( source );
-      m_constValues[index].second =  &(*(m_values[index].second));
+      m_constValues[index].second =  &( *( m_values[index].second ) );
     }
     else
     {
       if( overwrite )
       {
-        erase(index);
+        erase( index );
         m_values[index].second = std::move( source );
-        m_constValues[index].second =  &(*(m_values[index].second));
+        m_constValues[index].second =  &( *( m_values[index].second ) );
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
         string const message = "MappedVector::insert(): Tried to insert existing key with a "
-            "different type without overwrite flag\n";
-        GEOS_ERROR(message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
+                               "different type without overwrite flag\n";
+        GEOS_ERROR( message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
       }
       else
       {
@@ -528,7 +528,7 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     }
   }
 
-  return &(*(m_values[index].second));
+  return &( *( m_values[index].second ) );
 }
 }
 

@@ -34,9 +34,9 @@ public:
   virtual ~IntegrationRuleT();
 
 
-  void CalculateShapeFunctionDerivatives( const array1d<R1Tensor>& X_local,
-                                          array1d<R1Tensor>& dNdX,
-                                          realT& detJ );
+  void CalculateShapeFunctionDerivatives( const array1d<R1Tensor> & X_local,
+                                          array1d<R1Tensor> & dNdX,
+                                          realT & detJ );
 
 
 };
@@ -71,61 +71,61 @@ inline void CalculateShapeFunctionDerivative( const realT y[8],
   const realT z7 = z[7];
   const realT twelfth = 1.0/12.0;
 
-  b[0] = ( y1*((z5-z2)-(z3-z4))
-           +y2*(z1-z3)
-           +y3*((z2-z7)-(z4-z1))
-           +y4*((z7-z5)-(z1-z3))
-           +y5*(z4-z1)
-           +y7*(z3-z4) )*twelfth;
+  b[0] = ( y1*( ( z5-z2 )-( z3-z4 ) )
+           +y2*( z1-z3 )
+           +y3*( ( z2-z7 )-( z4-z1 ) )
+           +y4*( ( z7-z5 )-( z1-z3 ) )
+           +y5*( z4-z1 )
+           +y7*( z3-z4 ) )*twelfth;
 
-  b[1] = ( y2*((z6-z3)-(z0-z5))
-           +y3*(z2-z0)
-           +y0*((z3-z4)-(z5-z2))
-           +y5*((z4-z6)-(z2-z0))
-           +y6*(z5-z2)
-           +y4*(z0-z5) )*twelfth;
+  b[1] = ( y2*( ( z6-z3 )-( z0-z5 ) )
+           +y3*( z2-z0 )
+           +y0*( ( z3-z4 )-( z5-z2 ) )
+           +y5*( ( z4-z6 )-( z2-z0 ) )
+           +y6*( z5-z2 )
+           +y4*( z0-z5 ) )*twelfth;
 
-  b[2] = ( y3*((z7-z0)-(z1-z6))
-           +y0*(z3-z1)
-           +y1*((z0-z5)-(z6-z3))
-           +y6*((z5-z7)-(z3-z1))
-           +y7*(z6-z3)
-           +y5*(z1-z6))*twelfth;
+  b[2] = ( y3*( ( z7-z0 )-( z1-z6 ) )
+           +y0*( z3-z1 )
+           +y1*( ( z0-z5 )-( z6-z3 ) )
+           +y6*( ( z5-z7 )-( z3-z1 ) )
+           +y7*( z6-z3 )
+           +y5*( z1-z6 ) )*twelfth;
 
-  b[3] = ( y0*((z4-z1)-(z2-z7))
-           +y1*(z0-z2)
-           +y2*((z1-z6)-(z7-z0))
-           +y7*((z6-z4)-(z0-z2))
-           +y4*(z7-z0)
-           +y6*(z2-z7))*twelfth;
+  b[3] = ( y0*( ( z4-z1 )-( z2-z7 ) )
+           +y1*( z0-z2 )
+           +y2*( ( z1-z6 )-( z7-z0 ) )
+           +y7*( ( z6-z4 )-( z0-z2 ) )
+           +y4*( z7-z0 )
+           +y6*( z2-z7 ) )*twelfth;
 
-  b[4] = ( y7*((z3-z6)-(z5-z0))
-           +y6*(z7-z5)
-           +y5*((z6-z1)-(z0-z7))
-           +y0*((z1-z3)-(z7-z5))
-           +y3*(z0-z7)
-           +y1*(z5-z0))*twelfth;
+  b[4] = ( y7*( ( z3-z6 )-( z5-z0 ) )
+           +y6*( z7-z5 )
+           +y5*( ( z6-z1 )-( z0-z7 ) )
+           +y0*( ( z1-z3 )-( z7-z5 ) )
+           +y3*( z0-z7 )
+           +y1*( z5-z0 ) )*twelfth;
 
-  b[5] = ( y4*((z0-z7)-(z6-z1))
-           +y7*(z4-z6)
-           +y6*((z7-z2)-(z1-z4))
-           +y1*((z2-z0)-(z4-z6))
-           +y0*(z1-z4)
-           +y2*(z6-z1))*twelfth;
+  b[5] = ( y4*( ( z0-z7 )-( z6-z1 ) )
+           +y7*( z4-z6 )
+           +y6*( ( z7-z2 )-( z1-z4 ) )
+           +y1*( ( z2-z0 )-( z4-z6 ) )
+           +y0*( z1-z4 )
+           +y2*( z6-z1 ) )*twelfth;
 
-  b[6] = ( y5*((z1-z4)-(z7-z2))
-           +y4*(z5-z7)
-           +y7*((z4-z3)-(z2-z5))
-           +y2*((z3-z1)-(z5-z7))
-           +y1*(z2-z5)
-           +y3*(z7-z2))*twelfth;
+  b[6] = ( y5*( ( z1-z4 )-( z7-z2 ) )
+           +y4*( z5-z7 )
+           +y7*( ( z4-z3 )-( z2-z5 ) )
+           +y2*( ( z3-z1 )-( z5-z7 ) )
+           +y1*( z2-z5 )
+           +y3*( z7-z2 ) )*twelfth;
 
-  b[7] = ( y6*((z2-z5)-(z4-z3))
-           +y5*(z6-z4)
-           +y4*((z5-z0)-(z3-z6))
-           +y3*((z0-z2)-(z6-z4))
-           +y2*(z3-z6)
-           +y0*(z4-z3))*twelfth;
+  b[7] = ( y6*( ( z2-z5 )-( z4-z3 ) )
+           +y5*( z6-z4 )
+           +y4*( ( z5-z0 )-( z3-z6 ) )
+           +y3*( ( z0-z2 )-( z6-z4 ) )
+           +y2*( z3-z6 )
+           +y0*( z4-z3 ) )*twelfth;
 }
 
 

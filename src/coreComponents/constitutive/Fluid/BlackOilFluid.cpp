@@ -44,17 +44,17 @@ namespace constitutive
 
 BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
 {
-  if (str == "LiveOil")
+  if( str == "LiveOil" )
   {
     return BlackOilFluid::FluidType::LiveOil;
   }
-  else if (str == "DeadOil")
+  else if( str == "DeadOil" )
   {
     return BlackOilFluid::FluidType::DeadOil;
   }
   else
   {
-    GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
+    GEOS_ERROR( "Unrecognized black-oil fluid type: " << str );
   }
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
 }
@@ -62,20 +62,20 @@ BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
 BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
-  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
   RegisterViewWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of surface densities for each phase");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "List of surface densities for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of filenames with input PVT tables");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "List of filenames with input PVT tables" );
 
   RegisterViewWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Type of black-oil fluid (LiveOil/DeadOil)");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -132,7 +132,7 @@ void BlackOilFluid::PostProcessInput()
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 
-  m_fluidType = stringToFluidType(m_fluidTypeString);
+  m_fluidType = stringToFluidType( m_fluidTypeString );
 }
 
 void BlackOilFluid::createFluid()
@@ -143,12 +143,12 @@ void BlackOilFluid::createFluid()
   std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
   // if table file names are not absolute paths, convert them to such, based on path to main input/restart file
-  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
-  if (problemManager != nullptr)
+  ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>( "/" );
+  if( problemManager != nullptr )
   {
     // hopefully at least one of input or restart file names is provided, otherwise '.' will be used
     string inputFileName = problemManager->getInputFileName();
-    if (inputFileName.empty())
+    if( inputFileName.empty() )
     {
       inputFileName = problemManager->getRestartFileName();
     }
@@ -156,16 +156,16 @@ void BlackOilFluid::createFluid()
     splitPath( inputFileName, inputFileDir, inputFileName );
 
     // if table file names are not full paths, convert them to such
-    for (std::string & filename : tableFiles)
+    for( std::string & filename : tableFiles )
     {
-      if (!isAbsolutePath(filename))
+      if( !isAbsolutePath( filename ) )
       {
         getAbsolutePath( inputFileDir + '/' + filename, filename );
       }
     }
   }
 
-  switch (m_fluidType)
+  switch( m_fluidType )
   {
     case FluidType::LiveOil:
       m_fluid = std::make_unique<BlackOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );

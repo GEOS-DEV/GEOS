@@ -37,9 +37,9 @@ class SoloEvent : public EventBase
 {
 public:
   /// Main constructor
-  SoloEvent(const std::string& name,
-                ManagedGroup * const parent);
-  
+  SoloEvent( const std::string & name,
+             ManagedGroup * const parent );
+
   /// Destructor
   virtual ~SoloEvent() override;
 
@@ -49,16 +49,16 @@ public:
   /**
    * Estimate the expected number of cycles until an event is expected to trigger.
    */
-  virtual void EstimateEventTiming(real64 const time,
-                                   real64 const dt, 
-                                   integer const cycle,
-                                   dataRepository::ManagedGroup * domain) override;
+  virtual void EstimateEventTiming( real64 const time,
+                                    real64 const dt,
+                                    integer const cycle,
+                                    dataRepository::ManagedGroup * domain ) override;
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetTimestepRequest( real64 const time ) override;
 
 
   struct viewKeyStruct

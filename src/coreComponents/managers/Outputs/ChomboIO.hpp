@@ -38,7 +38,7 @@ class ChomboIO : public OutputBase
 {
 public:
   /// Main constructor
-  ChomboIO(std::string const & name, ManagedGroup * const parent);
+  ChomboIO( std::string const & name, ManagedGroup * const parent );
 
   /// Destructor
   virtual ~ChomboIO() final override;
@@ -60,10 +60,10 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) final override 
-  { 
+                        dataRepository::ManagedGroup * const domain ) final override
+  {
     m_waitForInput = 0;
-    Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain);
+    Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   struct viewKeyStruct
@@ -82,7 +82,7 @@ public:
   } viewKeys;
 
 private:
-  ChomboCoupler* m_coupler;
+  ChomboCoupler * m_coupler;
   std::string m_outputPath;
   double m_beginCycle;
   std::string m_inputPath;

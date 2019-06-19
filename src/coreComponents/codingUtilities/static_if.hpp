@@ -34,14 +34,14 @@ template<bool CONDITION>
 struct static_if_wrapper
 {
   template<typename LAMBDA_BODY>
-  constexpr inline static void if_function(LAMBDA_BODY&&) { }
+  constexpr inline static void if_function( LAMBDA_BODY && ) { }
 };
 
 template<>
 struct static_if_wrapper<true>
 {
   template<typename LAMBDA_BODY>
-  constexpr inline static void if_function(LAMBDA_BODY&& lambda)
+  constexpr inline static void if_function( LAMBDA_BODY && lambda )
   {
     lambda();
   }

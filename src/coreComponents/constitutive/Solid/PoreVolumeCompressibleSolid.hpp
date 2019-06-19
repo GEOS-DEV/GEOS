@@ -60,9 +60,9 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdatePointPressure(real64 const & pres,
-                                        localIndex const k,
-                                        localIndex const q) override final;
+  virtual void StateUpdatePointPressure( real64 const & pres,
+                                         localIndex const k,
+                                         localIndex const q ) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -87,9 +87,9 @@ private:
   ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
-inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,
-                                                                  localIndex const k,
-                                                                  localIndex const q)
+inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure( real64 const & pres,
+                                                                   localIndex const k,
+                                                                   localIndex const q )
 {
   m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }

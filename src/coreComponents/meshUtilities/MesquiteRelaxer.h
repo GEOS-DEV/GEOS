@@ -60,7 +60,7 @@ public:
     PATCH_JACOBI       = 5
   };
 
-  void RelaxMesh( PhysicalDomainT& domain );
+  void RelaxMesh( PhysicalDomainT & domain );
 
   /*
      void RelaxMesh(int *dimen,
@@ -86,23 +86,23 @@ private:
 
   MESQUITE_NS::ArrayMesh mesh;
 
-  void RunLaplace(const ElementTypes topo, const int num_iter);
-  void RunSmartLaplace(const ElementTypes topo, const int num_iter);
-  void RunConjugateGradient(const ElementTypes topo,
-                            const int num_iter,
-                            const PatchType patch);
-  void RunFeasibleNewton(const ElementTypes topo,
-                         const int num_iter,
-                         const PatchType patch);
-  void RunSteepestDescent(const ElementTypes topo,
+  void RunLaplace( const ElementTypes topo, const int num_iter );
+  void RunSmartLaplace( const ElementTypes topo, const int num_iter );
+  void RunConjugateGradient( const ElementTypes topo,
+                             const int num_iter,
+                             const PatchType patch );
+  void RunFeasibleNewton( const ElementTypes topo,
                           const int num_iter,
-                          const PatchType patch);
-  void ConstructMesh(unsigned long num_nod,
-                     double *coords,
-                     const int *fixed,
-                     unsigned long num_elem,
-                     const unsigned long *quads,
-                     const ElementTypes topo);
+                          const PatchType patch );
+  void RunSteepestDescent( const ElementTypes topo,
+                           const int num_iter,
+                           const PatchType patch );
+  void ConstructMesh( unsigned long num_nod,
+                      double * coords,
+                      const int * fixed,
+                      unsigned long num_elem,
+                      const unsigned long * quads,
+                      const ElementTypes topo );
 };
 
 #endif

@@ -221,8 +221,8 @@ void testInterfaceSolvers()
 
   // Define some vectors
   ParallelVector x_true,
-      x_comp,
-      b;
+                 x_comp,
+                 b;
 
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -230,7 +230,7 @@ void testInterfaceSolvers()
 
   // We have some simple initialization options for vectors:
   x_true.rand(); // random
-  x_comp.zero(); // zero 
+  x_comp.zero(); // zero
   b.set( 1.0 ); // ones
 
   // Also define a residual vector, this time using the copy constructor
@@ -318,9 +318,13 @@ void testInterfaceSolvers()
   for( localIndex i = 0 ; i < col_indices.size() ; ++i )
   {
     if( firstRow == col_indices[i] )
+    {
       EXPECT_DOUBLE_EQ( col_values[i], diagValue );
+    }
     else
+    {
       EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
+    }
   }
 }
 
@@ -355,10 +359,10 @@ void testGEOSXSolvers()
   ParallelMatrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
-  // Define vectors 
+  // Define vectors
   ParallelVector x_true,
-      x_comp,
-      b;
+                 x_comp,
+                 b;
 
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -377,7 +381,7 @@ void testGEOSXSolvers()
   real64 norm_comp = x_comp.norm2();
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
-  // Test with BiCGSTAB solver 
+  // Test with BiCGSTAB solver
   x_comp.zero();
 
   BiCGSTABsolver<LAI> testBiCGSTAB;
@@ -422,10 +426,10 @@ void testGEOSXBlockSolvers()
   ParallelMatrix identity = computeIdentity<LAI>( MPI_COMM_WORLD, N );
 
   ParallelVector x_true,
-      x_comp_0,
-      x_comp_1,
-      b_0,
-      b_1;
+                 x_comp_0,
+                 x_comp_1,
+                 b_0,
+                 b_1;
 
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp_0.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -480,7 +484,7 @@ void testGEOSXBlockSolvers()
   block_rhs.set( 1, b_1 );
   block_matrix.multiply( block_x_true, block_rhs );
 
-//TODO: Need to refactor Native block solvers.  Disable this testing section for now.
+  //TODO: Need to refactor Native block solvers.  Disable this testing section for now.
 #if 0
   // Create block CG solver object and solve
   CGsolver<LAI> testCG;
@@ -587,7 +591,7 @@ void testRectangularMatrixOperations()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
-TEST(testLAOperations,testEpetraLAOperations)
+TEST( testLAOperations, testEpetraLAOperations )
 {
   MPI_Init( nullptr, nullptr );
   geosx::setupMKL();
@@ -604,11 +608,11 @@ TEST(testLAOperations,testEpetraLAOperations)
  */
 //TEST(testLAOperations,testHypreLAOperations)
 //{
-  //MPI_Init( nullptr, nullptr );
-  //testInterfaceSolvers<HypreInterface>();
-  //testGEOSXSolvers<HypreInterface>();
-  //testGEOSXBlockSolvers<HypreInterface>();
-  //MPI_Finalize();
+//MPI_Init( nullptr, nullptr );
+//testInterfaceSolvers<HypreInterface>();
+//testGEOSXSolvers<HypreInterface>();
+//testGEOSXBlockSolvers<HypreInterface>();
+//MPI_Finalize();
 //}
 
 /*! @function testPETScLAOperations.
@@ -616,11 +620,11 @@ TEST(testLAOperations,testEpetraLAOperations)
  */
 //TEST(testLAOperations,testPETScLAOperations)
 //{
-  //MPI_Init( nullptr, nullptr );
-  //testInterfaceSolvers<PETScInterface>();
-  //testGEOSXSolvers<PETScInterface>();
-  //testGEOSXBlockSolvers<PETScInterface>();
-  //MPI_Finalize();
+//MPI_Init( nullptr, nullptr );
+//testInterfaceSolvers<PETScInterface>();
+//testGEOSXSolvers<PETScInterface>();
+//testGEOSXBlockSolvers<PETScInterface>();
+//MPI_Finalize();
 //}
 
 //@}

@@ -42,8 +42,8 @@ public:
 
   MeshLevel * CreateMeshLevel( integer const newLevel );
 
-  MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
-  MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>( level ); }
+  MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>( level ); }
 
   void setGlobalLengthScale( real64 scale );
 

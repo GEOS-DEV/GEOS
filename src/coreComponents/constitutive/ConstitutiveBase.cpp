@@ -50,10 +50,10 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     ManagedGroup * const parent ):
   ManagedGroup( name, parent ),
-  m_numQuadraturePoints(1),
-  m_constitutiveDataGroup(nullptr)
+  m_numQuadraturePoints( 1 ),
+  m_constitutiveDataGroup( nullptr )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 ConstitutiveBase::~ConstitutiveBase()
@@ -61,7 +61,7 @@ ConstitutiveBase::~ConstitutiveBase()
 
 
 
-ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
+ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
 {
   static ConstitutiveBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -81,7 +81,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
       {
         string const wrapperName = wrapper.first;
         std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-        parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+        parent->RegisterViewWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() );
       }
     }
   }
@@ -92,7 +92,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
     {
       string const wrapperName = wrapper.first;
       std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+      parent->RegisterViewWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() );
     }
   }
 
@@ -107,10 +107,10 @@ void ConstitutiveBase::DeliverClone( string const & name,
                                      ManagedGroup * const parent,
                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  clone->forViewWrappers([&]( ViewWrapperBase & wrapper )
+  clone->forViewWrappers( [&]( ViewWrapperBase & wrapper )
   {
-    wrapper.CopyWrapperAttributes( *(this->getWrapperBase(wrapper.getName() ) ) );
-  });
+    wrapper.CopyWrapperAttributes( *( this->getWrapperBase( wrapper.getName() ) ) );
+  } );
 }
 
 

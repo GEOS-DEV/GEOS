@@ -40,7 +40,7 @@ std::string const expression = "expression";
 using namespace dataRepository;
 
 
-CompositeFunction::CompositeFunction( const std::string& name,
+CompositeFunction::CompositeFunction( const std::string & name,
                                       ManagedGroup * const parent ):
   FunctionBase( name, parent ),
 #ifdef GEOSX_USE_MATHPRESSO
@@ -51,16 +51,16 @@ CompositeFunction::CompositeFunction( const std::string& name,
   m_subFunctions()
 {
   RegisterViewWrapper( keys::functionNames, &m_functionNames, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("List of source functions. The order must match the variableNames argument.");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "List of source functions. The order must match the variableNames argument." );
 
   RegisterViewWrapper( keys::variableNames, &m_variableNames, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("List of variables in expression");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "List of variables in expression" );
 
   RegisterViewWrapper( keys::expression, &m_expression, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Composite math expression");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Composite math expression" );
 }
 
 
@@ -72,26 +72,26 @@ void CompositeFunction::InitializeFunction()
 {
 #ifdef GEOSX_USE_MATHPRESSO
   // Register variables
-  for (localIndex ii=0 ; ii<m_variableNames.size() ; ++ii)
+  for( localIndex ii=0 ; ii<m_variableNames.size() ; ++ii )
   {
-    parserContext.addVariable(m_variableNames[ii].c_str(), static_cast<int>(ii * sizeof(double)));
+    parserContext.addVariable( m_variableNames[ii].c_str(), static_cast<int>( ii * sizeof( double ) ) );
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  mathpresso::Error err = parserExpression.compile(parserContext, m_expression.c_str(), mathpresso::kNoOptions);
-  GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
+  mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
+  GEOS_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
-  m_numSubFunctions = integer_conversion<localIndex>(m_functionNames.size());
-  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
+  m_numSubFunctions = integer_conversion<localIndex>( m_functionNames.size() );
+  for( localIndex ii=0 ; ii<m_numSubFunctions ; ++ii )
   {
-    m_subFunctions.push_back(functionManager->GetGroup<FunctionBase>(m_functionNames[ii]));
+    m_subFunctions.push_back( functionManager->GetGroup<FunctionBase>( m_functionNames[ii] ) );
   }
 #else
-  GEOS_ERROR("GEOSX was not configured with mathpresso!");
+  GEOS_ERROR( "GEOSX was not configured with mathpresso!" );
 #endif
 }
 
@@ -104,11 +104,11 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
   array1d<real64_array> subFunctionResults;
-  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
+  for( localIndex ii=0 ; ii<m_numSubFunctions ; ++ii )
   {
-    real64_array tmp(result.size());
-    m_subFunctions[ii]->Evaluate(group, time, set, tmp);
-    subFunctionResults.push_back(std::move(tmp));
+    real64_array tmp( result.size() );
+    m_subFunctions[ii]->Evaluate( group, time, set, tmp );
+    subFunctionResults.push_back( std::move( tmp ) );
   }
 
 #ifdef GEOSX_USE_MATHPRESSO
@@ -116,14 +116,14 @@ void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const gro
   real64 functionResults[m_maxNumSubFunctions];
   for( auto const & ii : set )
   {
-    for (localIndex jj=0 ; jj<m_numSubFunctions ; ++jj)
+    for( localIndex jj=0 ; jj<m_numSubFunctions ; ++jj )
     {
       functionResults[jj] = subFunctionResults[jj][ii];
     }
-    result[ii] = parserExpression.evaluate( reinterpret_cast<void*>( functionResults ));
+    result[ii] = parserExpression.evaluate( reinterpret_cast<void *>( functionResults ) );
   }
 #else
-  GEOS_ERROR("GEOSX was not configured with mathpresso!");
+  GEOS_ERROR( "GEOSX was not configured with mathpresso!" );
 #endif
 }
 
@@ -132,15 +132,15 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 {
   real64 functionResults[m_maxNumSubFunctions];
 
-  for (localIndex ii=0 ; ii<m_numSubFunctions ; ++ii)
+  for( localIndex ii=0 ; ii<m_numSubFunctions ; ++ii )
   {
-    functionResults[ii] = m_subFunctions[ii]->Evaluate(input);
+    functionResults[ii] = m_subFunctions[ii]->Evaluate( input );
   }
 
 #ifdef GEOSX_USE_MATHPRESSO
-  return parserExpression.evaluate( reinterpret_cast<void*>( functionResults ));
+  return parserExpression.evaluate( reinterpret_cast<void *>( functionResults ) );
 #else
-  GEOS_ERROR("GEOSX was not configured with mathpresso!");
+  GEOS_ERROR( "GEOSX was not configured with mathpresso!" );
   return 0;
 #endif
 }

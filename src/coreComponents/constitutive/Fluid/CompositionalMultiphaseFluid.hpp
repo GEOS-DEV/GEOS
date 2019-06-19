@@ -69,7 +69,7 @@ public:
     static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey equationsOfState = { equationsOfStateString };

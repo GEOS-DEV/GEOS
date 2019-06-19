@@ -98,7 +98,7 @@ public:
    * norm is computed as the one norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNormInf(array2d<real64> const & A) ;
+  static real64 matrixNormInf( array2d<real64> const & A ) ;
 
   /**
    * @brief Returns the one norm of the matrix.
@@ -111,7 +111,7 @@ public:
    * is computed as the infinity norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNorm1(array2d<real64> const & A) ;
+  static real64 matrixNorm1( array2d<real64> const & A ) ;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
@@ -124,7 +124,7 @@ public:
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  static real64 matrixNormFrobenius(array2d<real64> const & A) ;
+  static real64 matrixNormFrobenius( array2d<real64> const & A ) ;
 
   /**
    * @brief Vector-Vector sum;
@@ -190,7 +190,7 @@ public:
    *
    */
   static real64 vectorDot( array1d<real64> const & X,
-                           array1d<real64> const & Y) ;
+                           array1d<real64> const & Y ) ;
 
   /**
    * @brief Matrix-Vector product;
@@ -207,11 +207,11 @@ public:
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p A.
    */
-  static void matrixVectorMultiply(array2d<real64> const & A,
-                                   array1d<real64> const & X,
-                                   array1d<real64>  & Y,
-                                   real64 const alpha=1.,
-                                   real64 const beta=0.) ;
+  static void matrixVectorMultiply( array2d<real64> const & A,
+                                    array1d<real64> const & X,
+                                    array1d<real64>  & Y,
+                                    real64 const alpha=1.,
+                                    real64 const beta=0. ) ;
 
   /**
    * @brief transpose(Matrix)-Vector product;
@@ -230,11 +230,11 @@ public:
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p transpose(A).
    */
-  static void matrixTVectorMultiply(array2d<real64> const & A,
-                                    array1d<real64> const & X,
-                                    array1d<real64>  & Y,
-                                    real64 const alpha=1.,
-                                    real64 const beta=0.) ;
+  static void matrixTVectorMultiply( array2d<real64> const & A,
+                                     array1d<real64> const & X,
+                                     array1d<real64>  & Y,
+                                     real64 const alpha=1.,
+                                     real64 const beta=0. ) ;
 
   /**
    * @brief Matrix-Matrix product;
@@ -257,7 +257,7 @@ public:
                                     array2d<real64> const & B,
                                     array2d<real64> & C,
                                     real64 const alpha=1.,
-                                    real64 const beta=0.) ;
+                                    real64 const beta=0. ) ;
 
   /**
    * @brief transpose(Matrix)-Matrix product;
@@ -282,7 +282,7 @@ public:
                                      array2d<real64> const & B,
                                      array2d<real64> & C,
                                      real64 const alpha=1.,
-                                     real64 const beta=0.);
+                                     real64 const beta=0. );
 
   /**
    * @brief Matrix-transpose(Matrix) product;
@@ -307,7 +307,7 @@ public:
                                      array2d<real64> const & B,
                                      array2d<real64> & C,
                                      real64 const alpha=1.,
-                                     real64 const beta=0.) ;
+                                     real64 const beta=0. ) ;
 
   /**
    * @brief transpose(Matrix)-transpose(Matrix) product;
@@ -332,7 +332,7 @@ public:
                                       array2d<real64> const & B,
                                       array2d<real64> & C,
                                       real64 const alpha=1.,
-                                      real64 const beta=0.) ;
+                                      real64 const beta=0. ) ;
 
   /**
    * @brief Computes the inverse matrix;
@@ -383,7 +383,7 @@ public:
    */
   static void matrixInverse( array2d<real64> const & A,
                              array2d<real64> & Ainv,
-                             real64 & detA) ;
+                             real64 & detA ) ;
 
   /**
    * @brief Vector copy;
@@ -419,14 +419,14 @@ public:
    * @param [in] seed GEOSX array1d, dimension (4). The elements must be
    *             between 0 and 4095, and seed(4) must be odd.
    */
-  static void setRandomNumberGeneratorSeed( array1d<int> const & seed);
+  static void setRandomNumberGeneratorSeed( array1d<int> const & seed );
 
   /**
    * @brief Get the random number generator seed.
    *
    * @param [out] seed GEOSX array1d, dimension (4).
    */
-  static void getRandomNumberGeneratorSeed( array1d<int> & seed);
+  static void getRandomNumberGeneratorSeed( array1d<int> & seed );
 
   /**
    * @brief Sets vector entries to random real numbers.
@@ -439,7 +439,7 @@ public:
    *                       specifying the distribution of the random numbers.
    */
   static void vectorRand( array1d<real64> & X,
-                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 ) ;
 
   /**
    * @brief Sets matrix entries to random real numbers.
@@ -452,7 +452,7 @@ public:
    *                       specifying the distribution of the random numbers.
    */
   static void matrixRand( array2d<real64> & A,
-                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01) ;
+                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 ) ;
 
 };
 

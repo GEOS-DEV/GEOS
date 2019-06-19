@@ -37,7 +37,7 @@ using namespace constitutive;
 FieldSpecificationManager::FieldSpecificationManager( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 
@@ -68,7 +68,7 @@ ManagedGroup * FieldSpecificationManager::CreateChild( string const & childKey, 
 void FieldSpecificationManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for (auto& catalogIter: FieldSpecificationBase::GetCatalog())
+  for( auto & catalogIter: FieldSpecificationBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
@@ -80,13 +80,13 @@ void FieldSpecificationManager::ApplyInitialConditions( ManagedGroup * domain ) 
 
   Apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
-         string const &,
-         set<localIndex> const & targetSet,
-         ManagedGroup * const targetGroup,
-         string const fieldName )
-    {
-      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
-    } );
+              string const &,
+              set<localIndex> const & targetSet,
+              ManagedGroup * const targetGroup,
+              string const fieldName )
+  {
+    bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
+  } );
 }
 
 } /* namespace geosx */

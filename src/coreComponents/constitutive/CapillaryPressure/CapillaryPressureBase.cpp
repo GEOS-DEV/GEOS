@@ -35,7 +35,7 @@ constexpr integer CapillaryPressureBase::PhaseType::GAS;
 constexpr integer CapillaryPressureBase::PhaseType::OIL;
 constexpr integer CapillaryPressureBase::PhaseType::WATER;
 
-namespace 
+namespace
 {
 
 std::unordered_map<string, integer> const phaseDict =
@@ -52,15 +52,15 @@ CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
   : ConstitutiveBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of fluid phases");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "List of fluid phases" );
 
   RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false );
 
   RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false );
-  
+
   RegisterViewWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  
+
   RegisterViewWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac, false );
 }
 
@@ -85,7 +85,7 @@ void CapillaryPressureBase::PostProcessInput()
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
   m_phaseOrder = -1;
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
     GEOS_ERROR_IF( it == phaseDict.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip] );
@@ -93,12 +93,13 @@ void CapillaryPressureBase::PostProcessInput()
     GEOS_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex );
 
     m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = integer_conversion<integer>(ip);
+    m_phaseOrder[phaseIndex] = integer_conversion<integer>( ip );
 
   }
 
-  GEOS_ERROR_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0 , "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
-  
+  GEOS_ERROR_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
+                 "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
+
   // call to correctly set member array tertiary sizes on the 'main' material object
   ResizeFields( 0, 0 );
 }
@@ -121,7 +122,7 @@ void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::ManagedGro
 
 localIndex CapillaryPressureBase::numFluidPhases() const
 {
-  return integer_conversion<localIndex>(m_phaseNames.size());
+  return integer_conversion<localIndex>( m_phaseNames.size() );
 }
 
 string const & CapillaryPressureBase::phaseName( localIndex ip ) const

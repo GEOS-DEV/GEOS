@@ -32,7 +32,7 @@ namespace geosx
 class HydrofractureSolver : public SolverBase
 {
 public:
-  HydrofractureSolver( const std::string& name,
+  HydrofractureSolver( const std::string & name,
                        ManagedGroup * const parent );
 
   ~HydrofractureSolver() override;
@@ -48,13 +48,13 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition * const domain,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem ) override final;
 
-  virtual void ImplicitStepComplete( real64 const& time_n,
-                                     real64 const& dt,
+  virtual void ImplicitStepComplete( real64 const & time_n,
+                                     real64 const & dt,
                                      DomainPartition * const domain ) override final;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
@@ -71,8 +71,8 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
+  real64 SplitOperatorStep( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition * const domain );
 

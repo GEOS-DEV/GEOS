@@ -39,33 +39,33 @@ MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const p
   // components/phases. Models that do need these inputs should change input flags accordingly.
 
   RegisterViewWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("List of component names");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "List of component names" );
 
   RegisterViewWrapper( viewKeyStruct::componentMolarWeightString, &m_componentMolarWeight, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Component molar weights");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Component molar weights" );
 
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("List of fluid phases");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "List of fluid phases" );
 
-  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper( viewKeyStruct::phaseFractionString, &m_phaseFraction, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dPressureString, &m_dPhaseFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString, &m_dPhaseFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString, &m_dPhaseFraction_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper( viewKeyStruct::phaseDensityString, &m_phaseDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dPressureString, &m_dPhaseDensity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString, &m_dPhaseDensity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString, &m_dPhaseViscosity_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString, &m_dPhaseViscosity_dGlobalCompFraction, false );
 
-  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->setPlotLevel(PlotLevel::LEVEL_0);
+  RegisterViewWrapper( viewKeyStruct::phaseCompFractionString, &m_phaseCompFraction, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString, &m_dPhaseCompFraction_dPressure, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString, &m_dPhaseCompFraction_dTemperature, false );
   RegisterViewWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString, &m_dPhaseCompFraction_dGlobalCompFraction, false );
@@ -154,10 +154,10 @@ void MultiFluidBase::PostProcessInput()
 
 localIndex MultiFluidBase::numFluidComponents() const
 {
-  return integer_conversion<localIndex>(m_componentNames.size());
+  return integer_conversion<localIndex>( m_componentNames.size() );
 }
 
-string const & MultiFluidBase::componentName(localIndex ic) const
+string const & MultiFluidBase::componentName( localIndex ic ) const
 {
   GEOS_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
   return m_componentNames[ic];
@@ -165,10 +165,10 @@ string const & MultiFluidBase::componentName(localIndex ic) const
 
 localIndex MultiFluidBase::numFluidPhases() const
 {
-  return integer_conversion<localIndex>(m_phaseNames.size());
+  return integer_conversion<localIndex>( m_phaseNames.size() );
 }
 
-string const & MultiFluidBase::phaseName(localIndex ip) const
+string const & MultiFluidBase::phaseName( localIndex ip ) const
 {
   GEOS_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
   return m_phaseNames[ip];
@@ -179,7 +179,7 @@ bool MultiFluidBase::getMassFlag() const
   return m_useMass;
 }
 
-void MultiFluidBase::setMassFlag(bool flag)
+void MultiFluidBase::setMassFlag( bool flag )
 {
   m_useMass = flag;
 }

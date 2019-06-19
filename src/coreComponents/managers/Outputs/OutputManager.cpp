@@ -31,9 +31,9 @@ using namespace cxx_utilities;
 
 OutputManager::OutputManager( std::string const & name,
                               ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+  ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::REQUIRED);
+  setInputFlags( InputFlags::REQUIRED );
 }
 
 OutputManager::~OutputManager()
@@ -43,16 +43,16 @@ OutputManager::~OutputManager()
 
 ManagedGroup * OutputManager::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
+  GEOS_LOG_RANK_0( "Adding Output: " << childKey << ", " << childName );
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup<OutputBase>( childName, std::move(output) );
+  return this->RegisterGroup<OutputBase>( childName, std::move( output ) );
 }
 
 
 void OutputManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from OutputBase here
-  for (auto& catalogIter: OutputBase::GetCatalog())
+  for( auto & catalogIter: OutputBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

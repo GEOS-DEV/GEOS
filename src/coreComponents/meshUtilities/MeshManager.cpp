@@ -30,9 +30,9 @@ using namespace cxx_utilities;
 
 MeshManager::MeshManager( std::string const & name,
                           ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+  ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::REQUIRED);
+  setInputFlags( InputFlags::REQUIRED );
 }
 
 MeshManager::~MeshManager()
@@ -40,16 +40,16 @@ MeshManager::~MeshManager()
 
 ManagedGroup * MeshManager::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Mesh: " << childKey << ", " << childName);
+  GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr<MeshGeneratorBase> solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup<MeshGeneratorBase>( childName, std::move(solver) );
+  return this->RegisterGroup<MeshGeneratorBase>( childName, std::move( solver ) );
 }
 
 
 void MeshManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for (auto& catalogIter: MeshGeneratorBase::GetCatalog())
+  for( auto & catalogIter: MeshGeneratorBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
@@ -58,21 +58,21 @@ void MeshManager::ExpandObjectCatalogs()
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
+  forSubGroups<MeshGeneratorBase>( [&]( MeshGeneratorBase * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );
-  });
+  } );
 
 }
 
 
 void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
 {
-  this->forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
+  this->forSubGroups<MeshGeneratorBase>( [&]( MeshGeneratorBase * meshGen ) -> void
   {
     string meshName = meshGen->getName();
-    domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0);
-  });
+    domain->getMeshBodies()->RegisterGroup<MeshBody>( meshName )->CreateMeshLevel( 0 );
+  } );
 }
 
 

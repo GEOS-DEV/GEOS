@@ -29,7 +29,7 @@ namespace geosx
 void createIndexArray_FaceVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
                                    const string & fieldName,
-                                   array1d<ElementRegion*> const & regionPtrs,
+                                   array1d<ElementRegion *> const & regionPtrs,
                                    localIndex const numComponents,
                                    localIndex & numLocalNodes,
                                    localIndex & numLocalRows,
@@ -44,11 +44,11 @@ void createIndexArray_FaceVersion( DomainPartition * const domain,
 
   // step 0. register an index array with default = LocationStatus::notAssigned
   ObjectManagerBase *
-  baseManager = static_cast<ObjectManagerBase*>( meshLevel->getFaceManager() );
+  baseManager = static_cast<ObjectManagerBase *>( meshLevel->getFaceManager() );
 
   baseManager->RegisterViewWrapper<globalIndex_array>( fieldName )->
-    setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+  setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
+  setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
 
   globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( fieldName );
 
@@ -164,7 +164,7 @@ void createIndexArray_FaceVersion( DomainPartition * const domain,
 void createIndexArray_ElemVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
                                    const string & fieldName,
-                                   array1d<ElementRegion*> const & regionPtrs,
+                                   array1d<ElementRegion *> const & regionPtrs,
                                    localIndex const numComponents,
                                    localIndex & numLocalNodes,
                                    localIndex & numLocalRows,
@@ -218,8 +218,8 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
       CellElementSubRegion * const subRegion = regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
 
       subRegion->RegisterViewWrapper<globalIndex_array>( fieldName )->
-        setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
+      setApplyDefaultValue( static_cast<globalIndex>( DofManager::LocationStatus::notAssigned ) )->
+      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 );
 
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>( fieldName );
       integer_array const & ghostRank = subRegion->m_ghostRank;
@@ -312,8 +312,8 @@ void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                              DomainPartition * domain,
                              MeshLevel * meshLevel,
                              const string & fieldName,
-                             array1d<ElementRegion*> const & regionPtrs,
-                             localIndex const numComponents)
+                             array1d<ElementRegion *> const & regionPtrs,
+                             localIndex const numComponents )
 {
 
   localIndex numLocalNodes;
@@ -333,7 +333,7 @@ void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                 firstLocalRow,
                                 firstLocalConnectivity );
 
-  ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( meshLevel->getFaceManager() );
+  ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( meshLevel->getFaceManager() );
   globalIndex_array & indexArrayFace = baseManager->getReference<globalIndex_array>( fieldName );
 
   array1d<indexPair> pairs;
@@ -442,7 +442,7 @@ void createConnLocPattern( DomainPartition * const domain,
   auto const & regionListPtr = elemManager->GetRegions().keys();
   string_array regionNames( regionListPtr.size() );
 
-  for( auto& regionPtr : regionListPtr )
+  for( auto & regionPtr : regionListPtr )
   {
     regionNames[regionPtr.second] = regionPtr.first;
   }
@@ -450,7 +450,7 @@ void createConnLocPattern( DomainPartition * const domain,
   localIndex numTotalRegions = elemManager->numRegions();
   localIndex numActiveRegions = regionNames.size();
 
-  array1d<ElementRegion*> regionPtrs( numActiveRegions );
+  array1d<ElementRegion *> regionPtrs( numActiveRegions );
   for( localIndex er = 0 ; er < numActiveRegions ; ++er )
   {
     // Get region by name
@@ -478,7 +478,7 @@ void createConnLocPattern( DomainPartition * const domain,
                           meshLevel,
                           "userDefined",
                           regionPtrs,
-                          numComponents);
+                          numComponents );
 
   // TRILINOS interface
   localIndex maxEntriesPerRow = 0;

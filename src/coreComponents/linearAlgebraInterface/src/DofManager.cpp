@@ -37,7 +37,8 @@ DofManager::DofManager( localIndex const verbosity )
 }
 
 // Initialize data structure for connectivity and sparsity pattern
-void DofManager::initializeDataStructure() {
+void DofManager::initializeDataStructure()
+{
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
   m_connectivity.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
@@ -248,7 +249,7 @@ void DofManager::addField( string const & field,
     auto const & regionListPtr = elemManager->GetRegions().keys();
     string_array regionNames( regionListPtr.size() );
 
-    for( auto& regionPtr : regionListPtr )
+    for( auto & regionPtr : regionListPtr )
     {
       regionNames[regionPtr.second] = regionPtr.first;
     }
@@ -322,7 +323,7 @@ void DofManager::addField( string const & field,
   }
 
   last.connLocPattern = new ParallelMatrix();
-  ParallelMatrix* connLocPattDistr = last.connLocPattern;
+  ParallelMatrix * connLocPattDistr = last.connLocPattern;
   if( connectivity == Connectivity::Elem )
   {
     // In case of elemental connectivity, it reflects the mesh partitioning also in the connLoc matrix
@@ -347,7 +348,7 @@ void DofManager::addField( string const & field,
     {
       real64_array values( nnz );
       // Keep track of the original order
-      for( localIndex iLoc = 0 ; iLoc < nnz ; ++iLoc)
+      for( localIndex iLoc = 0 ; iLoc < nnz ; ++iLoc )
       {
         values[iLoc] = static_cast<real64>( connLocPattLocal.nnzEntries[connLocPattLocal.rowLengths[i]+iLoc] + 1 );
       }
@@ -447,7 +448,7 @@ void DofManager::addField( string const & field,
   m_connectivity[numFields - 1][numFields - 1] = connectivity;
 
   // save the user-provided location-connectivity matrix
-  last.connLocPattern = new ParallelMatrix(connLocInput);
+  last.connLocPattern = new ParallelMatrix( connLocInput );
 
   // compute useful values (number of local and global rows)
   last.numLocalRows = connLocInput.numMyCols();
@@ -471,7 +472,7 @@ void DofManager::addField( string const & field,
   }
   last.firstLocalRow *= components;
 
-  if ( connectivity == Connectivity::Elem )
+  if( connectivity == Connectivity::Elem )
   {
     globalIndex_array globalGather;
 
@@ -507,13 +508,13 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   // step 0. register an index array with default = LocationStatus::notAssigned
   ObjectManagerBase *
   baseManager = field.location == Location::Node ?
-                static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
-                static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() ) ;
+                static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() ) :
+                static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() ) ;
 
   baseManager->RegisterViewWrapper<globalIndex_array>( field.key )->
-    setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-    setDescription( field.docstring );
+  setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+  setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
+  setDescription( field.docstring );
 
   globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( field.key );
 
@@ -614,7 +615,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
   {
     if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) and
-      indexArray[n] != static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
+        indexArray[n] != static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
     {
       indexArray[n] += field.firstLocalRow;
     }
@@ -711,9 +712,9 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       CellElementSubRegion * const subRegion = field.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
 
       subRegion->RegisterViewWrapper<globalIndex_array>( field.key )->
-        setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-        setDescription( field.docstring );
+      setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
+      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
+      setDescription( field.docstring );
 
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>( field.key );
       integer_array const & ghostRank = subRegion->m_ghostRank;
@@ -809,7 +810,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
 {
   GEOS_ERROR_IF( rowFieldIndex * colFieldIndex < 0,
                  "setSparsityPattern accepts both two existing field indices (positive values) and "
-                 "two negative values (entire Jacobian rows/columns), instead just one index is positive.");
+                 "two negative values (entire Jacobian rows/columns), instead just one index is positive." );
 
   if( rowFieldIndex >= 0 and colFieldIndex == rowFieldIndex )
   {
@@ -1025,7 +1026,7 @@ void DofManager::setVector( ParallelVector & vector,
 {
   GEOS_ERROR_IF( rowFieldIndex * colFieldIndex < 0,
                  "setVector accepts both two existing field indices (positive values) and "
-                 "two negative values (entire Jacobian rows/columns), instead just one index is positive.");
+                 "two negative values (entire Jacobian rows/columns), instead just one index is positive." );
 
   if( rowFieldIndex >= 0 and colFieldIndex == rowFieldIndex )
   {
@@ -1262,11 +1263,11 @@ void DofManager::addCoupling( string const & rowField,
     localIndex colNameIndex = 0;
 
     for( array1d<string>::const_iterator regionName = regionsList.begin() ; regionName != regionsList.end() ;
-        ++regionName )
+         ++regionName )
     {
       localIndex
       rowID = std::find( rowFieldRegionNames.begin(), rowFieldRegionNames.end(), *regionName )
-            - rowFieldRegionNames.begin();
+              - rowFieldRegionNames.begin();
       bool rowDefined = rowID < rowFieldRegionNames.size();
       if( rowDefined )
       {
@@ -1275,7 +1276,7 @@ void DofManager::addCoupling( string const & rowField,
       areDefinedRegions &= rowDefined;
       localIndex
       colID = std::find( colFieldRegionNames.begin(), colFieldRegionNames.end(), *regionName )
-            - colFieldRegionNames.begin();
+              - colFieldRegionNames.begin();
       bool colDefined = colID < colFieldRegionNames.size();
       if( colDefined )
       {
@@ -1395,7 +1396,7 @@ void DofManager::getIndices( globalIndex_array & indices,
       real64_array values;
       globalIndex
       globalRow = fieldDesc.connLocPattern->getGlobalRowID(
-        firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
+                    firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
       if( globalRow >= 0 )
       {
         globalIndex_array indicesOrig;
@@ -1671,8 +1672,8 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
       // Case of connectivity = Elem and location = Node or Face
       ObjectManagerBase *
       baseManager = fieldDesc.location == Location::Node ?
-                    static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() ) :
-                    static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() ) ;
+                    static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() ) :
+                    static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() ) ;
 
       globalIndex_array & indexArray = baseManager->getReference<globalIndex_array>( fieldDesc.key );
 
@@ -1770,7 +1771,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() );
       globalIndex_array & indexArrayFace = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
       FieldDescription fieldTmp2;
@@ -1783,7 +1784,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp2 );
 
-      baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() );
       globalIndex_array & indexArrayFaceOrig = baseManager->getReference<globalIndex_array>( fieldTmp2.key );
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Face
@@ -1846,7 +1847,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() );
       globalIndex_array & indexArrayFace = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Face
@@ -1910,10 +1911,10 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() );
       globalIndex_array & indexArrayFace = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
-      baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() );
+      baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() );
       globalIndex_array & indexArrayNode = baseManager->getReference<globalIndex_array>( fieldDesc.key );
 
       globalIndex_array indexArrayFaceMarker( fieldTmp.numGlobalRows );
@@ -1989,7 +1990,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() );
       globalIndex_array & indexArrayNode = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
       FieldDescription fieldTmp2;
@@ -2002,7 +2003,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp2 );
 
-      baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() );
+      baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() );
       globalIndex_array & indexArrayNodeOrig = baseManager->getReference<globalIndex_array>( fieldTmp2.key );
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Node
@@ -2062,7 +2063,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() );
       globalIndex_array & indexArrayNode = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
       // Compute the transpose of the sparsity pattern, i.e., Connectivity::Elem and Location::Node
@@ -2123,10 +2124,10 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
 
       createIndexArray_NodeOrFaceVersion( fieldTmp, activeRegions );
 
-      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getFaceManager() );
+      ObjectManagerBase * baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getFaceManager() );
       globalIndex_array & indexArrayFace = baseManager->getReference<globalIndex_array>( fieldDesc.key );
 
-      baseManager = static_cast<ObjectManagerBase*>( m_meshLevel->getNodeManager() );
+      baseManager = static_cast<ObjectManagerBase *>( m_meshLevel->getNodeManager() );
       globalIndex_array & indexArrayNode = baseManager->getReference<globalIndex_array>( fieldTmp.key );
 
       globalIndex_array indexArrayFaceMarker( fieldDesc.numGlobalRows );

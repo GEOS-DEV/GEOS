@@ -57,49 +57,49 @@ public:
   ElementRegion( string const & name, ManagedGroup * const parent );
 
 
-  ElementRegion(const ElementRegion& init);
+  ElementRegion( const ElementRegion & init );
 
   virtual ~ElementRegion() override;
 
   virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
 
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 
   subGroupMap & GetSubRegions()
   {
-    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
+    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
+    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
+    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup<SUBREGIONTYPE>( regionName );
   }
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
+    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup<SUBREGIONTYPE>( regionName );
   }
 
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
+    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup<SUBREGIONTYPE>( index );
   }
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
+    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup<SUBREGIONTYPE>( index );
   }
 
   localIndex numSubRegions() const
   {
-    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
+    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
   }
 
   void AddCellBlockName( string const & cellBlockName )
@@ -111,40 +111,40 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>( lambda ) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>( lambda ) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+    ManagedGroup const * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>( lambda ) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+    ManagedGroup * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>( lambda ) );
   }
 
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>( lambda ) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>( lambda ) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -152,11 +152,11 @@ public:
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
+      ElementSubRegionBase const * const subRegion = this->GetSubRegion( esr );
       applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
-      });
+      } );
     }
   }
 
@@ -165,11 +165,11 @@ public:
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
-      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+      ElementSubRegionBase * const subRegion = this->GetSubRegion( esr );
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
-      });
+      } );
     }
   }
 
@@ -177,7 +177,7 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-    static constexpr auto coarseningRatioString = "coarseningRatio"; 
+    static constexpr auto coarseningRatioString = "coarseningRatio";
     static constexpr auto elementSubRegions = "elementSubRegions";
     static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
@@ -190,7 +190,7 @@ protected:
 
 private:
 
-  ElementRegion& operator=(const ElementRegion& rhs);
+  ElementRegion & operator=( const ElementRegion & rhs );
 
   string_array m_cellBlockNames;
   string_array m_materialList;

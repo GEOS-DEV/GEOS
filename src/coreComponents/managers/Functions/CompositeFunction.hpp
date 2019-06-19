@@ -41,7 +41,7 @@ class CompositeFunction : public FunctionBase
 {
 public:
   /// Main constructor
-  CompositeFunction( const std::string& name,
+  CompositeFunction( const std::string & name,
                      dataRepository::ManagedGroup * const parent );
 
   /// Destructor
@@ -49,7 +49,7 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "CompositeFunction"; }
-  
+
   /// Function initialization
   virtual void InitializeFunction() override;
 
@@ -69,7 +69,7 @@ public:
    * @brief Method to evaluate a function
    * @param input a scalar input
    */
-  virtual real64 Evaluate( real64 const * const input) const override final;
+  virtual real64 Evaluate( real64 const * const input ) const override final;
 
 private:
 
@@ -84,7 +84,7 @@ private:
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
-  std::vector<FunctionBase*> m_subFunctions;
+  std::vector<FunctionBase *> m_subFunctions;
 
 };
 

@@ -32,8 +32,8 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 BlueprintOutput::BlueprintOutput( std::string const & name,
-                        ManagedGroup * const parent ):
-  OutputBase( name, parent)
+                                  ManagedGroup * const parent ):
+  OutputBase( name, parent )
 {
 }
 
@@ -41,21 +41,21 @@ BlueprintOutput::~BlueprintOutput()
 {}
 
 
-void BlueprintOutput::Execute(real64 const time_n,
-                              real64 const dt,
-                              integer const cycleNumber,
-                              integer const eventCounter,
-                              real64 const eventProgress,
-                              ManagedGroup * domain)
+void BlueprintOutput::Execute( real64 const time_n,
+                               real64 const dt,
+                               integer const cycleNumber,
+                               integer const eventCounter,
+                               real64 const eventProgress,
+                               ManagedGroup * domain )
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
-  
-  const MeshLevel * meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
-  Blueprint bpWriter(*meshLevel->getNodeManager(),
-                     *meshLevel->getElemManager(),
-                     "bp_plot", MPI_COMM_GEOSX);
-  
-  bpWriter.write(cycleNumber, eventCounter );
+  DomainPartition * domainPartition = ManagedGroup::group_cast<DomainPartition *>( domain );
+
+  const MeshLevel * meshLevel = domainPartition->getMeshBody( 0 )->getMeshLevel( 0 );
+  Blueprint bpWriter( *meshLevel->getNodeManager(),
+                      *meshLevel->getElemManager(),
+                      "bp_plot", MPI_COMM_GEOSX );
+
+  bpWriter.write( cycleNumber, eventCounter );
 }
 
 

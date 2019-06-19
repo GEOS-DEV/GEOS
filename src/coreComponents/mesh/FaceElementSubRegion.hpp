@@ -54,12 +54,12 @@ public:
   }
 
   FaceElementSubRegion( string const & name,
-                     dataRepository::ManagedGroup * const parent );
+                        dataRepository::ManagedGroup * const parent );
   virtual ~FaceElementSubRegion() override;
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                     const NodeManager& nodeManager,
-                                     const bool useReferencePos = true) const override;
+                                                   const NodeManager & nodeManager,
+                                                   const bool useReferencePos = true ) const override;
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
@@ -123,12 +123,12 @@ public:
   /**
    * @return number of nodes per element
    */
-//  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
+  //  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-  arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > const    &    getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
-  arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 > const    &    getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
 private:

@@ -72,15 +72,15 @@ public:
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
-  SolidMechanicsLagrangianFEM( const std::string& name,
-                                ManagedGroup * const parent );
+  SolidMechanicsLagrangianFEM( const std::string & name,
+                               ManagedGroup * const parent );
 
 
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default ;
 
-  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM& operator=( SolidMechanicsLagrangianFEM && ) = delete ;
+  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
+  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete ;
 
   /**
    * destructor
@@ -92,7 +92,7 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
 
@@ -104,7 +104,7 @@ public:
    * @param MLPrec A pointer to the preconditioner object.
    */
   void SetupMLPreconditioner( DomainPartition const & domain,
-                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
+                              ML_Epetra::MultiLevelPreconditioner * MLPrec );
 
   /**
    * @defgroup Solver Interface Functions
@@ -112,32 +112,32 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
-  virtual real64 ExplicitStep( real64 const& time_n,
-                                   real64 const& dt,
-                                   integer const cycleNumber,
-                                   DomainPartition * domain ) override;
+  virtual real64 ExplicitStep( real64 const & time_n,
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition * const domain,
+                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
-  virtual void AssembleSystem ( DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                  real64 const time,
-                                  real64 const dt ) override;
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
   virtual void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            DomainPartition * const domain  ) override;
+                                    real64 const scalingFactor,
+                                    DomainPartition * const domain ) override;
 
   virtual void ApplyBoundaryConditions( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem,
@@ -145,13 +145,13 @@ public:
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem, DomainPartition *const domain) override;
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem, DomainPartition * const domain ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
+                                     real64 const & dt,
+                                     DomainPartition * const domain ) override;
 
   /**@}*/
 
@@ -160,8 +160,8 @@ public:
    * @param domain The DomainPartition object.
    * @param blockSystem the block system object to that holds the blocks that will be constructed
    */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * Function to set the sparsity pattern
@@ -182,7 +182,7 @@ public:
   void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
+                                     localIndex_array & localIndices,
                                      localIndex offset );
 
   /**
@@ -200,18 +200,18 @@ public:
   ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               PARAMS&&... params );
+                               PARAMS && ... params );
 
-/**
- * @param WRAPPER The class/struct that contains the Launch() function that launches the kernel
- * @param OVERRIDE An optional argument to add the override specifier to the function definiton. For the base class
- *                 this should be empty. For a derived class, "override" should be entered.
- * @return A valid definition of the virtual ExplicitElementKernelLaunch() function
- *
- * This macro provides the definition for the virtual ExplicitElementKernelLaunch() function that will call the
- * ElementKernelLaunchSelector<WRAPPER>() function.
- *
- */
+  /**
+   * @param WRAPPER The class/struct that contains the Launch() function that launches the kernel
+   * @param OVERRIDE An optional argument to add the override specifier to the function definiton. For the base class
+   *                 this should be empty. For a derived class, "override" should be entered.
+   * @return A valid definition of the virtual ExplicitElementKernelLaunch() function
+   *
+   * This macro provides the definition for the virtual ExplicitElementKernelLaunch() function that will call the
+   * ElementKernelLaunchSelector<WRAPPER>() function.
+   *
+   */
 #define EXPLICIT_ELEMENT_KERNEL_LAUNCH( WRAPPER,OVERRIDE )\
     virtual real64\
     ExplicitElementKernelLaunch(\
@@ -244,7 +244,7 @@ public:
                                                    dt );\
     }
 
-  EXPLICIT_ELEMENT_KERNEL_LAUNCH(SolidMechanicsLagrangianFEM::ExplicitElementKernelWrapper,)
+  EXPLICIT_ELEMENT_KERNEL_LAUNCH( SolidMechanicsLagrangianFEM::ExplicitElementKernelWrapper, )
 
 
   /**
@@ -316,7 +316,7 @@ public:
                                            rhs );\
     }
 
-  IMPLICIT_ELEMENT_KERNEL_LAUNCH(SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper,)
+  IMPLICIT_ELEMENT_KERNEL_LAUNCH( SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper, )
 
   /**
    * @struct Structure to wrap templated functions that support the explicit time integration kernels.
@@ -400,7 +400,7 @@ public:
             localIndex const numElems,
             real64 const dt,
             arrayView3d<R1Tensor const> const & dNdX,
-            arrayView2d<real64 const > const& detJ,
+            arrayView2d<real64 const > const & detJ,
             FiniteElementBase const * const fe,
             arrayView1d< integer const > const & elemGhostRank,
             arrayView2d< localIndex const > const & elemsToNodes,
@@ -430,7 +430,7 @@ public:
    */
   void ApplyDisplacementBC_implicit( real64 const time,
                                      DomainPartition & domain,
-                                     systemSolverInterface::EpetraBlockSystem & blockSystem  );
+                                     systemSolverInterface::EpetraBlockSystem & blockSystem );
 
 
   void ApplyTractionBC( DomainPartition * const domain,
@@ -450,13 +450,13 @@ public:
     {
       this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
     }
-    else if ( stringVal == "QuasiStatic" )
+    else if( stringVal == "QuasiStatic" )
     {
       this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
     }
     else
     {
-      GEOS_ERROR("Invalid time integration option: " << stringVal);
+      GEOS_ERROR( "Invalid time integration option: " << stringVal );
     }
   }
 
@@ -532,17 +532,17 @@ protected:
 
 
 template< int N >
-void Integrate( const R2SymTensor& fieldvar,
+void Integrate( const R2SymTensor & fieldvar,
                 arraySlice1d<R1Tensor const> const & dNdX,
-                real64 const& detJ,
-                real64 const& detF,
-                const R2Tensor& Finv,
-                R1Tensor * restrict const result)
+                real64 const & detJ,
+                real64 const & detF,
+                const R2Tensor & Finv,
+                R1Tensor * restrict const result )
 {
   real64 const integrationFactor = detJ * detF;
 
   R2Tensor P;
-  P.AijBkj( fieldvar,Finv);
+  P.AijBkj( fieldvar, Finv );
   P *= integrationFactor;
 
   for( int a=0 ; a<N ; ++a )  // loop through all shape functions in element
@@ -560,7 +560,7 @@ real64 SolidMechanicsLagrangianFEM::
 ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
                              localIndex NUM_QUADRATURE_POINTS,
                              constitutive::ConstitutiveBase * const constitutiveRelation,
-                             PARAMS&& ... params)
+                             PARAMS && ... params )
 {
   real64 rval = 0;
 
@@ -569,13 +569,13 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
     using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
     if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
     {
-      rval = KERNELWRAPPER::template Launch<8,8, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...);
+      rval = KERNELWRAPPER::template Launch<8, 8, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>( params )... );
     }
     else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
     {
-      rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...);
+      rval = KERNELWRAPPER::template Launch<4, 1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>( params )... );
     }
-  });
+  } );
   return rval;
 }
 
@@ -599,49 +599,49 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
 
   forall_in_set<elemPolicy>( elementList.values(),
                              elementList.size(),
-                             GEOSX_LAMBDA ( localIndex k) mutable
+                             GEOSX_LAMBDA( localIndex k ) mutable
   {
     R1Tensor v_local[NUM_NODES_PER_ELEM];
     R1Tensor u_local[NUM_NODES_PER_ELEM];
     R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-    CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
-                                                    u, vel,
-                                                    u_local, v_local );
+    CopyGlobalToLocal<NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
+                                                     u, vel,
+                                                     u_local, v_local );
 
     //Compute Quadrature
-    for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
+    for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q )
     {
 
       R2Tensor dUhatdX, dUdX;
-      CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q]);
+      CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q] );
       dUhatdX *= dt;
 
-      R2Tensor F,Ldt, Finv;
+      R2Tensor F, Ldt, Finv;
 
       // calculate du/dX
       F = dUhatdX;
       F *= 0.5;
       F += dUdX;
-      F.PlusIdentity(1.0);
-      Finv.Inverse(F);
+      F.PlusIdentity( 1.0 );
+      Finv.Inverse( F );
 
       // chain rule: calculate dv/du = dv/dX * dX/du
-      Ldt.AijBjk(dUhatdX, Finv);
+      Ldt.AijBjk( dUhatdX, Finv );
 
       // calculate gradient (end of step)
       F = dUhatdX;
       F += dUdX;
-      F.PlusIdentity(1.0);
+      F.PlusIdentity( 1.0 );
       real64 detF = F.Det();
-      Finv.Inverse(F);
+      Finv.Inverse( F );
 
 
       R2Tensor Rot;
       R2SymTensor Dadt;
-      HughesWinget(Rot, Dadt, Ldt);
+      HughesWinget( Rot, Dadt, Ldt );
 
-      constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+      constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0 );
 
       R2SymTensor TotalStress;
       TotalStress = devStress[k][q];
@@ -652,7 +652,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
 
 
     AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
-  });
+  } );
 
   return dt;
 }
@@ -668,7 +668,7 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
         localIndex const numElems,
         real64 const dt,
         arrayView3d<R1Tensor const> const & dNdX,
-        arrayView2d<real64 const > const& detJ,
+        arrayView2d<real64 const > const & detJ,
         FiniteElementBase const * const fe,
         arrayView1d< integer const > const & elemGhostRank,
         arrayView2d< localIndex const > const & elemsToNodes,
@@ -689,8 +689,8 @@ Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
         Epetra_FECrsMatrix * const matrix,
         Epetra_FEVector * const rhs )
 {
-  GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
-return 0;
+  GEOS_ERROR( "SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented" );
+  return 0;
 }
 
 } /* namespace geosx */

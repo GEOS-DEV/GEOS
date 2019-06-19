@@ -56,10 +56,10 @@ public:
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+  virtual localIndex PackUpDownMaps( buffer_unit_type *& buffer,
                                      arrayView1d<localIndex const> const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const *& buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
@@ -86,8 +86,8 @@ public:
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
 
-//  virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
-//  virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
+  //  virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
+  //  virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
 
 
   map< string, localIndex_array > m_constitutiveGrouping;
@@ -106,7 +106,7 @@ private:
   map<localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInFacelist;
 
   template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+  localIndex PackUpDownMapsPrivate( buffer_unit_type *& buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
 

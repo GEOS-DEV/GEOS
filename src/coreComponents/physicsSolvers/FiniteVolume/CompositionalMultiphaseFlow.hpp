@@ -65,7 +65,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  CompositionalMultiphaseFlow( const string& name,
+  CompositionalMultiphaseFlow( const string & name,
                                ManagedGroup * const parent );
 
   /// deleted default constructor
@@ -94,7 +94,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -103,13 +103,13 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition * const domain,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
 
@@ -125,15 +125,15 @@ public:
                                         real64 const dt ) override;
 
   virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                         DomainPartition * const domain ) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
 
   virtual bool
-  CheckSystemSolution(systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
-                      DomainPartition * const domain) override;
+  CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
 
   virtual void
   ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
@@ -408,8 +408,8 @@ private:
    * @param domain the domain containing the mesh and fields
    * @param blockSystem the linear system object
    */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system

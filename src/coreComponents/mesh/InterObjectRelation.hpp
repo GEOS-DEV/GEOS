@@ -41,25 +41,25 @@ public:
 
 
   /// equals operator that sets *this to a single value of any type
-  template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
+  template<typename rTYPE> InterObjectRelation & operator=( const rTYPE & rhs )
   {
-    BASETYPE::operator=(rhs);
-    return (*this);
+    BASETYPE::operator=( rhs );
+    return ( *this );
   }
 
-  const BASETYPE& Base() const { return static_cast<const BASETYPE&>(*this); }
-  BASETYPE& Base() { return dynamic_cast<BASETYPE&>(*this); }
+  const BASETYPE & Base() const { return static_cast<const BASETYPE &>( *this ); }
+  BASETYPE & Base() { return dynamic_cast<BASETYPE &>( *this ); }
 
   void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
-  const ObjectDataStructureBaseT* RelatedObject() const
+  const ObjectDataStructureBaseT * RelatedObject() const
   { return m_relatedObject; }
 
   globalIndex_array const & RelatedObjectLocalToGlobal() const
   { return this->m_relatedObject->m_localToGlobalMap; }
 
-  const std::map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const
+  const std::map<globalIndex, localIndex> & RelatedObjectGlobalToLocal() const
   { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:

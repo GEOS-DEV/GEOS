@@ -32,7 +32,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   localIndex constexpr numQuadraturePoints = 3;
 
   dataRepository::ManagedGroup disc( "discretization", nullptr );
-  disc.resize(numElems);
+  disc.resize( numElems );
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
@@ -45,10 +45,10 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   EXPECT_EQ( bulkModulus.size(), numElems );
   EXPECT_EQ( shearModulus.size(), numElems );
-  EXPECT_EQ( meanStress.size(0), numElems );
-  EXPECT_EQ( meanStress.size(1), numQuadraturePoints );
-  EXPECT_EQ( deviatorStress.size(0), numElems );
-  EXPECT_EQ( deviatorStress.size(1), numQuadraturePoints );
+  EXPECT_EQ( meanStress.size( 0 ), numElems );
+  EXPECT_EQ( meanStress.size( 1 ), numQuadraturePoints );
+  EXPECT_EQ( deviatorStress.size( 0 ), numElems );
+  EXPECT_EQ( deviatorStress.size( 1 ), numQuadraturePoints );
 
 }
 
@@ -62,7 +62,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   cm.defaultShearModulus() = G;
 
   dataRepository::ManagedGroup disc( "discretization", nullptr );
-  disc.resize(2);
+  disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
 
   cm.bulkModulus() = cm.bulkModulus0();
@@ -77,20 +77,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   R2SymTensor zero;
 
   {
-    Ddt(0,0) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 0 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (2.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], strain*K );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), ( 2.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), 0.0 );
   }
 
   {
@@ -98,20 +98,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     deviatorStress = zero;
     Ddt = 0;
 
-    Ddt(1,1) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 1, 1 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) ,  (2.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], strain*K );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), ( 2.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), 0.0 );
   }
 
   {
@@ -119,20 +119,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     deviatorStress = zero;
     Ddt = 0;
 
-    Ddt(2,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 2, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , strain*K );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) ,  (2.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], strain*K );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), ( -1.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), ( 2.0/3.0*strain )*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), 0.0 );
   }
 
   {
@@ -140,20 +140,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     deviatorStress = zero;
     Ddt = 0;
 
-    Ddt(0,1) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 1 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , strain*2*G );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], 0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), strain*2*G );
   }
 
   {
@@ -161,20 +161,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     deviatorStress = zero;
     Ddt = 0;
 
-    Ddt(0,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], 0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), 0.0 );
   }
 
   {
@@ -182,20 +182,20 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     deviatorStress = zero;
     Ddt = 0;
 
-    Ddt(1,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 1, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( meanStress[0][0] , 0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](1,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( deviatorStress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( meanStress[0][0], 0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 2, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 1, 2 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( deviatorStress[0][0]( 0, 1 ), 0.0 );
   }
 }
 
@@ -203,28 +203,28 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 TEST( LinearElasticIsotropicTests, testXML )
 {
-  ConstitutiveManager constitutiveManager("constitutive",nullptr);
+  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
   LinearElasticIsotropic cm( "model", &constitutiveManager );
 
   string const inputStream =
-  "<?xml version=\"1.0\" ?>"
-  "  <Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
-  "  <LinearElasticIsotropic name=\"granite\" "
-  "  defaultDensity=\"2700\" "
-  "  defaultBulkModulus=\"5.5556e9\" "
-  "  defaultShearModulus=\"4.16667e9\"/>"
-  "</Constitutive>";
+    "<?xml version=\"1.0\" ?>"
+    "  <Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+    "  <LinearElasticIsotropic name=\"granite\" "
+    "  defaultDensity=\"2700\" "
+    "  defaultBulkModulus=\"5.5556e9\" "
+    "  defaultShearModulus=\"4.16667e9\"/>"
+    "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-  if (!xmlResult)
+  if( !xmlResult )
   {
-    GEOS_LOG_RANK_0("XML parsed with errors!");
-    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description() );
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child("Constitutive");
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.PostProcessInputRecursive();
 

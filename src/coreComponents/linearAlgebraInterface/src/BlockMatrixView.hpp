@@ -82,8 +82,8 @@ public:
    * \param b Output vector.
    *
    */
-  void multiply( BlockVectorView<LAI> const &x,
-                 BlockVectorView<LAI> &b ) const;
+  void multiply( BlockVectorView<LAI> const & x,
+                 BlockVectorView<LAI> & b ) const;
 
   /**
    * @brief Compute residual <tt>r = b - Ax</tt>.
@@ -93,9 +93,9 @@ public:
    * \param r Output residual.
    *
    */
-  void residual( BlockVectorView<LAI> const &x,
-                 BlockVectorView<LAI> const &b,
-                 BlockVectorView<LAI> &r ) const;
+  void residual( BlockVectorView<LAI> const & x,
+                 BlockVectorView<LAI> const & b,
+                 BlockVectorView<LAI> & r ) const;
 
   /**
    * @brief Scale matrix using <tt>factor</tt>.
@@ -118,7 +118,7 @@ public:
    */
   void set( localIndex const blockRowIndex,
             localIndex const blockColIndex,
-            ParallelMatrix &matrix );
+            ParallelMatrix & matrix );
 
   //@}
 

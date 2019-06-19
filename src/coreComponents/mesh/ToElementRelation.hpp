@@ -63,12 +63,12 @@ public:
     return m_elemRegionManager;
   }
 
-//  template< bool DOPACK >
-//  friend localIndex Pack( char *& buffer,
-//                   localIndex_array const & packList,
-//                   ElementRegionManager const * const elemManager );
+  //  template< bool DOPACK >
+  //  friend localIndex Pack( char *& buffer,
+  //                   localIndex_array const & packList,
+  //                   ElementRegionManager const * const elemManager );
 
-//private:
+  //private:
   BASETYPE m_toElementRegion;
   BASETYPE m_toElementSubRegion;
   BASETYPE m_toElementIndex;
@@ -81,7 +81,7 @@ ToElementRelation<BASETYPE>::ToElementRelation():
   m_toElementRegion(),
   m_toElementSubRegion(),
   m_toElementIndex(),
-  m_elemRegionManager(nullptr)
+  m_elemRegionManager( nullptr )
 {
 
 }
@@ -96,9 +96,9 @@ template< typename BASETYPE >
 template< typename... DIMS >
 void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
 {
-  m_toElementRegion.resize(newdims...);
-  m_toElementSubRegion.resize(newdims...);
-  m_toElementIndex.resize(newdims...);
+  m_toElementRegion.resize( newdims... );
+  m_toElementSubRegion.resize( newdims... );
+  m_toElementIndex.resize( newdims... );
 }
 
 

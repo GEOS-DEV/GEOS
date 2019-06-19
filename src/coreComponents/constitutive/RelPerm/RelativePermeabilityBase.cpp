@@ -52,14 +52,14 @@ RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Ma
   : ConstitutiveBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of fluid phases");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "List of fluid phases" );
 
   RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false )->
-    setSizedFromParent(0);
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false )->
-    setSizedFromParent(0);
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac, false );
@@ -86,7 +86,7 @@ void RelativePermeabilityBase::PostProcessInput()
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
   m_phaseOrder = -1;
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
     GEOS_ERROR_IF( it == phaseDict.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip] );
@@ -94,7 +94,7 @@ void RelativePermeabilityBase::PostProcessInput()
     GEOS_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "RelativePermeabilityBase: invalid phase index " << phaseIndex );
 
     m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = integer_conversion<integer>(ip);
+    m_phaseOrder[phaseIndex] = integer_conversion<integer>( ip );
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
@@ -118,7 +118,7 @@ void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Managed
 
 localIndex RelativePermeabilityBase::numFluidPhases() const
 {
-  return integer_conversion<localIndex>(m_phaseNames.size());
+  return integer_conversion<localIndex>( m_phaseNames.size() );
 }
 
 string const & RelativePermeabilityBase::phaseName( localIndex ip ) const

@@ -80,7 +80,7 @@ namespace systemSolverInterface
 
 LinearSolverWrapper::LinearSolverWrapper():
 #ifdef GEOSX_USE_MPI
-  m_epetraComm(MPI_COMM_GEOSX)
+  m_epetraComm( MPI_COMM_GEOSX )
 #else
   m_epetraComm()
 #endif
@@ -97,12 +97,12 @@ LinearSolverWrapper::~LinearSolverWrapper()
 
 void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const blockSystem,
                                                   SystemSolverParameters const * const params,
-                                                  BlockIDs const blockID)
+                                                  BlockIDs const blockID )
 {
 
   // initial guess for solver
   int dummy;
-  double* local_solution = nullptr;
+  double * local_solution = nullptr;
 
 
   Epetra_FECrsMatrix * const matrix = blockSystem->GetMatrix( blockID,
@@ -111,16 +111,16 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
   Epetra_FEVector * const solution = blockSystem->GetSolutionVector( blockID );
 
 
-  solution->ExtractView(&local_solution,&dummy);
+  solution->ExtractView( &local_solution, &dummy );
 
-  if(params->scalingOption())
+  if( params->scalingOption() )
   {
-    Epetra_Vector scaling(matrix->RowMap());
-    matrix->InvRowSums(scaling);
-    matrix->LeftScale(scaling);
+    Epetra_Vector scaling( matrix->RowMap() );
+    matrix->InvRowSums( scaling );
+    matrix->LeftScale( scaling );
 
-    Epetra_MultiVector tmp (*rhs);
-    rhs->Multiply(1.0,scaling,tmp,0.0);
+    Epetra_MultiVector tmp( *rhs );
+    rhs->Multiply( 1.0, scaling, tmp, 0.0 );
   }
 
   Epetra_LinearProblem problem( matrix,
@@ -128,26 +128,26 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
                                 rhs );
 
 
-  if(params->useDirectSolver())
+  if( params->useDirectSolver() )
   {
-    Amesos_BaseSolver* Solver;
+    Amesos_BaseSolver * Solver;
     Amesos Factory;
 
     std::string SolverType = "Klu";
 
-    if( !(params->solverType().compare("Slu")) )
+    if( !( params->solverType().compare( "Slu" ) ) )
     {
       SolverType = "Amesos_Superludist";
     }
-    else if ( !(params->solverType().compare("Lapack")) )
+    else if( !( params->solverType().compare( "Lapack" ) ) )
     {
       SolverType = "Amesos_Lapack";
     }
 
     //GEOS_LOG( "Solver selected: " << SolverType );
-    GEOS_ERROR_IF( !Factory.Query(SolverType), "Requested solver not available: " << SolverType );
+    GEOS_ERROR_IF( !Factory.Query( SolverType ), "Requested solver not available: " << SolverType );
 
-    Solver = Factory.Create(SolverType, problem);
+    Solver = Factory.Create( SolverType, problem );
 
     int ierr = Solver->SymbolicFactorization();
 
@@ -160,62 +160,64 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
     Solver->Solve();
 
     if( Solver!=nullptr )
+    {
       delete Solver;
+    }
   }
   else
   {
-    AztecOO solver(problem);
+    AztecOO solver( problem );
 
-//      SetLinearSolverParameters( solver );
+    //      SetLinearSolverParameters( solver );
     std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> MLPrec;
 
     if( params->useMLPrecond() )
     {
       Teuchos::ParameterList MLList;
-      ML_Epetra::SetDefaults("SA",MLList);
+      ML_Epetra::SetDefaults( "SA", MLList );
       //MLList.set("aggregation: type", "Uncoupled");
       //MLList.set("aggregation: type", "MIS");
-      MLList.set("prec type", "MGW");
-      MLList.set("smoother: type","ILU");
-      MLList.set("PDE equations",3);
-      MLList.set("ML output", params->verbose());
-      MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
-      solver.SetPrecOperator(MLPrec.get());
+      MLList.set( "prec type", "MGW" );
+      MLList.set( "smoother: type", "ILU" );
+      MLList.set( "PDE equations", 3 );
+      MLList.set( "ML output", params->verbose() );
+      MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>( *matrix, MLList );
+      solver.SetPrecOperator( MLPrec.get() );
 
 
 
 
-//      Teuchos::ParameterList list;
-//                             ML_Epetra::SetDefaults("SA",list);
-//                             list.set("ML output",0);
-//                             list.set("max levels",parameters.uu.max_levels);
-//                             list.set("aggregation: type",parameters.uu.aggregation_type);
-//                             list.set("smoother: type",parameters.uu.smoother_type);
-//                             list.set("coarse: type",parameters.uu.coarse_type);
-//                             list.set("smoother: sweeps",parameters.uu.smoother_sweeps); // Chebyshev polynomial order
-//                             list.set("coarse: sweeps",parameters.uu.coarse_sweeps);
-//                             list.set("aggregation: threshold",parameters.uu.aggregation_threshold);
-//                             list.set("PDE equations",3);
-//                             list.set("prec type",parameters.uu.cycle_type);
-//                             list.set("coarse: max size",parameters.uu.max_coarse_size);
-//                             list.set("smoother: damping factor",parameters.uu.damping);
-//                             list.set("coarse: damping factor",parameters.uu.damping);
-//
-//                             list.set("null space: type","pre-computed");
-//                             list.set("null space: vectors",&rigid_body_modes[0]);
-//                             list.set("null space: dimension", n_rbm);
+      //      Teuchos::ParameterList list;
+      //                             ML_Epetra::SetDefaults("SA",list);
+      //                             list.set("ML output",0);
+      //                             list.set("max levels",parameters.uu.max_levels);
+      //                             list.set("aggregation: type",parameters.uu.aggregation_type);
+      //                             list.set("smoother: type",parameters.uu.smoother_type);
+      //                             list.set("coarse: type",parameters.uu.coarse_type);
+      //                             list.set("smoother: sweeps",parameters.uu.smoother_sweeps); // Chebyshev polynomial order
+      //                             list.set("coarse: sweeps",parameters.uu.coarse_sweeps);
+      //                             list.set("aggregation: threshold",parameters.uu.aggregation_threshold);
+      //                             list.set("PDE equations",3);
+      //                             list.set("prec type",parameters.uu.cycle_type);
+      //                             list.set("coarse: max size",parameters.uu.max_coarse_size);
+      //                             list.set("smoother: damping factor",parameters.uu.damping);
+      //                             list.set("coarse: damping factor",parameters.uu.damping);
+      //
+      //                             list.set("null space: type","pre-computed");
+      //                             list.set("null space: vectors",&rigid_body_modes[0]);
+      //                             list.set("null space: dimension", n_rbm);
     }
     else   // use ILUT preconditioner with domain decomp
     {
-      solver.SetAztecOption(AZ_precond,AZ_dom_decomp);
-      solver.SetAztecOption(AZ_subdomain_solve,AZ_ilut);
-      solver.SetAztecParam(AZ_ilut_fill,params->ilut_fill());
-      solver.SetAztecParam(AZ_drop,params->ilut_drop());
+      solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
+      solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
+      solver.SetAztecParam( AZ_ilut_fill, params->ilut_fill() );
+      solver.SetAztecParam( AZ_drop, params->ilut_drop() );
     }
 
-    solver.SetAztecOption(AZ_output,params->verbose());
-    solver.Iterate(params->numKrylovIter(),
-                   params->krylovTol() );
+    solver.SetAztecOption( AZ_output, params->verbose() );
+    solver.Iterate( params->numKrylovIter(),
+                    params->krylovTol() );
 
   }
 }

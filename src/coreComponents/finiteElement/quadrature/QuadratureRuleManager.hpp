@@ -36,7 +36,7 @@ class QuadratureRuleManager : public dataRepository::ManagedGroup
 {
 public:
   QuadratureRuleManager() = delete;
-  QuadratureRuleManager(string const & name, ManagedGroup * const parent);
+  QuadratureRuleManager( string const & name, ManagedGroup * const parent );
   virtual ~QuadratureRuleManager() override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;

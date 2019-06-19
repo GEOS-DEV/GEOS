@@ -46,7 +46,7 @@ using namespace MESQUITE_NS;
 
 typedef std::map<ElementManagerT::RegKeyType, ElementRegionT > RegionMap;
 
-void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
+void MesquiteRelaxer::RelaxMesh( PhysicalDomainT & domain )
 {
 
 
@@ -58,17 +58,17 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
   PatchType patch = PatchType::PATCH_GLOBAL;
 
 
-  array1d<R1Tensor>& Xref = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
-  const array1d<R1Tensor>& disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
-  const array1d<integer>& isNodeExternal = domain.m_feNodeManager.m_isExternal;
+  array1d<R1Tensor> & Xref = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+  const array1d<R1Tensor> & disp = domain.m_feNodeManager.GetFieldData<FieldInfo::displacement>();
+  const array1d<integer> & isNodeExternal = domain.m_feNodeManager.m_isExternal;
   R1Tensor nodePosition;
   int xyzIdx, nodeIdx;
   ElementTypes topo;
 
   unsigned long int numNodes = domain.m_feNodeManager.m_numNodes;
-  array1d<real64> coords(3*numNodes);
+  array1d<real64> coords( 3*numNodes );
   // Interleave x/y/z coordinates into "coords"
-  for (localIndex a = 0 ; a < numNodes ; ++a)
+  for( localIndex a = 0 ; a < numNodes ; ++a )
   {
     xyzIdx = 3*a;
     coords[xyzIdx  ] = Xref[a][0]+disp[a][0];
@@ -77,44 +77,44 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
   }
 
   RegionMap::iterator
-    iter_region     = domain.m_feElementManager.m_ElementRegions.begin(),
-    end_region = domain.m_feElementManager.m_ElementRegions.end();
+  iter_region     = domain.m_feElementManager.m_ElementRegions.begin(),
+  end_region = domain.m_feElementManager.m_ElementRegions.end();
 
-  for( ; iter_region != end_region ; ++iter_region)
+  for( ; iter_region != end_region ; ++iter_region )
   {
-    ElementRegionT& region = iter_region->second;
+    ElementRegionT & region = iter_region->second;
     // Find out some basic information abou the element region mesh
     unsigned long int numElems = region.m_numElems;//domain.m_feElementManager.m_numElems;
 
     const unsigned numNodesPerElement = region.m_numNodesPerElem;
-    lArray1d elemToNode_serialized(numNodesPerElement*numElems);
+    lArray1d elemToNode_serialized( numNodesPerElement*numElems );
 
     // Figure out the element type for this element region
     int switchOnElement = numNodesPerElement;
-    if (numNodesPerElement == 4 && region.m_ElementDimension == 3)
+    if( numNodesPerElement == 4 && region.m_ElementDimension == 3 )
     {
       switchOnElement = 5;
     }
-    switch (switchOnElement)
+    switch( switchOnElement )
     {
-    case 3:
-      topo = ElementTypes::TRIS;
-      break;
-    case 4:
-      topo = ElementTypes::QUADS;
-      break;
-    case 5:
-      topo = ElementTypes::TETS;
-      break;
-    case 8:
-      topo = ElementTypes::HEXES;
-      break;
-    default:
-      GEOS_ERROR("There is no default case");
-      break;
+      case 3:
+        topo = ElementTypes::TRIS;
+        break;
+      case 4:
+        topo = ElementTypes::QUADS;
+        break;
+      case 5:
+        topo = ElementTypes::TETS;
+        break;
+      case 8:
+        topo = ElementTypes::HEXES;
+        break;
+      default:
+        GEOS_ERROR( "There is no default case" );
+        break;
     }
 
-    const FixedOneToManyRelation& elementToNodeMap = region.m_toNodesRelation;
+    const FixedOneToManyRelation & elementToNodeMap = region.m_toNodesRelation;
     const array1d<integer> nodeOrdering = region.SiloNodeOrdering();
 
     // Interleave connectivity into array of integers such that for tri elements
@@ -122,53 +122,53 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
     //     quads = [ elem1_node1, elem1_node2, elem1_node3, elem2_node1,
     // elem2_node2, elem2_node3, ...] and so on.
     nodeIdx = 0;
-    for (localIndex a = 0 ; a < numElems ; ++a)
+    for( localIndex a = 0 ; a < numElems ; ++a )
     {
-      for (localIndex b = 0 ; b < numNodesPerElement ; ++b)
+      for( localIndex b = 0 ; b < numNodesPerElement ; ++b )
       {
         nodeIdx = a*numNodesPerElement + b;
-        elemToNode_serialized[nodeIdx] = elementToNodeMap(a,nodeOrdering(b));
+        elemToNode_serialized[nodeIdx] = elementToNodeMap( a, nodeOrdering( b ) );
       }
     }
 
-    MesquiteRelaxer::ConstructMesh(numNodes,
-                                   coords.data(),
-                                   isNodeExternal.data(),
-                                   numElems,
-                                   elemToNode_serialized.data(),
-                                   topo);
+    MesquiteRelaxer::ConstructMesh( numNodes,
+                                    coords.data(),
+                                    isNodeExternal.data(),
+                                    numElems,
+                                    elemToNode_serialized.data(),
+                                    topo );
 
-    switch (solver)
+    switch( solver )
     {
-    case SolverTypes::SMOOTH_OFF:
-      return;
-    case SolverTypes::LAPLACE:
-      MesquiteRelaxer::RunLaplace(topo,num_iter);
-      break;
-    case SolverTypes::SMART_LAPLACE:
-      MesquiteRelaxer::RunSmartLaplace(topo,num_iter);
-      break;
-    case SolverTypes::CONJUGATE_GRADIENT:
-      MesquiteRelaxer::RunConjugateGradient(topo,num_iter,patch);
-      break;
-    case SolverTypes::FEASIBLE_NEWTON:
-      MesquiteRelaxer::RunFeasibleNewton(topo,num_iter,patch);
-      break;
-    case SolverTypes::STEEPEST_DESCENT:
-      MesquiteRelaxer::RunSteepestDescent(topo,num_iter,patch);
-      break;
-    case SolverTypes::BOUNDARY:
-      GEOS_LOG_RANK("Not Implemented yet");
-      return;
-    default:
-      GEOS_LOG_RANK("There is no default case");
-      break;
+      case SolverTypes::SMOOTH_OFF:
+        return;
+      case SolverTypes::LAPLACE:
+        MesquiteRelaxer::RunLaplace( topo, num_iter );
+        break;
+      case SolverTypes::SMART_LAPLACE:
+        MesquiteRelaxer::RunSmartLaplace( topo, num_iter );
+        break;
+      case SolverTypes::CONJUGATE_GRADIENT:
+        MesquiteRelaxer::RunConjugateGradient( topo, num_iter, patch );
+        break;
+      case SolverTypes::FEASIBLE_NEWTON:
+        MesquiteRelaxer::RunFeasibleNewton( topo, num_iter, patch );
+        break;
+      case SolverTypes::STEEPEST_DESCENT:
+        MesquiteRelaxer::RunSteepestDescent( topo, num_iter, patch );
+        break;
+      case SolverTypes::BOUNDARY:
+        GEOS_LOG_RANK( "Not Implemented yet" );
+        return;
+      default:
+        GEOS_LOG_RANK( "There is no default case" );
+        break;
     }
   }
 
   // Overwrite the reference nodal positions based on the movement from the
   // Mesquite library
-  for (localIndex a = 0 ; a < numNodes ; ++a)
+  for( localIndex a = 0 ; a < numNodes ; ++a )
   {
     xyzIdx = 3*a;
     Xref[a][0] = coords[xyzIdx  ] - disp[a][0];
@@ -191,40 +191,40 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
   //   cout << endl;
   //}
 
-// End of Main Routine
+  // End of Main Routine
 }
 
 void MesquiteRelaxer::ConstructMesh( unsigned long num_nod,
-                                     double* coords,
-                                     const int* fixed,
+                                     double * coords,
+                                     const int * fixed,
                                      unsigned long num_elem,
-                                     const unsigned long* quads,
-                                     const ElementTypes topo)
+                                     const unsigned long * quads,
+                                     const ElementTypes topo )
 {
   EntityTopology type;
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-    type=TRIANGLE;
-    break;
-  case ElementTypes::QUADS:
-    type=QUADRILATERAL;
-    break;
-  case ElementTypes::TETS:
-    type=TETRAHEDRON;
-    break;
-  case ElementTypes::HEXES:
-    type=HEXAHEDRON;
-    break;
-  default:
-    GEOS_ERROR("invalid topo");
+    case ElementTypes::TRIS:
+      type=TRIANGLE;
+      break;
+    case ElementTypes::QUADS:
+      type=QUADRILATERAL;
+      break;
+    case ElementTypes::TETS:
+      type=TETRAHEDRON;
+      break;
+    case ElementTypes::HEXES:
+      type=HEXAHEDRON;
+      break;
+    default:
+      GEOS_ERROR( "invalid topo" );
   }
   ;
 
-  mesh.set_mesh(3,num_nod,coords,fixed,num_elem,type,quads);
+  mesh.set_mesh( 3, num_nod, coords, fixed, num_elem, type, quads );
 }
 
-void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
+void MesquiteRelaxer::RunLaplace( const ElementTypes topo, const int num_iter )
 {
   MsqError err;
   InstructionQueue queue1;
@@ -235,7 +235,7 @@ void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
   // Metrics
   ConditionNumberQualityMetric shape_metric;
   EdgeLengthQualityMetric edge_metric;
-  edge_metric.set_averaging_method(QualityMetric::RMS);
+  edge_metric.set_averaging_method( QualityMetric::RMS );
 
   //Objective Function
 
@@ -244,38 +244,38 @@ void MesquiteRelaxer::RunLaplace(const ElementTypes topo, const int num_iter)
   //   Solver: set parameters
 
   //   Solver: set termination
-  outer.add_iteration_limit(num_iter);
-  solver.set_outer_termination_criterion(&outer);
+  outer.add_iteration_limit( num_iter );
+  solver.set_outer_termination_criterion( &outer );
 
   //Quality Assessment
-  assessor.add_quality_assessment(&shape_metric);
-  assessor.add_quality_assessment(&edge_metric);
+  assessor.add_quality_assessment( &shape_metric );
+  assessor.add_quality_assessment( &edge_metric );
 
   //Add quality and assessor schemes to queue
-  queue1.add_quality_assessor(&assessor,err);
-  queue1.set_master_quality_improver(&solver,err);
+  queue1.add_quality_assessor( &assessor, err );
+  queue1.set_master_quality_improver( &solver, err );
 
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-  case ElementTypes::QUADS:
-  {
-//     queue1.run_instructions( &mesh, &domain, err);
-    break;
-  }
-  case ElementTypes::TETS:
-  case ElementTypes::HEXES:
-  {
-    queue1.run_instructions( &mesh, err);
-    break;
-  }
+    case ElementTypes::TRIS:
+    case ElementTypes::QUADS:
+    {
+      //     queue1.run_instructions( &mesh, &domain, err);
+      break;
+    }
+    case ElementTypes::TETS:
+    case ElementTypes::HEXES:
+    {
+      queue1.run_instructions( &mesh, err );
+      break;
+    }
   }
 
   queue1.clear();
   mesh.release();
 }
 
-void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_iter)
+void MesquiteRelaxer::RunSmartLaplace( const ElementTypes topo, const int num_iter )
 {
   MsqError err;
   InstructionQueue queue1;
@@ -285,11 +285,11 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
 
   // Metrics
   IdealWeightInverseMeanRatio inverse_metric;
-  inverse_metric.set_averaging_method(QualityMetric::SUM, err);
+  inverse_metric.set_averaging_method( QualityMetric::SUM, err );
 
   //Objective Function
   //LPtoPTemplate objective_function(inverse_metric, 1, err);
-  LInfTemplate objective_function(&inverse_metric);
+  LInfTemplate objective_function( &inverse_metric );
 
   //Solver
   SmartLaplacianSmoother solver( &objective_function );
@@ -307,20 +307,20 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
   queue1.set_master_quality_improver( &solver, err );
   queue1.add_quality_assessor( &assessor, err );
 
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-  case ElementTypes::QUADS:
-  {
-//     queue1.run_instructions( &mesh, &domain, err);
-    break;
-  }
-  case ElementTypes::TETS:
-  case ElementTypes::HEXES:
-  {
-    queue1.run_instructions( &mesh, err);
-    break;
-  }
+    case ElementTypes::TRIS:
+    case ElementTypes::QUADS:
+    {
+      //     queue1.run_instructions( &mesh, &domain, err);
+      break;
+    }
+    case ElementTypes::TETS:
+    case ElementTypes::HEXES:
+    {
+      queue1.run_instructions( &mesh, err );
+      break;
+    }
   }
 
   queue1.clear();
@@ -328,9 +328,9 @@ void MesquiteRelaxer::RunSmartLaplace(const ElementTypes topo, const int num_ite
 }
 
 
-void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
-                                           const int num_iter,
-                                           const PatchType patch)
+void MesquiteRelaxer::RunConjugateGradient( const ElementTypes topo,
+                                            const int num_iter,
+                                            const PatchType patch )
 {
   MsqError err;
   InstructionQueue queue1;
@@ -345,58 +345,58 @@ void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
   ConditionNumberQualityMetric shape_metric;
 
   //Objective Function
-  PMeanPTemplate objective_function( 2.0, &mu);
+  PMeanPTemplate objective_function( 2.0, &mu );
 
   //Solver
   ConjugateGradient solver( &objective_function );
 
   //   Solver: set parameters
-  switch (patch)
+  switch( patch )
   {
-  // Global Optimizer
-  case PatchType::PATCH_GLOBAL:
-  {
-    solver.use_global_patch();
-    outer.add_iteration_limit( 1 );
-    inner.add_relative_successive_improvement(OF_value);
-    break;
-  }
-  //Nash Game
-  case PatchType::PATCH_NASH:
-  {
-    solver.use_element_on_vertex_patch();
-    outer.add_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(num_iter);
-    break;
-  }
-  // Block Coordinate Descent
-  case PatchType::PATCH_BLOCK:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_block_coordinate_descent_optimization();
-    inner.add_iteration_limit(num_iter);
-    outer.add_relative_quality_improvement(OF_value);
-    break;
-  }
+    // Global Optimizer
+    case PatchType::PATCH_GLOBAL:
+    {
+      solver.use_global_patch();
+      outer.add_iteration_limit( 1 );
+      inner.add_relative_successive_improvement( OF_value );
+      break;
+    }
+    //Nash Game
+    case PatchType::PATCH_NASH:
+    {
+      solver.use_element_on_vertex_patch();
+      outer.add_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( num_iter );
+      break;
+    }
+    // Block Coordinate Descent
+    case PatchType::PATCH_BLOCK:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_block_coordinate_descent_optimization();
+      inner.add_iteration_limit( num_iter );
+      outer.add_relative_quality_improvement( OF_value );
+      break;
+    }
 
-  // Culling
-  case PatchType::PATCH_CULL:
-  {
-    solver.use_element_on_vertex_patch();
-    inner.cull_on_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(2);
-    break;
-  }
+    // Culling
+    case PatchType::PATCH_CULL:
+    {
+      solver.use_element_on_vertex_patch();
+      inner.cull_on_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( 2 );
+      break;
+    }
 
-  // Jacobi
-  case PatchType::PATCH_JACOBI:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_jacobi_optimization();
-    inner.add_iteration_limit( 2 );
-    outer.add_absolute_vertex_movement(OF_value);
-    break;
-  }
+    // Jacobi
+    case PatchType::PATCH_JACOBI:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_jacobi_optimization();
+      inner.add_iteration_limit( 2 );
+      outer.add_absolute_vertex_movement( OF_value );
+      break;
+    }
   }
 
   //   Solver: set termination
@@ -411,29 +411,29 @@ void MesquiteRelaxer::RunConjugateGradient(const ElementTypes topo,
   queue1.set_master_quality_improver( &solver, err );
   queue1.add_quality_assessor( &assessor, err );
 
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-  case ElementTypes::QUADS:
-  {
-    //    queue1.run_instructions( &mesh, &domain, err);
-    break;
-  }
-  case ElementTypes::TETS:
-  case ElementTypes::HEXES:
-  {
-    queue1.run_instructions( &mesh, err);
-    break;
-  }
+    case ElementTypes::TRIS:
+    case ElementTypes::QUADS:
+    {
+      //    queue1.run_instructions( &mesh, &domain, err);
+      break;
+    }
+    case ElementTypes::TETS:
+    case ElementTypes::HEXES:
+    {
+      queue1.run_instructions( &mesh, err );
+      break;
+    }
   }
 
   queue1.clear();
   mesh.release();
 }
 
-void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
-                                        const int num_iter,
-                                        const PatchType patch)
+void MesquiteRelaxer::RunFeasibleNewton( const ElementTypes topo,
+                                         const int num_iter,
+                                         const PatchType patch )
 {
   MsqError err;
   InstructionQueue queue1;
@@ -448,58 +448,58 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
   ConditionNumberQualityMetric shape_metric;
 
   //Objective Function
-  PMeanPTemplate objective_function( 2.0, &mu);
+  PMeanPTemplate objective_function( 2.0, &mu );
 
   //Solver
   FeasibleNewton solver( &objective_function );
 
   //   Solver: set parameters
-  switch (patch)
+  switch( patch )
   {
-  // Global Optimizer
-  case PatchType::PATCH_GLOBAL:
-  {
-    solver.use_global_patch();
-    outer.add_iteration_limit( 1 );
-    inner.add_relative_successive_improvement(OF_value);
-    break;
-  }
-  //Nash Game
-  case PatchType::PATCH_NASH:
-  {
-    solver.use_element_on_vertex_patch();
-    outer.add_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(num_iter);
-    break;
-  }
-  // Block Coordinate Descent
-  case PatchType::PATCH_BLOCK:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_block_coordinate_descent_optimization();
-    inner.add_iteration_limit(num_iter);
-    outer.add_relative_quality_improvement(OF_value);
-    break;
-  }
+    // Global Optimizer
+    case PatchType::PATCH_GLOBAL:
+    {
+      solver.use_global_patch();
+      outer.add_iteration_limit( 1 );
+      inner.add_relative_successive_improvement( OF_value );
+      break;
+    }
+    //Nash Game
+    case PatchType::PATCH_NASH:
+    {
+      solver.use_element_on_vertex_patch();
+      outer.add_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( num_iter );
+      break;
+    }
+    // Block Coordinate Descent
+    case PatchType::PATCH_BLOCK:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_block_coordinate_descent_optimization();
+      inner.add_iteration_limit( num_iter );
+      outer.add_relative_quality_improvement( OF_value );
+      break;
+    }
 
-  // Culling
-  case PatchType::PATCH_CULL:
-  {
-    solver.use_element_on_vertex_patch();
-    inner.cull_on_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(2);
-    break;
-  }
+    // Culling
+    case PatchType::PATCH_CULL:
+    {
+      solver.use_element_on_vertex_patch();
+      inner.cull_on_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( 2 );
+      break;
+    }
 
-  // Jacobi
-  case PatchType::PATCH_JACOBI:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_jacobi_optimization();
-    inner.add_iteration_limit( 2 );
-    outer.add_absolute_vertex_movement(OF_value);
-    break;
-  }
+    // Jacobi
+    case PatchType::PATCH_JACOBI:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_jacobi_optimization();
+      inner.add_iteration_limit( 2 );
+      outer.add_absolute_vertex_movement( OF_value );
+      break;
+    }
   }
 
   //   Solver: set termination
@@ -515,20 +515,20 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
   queue1.set_master_quality_improver( &solver, err );
   queue1.add_quality_assessor( &assessor, err );
 
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-  case ElementTypes::QUADS:
-  {
-    //    queue1.run_instructions( &mesh, &domain, err);
-    break;
-  }
-  case ElementTypes::TETS:
-  case ElementTypes::HEXES:
-  {
-    queue1.run_instructions( &mesh, err);
-    break;
-  }
+    case ElementTypes::TRIS:
+    case ElementTypes::QUADS:
+    {
+      //    queue1.run_instructions( &mesh, &domain, err);
+      break;
+    }
+    case ElementTypes::TETS:
+    case ElementTypes::HEXES:
+    {
+      queue1.run_instructions( &mesh, err );
+      break;
+    }
   }
 
   queue1.clear();
@@ -536,9 +536,9 @@ void MesquiteRelaxer::RunFeasibleNewton(const ElementTypes topo,
 
 }
 
-void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
-                                         const int num_iter,
-                                         const PatchType patch)
+void MesquiteRelaxer::RunSteepestDescent( const ElementTypes topo,
+                                          const int num_iter,
+                                          const PatchType patch )
 {
   MsqError err;
   InstructionQueue queue1;
@@ -553,58 +553,58 @@ void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
   ConditionNumberQualityMetric shape_metric;
 
   //Objective Function
-  PMeanPTemplate objective_function( 2.0, &mu);
+  PMeanPTemplate objective_function( 2.0, &mu );
 
   //Solver
   SteepestDescent solver( &objective_function );
 
   //   Solver: set parameters
-  switch (patch)
+  switch( patch )
   {
-  // Global Optimizer
-  case PatchType::PATCH_GLOBAL:
-  {
-    solver.use_global_patch();
-    outer.add_iteration_limit( 1 );
-    inner.add_relative_successive_improvement(OF_value);
-    break;
-  }
-  //Nash Game
-  case PatchType::PATCH_NASH:
-  {
-    solver.use_element_on_vertex_patch();
-    outer.add_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(num_iter);
-    break;
-  }
-  // Block Coordinate Descent
-  case PatchType::PATCH_BLOCK:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_block_coordinate_descent_optimization();
-    inner.add_iteration_limit(num_iter);
-    outer.add_relative_quality_improvement(OF_value);
-    break;
-  }
+    // Global Optimizer
+    case PatchType::PATCH_GLOBAL:
+    {
+      solver.use_global_patch();
+      outer.add_iteration_limit( 1 );
+      inner.add_relative_successive_improvement( OF_value );
+      break;
+    }
+    //Nash Game
+    case PatchType::PATCH_NASH:
+    {
+      solver.use_element_on_vertex_patch();
+      outer.add_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( num_iter );
+      break;
+    }
+    // Block Coordinate Descent
+    case PatchType::PATCH_BLOCK:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_block_coordinate_descent_optimization();
+      inner.add_iteration_limit( num_iter );
+      outer.add_relative_quality_improvement( OF_value );
+      break;
+    }
 
-  // Culling
-  case PatchType::PATCH_CULL:
-  {
-    solver.use_element_on_vertex_patch();
-    inner.cull_on_absolute_vertex_movement(OF_value);
-    inner.add_iteration_limit(2);
-    break;
-  }
+    // Culling
+    case PatchType::PATCH_CULL:
+    {
+      solver.use_element_on_vertex_patch();
+      inner.cull_on_absolute_vertex_movement( OF_value );
+      inner.add_iteration_limit( 2 );
+      break;
+    }
 
-  // Jacobi
-  case PatchType::PATCH_JACOBI:
-  {
-    solver.use_element_on_vertex_patch();
-    solver.do_jacobi_optimization();
-    inner.add_iteration_limit( 2 );
-    outer.add_absolute_vertex_movement(OF_value);
-    break;
-  }
+    // Jacobi
+    case PatchType::PATCH_JACOBI:
+    {
+      solver.use_element_on_vertex_patch();
+      solver.do_jacobi_optimization();
+      inner.add_iteration_limit( 2 );
+      outer.add_absolute_vertex_movement( OF_value );
+      break;
+    }
   }
 
   //   Solver: set termination
@@ -619,20 +619,20 @@ void MesquiteRelaxer::RunSteepestDescent(const ElementTypes topo,
   queue1.set_master_quality_improver( &solver, err );
   queue1.add_quality_assessor( &assessor, err );
 
-  switch (topo)
+  switch( topo )
   {
-  case ElementTypes::TRIS:
-  case ElementTypes::QUADS:
-  {
-//     queue1.run_instructions( &mesh, &domain, err);
-    break;
-  }
-  case ElementTypes::TETS:
-  case ElementTypes::HEXES:
-  {
-    queue1.run_instructions( &mesh, err);
-    break;
-  }
+    case ElementTypes::TRIS:
+    case ElementTypes::QUADS:
+    {
+      //     queue1.run_instructions( &mesh, &domain, err);
+      break;
+    }
+    case ElementTypes::TETS:
+    case ElementTypes::HEXES:
+    {
+      queue1.run_instructions( &mesh, err );
+      break;
+    }
   }
 
   queue1.clear();

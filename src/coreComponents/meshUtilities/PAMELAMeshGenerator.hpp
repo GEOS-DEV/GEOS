@@ -40,7 +40,7 @@ namespace geosx
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
-  PAMELAMeshGenerator( const std::string& name,
+  PAMELAMeshGenerator( const std::string & name,
                        ManagedGroup * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
@@ -55,19 +55,19 @@ public:
     constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
   };
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+  virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                             const int index[],
-                                             const int& iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
+  virtual void GetElemToNodesRelationInBox( const std::string & elementType,
+                                            const int index[],
+                                            const int & iEle,
+                                            int nodeIDInBox[],
+                                            const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
+  virtual void RemapMesh( dataRepository::ManagedGroup * const domain ) override;
 
 protected:
   void PostProcessInput() override final;
@@ -89,8 +89,8 @@ private:
   string_array m_fieldNamesInGEOSX;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
-    =
-    {
+  =
+  {
     { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
     { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
     { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
@@ -99,7 +99,7 @@ private:
     { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
     { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
     { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
-    };
+  };
 };
 
 }

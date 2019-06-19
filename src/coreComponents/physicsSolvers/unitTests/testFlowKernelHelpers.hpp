@@ -38,11 +38,11 @@ void setArrayElement( ArrayView<T, NDIM> const & arr,
                       localIndex const srcIndex,
                       T const * const data )
 {
-  localIndex const elemSize = arr.size() / arr.size(0); // assume singleParameterResizeIndex == 0
-  T * const elemPtr = arr.data(dstIndex);
+  localIndex const elemSize = arr.size() / arr.size( 0 ); // assume singleParameterResizeIndex == 0
+  T * const elemPtr = arr.data( dstIndex );
   T const * const dataPtr = data + srcIndex * elemSize;
 
-  for (localIndex i = 0; i < elemSize; ++i)
+  for( localIndex i = 0; i < elemSize; ++i )
   {
     elemPtr[i] = dataPtr[i];
   }
@@ -75,14 +75,14 @@ struct AccessorHelper<false>
                        DIMS... otherDims )
   {
     localIndex numElems = 0;
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       numElems = std::max( numElems, stencil[i].index.index + 1 );
     }
 
     ElementAccessor<NDIM, T> acc( numElems, otherDims... );
 
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       CellDescriptor const & cell = stencil[i].index;
       detail::setArrayElement( acc, cell.index, i, data );
@@ -98,14 +98,14 @@ struct AccessorHelper<false>
                         localIndex matIndex, DIMS... otherDims )
   {
     localIndex numElems = 0;
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       numElems = std::max( numElems, stencil[i].index.index + 1 );
     }
 
     MaterialAccessor<NDIM, T> acc( numElems, 1, otherDims... );
 
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       CellDescriptor const & cell = stencil[i].index;
       detail::setArrayElement( acc, cell.index, i, data );
@@ -131,7 +131,7 @@ struct AccessorHelper<true>
                        DIMS... otherDims )
   {
     localIndex numRegions = 0, numSubRegions = 0, numElems = 0;
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       numRegions = std::max( numRegions, stencil[i].index.region + 1 );
       numSubRegions = std::max( numSubRegions, stencil[i].index.subRegion + 1 );
@@ -140,16 +140,16 @@ struct AccessorHelper<true>
 
     ElementAccessor<NDIM, T> acc;
     acc.resize( numRegions );
-    for (localIndex kr = 0; kr < numRegions; ++kr)
+    for( localIndex kr = 0; kr < numRegions; ++kr )
     {
       acc[kr].resize( numSubRegions );
-      for (localIndex ksr = 0; ksr < numSubRegions; ++ksr)
+      for( localIndex ksr = 0; ksr < numSubRegions; ++ksr )
       {
         acc[kr][ksr].resize( numElems, otherDims... );
       }
     }
 
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       CellDescriptor const & cell = stencil[i].index;
       detail::setArrayElement( acc[cell.region][cell.subRegion], cell.index, i, data );
@@ -165,7 +165,7 @@ struct AccessorHelper<true>
                         localIndex matIndex, DIMS... otherDims )
   {
     localIndex numRegions = 0, numSubRegions = 0, numElems = 0;
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       numRegions = std::max( numRegions, stencil[i].index.region + 1 );
       numSubRegions = std::max( numSubRegions, stencil[i].index.subRegion + 1 );
@@ -174,17 +174,17 @@ struct AccessorHelper<true>
 
     MaterialAccessor<NDIM, T> acc;
     acc.resize( numRegions );
-    for (localIndex kr = 0; kr < numRegions; ++kr)
+    for( localIndex kr = 0; kr < numRegions; ++kr )
     {
       acc[kr].resize( numSubRegions );
-      for (localIndex ksr = 0; ksr < numSubRegions; ++ksr)
+      for( localIndex ksr = 0; ksr < numSubRegions; ++ksr )
       {
         acc[kr][ksr].resize( matIndex + 1 );
         acc[kr][ksr][matIndex].resize( numElems, 1, otherDims... );
       }
     }
 
-    for (int i = 0; i < stencilSize; ++i)
+    for( int i = 0; i < stencilSize; ++i )
     {
       CellDescriptor const & cell = stencil[i].index;
       detail::setArrayElement( acc[cell.region][cell.subRegion][matIndex], cell.index, i, data );

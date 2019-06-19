@@ -41,7 +41,7 @@ class SymbolicFunction : public FunctionBase
 {
 public:
   /// Main constructor
-  SymbolicFunction( const std::string& name,
+  SymbolicFunction( const std::string & name,
                     dataRepository::ManagedGroup * const parent );
 
   /// Destructor
@@ -49,7 +49,7 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "SymbolicFunction"; }
-  
+
   /// Function initialization
   virtual void InitializeFunction() override;
 
@@ -75,9 +75,9 @@ public:
   inline real64 Evaluate( real64 const * const input ) const override final
   {
 #ifdef GEOSX_USE_MATHPRESSO
-    return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
+    return parserExpression.evaluate( reinterpret_cast<void *>( const_cast<real64 *>( input ) ) );
 #else
-    GEOS_ERROR("GEOSX was not built with mathpresso!");
+    GEOS_ERROR( "GEOSX was not built with mathpresso!" );
     return 0;
 #endif
   }

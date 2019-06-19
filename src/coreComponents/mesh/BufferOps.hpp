@@ -32,26 +32,26 @@ namespace bufferOps
 {
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( char *& buffer,
                  OrderedVariableToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
+localIndex Pack( char *& buffer,
                  FixedToManyElementRelation const & var,
                  arrayView1d<localIndex const> const & packList,
                  ElementRegionManager const * const elementRegionManager );
 
 
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( char const *& buffer,
                    OrderedVariableToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag );
 
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( char const *& buffer,
                    FixedToManyElementRelation & var,
                    arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,

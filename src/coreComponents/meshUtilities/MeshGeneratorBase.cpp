@@ -33,13 +33,13 @@ using namespace dataRepository;
 MeshGeneratorBase::MeshGeneratorBase( string const & name, ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 MeshGeneratorBase::~MeshGeneratorBase()
 {}
 
-MeshGeneratorBase::CatalogInterface::CatalogType& MeshGeneratorBase::GetCatalog()
+MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::GetCatalog()
 {
   static MeshGeneratorBase::CatalogInterface::CatalogType catalog;
   return catalog;

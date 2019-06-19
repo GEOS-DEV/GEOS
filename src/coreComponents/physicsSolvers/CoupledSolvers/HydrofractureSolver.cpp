@@ -41,26 +41,26 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-HydrofractureSolver::HydrofractureSolver( const std::string& name,
-                                      ManagedGroup * const parent ):
-  SolverBase(name,parent),
+HydrofractureSolver::HydrofractureSolver( const std::string & name,
+                                          ManagedGroup * const parent ):
+  SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString("FixedStress"),
+  m_couplingTypeOptionString( "FixedStress" ),
   m_couplingTypeOption()
 
 {
-  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
+  RegisterViewWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
 
-  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
+  RegisterViewWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0 )->
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+  RegisterViewWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
 
 }
 
@@ -69,30 +69,30 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * con
 
 }
 
-void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
-                                             real64 const& dt,
+void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
+                                             real64 const & dt,
                                              DomainPartition * const domain,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   SolverBase & solidSolver =
-    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+    *( this->getParent()->GetGroup( m_solidSolverName )->group_cast<SolverBase *>() );
 
   SinglePhaseFlow & fluidSolver =
-    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+    *( this->getParent()->GetGroup( m_flowSolverName )->group_cast<SinglePhaseFlow *>() );
 
   solidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
 }
 
-void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
-                                              real64 const& dt,
-                                              DomainPartition * const domain)
+void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
+                                                real64 const & dt,
+                                                DomainPartition * const domain )
 {
 }
 
 void HydrofractureSolver::PostProcessInput()
 {
-  string ctOption = this->getReference<string>(viewKeyStruct::couplingTypeOptionStringString);
+  string ctOption = this->getReference<string>( viewKeyStruct::couplingTypeOptionStringString );
 
   if( ctOption == "FixedStress" )
   {
@@ -104,12 +104,12 @@ void HydrofractureSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOS_ERROR( "invalid coupling type option" );
   }
 
 }
 
-void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
+void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
 
 }
@@ -125,25 +125,25 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
 }
 
 real64 HydrofractureSolver::SolverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      int const cycleNumber,
-                                      DomainPartition * domain )
+                                        real64 const & dt,
+                                        int const cycleNumber,
+                                        DomainPartition * domain )
 {
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition *>() );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented" );
   }
   return dtReturn;
 }
 
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -153,9 +153,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   array1d< array1d<localIndex> > const & facesToNodes = faceManager->nodeList();
 
-  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
+  elemManager->forElementRegions<FaceElementRegion>( [&]( FaceElementRegion * const faceElemRegion )
   {
-    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
     {
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
@@ -178,87 +178,87 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
         area[kfe] = faceArea[kfe];
         // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace+0.0001;
+        aperture[kfe] = -Dot( temp, faceNormal[kf0] ) / numNodesPerFace+0.0001;
         volume[kfe] = aperture[kfe] * area[kfe];
         //std::cout<<"kfe, area, aperture, volume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<std::endl;
       }
 
-    });
-  });
+    } );
+  } );
 
 }
 
-real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
-                                             real64 const& dt,
-                                             integer const cycleNumber,
-                                             DomainPartition * const domain)
+real64 HydrofractureSolver::SplitOperatorStep( real64 const & time_n,
+                                               real64 const & dt,
+                                               integer const cycleNumber,
+                                               DomainPartition * const domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary = dtReturn;
 
   SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  solidSolver = *( this->getParent()->GetGroup( m_solidSolverName )->group_cast<SolverBase *>() );
 
   SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  fluidSolver = *( this->getParent()->GetGroup( m_flowSolverName )->group_cast<SinglePhaseFlow *>() );
 
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
-  this->UpdateDeformationForCoupling(domain);
+  this->UpdateDeformationForCoupling( domain );
 
   int iter = 0;
-  while (iter < (*(this->getSystemSolverParameters())).maxIterNewton() )
+  while( iter < ( *( this->getSystemSolverParameters() ) ).maxIterNewton() )
   {
-    if (iter == 0)
+    if( iter == 0 )
     {
       // reset the states of all slave solvers if any of them has been reset
       fluidSolver.ResetStateToBeginningOfStep( domain );
       solidSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
-    if (this->verboseLevel() >= 1)
+    if( this->verboseLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain,
-                                                          getLinearSystemRepository() );
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain,
+                                                           getLinearSystemRepository() );
 
-    if (dtReturnTemporary < dtReturn)
+    if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
       dtReturn = dtReturnTemporary;
       continue;
     }
 
-    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+    if( fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    if (this->verboseLevel() >= 1)
+    if( this->verboseLevel() >= 1 )
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
     }
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain,
-                                                          getLinearSystemRepository() );
-    if (dtReturnTemporary < dtReturn)
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain,
+                                                           getLinearSystemRepository() );
+    if( dtReturnTemporary < dtReturn )
     {
       iter = 0;
       dtReturn = dtReturnTemporary;
       continue;
     }
-    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+    if( solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0 )
     {
-      this->UpdateDeformationForCoupling(domain);
+      this->UpdateDeformationForCoupling( domain );
     }
     ++iter;
   }
@@ -270,14 +270,14 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
-                                          real64 const& dt,
+real64 HydrofractureSolver::ExplicitStep( real64 const & time_n,
+                                          real64 const & dt,
                                           const int cycleNumber,
                                           DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  SolverBase & solidSolver = *( this->getParent()->GetGroup( m_solidSolverName )->group_cast<SolverBase *>() );
+  SinglePhaseFlow & fluidSolver = *( this->getParent()->GetGroup( m_flowSolverName )->group_cast<SinglePhaseFlow *>() );
 
   solidSolver.ExplicitStep( time_n, dt, cycleNumber, domain );
   fluidSolver.SolverStep( time_n, dt, cycleNumber, domain );

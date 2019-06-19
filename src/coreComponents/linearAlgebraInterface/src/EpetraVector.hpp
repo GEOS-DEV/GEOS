@@ -251,7 +251,7 @@ public:
    * \param vec EpetraVector to dot-product with.
    *
    */
-  real64 dot( EpetraVector const &vec );
+  real64 dot( EpetraVector const & vec );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
@@ -261,7 +261,7 @@ public:
    * \param x EpetraVector to copy.
    *
    */
-  void copy( EpetraVector const &x );
+  void copy( EpetraVector const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
@@ -273,7 +273,7 @@ public:
    *
    */
   void axpy( real64 const alpha,
-             EpetraVector const &x );
+             EpetraVector const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -286,7 +286,7 @@ public:
    *
    */
   void axpby( real64 const alpha,
-              EpetraVector const &x,
+              EpetraVector const & x,
               real64 const beta );
 
   /**
@@ -341,7 +341,7 @@ public:
   /**
    * @brief Returns a non-const pointer to the underlying Epetra object.
    */
-  Epetra_FEVector* unwrappedPointer();
+  Epetra_FEVector * unwrappedPointer();
 
   //@}
 
@@ -386,7 +386,7 @@ private:
    *
    * \param map Input Epetra Map.
    */
-  void create( Epetra_Map const &map );
+  void create( Epetra_Map const & map );
 };
 
 } // end geosx namespace

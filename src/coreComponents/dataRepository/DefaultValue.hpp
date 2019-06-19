@@ -48,17 +48,17 @@ template< typename T >
 struct is_defaultable
 {
   /// attribute to set what type is able to contain a default value
-  static constexpr bool value = std::is_same<T,int>::value ||
-                                std::is_same<T,long int>::value ||
-                                std::is_same<T,long long int>::value ||
-                                std::is_same<T,unsigned int>::value ||
-                                std::is_same<T,unsigned long int>::value ||
-                                std::is_same<T,unsigned long long int>::value ||
+  static constexpr bool value = std::is_same<T, int>::value ||
+                                std::is_same<T, long int>::value ||
+                                std::is_same<T, long long int>::value ||
+                                std::is_same<T, unsigned int>::value ||
+                                std::is_same<T, unsigned long int>::value ||
+                                std::is_same<T, unsigned long long int>::value ||
                                 std::is_floating_point<T>::value ||
-                                std::is_same<T,string>::value ||
-                                std::is_same<T,R1Tensor>::value ||
-                                std::is_same<T,R2Tensor>::value ||
-                                std::is_same<T,R2SymTensor>::value ;
+                                std::is_same<T, string>::value ||
+                                std::is_same<T, R1Tensor>::value ||
+                                std::is_same<T, R2Tensor>::value ||
+                                std::is_same<T, R2SymTensor>::value ;
 };
 
 /**
@@ -108,7 +108,7 @@ HAS_ALIAS( value_type )
  */
 template< typename T >
 struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
-                                          ( is_defaultable<typename T::value_type>::value) >::type >
+( is_defaultable<typename T::value_type>::value ) >::type >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;

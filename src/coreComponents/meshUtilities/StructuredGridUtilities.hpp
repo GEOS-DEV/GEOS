@@ -34,11 +34,11 @@ namespace StructuredGrid
  */
 
 template <int dim>
-int dimpower(int n);
+int dimpower( int n );
 
-template <> inline int dimpower<1>(int n) { return n; }
-template <> inline int dimpower<2>(int n) { return n*n; }
-template <> inline int dimpower<3>(int n) { return n*n*n; }
+template <> inline int dimpower<1>( int n ) { return n; }
+template <> inline int dimpower<2>( int n ) { return n*n; }
+template <> inline int dimpower<3>( int n ) { return n*n*n; }
 
 /*!
  * Given a lexographical index N, map back to the original
@@ -47,41 +47,41 @@ template <> inline int dimpower<3>(int n) { return n*n*n; }
  */
 
 template <int dim>
-void map_index(const int index,
-               const int nnx,
-               std::vector<int> &indices);
+void map_index( const int index,
+                const int nnx,
+                std::vector<int> & indices );
 
 template <>
 inline
-void map_index<1>(const int index,
-                  const int nnx,
-                  std::vector<int> &indices)
+void map_index<1>( const int index,
+                   const int nnx,
+                   std::vector<int> & indices )
 {
-  assert(index < nnx);
+  assert( index < nnx );
   indices[0] = index;
 }
 
 template <>
 inline
-void map_index<2>(const int index,
-                  const int nnx,
-                  std::vector<int> &indices)
+void map_index<2>( const int index,
+                   const int nnx,
+                   std::vector<int> & indices )
 {
-  assert(index < nnx*nnx);
+  assert( index < nnx*nnx );
   indices[0] = index % nnx;
   indices[1] = index / nnx;
 }
 
 template <>
 inline
-void map_index<3>(const int index,
-                  const int nnx,
-                  std::vector<int> &indices)
+void map_index<3>( const int index,
+                   const int nnx,
+                   std::vector<int> & indices )
 {
-  assert(index < nnx*nnx*nnx);
+  assert( index < nnx*nnx*nnx );
   indices[0] = index % nnx;
-  indices[1] = (index / nnx) % nnx;
-  indices[2] = index / (nnx*nnx);
+  indices[1] = ( index / nnx ) % nnx;
+  indices[2] = index / ( nnx*nnx );
 }
 
 } // end namespace

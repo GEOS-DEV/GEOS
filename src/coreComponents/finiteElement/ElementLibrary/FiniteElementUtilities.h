@@ -32,38 +32,38 @@
 
 namespace FiniteElementUtilities
 {
-void Integrate( const R2SymTensor& fieldvar,
-                const R1Tensor* const dNdX,
-                const realT& detJ,
-                const realT& detF,
-                const R2Tensor& Finv,
+void Integrate( const R2SymTensor & fieldvar,
+                const R1Tensor * const dNdX,
+                const realT & detJ,
+                const realT & detF,
+                const R2Tensor & Finv,
                 const int numPoints,
-                R1Tensor* const result);
+                R1Tensor * const result );
 
 
 //  void Interp(const R1Tensor &globalCoord,
-//	      const array1d<R1Tensor> &nodeCoords,
+//        const array1d<R1Tensor> &nodeCoords,
 //              const array1d<real64> &nodeValues,
 //              BasisBase *basis,
-//	      const unsigned int &ndofs,
-//	      const unsigned int &ndim,
+//        const unsigned int &ndofs,
+//        const unsigned int &ndim,
 //              realT &result);
 //
 //
 //  void InterpdNdX(const R1Tensor &globalCoord,
-//		  const array1d<R1Tensor> &nodeCoords,
-//		  BasisBase *basis,
-//		  const unsigned int &ndofs,
+//      const array1d<R1Tensor> &nodeCoords,
+//      BasisBase *basis,
+//      const unsigned int &ndofs,
 //                  const unsigned int &ndim,
-//		  array1d<R1Tensor> &result);
+//      array1d<R1Tensor> &result);
 //
 //
 //  void FindLocalCoord(const R1Tensor &globalCoord,
-//		      const array1d<R1Tensor> &nodeCoords,
-//		      BasisBase *basis,
-//		      const unsigned int &ndofs,
-//		      const unsigned int &ndim,
-//		      R1Tensor &localCoord);
+//          const array1d<R1Tensor> &nodeCoords,
+//          BasisBase *basis,
+//          const unsigned int &ndofs,
+//          const unsigned int &ndim,
+//          R1Tensor &localCoord);
 
 }
 

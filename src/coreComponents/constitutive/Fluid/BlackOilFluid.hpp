@@ -73,7 +73,7 @@ public:
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
     static constexpr auto fluidTypeString = "fluidType";
-    
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey surfaceDensities = { surfaceDensitiesString };

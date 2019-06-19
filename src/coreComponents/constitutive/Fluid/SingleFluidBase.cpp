@@ -35,12 +35,12 @@ SingleFluidBase::SingleFluidBase( std::string const & name, ManagedGroup * const
 {
 
   RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for density.");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Default value for density." );
 
   RegisterViewWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for viscosity.");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Default value for viscosity." );
 
   RegisterViewWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -56,8 +56,8 @@ SingleFluidBase::~SingleFluidBase() = default;
 void SingleFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
-  this->getWrapper< array2d<real64> >(viewKeyStruct::densityString)->setApplyDefaultValue(m_defaultDensity);
-  this->getWrapper< array2d<real64> >(viewKeyStruct::viscosityString)->setApplyDefaultValue(m_defaultViscosity);
+  this->getWrapper< array2d<real64> >( viewKeyStruct::densityString )->setApplyDefaultValue( m_defaultDensity );
+  this->getWrapper< array2d<real64> >( viewKeyStruct::viscosityString )->setApplyDefaultValue( m_defaultViscosity );
 
 }
 
@@ -84,7 +84,7 @@ SingleFluidBase::DeliverClone( string const & name,
   GEOS_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
-  SingleFluidBase * const newConstitutiveRelation = dynamic_cast<SingleFluidBase *>(clone.get());
+  SingleFluidBase * const newConstitutiveRelation = dynamic_cast<SingleFluidBase *>( clone.get() );
 
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_defaultViscosity = m_defaultViscosity;

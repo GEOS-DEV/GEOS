@@ -51,7 +51,7 @@ public:
   static string CatalogName() { return "QuadratureBase"; }
 
   using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   virtual int size() const = 0;
   virtual R1Tensor integration_point( const int index ) const = 0;

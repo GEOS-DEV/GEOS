@@ -26,30 +26,30 @@
 #include "ShapeFunctionBaseT.h"
 
 ShapeFunctionBaseT::ShapeT() :
-  rElement(0),
-  pNodes(0)
+  rElement( 0 ),
+  pNodes( 0 )
 {}
 
-ShapeFunctionBaseT::~ShapeFunctionBaseT(void)
+ShapeFunctionBaseT::~ShapeFunctionBaseT( void )
 {}
 
 
 
-void ShapeFunctionBaseT::CalculateJacobian(const int elem)
+void ShapeFunctionBaseT::CalculateJacobian( const int elem )
 {
   J = 0.0;
   for( int i=1 ; i<=nsdof ; ++i )
     for( int j=1 ; j<=nsdof ; ++j )
       for( int a=1 ; a<=rElement->NumNodeElem() ; ++a )
-        J(i,j) += pNodes->Xref( rElement->Connectivity(elem,a),i)
-                  * dNdXi(a)(j);
+        J( i, j ) += pNodes->Xref( rElement->Connectivity( elem, a ), i )
+                     * dNdXi( a )( j );
 
 }
 
-void ContinuumShapeT::Calc_Shape_Deriv(const realT fac)
+void ContinuumShapeT::Calc_Shape_Deriv( const realT fac )
 {
 
-  realT factor = 1.0 / pow(static_cast<realT>(2),nsdof);
+  realT factor = 1.0 / pow( static_cast<realT>( 2 ), nsdof );
 
   // loop over "nodal indexed" shape functions and calculate the
   // shape function derivitives wrt the local coordinates
@@ -57,31 +57,35 @@ void ContinuumShapeT::Calc_Shape_Deriv(const realT fac)
   {
     for( int i=1 ; i<=nsdof ; ++i )
     {
-      dNdXi(a)(i) = factor * rElement->Xi_node(a,i);
+      dNdXi( a )( i ) = factor * rElement->Xi_node( a, i );
       for( int j=1 ; j<=nsdof ; j++ )
         if( i!=j )
-          dNdXi(a)(i) *= ( 1 + ip_coord_fac * rElement->Xi_node(ip,j) * rElement->Xi_node(a,j));
+        {
+          dNdXi( a )( i ) *= ( 1 + ip_coord_fac * rElement->Xi_node( ip, j ) * rElement->Xi_node( a, j ) );
+        }
 
     }
   }
 
-  CalculateJacobian(elem);
+  CalculateJacobian( elem );
 
-  m_detJ(elem,ip) = J.Det();
+  m_detJ( elem, ip ) = J.Det();
 
-  dNdX.AijBi(Jinv,dNdXi);
+  dNdX.AijBi( Jinv, dNdXi );
 
 
 }
 
 
-inline realT ShapeFunctionBaseT::Shape( const R1Tensor& Xi,
-                                        const R1Tensor& Xi_node )
+inline realT ShapeFunctionBaseT::Shape( const R1Tensor & Xi,
+                                        const R1Tensor & Xi_node )
 {
-  realT N = 1.0 / pow(2.0,nsdof);
+  realT N = 1.0 / pow( 2.0, nsdof );
 
   for( int i=1 ; i<=nsdof ; ++i )
-    N *= ( 1 +  Xi(i) * Xi_node(i) );
+  {
+    N *= ( 1 +  Xi( i ) * Xi_node( i ) );
+  }
 
   return N;
 }

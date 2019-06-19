@@ -63,8 +63,8 @@ public:
   localIndex numConnections() const;
 
   /// resize the collection
-  void reserve(localIndex const numConn,
-               localIndex const avgStencilSize);
+  void reserve( localIndex const numConn,
+                localIndex const avgStencilSize );
 
   /// add data for one connection
   void add( localIndex const numPts,
@@ -102,10 +102,10 @@ FluxStencil<INDEX, WEIGHT>::FluxStencil()
 
 template<typename INDEX, typename WEIGHT>
 FluxStencil<INDEX, WEIGHT>::FluxStencil( localIndex const numConn,
-                                                     localIndex const avgStencilSize )
+                                         localIndex const avgStencilSize )
   : m_connections()
 {
-  reserve(numConn, avgStencilSize);
+  reserve( numConn, avgStencilSize );
 }
 
 template<typename INDEX, typename WEIGHT>
@@ -130,8 +130,8 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
-  for (localIndex i = 0; i < numPts; ++i)
+  stackArray1d<Entry, MAX_STENCIL_SIZE> entries( numPts );
+  for( localIndex i = 0; i < numPts; ++i )
   {
     entries[i] = { indices[i], weights[i] };
   }
@@ -144,15 +144,15 @@ template<typename INDEX, typename WEIGHT>
 bool FluxStencil<INDEX, WEIGHT>::zero( localIndex const connectorIndex )
 {
   return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
+    executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
     Entry * const entries = m_connections[connectionListIndex];
-    for (localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i)
+    for( localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i )
     {
       entries[i].weight = 0; // TODO remove entries altogether?
     }
-//    m_connections.resizeArray( connectionListIndex, 0 );
-  });
+    //    m_connections.resizeArray( connectionListIndex, 0 );
+  } );
 }
 
 

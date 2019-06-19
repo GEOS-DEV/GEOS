@@ -33,23 +33,23 @@ using namespace cxx_utilities;
 
 SiloOutput::SiloOutput( std::string const & name,
                         ManagedGroup * const parent ):
-  OutputBase( name, parent),
+  OutputBase( name, parent ),
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel()
 {
-  RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  RegisterViewWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "" );
 
-  RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  RegisterViewWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "" );
 
-  RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("");
+  RegisterViewWrapper( viewKeysStruct::plotLevel, &m_plotLevel, false )->
+  setApplyDefaultValue( 1 )->
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "" );
 
 }
 
@@ -58,29 +58,29 @@ SiloOutput::~SiloOutput()
 
 
 
-void SiloOutput::Execute(real64 const time_n,
-                         real64 const dt,
-                         integer const cycleNumber,
-                         integer const eventCounter,
-                         real64 const eventProgress,
-                         ManagedGroup * domain)
+void SiloOutput::Execute( real64 const time_n,
+                          real64 const dt,
+                          integer const cycleNumber,
+                          integer const eventCounter,
+                          real64 const eventProgress,
+                          ManagedGroup * domain )
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition * domainPartition = ManagedGroup::group_cast<DomainPartition *>( domain );
   SiloFile silo;
 
   integer rank;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
   MPI_Barrier( MPI_COMM_GEOSX );
 
   integer numFiles = this->parallelThreads();
 
   silo.setPlotLevel( getReference<integer>( viewKeysStruct::plotLevel ) );
 
-  silo.Initialize(PMPIO_WRITE , numFiles );
-  silo.WaitForBatonWrite(rank, cycleNumber, eventCounter, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0);
+  silo.Initialize( PMPIO_WRITE, numFiles );
+  silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0 );
   silo.HandOffBaton();
-  silo.ClearEmptiesFromMultiObjects(cycleNumber);
+  silo.ClearEmptiesFromMultiObjects( cycleNumber );
   silo.Finish();
 
 }

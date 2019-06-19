@@ -55,7 +55,7 @@ template<typename>
 constexpr bool is_array = false;
 
 template< typename T, int NDIM, typename INDEX_TYPE >
-constexpr bool is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > = true;
+constexpr bool is_array< LvArray::Array<T, NDIM, INDEX_TYPE> > = true;
 
 template <class T>
 constexpr bool is_tensorT = is_instance_of_v<R1Tensor, T> ||
@@ -89,13 +89,13 @@ template<typename>
 struct is_packable_array : std::false_type {};
 
 template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+struct is_packable_array< LvArray::Array<T, NDIM, INDEX_TYPE> > : is_packable<T> {};
 
 template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+struct is_packable_array< LvArray::ArrayView<T, NDIM, INDEX_TYPE> > : is_packable<T> {};
 
 template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+struct is_packable_array< LvArray::ArraySlice<T, NDIM, INDEX_TYPE> > : is_packable<T> {};
 
 
 template<typename>
@@ -114,13 +114,13 @@ template<typename>
 struct is_packable_map : std::false_type {};
 
 template<typename T_KEY, typename T_VAL>
-struct is_packable_map< map<T_KEY,T_VAL> >
+struct is_packable_map< map<T_KEY, T_VAL> >
 {
   static constexpr bool value = is_packable<T_KEY>::value &&
                                 is_packable<T_VAL>::value;
 };
 template< typename T_KEY, typename T_VAL>
-constexpr bool is_packable_map< map<T_KEY,T_VAL> >::value;
+constexpr bool is_packable_map< map<T_KEY, T_VAL> >::value;
 
 
 template< typename T >

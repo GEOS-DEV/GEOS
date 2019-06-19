@@ -58,7 +58,7 @@ struct FieldSpecificationEqual
                      int const component,
                      real64 const & value )
   {
-    field[index] = static_cast<T>(value);
+    field[index] = static_cast<T>( value );
   }
 
   /**
@@ -96,19 +96,19 @@ struct FieldSpecificationEqual
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     if( component >= 0 )
     {
-      field[index][component] = static_cast<T>(value);
+      field[index][component] = static_cast<T>( value );
     }
     else
     {
       for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
       {
-        field[index][a] = static_cast<T>(value);
+        field[index][a] = static_cast<T>( value );
       }
     }
   }
@@ -127,11 +127,11 @@ struct FieldSpecificationEqual
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView2d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
-    if( component >= 0)
+    if( component >= 0 )
     {
       for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
       {
@@ -160,15 +160,15 @@ struct FieldSpecificationEqual
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       for( localIndex b=0; b<field.size( 2 ) ; ++b )
       {
-        field[index][a][b] = static_cast<T>(value);
+        field[index][a][b] = static_cast<T>( value );
       }
     }
   }
@@ -187,9 +187,9 @@ struct FieldSpecificationEqual
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView3d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -216,11 +216,11 @@ struct FieldSpecificationEqual
    * the difference between \p bcValue and \p fieldValue.
    */
   static inline void SpecifyFieldValue( globalIndex const dof,
-                            systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            systemSolverInterface::BlockIDs const blockID,
-                            real64 & rhs,
-                            real64 const & bcValue,
-                            real64 const fieldValue )
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::BlockIDs const blockID,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
   {
 
     if( true )//node_is_ghost[*nd] < 0 )
@@ -318,11 +318,11 @@ struct FieldSpecificationAdd
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
-    field[index] += static_cast<T>(value);
+    field[index] += static_cast<T>( value );
   }
 
   /**
@@ -339,9 +339,9 @@ struct FieldSpecificationAdd
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
   SpecifyFieldValue( arrayView1d<T> & field,
-                localIndex const index,
-                int const component,
-                real64 const & value )
+                     localIndex const index,
+                     int const component,
+                     real64 const & value )
   {
     field[index].Data()[component] += value;
   }
@@ -365,7 +365,7 @@ struct FieldSpecificationAdd
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
-      field[index][a] += static_cast<T>(value);
+      field[index][a] += static_cast<T>( value );
     }
   }
 
@@ -405,11 +405,11 @@ struct FieldSpecificationAdd
    *
    */
   static inline void SpecifyFieldValue( globalIndex const dof,
-                                              systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                              systemSolverInterface::BlockIDs const blockID,
-                                              real64 & rhs,
-                                              real64 const & bcValue,
-                                              real64 const fieldValue )
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        systemSolverInterface::BlockIDs const blockID,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
   {
     if( true )//node_is_ghost[*nd] < 0 )
     {
@@ -490,14 +490,14 @@ public:
    * alias to define the catalog type for this base type
    */
   using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
-                                                            string const &,
-                                                            dataRepository::ManagedGroup * const >;
+        string const &,
+        dataRepository::ManagedGroup * const >;
 
   /**
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
    */
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   static string CatalogName() { return "FieldSpecification"; }
 
@@ -536,16 +536,16 @@ public:
    */
   template< typename FIELD_OP >
   void ApplyFieldValue( set<localIndex> const & targetSet,
-                                      real64 const time,
-                                      dataRepository::ManagedGroup * dataGroup,
-                                      string const & fieldname ) const;
+                        real64 const time,
+                        dataRepository::ManagedGroup * dataGroup,
+                        string const & fieldname ) const;
 
   // calls user-provided lambda to apply computed boundary value
-//  template<typename LAMBDA>
-//  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
-//                               real64 const time,
-//                               dataRepository::ManagedGroup * dataGroup,
-//                               LAMBDA && lambda );
+  //  template<typename LAMBDA>
+  //  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
+  //                               real64 const time,
+  //                               dataRepository::ManagedGroup * dataGroup,
+  //                               LAMBDA && lambda );
 
   // TODO: to be removed. The new version works with LAI
   /**
@@ -631,12 +631,12 @@ public:
                                   systemSolverInterface::BlockIDs const blockID,
                                   LAMBDA && lambda ) const;
 
-// calls user-provided lambda to apply computed boundary value
-//  template<typename LAMBDA>
-//  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
-//                               real64 const time,
-//                               dataRepository::ManagedGroup * dataGroup,
-//                               LAMBDA && lambda );
+  // calls user-provided lambda to apply computed boundary value
+  //  template<typename LAMBDA>
+  //  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
+  //                               real64 const time,
+  //                               dataRepository::ManagedGroup * dataGroup,
+  //                               LAMBDA && lambda );
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
@@ -734,12 +734,12 @@ public:
     return m_functionName;
   }
 
-  virtual const string& GetObjectPath() const
+  virtual const string & GetObjectPath() const
   {
     return m_objectPath;
   }
 
-  virtual const string& GetFieldName() const
+  virtual const string & GetFieldName() const
   {
     return m_fieldName;
   }
@@ -749,7 +749,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT time )
+  virtual const R1Tensor & GetDirection( realT time )
   {
     return m_direction;
   }
@@ -792,7 +792,7 @@ public:
     m_scale = scale;
   }
 
-  void InitialCondition( bool isInitialCondition)
+  void InitialCondition( bool isInitialCondition )
   {
     m_initialCondition = isInitialCondition;
   }
@@ -820,7 +820,7 @@ private:
   string m_fieldName;
 
 
-//  string m_dataType;
+  //  string m_dataType;
 
   /// The component the boundary condition acts on. Not used if field is a scalar.
   int m_component;
@@ -853,9 +853,9 @@ private:
 
 template< typename FIELD_OP >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
-                                                           real64 const time,
-                                                           ManagedGroup * dataGroup,
-                                                           string const & fieldName ) const
+                                              real64 const time,
+                                              ManagedGroup * dataGroup,
+                                              string const & fieldName ) const
 {
 
   integer const component = GetComponent();
@@ -863,49 +863,49 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  std::type_index typeIndex = std::type_index( vw->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto type, auto baseType ) -> void
+  {
+    using fieldType = decltype( type );
+    dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
+    fieldType & field = view.reference();
+    if( functionName.empty() )
     {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
-      fieldType & field = view.reference();
-      if( functionName.empty() )
+      for( auto a : targetSet )
       {
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+      }
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+      GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+      if( function->isFunctionOfTime()==2 )
+      {
+        real64 value = m_scale * function->Evaluate( &time );
         for( auto a : targetSet )
         {
-          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+          FIELD_OP::SpecifyFieldValue( field, a, component, value );
         }
       }
       else
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-        GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-        if( function->isFunctionOfTime()==2 )
+        real64_array result( static_cast<localIndex>( targetSet.size() ) );
+        function->Evaluate( dataGroup, time, targetSet, result );
+        integer count=0;
+        for( auto a : targetSet )
         {
-          real64 value = m_scale * function->Evaluate( &time );
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, value );
-          }
-        }
-        else
-        {
-          real64_array result( static_cast<localIndex>(targetSet.size()) );
-          function->Evaluate( dataGroup, time, targetSet, result );
-          integer count=0;
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*result[count] );
-            ++count;
-          }
+          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*result[count] );
+          ++count;
         }
       }
-    } );
+    }
+  } );
 }
 
 
@@ -923,25 +923,25 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 systemSolverInterface::BlockIDs const blockID ) const
 {
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  std::type_index typeIndex = std::type_index( vw->get_typeid() );
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-    [&]( auto type ) -> void
-    {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      fieldType & field = view.reference();
+                                  [&]( auto type ) -> void
+  {
+    using fieldType = decltype( type );
+    dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >( *vw );
+    fieldType & field = view.reference();
 
-      this->ApplyBoundaryConditionToSystem<FIELD_OP>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
-        [&]( localIndex const a )->real64
-        {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
-        }
-      );
+    this->ApplyBoundaryConditionToSystem<FIELD_OP>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, blockSystem, blockID,
+                                                    [&]( localIndex const a )->real64
+    {
+      return static_cast<real64>( rtTypes::value( field[a], component ) );
     }
-  );
+                                                  );
+  }
+                                );
 }
 
 template< typename FIELD_OP, typename LAMBDA >
@@ -957,16 +957,16 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 systemSolverInterface::BlockIDs const blockID,
                                 LAMBDA && lambda ) const
 {
-  ApplyBoundaryConditionToSystem<FIELD_OP,LAMBDA>( targetSet,
-                                                   normalizeBySetSize,
-                                                   time,
-                                                   1.0,
-                                                   dataGroup,
-                                                   dofMap,
-                                                   dofDim,
-                                                   blockSystem,
-                                                   blockID,
-                                                   std::forward<LAMBDA&&>(lambda) );
+  ApplyBoundaryConditionToSystem<FIELD_OP, LAMBDA>( targetSet,
+                                                    normalizeBySetSize,
+                                                    time,
+                                                    1.0,
+                                                    dataGroup,
+                                                    dofMap,
+                                                    dofDim,
+                                                    blockSystem,
+                                                    blockID,
+                                                    std::forward<LAMBDA&&>( lambda ) );
 }
 
 // TODO: to be removed. The new version works with LAI
@@ -1037,18 +1037,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     else
     {
       real64_array result;
-      result.resize( integer_conversion<localIndex>( targetSet.size()));
+      result.resize( integer_conversion<localIndex>( targetSet.size() ) );
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )
       {
         dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
         FIELD_OP::SpecifyFieldValue( dof( counter ),
-                             blockSystem,
-                             blockID,
-                             rhsContribution( counter ),
-                             m_scale * dt * result[counter] * setSizeFactor,
-                             lambda( a ) );
+                                     blockSystem,
+                                     blockID,
+                                     rhsContribution( counter ),
+                                     m_scale * dt * result[counter] * setSizeFactor,
+                                     lambda( a ) );
         ++counter;
       }
       FIELD_OP::ReplaceGlobalValues( rhs, counter, dof.data(), rhsContribution.data() );
@@ -1058,34 +1058,34 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
 template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
-                                                            real64 const time,
-                                                            dataRepository::ManagedGroup * dataGroup,
-                                                            string const & fieldName,
-                                                            string const & dofMapName,
-                                                            integer const & dofDim,
-                                                            typename LAI::ParallelMatrix & matrix,
-                                                            typename LAI::ParallelVector & rhs ) const
+                                                             real64 const time,
+                                                             dataRepository::ManagedGroup * dataGroup,
+                                                             string const & fieldName,
+                                                             string const & dofMapName,
+                                                             integer const & dofDim,
+                                                             typename LAI::ParallelMatrix & matrix,
+                                                             typename LAI::ParallelVector & rhs ) const
 {
   dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  std::type_index typeIndex = std::type_index( vw->get_typeid() );
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-    [&]( auto type ) -> void
-    {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
-      fieldType & field = view.reference();
+                                  [&]( auto type ) -> void
+  {
+    using fieldType = decltype( type );
+    dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >( *vw );
+    fieldType & field = view.reference();
 
-      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
-        [&]( localIndex const a )->real64
-        {
-          return static_cast<real64>(rtTypes::value( field[a], component ));
-        }
-      );
+    this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
+                                                         [&]( localIndex const a )->real64
+    {
+      return static_cast<real64>( rtTypes::value( field[a], component ) );
     }
-  );
+                                                       );
+  }
+                                );
 }
 
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
@@ -1148,7 +1148,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     else
     {
       real64_array result;
-      result.resize( integer_conversion<localIndex>( targetSet.size()));
+      result.resize( integer_conversion<localIndex>( targetSet.size() ) );
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )

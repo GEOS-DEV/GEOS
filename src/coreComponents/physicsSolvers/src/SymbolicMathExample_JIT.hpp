@@ -39,7 +39,7 @@ class DomainPartition;
 class SymbolicMathExample_JIT : public SolverBase
 {
 public:
-  SymbolicMathExample_JIT( const std::string& name,
+  SymbolicMathExample_JIT( const std::string & name,
                            ManagedGroup * const parent );
 
 
@@ -53,10 +53,10 @@ public:
 
   virtual void Initialize( ManagedGroup * const problemManager ) override final;
 
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
 };
 

@@ -30,9 +30,9 @@ namespace geosx
 
 using namespace dataRepository;
 
-TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
-                                                     ManagedGroup *const parent)
-  : FluxApproximationBase(name, parent)
+TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
+                                                      ManagedGroup * const parent )
+  : FluxApproximationBase( name, parent )
 {
 
 }
@@ -40,22 +40,22 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
 namespace
 {
 
-void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
+void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
 {
   result = 0.0;
   R1Tensor axis;
   R2SymTensor temp;
 
   // assemble full tensor from eigen-decomposition
-  for (unsigned icoord = 0; icoord < 3; ++icoord)
+  for( unsigned icoord = 0; icoord < 3; ++icoord )
   {
     // assume principal axis aligned with global coordinate system
     axis = 0.0;
-    axis(icoord) = 1.0;
+    axis( icoord ) = 1.0;
 
     // XXX: is there a more elegant way to do this?
-    temp.dyadic_aa(axis);
-    temp *= values(icoord);
+    temp.dyadic_aa( axis );
+    temp *= values( icoord );
     result += temp;
   }
 }
@@ -65,8 +65,8 @@ void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
 void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain,
                                                     CellStencil & stencil )
 {
-  MeshBody const * const meshBody = domain.getMeshBody(0);
-  MeshLevel const * const mesh = meshBody->getMeshLevel(0);
+  MeshBody const * const meshBody = domain.getMeshBody( 0 );
+  MeshLevel const * const mesh = meshBody->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -77,11 +77,11 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   arrayView1d<R1Tensor const>   const & X = nodeManager->referencePosition();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
-    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
-                                        CellBlock::viewKeyStruct::elementCenterString);
+                                                                  elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
+                                                                    CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
-    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
+                                                                  elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
 
   arrayView1d<integer const> const & faceGhostRank =
     faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
@@ -90,7 +90,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
-  for (string const & regionName : m_targetRegions)
+  for( string const & regionName : m_targetRegions )
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
   }
@@ -101,31 +101,37 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   R2SymTensor coefTensor;
   real64 faceArea, faceWeight, faceWeightInv;
 
-  stackArray1d<CellDescriptor, numElems> stencilCells(numElems);
-  stackArray1d<real64, numElems> stencilWeights(numElems);
+  stackArray1d<CellDescriptor, numElems> stencilCells( numElems );
+  stackArray1d<real64, numElems> stencilWeights( numElems );
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  stencil.reserve(faceManager->size(), 2);
+  stencil.reserve( faceManager->size(), 2 );
   real64 const areaTolerance = pow( meshBody->getGlobalLengthScale() * this->m_areaRelTol, 2 );
 
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
+  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
   {
-    if (faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1)
+    if( faceGhostRank[kf] >= 0 || elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1 )
+    {
       continue;
+    }
 
-    if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
+    if( !( regionFilter.contains( elemRegionList[kf][0] ) && regionFilter.contains( elemRegionList[kf][1] ) ) )
+    {
       continue;
+    }
 
     faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
+    {
       continue;
+    }
 
     faceWeightInv = 0.0;
 
-    for (localIndex ke = 0; ke < numElems; ++ke)
+    for( localIndex ke = 0; ke < numElems; ++ke )
     {
-      if (elemRegionList[kf][ke] != -1)
+      if( elemRegionList[kf][ke] != -1 )
       {
         localIndex const er  = elemRegionList[kf][ke];
         localIndex const esr = elemSubRegionList[kf][ke];
@@ -134,16 +140,18 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         cellToFaceVec = faceCenter;
         cellToFaceVec -= elemCenter[er][esr][ei];
 
-        if (ke == 1)
+        if( ke == 1 )
+        {
           cellToFaceVec *= -1.0;
+        }
 
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
         // assemble full coefficient tensor from principal axis/components
-        makeFullTensor(coefficient[er][esr][ei], coefTensor);
+        makeFullTensor( coefficient[er][esr][ei], coefTensor );
 
-        faceConormal.AijBj(coefTensor, faceNormal);
-        real64 const ht = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+        faceConormal.AijBj( coefTensor, faceNormal );
+        real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
 
         faceWeightInv += 1.0 / ht; // XXX: safeguard against div by zero?
       }
@@ -152,15 +160,17 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     faceWeight = 1.0 / faceWeightInv; // XXX: safeguard against div by zero?
 
     // ensure consistent normal orientation
-    if (Dot(cellToFaceVec, faceNormal) < 0)
+    if( Dot( cellToFaceVec, faceNormal ) < 0 )
+    {
       faceWeight *= -1;
+    }
 
-    for (localIndex ke = 0; ke < numElems; ++ke)
+    for( localIndex ke = 0; ke < numElems; ++ke )
     {
       stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
-      stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+      stencilWeights[ke] = faceWeight * ( ke == 0 ? 1 : -1 );
     }
-    stencil.add(2, stencilCells.data(), stencilWeights.data(), kf);
+    stencil.add( 2, stencilCells.data(), stencilWeights.data(), kf );
   }
   stencil.compress();
 }
@@ -169,7 +179,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & domain,
                                                       string const & faceElementRegionName )
 {
-  MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   EdgeManager const * const edgeManager = mesh->getEdgeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
@@ -177,25 +187,25 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
-  elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
-                                                                                               viewKeyStruct::
-                                                                                               elementCenterString);
+                                                                elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
+                                                                             viewKeyStruct::
+                                                                             elementCenterString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor> > const
-  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
+  coefficient = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
 
   arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceCenter = faceManager->faceCenter();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
-  CellStencil & fractureStencil = getReference<CellStencil>(viewKeyStruct::fractureStencilString);
+  CellStencil & fractureStencil = getReference<CellStencil>( viewKeyStruct::fractureStencilString );
   CellStencil & cellStencil     = getStencil();
 
-  FaceElementRegion const * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(faceElementRegionName);
+  FaceElementRegion const * const fractureRegion = elemManager->GetRegion<FaceElementRegion>( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
-  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>("default");
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>( "default" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
   array1d<localIndex> const &
@@ -205,8 +215,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   array1d<array1d<localIndex> > const &
   fractureConnectorsToFaceElements = fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::
-                                                                                                    viewKeyStruct::
-                                                                                                    fractureConnectorsToFaceElementsString );
+                                     viewKeyStruct::
+                                     fractureConnectorsToFaceElementsString );
 
   FixedToManyElementRelation const &
   faceElementsToCells = fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::
@@ -229,9 +239,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     {
       localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-      GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
-      stencilCells.resize(numElems);
-      stencilWeights.resize(numElems);
+      GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
+      stencilCells.resize( numElems );
+      stencilWeights.resize( numElems );
 
       // get edge geometry
       R1Tensor edgeCenter, edgeLength;
@@ -253,10 +263,11 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
         // TODO stenciWeights will mean something else once you take out the aperture.
         // We won't be doing the harmonic mean here...etc.
-        stencilWeights[kfe] = pow( -1 , kfe ) * pow( aperture[fractureElementIndex], 3) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+        stencilWeights[kfe] = pow( -1, kfe ) * pow( aperture[fractureElementIndex],
+                                                    3 ) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
       }
       // add/overwrite the stencil for index fci
-      fractureStencil.add(2, stencilCells.data(), stencilWeights.data(), fci );
+      fractureStencil.add( 2, stencilCells.data(), stencilWeights.data(), fci );
     }
   }
 
@@ -265,13 +276,13 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     arrayView2d<localIndex const> const & elemRegionList = faceElementsToCells.m_toElementRegion;
     arrayView2d<localIndex const> const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d<localIndex const> const & elemList = faceElementsToCells.m_toElementIndex;
-    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
+    for( localIndex kfe=0 ; kfe<faceElementsToCells.size( 0 ) ; ++kfe )
     {
-      localIndex const numElems = faceElementsToCells.size(1);
+      localIndex const numElems = faceElementsToCells.size( 1 );
 
-      GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
-      stencilCells.resize(numElems);
-      stencilWeights.resize(numElems);
+      GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
+      stencilCells.resize( numElems );
+      stencilWeights.resize( numElems );
 
       R2SymTensor coefTensor;
       R1Tensor cellToFaceVec;
@@ -280,7 +291,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       // remove cell-to-cell connections from cell stencil and add in new connections
       if( cellStencil.zero( faceMap[kfe][0] ) )
       {
-        for (localIndex ke = 0; ke < numElems; ++ke)
+        for( localIndex ke = 0; ke < numElems; ++ke )
         {
           localIndex const faceIndex = faceMap[kfe][ke];
           localIndex const er  = elemRegionList[kfe][ke];
@@ -293,9 +304,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
           real64 const c2fDistance = cellToFaceVec.Normalize();
 
           // assemble full coefficient tensor from principal axis/components
-          makeFullTensor(coefficient[er][esr][ei], coefTensor);
+          makeFullTensor( coefficient[er][esr][ei], coefTensor );
 
-          faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
+          faceConormal.AijBj( coefTensor, faceNormal[faceIndex] );
           real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
           // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
@@ -316,8 +327,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
                                                         set<localIndex> const & faceSet,
                                                         BoundaryStencil & stencil )
 {
-  MeshBody const * const meshBody = domain.getMeshBody(0);
-  MeshLevel const * const mesh = meshBody->getMeshLevel(0);
+  MeshBody const * const meshBody = domain.getMeshBody( 0 );
+  MeshLevel const * const mesh = meshBody->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -328,21 +339,21 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   r1_array const & X = nodeManager->referencePosition();
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const elemCenter =
-    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
-                                        CellBlock::viewKeyStruct::elementCenterString);
+                                                                  elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(
+                                                                    CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const coefficient =
-    elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >(m_coeffName);
+                                                                  elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( m_coeffName );
 
-  integer_array const & faceGhostRank = faceManager->getReference<integer_array>(ObjectManagerBase::
-                                                                                 viewKeyStruct::
-                                                                                 ghostRankString);
+  integer_array const & faceGhostRank = faceManager->getReference<integer_array>( ObjectManagerBase::
+                                                                                  viewKeyStruct::
+                                                                                  ghostRankString );
 
   array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
-  for (string const & regionName : m_targetRegions)
+  for( string const & regionName : m_targetRegions )
   {
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
   }
@@ -353,27 +364,33 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   R2SymTensor coefTensor;
   real64 faceArea, faceWeight;
 
-  stackArray1d<PointDescriptor, numElems> stencilPoints(numElems);
-  stackArray1d<real64, numElems> stencilWeights(numElems);
+  stackArray1d<PointDescriptor, numElems> stencilPoints( numElems );
+  stackArray1d<real64, numElems> stencilWeights( numElems );
 
   real64 const areaTolerance = pow( meshBody->getGlobalLengthScale() * this->m_areaRelTol, 2 );
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  stencil.reserve(faceSet.size(), 2);
-  for (localIndex kf : faceSet)
+  stencil.reserve( faceSet.size(), 2 );
+  for( localIndex kf : faceSet )
   {
-    if (faceGhostRank[kf] >= 0)
+    if( faceGhostRank[kf] >= 0 )
+    {
       continue;
+    }
 
     faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
-    for (localIndex ke = 0; ke < numElems; ++ke)
+    for( localIndex ke = 0; ke < numElems; ++ke )
     {
-      if (elemRegionList[kf][ke] < 0)
+      if( elemRegionList[kf][ke] < 0 )
+      {
         continue;
+      }
 
-      if (!regionFilter.empty() && !regionFilter.contains(elemRegionList[kf][ke]))
+      if( !regionFilter.empty() && !regionFilter.contains( elemRegionList[kf][ke] ) )
+      {
         continue;
+      }
 
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];
@@ -385,14 +402,16 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       real64 const c2fDistance = cellToFaceVec.Normalize();
 
       // assemble full coefficient tensor from principal axis/components
-      makeFullTensor(coefficient[er][esr][ei], coefTensor);
+      makeFullTensor( coefficient[er][esr][ei], coefTensor );
 
-      faceConormal.AijBj(coefTensor, faceNormal);
-      faceWeight = Dot(cellToFaceVec, faceConormal) * faceArea / c2fDistance;
+      faceConormal.AijBj( coefTensor, faceNormal );
+      faceWeight = Dot( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
 
       // ensure consistent normal orientation
-      if (Dot(cellToFaceVec, faceNormal) < 0)
+      if( Dot( cellToFaceVec, faceNormal ) < 0 )
+      {
         faceWeight *= -1;
+      }
 
       stencilPoints[0].tag = PointDescriptor::Tag::CELL;
       stencilPoints[0].cellIndex = { er, esr, ei };
@@ -402,13 +421,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       stencilPoints[1].faceIndex = kf;
       stencilWeights[1] = -faceWeight;
 
-      stencil.add(2, stencilPoints.data(), stencilWeights.data(), kf );
+      stencil.add( 2, stencilPoints.data(), stencilWeights.data(), kf );
     }
   }
   stencil.compress();
 }
 
 
-REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY( FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const )
 
 }

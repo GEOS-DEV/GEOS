@@ -49,14 +49,14 @@ class DomainPartition;
 class VTMMeshGenerator : public MeshGeneratorBase
 {
 public:
-  VTMMeshGenerator( const std::string& name,
-                         ManagedGroup * const parent );
+  VTMMeshGenerator( const std::string & name,
+                    ManagedGroup * const parent );
 
   virtual ~VTMMeshGenerator() override;
 
   static string CatalogName() { return "MeshFile"; }
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+  virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -65,15 +65,15 @@ public:
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                             const int index[],
-                                             const int& iEle,
-                                             int nodeIDInBox[],
-                                             const int size) override;
+  virtual void GetElemToNodesRelationInBox( const std::string & elementType,
+                                            const int index[],
+                                            const int & iEle,
+                                            int nodeIDInBox[],
+                                            const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
+  virtual void RemapMesh( dataRepository::ManagedGroup * const domain ) override;
 
-//  int m_delayMeshDeformation;
+  //  int m_delayMeshDeformation;
 
 protected:
   void PostProcessInput() override final;
@@ -88,7 +88,7 @@ private:
   inline globalIndex NodeGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
-      /*
+    /*
 
     rval = index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
     */
@@ -98,7 +98,7 @@ private:
   inline globalIndex ElemGlobalIndex( const int index[3] )
   {
     globalIndex rval = 0;
-      /*
+    /*
 
     rval = index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
     */
@@ -108,63 +108,63 @@ private:
   inline R1Tensor NodePosition( const int a[3], int trianglePattern )
   {
     R1Tensor X;
-      /*
+    /*
     realT xInterval(0);
 
     int xPosIndex = 0;
     if (trianglePattern == 1)
     {
-      int startingIndex = 0;
-      int endingIndex = 0;
-      int block = 0;
-      for( block=0 ; block<m_nElems[0].size() ; ++block )
-      {
-        startingIndex = endingIndex;
-        endingIndex = startingIndex + m_nElems[0][block];
-      }
-      xPosIndex = endingIndex;
+    int startingIndex = 0;
+    int endingIndex = 0;
+    int block = 0;
+    for( block=0 ; block<m_nElems[0].size() ; ++block )
+    {
+      startingIndex = endingIndex;
+      endingIndex = startingIndex + m_nElems[0][block];
+    }
+    xPosIndex = endingIndex;
     }
 
     for( int i=0 ; i<3 ; ++i )
     {
 
-      int startingIndex = 0;
-      int endingIndex = 0;
-      int block = 0;
-      for( block=0 ; block<m_nElems[i].size() ; ++block )
+    int startingIndex = 0;
+    int endingIndex = 0;
+    int block = 0;
+    for( block=0 ; block<m_nElems[i].size() ; ++block )
+    {
+      startingIndex = endingIndex;
+      endingIndex = startingIndex + m_nElems[i][block];
+      if( a[i]>=startingIndex && a[i]<=endingIndex )
       {
-        startingIndex = endingIndex;
-        endingIndex = startingIndex + m_nElems[i][block];
-        if( a[i]>=startingIndex && a[i]<=endingIndex )
-        {
-          break;
-        }
+        break;
       }
-      realT min = m_vertices[i][block];
-      realT max = m_vertices[i][block+1];
+    }
+    realT min = m_vertices[i][block];
+    realT max = m_vertices[i][block+1];
 
 
-      X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
+    X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
-      if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
+    if (( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
+    {
+      if (fabs(m_nElemBias[i][block]) >= 1)
       {
-        if (fabs(m_nElemBias[i][block]) >= 1)
-        {
-          GEOS_ERROR("Mesh bias must between -1 and 1!");
-        }
-
-        realT len = max -  min;
-        realT xmean = len / m_nElems[i][block];
-        realT x0 = xmean * double( a[i] - startingIndex );
-        realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-        realT dx = -x0*chi + x0*x0*chi/len;
-        X[i] += dx;
+        GEOS_ERROR("Mesh bias must between -1 and 1!");
       }
 
-      // This is for creating regular triangle pattern
-      if (i==0) xInterval = (max-min) / m_nElems[i][block];
-      if (trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex)
-        X[0] -= xInterval * 0.5;
+      realT len = max -  min;
+      realT xmean = len / m_nElems[i][block];
+      realT x0 = xmean * double( a[i] - startingIndex );
+      realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+      realT dx = -x0*chi + x0*x0*chi/len;
+      X[i] += dx;
+    }
+
+    // This is for creating regular triangle pattern
+    if (i==0) xInterval = (max-min) / m_nElems[i][block];
+    if (trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex)
+      X[0] -= xInterval * 0.5;
     }
 
     */
@@ -188,11 +188,11 @@ private:
 public:
   inline bool isRadial()
   {
-      /*
+    /*
     bool rval = (m_mapToRadial > 0);
     return rval;
     */
-      return false;
+    return false;
   }
 
 };

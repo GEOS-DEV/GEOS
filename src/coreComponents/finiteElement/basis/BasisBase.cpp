@@ -24,9 +24,9 @@ namespace geosx
 
 BasisBase::BasisBase( std::string const & name,
                       ManagedGroup * const parent ):
-  ManagedGroup(name, parent)
+  ManagedGroup( name, parent )
 {
-  setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 
@@ -35,7 +35,7 @@ BasisBase::~BasisBase()
 
 }
 
-BasisBase::CatalogInterface::CatalogType& BasisBase::GetCatalog()
+BasisBase::CatalogInterface::CatalogType & BasisBase::GetCatalog()
 {
   static BasisBase::CatalogInterface::CatalogType catalog;
   return catalog;

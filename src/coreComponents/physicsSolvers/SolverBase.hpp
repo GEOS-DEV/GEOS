@@ -71,12 +71,12 @@ public:
 
   SolverBase() = delete;
   SolverBase( SolverBase const & ) = delete;
-  SolverBase& operator=( SolverBase const & ) = delete;
-  SolverBase& operator=( SolverBase&& ) = delete;
+  SolverBase & operator=( SolverBase const & ) = delete;
+  SolverBase & operator=( SolverBase && ) = delete;
 
   static string CatalogName() { return "SolverBase"; }
 
-//  virtual void Registration( dataRepository::WrapperCollection& domain );
+  //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
 
@@ -198,8 +198,8 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition * const domain,
                                   systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
@@ -250,7 +250,7 @@ public:
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                          DomainPartition * const domain );
 
   /**
@@ -268,16 +268,16 @@ public:
                             SystemSolverParameters const * const params );
 
   /**
- * @brief Function to check system solution for physical consistency and constraint violation
- * @param blockSystem the entire block system
- * @param scalingFactor factor to scale the solution prior to application
- * @param objectManager the object manager that holds the fields we wish to apply the solution to
- * @return true if solution can be safely applied without violating physical constraints, false otherwise
- *
- * @note This function must be overridden in the derived physics solver in order to use an implict
- * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
- *
- */
+  * @brief Function to check system solution for physical consistency and constraint violation
+  * @param blockSystem the entire block system
+  * @param scalingFactor factor to scale the solution prior to application
+  * @param objectManager the object manager that holds the fields we wish to apply the solution to
+  * @return true if solution can be safely applied without violating physical constraints, false otherwise
+  *
+  * @note This function must be overridden in the derived physics solver in order to use an implict
+  * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
+  *
+  */
   virtual bool
   CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
                        real64 const scalingFactor,
@@ -350,7 +350,7 @@ public:
   virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   struct viewKeyStruct
   {
@@ -371,7 +371,7 @@ public:
 
 
   R1Tensor const & getGravityVector() const { return m_gravityVector; }
-  R1Tensor       & getGravityVector()       { return m_gravityVector; }
+  R1Tensor    &    getGravityVector()       { return m_gravityVector; }
   R1Tensor const * globalGravityVector() const;
 
   systemSolverInterface::EpetraBlockSystem * getLinearSystemRepository();
@@ -404,11 +404,11 @@ public:
 
   template<typename MESH, typename LAMBDA>
   typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
-                          std::is_convertible<LAMBDA, SubregionFunc<std::is_const<MESH>::value>>::value,
-                          void>::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  std::is_convertible<LAMBDA, SubregionFunc<std::is_const<MESH>::value>>::value,
+      void>::type
+      applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>(lambda) );
+    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>( lambda ) );
   }
 
   template<bool CONST>
@@ -418,11 +418,11 @@ public:
 
   template<typename MESH, typename LAMBDA>
   typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
-                          std::is_convertible<LAMBDA, SubregionFuncComplete<std::is_const<MESH>::value>>::value,
-                          void>::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  std::is_convertible<LAMBDA, SubregionFuncComplete<std::is_const<MESH>::value>>::value,
+      void>::type
+      applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward<LAMBDA>(lambda) );
+    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward<LAMBDA>( lambda ) );
   }
 
 protected:
@@ -452,7 +452,7 @@ protected:
   string_array m_targetRegions;
 
 
-//  localIndex_array m_blockLocalDofNumber;
+  //  localIndex_array m_blockLocalDofNumber;
 
 
 };

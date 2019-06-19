@@ -53,33 +53,33 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag(InputFlags::REQUIRED);
-  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
-  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
   RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of equation of state types for each phase");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "List of equation of state types for each phase" );
 
   RegisterViewWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Component critical pressures");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Component critical pressures" );
 
   RegisterViewWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Component critical temperatures");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Component critical temperatures" );
 
   RegisterViewWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Component acentric factors");
+  setInputFlag( InputFlags::REQUIRED )->
+  setDescription( "Component acentric factors" );
 
   RegisterViewWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Component volume shifts");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Component volume shifts" );
 
   RegisterViewWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Table of binary interaction coefficients");
+  setInputFlag( InputFlags::OPTIONAL )->
+  setDescription( "Table of binary interaction coefficients" );
 }
 
 CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
@@ -135,7 +135,7 @@ void CompositionalMultiphaseFluid::PostProcessInput()
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString )
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString )
 
-  if (m_componentVolumeShift.empty())
+  if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
     m_componentVolumeShift = 0.0;
@@ -161,7 +161,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
   std::vector<EOS_TYPE> eos( NP );
 
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
     auto it = PVTPackage_eosDict.find( m_equationsOfState[ip] );
     GEOS_ERROR_IF( it == PVTPackage_eosDict.end(), "Invalid eos name: " << m_equationsOfState[ip] );

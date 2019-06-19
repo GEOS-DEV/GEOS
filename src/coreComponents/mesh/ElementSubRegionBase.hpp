@@ -25,8 +25,8 @@ public:
   ~ElementSubRegionBase();
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const = 0;
+                                                   const NodeManager & nodeManager,
+                                                   const bool useReferencePos = true ) const = 0;
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
@@ -66,7 +66,7 @@ public:
   /**
    * @return number of nodes per element
    */
-  localIndex       & numNodesPerElement()       { return m_numNodesPerElement; }
+  localIndex    &    numNodesPerElement()       { return m_numNodesPerElement; }
 
   virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
 
@@ -78,7 +78,7 @@ public:
   /**
    * @return number of edges per element
    */
-  localIndex       & numEdgesPerElement()       { return m_numEdgesPerElement; }
+  localIndex    &    numEdgesPerElement()       { return m_numEdgesPerElement; }
 
   /**
    * @return number of faces per element
@@ -88,7 +88,7 @@ public:
   /**
    * @return number of faces per element
    */
-  localIndex       & numFacesPerElement()       { return m_numFacesPerElement; }
+  localIndex    &    numFacesPerElement()       { return m_numFacesPerElement; }
 
   array1d< R1Tensor > const & getElementCenter() const
   {
@@ -134,8 +134,8 @@ protected:
   string m_elementTypeString;
 
   FiniteElementBase::ElementType m_elementType;
-//  template< LAMBDA lambda >
-//  void numNodesPerElemSwitchyard() const;
+  //  template< LAMBDA lambda >
+  //  void numNodesPerElemSwitchyard() const;
 };
 
 

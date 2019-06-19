@@ -126,7 +126,7 @@ public:
    * @brief accessor for the stiffness field
    * @return
    */
-  arrayView1d<StiffnessTensor> const &       stiffness()       { return m_stiffness; }
+  arrayView1d<StiffnessTensor> const    &    stiffness()       { return m_stiffness; }
 
   /**
    * @brief immutable accessor for the stiffness field

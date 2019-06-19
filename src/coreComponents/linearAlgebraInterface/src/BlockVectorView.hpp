@@ -95,7 +95,7 @@ public:
    *
    * \param x Vector to copy.
    */
-  void shallowCopy( BlockVectorView<LAI> const &x );
+  void shallowCopy( BlockVectorView<LAI> const & x );
 
   /**
    * @brief Set block <tt>blockIndex</tt> using <tt>vector</tt>.
@@ -105,7 +105,7 @@ public:
    *
    */
   void set( localIndex const blockIndex,
-            ParallelVector &x );
+            ParallelVector & x );
 
   //@}
   //! @name Linear Algebra Operations
@@ -126,7 +126,7 @@ public:
    * \param result Result of the dot product.
    *
    */
-  real64 dot( BlockVectorView<LAI> const &x ) const;
+  real64 dot( BlockVectorView<LAI> const & x ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -152,7 +152,7 @@ public:
    * \param x Vector to add.
    */
   void axpy( real64 const alpha,
-             BlockVectorView<LAI> const &x );
+             BlockVectorView<LAI> const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + beta*y</tt>.
@@ -164,7 +164,7 @@ public:
    * \param beta Scaling factor for self vector.
    */
   void axpby( real64 const alpha,
-              BlockVectorView<LAI> const &x,
+              BlockVectorView<LAI> const & x,
               real64 const beta );
 
   //@}

@@ -26,25 +26,25 @@ using namespace dataRepository;
 namespace
 {
 int global_argc;
-char** global_argv;
+char ** global_argv;
 }
 
-int main(int argc, char** argv)
+int main( int argc, char ** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
 #ifdef GEOSX_USE_MPI
   int rank;
-  MPI_Init(&argc,&argv);
+  MPI_Init( &argc, &argv );
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  logger::InitializeLogger(MPI_COMM_GEOSX);
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
   logger::InitializeLogger();
-#endif 
+#endif
 
   global_argc = argc;
-  global_argv = new char*[global_argc];
+  global_argv = new char * [global_argc];
   for( int i = 0 ; i < argc ; ++i )
   {
     global_argv[i] = argv[i];
@@ -63,9 +63,9 @@ int main(int argc, char** argv)
 }
 
 
-TEST(testXML,testXML)
+TEST( testXML, testXML )
 {
-  ProblemManager problemManager("Problem",nullptr);
+  ProblemManager problemManager( "Problem", nullptr );
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );

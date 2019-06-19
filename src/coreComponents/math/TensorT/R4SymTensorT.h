@@ -56,32 +56,32 @@ class R4SymTensorT : public TensorBaseT<SymSize<T_dim>::value>
 {
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
-  R4SymTensorT(void);
-  ~R4SymTensorT(void);
-  R4SymTensorT(const R4SymTensorT<T_dim>& rhs);
+  R4SymTensorT( void );
+  ~R4SymTensorT( void );
+  R4SymTensorT( const R4SymTensorT<T_dim> & rhs );
 
   //***** ASSIGNMENT OPERATORS
   // **************************************************
-  R4SymTensorT<T_dim>&
-  operator=(const int& rhs);
-  R4SymTensorT<T_dim>&
-  operator=(const realT& rhs);
+  R4SymTensorT<T_dim> &
+  operator=( const int & rhs );
+  R4SymTensorT<T_dim> &
+  operator=( const realT & rhs );
 #if __LONG_real
-  R4SymTensorT<T_dim>& operator=( const realT& rhs )
+  R4SymTensorT<T_dim> & operator=( const realT & rhs )
   {
-    operator=(static_cast<realT>(rhs));
+    operator=( static_cast<realT>( rhs ) );
     return *this;
   }
 #endif
 
-  R4SymTensorT<T_dim>&
-  operator=(const R4SymTensorT<T_dim>& rhs);
+  R4SymTensorT<T_dim> &
+  operator=( const R4SymTensorT<T_dim> & rhs );
 
   //***** ACCESS OPERATORS ****************************************************
   inline realT
-  operator()(const int i, const int j) const;
-  inline realT&
-  operator()(const int i, const int j);
+  operator()( const int i, const int j ) const;
+  inline realT &
+  operator()( const int i, const int j );
 
   //***** MULTIPLICATION OPERATIONS *******************************************
 
@@ -92,94 +92,98 @@ public:
   friend class R2TensorT<T_dim>;
 
 private:
-  R4SymTensorT(R4SymTensorT<T_dim>&);
+  R4SymTensorT( R4SymTensorT<T_dim> & );
 
 };
 
 
 template<int T_dim>
-R4SymTensorT<T_dim>::R4SymTensorT(void):
+R4SymTensorT<T_dim>::R4SymTensorT( void ):
   TensorBaseT<SymSize<T_dim>::value> ()
 {}
 
 template<int T_dim>
-R4SymTensorT<T_dim>::~R4SymTensorT(void)
+R4SymTensorT<T_dim>::~R4SymTensorT( void )
 {}
 
 template<int T_dim>
-R4SymTensorT<T_dim>::R4SymTensorT(const R4SymTensorT<T_dim>& rhs):
+R4SymTensorT<T_dim>::R4SymTensorT( const R4SymTensorT<T_dim> & rhs ):
   TensorBaseT<SymSize<T_dim>::value> ()
 {
-  TensorBaseT<SymSize<T_dim>::value>::operator=(rhs);
+  TensorBaseT<SymSize<T_dim>::value>::operator=( rhs );
 }
 
 //***** ASSIGNMENT OPERATORS **************************************************
 
 // Assigns all components to an integer
 template<int T_dim>
-R4SymTensorT<T_dim>&
-R4SymTensorT<T_dim>::operator=(const int& rhs)
+R4SymTensorT<T_dim> &
+R4SymTensorT<T_dim>::operator=( const int & rhs )
 {
-  TensorBaseT<SymSize<T_dim>::value>::operator=(rhs);
+  TensorBaseT<SymSize<T_dim>::value>::operator=( rhs );
   return *this;
 }
 
 // Assigns all components to a realT
 template<int T_dim>
-R4SymTensorT<T_dim>&
-R4SymTensorT<T_dim>::operator=(const realT& rhs)
+R4SymTensorT<T_dim> &
+R4SymTensorT<T_dim>::operator=( const realT & rhs )
 {
-  TensorBaseT<SymSize<T_dim>::value>::operator=(rhs);
+  TensorBaseT<SymSize<T_dim>::value>::operator=( rhs );
   return *this;
 }
 
 // Assigns all components to another TensorBaseT's (Copy Constructor)
 template<int T_dim>
-R4SymTensorT<T_dim>&
-R4SymTensorT<T_dim>::operator=(const R4SymTensorT<T_dim>& rhs)
+R4SymTensorT<T_dim> &
+R4SymTensorT<T_dim>::operator=( const R4SymTensorT<T_dim> & rhs )
 {
-  TensorBaseT<SymSize<T_dim>::value>::operator=(rhs);
+  TensorBaseT<SymSize<T_dim>::value>::operator=( rhs );
   return *this;
 }
 
 template<int T_dim>
 realT
-R4SymTensorT<T_dim>::operator()(const int i, const int j) const
+R4SymTensorT<T_dim>::operator()( const int i, const int j ) const
 {
   int index = 0;
   int i_sym = i;
   int j_sym = j;
 
-  if (j > i)
+  if( j > i )
   {
     i_sym = j;
     j_sym = i;
   }
 
-  for (int k = 1 ; k < i_sym ; ++k)
+  for( int k = 1 ; k < i_sym ; ++k )
+  {
     index += k;
-  index += (j_sym - 1);
+  }
+  index += ( j_sym - 1 );
 
   return this->t_data[index];
 }
 
 template<int T_dim>
-inline realT&
-R4SymTensorT<T_dim>::operator()(const int i, const int j)
+inline realT &
+R4SymTensorT<T_dim>::operator()( const int i, const int j )
 {
   int index = 0;
   int i_sym = i;
   int j_sym = j;
 
-  if (j > i)
+  if( j > i )
   {
     i_sym = j;
     j_sym = i;
   }
 
-  for (int k = 1 ; k < i_sym ; ++k)
+  for( int k = 1 ; k < i_sym ; ++k )
+  {
     index += k;
-  index += (j_sym - 1);
+  }
+  index += ( j_sym - 1 );
 
   return this->t_data[index];
 }

@@ -37,7 +37,7 @@ public:
 
   TwoPointFluxApproximation() = delete;
 
-  TwoPointFluxApproximation(std::string const & name, dataRepository::ManagedGroup * const parent);
+  TwoPointFluxApproximation( std::string const & name, dataRepository::ManagedGroup * const parent );
 
 protected:
 

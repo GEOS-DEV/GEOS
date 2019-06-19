@@ -47,12 +47,12 @@ class DomainPartition;
 class FlowSolverBase : public SolverBase
 {
 public:
-/**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
-   */
-  FlowSolverBase( const std::string& name,
+  /**
+     * @brief main constructor for ManagedGroup Objects
+     * @param name the name of this instantiation of ManagedGroup in the repository
+     * @param parent the parent group of this instantiation of ManagedGroup
+     */
+  FlowSolverBase( const std::string & name,
                   ManagedGroup * const parent );
 
 
@@ -131,13 +131,13 @@ private:
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
-  void PrecomputeData(DomainPartition *const domain);
+  void PrecomputeData( DomainPartition * const domain );
 
 protected:
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
 
 
   /**

@@ -31,14 +31,14 @@ namespace geosx
 class ThickPlane : public SimpleGeometricObjectBase
 {
 public:
-  ThickPlane( const std::string& name,
+  ThickPlane( const std::string & name,
               ManagedGroup * const parent );
 
   virtual ~ThickPlane() override;
 
   static string CatalogName() { return "ThickPlane"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
 protected:
   virtual void PostProcessInput() override final;

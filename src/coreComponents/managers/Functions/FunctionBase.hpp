@@ -32,7 +32,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const inputVarNames("inputVarNames");
+string const inputVarNames( "inputVarNames" );
 
 }
 }
@@ -46,7 +46,7 @@ class FunctionBase : public dataRepository::ManagedGroup
 {
 public:
   /// Main constructor
-  FunctionBase( const std::string& name,
+  FunctionBase( const std::string & name,
                 dataRepository::ManagedGroup * const parent );
 
   /// Destructor
@@ -56,7 +56,7 @@ public:
   static string CatalogName() { return "FunctionBase"; }
 
   /// Function initialization
-  virtual void InitializeFunction(){}
+  virtual void InitializeFunction() {}
 
   /// Test to see if the function is a 1D function of time
   integer isFunctionOfTime() const;
@@ -81,7 +81,7 @@ public:
 
   // Setup catalog
   using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog()
+  static CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
@@ -96,7 +96,7 @@ public:
    */
   real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
                               real64 const time,
-                              set<localIndex> const & set) const;
+                              set<localIndex> const & set ) const;
 
 protected:
   string_array m_inputVarNames;
@@ -121,34 +121,34 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   real64 const * input_ptrs[4];
 
   string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
-  
-  localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
-  GEOS_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
+
+  localIndex const numVars = integer_conversion<localIndex>( inputVarNames.size() );
+  GEOS_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
 
   localIndex varSize[4];
   for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
 
-    if( varName=="time")
+    if( varName=="time" )
     {
       input_ptrs[varIndex] = &time;
       varSize[varIndex] = 1;
     }
     else
     {
-      dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
-      std::type_index typeIndex = std::type_index(vwb.get_typeid());
-      rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
-        {
-          using containerType = decltype(container_type);
-          using varType = decltype(var_type);
-          dataRepository::ViewWrapper<containerType> const & view =
-            dynamic_cast< dataRepository::ViewWrapper<containerType> const & >(vwb);
+      dataRepository::ViewWrapperBase const & vwb = *( group->getWrapperBase( varName ) );
+      std::type_index typeIndex = std::type_index( vwb.get_typeid() );
+      rtTypes::ApplyTypeLambda2( rtTypes::typeID( typeIndex ), [&]( auto container_type, auto var_type ) -> void
+      {
+        using containerType = decltype( container_type );
+        using varType = decltype( var_type );
+        dataRepository::ViewWrapper<containerType> const & view =
+        dynamic_cast< dataRepository::ViewWrapper<containerType> const & >( vwb );
 
-          input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
-          varSize[varIndex] = sizeof(varType) / sizeof(double);
-        });
+        input_ptrs[varIndex] = reinterpret_cast<double const *>( view.dataPtr() );
+        varSize[varIndex] = sizeof( varType ) / sizeof( double );
+      } );
     }
   }
 
@@ -167,7 +167,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
 
     // TODO: Check this line to make sure it is correct
-    result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
+    result[count] = static_cast<LEAF const *>( this )->Evaluate( input );
     ++count;
   }
 

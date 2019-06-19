@@ -33,8 +33,8 @@ class DomainPartition;
 class DummySolver : public SolverBase
 {
 public:
-  DummySolver( const std::string& name,
-                           ManagedGroup * const parent );
+  DummySolver( const std::string & name,
+               ManagedGroup * const parent );
 
 
   virtual ~DummySolver() override;
@@ -42,12 +42,12 @@ public:
   static string CatalogName() { return "DummySolver"; }
 
 
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetTimestepRequest( real64 const time ) override;
 
   struct viewKeysStruct
   {

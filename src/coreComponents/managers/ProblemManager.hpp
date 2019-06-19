@@ -57,7 +57,7 @@ class DomainPartition;
 class ProblemManager : public ObjectManagerBase
 {
 public:
-  explicit ProblemManager( const std::string& name,
+  explicit ProblemManager( const std::string & name,
                            ManagedGroup * const parent );
 
   ~ProblemManager() override;
@@ -66,7 +66,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  const static string CatalogName() 
+  const static string CatalogName()
   { return "Problem"; }
   virtual const string getCatalogName() const override final
   { return ProblemManager::CatalogName(); }
@@ -76,17 +76,17 @@ public:
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
 
   virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int argc, char* argv[]);
+  void ParseCommandLineInput( int argc, char * argv[] );
 
-  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
+  static bool ParseRestart( int argc, char * argv[], std::string & restartFileName );
 
   void InitializePythonInterpreter();
 
@@ -115,7 +115,7 @@ public:
   void RunSimulation();
 
 
-  void ReadRestartOverwrite( const std::string& restartFileName );
+  void ReadRestartOverwrite( const std::string & restartFileName );
 
   void ApplyInitialConditions();
 
@@ -123,16 +123,16 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const string & getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  { return GetGroup<ManagedGroup>( groupKeys.commandLine )->getReference<string>( viewKeys.problemName ); }
 
   const string & getInputFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  { return GetGroup<ManagedGroup>( groupKeys.commandLine )->getReference<string>( viewKeys.inputFileName ); }
 
   const string & getRestartFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  { return GetGroup<ManagedGroup>( groupKeys.commandLine )->getReference<string>( viewKeys.restartFileName ); }
 
   const string & getSchemaFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  { return GetGroup<ManagedGroup>( groupKeys.commandLine )->getReference<string>( viewKeys.schemaFileName ); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;

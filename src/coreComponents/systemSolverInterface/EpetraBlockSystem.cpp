@@ -35,7 +35,7 @@ EpetraBlockSystem::EpetraBlockSystem():
   m_blockIndex(),
   m_solverNames(),
   m_solverNameMap(),
-  m_numBlocks(0),
+  m_numBlocks( 0 ),
   m_rowMap(),
   m_solution(),
   m_lastSolution(),

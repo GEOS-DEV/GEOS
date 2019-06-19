@@ -34,13 +34,13 @@ namespace geosx
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
+  DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup * const parent );
   DirichletBoundaryCondition() = delete;
   virtual ~DirichletBoundaryCondition();
 
   static string CatalogName() { return "Dirichlet"; }
 
-  virtual const string getCatalogName() const 
+  virtual const string getCatalogName() const
   {
     return DirichletBoundaryCondition::CatalogName();
   }

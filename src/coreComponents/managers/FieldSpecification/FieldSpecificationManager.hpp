@@ -93,13 +93,13 @@ public:
    *
    */
   void ApplyFieldValue( real64 const time,
-                                      dataRepository::ManagedGroup * domain,
-                                      string const & fieldPath,
-                                      string const & fieldName ) const
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName ) const
   {
-	  ApplyFieldValue( time, domain, fieldPath, fieldName,
-                                   [&]( FieldSpecificationBase const * const,
-                                        set<localIndex> const & ){} );
+    ApplyFieldValue( time, domain, fieldPath, fieldName,
+                     [&]( FieldSpecificationBase const * const,
+    set<localIndex> const & ) {} );
   }
 
   /**
@@ -133,10 +133,10 @@ public:
    */
   template< typename LAMBDA >
   void ApplyFieldValue( real64 const time,
-                                      dataRepository::ManagedGroup * domain,
-                                      string const & fieldPath,
-                                      string const & fieldName,
-                                      LAMBDA && lambda ) const;
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        LAMBDA && lambda ) const;
 
   template< typename PRELAMBDA, typename POSTLAMBDA >
   void ApplyFieldValue( real64 const time,
@@ -192,16 +192,16 @@ public:
       int const isInitialCondition = fs->initialCondition();
 
       if( ( isInitialCondition && fieldPath=="" ) ||
-          ( !isInitialCondition && fs->GetObjectPath().find(fieldPath) != string::npos ) )
+          ( !isInitialCondition && fs->GetObjectPath().find( fieldPath ) != string::npos ) )
       {
         string_array const targetPath = stringutilities::Tokenize( fs->GetObjectPath(), "/" );
-        localIndex const targetPathLength = integer_conversion<localIndex>(targetPath.size());
+        localIndex const targetPathLength = integer_conversion<localIndex>( targetPath.size() );
         string const targetName = fs->GetFieldName();
 
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
         {
-          MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
+          MeshLevel * const meshLevel = domain->group_cast<DomainPartition *>()->
                                         getMeshBody( 0 )->getMeshLevel( 0 );
 
           dataRepository::ManagedGroup * targetGroup = meshLevel;
@@ -221,14 +221,14 @@ public:
               targetGroup = elemSubRegionSubGroup;
             }
 
-//            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
-//            {
-//              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
-//            }
-//            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
-//            {
-//              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
-//            }
+            //            if( targetGroup->getName() == MeshLevel::groupStructKeys::elemManagerString )
+            //            {
+            //              targetGroup = targetGroup->GetGroup( dataRepository::keys::elementRegions );
+            //            }
+            //            if( targetGroup->getName() == ElementRegion::viewKeyStruct::elementSubRegions )
+            //            {
+            //              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+            //            }
 
             if( targetPath[pathLevel] == dataRepository::keys::elementRegions ||
                 targetPath[pathLevel] == ElementRegion::viewKeyStruct::elementSubRegions )
@@ -240,7 +240,7 @@ public:
             processedPath += "/" + targetPath[pathLevel];
 
             GEOS_ERROR_IF( targetGroup == nullptr,
-                "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
+                           "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
           ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
@@ -265,9 +265,10 @@ private:
                              ) const
   {
     if( ( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
-        || target->getName() == "nodeManager"
-        || target->getName() == "FaceManager"
-        || target->getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are inconsistencies with the name of the Managers...
+          || target->getName() == "nodeManager"
+          || target->getName() == "FaceManager"
+          || target->getName() ==
+          "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are inconsistencies with the name of the Managers...
         && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
         && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
     {
@@ -281,14 +282,14 @@ private:
           set<localIndex> const & targetSet = setWrapper->reference();
           lambda( fs, setName, targetSet, target, targetName );
         }
-      } 
+      }
     }
     else
     {
-      target->forSubGroups([&]( ManagedGroup * subTarget ) -> void
+      target->forSubGroups( [&]( ManagedGroup * subTarget ) -> void
       {
         ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
-      });
+      } );
     }
   }
 };
@@ -297,21 +298,21 @@ template< typename LAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                               dataRepository::ManagedGroup * domain,
-                               string const & fieldPath,
-                               string const & fieldName,
-                               LAMBDA && lambda ) const
+                 dataRepository::ManagedGroup * domain,
+                 string const & fieldPath,
+                 string const & fieldName,
+                 LAMBDA && lambda ) const
 {
   Apply( time, domain, fieldPath, fieldName,
-        [&]( FieldSpecificationBase const * const fs,
-        string const &,
-        set<localIndex> const & targetSet,
-        ManagedGroup * const targetGroup,
-        string const & targetField )
-    {
-      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
-      lambda( fs, targetSet );
-    } );
+         [&]( FieldSpecificationBase const * const fs,
+              string const &,
+              set<localIndex> const & targetSet,
+              ManagedGroup * const targetGroup,
+              string const & targetField )
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+    lambda( fs, targetSet );
+  } );
 }
 
 template< typename PRELAMBDA, typename POSTLAMBDA >
@@ -325,16 +326,16 @@ ApplyFieldValue( real64 const time,
                  POSTLAMBDA && postLambda ) const
 {
   Apply( time, domain, fieldPath, fieldName,
-        [&]( FieldSpecificationBase const * const fs,
-        string const &,
-        set<localIndex> const & targetSet,
-        ManagedGroup * const targetGroup,
-        string const & targetField )
-    {
-      preLambda( fs, targetSet );
-      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
-      postLambda( fs, targetSet );
-    } );
+         [&]( FieldSpecificationBase const * const fs,
+              string const &,
+              set<localIndex> const & targetSet,
+              ManagedGroup * const targetGroup,
+              string const & targetField )
+  {
+    preLambda( fs, targetSet );
+    fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+    postLambda( fs, targetSet );
+  } );
 }
 
 } /* namespace geosx */

@@ -44,10 +44,10 @@ public:
   template< typename LAMBDA >
   void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
   {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex]; 
-        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
+    for( localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex];
+         fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++ )
     {
-      lambda(m_fineToCoarse[fineCell]);
+      lambda( m_fineToCoarse[fineCell] );
     }
   }
 
@@ -60,19 +60,19 @@ public:
                              dataRepository::ManagedGroup * const parent );
 
   virtual ~AggregateElementSubRegion() override;
- 
+
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
                                   array1d< localIndex > const & fineToCoarse,
-                                  array1d< R1Tensor > const & barycenters);
+                                  array1d< R1Tensor > const & barycenters );
 
-  const array1d< localIndex >& GetFineToCoarseMap()
+  const array1d< localIndex > & GetFineToCoarseMap()
   {
     return m_fineToCoarse;
   }
-  
+
   virtual R1Tensor const & calculateElementCenter( localIndex k,
                                                    NodeManager const & nodeManager,
-                                                   const bool useReferencePos = true) const override
+                                                   const bool useReferencePos = true ) const override
   {
     return m_elementCenter[k];
   }
@@ -80,7 +80,7 @@ public:
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override
   {
-      //TODO ?
+    //TODO ?
   }
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
@@ -100,7 +100,7 @@ public:
    * @param[in] k the index of the element.
    */
   virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
+  {
     return m_toNodesRelation[k];
   }
 

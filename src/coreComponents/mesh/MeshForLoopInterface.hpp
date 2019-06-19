@@ -30,120 +30,120 @@
 
 namespace geosx
 {
-   
+
 //-------------
-//Here we want to unpack data and 
+//Here we want to unpack data and
 //use one of the templated loops above
 //------------
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
-{  
-  NodeManager const * const nodeManager = mesh->getNodeManager();  
-  forall_in_range<POLICY> (0, nodeManager->size(), body);
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void for_nodes( MeshLevel const * const mesh, LAMBDA && body )
+{
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  forall_in_range<POLICY> ( 0, nodeManager->size(), body );
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_faces( MeshLevel const * const mesh, LAMBDA && body)
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void for_faces( MeshLevel const * const mesh, LAMBDA && body )
 {
   FaceManager const * const faceManager = mesh->getFaceManager();
-  forall_in_range<POLICY> (0, faceManager->size(), body);
+  forall_in_range<POLICY> ( 0, faceManager->size(), body );
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems( MeshLevel const * const mesh, LAMBDA && body)
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void for_elems( MeshLevel const * const mesh, LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup( dataRepository::keys::elementRegions );
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
     for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
-      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
-      
-      forall_in_range<POLICY>(0,elementSubRegion->size(), body);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>( iterSubRegions.first );
+
+      forall_in_range<POLICY>( 0, elementSubRegion->size(), body );
 
     }
   }
 }
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void for_elems( MeshLevel const * const mesh, const localIndex * setList, localIndex listLen, LAMBDA && body )
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
-  
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup( dataRepository::keys::elementRegions );
+
   for( auto const & region : elementRegions->GetSubGroups() )
-    {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+  {
+    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>( iterCellBlocks.first );
 
-      forall_in_set<POLICY>(setList, listLen, body);
+      forall_in_set<POLICY>( setList, listLen, body );
     }
   }
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body )
 {
-  forall_in_range<POLICY>(0,subRegion->size(), body);
+  forall_in_range<POLICY>( 0, subRegion->size(), body );
 }
 
-  
-template<class POLICY=elemPolicy,typename LAMBDA=void>
-void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+
+template<class POLICY=elemPolicy, typename LAMBDA=void>
+void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody )
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    ElementRegion const * const elemRegion = elemManager->GetRegion( er );
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
-      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
+      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion( esr );
 
-      forall_in_range<POLICY>(0, elementSubRegion->size(),
-                              [=](localIndex index) mutable -> void
-                              {
-                                lambdaBody(er,esr,index);
-                              });
+      forall_in_range<POLICY>( 0, elementSubRegion->size(),
+                               [=]( localIndex index ) mutable -> void
+      {
+        lambdaBody( er, esr, index );
+      } );
     }
   }
 }
 
 
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+template<typename NUMBER=real64, class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+NUMBER sum_in_range( localIndex const begin, const localIndex end, LAMBDA && body )
 {
-  ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+  ReduceSum<REDUCE_POLICY, NUMBER> sum( NUMBER( 0 ) );
+
+  forall_in_range( begin, end, GEOSX_LAMBDA( localIndex index ) mutable -> void
   {
-      sum += body(index);
-  });
-  
+    sum += body( index );
+  } );
+
   return sum.get();
 }
 
 
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+template<typename NUMBER=real64, class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+NUMBER sum_in_set( localIndex const * const indexList, const localIndex len, LAMBDA && body )
 {
-  ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-   {
-     sum += body(index);
-   });
-  
+  ReduceSum<REDUCE_POLICY, NUMBER> sum( NUMBER( 0 ) );
+  forall_in_set( indexList, GEOSX_LAMBDA( localIndex index ) mutable -> void
+  {
+    sum += body( index );
+  } );
+
   return sum.get();
 }
 
 template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody )
 {
   real64 sum = 0.0;
 
@@ -151,16 +151,16 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    ElementRegion const * const elemRegion = elemManager->GetRegion( er );
     elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const elementSubRegion )
     {
-      auto ebody = [=](localIndex index) mutable -> real64
+      auto ebody = [=]( localIndex index ) mutable -> real64
       {
-        return lambdaBody(er,esr,index);
+        return lambdaBody( er, esr, index );
       };
 
-      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, elementSubRegion->size(), ebody);
-    });
+      sum += sum_in_range<real64, EXEC_POLICY, REDUCE_POLICY>( 0, elementSubRegion->size(), ebody );
+    } );
   }
 
   return sum;
@@ -203,7 +203,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
 
       //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
       arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);
-      
+
       arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ);
 
       auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
@@ -251,7 +251,7 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                 constitutiveModelData
                 ); };
 
-        
+
         forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
       }

@@ -49,9 +49,9 @@ TEST( SinglePhaseFlowKernels, mobility )
   real64 const visc[NTEST]        = { 5.0,   2.0,    1.0    };
   real64 const dVisc_dPres[NTEST] = { 1e-7,  0.0,    0.0    };
 
-  for (int i = 0; i < NTEST; ++i)
+  for( int i = 0; i < NTEST; ++i )
   {
-    SCOPED_TRACE( "Input # " + std::to_string(i) );
+    SCOPED_TRACE( "Input # " + std::to_string( i ) );
 
     real64 mob;
     real64 dMob_dPres;
@@ -60,7 +60,7 @@ TEST( SinglePhaseFlowKernels, mobility )
 
     // compute etalon
     real64 const mob_et = dens[i] / visc[i];
-    real64 const dMob_dPres_et = mob_et * (dDens_dPres[i] / dens[i] - dVisc_dPres[i] / visc[i]);
+    real64 const dMob_dPres_et = mob_et * ( dDens_dPres[i] / dens[i] - dVisc_dPres[i] / visc[i] );
 
     EXPECT_DOUBLE_EQ( mob, mob_et );
     EXPECT_DOUBLE_EQ( dMob_dPres, dMob_dPres_et );
@@ -88,9 +88,9 @@ TEST( SinglePhaseFlowKernels, accumulation )
   real64 const volume               = 1.0;
 
 
-  for (int i = 0; i < NTEST; ++i)
+  for( int i = 0; i < NTEST; ++i )
   {
-    SCOPED_TRACE( "Input # " + std::to_string(i) );
+    SCOPED_TRACE( "Input # " + std::to_string( i ) );
 
     real64 accum;
     real64 accumJacobian;
@@ -102,9 +102,9 @@ TEST( SinglePhaseFlowKernels, accumulation )
 
     // compute etalon
     real64 const poroNew_et = poroRef[i] * pvMult[i];
-    real64 const accum_et = poroNew_et * densNew[i] * (volume + dVol[i]) - poroOld[i] * densOld[i] * volume;
-    real64 const accumJacobian_et = dPvMult_dPres[i] * poroRef[i] * densNew[i] * (volume + dVol[i])
-                                  + poroNew_et * dDens_dPres[i] * (volume + dVol[i]);
+    real64 const accum_et = poroNew_et * densNew[i] * ( volume + dVol[i] ) - poroOld[i] * densOld[i] * volume;
+    real64 const accumJacobian_et = dPvMult_dPres[i] * poroRef[i] * densNew[i] * ( volume + dVol[i] )
+                                    + poroNew_et * dDens_dPres[i] * ( volume + dVol[i] );
 
     EXPECT_DOUBLE_EQ( poroNew, poroNew_et );
     EXPECT_DOUBLE_EQ( accum, accum_et );
@@ -119,7 +119,7 @@ template<typename T, int NDIM>
 using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
 
 template<localIndex stencilSize>
-void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[stencilSize],
+void computeFlux( FluxApproximationBase::CellStencil::Entry const( & stencil )[stencilSize],
                   real64 const * pres,
                   real64 const * dPres,
                   real64 const * gravDepth,
@@ -130,27 +130,27 @@ void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[st
                   real64 const dt,
                   integer const gravityFlag,
                   real64 & flux,
-                  real64 (& dFlux_dP)[stencilSize] )
+                  real64( & dFlux_dP )[stencilSize] )
 {
   localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
 
   real64 densMean = 0.0;
   real64 dDensMean_dP[stencilSize] {};
-  for (localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     densMean += 0.5 * dens[i];
     dDensMean_dP[i] = 0.5 * dDens_dPres[i];
   }
   real64 potDif = 0.0;
   real64 dPotDif_dP[stencilSize] {};
-  for (localIndex i = 0; i < stencilSize; ++i)
+  for( localIndex i = 0; i < stencilSize; ++i )
   {
-    potDif += stencil[i].weight * (pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i]);
-    dPotDif_dP[i] = stencil[i].weight * (1 - gravityFlag * dDensMean_dP[i] * gravDepth[i]);
+    potDif += stencil[i].weight * ( pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i] );
+    dPotDif_dP[i] = stencil[i].weight * ( 1 - gravityFlag * dDensMean_dP[i] * gravDepth[i] );
   }
-  localIndex const k_up = (potDif >= 0) ? 0 : 1;
+  localIndex const k_up = ( potDif >= 0 ) ? 0 : 1;
   flux = dt * potDif * mob[k_up];
-  for (localIndex i = 0; i < stencilSize; ++i)
+  for( localIndex i = 0; i < stencilSize; ++i )
   {
     dFlux_dP[i] = dt * dPotDif_dP[i] * mob[k_up];
   }
@@ -158,7 +158,7 @@ void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[st
 }
 
 template<bool FULL, localIndex stencilSize>
-void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)[stencilSize],
+void testFluxKernel( FluxApproximationBase::CellStencil::Entry const( & stencil )[stencilSize],
                      real64 const * pres,
                      real64 const * dPres,
                      real64 const * gravDepth,
@@ -216,7 +216,7 @@ void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)
 
   EXPECT_DOUBLE_EQ( flux[0],  flux_et );
   EXPECT_DOUBLE_EQ( flux[1], -flux_et );
-  for (localIndex i = 0; i < stencilSize; ++i)
+  for( localIndex i = 0; i < stencilSize; ++i )
   {
     EXPECT_DOUBLE_EQ( fluxJacobian[0][i],  dFlux_dP_et[i] );
     EXPECT_DOUBLE_EQ( fluxJacobian[1][i], -dFlux_dP_et[i] );
@@ -227,10 +227,10 @@ TEST( SinglePhaseFlowKernels, fluxFull )
 {
   localIndex constexpr stencilSize = 2;
   FluxApproximationBase::CellStencil::Entry stencil[stencilSize] =
-    {
-      { { 0, 0, 1 },  1e-12 },
-      { { 1, 0, 0 }, -1e-12 }
-    };
+  {
+    { { 0, 0, 1 },  1e-12 },
+    { { 1, 0, 0 }, -1e-12 }
+  };
 
   int constexpr NTEST = 3;
 
@@ -246,9 +246,9 @@ TEST( SinglePhaseFlowKernels, fluxFull )
   integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
-  for (int i = 0; i < NTEST; ++i)
+  for( int i = 0; i < NTEST; ++i )
   {
-    SCOPED_TRACE( "Input # " + std::to_string(i) );
+    SCOPED_TRACE( "Input # " + std::to_string( i ) );
 
     testFluxKernel<true>( stencil,
                           presData[i],
@@ -268,10 +268,10 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
 {
   localIndex constexpr stencilSize = 2;
   FluxApproximationBase::CellStencil::Entry stencil[stencilSize] =
-    {
-      { { 0, 0, 1 },  1e-12 },
-      { { 0, 0, 0 }, -1e-12 }
-    };
+  {
+    { { 0, 0, 1 },  1e-12 },
+    { { 0, 0, 0 }, -1e-12 }
+  };
 
   int constexpr NTEST = 3;
 
@@ -287,9 +287,9 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
   integer const gravityFlag    [NTEST]              = { 1,              1,              0              };
 
 
-  for (int i = 0; i < NTEST; ++i)
+  for( int i = 0; i < NTEST; ++i )
   {
-    SCOPED_TRACE( "Input # " + std::to_string(i) );
+    SCOPED_TRACE( "Input # " + std::to_string( i ) );
 
     testFluxKernel<false>( stencil,
                            presData[i],
@@ -305,7 +305,7 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
   }
 }
 
-int main( int argc, char** argv )
+int main( int argc, char ** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 

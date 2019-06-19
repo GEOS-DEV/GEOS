@@ -29,13 +29,13 @@
 
 namespace timingHelpers
 {
-  inline std::string stripPF( char const * prettyFunction )
-  {
-    std::string input(prettyFunction);
-    std::string::size_type const end = input.find_first_of( '(' );
-    std::string::size_type const beg = input.find_last_of( ' ', end)+1;
-    return input.substr( beg, end-beg );
-  }
+inline std::string stripPF( char const * prettyFunction )
+{
+  std::string input( prettyFunction );
+  std::string::size_type const end = input.find_first_of( '(' );
+  std::string::size_type const beg = input.find_last_of( ' ', end )+1;
+  return input.substr( beg, end-beg );
+}
 }
 
 #define DO_STRINGIFY(arg) #arg

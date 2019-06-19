@@ -83,7 +83,7 @@ public:
 
   // necessary declarations for factory instantiation of derived classes
   using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, ManagedGroup * const >;
-  static typename CatalogInterface::CatalogType& GetCatalog();
+  static typename CatalogInterface::CatalogType & GetCatalog();
 
   // typedefs for stored stencil types
   using CellStencil     = FluxStencil<CellDescriptor, real64>;
@@ -91,7 +91,7 @@ public:
 
   FluxApproximationBase() = delete;
 
-  FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
+  FluxApproximationBase( string const & name, dataRepository::ManagedGroup * const parent );
 
   /// provides const access to the cell stencil collection
   CellStencil const & getStencil() const;
@@ -100,21 +100,21 @@ public:
   CellStencil & getStencil();
 
   /// return a boundary stencil by face set name
-  BoundaryStencil const & getBoundaryStencil(string const & setName) const;
+  BoundaryStencil const & getBoundaryStencil( string const & setName ) const;
 
   /// return a boundary stencil by face set name
-  BoundaryStencil & getBoundaryStencil(string const & setName);
+  BoundaryStencil & getBoundaryStencil( string const & setName );
 
   /// check if a stencil exists
-  bool hasBoundaryStencil(string const & setName) const;
+  bool hasBoundaryStencil( string const & setName ) const;
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
-  void forCellStencils(LAMBDA && lambda) const;
+  void forCellStencils( LAMBDA && lambda ) const;
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
-  void forBoundaryStencils(LAMBDA && lambda) const;
+  void forBoundaryStencils( LAMBDA && lambda ) const;
 
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
@@ -140,7 +140,7 @@ public:
   };
 
   string_array const & targetRegions() const { return m_targetRegions; }
-  string_array &       targetRegions()       { return m_targetRegions; }
+  string_array    &    targetRegions()       { return m_targetRegions; }
 
 protected:
 
@@ -173,21 +173,21 @@ protected:
 };
 
 template<typename LAMBDA>
-void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
+void FluxApproximationBase::forCellStencils( LAMBDA && lambda ) const
 {
-  this->forViewWrappers<CellStencil>([&] (auto const * const vw) -> void
+  this->forViewWrappers<CellStencil>( [&]( auto const * const vw ) -> void
   {
-    lambda(vw->reference());
-  });
+    lambda( vw->reference() );
+  } );
 }
 
 template<typename LAMBDA>
-void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
+void FluxApproximationBase::forBoundaryStencils( LAMBDA && lambda ) const
 {
-  this->forViewWrappers<BoundaryStencil>([&] (auto const * const vw) -> void
+  this->forViewWrappers<BoundaryStencil>( [&]( auto const * const vw ) -> void
   {
-    lambda(vw->reference());
-  });
+    lambda( vw->reference() );
+  } );
 }
 
 } // namespace geosx

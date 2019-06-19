@@ -33,27 +33,27 @@ FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const 
   m_fractureConnectorsToFaceElements(),
   m_faceElementsToCells()
 {
-  this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
+  this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup<FaceElementSubRegion>( "default" );
 
   RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsString, &m_edgesToFractureConnectors, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of edge local indices to the fracture connector local indices.")->
-    setSizedFromParent(0);
+  setRestartFlags( RestartFlags::NO_WRITE )->
+  setDescription( "A map of edge local indices to the fracture connector local indices." )->
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::fractureConnectorsToEdgesString, &m_fractureConnectorsToEdges, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of fracture connector local indices to edge local indices.")->
-    setSizedFromParent(0);
+  setRestartFlags( RestartFlags::NO_WRITE )->
+  setDescription( "A map of fracture connector local indices to edge local indices." )->
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::fractureConnectorsToFaceElementsString, &m_fractureConnectorsToFaceElements, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of fracture connector local indices face element local indices")->
-    setSizedFromParent(0);
+  setRestartFlags( RestartFlags::NO_WRITE )->
+  setDescription( "A map of fracture connector local indices face element local indices" )->
+  setSizedFromParent( 0 );
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellsString, &m_faceElementsToCells, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of face element local indices to the cell local indices")->
-    setSizedFromParent(0);
+  setRestartFlags( RestartFlags::NO_WRITE )->
+  setDescription( "A map of face element local indices to the cell local indices" )->
+  setSizedFromParent( 0 );
 
 
 }
@@ -65,7 +65,7 @@ FaceElementRegion::~FaceElementRegion()
 
 localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceManager,
                                                  string const & subRegionName,
-                                                 localIndex const faceIndices[2]  )
+                                                 localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
 
@@ -75,9 +75,9 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   array2d<localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
   array2d<localIndex > const & faceToElementIndex = faceManager->elementList();
 
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  ManagedGroup * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
-  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup<FaceElementSubRegion>(subRegionName);
+  FaceElementSubRegion * subRegion = elementSubRegions->GetGroup<FaceElementSubRegion>( subRegionName );
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
@@ -92,7 +92,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   localIndex const kfe = subRegion->size() - 1;
 
-  m_newFractureElements.insert(kfe);
+  m_newFractureElements.insert( kfe );
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
@@ -134,12 +134,12 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   for( auto const & edge : connectedEdges )
   {
     // check to see if the edgesToFractureConnectors already have an entry
-    if( m_edgesToFractureConnectors.count(edge)==0 )
+    if( m_edgesToFractureConnectors.count( edge )==0 )
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      m_fractureConnectorsToFaceElements.push_back({});
-      m_fractureConnectorsToEdges.push_back(edge);
+      m_fractureConnectorsToFaceElements.push_back( {} );
+      m_fractureConnectorsToEdges.push_back( edge );
       m_edgesToFractureConnectors[edge] = m_fractureConnectorsToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
@@ -159,7 +159,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   {
     set<localIndex> const & faceSet = faceManager->sets()->getReference<set<localIndex> >( setIter.first );
     set<localIndex> & faceElementSet = subRegion->sets()->RegisterViewWrapper< set<localIndex> >( setIter.first )->reference();
-    for( localIndex a=0 ; a<faceMap.size(0) ; ++a )
+    for( localIndex a=0 ; a<faceMap.size( 0 ) ; ++a )
     {
       localIndex const faceIndex = faceMap[a][0];
       if( faceSet.count( faceIndex ) )

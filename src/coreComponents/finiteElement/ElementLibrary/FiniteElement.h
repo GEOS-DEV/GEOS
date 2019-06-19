@@ -54,11 +54,11 @@ public:
                  QuadratureBase const & quadrature,
                  const int num_zero_energy_modes = 0 );
 
-  virtual ~FiniteElement(){}
+  virtual ~FiniteElement() {}
 
   static string CatalogName() { return "C3D8"; }
 
-  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points);
+  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points );
 
 };
 
@@ -75,23 +75,23 @@ template <int dim>
 FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
                                      QuadratureBase const & quadrature,
                                      const int num_zero_energy_modes ):
-  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
+  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes )
 {
 
-  data.resize(n_q_points);
-  for(auto q=0 ; q<n_q_points ; ++q)
+  data.resize( n_q_points );
+  for( auto q=0 ; q<n_q_points ; ++q )
   {
-    data[q].parent_q_point = quadrature.integration_point(q);
-    data[q].parent_q_weight = quadrature.integration_weight(q);
+    data[q].parent_q_point = quadrature.integration_point( q );
+    data[q].parent_q_weight = quadrature.integration_weight( q );
 
-    data[q].parent_values.resize(n_dofs);
-    data[q].parent_gradients.resize(n_dofs);
-    data[q].mapped_gradients.resize(n_dofs);
+    data[q].parent_values.resize( n_dofs );
+    data[q].parent_gradients.resize( n_dofs );
+    data[q].mapped_gradients.resize( n_dofs );
 
-    for(auto i=0 ; i<n_dofs ; ++i)
+    for( auto i=0 ; i<n_dofs ; ++i )
     {
-      data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
-      data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
+      data[q].parent_values[i]    = basis.value( i, data[q].parent_q_point );
+      data[q].parent_gradients[i] = basis.gradient( i, data[q].parent_q_point );
     }
   }
 }
@@ -109,30 +109,30 @@ FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
  */
 
 template <int dim>
-void FiniteElement<dim> :: reinit(const array1d<R1TensorT<3> > &mapped_support_points)
+void FiniteElement<dim> :: reinit( const array1d<R1TensorT<3> > & mapped_support_points )
 {
-  assert(mapped_support_points.size() == n_dofs);
+  assert( mapped_support_points.size() == n_dofs );
 
   R2TensorT<3> jacobian;
   R2TensorT<3> inv_jacobian;
 
-  for(auto q=0 ; q<n_q_points ; ++q)
+  for( auto q=0 ; q<n_q_points ; ++q )
   {
 
     jacobian = 0;
-    for(auto a=0 ; a<n_dofs ; ++a)
+    for( auto a=0 ; a<n_dofs ; ++a )
     {
       jacobian.plus_dyadic_ab( mapped_support_points[a], data[q].parent_gradients[a] );
     }
 
     if( dim==2 )
     {
-      jacobian(2,2) = 1;
+      jacobian( 2, 2 ) = 1;
     }
 
-    data[q].jacobian_determinant = inv_jacobian.Inverse(jacobian);
+    data[q].jacobian_determinant = inv_jacobian.Inverse( jacobian );
 
-    for(auto i=0 ; i<n_dofs ; ++i)
+    for( auto i=0 ; i<n_dofs ; ++i )
     {
       data[q].mapped_gradients[i].AijBi( inv_jacobian, data[q].parent_gradients[i] );
     }

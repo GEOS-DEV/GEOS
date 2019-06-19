@@ -40,7 +40,7 @@ class EventBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit EventBase( std::string const & name,
-                       ManagedGroup * const parent );
+                      ManagedGroup * const parent );
 
   /// Destructor
   virtual ~EventBase() override;
@@ -52,10 +52,10 @@ public:
    * If the event forecast is equal to 1, then signal the targets to prepare for execution
    * during the next cycle.
    */
-  virtual void SignalToPrepareForExecution(real64 const time,
-                                           real64 const dt,  
-                                           integer const cycle,
-                                           dataRepository::ManagedGroup * domain) override;
+  virtual void SignalToPrepareForExecution( real64 const time,
+                                            real64 const dt,
+                                            integer const cycle,
+                                            dataRepository::ManagedGroup * domain ) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    * There are three types of time-steps that are allowed:
@@ -74,10 +74,10 @@ public:
    * This method will call the execute method on the target
    * and/or children if present.
    */
-  void Step(real64 const time,
-            real64 const dt,  
-            integer const cycle,
-            dataRepository::ManagedGroup * domain );
+  void Step( real64 const time,
+             real64 const dt,
+             integer const cycle,
+             dataRepository::ManagedGroup * domain );
 
   /*
    * This method is called as the code exits the main run loop
@@ -104,9 +104,9 @@ public:
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
 
 
   /**
@@ -123,26 +123,26 @@ public:
    * will call EstimateEventTiming (defined in each subclass) on this event and
    * its children.
    */
-  virtual void CheckEvents(real64 const time, 
-                              real64 const dt,
-                              integer const cycle,
-                              dataRepository::ManagedGroup * domain);
+  virtual void CheckEvents( real64 const time,
+                            real64 const dt,
+                            integer const cycle,
+                            dataRepository::ManagedGroup * domain );
 
   /// Method to estimate the timing of the event
-  virtual void EstimateEventTiming(real64 const time, 
-                                      real64 const dt,
-                                      integer const cycle,
-                                      dataRepository::ManagedGroup * domain) = 0;
+  virtual void EstimateEventTiming( real64 const time,
+                                    real64 const dt,
+                                    integer const cycle,
+                                    dataRepository::ManagedGroup * domain ) = 0;
 
   /**
    * This method will collect time-step size requests from its
    * targets and/or children.
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetTimestepRequest( real64 const time ) override;
 
 
   /// This method is used to count the number of events/sub-events
-  void GetExecutionOrder(array1d<integer> & eventCounters);
+  void GetExecutionOrder( array1d<integer> & eventCounters );
 
   /**
    * This method is used to determine how to handle the timestamp for an event
@@ -150,7 +150,7 @@ public:
    * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    * will be time + dt.
    */
-  void SetProgressIndicator(array1d<integer> & eventCounters);
+  void SetProgressIndicator( array1d<integer> & eventCounters );
 
 
 
@@ -191,14 +191,14 @@ public:
 
   ///Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   /// Access functions
-  integer GetForecast(){ return m_eventForecast; }
-  void SetForecast(integer forecast){ m_eventForecast = forecast; }
+  integer GetForecast() { return m_eventForecast; }
+  void SetForecast( integer forecast ) { m_eventForecast = forecast; }
 
   integer GetExitFlag();
-  void SetExitFlag(integer flag){ m_exitFlag = flag; }
+  void SetExitFlag( integer flag ) { m_exitFlag = flag; }
 
   integer GetEventCount() const { return m_eventCount; }
   real64  GetEventProgress() const { return m_eventProgress; }

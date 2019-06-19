@@ -36,10 +36,10 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlockManager::CellBlockManager(  string const & name, ManagedGroup * const parent ):
-  ObjectManagerBase(name,parent)
+CellBlockManager::CellBlockManager( string const & name, ManagedGroup * const parent ):
+  ObjectManagerBase( name, parent )
 {
-  this->RegisterGroup<ManagedGroup>(keys::cellBlocks);
+  this->RegisterGroup<ManagedGroup>( keys::cellBlocks );
 }
 
 CellBlockManager::~CellBlockManager()
@@ -51,12 +51,12 @@ void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames,
                                string_array const & elementTypes )
 {
-  localIndex const numRegions = integer_conversion<localIndex>(regionNames.size());
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+  localIndex const numRegions = integer_conversion<localIndex>( regionNames.size() );
+  //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<numRegions ; ++reg )
   {
     CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
-    elemRegion->resize(numElements[reg]);
+    elemRegion->resize( numElements[reg] );
   }
 }
 
