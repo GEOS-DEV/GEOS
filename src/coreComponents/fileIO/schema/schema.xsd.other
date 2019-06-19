@@ -224,42 +224,6 @@
 		</xsd:choice>
 		<!--currentSubEvent => index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
-		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
-		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
-		<xsd:attribute name="lastTime" type="real64" />
-	</xsd:complexType>
-	<xsd:complexType name="PeriodicEventType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
-		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent-->
-		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
-		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
-		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
-		<xsd:attribute name="lastTime" type="real64" />
-	</xsd:complexType>
-	<xsd:complexType name="SoloEventType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
-		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent-->
-		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
-		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
-		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
-		<xsd:attribute name="lastTime" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -854,28 +818,22 @@
 		<xsd:attribute name="faceCenter" type="r1_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
-		<!--facePressure => (no description available)-->
-		<xsd:attribute name="facePressure" type="real64_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--gravityDepth => (no description available)-->
 		<xsd:attribute name="gravityDepth" type="real64_array" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--mobility => (no description available)-->
-		<xsd:attribute name="mobility" type="real64_array" />
-		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
-		<!--parentIndex => Parent index of the face.-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
-		<xsd:attribute name="ruptureState" type="integer_array" />
+		<!--facePressure => (no description available)-->
+		<xsd:attribute name="facePressure" type="real64_array" />
+		<!--density => (no description available)-->
+		<xsd:attribute name="density" type="real64_array2d" />
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
+		<!--mobility => (no description available)-->
+		<xsd:attribute name="mobility" type="real64_array" />
+		<!--parentIndex => Parent index of the face.-->
+		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--childIndex => child index of the face.-->
+		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
+		<xsd:attribute name="ruptureState" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -910,24 +868,32 @@
 		<xsd:attribute name="elemRegionList" type="LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt;" />
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt;" />
-		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--parentIndex => Parent index of node.-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--trilinosIndex => (no description available)-->
-		<xsd:attribute name="trilinosIndex" type="globalIndex_array" />
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="uhatTilde" type="r1_array" />
+		<!--elemList => (no description available)-->
+		<xsd:attribute name="elemList" type="LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt;" />
+		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="TotalDisplacement" type="r1_array" />
+		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="IncrementalDisplacement" type="r1_array" />
+		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="Velocity" type="r1_array" />
+		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="Acceleration" type="r1_array" />
+		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="Mass" type="real64_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="velocityTilde" type="r1_array" />
+		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="uhatTilde" type="r1_array" />
+		<!--trilinosIndex => (no description available)-->
+		<xsd:attribute name="trilinosIndex" type="globalIndex_array" />
+		<!-- => Primary field variable-->
+		<xsd:attribute name="" type="real64_array" />
+		<!--blockLocalDofNumber_Laplace => Global DOF numbers for the primary field variable-->
+		<xsd:attribute name="blockLocalDofNumber_Laplace" type="globalIndex_array" />
+		<!--parentIndex => Parent index of node.-->
+		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--degreeFromCrack => connectivity distance from crack.-->
+		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
