@@ -223,7 +223,7 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
       nbCellElements += elementSubRegion->size();
     });
   // Number of aggregate computation
-  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio ) );
+  localIndex nbAggregates = static_cast< localIndex >( nbCellElements * m_coarseningRatio );
 
   // METIS variable declarations
   using idx_t = ::idx_t;

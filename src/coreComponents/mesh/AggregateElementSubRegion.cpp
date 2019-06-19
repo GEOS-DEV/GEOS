@@ -64,7 +64,7 @@ void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregat
   elementRegion->forElementSubRegions( [&]( auto * elementSubRegion ) -> void
   {
     auto & aggregateIndexSave =
-      elementSubRegion->template getWrapper< array1d< globalIndex > > ( CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString )->reference();
+      elementSubRegion->template getReference< array1d< globalIndex > > ( CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString );
     for(int i = 0; i < elementSubRegion->size() ;i++)
     {
       aggregateIndexSave[i] = m_localToGlobalMap[fineToCoarse[i]];
