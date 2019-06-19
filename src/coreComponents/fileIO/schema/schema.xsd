@@ -191,11 +191,11 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--maxCycle => Maximum simulation cycle.-->
-		<xsd:attribute name="maxCycle" type="integer" default="-1" />
 		<!--maxTime => Maximum simulation time.-->
-		<xsd:attribute name="maxTime" type="real64" default="-1" />
-		<!--verbosity => Maximum simulation time.-->
+		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
+		<!--maxCycle => Maximum simulation cycle.-->
+		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
+		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
@@ -751,12 +751,12 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--rand_scale => Scale for modifying requested dt-->
-		<xsd:attribute name="rand_scale" type="real64" default="1e-09" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
-		<xsd:attribute name="verboseLevel" type="integer" default="0" />
+		<!--scale => Scale for modifying requested dt-->
+		<xsd:attribute name="scale" type="real64" default="1e-09" />
+		<!--seed => Scale for modifying requested dt-->
+		<xsd:attribute name="seed" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
