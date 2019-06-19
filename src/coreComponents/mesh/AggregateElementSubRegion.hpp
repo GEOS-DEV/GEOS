@@ -72,8 +72,8 @@ public:
     return m_elementCenter[k];
   }
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) override
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & faceManager ) override
   {
   }
 

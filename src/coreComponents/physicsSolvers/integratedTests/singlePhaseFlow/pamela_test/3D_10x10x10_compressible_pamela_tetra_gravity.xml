@@ -12,7 +12,7 @@
                           fluidName="water"
                           solidName="rock"
                           discretization="singlePhaseTPFA"
-                          targetRegions="Domain">
+                          targetRegions="{Domain}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -65,11 +65,13 @@
 
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="0_TETRA" materialList="water rock"/>
+    <ElementRegion name="Domain" cellBlocks="{0_TETRA}" materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="1e-9"
@@ -84,7 +86,7 @@
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"  
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
@@ -92,7 +94,7 @@
     <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
@@ -100,21 +102,21 @@
     <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/elementRegions/Domain/elementSubRegions/0_TETRA"
                fieldName="pressure"
                scale="1e3"/>
@@ -122,7 +124,7 @@
                objectPath="faceManager"
                fieldName="facePressure"
                scale="1.1e3"
-               setNames="left"/>
+               setNames="{left}"/>
   </FieldSpecifications>
 
   <Functions>

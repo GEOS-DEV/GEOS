@@ -76,7 +76,7 @@ struct Arg : public option::Arg
   static option::ArgStatus Numeric(const option::Option& option, bool /*error*/)
   {
     char* endptr = nullptr;
-    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {};
+    if ((option.arg != nullptr) && strtol(option.arg, &endptr, 10)) {}
     if ((endptr != option.arg) && (*endptr == 0))
     {
       return option::ARG_OK;
@@ -518,6 +518,12 @@ void ProblemManager::GenerateDocumentation()
     // Generate an extensive data structure
     GenerateDataStructureSkeleton(0);
 
+    MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
+    DomainPartition * domain  = getDomainPartition();
+    meshManager->GenerateMeshLevels(domain);
+
+    RegisterDataOnMeshRecursive(nullptr);
+
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
 
@@ -762,8 +768,6 @@ void ProblemManager::GenerateMesh()
 
       edgeManager->BuildEdges(faceManager, nodeManager );
 
-      elemManager->GenerateFractureMesh( faceManager );
-
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
@@ -777,8 +781,8 @@ void ProblemManager::GenerateMesh()
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
-          subRegion->CalculateCellVolumes( array1d<localIndex>(),
-                                           nodeManager->referencePosition() );
+          subRegion->CalculateElementGeometricQuantities( *nodeManager,
+                                                          *faceManager );
         });
 
       });
@@ -811,7 +815,7 @@ void ProblemManager::ApplyNumericalMethods()
   ManagedGroup * const meshBodies = domain->getMeshBodies();
 
 
-
+  map<string,localIndex> regionQuadrature;
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
@@ -820,8 +824,6 @@ void ProblemManager::ApplyNumericalMethods()
 
     FiniteElementDiscretizationManager const *
     feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-
-
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(numericalMethodName);
 
@@ -838,25 +840,51 @@ void ProblemManager::ApplyNumericalMethods()
         for( auto const & regionName : targetRegions )
         {
           ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
-          if( elemRegion != nullptr )
+          localIndex const quadratureSize = feDiscretization == nullptr ? 1 : feDiscretization->getNumberOfQuadraturePoints();
+          if( quadratureSize > regionQuadrature[regionName] )
           {
-            string_array const & materialList = elemRegion->getMaterialList();
-            localIndex quadratureSize = 1;
-
-            elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
-            {
-              if( feDiscretization != nullptr )
-              {
-                feDiscretization->ApplySpaceToTargetCells(subRegion);
-                feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
-                quadratureSize = feDiscretization->getNumberOfQuadraturePoints();
-              }
-              for( auto & materialName : materialList )
-              {
-                constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
-              }
-            });
+            regionQuadrature[regionName] = quadratureSize;
           }
+          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          {
+            if( feDiscretization != nullptr )
+            {
+              feDiscretization->ApplySpaceToTargetCells(subRegion);
+              feDiscretization->CalculateShapeFunctionGradients( X, subRegion);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
+  {
+    MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(a);
+    for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
+    {
+      MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
+      NodeManager * const nodeManager = meshLevel->getNodeManager();
+      ElementRegionManager * const elemManager = meshLevel->getElemManager();
+      arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
+
+      for( map<string,localIndex>::iterator iter=regionQuadrature.begin() ; iter!=regionQuadrature.end() ; ++iter )
+      {
+        string const regionName = iter->first;
+        localIndex const quadratureSize = iter->second;
+
+        ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+        if( elemRegion != nullptr )
+        {
+          string_array const & materialList = elemRegion->getMaterialList();
+
+          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          {
+            for( auto & materialName : materialList )
+            {
+              constitutiveManager->HangConstitutiveRelation( materialName, subRegion, quadratureSize );
+            }
+          });
         }
       }
     }

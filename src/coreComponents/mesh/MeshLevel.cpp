@@ -58,6 +58,14 @@ MeshLevel::MeshLevel( string const & name,
 MeshLevel::~MeshLevel()
 {}
 
+void MeshLevel::InitializePostInitialConditions_PostSubGroups( ManagedGroup * const )
+{
+  m_elementManager.forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+  {
+    subRegion->CalculateElementGeometricQuantities( m_nodeManager, m_faceManager );
+  });
+}
+
 
 void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,

@@ -43,9 +43,17 @@ public:
 
   static NewFunctionManager * Instance()
   {
-    static NewFunctionManager theFunctionManager("Functions", nullptr);
+    static NewFunctionManager * theFunctionManager = nullptr;
+    if (theFunctionManager == nullptr)
+    {
+      theFunctionManager = new NewFunctionManager("Functions", nullptr); 
+    }
+    return theFunctionManager;
+  }
 
-    return &theFunctionManager;
+  static void finalize()
+  {
+    delete Instance();
   }
 
   static string CatalogName() { return "NewFunctionManager"; }

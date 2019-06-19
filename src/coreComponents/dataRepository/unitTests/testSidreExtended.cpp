@@ -16,11 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#if __clang_major__ >= 5  && !defined(__APPLE__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-
 #include <gtest/gtest.h>
 
 
@@ -527,7 +522,3 @@ int main(int argc, char* argv[])
   MPI_Finalize();
   return result;
 }
-
-#if __clang_major__ >= 5
-#pragma clang diagnostic pop
-#endif

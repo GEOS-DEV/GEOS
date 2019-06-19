@@ -815,7 +815,6 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
 
 
   int elemCount = 0;
-  int regionCount = 0;
   for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
   {
     ElementRegion const * const elemRegion = elementManager->GetRegion(er);
@@ -1117,9 +1116,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   }
 
-
-
-  set<std::pair<string, ViewWrapperBase const *>> fieldNames;
+  std::set<std::pair<string, ViewWrapperBase const *>> fieldNames;
   for( localIndex matI=0 ; matI<nmat ; ++matI )
   {
     ConstitutiveBase const * const

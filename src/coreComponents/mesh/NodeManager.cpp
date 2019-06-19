@@ -145,11 +145,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   {
     ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
 
-    for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
+                                                                      CellElementSubRegion const * const subRegion )
     {
-      ElementSubRegionBase const * const subRegion = elemRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetGroup<ElementSubRegionBase>(kSubReg);
-
-
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
         arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
@@ -161,7 +159,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
           toElementList[nodeIndex].push_back( ke );
         }
       }
-    }
+    });
   }
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
@@ -291,7 +289,7 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
 
   for( auto const & targetIndex : receivedNodes )
   {
-    set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
+    std::set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
     for( localIndex k=0 ; k<m_toElements.m_toElementRegion[targetIndex].size() ; ++k )
     {
       localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];

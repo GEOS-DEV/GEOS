@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
- */
-
 #ifndef ELEMENTREGION_H
 #define ELEMENTREGION_H
 
@@ -32,61 +26,6 @@
 
 namespace geosx
 {
-
-//template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
-//{
-//  bool rval = false;
-//
-//  SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
-//  if( subRegion!= nullptr )
-//  {
-//    lambda( subRegion );
-//    rval = true;
-//  }
-//  else
-//  {
-//    rval = applyLambdaToCellBlocks< SUBREGIONTYPES..., LAMBDA >( cellSubRegion, std::forward<LAMBDA>(lambda) );
-//  }
-//
-//  return rval;
-//}
-//
-//template< typename SUBREGIONTYPE, typename LAMBDA >
-//constexpr static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
-//{
-//  bool rval = false;
-//  SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
-//  if( subRegion!= nullptr )
-//  {
-//    lambda( subRegion );
-//    rval=true;
-//  }
-//
-//  return rval;
-//}
-//
-//template< typename... SUBREGIONTYPES, typename LAMBDA >
-//void forSomeCellBlocks( LAMBDA && lambda ) const
-//{
-//  ManagedGroup const * cellBlockSubRegions = this->GetGroup(viewKeyStruct::cellBlockSubRegions);
-//
-//  for( auto const & subGroupIter : cellBlockSubRegions->GetSubGroups() )
-//  {
-//    bool isNull =
-//    !applyLambdaToCellBlocks<SUBREGIONTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
-//    {
-//      lambda( subRegion );
-//    });
-//    GEOS_ERROR_IF( isNull, "subRegion "<<subGroupIter.second->getName()<<" is can not be casted to any "
-//                   "types specified in parameter pack.");
-//  }
-//}
-
-
-
-
-
 
 class StableTimeStep;
 
@@ -106,7 +45,7 @@ public:
   static const string CatalogName()
   { return "ElementRegion"; }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const override
   { return ElementRegion::CatalogName(); }
 
 
@@ -122,11 +61,9 @@ public:
 
   virtual ~ElementRegion() override;
 
-  void GenerateMesh( ManagedGroup const * const cellBlocks );
+  virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
 
   void GenerateAggregates( FaceManager const * const faceManager ); 
-
-  void GenerateFractureMesh( FaceManager const * const faceManager );
 
   subGroupMap & GetSubRegions()
   {
@@ -172,48 +109,6 @@ public:
 
 
   template< typename LAMBDA >
-  static bool applyLambdaToCellBlocks( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )
-  { return false; }
-
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  static bool applyLambdaToCellBlocks( ManagedGroup const * const cellSubRegion, LAMBDA&& lambda )
-  {
-    bool rval = false;
-    SUBREGIONTYPE const * const subRegion = dynamic_cast<SUBREGIONTYPE const *>( cellSubRegion );
-    if( subRegion!= nullptr )
-    {
-      lambda( subRegion );
-      rval = true;
-    }
-    else
-    {
-      rval = applyLambdaToCellBlocks< SUBREGIONTYPES... >( cellSubRegion, std::forward<LAMBDA>(lambda) );
-    }
-    return rval;
-  }
-
-  template< typename LAMBDA >
-  static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
-  { return false; }
-
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  static bool applyLambdaToCellBlocks( ManagedGroup * const cellSubRegion, LAMBDA&& lambda )
-  {
-    bool rval = false;
-    SUBREGIONTYPE * const subRegion = dynamic_cast<SUBREGIONTYPE *>( cellSubRegion );
-    if( subRegion!= nullptr )
-    {
-      lambda( subRegion );
-      rval = true;
-    }
-    else
-    {
-      rval = applyLambdaToCellBlocks< SUBREGIONTYPES... >( cellSubRegion, std::forward<LAMBDA>(lambda) );
-    }
-    return rval;
-  }
-
-  template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
     forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
@@ -228,29 +123,15 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-
-    for( auto const & subGroupIter : elementSubRegions->GetSubGroups() )
-    {
-      applyLambdaToCellBlocks<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto const * const subRegion )
-      {
-        lambda( subRegion );
-      });
-    }
+    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
-
-    for( auto & subGroupIter : elementSubRegions->GetSubGroups() )
-    {
-      applyLambdaToCellBlocks<SUBREGIONTYPE, SUBREGIONTYPES...>( subGroupIter.second, [&]( auto * const subRegion )
-      {
-        lambda( subRegion );
-      });
-    }
+    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
 
@@ -272,7 +153,7 @@ public:
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
-      applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       });
@@ -285,7 +166,7 @@ public:
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
-      applyLambdaToCellBlocks<SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
       {
         lambda( esr, castedSubRegion );
       });
@@ -296,18 +177,10 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-    static constexpr auto fractureSetString = "fractureSet";
     static constexpr auto coarseningRatioString = "coarseningRatio"; 
     static constexpr auto elementSubRegions = "elementSubRegions";
     static constexpr auto sourceCellBlockNames = "cellBlocks";
-
-    static constexpr auto fractureConnectorIndicesString = "fractureConnectorIndices";
-    static constexpr auto fractureElementConnectorString = "fractureElementConnectors";
-    static constexpr auto fractureToCellConnectorString = "fractureCellConnectors";
-    static constexpr auto fractureCellConnectorIndicesString = "fractureCellConnectorIndices";
-
-
-  } m_regionViewKeys;
+  };
 
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
@@ -320,7 +193,6 @@ private:
   ElementRegion& operator=(const ElementRegion& rhs);
 
   string_array m_cellBlockNames;
-  string_array m_fractureSetNames;
   string_array m_materialList;
   string m_numericalMethod;
   real64 m_coarseningRatio;
