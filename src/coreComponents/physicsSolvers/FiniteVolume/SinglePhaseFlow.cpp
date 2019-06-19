@@ -612,11 +612,11 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
     AssembleAccumulationTerms<false>( domain, jacobian, residual, time_n, dt );
   }
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::AssembleAccumulationTerms");
-    //GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    //GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 
 
@@ -625,11 +625,11 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   jacobian->GlobalAssemble(true);
   residual->GlobalAssemble();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::AssembleSystem");
-    //GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    //GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+    GEOS_LOG_RANK("\nResidual:\n" << *residual);
   }
 }
 
@@ -866,12 +866,23 @@ void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
 
   ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK("In SinglePhaseFlow::ApplyBoundaryConditions => printing matrix");
+    GEOS_LOG_RANK("After SinglePhaseFlow::ApplyBoundaryConditions");
     Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
                                                                   BlockIDs::fluidPressureBlock );
-    string filename = "matrix_" + std::to_string( time_n ) + ".mtx";
+    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+    string filename = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+
+    GEOS_LOG_RANK( "In SinglePhaseFlow::ApplyBoundaryConditions => printing matrix " << filename );
+    Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::fluidPressureBlock,
+                                                                  BlockIDs::fluidPressureBlock );
     // Should use LinearAlgebraInterface
     EpetraExt::RowMatrixToMatrixMarketFile( filename.c_str(), *jacobian );
   }
@@ -1264,10 +1275,10 @@ void SinglePhaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
                                                 params,
                                                 BlockIDs::fluidPressureBlock );
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK("After SinglePhaseFlow::SolveSystem");
-    //GEOS_LOG_RANK("\nsolution\n" << *solution);
+    GEOS_LOG_RANK("\nsolution\n" << *solution);
   }
 
 }
