@@ -172,98 +172,98 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
           ManagedGroup * const subGroup = group->GetGroup(subName);
           SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
         }
+      }
 
-        // Add schema deviations
-        group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
+      // Add schema deviations
+      group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
 
-        // Add attributes
-        for ( auto wrapperPair : group->wrappers() )
-        {
-          ViewWrapperBase * const wrapper = wrapperPair.second;
-          InputFlags flag = wrapper->getInputFlag();
-          
-          if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
-          {
-            string attributeName = wrapper->getName();
-
-            // Ignore duplicate copies of attributes
-            if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", attributeName.c_str()).empty())
-            {
-              // Write any additional documentation that isn't expected by the .xsd format in a comment
-              // Attribute description
-              string description = wrapper->getDescription();
-              string commentString = attributeName + " => ";
-              
-              if (!description.empty())
-              {
-                commentString += description;
-              }
-              else
-              {
-                commentString += "(no description available)";
-              }
-
-              // List of objects that registered this field
-              std::vector<string> registrars = wrapper->getRegisteringObjects();
-              if (registrars.size() > 0)
-              {
-                commentString += " => " + registrars[0];
-                for (size_t ii=1; ii<registrars.size(); ++ii)
-                {
-                  commentString += ", " + registrars[ii];
-                }
-              }
-
-              xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
-              commentNode.set_value(commentString.c_str());
-
-
-              // Write the valid schema attributes
-              // Basic attributes
-              xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
-              attributeNode.append_attribute("name") = attributeName.c_str();
-              attributeNode.append_attribute("type") = (rtTypes::typeNames(wrapper->get_typeid()).c_str());
-
-              // (Optional) Default Value
-              if ( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
-              {
-                GEOS_LOG_RANK_0(attributeName << " has an invalid input flag");
-                GEOS_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
-              }
-              else if ( flag == InputFlags::OPTIONAL )
-              {
-                rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
-                rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                                    [&]( auto a, auto b ) -> void
-                {
-                  using COMPOSITE_TYPE = decltype(a);
-                  ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
-                  
-                  if( typedWrapper.getDefaultValueStruct().has_default_value )
-                  {
-                    SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
-                  }
-                });
-              }
-              else if (documentationType == 0)
-              {
-                attributeNode.append_attribute("use") = "required";
-              }
-            }  
-          }
-        }
-
-        // Elements that are nonunique require the use of the name attribute
-        if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
-        {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
-          commentNode.set_value("name => A name is required for any non-unique nodes");
+      // Add attributes
+      for ( auto wrapperPair : group->wrappers() )
+      {
+        ViewWrapperBase * const wrapper = wrapperPair.second;
+        InputFlags flag = wrapper->getInputFlag();
         
-          xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
-          attributeNode.append_attribute("name") = "name";
-          attributeNode.append_attribute("type") = "string";
-          attributeNode.append_attribute("use") = "required";
+        if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
+        {
+          string attributeName = wrapper->getName();
+
+          // Ignore duplicate copies of attributes
+          if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", attributeName.c_str()).empty())
+          {
+            // Write any additional documentation that isn't expected by the .xsd format in a comment
+            // Attribute description
+            string description = wrapper->getDescription();
+            string commentString = attributeName + " => ";
+            
+            if (!description.empty())
+            {
+              commentString += description;
+            }
+            else
+            {
+              commentString += "(no description available)";
+            }
+
+            // List of objects that registered this field
+            std::vector<string> registrars = wrapper->getRegisteringObjects();
+            if (registrars.size() > 0)
+            {
+              commentString += " => " + registrars[0];
+              for (size_t ii=1; ii<registrars.size(); ++ii)
+              {
+                commentString += ", " + registrars[ii];
+              }
+            }
+
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+            commentNode.set_value(commentString.c_str());
+
+
+            // Write the valid schema attributes
+            // Basic attributes
+            xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+            attributeNode.append_attribute("name") = attributeName.c_str();
+            attributeNode.append_attribute("type") = (rtTypes::typeNames(wrapper->get_typeid()).c_str());
+
+            // (Optional) Default Value
+            if ( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
+            {
+              GEOS_LOG_RANK_0(attributeName << " has an invalid input flag");
+              GEOS_ERROR("SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed");
+            }
+            else if ( flag == InputFlags::OPTIONAL )
+            {
+              rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
+              rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
+                                                  [&]( auto a, auto b ) -> void
+              {
+                using COMPOSITE_TYPE = decltype(a);
+                ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+                
+                if( typedWrapper.getDefaultValueStruct().has_default_value )
+                {
+                  SetDefaultValueString( typedWrapper.getDefaultValueStruct(), attributeNode );
+                }
+              });
+            }
+            else if (documentationType == 0)
+            {
+              attributeNode.append_attribute("use") = "required";
+            }
+          }  
         }
+      }
+
+      // Elements that are nonunique require the use of the name attribute
+      if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
+      {
+        xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+        commentNode.set_value("name => A name is required for any non-unique nodes");
+      
+        xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+        attributeNode.append_attribute("name") = "name";
+        attributeNode.append_attribute("type") = "string";
+        attributeNode.append_attribute("use") = "required";
       }
     }
   }
