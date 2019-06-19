@@ -117,7 +117,10 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   }
 
   ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
+  if (region != nullptr)
+  {
+    SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
+  }
 }
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
