@@ -167,7 +167,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
         std::sort(subGroupNames.begin(), subGroupNames.end());
 
         // Add children of the group
-        for ( auto & subName : subGroupNames )
+        for ( string subName : subGroupNames )
         {
           ManagedGroup * const subGroup = group->GetGroup(subName);
           SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
@@ -178,15 +178,23 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
       group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
 
       // Add attributes
-      for ( auto wrapperPair : group->wrappers() )
+      // Note: wrappers that were added to this group by another group
+      //       may end up in different order.  To avoid this, add them
+      //       into the schema in alphabetic order.
+      std::vector<string> groupWrapperNames;
+      for( auto & wrapperPair : group->wrappers())
       {
-        ViewWrapperBase * const wrapper = wrapperPair.second;
+        groupWrapperNames.push_back(wrapperPair.first);
+      }
+      std::sort(groupWrapperNames.begin(), groupWrapperNames.end());
+
+      for ( string attributeName : groupWrapperNames )
+      {
+        ViewWrapperBase * const wrapper = group->getWrapperBase(attributeName);
         InputFlags flag = wrapper->getInputFlag();
         
         if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
         {
-          string attributeName = wrapper->getName();
-
           // Ignore duplicate copies of attributes
           if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", attributeName.c_str()).empty())
           {
