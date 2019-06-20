@@ -63,16 +63,10 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents
 geosx_add_code_checks(PREFIX core )
 
 
-#add_custom_target( uncrustify_modified_source
-#                   ALL
-#                   COMMAND bash ../scripts/uncrustifyChangedFiles.bash ${UNCRUSTIFY_EXECUTABLE}
-#                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-#                   DEPENDS geosx
-#                 )
 
-#blt_add_test( NAME uncrustify_modified_source
-#              COMMAND "bash ../scripts/uncrustifyChangedFiles.bash ${UNCRUSTIFY_EXECUTABLE} -c ${PROJECT_SOURCE_DIR}/uncrustify.cfg --check"
-#              NUM_MPI_TASKS 1
-#            )
+add_test( NAME testUncrustifyCheck
+          COMMAND make common_uncrustify_check dataRepository_uncrustify_check
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          )
 
 add_subdirectory( unitTests )
