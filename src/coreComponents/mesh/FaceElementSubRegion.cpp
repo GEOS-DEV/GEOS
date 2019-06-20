@@ -96,7 +96,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
                                                                 arrayView1d<real64 const> const & faceArea )
 {
   m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-  m_elementVolume[k] = m_elementAperture[k] * faceArea[k];
+  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
@@ -107,7 +107,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager cons
   forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
     m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-    m_elementVolume[k] = m_elementAperture[k] * faceArea[k];
+    m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
   });
 }
 
