@@ -1283,6 +1283,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   arrayView1d<localIndex> const & parentFaceIndices =
     faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
+  arrayView1d<localIndex const> const & parentEdgeIndices =
+    edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
 
 
 
@@ -1463,7 +1465,10 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           localIndex faceIndices[2] = {faceIndex,newFaceIndex};
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].
-          insert( fractureElementRegion->AddToFractureMesh( &faceManager, "default", faceIndices ) );
+          insert( fractureElementRegion->AddToFractureMesh( &faceManager,
+                                                            this->m_originalFaceToEdges,
+                                                            "default",
+                                                            faceIndices ) );
         }
 //        externalFaceManager.SplitFace(parentFaceIndex, newFaceIndex, nodeManager);
 

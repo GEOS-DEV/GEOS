@@ -45,7 +45,7 @@
     </SinglePhaseFlow>
     
         <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      verboseLevel="1"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}">
     </SurfaceGenerator>
@@ -70,6 +70,7 @@
     <Box name="bottom"    xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
     <Box name="top"       xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
     <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
+    <Box name="fracture2" xMin="-1.01,  0.99, -0.01" xMax=" 1.01,  1.01, 1.01"/>
     <Box name="source"    xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  1.01, 1.01"/>
   </Geometry>
 
