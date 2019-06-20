@@ -177,7 +177,7 @@ void LinearSolverWrapper::SolveSingleBlockSystem( EpetraBlockSystem * const bloc
       //MLList.set("aggregation: type", "MIS");
       MLList.set("prec type", "MGW");
       MLList.set("smoother: type","ILU");
-      MLList.set("PDE equations",1);
+      MLList.set("PDE equations",3);
       MLList.set("ML output", params->verbose());
       MLPrec = std::make_unique<ML_Epetra::MultiLevelPreconditioner>(*matrix, MLList);
       solver.SetPrecOperator(MLPrec.get());
