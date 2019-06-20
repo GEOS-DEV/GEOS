@@ -26,8 +26,8 @@
 #include <vector>
 #include <math.h>
 
-#include "RAJA/RAJA.hpp"
-#include "RAJA/util/defines.hpp"
+//#include "RAJA/RAJA.hpp"
+//#include "RAJA/util/defines.hpp"
 
 #include "common/TimingMacros.hpp"
 

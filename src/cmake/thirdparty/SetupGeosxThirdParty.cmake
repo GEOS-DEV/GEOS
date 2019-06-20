@@ -6,6 +6,10 @@ message(STATUS "\nProcessing SetupGeosxThirdParty.cmake")
 ####################################
 include(ExternalProject)
 
+################################
+# Include Fortran runtime libs
+################################
+include(cmake/GFortranLib.cmake)
 
 message(STATUS "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
 if( NOT GEOSX_TPL_DIR )
@@ -356,7 +360,8 @@ if( ENABLE_TRILINOS )
   blt_register_library( NAME trilinos
                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
                         LIBRARIES ${Trilinos_LIBRARIES}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+                        TREAT_INCLUDES_AS_SYSTEM ON
+                        DEPENDS_ON ${GEOSX_FORTRAN_RUNTIME} )
   set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
 
 endif()
