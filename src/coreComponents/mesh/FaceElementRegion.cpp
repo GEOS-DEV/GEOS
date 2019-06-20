@@ -64,6 +64,7 @@ FaceElementRegion::~FaceElementRegion()
 
 
 localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceManager,
+                                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
                                                  string const & subRegionName,
                                                  localIndex const faceIndices[2]  )
 {
@@ -88,7 +89,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
   OrderedVariableOneToManyRelation const & facesToNodesMap = faceManager->nodeList();
-  OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
+  array1d< array1d<localIndex> > const & facesToEdgesMap = originalFaceToEdges;
 
   localIndex const kfe = subRegion->size() - 1;
 

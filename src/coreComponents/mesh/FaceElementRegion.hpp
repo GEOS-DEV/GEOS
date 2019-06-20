@@ -71,6 +71,7 @@ public:
    * @return The local index of the new FaceElement entry.
    */
   localIndex AddToFractureMesh( FaceManager const * const faceManager,
+                                array1d< array1d<localIndex> > const & originalFaceToEdges,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
