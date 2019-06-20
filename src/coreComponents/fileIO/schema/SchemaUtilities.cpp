@@ -257,13 +257,17 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
       // Elements that are nonunique require the use of the name attribute
       if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
       {
-        xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
-        commentNode.set_value("name => A name is required for any non-unique nodes");
-      
-        xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
-        attributeNode.append_attribute("name") = "name";
-        attributeNode.append_attribute("type") = "string";
-        attributeNode.append_attribute("use") = "required";
+        // Only add this attribute if not present
+        if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", "name").empty())
+        {
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+          commentNode.set_value("name => A name is required for any non-unique nodes");
+        
+          xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
+          attributeNode.append_attribute("name") = "name";
+          attributeNode.append_attribute("type") = "string";
+          attributeNode.append_attribute("use") = "required";
+        }
       }
     }
   }
