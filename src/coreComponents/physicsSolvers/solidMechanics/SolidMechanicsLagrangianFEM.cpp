@@ -26,10 +26,6 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include "SolidMechanicsLagrangianFEMKernels_impl.hpp"
-#include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/Layout.hpp"
-#include "../miniApps/SolidMechanicsLagrangianFEM-MiniApp/ConstitutiveUpdate_impl.hpp"
-
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -55,6 +51,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace systemSolverInterface;
 
+
 void Integrate( const R2SymTensor& fieldvar,
                 arraySlice1d<R1Tensor> const & dNdX,
                 real64 const& detJ,
@@ -74,10 +71,6 @@ void Integrate( const R2SymTensor& fieldvar,
     result[a].minusAijBj( P, dNdX[a] );
   }
 }
-
-
-
-
 
 
 inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & TotalStress, R2Tensor & Rot,
@@ -101,6 +94,50 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 }
 
 
+void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
+              geosx::arraySlice1d<R1Tensor> & y,
+              real64 const dx,
+              localIndex const length){
+  
+  geosx::forall_in_range(0,length, GEOSX_LAMBDA (localIndex a){
+      y[a][0] += dx*dydx[a][0];
+      y[a][1] += dx*dydx[a][1];
+      y[a][2] += dx*dydx[a][2];
+      
+    });
+}
+
+
+void OnePoint(geosx::arraySlice1d<R1Tensor> const & dydx,
+              geosx::arraySlice1d<R1Tensor> & y,
+              real64 const dx,
+              localIndex const * const indices,
+              localIndex const length)
+{
+  geosx::forall_in_set(indices, length, GEOSX_LAMBDA (localIndex a){
+      y[a][0] += dx*dydx[a][0];
+      y[a][1] += dx*dydx[a][1];
+      y[a][2] += dx*dydx[a][2];
+    });
+}
+
+
+void OnePoint(geosx::arraySlice1d<R1Tensor> dydx,
+              geosx::arraySlice1d<R1Tensor> dy,
+              geosx::arraySlice1d<R1Tensor> y,
+              real64 const dx,
+              localIndex const length)
+{
+  geosx::forall_in_range(0, length, GEOSX_LAMBDA (localIndex a){
+      dy[a][0] = dydx[a][0] * dx;
+      dy[a][1] = dydx[a][1] * dx;
+      dy[a][2] = dydx[a][2] * dx;
+      
+      y[a][0] += dy[a][0];
+      y[a][1] += dy[a][1];
+      y[a][2] += dy[a][2];
+    });
+}
 
 
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& name,
@@ -507,13 +544,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   GEOSX_MARK_BEGIN(firstVelocityUpdate);
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt/2, numNodes );
+  OnePoint( acc, vel, dt/2, numNodes );
   GEOSX_MARK_END(firstVelocityUpdate);
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-  SolidMechanicsLagrangianFEMKernels::OnePoint( vel, uhat, u, dt, numNodes );
+  OnePoint( vel, uhat, u, dt, numNodes );
 
 
   fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
@@ -600,7 +637,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   });
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.values(), m_sendOrRecieveNodes.size() );
+  OnePoint( acc, vel, dt / 2, m_sendOrRecieveNodes.values(), m_sendOrRecieveNodes.size() );
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -657,7 +694,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   });
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.values(), m_nonSendOrRecieveNodes.size());
+  OnePoint( acc, vel, dt / 2, m_nonSendOrRecieveNodes.values(), m_nonSendOrRecieveNodes.size());
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
