@@ -132,26 +132,18 @@ ManagedGroup * EventBase::CreateChild( string const & childKey, string const & c
 }
 
 
-void EventBase::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent,
-                                    integer documentationType)
+void EventBase::ExpandObjectCatalogs()
 {
-  // Create a choice node if necessary
-  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child("xsd:choice");
-  if( targetChoiceNode.empty() )
+  // Only add children if the parent is of type EventManager
+  // otherwise, this would fall into a loop
+  if (strcmp(this->getParent()->getName().c_str(), "Events") == 0)
   {
-    targetChoiceNode = schemaParent.prepend_child("xsd:choice");
-    targetChoiceNode.append_attribute("minOccurs") = "0";
-    targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
+    for (auto& catalogIter: EventBase::GetCatalog())
+    {
+      CreateChild( catalogIter.first, catalogIter.first );
+    }
   }
-
-  // Enable recursion in the schema
-  this->getParent()->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
-  {
-    SchemaUtilities::SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
-  });
 }
-
 
 
 void EventBase::GetTargetReferences()
