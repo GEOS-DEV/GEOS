@@ -219,23 +219,8 @@
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
-		</xsd:choice>
-		<!--lastTime => last event occurrence (time)-->
-		<xsd:attribute name="lastTime" type="real64" />
-		<!--lastCycle => last event occurrence (cycle)-->
-		<xsd:attribute name="lastCycle" type="integer" />
-		<!--currentSubEvent => index of the current subevent-->
-		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
-		<xsd:attribute name="isTargetExecuting" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="SoloEventType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="HaltEvent" type="HaltEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
-			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 		</xsd:choice>
 		<!--lastTime => last event occurrence (time)-->
 		<xsd:attribute name="lastTime" type="real64" />
@@ -249,8 +234,23 @@
 	<xsd:complexType name="PeriodicEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+		</xsd:choice>
+		<!--lastTime => last event occurrence (time)-->
+		<xsd:attribute name="lastTime" type="real64" />
+		<!--lastCycle => last event occurrence (cycle)-->
+		<xsd:attribute name="lastCycle" type="integer" />
+		<!--currentSubEvent => index of the current subevent-->
+		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--isTargetExecuting => index of the current subevent-->
+		<xsd:attribute name="isTargetExecuting" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="SoloEventType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
 		<!--lastTime => last event occurrence (time)-->
 		<xsd:attribute name="lastTime" type="real64" />
