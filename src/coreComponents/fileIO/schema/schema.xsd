@@ -201,8 +201,8 @@
 	<xsd:complexType name="HaltEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
 		<!--target => event target-->
 		<xsd:attribute name="target" type="string" use="required" />
@@ -224,55 +224,12 @@
 		<xsd:attribute name="maxRuntime" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SoloEventType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
-			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
-		</xsd:choice>
-		<!--target => event target-->
-		<xsd:attribute name="target" type="string" use="required" />
-		<!--beginTime => Start time of this event-->
-		<xsd:attribute name="beginTime" type="real64" default="0" />
-		<!--endTime => End time of this event-->
-		<xsd:attribute name="endTime" type="real64" default="1e+100" />
-		<!--forceDt => Forced timestep for this event-->
-		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--allowSuperstep => allows event super-stepping (dt_super=dt+t-t_last)-->
-		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
-		<!--allowSubstep => allows event sub-stepping-->
-		<xsd:attribute name="allowSubstep" type="integer" default="0" />
-		<!--substepFactor => integer substep factor (dt_sub=dt/f)-->
-		<xsd:attribute name="substepFactor" type="integer" default="1" />
-		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
-		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
-		<!--targetTime => Event time-->
-		<xsd:attribute name="targetTime" type="real64" default="-1" />
-		<!--targetCycle => event cycle-->
-		<xsd:attribute name="targetCycle" type="integer" default="-1" />
-		<!--targetExactTimestep => allows timesteps to be truncated to match time frequency perfectly-->
-		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PeriodicEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HaltEvent" type="HaltEventType" />
-			<xsd:element name="SoloEvent" type="SoloEventType" />
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
 		<!--target => event target-->
 		<xsd:attribute name="target" type="string" use="required" />
@@ -308,10 +265,35 @@
 		<xsd:attribute name="threshold" type="real64" default="1e+10" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SoloEventType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HaltEvent" type="HaltEventType" />
+			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
+			<xsd:element name="SoloEvent" type="SoloEventType" />
+		</xsd:choice>
+		<!--target => event target-->
+		<xsd:attribute name="target" type="string" use="required" />
+		<!--beginTime => Start time of this event-->
+		<xsd:attribute name="beginTime" type="real64" default="0" />
+		<!--endTime => End time of this event-->
+		<xsd:attribute name="endTime" type="real64" default="1e+100" />
+		<!--forceDt => Forced timestep for this event-->
+		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--allowSuperstep => allows event super-stepping (dt_super=dt+t-t_last)-->
+		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
+		<!--allowSubstep => allows event sub-stepping-->
+		<xsd:attribute name="allowSubstep" type="integer" default="0" />
+		<!--substepFactor => integer substep factor (dt_sub=dt/f)-->
+		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
+		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<!--targetTime => Event time-->
+		<xsd:attribute name="targetTime" type="real64" default="-1" />
+		<!--targetCycle => event cycle-->
+		<xsd:attribute name="targetCycle" type="integer" default="-1" />
+		<!--targetExactTimestep => allows timesteps to be truncated to match time frequency perfectly-->
+		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
