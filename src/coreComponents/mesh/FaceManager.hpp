@@ -37,6 +37,10 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
+  using NodeMapType = OrderedVariableOneToManyRelation;
+  using EdgeMapType = OrderedVariableOneToManyRelation;
+  using ElemMapType = FixedToManyElementRelation;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -144,7 +148,8 @@ public:
   array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
-
+  ElemMapType       & toElementRelation()       { return m_toElements; }
+  ElemMapType const & toElementRelation() const { return m_toElements; }
 
 private:
 
@@ -153,9 +158,9 @@ private:
                                     arrayView1d<localIndex const> const & packList ) const;
 
 
-  OrderedVariableOneToManyRelation m_nodeList;
-  OrderedVariableOneToManyRelation m_edgeList;
-  FixedToManyElementRelation m_toElements;
+  NodeMapType m_nodeList;
+  EdgeMapType m_edgeList;
+  ElemMapType m_toElements;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
