@@ -40,6 +40,9 @@ class EdgeManager : public ObjectManagerBase
 {
 public:
 
+  using NodeMapType = FixedOneToManyRelation;
+  using FaceMapType = UnorderedVariableOneToManyRelation;
+
   /**
     * @name Static Factory Catalog Functions
     */
@@ -177,8 +180,9 @@ public:
 
 
 private:
-  FixedOneToManyRelation m_toNodesRelation;
-  UnorderedVariableOneToManyRelation m_toFacesRelation;
+
+  NodeMapType m_toNodesRelation;
+  FaceMapType m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
