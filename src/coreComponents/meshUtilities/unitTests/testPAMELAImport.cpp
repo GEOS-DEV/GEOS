@@ -93,7 +93,7 @@ TEST( PAMELAImport, testXML )
 
 
   // Check if the computed center match with the importer center
-  auto centerProperty =  elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64> >( "barycenter" );
+  auto centerProperty =  elemManager->ConstructViewAccessor<array1d<R1Tensor>, arrayView1d<R1Tensor> >( "barycenter" );
   elemManager->forElementRegions( [&]( ElementRegion * const elemRegion)->void
   {
     localIndex er = elemRegion->getIndexInParent();
