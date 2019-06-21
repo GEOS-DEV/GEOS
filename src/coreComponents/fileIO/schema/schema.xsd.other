@@ -412,8 +412,6 @@
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
-		<!--blockSystemRepository => (no description available)-->
-		<xsd:attribute name="blockSystemRepository" type="geosx::systemSolverInterface::EpetraBlockSystem" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -892,8 +890,6 @@
 		<xsd:attribute name="TotalDisplacement" type="r1_array" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="r1_array" />
-		<!--blockLocalDofNumber_Laplace => Global DOF numbers for the primary field variable-->
-		<xsd:attribute name="blockLocalDofNumber_Laplace" type="globalIndex_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
