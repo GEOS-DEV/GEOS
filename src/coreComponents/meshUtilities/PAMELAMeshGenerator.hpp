@@ -53,6 +53,7 @@ public:
     constexpr static auto scaleString = "scale";
     constexpr static auto fieldsToImportString = "fieldsToImport";
     constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
+    constexpr static auto reverseZString = "reverseZ";
   };
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
@@ -87,6 +88,8 @@ private:
   real64 m_scale;
 
   string_array m_fieldNamesInGEOSX;
+
+  int m_isZReverse;
 
   const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =
