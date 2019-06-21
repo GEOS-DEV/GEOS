@@ -21,8 +21,6 @@
  */
 
 #include "SinglePhaseFlowKernels.hpp"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
 
 namespace geosx
 {
@@ -122,20 +120,20 @@ inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
                                                  globalIndex const * const dofColIndices,
                                                  real64 const * const localFluxJacobian,
                                                  real64 const * const localFlux,
-                                                 Epetra_FECrsMatrix * const jacobian,
-                                                 Epetra_FEVector * const residual )
+                                                 ParallelMatrix * const jacobian,
+                                                 ParallelVector * const residual )
 {
 
   // Add to global residual/jacobian
-  jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                 eqnRowIndices,
-                                 integer_conversion<int>(stencilSize),
-                                 dofColIndices,
-                                 localFluxJacobian );
+  jacobian->add( eqnRowIndices,
+                 dofColIndices,
+                 localFluxJacobian,
+                 numFluxElems,
+                 stencilSize );
 
-  residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                 eqnRowIndices,
-                                 localFlux );
+  residual->add( eqnRowIndices,
+                 localFlux,
+                 numFluxElems);
 
 }
 
@@ -154,8 +152,8 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
-                                Epetra_FECrsMatrix * const jacobian,
-                                Epetra_FEVector * const residual )
+                                ParallelMatrix * const jacobian,
+                                ParallelVector * const residual )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -232,8 +230,8 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
-                            Epetra_FECrsMatrix * const jacobian,
-                            Epetra_FEVector * const residual )
+                            ParallelMatrix * const jacobian,
+                            ParallelVector * const residual )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
