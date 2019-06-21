@@ -31,7 +31,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/MappedVector.hpp"
-#include "TrilinosInterface.hpp"
+#include "InterfaceTypes.hpp"
 
 namespace geosx
 {
@@ -60,9 +60,6 @@ struct Dof_SparsityPattern
   globalIndex_array colIndices; //!< packed column indices, size numLocalNonZeros
   localIndex_array nnzEntries; //!< packed values (of type localIndex), size numLocalNonZeros
 };
-
-using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
-using ParallelVector = typename TrilinosInterface::ParallelVector;
 
 /**
  * @class DofManager

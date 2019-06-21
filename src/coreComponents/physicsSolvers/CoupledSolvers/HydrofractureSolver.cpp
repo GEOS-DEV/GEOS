@@ -69,24 +69,19 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * con
 
 }
 
-void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
-                                             real64 const& dt,
+void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
+                                             real64 const & dt,
                                              DomainPartition * const domain,
-                                             systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                             DofManager & dofManager,
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
-  SolverBase & solidSolver =
-    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-
-  SinglePhaseFlow & fluidSolver =
-    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
-  fluidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
 }
 
 void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
-                                              real64 const& dt,
-                                              DomainPartition * const domain)
+                                                real64 const& dt,
+                                                DomainPartition * const domain)
 {
 }
 
@@ -125,9 +120,9 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
 }
 
 real64 HydrofractureSolver::SolverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      int const cycleNumber,
-                                      DomainPartition * domain )
+                                        real64 const & dt,
+                                        int const cycleNumber,
+                                        DomainPartition * const domain )
 {
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
@@ -160,7 +155,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & area = subRegion->getElementArea();
-      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
+      //array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
@@ -188,10 +183,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
 }
 
-real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
-                                             real64 const& dt,
-                                             integer const cycleNumber,
-                                             DomainPartition * const domain)
+real64 HydrofractureSolver::SplitOperatorStep( real64 const & time_n,
+                                               real64 const & dt,
+                                               integer const cycleNumber,
+                                               DomainPartition * const domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary = dtReturn;
@@ -202,9 +197,17 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
   SinglePhaseFlow &
   fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
-  fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-  solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-  this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  fluidSolver.ImplicitStepSetup( time_n, dt, domain,
+                                 fluidSolver.getDofManager(),
+                                 fluidSolver.getSystemMatrix(),
+                                 fluidSolver.getSystemRhs(),
+                                 fluidSolver.getSystemSolution() );
+
+  solidSolver.ImplicitStepSetup( time_n, dt, domain,
+                                 solidSolver.getDofManager(),
+                                 solidSolver.getSystemMatrix(),
+                                 solidSolver.getSystemRhs(),
+                                 solidSolver.getSystemSolution() );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -223,10 +226,13 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain,
-                                                          getLinearSystemRepository() );
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain,
+                                                           fluidSolver.getDofManager(),
+                                                           fluidSolver.getSystemMatrix(),
+                                                           fluidSolver.getSystemRhs(),
+                                                           fluidSolver.getSystemSolution() );
 
     if (dtReturnTemporary < dtReturn)
     {
@@ -246,10 +252,13 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
     }
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
-                                                          dtReturn,
-                                                          cycleNumber,
-                                                          domain,
-                                                          getLinearSystemRepository() );
+                                                           dtReturn,
+                                                           cycleNumber,
+                                                           domain,
+                                                           solidSolver.getDofManager(),
+                                                           solidSolver.getSystemMatrix(),
+                                                           solidSolver.getSystemRhs(),
+                                                           solidSolver.getSystemSolution() );
     if (dtReturnTemporary < dtReturn)
     {
       iter = 0;

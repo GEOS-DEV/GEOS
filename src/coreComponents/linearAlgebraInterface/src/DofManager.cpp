@@ -450,7 +450,7 @@ void DofManager::addField( string const & field,
   last.connLocPattern = new ParallelMatrix(connLocInput);
 
   // compute useful values (number of local and global rows)
-  last.numLocalRows = connLocInput.numMyCols();
+  last.numLocalRows = connLocInput.localCols();
   last.numLocalNodes = last.numLocalRows / components;
 
   localIndex_array localGather;
@@ -538,13 +538,13 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
     {
       for( localIndex esr = 0 ; esr < field.regionPtrs[er]->numSubRegions() ; esr++ )
       {
-        CellElementSubRegion const * const subRegion = field.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+        ElementSubRegionBase const * const subRegion = field.regionPtrs[er]->GetSubRegion( esr );
         integer_array const & ghostRank = subRegion->m_ghostRank;
 
         localIndex_array2d const &
         map = field.location == Location::Node ?
-              subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference() :
-              subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference() ;
+              subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::nodeListString ) :
+              subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
 
         // Set which process owns the boundary nodes/faces
         for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
@@ -675,7 +675,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   field.numLocalNodes = 0;
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
   {
-    field.regionPtrs[er]->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    field.regionPtrs[er]->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
     {
       localIndex numGhost = subRegion->GetNumberOfGhosts();
       field.numLocalNodes += subRegion->size() - numGhost;
@@ -708,7 +708,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   {
     for( localIndex esr = 0 ; esr < field.regionPtrs[er]->numSubRegions() ; esr++ )
     {
-      CellElementSubRegion * const subRegion = field.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+      ElementSubRegionBase * const subRegion = field.regionPtrs[er]->GetSubRegion( esr );
 
       subRegion->RegisterViewWrapper<globalIndex_array>( field.key )->
         setApplyDefaultValue( static_cast<globalIndex>( LocationStatus::notAssigned ) )->
@@ -1368,8 +1368,8 @@ void DofManager::getIndices( globalIndex_array & indices,
             localIndex localCount = 0;
             for( localIndex esr = 0 ; esr < subregion ; esr++ )
             {
-              CellElementSubRegion const * const
-              subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+              ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
+
               integer_array const & ghostRank = subRegion->m_ghostRank;
 
               for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
@@ -1509,12 +1509,6 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
                                               localIndex_array const & colActiveRegions,
                                               Connectivity const connectivity )
 {
-  // Row field description
-  FieldDescription const & rowFieldDesc = m_fields[rowFieldIndex];
-
-  // Col field description
-  FieldDescription const & colFieldDesc = m_fields[colFieldIndex];
-
   // Compute the CL matrices for row and col fields
   Dof_SparsityPattern rowPatternLocal, colPatternLocal;
   addDiagSparsityPattern( rowPatternLocal, rowFieldIndex, connectivity, rowActiveRegions );
@@ -1613,8 +1607,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
@@ -1643,8 +1636,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
       {
         for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
         {
-          CellElementSubRegion const * const
-          subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+          ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
           integer_array const & ghostRank = subRegion->m_ghostRank;
 
           for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
@@ -1684,8 +1676,7 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             for( localIndex e = 0 ; e < ghostRank.size() ; ++e )
@@ -1713,14 +1704,13 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
       {
         for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
         {
-          CellElementSubRegion const * const
-          subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+          ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
           integer_array const & ghostRank = subRegion->m_ghostRank;
 
           localIndex_array2d const &
           map = fieldDesc.location == Location::Node ?
-                subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference() :
-                subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference() ;
+                subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::nodeListString ) :
+                subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
 
           for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
           {
@@ -1794,12 +1784,11 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
             {
@@ -1857,13 +1846,12 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
             globalIndex_array const & indexArrayElem = subRegion->getReference<globalIndex_array>( fieldDesc.key );
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
             {
@@ -1926,12 +1914,18 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+
+            // skip element subregions that are not volume cells
+            if( subRegion == nullptr )
+            {
+              continue;
+            }
+
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
             localIndex_array nodeIndices;
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
@@ -2013,12 +2007,11 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
             {
@@ -2073,13 +2066,12 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            ElementSubRegionBase const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion( esr );
             integer_array const & ghostRank = subRegion->m_ghostRank;
             globalIndex_array const & indexArrayElem = subRegion->getReference<globalIndex_array>( fieldDesc.key );
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().nodeListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )
             {
@@ -2140,12 +2132,18 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
         {
           for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
           {
-            CellElementSubRegion const * const
-            subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+            CellElementSubRegion const * const subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
+
+            // skip element subregions that are not volume cells
+            if( subRegion == nullptr )
+            {
+              continue;
+            }
+
             integer_array const & ghostRank = subRegion->m_ghostRank;
 
             localIndex_array2d const &
-            map = subRegion->getWrapper<FixedOneToManyRelation>( subRegion->viewKeys().faceListString )->reference();
+            map = subRegion->getReference<FixedOneToManyRelation>( ElementSubRegionBase::viewKeyStruct::faceListString );
             localIndex_array nodeIndices;
 
             for( localIndex e = 0 ; e < map.size( 0 ) ; ++e )

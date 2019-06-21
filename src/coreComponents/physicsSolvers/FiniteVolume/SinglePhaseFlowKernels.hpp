@@ -26,15 +26,10 @@
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
-
-class Epetra_FECrsMatrix;
-class Epetra_FEVector;
-
+#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
 
 namespace geosx
 {
-
 
 namespace SinglePhaseFlowKernels
 {
@@ -260,8 +255,8 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
           ElementView < arrayView1d<real64 const> > const & aperture,
-          Epetra_FECrsMatrix * const jacobian,
-          Epetra_FEVector * const residual );
+          ParallelMatrix * const jacobian,
+          ParallelVector * const residual );
 
 
   /**

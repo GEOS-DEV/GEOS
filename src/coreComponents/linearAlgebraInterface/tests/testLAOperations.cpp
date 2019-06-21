@@ -313,6 +313,7 @@ void testInterfaceSolvers()
   globalIndex firstRow = matrix.ilower();
 
   matrix.clearRow( firstRow, diagValue );
+  matrix.close();
 
   matrix.getRowCopy( firstRow, col_indices, col_values );
   for( localIndex i = 0 ; i < col_indices.size() ; ++i )
@@ -322,6 +323,7 @@ void testInterfaceSolvers()
     else
       EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
   }
+  EXPECT_DOUBLE_EQ( matrix.getDiagValue( firstRow ), diagValue );
 }
 
 /**
