@@ -45,10 +45,5 @@ set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
 set(RAJA_ENABLE_OPENMP "ON"        CACHE BOOL "" FORCE)
 
 # Use mkl instead of the lapack suite
-#set(ENABLE_LAPACK_SUITE OFF CACHE BOOL "" FORCE)
-#set(ENABLE_MKL ON CACHE BOOL "" FORCE)
-#set(MKL_ROOT "/usr/tce/packages/mkl/mkl-2019.0" CACHE STRING "" FORCE)
-#set(MKL_LIBRARY_NAMES libmkl_rt.so CACHE STRING "" FORCE)
-
 set(BLAS_DIR "/usr/tce/packages/mkl/mkl-2019.0" CACHE STRING "" FORCE)
 set(LAPACK_DIR "/usr/tce/packages/mkl/mkl-2019.0" CACHE STRING "" FORCE)
