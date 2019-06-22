@@ -351,10 +351,6 @@ else()
     include( cmake/thirdparty/Find_LAPACK.cmake )
 endif()
 
-string( FIND ${LAPACK_LIBRARY_NAMES} "mkl" MKL )
-if ( NOT ${MKL} EQUAL -1 )
-    set(ENABLE_MKL ON CACHE BOOL "" FORCE)
-endif()
 
 blt_register_library( NAME blas
                       INCLUDES ${BLAS_INCLUDE_DIR}
@@ -574,7 +570,17 @@ endif()
 if (ENABLE_MKL AND EXISTS ${MKL_ROOT})
     message( STATUS "setting up Intel MKL" )
 
-    find_library( MKL_LIBRARY NAMES ${MKL_LIBRARY_NAMES}
+    find_path( MKL_INCLUDE_DIR 
+               NAMES  mkl.h
+               PATHS  ${MKL_ROOT}/include
+               NO_DEFAULT_PATH
+               NO_CMAKE_ENVIRONMENT_PATH
+               NO_CMAKE_PATH
+               NO_SYSTEM_ENVIRONMENT_PATH
+               NO_CMAKE_SYSTEM_PATH)
+               
+    find_library( MKL_LIBRARY 
+                  NAMES ${MKL_LIBRARY_NAMES}
                   PATHS ${MKL_ROOT}/lib
                   NO_DEFAULT_PATH
                   NO_CMAKE_ENVIRONMENT_PATH
@@ -582,12 +588,21 @@ if (ENABLE_MKL AND EXISTS ${MKL_ROOT})
                   NO_SYSTEM_ENVIRONMENT_PATH
                   NO_CMAKE_SYSTEM_PATH)
 
+    find_package_handle_standard_args( MKL_LIBRARY 
+                                       DEFAULT_MSG
+                                       BLAS_DIR
+                                       BLAS_INCLUDE_DIR
+                                       BLAS_LIBRARY_DIR
+                                       BLAS_LIBRARIES
+                                       )
+
     blt_register_library( NAME mkl
-                          INCLUDES ${MKL_ROOT}/include
+                          INCLUDES ${MKL_INCLUDE_DIR}
                           LIBRARIES ${MKL_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
     set( thirdPartyLibs ${thirdPartyLibs} mkl )
+
 endif()
 
 
