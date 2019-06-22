@@ -16,15 +16,19 @@ else()
                NO_CMAKE_PATH
                NO_SYSTEM_ENVIRONMENT_PATH
                NO_CMAKE_SYSTEM_PATH)
-     
-     find_library( LAPACK_LIBRARIES 
-              NAMES lapack libmkl_rt.so 
-              PATHS ${LAPACK_DIR}/lib ${LAPACK_DIR}/lib64
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
+
+    if( NOT DEFINED LAPACK_LIBRARY_NAMES )
+        set( LAPACK_LIBRARY_NAMES "lapack;libmkl_rt.so" CACHE STRING "")
+    endif()
+
+    find_library( LAPACK_LIBRARIES 
+                  NAMES ${LAPACK_LIBRARY_NAMES} 
+                  PATHS ${LAPACK_DIR}/lib ${LAPACK_DIR}/lib64
+                  NO_DEFAULT_PATH
+                  NO_CMAKE_ENVIRONMENT_PATH
+                  NO_CMAKE_PATH
+                  NO_SYSTEM_ENVIRONMENT_PATH
+                  NO_CMAKE_SYSTEM_PATH)
               
     list( GET LAPACK_LIBRARIES 0 LAPACK_LIB0 )
     get_filename_component( LAPACK_LIBRARY_DIR ${LAPACK_LIB0} DIRECTORY CACHE )
@@ -39,7 +43,7 @@ find_package_handle_standard_args( LAPACK
                                    LAPACK_LIBRARIES
                                    )
 
-set(LAPACK_LIBRARY_NAMES "" CACHE PATH "")
+set(LAPACK_LIBRARY_NAMES "" CACHE PATH "" FORCE)
 foreach( lib ${LAPACK_LIBRARIES} )
     get_filename_component( libname ${lib} NAME )
     list( APPEND LAPACK_LIBRARY_NAMES ${libname} )

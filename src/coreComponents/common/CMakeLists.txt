@@ -30,9 +30,6 @@ if( ENABLE_RAJA )
   set( dependencyList ${dependencyList} RAJA )
 endif()
 
-if( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
-endif()
 
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
