@@ -48,17 +48,17 @@ template< typename T >
 struct is_defaultable
 {
   /// attribute to set what type is able to contain a default value
-  static constexpr bool value = std::is_same<T,int>::value ||
-                                std::is_same<T,long int>::value ||
-                                std::is_same<T,long long int>::value ||
-                                std::is_same<T,unsigned int>::value ||
-                                std::is_same<T,unsigned long int>::value ||
-                                std::is_same<T,unsigned long long int>::value ||
-                                std::is_floating_point<T>::value ||
-                                std::is_same<T,string>::value ||
-                                std::is_same<T,R1Tensor>::value ||
-                                std::is_same<T,R2Tensor>::value ||
-                                std::is_same<T,R2SymTensor>::value ;
+  static constexpr bool value = std::is_same< T, int >::value ||
+                                std::is_same< T, long int >::value ||
+                                std::is_same< T, long long int >::value ||
+                                std::is_same< T, unsigned int >::value ||
+                                std::is_same< T, unsigned long int >::value ||
+                                std::is_same< T, unsigned long long int >::value ||
+                                std::is_floating_point< T >::value ||
+                                std::is_same< T, string >::value ||
+                                std::is_same< T, R1Tensor >::value ||
+                                std::is_same< T, R2Tensor >::value ||
+                                std::is_same< T, R2SymTensor >::value;
 };
 
 /**
@@ -84,7 +84,7 @@ struct Helper
  * a member to hold a default value.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if<is_defaultable<T>::value >::type >
+struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -107,8 +107,8 @@ HAS_ALIAS( value_type )
  * containers.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
-                                          ( is_defaultable<typename T::value_type>::value) >::type >
+struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
+                                           ( is_defaultable< typename T::value_type >::value) >::type >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;
@@ -127,7 +127,7 @@ struct Helper< T, typename std::enable_if< has_alias_value_type<T>::value &&
  * A templated alias to hold default values.
  */
 template< typename T >
-using DefaultValue = wrapperDefaultValue::Helper<T>;
+using DefaultValue = wrapperDefaultValue::Helper< T >;
 
 
 }
