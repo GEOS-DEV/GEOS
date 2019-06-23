@@ -31,27 +31,26 @@ using namespace LvArray;
 using namespace dataRepository;
 
 
-TEST(testDefaultValue,testScalar)
+TEST( testDefaultValue, testScalar )
 {
-  EXPECT_TRUE( DefaultValue<int>::has_default_value == true );
-  EXPECT_TRUE( DefaultValue<long int>::has_default_value == true );
-  EXPECT_TRUE( DefaultValue<long long int>::has_default_value == true );
-  EXPECT_TRUE( DefaultValue<double>::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< long int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< long long int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< double >::has_default_value == true );
 }
 
-TEST(testDefaultValue,testArray)
+TEST( testDefaultValue, testArray )
 {
-  using array1 = Array<double,1,int>;
-  using array2 = Array<double,2,int>;
-  using array3 = Array<double,3,int>;
-  using array4 = Array<int,1,int>;
-  using array5 = Array<long int,1,long int>;
-  using array6 = Array<long long int,1,long long int>;
-  EXPECT_TRUE( DefaultValue<array1>::has_default_value==true );
-  EXPECT_TRUE( DefaultValue<array2>::has_default_value==true );
-  EXPECT_TRUE( DefaultValue<array3>::has_default_value==true );
-  EXPECT_TRUE( DefaultValue<array4>::has_default_value==true );
-  EXPECT_TRUE( DefaultValue<array5>::has_default_value==true );
-  EXPECT_TRUE( DefaultValue<array6>::has_default_value==true );
+  using array1 = Array< double, 1, int >;
+  using array2 = Array< double, 2, int >;
+  using array3 = Array< double, 3, int >;
+  using array4 = Array< int, 1, int >;
+  using array5 = Array< long int, 1, long int >;
+  using array6 = Array< long long int, 1, long long int >;
+  EXPECT_TRUE( DefaultValue< array1 >::has_default_value==true );
+  EXPECT_TRUE( DefaultValue< array2 >::has_default_value==true );
+  EXPECT_TRUE( DefaultValue< array3 >::has_default_value==true );
+  EXPECT_TRUE( DefaultValue< array4 >::has_default_value==true );
+  EXPECT_TRUE( DefaultValue< array5 >::has_default_value==true );
+  EXPECT_TRUE( DefaultValue< array6 >::has_default_value==true );
 }
-
