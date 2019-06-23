@@ -46,9 +46,6 @@ include("${CMAKE_CURRENT_LIST_DIR}/geosxOptions.cmake")
 ################################
 #include(cmake/SetupShroud.cmake)
 
-include("${CMAKE_CURRENT_LIST_DIR}/GFortranLib.cmake")
-#blt_register_library( NAME gfortran
-#                      LIBRARIES ${GEOSX_FORTRAN_RUNTIME} )
 include("${CMAKE_CURRENT_LIST_DIR}/thirdparty/SetupGeosxThirdParty.cmake")
 #include(components/cmake/thirdparty/SetupGeosxThirdParty.cmake)
 
