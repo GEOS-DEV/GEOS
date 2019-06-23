@@ -27,7 +27,7 @@ namespace geosx
  * @param [in] argc the number of command line arguments.
  * @param [in/out] argv the command line arguments.
  */
-void basicSetup( int argc, char *argv[] );
+void basicSetup( int argc, char * argv[] );
 
 /**
  * @brief Perform the basic GEOSX cleanup.
@@ -60,7 +60,7 @@ void setupOpenMP();
  * @param [in] argc the number of command line arguments.
  * @param [in/out] argv the command line arguments.
  */
-void setupMPI(int argc, char *argv[]);
+void setupMPI( int argc, char * argv[] );
 
 /**
  * @brief Finalize MPI.
