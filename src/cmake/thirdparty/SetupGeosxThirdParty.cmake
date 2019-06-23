@@ -334,6 +334,39 @@ blt_register_library( NAME pugixml
 
 set( thirdPartyLibs ${thirdPartyLibs} pugixml )  
 
+
+
+################################
+# BLAS/LAPACK
+################################
+if (DEFINED ENABLE_LAPACK_SUITE AND ENABLE_LAPACK_SUITE)
+    set(BLAS_DIR ${GEOSX_TPL_DIR}/lapack_suite)
+    set(LAPACK_DIR ${GEOSX_TPL_DIR}/lapack_suite)
+    include( cmake/thirdparty/Find_BLAS.cmake )
+    include( cmake/thirdparty/Find_LAPACK.cmake )
+    include(${LAPACK_LIBRARY_DIRS}/cmake/cblas-3.8.0/cblas-targets-release.cmake)
+    include(${LAPACK_LIBRARY_DIRS}/cmake/lapack-3.8.0/lapack-targets-release.cmake)
+else()
+    include( cmake/thirdparty/Find_BLAS.cmake )
+    include( cmake/thirdparty/Find_LAPACK.cmake )
+endif()
+
+
+blt_register_library( NAME blas
+                      INCLUDES ${BLAS_INCLUDE_DIR}
+                      TREAT_INCLUDES_AS_SYSTEM ON
+                      LIBRARIES ${BLAS_LIBRARIES}
+                      LINK_FLAGS ${BLAS_LINKER_FLAGS}
+                      )
+
+blt_register_library( NAME lapack
+                      DEPENDS_ON blas
+                      INCLUDES ${LAPACK_INCLUDE_DIR}
+                      TREAT_INCLUDES_AS_SYSTEM ON
+                      LIBRARIES ${LAPACK_LIBRARIES}
+                      LINK_FLAGS ${LAPACK_LINKER_FLAGS}
+                      )
+
 ################################
 # TRILINOS
 ################################
@@ -354,6 +387,7 @@ if( ENABLE_TRILINOS )
   message(STATUS "Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
   
   blt_register_library( NAME trilinos
+                        DEPENDS_ON lapack
                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
                         LIBRARIES ${Trilinos_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
@@ -436,9 +470,9 @@ if( ENABLE_PARMETIS )
     endif()
 
     blt_register_library( NAME parmetis
-                        INCLUDES ${PARMETIS_INCLUDE_DIRS} 
-                        LIBRARIES ${PARMETIS_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+                          INCLUDES ${PARMETIS_INCLUDE_DIRS} 
+                          LIBRARIES ${PARMETIS_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 
     set( thirdPartyLibs ${thirdPartyLibs} parmetis )
 endif()
@@ -478,9 +512,10 @@ if( ENABLE_SUPERLU_DIST)
     endif()
 
     blt_register_library( NAME superlu_dist
-                            INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
-                    LIBRARIES ${SUPERLU_DIST_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+                          DEPENDS_ON lapack blas
+                          INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
+                          LIBRARIES ${SUPERLU_DIST_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 
     set( thirdPartyLibs ${thirdPartyLibs} superlu_dist )
 endif()
@@ -520,9 +555,10 @@ if( ENABLE_HYPRE )
     endif()
 
     blt_register_library( NAME hypre
-                        INCLUDES ${HYPRE_INCLUDE_DIRS} 
-                        LIBRARIES ${HYPRE_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+                          DEPENDS_ON superlu_dist lapack
+                          INCLUDES ${HYPRE_INCLUDE_DIRS}
+                          LIBRARIES ${HYPRE_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
 
     set( thirdPartyLibs ${thirdPartyLibs} hypre )
 endif()
@@ -534,7 +570,17 @@ endif()
 if (ENABLE_MKL AND EXISTS ${MKL_ROOT})
     message( STATUS "setting up Intel MKL" )
 
-    find_library( MKL_LIBRARY NAMES ${MKL_LIBRARY_NAMES}
+    find_path( MKL_INCLUDE_DIR 
+               NAMES  mkl.h
+               PATHS  ${MKL_ROOT}/include
+               NO_DEFAULT_PATH
+               NO_CMAKE_ENVIRONMENT_PATH
+               NO_CMAKE_PATH
+               NO_SYSTEM_ENVIRONMENT_PATH
+               NO_CMAKE_SYSTEM_PATH)
+               
+    find_library( MKL_LIBRARY 
+                  NAMES ${MKL_LIBRARY_NAMES}
                   PATHS ${MKL_ROOT}/lib
                   NO_DEFAULT_PATH
                   NO_CMAKE_ENVIRONMENT_PATH
@@ -542,12 +588,21 @@ if (ENABLE_MKL AND EXISTS ${MKL_ROOT})
                   NO_SYSTEM_ENVIRONMENT_PATH
                   NO_CMAKE_SYSTEM_PATH)
 
+    find_package_handle_standard_args( MKL_LIBRARY 
+                                       DEFAULT_MSG
+                                       BLAS_DIR
+                                       BLAS_INCLUDE_DIR
+                                       BLAS_LIBRARY_DIR
+                                       BLAS_LIBRARIES
+                                       )
+
     blt_register_library( NAME mkl
-                          INCLUDES ${MKL_ROOT}/include
+                          INCLUDES ${MKL_INCLUDE_DIR}
                           LIBRARIES ${MKL_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
     set( thirdPartyLibs ${thirdPartyLibs} mkl )
+
 endif()
 
 
