@@ -30,12 +30,12 @@
 using namespace geosx;
 using namespace LvArray;
 
-TEST(testReferenceWrapper,testIntWrapper)
+TEST( testReferenceWrapper, testIntWrapper )
 {
 
   int var = 0;
 
-  ReferenceWrapper<int> wrappedVar( var );
+  ReferenceWrapper< int > wrappedVar( var );
 
   wrappedVar = 5;
 
@@ -50,12 +50,12 @@ TEST(testReferenceWrapper,testIntWrapper)
 
 }
 
-TEST(testReferenceWrapper,testArrayWrapper)
+TEST( testReferenceWrapper, testArrayWrapper )
 {
-  Array< int, 1 , int > arr;
+  Array< int, 1, int > arr;
   arr.resize( 4 );
 
-  ReferenceWrapper< Array< int, 1 , int > > wrappedArr( arr );
+  ReferenceWrapper< Array< int, 1, int > > wrappedArr( arr );
 
   for( int i=0 ; i<4 ; ++i )
   {
@@ -69,13 +69,13 @@ TEST(testReferenceWrapper,testArrayWrapper)
 
 }
 
-TEST(testReferenceWrapper,testArrayOfWrappedInts)
+TEST( testReferenceWrapper, testArrayOfWrappedInts )
 {
   int val0 = 0;
   int val1 = 1;
 
-  std::vector< ReferenceWrapper<int> > arr2;
-  arr2.resize(2);
+  std::vector< ReferenceWrapper< int > > arr2;
+  arr2.resize( 2 );
   arr2[0].set( val0 );
   arr2[1].set( val1 );
 
@@ -86,11 +86,11 @@ TEST(testReferenceWrapper,testArrayOfWrappedInts)
   EXPECT_TRUE( val1 == 11 );
 }
 
-TEST(testReferenceWrapper,testOperatorParen)
+TEST( testReferenceWrapper, testOperatorParen )
 {
-  using array2d = Array< int, 2 , int >;
+  using array2d = Array< int, 2, int >;
   array2d arr;
-  arr.resize( 2,3 );
+  arr.resize( 2, 3 );
 
   ReferenceWrapper< array2d > wrappedArr( arr );
 
@@ -98,7 +98,7 @@ TEST(testReferenceWrapper,testOperatorParen)
   {
     for( int j=0 ; j<3 ; ++j )
     {
-      wrappedArr(i,j) = 3*i+j;
+      wrappedArr( i, j ) = 3*i+j;
     }
   }
 
@@ -110,11 +110,11 @@ TEST(testReferenceWrapper,testOperatorParen)
   EXPECT_TRUE( arr[1][2] == 5 );
 }
 
-TEST(testReferenceWrapper,testNestedOperatorSquare)
+TEST( testReferenceWrapper, testNestedOperatorSquare )
 {
-  using array2d = Array< int, 2 , int >;
+  using array2d = Array< int, 2, int >;
   array2d arr;
-  arr.resize( 2,3 );
+  arr.resize( 2, 3 );
 
   ReferenceWrapper< array2d > wrappedArr( arr );
 
