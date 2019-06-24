@@ -24,6 +24,7 @@ set(GEOSX_TPL_DIR "${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release" CACHE P
 
 set(SPHINX_EXECUTABLE "/collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/bin/sphinx-build" CACHE PATH "" FORCE)
 set(UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" FORCE )
+set(ASTYLE_EXECUTABLE "${GEOSX_TPL_DIR}/astyle/usr/bin/astyle" CACHE PATH "" FORCE )
 set(DOXYGEN_EXECUTABLE "/usr/gapps/GEOS/geosx/thirdPartyLibs/doxygen/bin/doxygen" CACHE PATH "" FORCE )
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
@@ -45,7 +46,12 @@ set(ENABLE_OPENMP     "ON"        CACHE PATH "" FORCE)
 set(RAJA_ENABLE_OPENMP "ON"        CACHE BOOL "" FORCE)
 
 # Use mkl instead of the lapack suite
-set(ENABLE_LAPACK_SUITE OFF CACHE BOOL "" FORCE)
 set(ENABLE_MKL ON CACHE BOOL "" FORCE)
 set(MKL_ROOT "/usr/tce/packages/mkl/mkl-2019.0" CACHE STRING "" FORCE)
-set(MKL_LIBRARY_NAMES libmkl_rt.so CACHE STRING "" FORCE)
+set(MKL_LIBRARY_NAMES libmkl_rt.so CACHE STRING "" FORCE) 
+
+set(BLAS_DIR ${MKL_ROOT} CACHE STRING "" FORCE)
+set(BLAS_LIBRARY_NAMES ${MKL_LIBRARY_NAMES} CACHE STRING "" FORCE)
+
+set(LAPACK_DIR ${MKL_ROOT} CACHE STRING "" FORCE)
+set(LAPACK_LIBRARY_NAMES ${MKL_LIBRARY_NAMES} CACHE STRING "" FORCE)
