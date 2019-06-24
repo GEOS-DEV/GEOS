@@ -98,9 +98,9 @@ inline PlotLevel IntToPlotLevel( int const val )
  * @param[in] right
  * @return boolean result of left<right
  */
-inline bool operator<( PlotLevel const left, PlotLevel const right)
+inline bool operator<( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast<int>(left) < static_cast<int>(right);
+  return static_cast< int >(left) < static_cast< int >(right);
 }
 
 /**
@@ -109,9 +109,9 @@ inline bool operator<( PlotLevel const left, PlotLevel const right)
  * @param[in] right
  * @return boolean result of left>right
  */
-inline bool operator>( PlotLevel const left, PlotLevel const right)
+inline bool operator>( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast<int>(left) > static_cast<int>(right);
+  return static_cast< int >(left) > static_cast< int >(right);
 }
 
 /**
@@ -120,9 +120,9 @@ inline bool operator>( PlotLevel const left, PlotLevel const right)
  * @param[in] right
  * @return boolean result of left==right
  */
-inline bool operator==( PlotLevel const left, PlotLevel const right)
+inline bool operator==( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast<int>(left) == static_cast<int>(right);
+  return static_cast< int >(left) == static_cast< int >(right);
 }
 
 /**
@@ -131,11 +131,10 @@ inline bool operator==( PlotLevel const left, PlotLevel const right)
  * @param[in] right
  * @return boolean result of left!=right
  */
-inline bool operator!=( PlotLevel const left, PlotLevel const right)
+inline bool operator!=( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast<int>(left) != static_cast<int>(right);
+  return static_cast< int >(left) != static_cast< int >(right);
 }
-
 
 
 

@@ -42,8 +42,8 @@ namespace bufferOps
  * @return
  */
 template< bool DO_PACKING, typename T >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer, T const & var )
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   static_if( DO_PACKING )
@@ -60,9 +60,9 @@ Pack( char*&  buffer, T const & var )
  * @param var
  * @return size (in bytes) of unpacked data
  */
-template< typename T>
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer, T & var )
+template< typename T >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T & var )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
   memcpy( &var, buffer, sizeOfUnpackedChars );
@@ -72,10 +72,10 @@ Unpack( char const *& buffer, T & var )
 
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   sizeOfPackedChars += length * sizeof(T);
   static_if( DO_PACKING )
@@ -90,8 +90,8 @@ Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
 
 
 template< typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedLength )
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -108,10 +108,10 @@ Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedL
 
 
 template< bool DO_PACKING >
-localIndex Pack( char*& buffer, const std::string& var )
+localIndex Pack( char * & buffer, const std::string & var )
 {
   const string::size_type varSize = var.size();
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, varSize );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
 
   static_if( DO_PACKING )
   {
@@ -119,18 +119,18 @@ localIndex Pack( char*& buffer, const std::string& var )
     buffer += varSize;
   }
   end_static_if
-  
-  sizeOfPackedChars += varSize;
+
+    sizeOfPackedChars += varSize;
   return sizeOfPackedChars;
 }
 
 
-inline localIndex Unpack( char const *& buffer, string& var )
+inline localIndex Unpack( char const * & buffer, string & var )
 {
   string::size_type stringsize = 0;
   localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
 
-  var.resize(stringsize);
+  var.resize( stringsize );
   var.assign( buffer, stringsize );
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
@@ -140,18 +140,18 @@ inline localIndex Unpack( char const *& buffer, string& var )
 
 
 template< bool DO_PACKING, typename T >
-typename std::enable_if< traits::is_tensorT<T>, localIndex >::type
-Pack( char*& buffer, T const & var )
+typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
+Pack( char * & buffer, T const & var )
 {
   localIndex sizeOfPackedChars = 0;
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.Data(), var.Length());
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.Data(), var.Length());
   return sizeOfPackedChars;
 }
 
 
 template< typename T >
-typename std::enable_if< traits::is_tensorT<T>, localIndex >::type
-Unpack( char const *& buffer, T & var )
+typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
+Unpack( char const * & buffer, T & var )
 {
   localIndex sizeOfUnpackedChars = 0;
   real64 * const pVar = var.Data();
@@ -162,14 +162,14 @@ Unpack( char const *& buffer, T & var )
 
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ a ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
   }
 
   return sizeOfPackedChars;
@@ -177,8 +177,8 @@ Pack( char*&  buffer, T const * const restrict var, INDEX_TYPE const length )
 
 
 template< typename T, typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedLength )
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -197,16 +197,16 @@ Unpack( char const *& buffer, T * const restrict var, INDEX_TYPE const expectedL
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 localIndex
-Pack( char*&  buffer,
+Pack( char * & buffer,
       T const * const restrict var,
-      arraySlice1d<INDEX_TYPE const> const & indices,
+      arraySlice1d< INDEX_TYPE const > const & indices,
       INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ indices[a] ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
   }
 
   return sizeOfPackedChars;
@@ -215,9 +215,9 @@ Pack( char*&  buffer,
 
 template< typename T, typename INDEX_TYPE >
 localIndex
-Unpack( char const *& buffer,
+Unpack( char const * & buffer,
         T * const restrict var,
-        arraySlice1d<INDEX_TYPE const> const & indices,
+        arraySlice1d< INDEX_TYPE const > const & indices,
         INDEX_TYPE & length )
 {
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -234,18 +234,18 @@ Unpack( char const *& buffer,
 
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Pack( char*& buffer,
-      arraySlice1d<T> const & var,
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
       INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
 
   static_if( DO_PACKING )
   {
     T * const restrict buffer_T = static_cast< T * >( buffer );
-    for ( INDEX_TYPE i = 0; i < length; ++i )
+    for( INDEX_TYPE i = 0 ; i < length ; ++i )
     {
       buffer_T[ i ] = var[ i ];
     }
@@ -259,16 +259,16 @@ Pack( char*& buffer,
 
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Pack( char*& buffer,
-      arraySlice1d<T> const & var,
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
       INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ a ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
   }
 
   return sizeOfPackedChars;
@@ -276,9 +276,9 @@ Pack( char*& buffer,
 
 
 template< typename T, typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer,
-        arraySlice1d<T> & var,
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
         INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
@@ -288,7 +288,7 @@ Unpack( char const *& buffer,
                    expectedLength << " != " << length );
 
   T const * const restrict buffer_T = reinterpret_cast< T const * >( buffer );
-  for ( INDEX_TYPE i = 0; i < length; ++i )
+  for( INDEX_TYPE i = 0 ; i < length ; ++i )
   {
     var[ i ] = buffer_T[ i ];
   }
@@ -300,9 +300,9 @@ Unpack( char const *& buffer,
 
 
 template< typename T, typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer,
-        arraySlice1d<T> & var,
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
         INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
@@ -322,16 +322,16 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 localIndex
-Pack( char*&  buffer,
-      arraySlice1d<T> const & var,
-      arraySlice1d<INDEX_TYPE> const & indices,
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
+      arraySlice1d< INDEX_TYPE > const & indices,
       INDEX_TYPE const length )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ indices[a] ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
   }
 
   return sizeOfPackedChars;
@@ -340,9 +340,9 @@ Pack( char*&  buffer,
 
 template< typename T, typename INDEX_TYPE >
 localIndex
-Unpack( char const *& buffer,
-        arraySlice1d<T> & var,
-        arraySlice1d<INDEX_TYPE> const & indices,
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
+        arraySlice1d< INDEX_TYPE > const & indices,
         INDEX_TYPE & length )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -361,22 +361,22 @@ Unpack( char const *& buffer,
 
 
 template< bool DO_PACKING, typename T >
-localIndex Pack( char *& buffer, set<T> const & var )
+localIndex Pack( char * & buffer, set< T > const & var )
 {
-  const localIndex length = integer_conversion<localIndex>(var.size());
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  const localIndex length = integer_conversion< localIndex >( var.size());
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename set< T >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>(buffer, *i);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
   }
 
   return sizeOfPackedChars;
 }
 
 
-template< typename T>
-localIndex Unpack( char const *& buffer, set<T> & var )
+template< typename T >
+localIndex Unpack( char const * & buffer, set< T > & var )
 {
   var.clear();
 
@@ -394,23 +394,23 @@ localIndex Unpack( char const *& buffer, set<T> & var )
 }
 
 template< bool DO_PACKING >
-localIndex Pack( char *& buffer,
-                 set<localIndex> const & var,
-                 set<globalIndex> const & unmappedGlobalIndices,
-                 arraySlice1d<globalIndex const> const & localToGlobal )
+localIndex Pack( char * & buffer,
+                 set< localIndex > const & var,
+                 set< globalIndex > const & unmappedGlobalIndices,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
 {
-  const localIndex length = integer_conversion<localIndex>(var.size()+unmappedGlobalIndices.size());
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  const localIndex length = integer_conversion< localIndex >( var.size()+unmappedGlobalIndices.size());
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename set<localIndex>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename set< localIndex >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[*i]);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[*i] );
   }
 
-  for( typename set<globalIndex>::const_iterator i=unmappedGlobalIndices.begin() ;
-      i!=unmappedGlobalIndices.end() ; ++i )
+  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+       i!=unmappedGlobalIndices.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
   }
 
 
@@ -418,10 +418,10 @@ localIndex Pack( char *& buffer,
 }
 
 inline
-localIndex Unpack( char const *& buffer,
-                   set<localIndex> & var,
-                   set<globalIndex> & unmappedGlobalIndices,
-                   map<globalIndex,localIndex> const & globalToLocalMap,
+localIndex Unpack( char const * & buffer,
+                   set< localIndex > & var,
+                   set< globalIndex > & unmappedGlobalIndices,
+                   map< globalIndex, localIndex > const & globalToLocalMap,
                    bool const clearExistingSet )
 {
   if( clearExistingSet )
@@ -435,10 +435,10 @@ localIndex Unpack( char const *& buffer,
   {
     globalIndex temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
-    map<globalIndex,localIndex>::const_iterator iter = globalToLocalMap.find(temp);
+    map< globalIndex, localIndex >::const_iterator iter = globalToLocalMap.find( temp );
     if( iter==globalToLocalMap.end() )
     {
-      unmappedGlobalIndices.insert(temp);
+      unmappedGlobalIndices.insert( temp );
     }
     else
     {
@@ -451,39 +451,38 @@ localIndex Unpack( char const *& buffer,
 
 
 
-
 template< bool DO_PACKING >
-localIndex Pack( char *& buffer,
-                 set<localIndex> const & var,
-                 arrayView1d<localIndex const> const & packList,
-                 set<globalIndex> const & unmappedGlobalIndices,
-                 arraySlice1d<globalIndex const> const & localToGlobal )
+localIndex Pack( char * & buffer,
+                 set< localIndex > const & var,
+                 arrayView1d< localIndex const > const & packList,
+                 set< globalIndex > const & unmappedGlobalIndices,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
 {
 
   localIndex length = 0;
-  array1d<localIndex> temp(var.size());
+  array1d< localIndex > temp( var.size());
 
   for( auto a : packList )
   {
-    if( var.count(a) )
+    if( var.count( a ) )
     {
       temp[length] = a;
       ++length;
     }
   }
-  temp.resize(length);
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  temp.resize( length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
 
   for( localIndex a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[temp[a]]);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
   }
 
-  for( typename set<globalIndex>::const_iterator i=unmappedGlobalIndices.begin() ;
-      i!=unmappedGlobalIndices.end() ; ++i )
+  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+       i!=unmappedGlobalIndices.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
   }
 
   return sizeOfPackedChars;
@@ -491,24 +490,24 @@ localIndex Pack( char *& buffer,
 
 
 template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
-Pack( char*& buffer,
-      LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var )
+typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Pack( char * & buffer,
+      LvArray::ArrayView< T, NDIM, INDEX_TYPE > const & var )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, var.dims(), NDIM );
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
-  
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.dims(), NDIM );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.strides(), NDIM );
+
   const localIndex length = var.size();
   T const * const data = var.data();
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, data, length );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, length );
 
   return sizeOfPackedChars;
 }
 
 
 template< typename T, int NDIM, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
-Unpack( char const *& buffer, LvArray::Array<T,NDIM,INDEX_TYPE> & var )
+typename std::enable_if< bufferOps::is_packable_array< LvArray::Array< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Unpack( char const * & buffer, LvArray::Array< T, NDIM, INDEX_TYPE > & var )
 {
   INDEX_TYPE dims[NDIM];
   localIndex sizeOfUnpackedChars = Unpack( buffer, dims, NDIM );
@@ -532,17 +531,17 @@ Unpack( char const *& buffer, LvArray::Array<T,NDIM,INDEX_TYPE> & var )
 
 
 template< bool DO_PACKING, typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> >::value, localIndex >::type
-Pack( char*& buffer,
-      LvArray::ArrayView<T,NDIM,INDEX_TYPE> const & var,
-      const T_indices& indices )
+typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Pack( char * & buffer,
+      LvArray::ArrayView< T, NDIM, INDEX_TYPE > const & var,
+      const T_indices & indices )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, var.strides(), NDIM );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.strides(), NDIM );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    T const * const data = var.data(indices[a]);
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, data, var.strides()[0] );
+    T const * const data = var.data( indices[a] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.strides()[0] );
   }
   return sizeOfPackedChars;
 }
@@ -550,9 +549,9 @@ Pack( char*& buffer,
 
 template< typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
 localIndex
-Unpack( char const *& buffer,
-        LvArray::ArrayView<T,NDIM,INDEX_TYPE> & var,
-        const T_indices& indices )
+Unpack( char const * & buffer,
+        LvArray::ArrayView< T, NDIM, INDEX_TYPE > & var,
+        const T_indices & indices )
 {
   INDEX_TYPE strides[NDIM];
   localIndex sizeOfUnpackedChars = Unpack( buffer, strides, NDIM );
@@ -574,18 +573,18 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arraySlice1d<localIndex const> const & var,
-      arraySlice1d<globalIndex const> const & unmappedGlobalIndices,
+Pack( char * & buffer,
+      arraySlice1d< localIndex const > const & var,
+      arraySlice1d< globalIndex const > const & unmappedGlobalIndices,
       localIndex const length,
-      arraySlice1d<globalIndex const> const & localToGlobalMap )
+      arraySlice1d< globalIndex const > const & localToGlobalMap )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length*sizeof(globalIndex);
 
   static_if( DO_PACKING )
   {
-    globalIndex * const buffer_GI = reinterpret_cast<globalIndex *>(buffer);
+    globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
     for( localIndex a=0 ; a<length ; ++a )
     {
       if( var[a] != unmappedLocalIndexValue )
@@ -608,15 +607,15 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
+Unpack( char const * & buffer,
         localIndex_array & var,
-        array1d<globalIndex> & unmappedGlobalIndices,
-        map<globalIndex,localIndex> const & globalToLocalMap )
+        array1d< globalIndex > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  var.resize(length);
-  unmappedGlobalIndices.resize(length);
+  var.resize( length );
+  unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices = unmappedLocalIndexValue;
 
   bool unpackedGlobalFlag = false;
@@ -625,8 +624,8 @@ Unpack( char const *& buffer,
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
 
-    map<globalIndex,localIndex>::const_iterator
-    iter = globalToLocalMap.find(unpackedGlobalIndex);
+    map< globalIndex, localIndex >::const_iterator
+      iter = globalToLocalMap.find( unpackedGlobalIndex );
     if( iter == globalToLocalMap.end() )
     {
       var[a] = unmappedLocalIndexValue;
@@ -649,11 +648,11 @@ Unpack( char const *& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arraySlice1d<localIndex> & var,
-        array1d<globalIndex> & unmappedGlobalIndices,
+Unpack( char const * & buffer,
+        arraySlice1d< localIndex > & var,
+        array1d< globalIndex > & unmappedGlobalIndices,
         localIndex const expectedLength,
-        map<globalIndex,localIndex> const & globalToLocalMap )
+        map< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -663,7 +662,7 @@ Unpack( char const *& buffer,
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
 
-  unmappedGlobalIndices.resize(length);
+  unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices = unmappedLocalIndexValue;
 
   bool unpackedGlobalFlag = false;
@@ -672,8 +671,8 @@ Unpack( char const *& buffer,
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
 
-    map<globalIndex,localIndex>::const_iterator
-    iter = globalToLocalMap.find(unpackedGlobalIndex);
+    map< globalIndex, localIndex >::const_iterator
+      iter = globalToLocalMap.find( unpackedGlobalIndex );
     if( iter == globalToLocalMap.end() )
     {
       var[a] = unmappedLocalIndexValue;
@@ -696,28 +695,28 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arrayView1d<localIndex const> const & var,
-      arrayView1d<localIndex const> const & indices,
-      arrayView1d<globalIndex const> const & localToGlobalMap,
-      arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
+Pack( char * & buffer,
+      arrayView1d< localIndex const > const & var,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     localIndex const li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
     if( var[li] != -1 )
     {
-      sizeOfPackedChars += Pack<DO_PACKING>( buffer,
-                                             relatedObjectLocalToGlobalMap[var[li]] );
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                               relatedObjectLocalToGlobalMap[var[li]] );
     }
     else
     {
-      sizeOfPackedChars += Pack<DO_PACKING>( buffer,
-                                             localIndex(-1) );
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                               localIndex( -1 ) );
     }
   }
 
@@ -727,11 +726,11 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arrayView1d<localIndex> & var,
-        array1d<localIndex> const & indices,
-        map<globalIndex,localIndex> const & globalToLocalMap,
-        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+Unpack( char const * & buffer,
+        arrayView1d< localIndex > & var,
+        array1d< localIndex > const & indices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -740,7 +739,7 @@ Unpack( char const *& buffer,
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -749,13 +748,13 @@ Unpack( char const *& buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
                      "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      li = globalToLocalMap.at(gi);
+      li = globalToLocalMap.at( gi );
     }
 
     globalIndex mappedGlobalIndex;
@@ -775,38 +774,37 @@ Unpack( char const *& buffer,
 
 
 
-
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arrayView1d<localIndex_array const> const & var,
-      map< localIndex, array1d<globalIndex> > const & unmappedGlobalIndices,
-      arrayView1d<localIndex const> const & indices,
-      arrayView1d<globalIndex const> const & localToGlobalMap,
-      arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
+Pack( char * & buffer,
+      arrayView1d< localIndex_array const > const & var,
+      map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars=0;
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     localIndex const li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    map< localIndex, array1d<globalIndex> >::const_iterator
-    iterUnmappedGI = unmappedGlobalIndices.find(li);
+    map< localIndex, array1d< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d<globalIndex> junk;
-    array1d<globalIndex> const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
-                                              junk :
-                                              iterUnmappedGI->second;
+    array1d< globalIndex > junk;
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
 
 
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer,
-                                           var[li],
-                                           unmappedGI,
-                                           var[li].size(),
-                                           relatedObjectLocalToGlobalMap );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             var[li].size(),
+                                             relatedObjectLocalToGlobalMap );
   }
 
   return sizeOfPackedChars;
@@ -815,12 +813,12 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arrayView1d<localIndex_array> & var,
-        array1d<localIndex> & indices,
-        map<localIndex, array1d<globalIndex> > & unmappedGlobalIndices,
-        map<globalIndex,localIndex> const & globalToLocalMap,
-        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+Unpack( char const * & buffer,
+        arrayView1d< localIndex_array > & var,
+        array1d< localIndex > & indices,
+        map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -829,9 +827,9 @@ Unpack( char const *& buffer,
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-  indices.resize(numIndicesUnpacked);
+  indices.resize( numIndicesUnpacked );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -841,25 +839,25 @@ Unpack( char const *& buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
                      "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      li = globalToLocalMap.at(gi);
+      li = globalToLocalMap.at( gi );
     }
 
-    array1d<globalIndex> unmappedIndices;
+    array1d< globalIndex > unmappedIndices;
 #if 1
     sizeOfUnpackedChars += Unpack( buffer,
                                    var[li],
                                    unmappedIndices,
                                    relatedObjectGlobalToLocalMap );
 #else
-    array1d<globalIndex> tempUnmappedIndices;
-    array1d<localIndex> unpackedIndices;
-    set<localIndex> unpackedIndicesSet;
+    array1d< globalIndex > tempUnmappedIndices;
+    array1d< localIndex > unpackedIndices;
+    set< localIndex > unpackedIndicesSet;
 
     sizeOfUnpackedChars += Unpack( buffer,
                                    unpackedIndices,
@@ -878,12 +876,12 @@ Unpack( char const *& buffer,
       localIndex const numElems = var[li].size();
       for( localIndex c=0 ; c<numElems ; ++c )
       {
-        unpackedIndicesSet.insert(unpackedIndices[c]);
+        unpackedIndicesSet.insert( unpackedIndices[c] );
       }
       bool isSame = true;
       for( localIndex c=0 ; c<numElems ; ++c )
       {
-        if( unpackedIndicesSet.count(var[li][c])==0 )
+        if( unpackedIndicesSet.count( var[li][c] )==0 )
         {
           isSame = false;
         }
@@ -908,7 +906,7 @@ Unpack( char const *& buffer,
             break;
           }
         }
-        GEOS_ERROR_IF( shift==INT_MIN, "Trying to unpack indices with no valid localIndices...can't set order.");
+        GEOS_ERROR_IF( shift==INT_MIN, "Trying to unpack indices with no valid localIndices...can't set order." );
         for( localIndex b=0 ; b<numElems ; ++b )
         {
           localIndex c = b + shift;
@@ -930,7 +928,7 @@ Unpack( char const *& buffer,
     }
     else
     {
-      GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices");
+      GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices" );
     }
 #endif
 
@@ -945,32 +943,32 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arrayView1d< set<localIndex> const > const & var,
-      map< localIndex, set<globalIndex> > const & unmappedGlobalIndices,
-      arrayView1d<localIndex const> const & indices,
-      arrayView1d<globalIndex const> const & localToGlobalMap,
-      arrayView1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
+Pack( char * & buffer,
+      arrayView1d< set< localIndex > const > const & var,
+      map< localIndex, set< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, indices.size() );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    map< localIndex, set<globalIndex> >::const_iterator
-    iterUnmappedGI = unmappedGlobalIndices.find(li);
+    map< localIndex, set< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    set<globalIndex> junk;
-    set<globalIndex> const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
-                                          junk :
-                                          iterUnmappedGI->second;
+    set< globalIndex > junk;
+    set< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                            junk :
+                                            iterUnmappedGI->second;
 
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer,
-                                           var[li],
-                                           unmappedGI,
-                                           relatedObjectLocalToGlobalMap );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             relatedObjectLocalToGlobalMap );
   }
 
   return sizeOfPackedChars;
@@ -979,12 +977,12 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arrayView1d< set<localIndex> > & var,
+Unpack( char const * & buffer,
+        arrayView1d< set< localIndex > > & var,
         localIndex_array & indices,
-        map<localIndex, set<globalIndex> > & unmappedGlobalIndices,
-        map<globalIndex,localIndex> const & globalToLocalMap,
-        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap,
+        map< localIndex, set< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
 {
   localIndex sizeOfUnpackedChars=0;
@@ -994,9 +992,9 @@ Unpack( char const *& buffer,
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-  indices.resize(numIndicesUnpacked);
+  indices.resize( numIndicesUnpacked );
 
   for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
   {
@@ -1007,16 +1005,16 @@ Unpack( char const *& buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      li = globalToLocalMap.at(gi);
+      li = globalToLocalMap.at( gi );
     }
 
-    set<globalIndex> unmappedIndices;
+    set< globalIndex > unmappedIndices;
     sizeOfUnpackedChars += Unpack( buffer,
                                    var[li],
                                    unmappedIndices,
@@ -1031,18 +1029,18 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arrayView2d<localIndex> const & var,
-      arrayView1d<localIndex> const & indices,
-      arraySlice1d<globalIndex> const & localToGlobalMap )
+Pack( char * & buffer,
+      arrayView2d< localIndex > const & var,
+      arrayView1d< localIndex > const & indices,
+      arraySlice1d< globalIndex > const & localToGlobalMap )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, indices.size() );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[li], var.size( 1 ) );
   }
 
   return sizeOfPackedChars;
@@ -1051,10 +1049,10 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arrayView2d<localIndex> & var,
-        array1d<localIndex> & indices,
-        map<globalIndex,localIndex> const & globalToLocalMap )
+Unpack( char const * & buffer,
+        arrayView2d< localIndex > & var,
+        array1d< localIndex > & indices,
+        map< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1064,9 +1062,9 @@ Unpack( char const *& buffer,
 
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-  indices.resize(numIndicesUnpacked);
+  indices.resize( numIndicesUnpacked );
 
   for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
   {
@@ -1076,17 +1074,17 @@ Unpack( char const *& buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      li = globalToLocalMap.at(gi);
+      li = globalToLocalMap.at( gi );
     }
 
     localIndex * const varSlice = var[li];
-    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
+    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size( 1 ) );
   }
 
 
@@ -1096,34 +1094,34 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char*& buffer,
-      arrayView2d<localIndex const> const & var,
-      map< localIndex, array1d<globalIndex> > const & unmappedGlobalIndices,
-      arrayView1d<localIndex const> const & indices,
-      arraySlice1d<globalIndex const> const & localToGlobalMap,
-      arraySlice1d<globalIndex const> const & relatedObjectLocalToGlobalMap )
+Pack( char * & buffer,
+      arrayView2d< localIndex const > const & var,
+      map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arraySlice1d< globalIndex const > const & localToGlobalMap,
+      arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
   localIndex sizeOfPackedChars = 0;
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    map< localIndex, array1d<globalIndex> >::const_iterator
-    iterUnmappedGI = unmappedGlobalIndices.find(li);
+    map< localIndex, array1d< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d<globalIndex> junk;
-    array1d<globalIndex> const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
-                                              junk :
-                                              iterUnmappedGI->second;
+    array1d< globalIndex > junk;
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
 
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer,
-                                           var[li],
-                                           unmappedGI,
-                                           var.size(1),
-                                           relatedObjectLocalToGlobalMap );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             var.size( 1 ),
+                                             relatedObjectLocalToGlobalMap );
   }
 
   return sizeOfPackedChars;
@@ -1132,12 +1130,12 @@ Pack( char*& buffer,
 
 inline
 localIndex
-Unpack( char const *& buffer,
-        arrayView2d<localIndex> & var,
+Unpack( char const * & buffer,
+        arrayView2d< localIndex > & var,
         localIndex_array & indices,
-        map< localIndex, array1d<globalIndex> > & unmappedGlobalIndices,
-        map<globalIndex,localIndex> const & globalToLocalMap,
-        map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
+        map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1146,9 +1144,9 @@ Unpack( char const *& buffer,
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
   GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                 "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-  indices.resize(numIndicesUnpacked);
+  indices.resize( numIndicesUnpacked );
 
   for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
   {
@@ -1158,22 +1156,22 @@ Unpack( char const *& buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at(gi),
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                     <<li<<" for localIndex "<<li<<" on this rank");
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      li = globalToLocalMap.at(gi);
+      li = globalToLocalMap.at( gi );
     }
 
-    arraySlice1d<localIndex> varSlice = var[li];
-    array1d<globalIndex> unmappedIndices;
+    arraySlice1d< localIndex > varSlice = var[li];
+    array1d< globalIndex > unmappedIndices;
 
     sizeOfUnpackedChars += Unpack( buffer,
                                    varSlice,
                                    unmappedIndices,
-                                   var.size(1),
+                                   var.size( 1 ),
                                    relatedObjectGlobalToLocalMap );
 
     if( unmappedIndices.size()>0 )
@@ -1189,15 +1187,15 @@ Unpack( char const *& buffer,
 
 template< bool DO_PACKING, typename T_KEY, typename T_VAL >
 typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
-Pack( char*& buffer, map<T_KEY, T_VAL> const & var )
+Pack( char * & buffer, map< T_KEY, T_VAL > const & var )
 {
-  const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  const typename std::map< T_KEY, T_VAL >::size_type length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename std::map< T_KEY, T_VAL >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->first );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->second );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second );
   }
 
   return sizeOfPackedChars;
@@ -1205,22 +1203,22 @@ Pack( char*& buffer, map<T_KEY, T_VAL> const & var )
 
 
 template< typename T_KEY, typename T_VAL >
-typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value, localIndex >::type
-Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
+Unpack( char const * & buffer, std::map< T_KEY, T_VAL > & map )
 {
   map.clear();
-  typename std::map<T_KEY,T_VAL>::size_type map_length;
+  typename std::map< T_KEY, T_VAL >::size_type map_length;
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
+  for( typename std::map< T_KEY, T_VAL >::size_type a=0 ; a<map_length ; ++a )
   {
     T_KEY key;
     T_VAL value;
     sizeOfUnpackedChars += Unpack( buffer, key );
     sizeOfUnpackedChars += Unpack( buffer, value );
 
-    map[key] = std::move(value);
+    map[key] = std::move( value );
   }
 
   return sizeOfUnpackedChars;
@@ -1228,16 +1226,16 @@ Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
 
 
 template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
-typename std::enable_if< bufferOps::is_packable_map< map<T_KEY, T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
-Pack( char*& buffer, std::map<T_KEY,T_VAL> const & var, T_INDICES const & packIndices )
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value && bufferOps::is_packable_by_index< T_VAL >::value, localIndex >::type
+Pack( char * & buffer, std::map< T_KEY, T_VAL > const & var, T_INDICES const & packIndices )
 {
-  const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>( buffer, length );
+  const typename std::map< T_KEY, T_VAL >::size_type length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename std::map< T_KEY, T_VAL >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->first );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->second, packIndices );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second, packIndices );
   }
 
   return sizeOfPackedChars;
@@ -1245,15 +1243,15 @@ Pack( char*& buffer, std::map<T_KEY,T_VAL> const & var, T_INDICES const & packIn
 
 
 template< typename T_KEY, typename T_VAL, typename T_INDICES >
-typename std::enable_if< bufferOps::is_packable_map< map<T_KEY,T_VAL> >::value && bufferOps::is_packable_by_index<T_VAL>::value, localIndex >::type
-Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map, T_INDICES const & unpackIndices )
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value && bufferOps::is_packable_by_index< T_VAL >::value, localIndex >::type
+Unpack( char const * & buffer, std::map< T_KEY, T_VAL > & map, T_INDICES const & unpackIndices )
 {
   map.clear();
-  typename std::map<T_KEY,T_VAL>::size_type map_length;
+  typename std::map< T_KEY, T_VAL >::size_type map_length;
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
+  for( typename std::map< T_KEY, T_VAL >::size_type a=0 ; a<map_length ; ++a )
   {
     T_KEY key;
     T_VAL value;
@@ -1269,20 +1267,20 @@ Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map, T_INDICES const & unpa
 
 template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
 localIndex
-Pack( char*& buffer, std::pair< T_FIRST, T_SECOND > const & var )
+Pack( char * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
 {
-  localIndex sizeOfPackedChars = Pack<DO_PACKING>(buffer, var.first);
-  sizeOfPackedChars += Pack<DO_PACKING>(buffer, var.second);
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.first );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.second );
   return sizeOfPackedChars;
 }
 
 
 template< typename T_FIRST, typename T_SECOND >
 localIndex
-Unpack( char const *& buffer, std::pair< T_FIRST, T_SECOND >& var )
+Unpack( char const * & buffer, std::pair< T_FIRST, T_SECOND > & var )
 {
-  localIndex sizeOfUnpackedChars = Unpack(buffer, var.first);
-  sizeOfUnpackedChars += Unpack(buffer, var.second);
+  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first );
+  sizeOfUnpackedChars += Unpack( buffer, var.second );
   return sizeOfUnpackedChars;
 }
 
