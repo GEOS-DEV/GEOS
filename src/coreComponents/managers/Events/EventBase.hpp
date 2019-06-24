@@ -100,14 +100,8 @@ public:
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
 
-  /**
-   * This function is used to inform the schema generator of any
-   * deviations between the xml and GEOS data structures.
-   */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
-
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.
