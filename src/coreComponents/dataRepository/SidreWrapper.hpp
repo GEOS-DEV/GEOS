@@ -44,16 +44,16 @@ class SidreWrapper
 public:
   SidreWrapper();
   ~SidreWrapper();
-  
+
 #ifdef GEOSX_USE_ATK
-  static axom::sidre::DataStore& dataStore();
+  static axom::sidre::DataStore & dataStore();
 #endif
 
-  static void writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm);
+  static void writeTree( int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm );
 
-  static void reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm);
+  static void reconstructTree( const std::string & root_path, const std::string & protocol, MPI_Comm comm );
 
-  static void loadExternalData(const std::string & root_path, MPI_Comm comm);
+  static void loadExternalData( const std::string & root_path, MPI_Comm comm );
 
 private:
 

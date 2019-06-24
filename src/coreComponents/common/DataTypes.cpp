@@ -31,14 +31,14 @@
 namespace geosx
 {
 #ifdef GEOSX_USE_MPI
-  MPI_Comm MPI_COMM_GEOSX;
+MPI_Comm MPI_COMM_GEOSX;
 #endif
 
 void printTypeSummary()
 {
-  GEOS_LOG_RANK_0("real64 is alias of "     <<cxx_utilities::demangle( typeid(real64).name() ) );
-  GEOS_LOG_RANK_0("localIndex is alias of " <<cxx_utilities::demangle( typeid(localIndex).name() ) );
-  GEOS_LOG_RANK_0("globalIndex is alias of "<<cxx_utilities::demangle( typeid(globalIndex).name()) );
+  GEOS_LOG_RANK_0( "real64 is alias of " <<cxx_utilities::demangle( typeid(real64).name() ) );
+  GEOS_LOG_RANK_0( "localIndex is alias of " <<cxx_utilities::demangle( typeid(localIndex).name() ) );
+  GEOS_LOG_RANK_0( "globalIndex is alias of "<<cxx_utilities::demangle( typeid(globalIndex).name()) );
 }
 
 
