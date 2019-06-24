@@ -1,6 +1,6 @@
 
 
-if( NOT DEFINED GEOSX_TPL_DIR )
+if( NOT DEFINED GEOSX_TPL_ROOT_DIR )
     set( GEOSX_TPL_ROOT_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs" CACHE PATH "" )
 endif()
 
