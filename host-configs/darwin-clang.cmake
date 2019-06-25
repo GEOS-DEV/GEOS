@@ -5,30 +5,33 @@ message( "CONFIG_NAME = ${CONFIG_NAME}" )
 
 set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
-
+set(CMAKE_Fortran_COMPILER "/usr/local/bin/gfortran" CACHE PATH "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
-set(CMAKE_Fortran_COMPILER "/opt/local/bin/gfortran-mp-7" CACHE PATH "")
 
 
 set(ENABLE_MPI ON CACHE PATH "")
-set(MPI_C_COMPILER "/opt/local/bin/mpicc-openmpi-clang" CACHE PATH "")
-set(MPI_CXX_COMPILER "/opt/local/bin/mpicxx-openmpi-clang" CACHE PATH "")
-set(MPI_Fortran_COMPILER "/opt/local/bin/mpifort-openmpi-clang" CACHE PATH "")
-set(MPIEXEC "mpirun-openmpi-gcc7" CACHE PATH "")
+set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
+set(MPI_CXX_COMPILER "/usr/local/bin/mpicxx" CACHE PATH "")
+set(MPI_Fortran_COMPILER "/usr/local/bin/mpifort" CACHE PATH "")
+set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
-set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
-set(SPHINX_EXECUTABLE "/opt/local/bin/sphinx-build-2.7" CACHE PATH "" FORCE)
+set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 
-#######################################
-# RAJA/CHAI SETUP
-#######################################
-#set( CHAI_DIR "${CMAKE_SOURCE_DIR}/../../chai" CACHE PATH "")
-#set( RAJA_DIR "${CMAKE_SOURCE_DIR}/../../raja" CACHE PATH "")
-
-option( RAJA_ENABLE_TBB "" OFF)
-option( ENABLE_CALIPER "Enables CALIPER" OFF )
+set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
+set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "OFF"        CACHE PATH "" FORCE)
 set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
 set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
+
+option( RAJA_ENABLE_TBB "" OFF)
+set(RAJA_ENABLE_OPENMP "OFF"        CACHE BOOL "" FORCE)
+
+option( ENABLE_CALIPER "Enables CALIPER" OFF )
+
+set( BLAS_DIR "/usr" CACHE PATH "" FORCE )
+set( BLAS_LIBRARY_NAMES "libblas.dylib" CACHE PATH "" FORCE )
+set( LAPACK_DIR "/usr" CACHE PATH "" FORCE )
+set( LAPACK_LIBRARY_NAMES "liblapack.dylib" CACHE PATH "" FORCE )
+#set( ENABLE_LAPACK_SUITE ON CACHE BOOL "" FORCE )
