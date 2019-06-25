@@ -8,7 +8,7 @@ env:
 matrix:
   include:
   - os: osx
-    osx_image: xcode10.2.1
+    osx_image: xcode10.2
     env:
     - CC=clang
     - CXX=clang++
