@@ -91,7 +91,7 @@ before_script:
     fi
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--use-hwthread-cpus";
+      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
       cd build-darwin-clang-debug;
       make -j2 VERBOSE=1;
       ctest -V;
