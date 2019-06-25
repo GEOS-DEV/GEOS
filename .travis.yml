@@ -7,18 +7,18 @@ env:
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
 matrix:
   include:
-#  - os: osx
-#    osx_image: xcode10
-#    env:
-#    - CC=clang
-#    - CXX=clang++
-#    - FC=gfortran
-#    - MPICC=mpicc
-#    - MPICXX=mpicxx
-#    - MPIFC=mpifort
-#    - MPIEXEC=/usr/local/bin/mpirun
-#    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
-#    - CMAKE_BUILD_TYPE=Release
+  - os: osx
+    osx_image: xcode10.2.1
+    env:
+    - CC=clang
+    - CXX=clang++
+    - FC=gfortran
+    - MPICC=mpicc
+    - MPICXX=mpicxx
+    - MPIFC=mpifort
+    - MPIEXEC=/usr/local/bin/mpirun
+    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+    - CMAKE_BUILD_TYPE=Release
   - compiler: clang6-LC-toss3
     sudo: required
     services: docker
@@ -69,7 +69,7 @@ matrix:
     - CMAKE_BUILD_TYPE=Debug
 git:
   submodules: false
-before_install:
+before_script:
   - git submodule update --init --recursive src/coreComponents/cxx-utilities
   - git submodule update --init --recursive src/cmake/blt
   - git submodule update --init --recursive src/externalComponents/PVTPackage
@@ -78,17 +78,23 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     fi
-script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      pwd;
       brew install openmpi > /dev/null 2>&1;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/erttwgj8yclo9gx/tpl-osx-clang10-20190416.tar.gz;
-      tar -xf tpl-osx-clang10-20190416.tar.gz;
-      cd ../GEOSX;
-      bash ${TRAVIS_BUILD_DIR}/scripts/travis_build_and_test.sh;
+      wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
+      tar -xf tpl-osx-clang10-20190625.tar.gz;
+      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
+      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      cd ../GEOSX;  
+    fi
+script: 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      python ${TRAVIS_BUILD_DIR}/scripts/config-build.py -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake ;
+      cd build-darwin-clang-debug;
+      make -j2 VERBOSE=1;
+      ctest -V;
     else
       docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     fi
