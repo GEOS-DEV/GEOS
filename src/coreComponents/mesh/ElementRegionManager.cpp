@@ -22,6 +22,7 @@
 #include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceElementRegion.hpp"
+#include "AggregateElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
@@ -135,7 +136,13 @@ void ElementRegionManager::GenerateAggregates( FaceManager const * const faceMan
 {
   this->forElementRegions([&](ElementRegion * const elemRegion)->void
   {
-    elemRegion->GenerateAggregates( faceManager );
+    real64 coarseningRatio = elemRegion->GetCoarseningRatio();
+    if( coarseningRatio < 1.0 )
+    {
+      AggregateElementRegion * aggReg =
+        this->CreateChild( AggregateElementRegion::CatalogName(), elemRegion->getName() + "_coarse")->group_cast< AggregateElementRegion * >();
+      aggReg->Generate( faceManager, elemRegion, coarseningRatio );
+    }
   });
 }
 

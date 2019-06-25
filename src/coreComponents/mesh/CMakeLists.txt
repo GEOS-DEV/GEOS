@@ -1,5 +1,6 @@
 # Specify all headers
 set(mesh_headers
+    AggregateElementRegion.hpp
     AggregateElementSubRegion.hpp
     BufferOps.hpp
     CellBlockManager.hpp
@@ -21,6 +22,7 @@ set(mesh_headers
 
 # Specify all sources
 set(mesh_sources
+    AggregateElementRegion.cpp
     AggregateElementSubRegion.cpp
     BufferOps.cpp
     CellBlockManager.cpp

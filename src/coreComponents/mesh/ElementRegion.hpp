@@ -102,6 +102,11 @@ public:
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
+  real64 GetCoarseningRatio() const
+  {
+    return m_coarseningRatio;
+  }
+
   void AddCellBlockName( string const & cellBlockName )
   {
     m_cellBlockNames.push_back( cellBlockName );
