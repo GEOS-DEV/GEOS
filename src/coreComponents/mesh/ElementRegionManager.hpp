@@ -34,6 +34,7 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 //#include "legacy/ArrayT/bufvector.h"
 #include "ElementRegion.hpp"
+#include "FaceElementRegion.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
 namespace geosx
@@ -197,6 +198,52 @@ public:
     ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
     elementRegions->forSubGroups<ElementRegion>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
+
+
+
+  template< typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda ) const
+  {
+    forElementRegionsComplete<ElementRegion,FaceElementRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda )
+  {
+    forElementRegionsComplete<ElementRegion,FaceElementRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda )
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion * const elementRegion = this->GetRegion(er);
+
+      ManagedGroup::applyLambdaToContainer<ElementRegion, REGIONTYPE,REGIONTYPES...>( elementRegion, [&]( auto * const castedRegion )
+      {
+        lambda( er, castedRegion );
+      });
+    }
+  }
+
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda ) const
+  {
+    for( localIndex er=0 ; er<this->numRegions() ; ++er )
+    {
+      ElementRegion const * const elementRegion = this->GetRegion(er);
+
+      ManagedGroup::applyLambdaToContainer<ElementRegion,REGIONTYPE,REGIONTYPES...>( elementRegion, [&]( auto const * const castedRegion )
+      {
+        lambda( er, castedRegion );
+      });
+    }
+  }
+
+
 
 
   template< typename LAMBDA >
