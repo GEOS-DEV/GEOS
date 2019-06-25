@@ -98,8 +98,6 @@ public:
 
   void GenerateMesh( ManagedGroup const * const cellBlockManager );
 
-  void GenerateFractureMesh( FaceManager const * const faceManager );
-
   void GenerateAggregates( FaceManager const * const faceManager );
 
   virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;

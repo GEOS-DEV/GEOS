@@ -23,6 +23,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
 #include "FaceElementSubRegion.hpp"
+#include "AggregateElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -62,8 +63,6 @@ public:
   virtual ~ElementRegion() override;
 
   virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
-
-  void GenerateAggregates( FaceManager const * const faceManager ); 
 
   subGroupMap & GetSubRegions()
   {
@@ -116,13 +115,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, AggregateElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, AggregateElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -143,13 +142,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, AggregateElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, AggregateElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >

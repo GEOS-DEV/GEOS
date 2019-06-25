@@ -788,14 +788,6 @@ void ProblemManager::GenerateMesh()
       });
 
       elemManager->GenerateAggregates( faceManager );
-//      elemManager->forElementSubRegions([&](CellBlockSubRegion * const subRegion)->void
-//      {
-//        subRegion->nodeList().SetRelatedObject(nodeManager);
-//        subRegion->faceList().SetRelatedObject(faceManager);
-//        subRegion->CalculateCellVolumes( array1d<localIndex>(),
-//                                         nodeManager->referencePosition() );
-//      });
-
     }
   }
 }

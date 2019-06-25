@@ -189,12 +189,6 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
   }
 }
 
-void ElementRegion::GenerateAggregates( FaceManager const * const faceManager )
-{
-}
-
-
-
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
 
 }

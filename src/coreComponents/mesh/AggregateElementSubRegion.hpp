@@ -31,7 +31,7 @@ class AggregateElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
+  using NodeMapType=OrderedVariableOneToManyRelation;
 
   static const string CatalogName()
   { return "AggregateCell"; }
@@ -81,21 +81,22 @@ public:
   {
   }
 
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
+  NodeMapType const & nodeList() const
+  {
+    return m_toNodesRelation;
+  }
+
+  NodeMapType & nodeList()
+  {
+    return m_toNodesRelation;
+  }
+
+
   virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
+  {
     return m_toNodesRelation[k];
   }
 
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
   virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
   {
     return m_toNodesRelation[k];

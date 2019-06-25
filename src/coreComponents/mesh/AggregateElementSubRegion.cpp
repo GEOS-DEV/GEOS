@@ -58,17 +58,6 @@ void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregat
     this->m_localToGlobalMap[i] = i + offsetForGlobalIndex;
   }
   this->ConstructGlobalToLocalMap();
-
-  // Aggregate global indexes are saved within the fine cells
-  ElementRegion const * elementRegion = this->getParent()->getParent()->group_cast<ElementRegion const *>();
-  elementRegion->forElementSubRegions( [&]( auto * elementSubRegion ) -> void
-  {
-    auto & aggregateIndexSave =
-      elementSubRegion->template getReference< array1d< globalIndex > > ( CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString );
-    for(int i = 0; i < elementSubRegion->size() ;i++)
-    {
-      aggregateIndexSave[i] = m_localToGlobalMap[fineToCoarse[i]];
-    }
-  });
 }
+
 }

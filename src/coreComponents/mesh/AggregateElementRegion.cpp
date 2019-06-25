@@ -155,6 +155,16 @@ void AggregateElementRegion::Generate( FaceManager const * const faceManager,
     partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
   }
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters, aggregateVolumes);
+  // Aggregate global indexes are saved within the fine cells
+  elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( auto * elementSubRegion ) -> void
+  {
+    auto & aggregateIndexSave =
+      elementSubRegion->template getReference< array1d< globalIndex > > ( CellElementSubRegion::viewKeyStruct::aggregateGlobalIndexString );
+    for(int i = 0; i < elementSubRegion->size() ;i++)
+    {
+      aggregateIndexSave[i] = aggregateSubRegion->m_localToGlobalMap[partsGEOS[i]];
+    }
+  });
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, AggregateElementRegion, std::string const &, ManagedGroup * const )
