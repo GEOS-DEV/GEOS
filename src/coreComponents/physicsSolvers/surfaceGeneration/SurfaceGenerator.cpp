@@ -3467,6 +3467,8 @@ int SurfaceGenerator::CheckNodeSplitability( const localIndex nodeID,
 void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                                      std::set<localIndex> const & indexList )
 {
+  // in serial, we can simply loop over the indexList and assign new global indices based on
+  // the value of the m_maxGlobalIndex + 1;
   for( localIndex const newLocalIndex : indexList )
   {
     globalIndex const newGlobalIndex = object.m_maxGlobalIndex + 1;
@@ -3482,6 +3484,10 @@ void SurfaceGenerator::
 AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                               std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
 {
+  // in serial, we can simply iterate over the entries in newElems and assign new global indices based on
+  // the value of the m_maxGlobalIndex + 1 for the ElementRegionManager.
+
+  // loop over entries of newElems, which gives elementRegion/subRegion local indices
   for( auto const & iter : newElems )
   {
     localIndex const er = iter.first.first;
@@ -3489,6 +3495,8 @@ AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
     std::set<localIndex> const & indexList = iter.second;
 
     ElementSubRegionBase * const subRegion = elementManager.GetRegion(er)->GetSubRegion(esr);
+
+    // loop over the new elems in the subRegion
     for( localIndex const newLocalIndex : indexList )
     {
       globalIndex const newGlobalIndex = elementManager.m_maxGlobalIndex + 1;
