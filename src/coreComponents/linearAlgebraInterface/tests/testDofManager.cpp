@@ -63,6 +63,8 @@ protected:
 
   static void SetUpTestCase()
   {
+    problemManager = new ProblemManager("Problem", nullptr);
+
     string const inputStream =
     "<?xml version=\"1.0\" ?>"
     "<Problem xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
@@ -96,17 +98,17 @@ protected:
 
     int mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
     dataRepository::ManagedGroup * commandLine =
-      problemManager.GetGroup<dataRepository::ManagedGroup>( problemManager.groupKeys.commandLine );
-    commandLine->RegisterViewWrapper<integer>( problemManager.viewKeys.xPartitionsOverride.Key() )->
+      problemManager->GetGroup<dataRepository::ManagedGroup>( problemManager->groupKeys.commandLine );
+    commandLine->RegisterViewWrapper<integer>( problemManager->viewKeys.xPartitionsOverride.Key() )->
       setApplyDefaultValue(mpiSize);
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager.InitializePythonInterpreter();
-    problemManager.ProcessInputFileRecursive( xmlProblemNode );
+    problemManager->InitializePythonInterpreter();
+    problemManager->ProcessInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition * domain  = problemManager.getDomainPartition();
-    MeshManager * meshManager = problemManager.GetGroup<MeshManager>( problemManager.groupKeys.meshManager );
+    DomainPartition * domain  = problemManager->getDomainPartition();
+    MeshManager * meshManager = problemManager->GetGroup<MeshManager>( problemManager->groupKeys.meshManager );
     meshManager->GenerateMeshLevels(domain);
 
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
@@ -114,21 +116,23 @@ protected:
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
-    problemManager.ProblemSetup();
+    problemManager->ProblemSetup();
   }
 
   static void TearDownTestCase()
   {
+    delete problemManager;
+    problemManager = nullptr;
   }
 
-  static ProblemManager problemManager;
+  static ProblemManager * problemManager;
 };
 
-ProblemManager DofManagerTest::problemManager( "Problem", nullptr );
+ProblemManager * DofManagerTest::problemManager = nullptr;
 
 TEST_F(DofManagerTest, TestFEM_partial)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -153,7 +157,7 @@ TEST_F(DofManagerTest, TestFEM_partial)
 
 TEST_F(DofManagerTest, TestFEM_all)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -172,7 +176,7 @@ TEST_F(DofManagerTest, TestFEM_all)
 
 TEST_F(DofManagerTest, TestFVM_partial)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -196,7 +200,7 @@ TEST_F(DofManagerTest, TestFVM_partial)
 
 TEST_F(DofManagerTest, TestFVM_all)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -215,7 +219,7 @@ TEST_F(DofManagerTest, TestFVM_all)
 
 TEST_F(DofManagerTest, TestCoupling)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -258,7 +262,7 @@ TEST_F(DofManagerTest, TestCoupling)
 
 TEST_F(DofManagerTest, TestUserDefinedPattern)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -285,7 +289,7 @@ TEST_F(DofManagerTest, TestUserDefinedPattern)
 
 TEST_F(DofManagerTest, TestFEM_FVM)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -308,7 +312,7 @@ TEST_F(DofManagerTest, TestFEM_FVM)
 
 TEST_F(DofManagerTest, TestMassMatrix)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -330,7 +334,7 @@ TEST_F(DofManagerTest, TestMassMatrix)
 
 TEST_F(DofManagerTest, TestIndices)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -369,7 +373,7 @@ TEST_F(DofManagerTest, TestIndices)
 
 TEST_F(DofManagerTest, TestPermutation)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
@@ -412,7 +416,7 @@ TEST_F(DofManagerTest, TestPermutation)
 // This last test is always true! It collects time
 TEST_F(DofManagerTest, TestWithTimes)
 {
-  DomainPartition * const domain = problemManager.getDomainPartition();
+  DomainPartition * const domain = problemManager->getDomainPartition();
 
   DofManager dofManager;
   dofManager.setMesh( domain, 0, 0 );
