@@ -948,7 +948,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   elementManager->forElementRegions<ElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
-    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
+    elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
     {
       if( numMatInRegion > 1 )
       {
@@ -980,7 +980,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                         getIndexInParent();
       }
 
-      elemRegion->forElementSubRegions([&]( auto const * const subRegion )
+      elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
       {
         if( numMatInRegion == 1 )
         {
