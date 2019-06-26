@@ -274,7 +274,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilWeights[kfe] = pow( -1 , kfe ) * pow( aperture[fractureElementIndex], 3) / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
       }
       // add/overwrite the stencil for index fci
-      fractureStencil.add(2, stencilCells.data(), stencilWeights.data(), fci );
+      fractureStencil.add(numElems, stencilCells.data(), stencilWeights.data(), fci );
     }
   }
 
