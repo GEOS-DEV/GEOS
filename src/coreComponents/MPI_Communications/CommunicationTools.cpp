@@ -458,6 +458,78 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
 
 void
 CommunicationTools::
+AssignNewGlobalIndices( ElementRegionManager & elementManager,
+                        std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
+{
+  int const thisRank = MPI_Rank( MPI_COMM_GEOSX );
+  int const commSize = MPI_Size( MPI_COMM_GEOSX );
+
+  localIndex numberOfNewObjectsHere = 0;
+
+  for( auto const & iter : newElems )
+  {
+    localIndex const er = iter.first.first;
+    localIndex const esr = iter.first.second;
+    std::set<localIndex> const & indexList = iter.second;
+    numberOfNewObjectsHere += indexList.size();
+  }
+
+  localIndex_array numberOfNewObjects( commSize );
+  localIndex_array glocalIndexOffset( commSize );
+  MPI_Allgather( reinterpret_cast<char*>( &numberOfNewObjectsHere ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 reinterpret_cast<char*>( numberOfNewObjects.data() ),
+                 sizeof(localIndex),
+                 MPI_CHAR,
+                 MPI_COMM_GEOSX );
+
+
+  glocalIndexOffset[0] = 0;
+  for( int rank = 1 ; rank < commSize ; ++rank )
+  {
+    glocalIndexOffset[rank] = glocalIndexOffset[rank - 1] + numberOfNewObjects[rank - 1];
+  }
+
+  localIndex nIndicesAssigned = 0;
+  globalIndex maxGlobalIndex = -1;
+
+  for( auto const & iter : newElems )
+  {
+    localIndex const er = iter.first.first;
+    localIndex const esr = iter.first.second;
+    std::set<localIndex> const & indexList = iter.second;
+
+    ElementSubRegionBase * const subRegion = elementManager.GetRegion(er)->GetSubRegion(esr);
+
+    for ( localIndex const newLocalIndex : indexList )
+    {
+      GEOS_ERROR_IF( subRegion->m_localToGlobalMap[newLocalIndex] != -1,
+                     "Local object " << newLocalIndex << " should be new but already has a global index "
+                     << subRegion->m_localToGlobalMap[newLocalIndex] );
+
+      subRegion->m_localToGlobalMap[newLocalIndex] = elementManager.m_maxGlobalIndex + glocalIndexOffset[thisRank] + nIndicesAssigned + 1;
+      subRegion->m_globalToLocalMap[subRegion->m_localToGlobalMap[newLocalIndex]] = newLocalIndex;
+
+      nIndicesAssigned += 1;
+    }
+    for( localIndex a=0 ; a<subRegion->m_localToGlobalMap.size() ; ++a )
+    {
+      maxGlobalIndex = std::max( maxGlobalIndex, subRegion->m_localToGlobalMap[a] );
+    }
+  }
+
+
+  MPI_Allreduce( &maxGlobalIndex,
+                 &(elementManager.m_maxGlobalIndex),
+                 1,
+                 MPI_LONG_LONG_INT,
+                 MPI_MAX,
+                 MPI_COMM_GEOSX );
+}
+
+void
+CommunicationTools::
 FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                      array1d<NeighborCommunicator> & allNeighbors )//,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )

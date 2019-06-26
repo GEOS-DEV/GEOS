@@ -135,8 +135,23 @@ public:
                         const bool prefrac,
                         const realT time );
 
+  /**
+   * @brief Function to generate new global indices of a simple object (node, edge, face)
+   * @param[in/out] object A reference to the object that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
+
+
+  /**
+   * @brief Function to generate new global indices for elements
+   * @param[in/out] elementManager A reference to the ElementRegionManager that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
+  void
+  AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+                                std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
