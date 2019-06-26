@@ -945,12 +945,10 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   int dims = 0;
   int mixlen=0;
 
-  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  elementManager->forElementRegions<ElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
   {
-    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
-
-    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
+    elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
     {
       if( numMatInRegion > 1 )
       {
@@ -958,7 +956,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       }
       dims += subRegion->size();
     });
-  }
+  } );
 
   array1d<integer> matlist( dims );
   array1d<integer> mix_zone( mixlen );
@@ -968,53 +966,54 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   int elemCount = 0;
   int mixCount = 0;
-  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  elementManager->forElementRegions<ElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
   {
-    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     int const numMatInRegion = elemRegion->getMaterialList().size();
-    if (numMatInRegion <= 0) continue;
-    array1d<localIndex> matIndices(numMatInRegion);
-
-    for( localIndex a=0 ; a<numMatInRegion ; ++a )
+    if (numMatInRegion > 0)
     {
-      matIndices[a] = constitutiveManager->
-                      GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
-                      getIndexInParent();
-    }
+      array1d<localIndex> matIndices(numMatInRegion);
 
-    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
-    {
-      if( numMatInRegion == 1 )
+      for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
-        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
-        {
-          matlist[elemCount++] = matIndices[0];
-        }
+        matIndices[a] = constitutiveManager->
+                        GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
+                        getIndexInParent();
       }
-      else
+
+      elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
       {
-        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        if( numMatInRegion == 1 )
         {
-          matlist[elemCount++] = -(mixCount+1);
-          for( localIndex a=0 ; a<numMatInRegion ; ++a )
+          for( localIndex k = 0 ; k < subRegion->size() ; ++k )
           {
-            mix_zone[mixCount] = k;
-            mix_mat[mixCount] = matIndices[a];
-            mix_vf[mixCount] = 1.0/numMatInRegion;
-            if( a == numMatInRegion-1 )
-            {
-              mix_next[mixCount] = 0;
-            }
-            else
-            {
-              mix_next[mixCount] = mixCount+2;
-            }
-            ++mixCount;
+            matlist[elemCount++] = matIndices[0];
           }
         }
-      }
-    });
-  }
+        else
+        {
+          for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+          {
+            matlist[elemCount++] = -(mixCount+1);
+            for( localIndex a=0 ; a<numMatInRegion ; ++a )
+            {
+              mix_zone[mixCount] = k;
+              mix_mat[mixCount] = matIndices[a];
+              mix_vf[mixCount] = 1.0/numMatInRegion;
+              if( a == numMatInRegion-1 )
+              {
+                mix_next[mixCount] = 0;
+              }
+              else
+              {
+                mix_next[mixCount] = mixCount+2;
+              }
+              ++mixCount;
+            }
+          }
+        }
+      });
+    }
+  } );
 
   {
     DBoptlist* optlist = DBMakeOptlist(3);
@@ -1586,9 +1585,9 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
   array1d< array1d< std::map< string, ViewWrapperBase const * > > > viewPointers(elementManager->numRegions());
 
-  for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+  elementManager->forElementRegionsComplete<ElementRegion,FaceElementRegion>( [&]( localIndex const er,
+                                                                                   auto const * const elemRegion )
   {
-    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
     viewPointers[er].resize( elemRegion->numSubRegions() );
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                auto const * const subRegion )
@@ -1626,7 +1625,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
         }
       }
     });
-  }
+  } );
   fakeGroup.resize(numElems);
 
 
@@ -1645,9 +1644,9 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+      elementManager->forElementRegionsComplete<ElementRegion,FaceElementRegion>( [&]( localIndex const er,
+                                                                                       auto const * const elemRegion )
       {
-        ElementRegion const * const elemRegion = elementManager->GetRegion(er);
         elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                    auto const * const subRegion )
         {
@@ -1666,7 +1665,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
             counter += subRegion->size();
           }
         });
-      }
+      });
     });
   }
 
@@ -1772,60 +1771,62 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     coords[2] = zcoords.data();
 
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
-    const localIndex numElementRegions = elementManager->GetGroup(keys::elementRegions)->GetSubGroups().size();
-    array1d<localIndex*> meshConnectivity(numElementRegions);
-    array1d<globalIndex*> globalElementNumbers(numElementRegions);
-    array1d<integer> shapecnt(numElementRegions);
-    array1d<integer> shapetype(numElementRegions);
-    array1d<integer> shapesize(numElementRegions);
+    localIndex numElementShapes = 0;
+
+    elementManager->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto const * const subRegion )
+    {
+      ++numElementShapes;
+    });
+
+    array1d<localIndex*> meshConnectivity(numElementShapes);
+    array1d<globalIndex*> globalElementNumbers(numElementShapes);
+    array1d<integer> shapecnt(numElementShapes);
+    array1d<integer> shapetype(numElementShapes);
+    array1d<integer> shapesize(numElementShapes);
 
     array1d<FixedOneToManyRelation> elementToNodeMap;
-    elementToNodeMap.resize( numElementRegions );
+    elementToNodeMap.resize( numElementShapes );
 
     int count = 0;
 
     ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
 
-    for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
+    elementManager->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto const * const elementSubRegion )
     {
-      ElementRegion const * const region = elementManager->GetRegion(er);
+      TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
 
-      region->forElementSubRegions([&]( auto const * const elementSubRegion )
+      // TODO HACK. this isn't correct for variable relations.
+      elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
+
+      integer_array const & elemGhostRank = elementSubRegion->GhostRank();
+
+
+      string elementType = elementSubRegion -> GetElementTypeString();
+      integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
+      for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
       {
-        TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
-
-        // TODO HACK. this isn't correct for variable relations.
-        elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
-
-        integer_array const & elemGhostRank = elementSubRegion->GhostRank();
-
-
-        string elementType = elementSubRegion -> GetElementTypeString();
-        integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
-        for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
+        integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
+        for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
         {
-          integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
-          for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
-          {
-            elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
-          }
-
-          if( elemGhostRank[k] >= 0 )
-          {
-            ghostZoneFlag.push_back( 1 );
-          }
-          else
-          {
-            ghostZoneFlag.push_back( 0 );
-          }
+          elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
         }
 
+        if( elemGhostRank[k] >= 0 )
+        {
+          ghostZoneFlag.push_back( 1 );
+        }
+        else
+        {
+          ghostZoneFlag.push_back( 0 );
+        }
+      }
 
-        meshConnectivity[count] = elementToNodeMap[count].data();
+
+      meshConnectivity[count] = elementToNodeMap[count].data();
 
 
-//        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
-        shapecnt[count] = static_cast<int>(elementSubRegion->size());
+      //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
+      shapecnt[count] = static_cast<int>(elementSubRegion->size());
 
 
       if (! elementType.compare(0, 4, "C3D8") )
@@ -1846,31 +1847,31 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
         shapetype[count] = DB_ZONETYPE_PYRAMID;
         writeArbitraryPolygon = true; 
       }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
-// !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_QUAD;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") ||
-// !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") ||
-// !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
-//      {
-//        shapetype[count] = DB_ZONETYPE_TRIANGLE;
-//      }
-//      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE2") )
-//      {
-//        shapetype[count] = DB_ZONETYPE_TRIANGLE;
-//      }
-//      else
-//      {
-//        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize
-// geometry type " + elementRegion.m_elementGeometryID + " \n");
-//      }
+      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
+      // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
+      //      {
+      //        shapetype[count] = DB_ZONETYPE_QUAD;
+      //      }
+      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") ||
+      // !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") ||
+      // !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
+      //      {
+      //        shapetype[count] = DB_ZONETYPE_TRIANGLE;
+      //      }
+      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE2") )
+      //      {
+      //        shapetype[count] = DB_ZONETYPE_TRIANGLE;
+      //      }
+      //      else
+      //      {
+      //        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize
+      // geometry type " + elementRegion.m_elementGeometryID + " \n");
+      //      }
 
-        shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
-        count++;
-      });
-    }
+      shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
+      ++count;
+    });
+
 
 
 
@@ -1880,7 +1881,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                     nodeManager->m_localToGlobalMap.data(),
                     ghostNodeFlag.data(),
                     ghostZoneFlag.data(),
-                    integer_conversion<int>(numElementRegions),
+                    integer_conversion<int>(numElementShapes),
                     shapecnt.data(),
                     meshConnectivity.data(),
                     nullptr /*globalElementNumbers.data()*/,
