@@ -111,7 +111,7 @@ void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & 
 
 // single element 
 void PetscVector::set( globalIndex const globalRow,
-                        real64 const value 
+                        real64 const value )
 {
 	VecSetValue(_vec, globalRow, value, INSERT_VALUES);
 	VecAssemblyBegin(_vec);
@@ -119,7 +119,7 @@ void PetscVector::set( globalIndex const globalRow,
 }
 
 void PetscVector::add( globalIndex const globalRow,
-                        real64 const value 
+                        real64 const value )
 {
 	VecSetValue(_vec, globalRow, value, ADD_VALUES);
 	VecAssemblyBegin(_vec);
