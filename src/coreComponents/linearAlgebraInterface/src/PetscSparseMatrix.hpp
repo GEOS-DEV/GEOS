@@ -331,8 +331,8 @@ public:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B. 
    */
-  void multiply( PetscMatrix const &src,
-                 PetscMatrix &dst ) const;
+  void multiply( PetscSparseMatrix const &src,
+                 PetscSparseMatrix &dst ) const;
 
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
@@ -440,7 +440,7 @@ public:
   /**
    * @brief Returns underlying PETSc matrix.
    */
-  Mat getMat()
+  Mat getMat();
 
   /**
    * @brief Returns the number of global rows.

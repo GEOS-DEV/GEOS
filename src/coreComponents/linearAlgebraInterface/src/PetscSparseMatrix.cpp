@@ -64,10 +64,10 @@ PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const &in_matrix )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from an Epetra_FECrsGraph.
 // """""""""""""""""""""""""""""""""""""""""""""""
-void PetscSparseMatrix::create( Epetra_FECrsGraph const &graph )
-{
-	// Hannah: skip?
-}
+// void PetscSparseMatrix::create( Epetra_FECrsGraph const &graph )
+// {
+// 	// Hannah: skip?
+// }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from number of elements

@@ -297,7 +297,7 @@ class PetscVector
    * @brief Infinity-norm of the vector.
    *
    */
-  real64 normInf() const
+  real64 normInf() const;
 
   //@}
 
