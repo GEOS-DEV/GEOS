@@ -2967,7 +2967,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
           {
             R1Tensor temp;
 
-            //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio so we multiply force and E here.
+            //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
             temp = nodalForceFromElement[er][esr][iEle][n];
             temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
             temp /= (1 - poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]*poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
