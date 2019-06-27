@@ -36,7 +36,7 @@ using namespace geosx;
 
 using INDEX_TYPE = std::ptrdiff_t;
 
-static real64 const machinePrecision = 10. * std::numeric_limits<real64>::epsilon();
+static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsilon();
 static real64 const pi = std::atan(1.0)*4.0;
 
 template<typename LAI>
