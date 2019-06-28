@@ -7,6 +7,7 @@ add_subdirectory(coupling/hdf5_interface)
 set(fileIO_headers
   xmlWrapper.hpp
   silo/SiloFile.hpp
+  vtk/VTKFile.hpp
   vtm/VtmFile.hpp
   blueprint/Blueprint.hpp
   schema/SchemaUtilities.hpp
@@ -19,6 +20,7 @@ set(fileIO_headers
 set(fileIO_sources
   xmlWrapper.cpp
   silo/SiloFile.cpp
+  vtk/VTKFile.cpp
   vtm/VtmFile.cpp
   schema/SchemaUtilities.cpp
   blueprint/Blueprint.cpp
