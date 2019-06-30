@@ -260,12 +260,13 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
       SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
 
 
-      rval = SeparationDriver( meshLevel,
-                               neighbors,
-                               partition.GetColor(),
-                               partition.NumColor(),
-                               0,
-                               time_n );
+        rval = SeparationDriver( meshLevel,
+                                 neighbors,
+                                 partition.GetColor(),
+                                 partition.NumColor(),
+                                 0,
+                                 time_n );
+
     }
   }
 
@@ -431,6 +432,7 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
     {
       for( localIndex a=0 ; a<nodeManager.size() ; ++a )
       {
+        int didSplit = 0;
         //      const localIndex nodeID = nodeManager.GetParentIndex(a);
         if( //layersFromDomainBoundary[a]>1 &&
           (   //isSeparable[a]
@@ -440,8 +442,13 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
           CheckNodeSplitability( a, nodeManager, faceManager, edgeManager, prefrac ) > 0 )  //&&
         //          nodesToRupturedFaces[a].size()>0 )
         {
-          rval += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
-                               modifiedObjects, prefrac );
+          didSplit += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
+                                   modifiedObjects, prefrac );
+          if( didSplit > 0 )
+          {
+            rval += didSplit;
+            --a;
+          }
         }
       }
     }
