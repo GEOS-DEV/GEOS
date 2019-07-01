@@ -21,6 +21,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           METIS
                           MPI
                           OPENMP
+                          CUDA
                           PARMETIS
                           PYTHON
                           RAJA 

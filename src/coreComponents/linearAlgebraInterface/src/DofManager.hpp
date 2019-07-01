@@ -409,6 +409,48 @@ private:
    */
   struct FieldDescription
   {
+    FieldDescription()
+    {}
+    
+    ~FieldDescription()
+    {}
+
+    FieldDescription( FieldDescription const & src ) :
+      name( src.name ),
+      regionNames( src.regionNames ),
+      regionPtrs( src.regionPtrs ),
+      location( src.location ),
+      numComponents( src.numComponents ),
+      key( src.key ),
+      docstring( src.docstring ),
+      numLocalNodes( src.numLocalNodes ),
+      numLocalRows( src.numLocalRows ),
+      numLocalConnectivity( src.numLocalConnectivity ),
+      numGlobalRows( src.numGlobalRows ),
+      firstLocalRow( src.firstLocalRow ),
+      fieldOffset( src.fieldOffset ),
+      firstLocalConnectivity( src.firstLocalConnectivity ),
+      connLocPattern( src.connLocPattern )
+    {}
+
+    FieldDescription( FieldDescription && src ) :
+      name( std::move( src.name ) ),
+      regionNames( std::move( src.regionNames ) ),
+      regionPtrs( std::move( src.regionPtrs ) ),
+      location( std::move( src.location ) ),
+      numComponents( std::move( src.numComponents ) ),
+      key( std::move( src.key ) ),
+      docstring( std::move( src.docstring ) ),
+      numLocalNodes( std::move( src.numLocalNodes ) ),
+      numLocalRows( std::move( src.numLocalRows ) ),
+      numLocalConnectivity( std::move( src.numLocalConnectivity ) ),
+      numGlobalRows( std::move( src.numGlobalRows ) ),
+      firstLocalRow( std::move( src.firstLocalRow ) ),
+      fieldOffset( std::move( src.fieldOffset ) ),
+      firstLocalConnectivity( std::move( src.firstLocalConnectivity ) ),
+      connLocPattern( std::move( src.connLocPattern ) )
+    {}
+
     string name; //!< field name
     array1d<string> regionNames; //!< active element regions
     array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
