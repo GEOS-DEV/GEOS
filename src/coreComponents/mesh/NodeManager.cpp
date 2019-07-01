@@ -84,6 +84,8 @@ NodeManager::~NodeManager()
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   /// flow of function:
   /// <ol>
   /// <li> Extract edgeToNode map from the edge manager
@@ -130,6 +132,8 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   ArrayOfArrays<localIndex> & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
@@ -151,6 +155,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
         arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodes[a];

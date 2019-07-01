@@ -398,7 +398,7 @@ void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeMan
 {
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
 
-  forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
     CalculateCellVolumesKernel( k, X );
   });
