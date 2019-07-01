@@ -50,10 +50,12 @@ void RestartOutput::Execute(real64 const time_n,
                             real64 const eventProgress,
                             ManagedGroup * domain)
 {
+#ifdef GEOSX_USE_ATK
+  GEOSX_MARK_FUNCTION;
+
   DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
   ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
 
-#ifdef GEOSX_USE_ATK
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
   char fileName[200] = {0};

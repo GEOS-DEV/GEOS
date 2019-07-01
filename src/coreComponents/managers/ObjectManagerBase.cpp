@@ -152,6 +152,8 @@ void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array&
 
 void ObjectManagerBase::ConstructGlobalToLocalMap()
 {
+  GEOSX_MARK_FUNCTION;
+
   m_globalToLocalMap.clear();
   for( localIndex k=0 ; k<size() ; ++k )
   {
