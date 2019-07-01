@@ -67,13 +67,6 @@ public:
                                  integer const updateStiffnessFlag ) override;
 
 
-  /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
-   */
-  void GetStiffness( localIndex const k, real64 c[6][6] ) const;
-
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     static constexpr auto bulkModulus0String  = "defaultBulkModulus";
@@ -98,18 +91,64 @@ public:
   arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
   arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
 
+  class KernelWrapper
+  {
+  public:
+    KernelWrapper( arrayView1d<real64 const> const bulkModulus,
+                   arrayView1d<real64 const> const shearModulus ) :
+      m_bulkModulus( bulkModulus ),
+      m_shearModulus( shearModulus )
+    {}
+
+    /**
+     * accessor to return the stiffness at a given element
+     * @param k the element number
+     * @param c the stiffness array
+     */
+    GEOSX_HOST_DEVICE inline
+    void GetStiffness( localIndex const k, real64 (&c)[6][6] ) const
+    {
+      real64 const G = m_shearModulus[k];
+      real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+
+      memset( c, 0, sizeof( c ) );
+
+      c[0][0] = Lame + 2 * G;
+      c[0][1] = Lame;
+      c[0][2] = Lame;
+
+      c[1][0] = Lame;
+      c[1][1] = Lame + 2 * G;
+      c[1][2] = Lame;
+
+      c[2][0] = Lame;
+      c[2][1] = Lame;
+      c[2][2] = Lame + 2 * G;
+
+      c[3][3] = G;
+
+      c[4][4] = G;
+
+      c[5][5] = G;
+    }
+
+  private:
+    arrayView1d<real64 const> const m_bulkModulus;
+    arrayView1d<real64 const> const m_shearModulus;
+  };
+
+  KernelWrapper createKernelWrapper() const
+  { return KernelWrapper( m_bulkModulus, m_shearModulus ); }
 
 protected:
   virtual void PostProcessInput() override;
 
 private:
 
-
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
-
 };
 
 
