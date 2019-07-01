@@ -166,10 +166,12 @@ struct AccumulationKernel
 
 
     // Residual contribution is mass conservation in the cell
-    localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
+    //localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
+    localAccum = poroOld * densNew * volNew - poroOld * densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    //localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
   }
 };
 
@@ -392,6 +394,90 @@ struct FluxKernel
       fluxJacobian[1][ke] = -fluxJacobian[0][ke];
     }
   }
+
+
+  /**
+   * @brief Compute flux and its derivatives for a given multi-element connector.
+   *
+   * This is a specialized version that flux in a single region, and uses
+   * element pairing instead of a proper junction.
+   */
+  inline static void
+  ComputeJunction( localIndex const numFluxElems,
+           FluxApproximationBase::CellStencil::Entry const * const stencil,
+           arrayView1d<real64 const> const & pres,
+           arrayView1d<real64 const> const & dPres,
+           arrayView1d<real64 const> const & gravDepth,
+           arrayView2d<real64 const> const & dens,
+           arrayView2d<real64 const> const & dDens_dPres,
+           arrayView1d<real64 const> const & mob,
+           arrayView1d<real64 const> const & dMob_dPres,
+           localIndex const fluidIndex,
+           integer const gravityFlag,
+           real64 const dt,
+           arraySlice1d<real64> const & flux,
+           arraySlice2d<real64> const & fluxJacobian )
+  {
+
+    localIndex k[2];
+    for( k[0]=0 ; k[0]<numFluxElems ; ++k[0] )
+    {
+      for( k[1]=k[0]+1 ; k[1]<numFluxElems ; ++k[1] )
+      {
+        real64  dFlux_dP[2] = {0,0};
+
+        localIndex const ei[2] = { stencil[k[0]].index.index, stencil[k[1]].index.index };
+
+        real64 const weight[2] = {   1 / ( 1 / stencil[k[0]].weight + 1 / stencil[k[1]].weight),
+                                   - 1 / ( 1 / stencil[k[0]].weight + 1 / stencil[k[1]].weight) };
+
+
+        // average density
+        real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
+
+        real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
+                                         0.5 * dDens_dPres[ei[1]][0] };
+
+        real64 potDif = 0.0;
+        for( localIndex i = 0 ; i < 2 ; ++i )
+        {
+          real64 const gravD = gravDepth[ei[i]];
+          real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
+          real64 const dGrav_dP = gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
+
+          potDif += weight[i] * (pres[ei[i]] + dPres[ei[i]] - gravTerm);
+          dFlux_dP[i] = weight[i] * (1.0 - dGrav_dP);
+        }
+
+        // upwinding of fluid properties (make this an option?)
+        localIndex const k_up = (potDif >= 0) ? 0 : 1;
+
+        CellDescriptor const & cell_up = stencil[k[k_up]].index;
+        localIndex ei_up  = cell_up.index;
+
+        real64 const mobility     = mob[ei_up];
+        real64 const dMobility_dP = dMob_dPres[ei_up];
+
+        // compute the final flux and derivatives
+        real64 const fluxVal = mobility * potDif;
+        dFlux_dP[0] *= mobility;
+        dFlux_dP[1] *= mobility;
+
+        dFlux_dP[k_up] += dMobility_dP * potDif;
+
+        // populate local flux vector and derivatives
+        flux[k[0]] += dt * fluxVal;
+        flux[k[1]] -= dt * fluxVal;
+
+        fluxJacobian[k[0]][k[0]] += dt * dFlux_dP[0];
+        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
+        fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
+        fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
+
+      }
+    }
+  }
+
 
 };
 

@@ -45,6 +45,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setApplyDefaultValue(1.0e-5)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The aperture of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
@@ -56,6 +57,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
     setApplyDefaultValue(-1.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The volume of each FaceElement.");
 
   m_numNodesPerElement = 8;
