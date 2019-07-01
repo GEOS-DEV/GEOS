@@ -29,6 +29,7 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -53,10 +54,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     field[index] = static_cast<T>(value);
   }
@@ -74,10 +75,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     field[index].Data()[component] = value;
   }
@@ -95,10 +96,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     if( component >= 0 )
     {
@@ -126,10 +127,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     if( component >= 0)
     {
@@ -159,10 +160,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -186,16 +187,16 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       for( localIndex b=0; b<field.size( 2 ) ; ++b )
       {
-        field[index][a][b].Data()[component] = value;
+        field[index][a][b][component] = value;
       }
     }
   }
@@ -317,10 +318,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     field[index] += static_cast<T>(value);
   }
@@ -338,12 +339,12 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
-    field[index].Data()[component] += value;
+    field[index][component] += value;
   }
 
   /**
@@ -358,10 +359,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -382,10 +383,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -853,11 +854,11 @@ private:
 
 template< typename FIELD_OP >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
-                                                           real64 const time,
-                                                           ManagedGroup * dataGroup,
-                                                           string const & fieldName ) const
+                                              real64 const time,
+                                              ManagedGroup * dataGroup,
+                                              string const & fieldName ) const
 {
-
+  LvArray::SortedArrayView<localIndex const, localIndex> const & targetSetView = targetSet;
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -868,44 +869,45 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto type, auto baseType ) -> void
+  {
+    using fieldType = decltype(type);
+    dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
+
+    auto & field = view.referenceAsView();
+    if( functionName.empty() )
     {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
-      fieldType & field = view.reference();
-      if( functionName.empty() )
+      forall_in_set<parallelHostPolicy>(targetSetView.values(), targetSetView.size(), GEOSX_LAMBDA (localIndex const a)
       {
-        for( auto a : targetSet )
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+      });
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+      GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+      if( function->isFunctionOfTime()==2 )
+      {
+        real64 value = m_scale * function->Evaluate( &time );
+        forall_in_set<parallelHostPolicy>(targetSetView.values(), targetSetView.size(), GEOSX_LAMBDA (localIndex const a)
         {
-          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
-        }
+          FIELD_OP::SpecifyFieldValue( field, a, component, value );
+        });
       }
       else
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-        GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-        if( function->isFunctionOfTime()==2 )
+        real64_array result( static_cast<localIndex>(targetSetView.size()) );
+        function->Evaluate( dataGroup, time, targetSet, result );
+        arrayView1d<real64 const> const & resultView = result;
+        forall_in_range<parallelHostPolicy>(0, targetSetView.size(), GEOSX_LAMBDA (localIndex const i)
         {
-          real64 value = m_scale * function->Evaluate( &time );
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, value );
-          }
-        }
-        else
-        {
-          real64_array result( static_cast<localIndex>(targetSet.size()) );
-          function->Evaluate( dataGroup, time, targetSet, result );
-          integer count=0;
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*result[count] );
-            ++count;
-          }
-        }
+          localIndex const a = targetSetView[ i ];
+          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
+        });
       }
-    } );
+    }
+  } );
 }
 
 
