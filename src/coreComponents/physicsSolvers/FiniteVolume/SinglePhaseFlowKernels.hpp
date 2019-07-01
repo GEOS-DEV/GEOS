@@ -419,7 +419,13 @@ struct FluxKernel
            arraySlice2d<real64> const & fluxJacobian )
   {
 
-    localIndex k[2];
+    real64 sumOfWeights = 0;
+    for( localIndex k=0 ; k<numFluxElems ; ++k )
+    {
+      sumOfWeights += stencil[k].weight;
+    }
+
+      localIndex k[2];
     for( k[0]=0 ; k[0]<numFluxElems ; ++k[0] )
     {
       for( k[1]=k[0]+1 ; k[1]<numFluxElems ; ++k[1] )
@@ -428,8 +434,8 @@ struct FluxKernel
 
         localIndex const ei[2] = { stencil[k[0]].index.index, stencil[k[1]].index.index };
 
-        real64 const weight[2] = {   1 / ( 1 / stencil[k[0]].weight + 1 / stencil[k[1]].weight),
-                                   - 1 / ( 1 / stencil[k[0]].weight + 1 / stencil[k[1]].weight) };
+        real64 const weight[2] = {   stencil[k[0]].weight * stencil[k[1]].weight / sumOfWeights,
+                                   - stencil[k[0]].weight * stencil[k[1]].weight / sumOfWeights };
 
 
         // average density
