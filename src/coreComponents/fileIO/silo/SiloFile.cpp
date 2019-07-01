@@ -976,7 +976,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
         matIndices[a] = constitutiveManager->
-                        GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
+                        GetConstitutiveRelation( elemRegion->getMaterialList()[a] )->
                         getIndexInParent();
       }
 
@@ -1119,7 +1119,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   for( localIndex matI=0 ; matI<nmat ; ++matI )
   {
     ConstitutiveBase const * const
-    constitutiveModel = constitutiveManager->GetConstitituveRelation(matI);
+    constitutiveModel = constitutiveManager->GetConstitutiveRelation(matI);
 
     for( auto const & wrapperIter : constitutiveModel->wrappers() )
     {
@@ -1183,7 +1183,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       MakeSubDirectory(matName, matDir);
       DBSetDir(m_dbBaseFilePtr, matDir.c_str());
 
-      ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitituveRelation(matIndex);
+      ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitutiveRelation(matIndex);
       for (auto fieldName : fieldNames)
       {
         if (constitutiveModel->hasView(fieldName.first))
