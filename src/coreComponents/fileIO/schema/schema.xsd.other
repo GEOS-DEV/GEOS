@@ -196,7 +196,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="EventsType">
@@ -798,7 +798,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="elementRegionsType" />
@@ -822,7 +822,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt;" />
@@ -864,7 +864,7 @@
 		<xsd:attribute name="gravityDepth" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--mobility => (no description available)-->
 		<xsd:attribute name="mobility" type="real64_array" />
@@ -918,7 +918,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--parentIndex => Parent index of node.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
@@ -943,7 +943,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellBlocksType" />
@@ -961,7 +961,7 @@
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => (no description available)-->
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="elementSubRegionsType" />
