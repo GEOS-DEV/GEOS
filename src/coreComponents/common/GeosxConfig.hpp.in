@@ -24,6 +24,7 @@
 #cmakedefine GEOSX_USE_TIMERS
 #cmakedefine GEOSX_USE_MKL
 
+#cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
 
 #endif  /* GEOSX_CONFIG_HPP */
