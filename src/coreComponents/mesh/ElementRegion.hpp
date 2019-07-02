@@ -107,6 +107,18 @@ public:
     m_cellBlockNames.push_back( cellBlockName );
   }
 
+  /*!
+   * @brief Get the number of elements within all the ElementSubRegion
+   */
+  localIndex GetTotalSize() const
+  {
+    localIndex nbElements = 0;
+    this->forElementSubRegions([&]( auto const * const elemSubRegion )
+    {
+      nbElements += elemSubRegion->size();
+    });
+    return nbElements;
+  }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const

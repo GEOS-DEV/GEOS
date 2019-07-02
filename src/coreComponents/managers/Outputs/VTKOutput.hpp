@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
+#include "fileIO/vtk/VTKFile.hpp"
 
 
 namespace geosx
@@ -77,6 +78,8 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+
+  VTKFile m_vtkFile;
 
 };
 
