@@ -26,48 +26,12 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FluxStencil.hpp"
+#include "FaceElementStencil.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
 
-/**
- * @struct A structure containing a single cell (element) identifier triplet
- */
-struct CellDescriptor
-{
-  localIndex region;
-  localIndex subRegion;
-  localIndex index;
-
-  bool operator==( CellDescriptor const & other )
-  {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
-  }
-};
-
-/**
- * @struct A structure describing an arbitrary point participating in a stencil
- *
- * Nodal and face center points are identified by local mesh index.
- * Cell center points are identified by a triplet <region,subregion,index>.
- *
- * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
- * cell and face centroids, so we have to discriminate between them at runtime
- */
-struct PointDescriptor
-{
-  enum class Tag { CELL, FACE, NODE };
-
-  Tag tag;
-
-  union
-  {
-    localIndex nodeIndex;
-    localIndex faceIndex;
-    CellDescriptor cellIndex;
-  };
-};
 
 /**
  * @class FluxApproximationBase
@@ -111,6 +75,9 @@ public:
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
+
+  template<typename LAMBDA>
+  void forStencilConnections(LAMBDA && lambda) const;
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
@@ -175,8 +142,21 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappers<CellStencil>([&] (auto const * const vw) -> void
+  this->forViewWrappers<CellStencil,FaceElementStencil>([&] (auto const * const vw) -> void
   {
+    lambda(vw->reference());
+  });
+}
+
+template<typename LAMBDA>
+void FluxApproximationBase::forStencilConnections(LAMBDA && lambda) const
+{
+  this->forViewWrappers<CellStencil,FaceElementStencil>([&] (auto const * const vw) -> void
+  {
+    using STENCIL_TYPE = TYPEOFPTR( vw )::TYPE;
+    STENCIL_TYPE const & stencil = vw->reference();
+
+    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
     lambda(vw->reference());
   });
 }

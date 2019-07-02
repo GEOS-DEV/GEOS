@@ -738,82 +738,126 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   integer const gravityFlag = m_gravityFlag;
   localIndex const fluidIndex = m_fluidIndex;
 
-  constexpr localIndex maxNumFluxElems = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;//FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
 
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
     ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
+    constexpr localIndex maxNumFluxElems = STENCIL_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex maxStencilSize = STENCIL_TYPE::MAX_STENCIL_SIZE;
+
+    if( std::is_same< STENCIL_TYPE, FluxApproximationBase::CellStencil >::value )
     {
-      localIndex const stencilSize  = connections.sizeOfArray(iconn);
-      localIndex const numFluxElems = connections.sizeOfArray(iconn);
-
-      // working arrays
-      stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
-      stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
-
-      stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
-      stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
-/*
-      FluxKernel::Compute( stencilSize,
-                           connections[iconn],
-                           pres,
-                           dPres,
-                           gravDepth,
-                           dens,
-                           dDens_dPres,
-                           mob,
-                           dMob_dPres,
-                           fluidIndex,
-                           gravityFlag,
-                           dt,
-                           localFlux,
-                           localFluxJacobian );
-      */
-      localIndex const er = connections[iconn][0].index.region;
-      localIndex const esr = connections[iconn][0].index.subRegion;
-
-      FluxKernel::ComputeJunction( numFluxElems,
-                                   connections[iconn],
-                                   pres[er][esr],
-                                   dPres[er][esr],
-                                   gravDepth[er][esr],
-                                   dens[er][esr][m_fluidIndex],
-                                   dDens_dPres[er][esr][m_fluidIndex],
-                                   mob[er][esr],
-                                   dMob_dPres[er][esr],
-                                   fluidIndex,
-                                   gravityFlag,
-                                   dt,
-                                   localFlux,
-                                   localFluxJacobian );
-
-      // extract DOF numbers
-      eqnRowIndices = -1;
-      for (localIndex i = 0; i < numFluxElems; ++i)
+      forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      }
+        localIndex const numFluxElems = maxNumFluxElems;
+        localIndex const stencilSize  = connections.sizeOfArray(iconn);
 
-      for (localIndex i = 0; i < stencilSize; ++i)
+        // working arrays
+        stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
+        stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+
+        stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+        stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
+
+        FluxKernel::Compute( stencilSize,
+                             connections[iconn],
+                             pres,
+                             dPres,
+                             gravDepth,
+                             dens,
+                             dDens_dPres,
+                             mob,
+                             dMob_dPres,
+                             fluidIndex,
+                             gravityFlag,
+                             dt,
+                             localFlux,
+                             localFluxJacobian );
+
+        // extract DOF numbers
+        eqnRowIndices = -1;
+        for (localIndex i = 0; i < numFluxElems; ++i)
+        {
+          CellDescriptor const & cell = connections(iconn, i).index;
+          eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        }
+
+        for (localIndex i = 0; i < stencilSize; ++i)
+        {
+          CellDescriptor const & cell = connections(iconn, i).index;
+          dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        }
+
+        // Add to global residual/jacobian
+        jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
+                                       eqnRowIndices.data(),
+                                       integer_conversion<int>(stencilSize),
+                                       dofColIndices.data(),
+                                       localFluxJacobian.data() );
+
+        residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
+      });
+    }
+    else if( std::is_same< STENCIL_TYPE, FaceElementStencil >::value )
+    {
+      forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
-      }
+        localIndex const numFluxElems = connections.sizeOfArray(iconn);
+        localIndex const stencilSize  = connections.sizeOfArray(iconn);
 
-      // Add to global residual/jacobian
-      jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                     eqnRowIndices.data(),
-                                     integer_conversion<int>(stencilSize),
-                                     dofColIndices.data(),
-                                     localFluxJacobian.data() );
+        // working arrays
+        stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
+        stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
 
-      residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
-    });
+        stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+        stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
+
+        localIndex const er = connections[iconn][0].index.region;
+        localIndex const esr = connections[iconn][0].index.subRegion;
+
+        FluxKernel::ComputeJunction( numFluxElems,
+                                     connections[iconn],
+                                     pres[er][esr],
+                                     dPres[er][esr],
+                                     gravDepth[er][esr],
+                                     dens[er][esr][m_fluidIndex],
+                                     dDens_dPres[er][esr][m_fluidIndex],
+                                     mob[er][esr],
+                                     dMob_dPres[er][esr],
+                                     fluidIndex,
+                                     gravityFlag,
+                                     dt,
+                                     localFlux,
+                                     localFluxJacobian );
+
+        // extract DOF numbers
+        eqnRowIndices = -1;
+        for (localIndex i = 0; i < numFluxElems; ++i)
+        {
+          CellDescriptor const & cell = connections(iconn, i).index;
+          eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        }
+
+        for (localIndex i = 0; i < stencilSize; ++i)
+        {
+          CellDescriptor const & cell = connections(iconn, i).index;
+          dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        }
+
+        // Add to global residual/jacobian
+        jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
+                                       eqnRowIndices.data(),
+                                       integer_conversion<int>(stencilSize),
+                                       dofColIndices.data(),
+                                       localFluxJacobian.data() );
+
+        residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
+      });
+    }
   });
+
 }
 
 void SinglePhaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
