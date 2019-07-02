@@ -22,6 +22,7 @@
 
 #include "VTKOutput.hpp"
 #include "fileIO/vtk/VTKFile.hpp"
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -34,7 +35,8 @@ VTKOutput::VTKOutput( std::string const & name,
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
-  m_plotLevel()
+  m_plotLevel(),
+  m_vtkFile(name)
 {
   RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -48,6 +50,8 @@ VTKOutput::VTKOutput( std::string const & name,
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
+
+  m_vtkFile.SetPlotLevel( m_plotLevel );
 
 }
 
@@ -63,6 +67,8 @@ void VTKOutput::Execute(real64 const time_n,
                          real64 const eventProgress,
                          ManagedGroup * domain)
 {
+  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  m_vtkFile.Write( time_n, *domainPartition);
 }
 
 
