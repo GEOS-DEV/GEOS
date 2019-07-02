@@ -51,7 +51,15 @@ VTKOutput::VTKOutput( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
+  RegisterViewWrapper(viewKeysStruct::binaryString, &m_writeBinaryData, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Output the data in binary format");
+
   m_vtkFile.SetPlotLevel( m_plotLevel );
+  std::cout <<"BINARY "<<  m_writeBinaryData << std::endl;
+  std::cout <<"PLOTLEVEL "<<  m_plotLevel << std::endl;
+  m_vtkFile.SetBinaryMode( m_writeBinaryData) ;
 
 }
 

@@ -63,6 +63,15 @@ class VTKFile
   }
 
   /*!
+   * @brief Set the binary mode
+   * @param[in] binary the binary mode
+   */
+  void SetBinaryMode( const bool binary )
+  {
+    m_binary = binary;
+  }
+
+  /*!
    * @brief Output a file for one time step
    * @param[in] cycle the cycle number
    */
