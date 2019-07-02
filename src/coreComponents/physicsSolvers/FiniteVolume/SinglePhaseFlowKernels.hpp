@@ -166,12 +166,12 @@ struct AccumulationKernel
 
 
     // Residual contribution is mass conservation in the cell
-    //localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
-    localAccum = poroOld * densNew * volNew - poroOld * densOld * volume;
+    localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
+    //localAccum = poroOld * densNew * volNew - poroOld * densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    //localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
-    localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
+    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    //localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
   }
 };
 
