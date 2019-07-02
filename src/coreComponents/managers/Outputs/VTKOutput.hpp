@@ -71,6 +71,7 @@ public:
     static constexpr auto plotFileRoot = "plotFileRoot";
     static constexpr auto writeFEMFaces = "writeFEMFaces";
     static constexpr auto plotLevel = "plotLevel";
+    static constexpr auto binaryString = "writeBinaryData";
 
   } vtkOutputViewKeys;
 
@@ -78,6 +79,8 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+
+  integer m_writeBinaryData;
 
   VTKFile m_vtkFile;
 

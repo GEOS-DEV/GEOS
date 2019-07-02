@@ -105,11 +105,14 @@ namespace geosx
       auto vtkFileNode = pvtuFile.append_child("VTKFile");
       vtkFileNode.append_attribute("type") = "PUnstructuredGrid";
       vtkFileNode.append_attribute("version") = "0.1";
-      vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
+      if( m_binary )
+      {
+        vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
+      }
 
       // Declaration of the node PUnstructuredGrid
       auto pUnstructureGridNode = vtkFileNode.append_child("PUnstructuredGrid");
-      pUnstructureGridNode.append_attribute("GhostLevel") = "0";
+      pUnstructureGridNode.append_attribute("GhostLevel") = "1";
 
       // Declaration the node PPoints
       auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
