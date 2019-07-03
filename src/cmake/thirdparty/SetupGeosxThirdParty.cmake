@@ -181,7 +181,7 @@ if( ENABLE_CALIPER )
             NO_SYSTEM_ENVIRONMENT_PATH
             NO_CMAKE_SYSTEM_PATH)
 
-    set( caliper_lib_list caliper caliper-mpi )
+    set( caliper_lib_list caliper-mpi caliper )
 
     message(STATUS "looking for libs in ${CALIPER_DIR}")
     blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
