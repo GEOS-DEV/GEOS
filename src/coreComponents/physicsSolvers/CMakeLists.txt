@@ -10,6 +10,7 @@ set( physicsSolvers_headers
      CoupledSolvers/PoroelasticSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
+     FiniteVolume/ProppantTransport.hpp     
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/SinglePhaseFlowKernels.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
@@ -30,6 +31,7 @@ set( physicsSolvers_sources
      CoupledSolvers/PoroelasticSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
+     FiniteVolume/ProppantTransport.cpp          
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/SinglePhaseFlowKernels.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp

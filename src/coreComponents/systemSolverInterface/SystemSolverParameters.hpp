@@ -72,6 +72,8 @@ public:
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
     static constexpr auto maxSubStepsString         = "maxSubSteps";
 
+    static constexpr auto doLineSearchString   = "doLineSearch";
+    
   } viewKeys;
 
   struct groupKeysStruct
@@ -104,7 +106,8 @@ public:
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
 
-
+  integer doLineSearch() const           { return m_doLineSearch; }  
+  
   integer m_verbose;
   string  m_solverType;
   real64  m_krylovTol;
@@ -131,6 +134,7 @@ public:
   integer m_allowNonConverged;
   integer m_maxSubSteps;
 
+  integer m_doLineSearch;
 
 };
 

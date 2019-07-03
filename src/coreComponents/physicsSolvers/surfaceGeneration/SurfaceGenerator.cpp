@@ -36,6 +36,7 @@
 #endif
 
 #include <set>
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -269,6 +270,14 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     }
   }
 
+  
+  /* Initial conditions (e.g. fracture aperture) must read again after fracture generation */
+
+  FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
+
+  boundaryConditionManager->ApplyInitialConditions( domain );
+
+  
   NumericalMethodsManager * const
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
 

@@ -86,11 +86,13 @@ public:
 
   ArrayOfArraysView<Entry const, true> getConnections() const { return m_connections; }
 
+  const localIndex_array &getConnectorMeshIndices() const { return m_connectorMeshIndices; }
+  
 private:
 
   ArrayOfArrays<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
-
+  localIndex_array m_connectorMeshIndices; 
 };
 
 template<typename INDEX, typename WEIGHT>
@@ -138,6 +140,7 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
 
   m_connections.appendArray( entries.data(), numPts );
   m_connectorIndices[connectorIndex] = m_connections.size() - 1;
+  m_connectorMeshIndices.push_back(connectorIndex);  
 }
 
 template<typename INDEX, typename WEIGHT>

@@ -163,7 +163,8 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
   FaceManager * const faceManager = mesh->getFaceManager();
-
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  
   R1Tensor const & gravityVector = getGravityVector();
 
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
@@ -176,7 +177,9 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 
     forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex a )
     {
+      subRegion->calculateElementCenter(a, *nodeManager);
       gravityDepth[a] = Dot( elemCenter[a], gravityVector );
+
     } );
   } );
 

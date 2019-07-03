@@ -125,15 +125,13 @@ public:
   {
   } groupKeysFlowSolverBase;
 
-private:
+protected:
 
   /**
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
   void PrecomputeData(DomainPartition *const domain);
-
-protected:
 
   virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
