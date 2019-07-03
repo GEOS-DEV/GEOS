@@ -57,8 +57,16 @@ void RestartOutput::Execute(real64 const time_n,
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
 
+  // Modification to allow testing
+  integer tmp_cycle = 0;
+  if (cycleNumber > 0)
+  {
+    tmp_cycle = cycleNumber + 1;
+  }
+  std::cout << "Note: cycle number in restarts is modified for testing!" << std::endl;
+
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
+  sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", tmp_cycle);
 
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
