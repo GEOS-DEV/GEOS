@@ -1,4 +1,3 @@
-
 site_name(HOST_NAME)
 set(CONFIG_NAME "${HOST_NAME}-darwin-x86_64-clang@apple-mp" CACHE PATH "") 
 message( "CONFIG_NAME = ${CONFIG_NAME}" )
@@ -7,7 +6,6 @@ set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
 set(CMAKE_Fortran_COMPILER "/usr/local/bin/gfortran" CACHE PATH "")
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
-
 
 set(ENABLE_MPI ON CACHE PATH "")
 set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
@@ -22,16 +20,8 @@ set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
 
 set(CUDA_ENABLED      "OFF"       CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "OFF"        CACHE PATH "" FORCE)
-set(CHAI_BUILD_TYPE   "cpu-no-rm" CACHE PATH "" FORCE)
-set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
-
-option( RAJA_ENABLE_TBB "" OFF)
-set(RAJA_ENABLE_OPENMP "OFF"        CACHE BOOL "" FORCE)
 
 option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
-set( BLAS_DIR "/usr" CACHE PATH "" FORCE )
-set( BLAS_LIBRARY_NAMES "libblas.dylib" CACHE PATH "" FORCE )
-set( LAPACK_DIR "/usr" CACHE PATH "" FORCE )
-set( LAPACK_LIBRARY_NAMES "liblapack.dylib" CACHE PATH "" FORCE )
-#set( ENABLE_LAPACK_SUITE ON CACHE BOOL "" FORCE )
+set( BLAS_LIBRARIES /usr/lib/libblas.dylib CACHE PATH "" FORCE )
+set( LAPACK_LIBRARIES /usr/lib/liblapack.dylib CACHE PATH "" FORCE )
