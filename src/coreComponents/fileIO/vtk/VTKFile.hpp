@@ -26,6 +26,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/RestartFlags.hpp" 
 #include "mesh/InterObjectRelation.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 #include "pugixml.hpp"
 
@@ -134,7 +135,7 @@ class VTKFile
       public:
         CustomVTUXMLWriter() = delete;
         CustomVTUXMLWriter( string const & fileName ) :
-          m_outFile( fileName/*, std::ios::binary*/ ),
+          m_outFile( fileName, std::ios::binary ),
           m_spaceCount(0)
         {
         }
@@ -233,9 +234,17 @@ class VTKFile
         }
 
       private:
+
         void WriteBinaryVertices( r1_array const & vertices )
         {
-          m_outFile.write( (char*)vertices.data()->Data(), vertices.size() );
+          std::stringstream stream;
+          std::uint32_t size = vertices.size() *3 *  sizeof( real64 );
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          for( auto const & vertex : vertices )
+          {
+            stream << stringutilities::EncodeBase64( ( const unsigned char * ) vertex.Data(), 3*sizeof( real64 )) ;
+          }
+          m_outFile << stream.rdbuf() << '\n';
         }
 
         void WriteAsciiVertices( r1_array const & vertices )
@@ -249,29 +258,36 @@ class VTKFile
         template< typename NODEMAPTYPE >
         void WriteBinaryConnectivities( NODEMAPTYPE const & connectivities )
         {
+          // TODO hardcoded, waiting for the VTK HEX node ordering in GEOSX
+          std::stringstream stream;
+          std::uint32_t size = connectivities.size() * sizeof( localIndex );
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          std::cout << size << std::endl;
+          for( localIndex i = 0; i < connectivities.size() / 8 ; i++ )
+          {
+            std::cout << connectivities[i][0] << " " <<
+connectivities[i][1] << " " <<
+connectivities[i][2] << " " <<
+connectivities[i][3] << " " <<
+connectivities[i][4] << " " <<
+connectivities[i][5] << " " <<
+connectivities[i][6] << " " <<
+connectivities[i][7] << std::endl;
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][0], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][1], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][3], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][2], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][4], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][5], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][7], sizeof( localIndex ) );
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][6], sizeof( localIndex ) );
+          }
+          m_outFile << stream.rdbuf() << '\n';
         }
 
         template< typename NODEMAPTYPE >
         void WriteAsciiConnectivities( NODEMAPTYPE const & connectivities )
         {
-          /*
-          cellToVertex[cellLocalIndex][0] =
-            cornerList[0]->get_localIndex();
-          cellToVertex[cellLocalIndex][1] =
-            cornerList[1]->get_localIndex();
-          cellToVertex[cellLocalIndex][2] =
-            cornerList[3]->get_localIndex();
-          cellToVertex[cellLocalIndex][3] =
-            cornerList[2]->get_localIndex();
-          cellToVertex[cellLocalIndex][4] =
-            cornerList[4]->get_localIndex();
-          cellToVertex[cellLocalIndex][5] =
-            cornerList[5]->get_localIndex();
-          cellToVertex[cellLocalIndex][6] =
-            cornerList[7]->get_localIndex();
-          cellToVertex[cellLocalIndex][7] =
-            cornerList[6]->get_localIndex();
-          */
           // TODO hardcoded, waiting for the VTK HEX node ordering in GEOSX
           for( localIndex i = 0; i < connectivities.size() / 8 ; i++ )
           {
@@ -285,12 +301,6 @@ class VTKFile
             m_outFile << connectivities[i][6] << " ";
             m_outFile << "\n";
           }
-          /*
-          for( auto connectivity : connectivities )
-          {
-            m_outFile << connectivity << " ";
-          }
-          */
         }
 
         void WriteAsciiOffsets( localIndex j, localIndex nb )
@@ -303,9 +313,18 @@ class VTKFile
 
         void WriteBinaryOffsets( localIndex j, localIndex nb )
         {
+          std::stringstream stream;
+          std::uint32_t size = nb * sizeof( localIndex );
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          for( localIndex i = 1 ; i < nb + 1 ; i++)
+          {
+            localIndex ij = i*j;
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )&ij, sizeof( localIndex ));
+          }
+          m_outFile << stream.rdbuf() << '\n';
         }
 
-        void WriteAsciiTypes( int type, localIndex nb )
+        void WriteAsciiTypes( integer type, localIndex nb )
         {
           for( localIndex i = 0 ; i < nb ; i++)
           {
@@ -313,8 +332,17 @@ class VTKFile
           }
         }
 
-        void WriteBinaryTypes( int type, localIndex nb )
+        void WriteBinaryTypes( integer type, localIndex nb )
         {
+          std::stringstream stream;
+          std::uint32_t size = nb * sizeof( integer );
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          string typeString64 = stringutilities::EncodeBase64( ( const unsigned char * )&type, sizeof( integer ));
+          for( localIndex i = 0 ; i < nb ; i++)
+          {
+            stream << typeString64;
+          }
+          m_outFile << stream.rdbuf() << '\n';
         }
 
         template< typename T >
@@ -350,7 +378,7 @@ class VTKFile
     const unordered_map< rtTypes::TypeIDs, string > m_geosxToVTKTypeMap =
     {
       {rtTypes::TypeIDs::integer_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_id, "Int32"},
+      {rtTypes::TypeIDs::localIndex_id, "Int64"},
       {rtTypes::TypeIDs::globalIndex_id, "Int64"},
       {rtTypes::TypeIDs::real32_id, "Float32"},
       {rtTypes::TypeIDs::real64_id, "Float64"},
@@ -362,12 +390,12 @@ class VTKFile
       {rtTypes::TypeIDs::real32_array2d_id, "Float32"},
       {rtTypes::TypeIDs::real32_array3d_id, "Float32"},
       {rtTypes::TypeIDs::integer_array_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_array_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_array2d_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_array3d_id, "Int32"},
-      {rtTypes::TypeIDs::globalIndex_array_id, "Int32"},
-      {rtTypes::TypeIDs::globalIndex_array2d_id, "Int32"},
-      {rtTypes::TypeIDs::globalIndex_array3d_id, "Int32"},
+      {rtTypes::TypeIDs::localIndex_array_id, "Int64"},
+      {rtTypes::TypeIDs::localIndex_array2d_id, "Int64"},
+      {rtTypes::TypeIDs::localIndex_array3d_id, "Int64"},
+      {rtTypes::TypeIDs::globalIndex_array_id, "Int64"},
+      {rtTypes::TypeIDs::globalIndex_array2d_id, "Int64"},
+      {rtTypes::TypeIDs::globalIndex_array3d_id, "Int64"},
     };
     /// Root file ( .pvd )
     pugi::xml_document m_rootFile;
