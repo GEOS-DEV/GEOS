@@ -75,13 +75,13 @@ namespace geosx
     if( m_binary )
     {
       format = "binary";
-    }
+    }  
     else
     {
       format = "ascii";
     }
-    if( mpiRank == 0 )
-    {
+    if( mpiRank == 0 )    
+    {                     
       /// Add the new entry to the pvd root file
       auto collectionNode = m_rootFile.child("VTKFile").child("Collection");
       auto dataSetNode = collectionNode.append_child("DataSet");
@@ -238,7 +238,7 @@ namespace geosx
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the cell types
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id ) },
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
@@ -255,6 +255,7 @@ namespace geosx
   vtuWriter.CloseXMLNode( "Cells" );
 
   // Definition of the CellDataArray node that will contains all the data held by the elements
+  /*
   vtuWriter.OpenXMLNode( "CellData", {} );
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                                    auto const * const elemRegion )
@@ -299,6 +300,7 @@ namespace geosx
     });
   });
   vtuWriter.CloseXMLNode( "CellData" );
+  */
   vtuWriter.CloseXMLNode( "Piece" );
   vtuWriter.CloseXMLNode( "UnstructuredGrid" );
   vtuWriter.CloseXMLNode( "VTKFile" );
