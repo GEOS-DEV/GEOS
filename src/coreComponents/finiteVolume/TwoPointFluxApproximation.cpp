@@ -178,7 +178,12 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
       stencilCells[ke] = { elemRegionList[kf][ke], elemSubRegionList[kf][ke], elemList[kf][ke] };
       stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
     }
-    stencil.add(2, stencilCells.data(), stencilWeights.data(), kf);
+    stencil.add( CellStencil::NUM_POINT_IN_FLUX,
+                 &(elemRegionList[kf][0]),
+                 &(elemSubRegionList[kf]),
+                 &(elemList[kf]),
+                 stencilWeights.data(),
+                 kf);
   }
   stencil.compress();
 }
