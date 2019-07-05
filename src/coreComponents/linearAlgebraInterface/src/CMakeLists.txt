@@ -33,7 +33,7 @@ set( linearAlgebraInterface_sources
      BlockMatrixView.cpp
      BlasLapackLA.cpp)
 
-set( dependencyList common trilinos hypre raja hdf5 pugixml mpi )
+set( dependencyList common blas lapack trilinos hypre raja hdf5 pugixml mpi )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )

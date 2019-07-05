@@ -160,16 +160,16 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
-  MultiFluidBase const * fluid = cm->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+  MultiFluidBase const * fluid = cm->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
   m_numPhases     = fluid->numFluidPhases();
   m_numComponents = fluid->numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;
 
-  RelativePermeabilityBase const * relPerm = cm->GetConstitituveRelation<RelativePermeabilityBase>( m_relPermName );
+  RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation<RelativePermeabilityBase>( m_relPermName );
   GEOS_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
   m_relPermIndex = relPerm->getIndexInParent();
 
-  CapillaryPressureBase const * capPressure = cm->GetConstitituveRelation<CapillaryPressureBase>( m_capPressureName );
+  CapillaryPressureBase const * capPressure = cm->GetConstitutiveRelation<CapillaryPressureBase>( m_capPressureName );
   if (m_capPressureFlag)
   {
     GEOS_ERROR_IF( capPressure == nullptr, "Capillary pressure model " + m_capPressureName + " not found" );
@@ -594,7 +594,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   // set mass fraction flag on main model
   // TODO find a way to set this before constitutive model is duplicated and attached to subregions?
   {
-    MultiFluidBase * const fluid = constitutiveManager->GetConstitituveRelation<MultiFluidBase>( m_fluidName );
+    MultiFluidBase * const fluid = constitutiveManager->GetConstitutiveRelation<MultiFluidBase>( m_fluidName );
     fluid->setMassFlag( static_cast<bool>(m_useMass) );
   }
 
