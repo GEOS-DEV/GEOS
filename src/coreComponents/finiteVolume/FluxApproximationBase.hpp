@@ -50,7 +50,7 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil     = FluxStencil<CellDescriptor, real64>;
+  using CellStencil     = FluxStencil<localIndex, real64>;
   using BoundaryStencil = FluxStencil<PointDescriptor, real64>;
 
   FluxApproximationBase() = delete;
@@ -144,19 +144,6 @@ void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
   this->forViewWrappers<CellStencil,FaceElementStencil>([&] (auto const * const vw) -> void
   {
-    lambda(vw->reference());
-  });
-}
-
-template<typename LAMBDA>
-void FluxApproximationBase::forStencilConnections(LAMBDA && lambda) const
-{
-  this->forViewWrappers<CellStencil,FaceElementStencil>([&] (auto const * const vw) -> void
-  {
-    using STENCIL_TYPE = TYPEOFPTR( vw )::TYPE;
-    STENCIL_TYPE const & stencil = vw->reference();
-
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
     lambda(vw->reference());
   });
 }
