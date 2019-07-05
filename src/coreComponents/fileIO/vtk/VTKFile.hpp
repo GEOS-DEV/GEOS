@@ -262,25 +262,18 @@ class VTKFile
           std::stringstream stream;
           std::uint32_t size = connectivities.size() * sizeof( localIndex );
           stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
-          std::cout << size << std::endl;
           for( localIndex i = 0; i < connectivities.size() / 8 ; i++ )
           {
-            std::cout << connectivities[i][0] << " " <<
-connectivities[i][1] << " " <<
-connectivities[i][2] << " " <<
-connectivities[i][3] << " " <<
-connectivities[i][4] << " " <<
-connectivities[i][5] << " " <<
-connectivities[i][6] << " " <<
-connectivities[i][7] << std::endl;
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][0], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][1], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][3], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][2], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][4], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][5], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][7], sizeof( localIndex ) );
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&connectivities[i][6], sizeof( localIndex ) );
+            localIndex_array connectivityIndex(8);
+            connectivityIndex[0] = connectivities[i][0];
+            connectivityIndex[1] = connectivities[i][1];
+            connectivityIndex[2] = connectivities[i][3];
+            connectivityIndex[3] = connectivities[i][2];
+            connectivityIndex[4] = connectivities[i][4];
+            connectivityIndex[5] = connectivities[i][5];
+            connectivityIndex[6] = connectivities[i][7];
+            connectivityIndex[7] = connectivities[i][6];
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )connectivityIndex.data(), sizeof( localIndex ) * 8 );
           }
           m_outFile << stream.rdbuf() << '\n';
         }
@@ -315,12 +308,22 @@ connectivities[i][7] << std::endl;
         {
           std::stringstream stream;
           std::uint32_t size = nb * sizeof( localIndex );
+          localIndex multiplier = FindMultiplier( sizeof( integer ) );
           stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
-          for( localIndex i = 1 ; i < nb + 1 ; i++)
+          localIndex_array offsetFragment( multiplier );
+          for( integer i = 0; i < multiplier; i++)
           {
-            localIndex ij = i*j;
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )&ij, sizeof( localIndex ));
+            offsetFragment[i] = ( i + 1 ) * j;
           }
+          for( localIndex i = 0 ; i < nb / multiplier ; i++)
+          {
+            stream << stringutilities::EncodeBase64( ( const unsigned char * )offsetFragment.data(), sizeof( localIndex ) * multiplier );
+            for( integer k = 0; k < multiplier; k++)
+            {
+              offsetFragment[k] += j * multiplier;
+            }
+          }
+          stream <<stringutilities::EncodeBase64( ( const unsigned char * )offsetFragment.data(), sizeof( localIndex ) * ( nb % multiplier) );
           m_outFile << stream.rdbuf() << '\n';
         }
 
@@ -337,11 +340,18 @@ connectivities[i][7] << std::endl;
           std::stringstream stream;
           std::uint32_t size = nb * sizeof( integer );
           stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
-          string typeString64 = stringutilities::EncodeBase64( ( const unsigned char * )&type, sizeof( integer ));
-          for( localIndex i = 0 ; i < nb ; i++)
+          localIndex multiplier = FindMultiplier( sizeof( integer ) );
+          integer_array typeArray( multiplier );
+          for( integer i = 0; i < multiplier; i++ )
+          {
+            typeArray[i] = type;
+          }
+          string typeString64 = stringutilities::EncodeBase64( ( const unsigned char * )typeArray.data(), sizeof( integer ) * multiplier );
+          for( localIndex i = 0 ; i < nb / multiplier ; i++)
           {
             stream << typeString64;
           }
+          stream <<stringutilities::EncodeBase64( ( const unsigned char * )typeArray.data(), sizeof( integer ) * ( nb % multiplier) );
           m_outFile << stream.rdbuf() << '\n';
         }
 
@@ -355,8 +365,23 @@ connectivities[i][7] << std::endl;
         }
 
         template< typename T >
-        void WriteBinaryData( T const & data)
+        void WriteBinaryData( T const & data )
         {
+          std::stringstream stream;
+          std::uint32_t size = data.size() * sizeof( real64 );
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          stream << stringutilities::EncodeBase64( ( const unsigned char * )data.data(), sizeof( data[0] ) * data.size() );
+          m_outFile << stream.rdbuf() << '\n';
+        }
+
+        localIndex FindMultiplier( localIndex typeSize )
+        {
+          localIndex multiplier = 1;
+          while( ( multiplier * typeSize) % 6 )
+          {
+            multiplier++;
+          }
+          return multiplier;
         }
       private:
         /// vtu output file
@@ -416,5 +441,18 @@ connectivities[i][7] << std::endl;
     bool m_compress;
 
 };
+
+template<>
+inline void VTKFile::CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
+{
+  std::stringstream stream;
+  std::uint32_t size = data.size() * sizeof( real64 ) * 3;
+  stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+  for( auto const & elem : data )
+  {
+    stream << stringutilities::EncodeBase64(  ( const unsigned char * )elem.Data(), sizeof( real64 ) * 3 );
+  }
+  m_outFile << stream.rdbuf() << '\n';
+}
 }
 #endif /* VTKFILE_H_ */
