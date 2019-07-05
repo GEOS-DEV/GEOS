@@ -69,14 +69,14 @@ TEST( PAMELAImport, testXML )
   inputStreamRegion <<
   "<?xml version=\"1.0\" ?>" <<
   "  <ElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-  "  <ElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"3\" cellBlocks=\"{3_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"4\" cellBlocks=\"{4_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"5\" cellBlocks=\"{5_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"6\" cellBlocks=\"{6_TETRA}\" materialList=\"{water rock}\"/>" <<
-  "  <ElementRegion name=\"7\" cellBlocks=\"{7_TETRA}\" materialList=\"{water rock}\"/>" <<
+  "  <ElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"3\" cellBlocks=\"{3_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"4\" cellBlocks=\"{4_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"5\" cellBlocks=\"{5_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"6\" cellBlocks=\"{6_TETRA}\" materialList=\"{water, rock}\"/>" <<
+  "  <ElementRegion name=\"7\" cellBlocks=\"{7_TETRA}\" materialList=\"{water, rock}\"/>" <<
   "</ElementRegions>";
   const string inputStringRegion = inputStreamRegion.str();
 

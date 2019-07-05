@@ -64,25 +64,25 @@ public:
   ~ConstitutiveManager() override;
 
   template< typename T = ConstitutiveBase >
-  T const * GetConstitituveRelation( string const & constitutiveRelationInstanceName ) const
+  T const * GetConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
   {
     return this->GetGroup<T>( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
-  T * GetConstitituveRelation( string const & constitutiveRelationInstanceName )
+  T * GetConstitutiveRelation( string const & constitutiveRelationInstanceName )
   {
     return this->GetGroup<T>( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
-  T const * GetConstitituveRelation( localIndex const index ) const
+  T const * GetConstitutiveRelation( localIndex const index ) const
   {
     return this->GetGroup<T>( index );
   }
 
   template< typename T = ConstitutiveBase >
-  T * GetConstitituveRelation( localIndex const index )
+  T * GetConstitutiveRelation( localIndex const index )
   {
     return this->GetGroup<T>( index );
   }
