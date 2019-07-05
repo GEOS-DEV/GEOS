@@ -233,7 +233,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.PostProcessInputRecursive();
 
-  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitituveRelation<LinearElasticAnisotropic>("granite");
+  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation<LinearElasticAnisotropic>("granite");
   dataRepository::ManagedGroup disc( "discretization", nullptr );
   disc.resize(1);
   model->AllocateConstitutiveData( &disc, 1 );
