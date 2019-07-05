@@ -117,14 +117,14 @@ namespace geosx
       // Declaration the node PPoints
       auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
       // .... and the data array containg the positions
-      CreatePDataArray( pPointsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id), "Position", 3 );
+      CreatePDataArray( pPointsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id), "Position", 3, format );
 
       // Declaration of the node PCells
       auto pCellsNode = pUnstructureGridNode.append_child("PCells");
       // .... and its data array defining the connectivities, types, and offsets
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1 );
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1 );
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1 );
+      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1, "ascii" ); //TODO harcoded for the moment
+      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1, format );
+      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1, format );
 
       // Find all the fields to output
       auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
@@ -154,7 +154,7 @@ namespace geosx
               {
                 dimension = 1;
               }
-              CreatePDataArray(pCellDataNode, m_geosxToVTKTypeMap.at(fieldType), fieldName, dimension);
+              CreatePDataArray(pCellDataNode, m_geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
             }
           }
        });
@@ -211,13 +211,13 @@ namespace geosx
   vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
                                         { "Name", "connectivity" },
                                         { "NumberOfComponents", "1" },
-                                        { "format", format } } );
+                                        { "format", "ascii" } } ); //TODO harcoded in ascii for th emoment
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                               auto const * const elemRegion )
   {
     elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
-      vtuWriter.WriteCellConnectivities( elemSubRegion->nodeList(), m_binary );
+      vtuWriter.WriteCellConnectivities( elemSubRegion->nodeList(), false ); //TODO harcoded in ascii for the moment
     });
   });
   vtuWriter.CloseXMLNode( "DataArray" );
@@ -255,7 +255,6 @@ namespace geosx
   vtuWriter.CloseXMLNode( "Cells" );
 
   // Definition of the CellDataArray node that will contains all the data held by the elements
-  /*
   vtuWriter.OpenXMLNode( "CellData", {} );
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                                    auto const * const elemRegion )
@@ -300,7 +299,6 @@ namespace geosx
     });
   });
   vtuWriter.CloseXMLNode( "CellData" );
-  */
   vtuWriter.CloseXMLNode( "Piece" );
   vtuWriter.CloseXMLNode( "UnstructuredGrid" );
   vtuWriter.CloseXMLNode( "VTKFile" );
