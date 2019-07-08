@@ -43,9 +43,9 @@ void erase( OrderedVariableToManyElementRelation & relation,
         esr==relation.m_toElementSubRegion[firstIndex][a] &&
         ei==relation.m_toElementIndex[firstIndex][a] )
     {
-      relation.m_toElementRegion.eraseArrayValue(firstIndex,a);
-      relation.m_toElementSubRegion.eraseArrayValue( firstIndex,a);
-      relation.m_toElementIndex.eraseArrayValue(firstIndex,a);
+      relation.m_toElementRegion.eraseFromArray(firstIndex,a);
+      relation.m_toElementSubRegion.eraseFromArray( firstIndex,a);
+      relation.m_toElementIndex.eraseFromArray(firstIndex,a);
     }
   }
 }
