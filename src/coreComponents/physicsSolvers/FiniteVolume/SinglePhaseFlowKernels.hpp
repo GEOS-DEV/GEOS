@@ -207,7 +207,10 @@ struct FluxKernel
    */
   inline static void
   Compute( localIndex const stencilSize,
-           FluxApproximationBase::CellStencil::Entry const * const stencil,
+           arraySlice1d<localIndex> const & seri,
+           arraySlice1d<localIndex> const & sesri,
+           arraySlice1d<localIndex> const & sei,
+           arraySlice1d<real64> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
@@ -238,11 +241,9 @@ struct FluxKernel
     real64 densMean = 0.0;
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
-      CellDescriptor const & cell = stencil[ke].index;
-
       // density
-      real64 const density = dens[cell.region][cell.subRegion][fluidIndex][cell.index][0];
-      real64 const dDens_dP = dDens_dPres[cell.region][cell.subRegion][fluidIndex][cell.index][0];
+      real64 const density = dens[seri[ke]][sesri[ke]][fluidIndex][sei[ke]][0];
+      real64 const dDens_dP = dDens_dPres[seri[ke]][sesri[ke]][fluidIndex][sei[ke]][0];
 
       // average density
       densMean        += densWeight[ke] * density;
@@ -253,12 +254,11 @@ struct FluxKernel
     real64 potDif = 0.0;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
-      CellDescriptor const & cell = stencil[ke].index;
-      localIndex const er  = cell.region;
-      localIndex const esr = cell.subRegion;
-      localIndex const ei  = cell.index;
+      localIndex const er  = seri[ke];
+      localIndex const esr = sesri[ke];
+      localIndex const ei  = sei[ke];
 
-      real64 weight = stencil[ke].weight;
+      real64 weight = stencilWeights[ke];
 
       real64 const gravD = gravDepth[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
@@ -271,10 +271,9 @@ struct FluxKernel
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
-    CellDescriptor const & cell_up = stencil[k_up].index;
-    localIndex er_up  = cell_up.region;
-    localIndex esr_up = cell_up.subRegion;
-    localIndex ei_up  = cell_up.index;
+    localIndex er_up  = seri[k_up];
+    localIndex esr_up = sesri[k_up];
+    localIndex ei_up  = sei[k_up];
 
     real64 const mobility     = mob[er_up][esr_up][ei_up];
     real64 const dMobility_dP = dMob_dPres[er_up][esr_up][ei_up];
@@ -307,7 +306,8 @@ struct FluxKernel
    */
   inline static void
   Compute( localIndex const stencilSize,
-           FluxApproximationBase::CellStencil::Entry const * const stencil,
+           arraySlice1d<localIndex> const & stencilElementIndices,
+           arraySlice1d<real64> const & stencilWeights,
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & dPres,
            arrayView1d<real64 const> const & gravDepth,
@@ -338,11 +338,9 @@ struct FluxKernel
     real64 densMean = 0.0;
     for (localIndex i = 0; i < numElems; ++i)
     {
-      CellDescriptor const & cell = stencil[i].index;
-
       // density
-      real64 const density = dens[cell.index][0];
-      real64 const dDens_dP = dDens_dPres[cell.index][0];
+      real64 const density = dens[stencilElementIndices[i]][0];
+      real64 const dDens_dP = dDens_dPres[stencilElementIndices[i]][0];
 
       // average density
       densMean += densWeight[i] * density;
@@ -353,10 +351,8 @@ struct FluxKernel
     real64 potDif = 0.0;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
-      CellDescriptor const & cell = stencil[ke].index;
-      localIndex const ei = cell.index;
-
-      real64 const weight = stencil[ke].weight;
+      localIndex const ei = stencilElementIndices[ke];
+      real64 const weight = stencilWeights[ke];
 
       real64 const gravD = gravDepth[ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
@@ -369,8 +365,7 @@ struct FluxKernel
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
-    CellDescriptor const & cell_up = stencil[k_up].index;
-    localIndex ei_up  = cell_up.index;
+    localIndex ei_up  = stencilElementIndices[k_up];
 
     real64 const mobility     = mob[ei_up];
     real64 const dMobility_dP = dMob_dPres[ei_up];
@@ -404,38 +399,39 @@ struct FluxKernel
    */
   inline static void
   ComputeJunction( localIndex const numFluxElems,
-           FluxApproximationBase::CellStencil::Entry const * const stencil,
-           arrayView1d<real64 const> const & pres,
-           arrayView1d<real64 const> const & dPres,
-           arrayView1d<real64 const> const & gravDepth,
-           arrayView2d<real64 const> const & dens,
-           arrayView2d<real64 const> const & dDens_dPres,
-           arrayView1d<real64 const> const & mob,
-           arrayView1d<real64 const> const & dMob_dPres,
-           localIndex const fluidIndex,
-           integer const gravityFlag,
-           real64 const dt,
-           arraySlice1d<real64> const & flux,
-           arraySlice2d<real64> const & fluxJacobian )
+                   arraySlice1d<localIndex> const & stencilElementIndices,
+                   arraySlice1d<real64> const & stencilWeights,
+                   arrayView1d<real64 const> const & pres,
+                   arrayView1d<real64 const> const & dPres,
+                   arrayView1d<real64 const> const & gravDepth,
+                   arrayView2d<real64 const> const & dens,
+                   arrayView2d<real64 const> const & dDens_dPres,
+                   arrayView1d<real64 const> const & mob,
+                   arrayView1d<real64 const> const & dMob_dPres,
+                   localIndex const fluidIndex,
+                   integer const gravityFlag,
+                   real64 const dt,
+                   arraySlice1d<real64> const & flux,
+                   arraySlice2d<real64> const & fluxJacobian )
   {
-
     real64 sumOfWeights = 0;
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
-      sumOfWeights += stencil[k].weight;
+      sumOfWeights += stencilWeights[k];
     }
 
-      localIndex k[2];
+    localIndex k[2];
     for( k[0]=0 ; k[0]<numFluxElems ; ++k[0] )
     {
       for( k[1]=k[0]+1 ; k[1]<numFluxElems ; ++k[1] )
       {
         real64  dFlux_dP[2] = {0,0};
 
-        localIndex const ei[2] = { stencil[k[0]].index.index, stencil[k[1]].index.index };
+        localIndex const ei[2] = { stencilElementIndices[k[0]],
+                                   stencilElementIndices[k[1]] };
 
-        real64 const weight[2] = {   stencil[k[0]].weight * stencil[k[1]].weight / sumOfWeights,
-                                   - stencil[k[0]].weight * stencil[k[1]].weight / sumOfWeights };
+        real64 const weight[2] = {   stencilWeights[k[0]] * stencilWeights[k[1]] / sumOfWeights,
+                                   - stencilWeights[k[0]] * stencilWeights[k[1]] / sumOfWeights };
 
 
         // average density
@@ -458,8 +454,7 @@ struct FluxKernel
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
-        CellDescriptor const & cell_up = stencil[k[k_up]].index;
-        localIndex ei_up  = cell_up.index;
+        localIndex ei_up  = stencilElementIndices[k[k_up]];
 
         real64 const mobility     = mob[ei_up];
         real64 const dMobility_dP = dMob_dPres[ei_up];
