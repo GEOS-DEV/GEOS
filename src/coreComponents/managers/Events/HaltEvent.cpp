@@ -32,18 +32,19 @@ using namespace dataRepository;
 HaltEvent::HaltEvent( const std::string& name,
                       ManagedGroup * const parent ):
   EventBase(name,parent),
-  m_startTime(),
-  m_lastTime(),
-  m_realDt()
+  m_externalStartTime(0.0),
+  m_externalLastTime(0.0),
+  m_externalDt(0.0),
+  m_maxRuntime(0.0)
 {
   timeval tim;
   gettimeofday(&tim, nullptr);
-  m_startTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
-  m_lastTime = m_startTime;  
+  m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  m_externalLastTime = m_externalStartTime;  
 
-  RegisterViewWrapper<real64>( haltEventViewKeys.maxRuntime.Key() )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription( "max runtime" );
+  RegisterViewWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("max runtime");
 }
 
 
@@ -56,19 +57,18 @@ void HaltEvent::EstimateEventTiming(real64 const time,
                                      integer const cycle,
                                      ManagedGroup * domain)
 {
-  real64 const maxRuntime = this->getReference<real64>(haltEventViewKeys.maxRuntime);
-  
   // Check run time
   timeval tim;
   gettimeofday(&tim, nullptr);
   real64 currentTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   // Update values
-  m_realDt = currentTime - m_lastTime;
-  m_lastTime = currentTime;
-  integer forecast = static_cast<integer>((maxRuntime - (currentTime - m_startTime)) / m_realDt);
+  m_externalDt = currentTime - m_externalLastTime;
+  m_externalLastTime = currentTime;
+  integer forecast = static_cast<integer>((m_maxRuntime - (currentTime - m_externalStartTime)) / m_externalDt);
   
   // The timing for the ranks may differ slightly, so synchronize
+  // TODO: Only do the communication when you are close to the end?
 #ifdef GEOSX_USE_MPI
     integer forecast_global;
     MPI_Allreduce(&forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);

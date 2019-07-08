@@ -205,8 +205,6 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--currentMaxDt => Maximum dt request for event loop.-->
-		<xsd:attribute name="currentMaxDt" type="real64" />
 		<!--currentSubEvent => index of the current subevent.-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
 		<!--cycle => Current simulation cycle number.-->
