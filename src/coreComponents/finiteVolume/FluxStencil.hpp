@@ -91,10 +91,8 @@ private:
   ArrayOfArrays<INDEX>  m_elementSubRegionIndices;
   ArrayOfArrays<INDEX>  m_elementIndices;
   ArrayOfArrays<WEIGHT> m_weights;
-
   
   map<localIndex, localIndex> m_connectorIndices;
-
 };
 
 template<typename INDEX, typename WEIGHT>
