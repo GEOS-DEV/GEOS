@@ -85,12 +85,12 @@ PetscVector::PetscVector(Vec vec)
 // into the vector length.
 void PetscVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  VecCreateMPI(comm, localSize, PETSC_DETERMINE, &_vec);
+  VecCreateMPI(comm, static_cast<PetscInt>(localSize), PETSC_DETERMINE, &_vec);
 }
 
 void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm )
 {
-  VecCreateMPI(comm, PETSC_DECIDE, globalSize, &_vec);
+  VecCreateMPI(comm, PETSC_DECIDE, static_cast<PetscInt>(globalSize), &_vec);
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -113,7 +113,7 @@ void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & 
 void PetscVector::set( globalIndex const globalRow,
                         real64 const value )
 {
-	VecSetValue(_vec, globalRow, value, INSERT_VALUES);
+	VecSetValue(_vec, static_cast<PetscInt>(globalRow), value, INSERT_VALUES);
 	VecAssemblyBegin(_vec);
   	VecAssemblyEnd(_vec);
 }
@@ -121,7 +121,7 @@ void PetscVector::set( globalIndex const globalRow,
 void PetscVector::add( globalIndex const globalRow,
                         real64 const value )
 {
-	VecSetValue(_vec, globalRow, value, ADD_VALUES);
+	VecSetValue(_vec, static_cast<PetscInt>(globalRow), value, ADD_VALUES);
 	VecAssemblyBegin(_vec);
   	VecAssemblyEnd(_vec);
 }
@@ -131,7 +131,7 @@ void PetscVector::set( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  VecSetValues(_vec, size, globalIndices, values, INSERT_VALUES);
+  VecSetValues(_vec, static_cast<PetscInt>(size), reinterpret_cast<const PetscInt *>(globalIndices), values, INSERT_VALUES);
   VecAssemblyBegin(_vec);
   VecAssemblyEnd(_vec);
 }
@@ -140,7 +140,7 @@ void PetscVector::add( globalIndex const * globalIndices,
                         real64 const * values,
                         localIndex size )
 {
-  VecSetValues(_vec, size, globalIndices, values, ADD_VALUES);
+  VecSetValues(_vec, static_cast<PetscInt>(size), reinterpret_cast<const PetscInt *>(globalIndices), values, ADD_VALUES);
   VecAssemblyBegin(_vec);
   VecAssemblyEnd(_vec);
 }
@@ -179,7 +179,7 @@ void PetscVector::rand()
 	PetscRandomCreate(PETSC_COMM_WORLD, &ran);
 
 	time_t seconds;
-  	seconds = time (NULL);
+  	seconds = time (nullptr);
 	PetscRandomSetSeed(ran, seconds);
 	PetscRandomSeed(ran);
 
@@ -328,8 +328,8 @@ void PetscVector::write( string const & filename ) const
 // Get element globalRow
 real64 PetscVector::get(globalIndex globalRow) const
 {
-	double value[1];
-	int index[1] = {globalRow};
+	real64 value[1];
+	PetscInt index[1] = {static_cast<PetscInt>(globalRow)};
 	VecGetValues(_vec, 1, index, value);
   	return value[0];
 }
@@ -350,7 +350,7 @@ const Vec* PetscVector::unwrappedPointer() const
 }
 
 // Get non-const pointer
-const Vec* PetscVector::unwrappedPointer()
+Vec* PetscVector::unwrappedPointer()
 {
 	return &(_vec);
 }
@@ -371,9 +371,9 @@ Vec PetscVector::getVec()
 // Get the number of global elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the global size of the vector (total number of elements).
-int PetscVector::globalSize() const
+globalIndex PetscVector::globalSize() const
 {
-	int size;
+	PetscInt size;
 	VecGetSize(_vec, &size);
 	return size;
 }
@@ -382,9 +382,9 @@ int PetscVector::globalSize() const
 // Get the number of local elements
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local size of the vector (total number of local elements).
-int PetscVector::localSize() const
+localIndex PetscVector::localSize() const
 {
-	int size;
+	PetscInt size;
 	VecGetLocalSize(_vec, &size);
 	return size;
 }
