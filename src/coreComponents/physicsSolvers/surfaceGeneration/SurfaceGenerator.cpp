@@ -1330,9 +1330,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   modifiedObjects.newNodes.insert( newNodeIndex );
   modifiedObjects.modifiedNodes.insert( nodeID );
 
-  nodesToElementRegions.eraseArray(newNodeIndex);
-  nodesToElementSubRegions.eraseArray(newNodeIndex);
-  nodesToElementIndex.eraseArray(newNodeIndex);
+  nodesToElementRegions.clearArray(newNodeIndex);
+  nodesToElementSubRegions.clearArray(newNodeIndex);
+  nodesToElementIndex.clearArray(newNodeIndex);
 
   nodesToEdges[newNodeIndex].clear();
   nodesToFaces[newNodeIndex].clear();

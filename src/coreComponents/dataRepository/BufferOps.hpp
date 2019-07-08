@@ -220,6 +220,18 @@ Unpack( char const * & buffer,
         LvArray::ArrayView< T, NDIM, INDEX_TYPE > & var,
         const T_indices & indices );
 
+
+//------------------------------------------------------------------------------
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var );
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var );
+
 //------------------------------------------------------------------------------
 template< bool DO_PACKING >
 localIndex
