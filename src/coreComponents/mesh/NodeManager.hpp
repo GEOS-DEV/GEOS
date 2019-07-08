@@ -165,23 +165,14 @@ public:
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array1d<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array1d<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  ArrayOfArrays< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  ArrayOfArrays< localIndex > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array1d<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array1d<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  ArrayOfArrays< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  ArrayOfArrays< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  array1d<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array1d<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-//  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-//
-//  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-//  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
-//
-//  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
-
+  ArrayOfArrays< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
+  ArrayOfArrays< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief const accessor to the reference position array
