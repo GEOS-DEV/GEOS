@@ -40,9 +40,10 @@ The first is the main repository, which may be cloned and initialized by the fol
 
    git clone git@github.com:GEOSX/thirdPartyLibs.git
    cd thirdPartyLibs
+   git lfs install
+   git pull
    git submodule init
    git submodule update
-   git lfs pull
    cd ..
 
 
