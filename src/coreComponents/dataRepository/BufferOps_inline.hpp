@@ -578,9 +578,9 @@ Pack( char * & buffer,
 {
   localIndex sizeOfPackedChars = 0;
 
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getOffsets().data(), var.getOffsets().size() );
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getSizes().data(), var.getSizes().size() );
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getValues().data(), var.getValues().size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.getOffsets().data(), var.getOffsets().size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.getSizes().data(), var.getSizes().size() );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.getValues().data(), var.getValues().size() );
 
   return sizeOfPackedChars;
 }
