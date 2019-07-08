@@ -76,23 +76,25 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                              localIndex const maxEntriesPerRow,
                                              MPI_Comm const & comm )
 {
-		// set up matrix
-		MatCreate(comm, &_mat);
-		MatSetType(_mat, MATMPIAIJ);
-		MatSetSizes(_mat, localSize, localSize, PETSC_DETERMINE, PETSC_DETERMINE);
-		// Hannah: being conservative here with maxEntriesPerRow
-		MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow, NULL, maxEntriesPerRow, NULL);
-		MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-		MatSetUp(_mat);
+	PetscInt localSize_ = static_cast<const PetscInt>(localSize);
+	PetscInt maxEntriesPerRow_ = static_cast<const PetscInt>(maxEntriesPerRow);
+	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, localSize_, localSize_, PETSC_DETERMINE, PETSC_DETERMINE);
+	// Hannah: being conservative here with maxEntriesPerRow
+	MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow_, nullptr, maxEntriesPerRow_, nullptr);
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
 
-		// assemble
-		// Hannah: assemble here?
-		MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-		MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+	// assemble
+	// Hannah: assemble here?
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
 
-		assembled = true;
+	assembled = true;
 
-		// Hannah: something wrong with number of columns
+	// Hannah: something wrong with number of columns
 
 	}
 
@@ -100,19 +102,21 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                                localIndex const maxEntriesPerRow,
                                                MPI_Comm const & comm )
 {
-		// set up matrix
-		MatCreate(comm, &_mat);
-		MatSetType(_mat, MATMPIAIJ);
-		MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, globalSize, globalSize);
-		MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow, NULL, maxEntriesPerRow, NULL);
-		MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-		MatSetUp(_mat);
+	PetscInt globalSize_ = static_cast<const PetscInt>(globalSize);
+	PetscInt maxEntriesPerRow_ = static_cast<const PetscInt>(maxEntriesPerRow);
+	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, globalSize_, globalSize_);
+	MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow_, nullptr, maxEntriesPerRow_, nullptr);
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
 
-		// assemble
-		MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-		MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+	// assemble
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
 
-		assembled = true;
+	assembled = true;
 	}
 
   void PetscSparseMatrix::createWithLocalSize(localIndex const localRows,
@@ -120,19 +124,22 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                               localIndex const maxEntriesPerRow,
                                               MPI_Comm const & comm )
 {
-		// set up matrix
-		MatCreate(comm, &_mat);
-		MatSetType(_mat, MATMPIAIJ);
-		MatSetSizes(_mat, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE);
-		MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow, NULL, maxEntriesPerRow, NULL);
-		MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-		MatSetUp(_mat);
+	PetscInt localRows_ = static_cast<const PetscInt>(localRows);
+	PetscInt localCols_ = static_cast<const PetscInt>(localCols);
+	PetscInt maxEntriesPerRow_ = static_cast<const PetscInt>(maxEntriesPerRow);
+	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, localRows_, localCols_, PETSC_DETERMINE, PETSC_DETERMINE);
+	MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow_, nullptr, maxEntriesPerRow_, nullptr);
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
 
-		// assemble
-		MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-		MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+	// assemble
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
 
-		assembled = true;
+	assembled = true;
 	}
 
   void PetscSparseMatrix::createWithGlobalSize(globalIndex const globalRows,
@@ -140,19 +147,22 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                                localIndex const maxEntriesPerRow,
                                                MPI_Comm const & comm )
 {
-		// set up matrix
-		MatCreate(comm, &_mat);
-		MatSetType(_mat, MATMPIAIJ);
-		MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, globalRows, globalCols);
-		MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow, NULL, maxEntriesPerRow, NULL);
-		MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-		MatSetUp(_mat);
+    PetscInt globalRows_ = static_cast<const PetscInt>(globalRows);
+	PetscInt globalCols_ = static_cast<const PetscInt>(globalCols);
+	PetscInt maxEntriesPerRow_ = static_cast<const PetscInt>(maxEntriesPerRow);
+	// set up matrix
+	MatCreate(comm, &_mat);
+	MatSetType(_mat, MATMPIAIJ);
+	MatSetSizes(_mat, PETSC_DECIDE, PETSC_DECIDE, globalRows_, globalCols_);
+	MatMPIAIJSetPreallocation(_mat, maxEntriesPerRow_, nullptr, maxEntriesPerRow_, nullptr);
+	MatSetOption(_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+	MatSetUp(_mat);
 
-		// assemble
-		MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
-		MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
+	// assemble
+	MatAssemblyBegin(_mat, MAT_FINAL_ASSEMBLY);
+	MatAssemblyEnd(_mat, MAT_FINAL_ASSEMBLY);
 
-		assembled = true;
+	assembled = true;
 	}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -192,49 +202,67 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                               globalIndex const colIndex,
                               real64 const value )
  {
- 	MatSetValue(_mat, rowIndex, colIndex, value, ADD_VALUES);
+ 	PetscInt rowIndex_ = static_cast<const PetscInt>(rowIndex);
+	PetscInt colIndex_ = static_cast<const PetscInt>(colIndex);
+	PetscScalar value_ = static_cast<const PetscScalar>(value);
+ 	MatSetValue(_mat, rowIndex_, colIndex_, value_, ADD_VALUES);
  }
 
  void PetscSparseMatrix::set( globalIndex const rowIndex,
                               globalIndex const colIndex,
                               real64 const value )
  {
- 	MatSetValue(_mat, rowIndex, colIndex, value, INSERT_VALUES);
+ 	PetscInt rowIndex_ = static_cast<const PetscInt>(rowIndex);
+	PetscInt colIndex_ = static_cast<const PetscInt>(colIndex);
+	PetscScalar value_ = static_cast<const PetscScalar>(value);
+ 	MatSetValue(_mat, rowIndex_, colIndex_, value_, INSERT_VALUES);
  }
 
  void PetscSparseMatrix::insert( globalIndex const rowIndex,
-                              globalIndex const colIndex,
-                              real64 const value )
+                                 globalIndex const colIndex,
+                                 real64 const value )
  {
- 	MatSetValue(_mat, rowIndex, colIndex, value, INSERT_VALUES);
+ 	PetscInt rowIndex_ = static_cast<const PetscInt>(rowIndex);
+	PetscInt colIndex_ = static_cast<const PetscInt>(colIndex);
+	PetscScalar value_ = static_cast<const PetscScalar>(value);
+ 	MatSetValue(_mat, rowIndex_, colIndex_, value_, INSERT_VALUES);
  }
 
  // 1xN with arrays
 void PetscSparseMatrix::add( globalIndex const rowIndex,
-                       globalIndex const * colIndices,
-                       real64 const * values,
-                       localIndex size )
+                             globalIndex const * colIndices,
+                             real64 const * values,
+                             localIndex size )
 {
-	int rows[1] = {rowIndex};
- 	MatSetValues(_mat, 1, rows, size, colIndices, values, ADD_VALUES);
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices);  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values); 
+	PetscInt size_ = static_cast<PetscInt>(size); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, ADD_VALUES);
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
-                       globalIndex const * colIndices,
-                       real64 const * values,
-                       localIndex size )
-{
-	int rows[1] = {rowIndex};
- 	MatSetValues(_mat, 1, rows, size, colIndices, values, INSERT_VALUES);
+                             globalIndex const * colIndices,
+                             real64 const * values,
+                             localIndex size )
+{ 
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+ 	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices);  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values); 
+	PetscInt size_ = static_cast<PetscInt>(size); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
-                          globalIndex const * colIndices,
-                          real64 const * values,
-                          localIndex size )
+                                globalIndex const * colIndices,
+                                real64 const * values,
+                                localIndex size )
 {
-	int rows[1] = {rowIndex};
- 	MatSetValues(_mat, 1, rows, size, colIndices, values, INSERT_VALUES);
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+ 	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices);  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values); 
+	PetscInt size_ = static_cast<PetscInt>(size); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
 	// Hannah: insert vs set?
 }
 
@@ -291,9 +319,9 @@ void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-vector product A*src = dst.
 void PetscSparseMatrix::multiply( PetscVector const &src,
-            					            PetscVector &dst ) const
+            					  PetscVector &dst ) const
 {
-	// Hannah: check dst is not NULL
+	// Hannah: check dst is not nullptr
 	MatMult(_mat, src.getConstVec(), dst.getVec());
 }
 
@@ -302,9 +330,9 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*src = dst.
 void PetscSparseMatrix::multiply(PetscSparseMatrix const & src, 
-    														 PetscSparseMatrix & dst) const
+    							 PetscSparseMatrix & dst) const
 {
-	MatMatMult(_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.getPointer_());
+	MatMatMult(_mat, src.getMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.getMat());
 	// Hannah: getPointer_ name?
 }
 
@@ -359,12 +387,12 @@ void PetscSparseMatrix::scale( real64 const scalingFactor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::leftScale( PetscVector const &vec )
 {
-	MatDiagonalScale(_mat, vec.getConstVec(), NULL);
+	MatDiagonalScale(_mat, vec.getConstVec(), nullptr);
 }
 
 void PetscSparseMatrix::rightScale( PetscVector const &vec )
 {
-	MatDiagonalScale(_mat, NULL, vec.getConstVec());
+	MatDiagonalScale(_mat, nullptr, vec.getConstVec());
 }
 
 void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
@@ -390,10 +418,10 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear the row.  By default the diagonal value will be set
 // to zero, but the user can pass a desired diagValue
-void PetscSparseMatrix::clearRow( int const row,
-            				   	  PetscScalar const factor )
+void PetscSparseMatrix::clearRow( globalIndex const row,
+            				   	  real64 const factor )
  {
-	int rows[1] = {row};
+	PetscInt rows[1] = {static_cast<const PetscInt>(row)};
 	double diag = 1;
 
 	// who does this row belong to
@@ -407,17 +435,17 @@ void PetscSparseMatrix::clearRow( int const row,
 		const int* inds;
 		int numEntries;
 
-		MatGetRow(_mat, row, &numEntries, &inds, &vals);
+		MatGetRow(_mat, rows[0], &numEntries, &inds, &vals);
 
 		for(int i = 0; i < numEntries; i++)
 		{
 			if(inds[i] == row) diag = vals[i];
 		}
-		MatRestoreRow(_mat, row, &numEntries, &inds, &vals);
+		MatRestoreRow(_mat, rows[0], &numEntries, &inds, &vals);
 	}
 
 	// zero row and multiply diagonal by factor
-	MatZeroRows(_mat, 1, rows, diag*factor, NULL, NULL);
+	MatZeroRows(_mat, 1, rows, diag*factor, nullptr, nullptr);
  }
 
 // ----------------------------
