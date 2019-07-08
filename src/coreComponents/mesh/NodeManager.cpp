@@ -136,9 +136,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
-    toElementRegionList.resizeArray(a,0);
-    toElementSubRegionList.resizeArray(a,0);
-    toElementList.resizeArray(a,0);
+    toElementRegionList.clearArray(a);
+    toElementSubRegionList.clearArray(a);
+    toElementList.clearArray(a);
   }
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )

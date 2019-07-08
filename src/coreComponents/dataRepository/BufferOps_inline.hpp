@@ -571,6 +571,37 @@ Unpack( char const * & buffer,
 }
 
 
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getOffsets().data(), var.getOffsets().size() );
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getSizes().data(), var.getSizes().size() );
+  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.getValues().data(), var.getValues().size() );
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  sizeOfUnpackedChars += Unpack( buffer, var.getOffsets().data(), var.getOffsets().size() );
+  sizeOfUnpackedChars += Unpack( buffer, var.getSizes().data(), var.getSizes().size() );
+  sizeOfUnpackedChars += Unpack( buffer, var.getValues().data(), var.getValues().size() );
+
+  return sizeOfUnpackedChars;
+}
+
+
+
 template< bool DO_PACKING >
 localIndex
 Pack( char * & buffer,
