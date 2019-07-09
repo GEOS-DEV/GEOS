@@ -41,8 +41,8 @@ localIndex Pack( char*& buffer,
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
-    sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, var.m_toElementRegion[index].size() );
-    for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+    sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, var.m_toElementRegion.sizeOfArray(index) );
+    for( localIndex b=0 ; b<var.m_toElementRegion.sizeOfArray(index) ; ++b )
     {
       localIndex elemRegionIndex    = var.m_toElementRegion[index][b];
       localIndex elemSubRegionIndex = var.m_toElementSubRegion[index][b];
@@ -96,7 +96,7 @@ localIndex Unpack( char const * & buffer,
     std::set< std::tuple<localIndex, localIndex, localIndex> > values;
     if( !clearFlag )
     {
-      for( localIndex b=0 ; b<var.m_toElementRegion[index].size() ; ++b )
+      for( localIndex b=0 ; b<var.m_toElementRegion.sizeOfArray(index) ; ++b )
       {
         values.insert( std::make_tuple( var.m_toElementRegion[index][b],
                                         var.m_toElementSubRegion[index][b],
@@ -139,9 +139,9 @@ localIndex Unpack( char const * & buffer,
 
     localIndex const newSize = values.size();
 
-    var.m_toElementRegion[index].resize( newSize );
-    var.m_toElementSubRegion[index].resize( newSize );
-    var.m_toElementIndex[index].resize( newSize );
+    var.m_toElementRegion.resizeArray( index, newSize );
+    var.m_toElementSubRegion.resizeArray( index, newSize );
+    var.m_toElementIndex.resizeArray( index, newSize );
 
     {
       localIndex b=0;
