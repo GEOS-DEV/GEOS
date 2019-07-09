@@ -244,7 +244,7 @@ Pack( char * & buffer,
 
   static_if( DO_PACKING )
   {
-    T * const restrict buffer_T = static_cast< T * >( buffer );
+    T * const restrict buffer_T = reinterpret_cast< T * >( buffer );
     for( INDEX_TYPE i = 0 ; i < length ; ++i )
     {
       buffer_T[ i ] = var[ i ];
@@ -294,6 +294,7 @@ Unpack( char const * & buffer,
   }
 
   buffer += length * sizeof(T);
+  sizeOfUnpackedChars += length * sizeof(T);
 
   return sizeOfUnpackedChars;
 }
@@ -566,6 +567,87 @@ Unpack( char const * & buffer,
   {
     sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), strides[0] );
   }
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
+  for( localIndex a=0 ; a<var.size() ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a], var.sizeOfArray( a ) );
+  }
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numOfArrays;
+  sizeOfUnpackedChars += Unpack( buffer, numOfArrays );
+  var.resize( numOfArrays );
+
+  for( localIndex a=0 ; a<numOfArrays ; ++a )
+  {
+    localIndex sizeOfArray;
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfArray );
+    var.resizeArray( a, sizeOfArray );
+    sizeOfUnpackedChars += Unpack( buffer, var[a], sizeOfArray );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var,
+      T_indices const & indices )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, &(var[indices[a]][0]), var.sizeOfArray( indices[a] ) );
+  }
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var,
+        T_indices const & indices )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numUnpackedIndices;
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+
+  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex sizeOfSubArray;
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray );
+    var.resizeArray( indices[a], sizeOfSubArray );
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], sizeOfSubArray );
+  }
+
 
   return sizeOfUnpackedChars;
 }
