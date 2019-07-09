@@ -230,7 +230,20 @@ Pack( char * & buffer,
 template< typename T, typename INDEX_TYPE >
 localIndex
 Unpack( char const * & buffer,
-        LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var );
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var );
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var,
+      T_indices const & indices );
+
+template< typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var,
+        T_indices const & indices );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING >
