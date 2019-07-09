@@ -1,5 +1,5 @@
 ###############################################################################
-GEOSX User Guide
+User Guide
 ###############################################################################
 
 Welcome to the GEOSX user guide.
@@ -12,12 +12,3 @@ Welcome to the GEOSX user guide.
    LinearSolver
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
-****************************************************
-Examples
-****************************************************
-
-Single-phase flow solver
-
-Compositional flow solver
-
-Solid mechanics solver
