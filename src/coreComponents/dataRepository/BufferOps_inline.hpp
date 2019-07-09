@@ -582,8 +582,8 @@ Pack( char * & buffer,
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray(a) );
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a], var.sizeOfArray(a) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a], var.sizeOfArray( a ) );
   }
   return sizeOfPackedChars;
 }
@@ -621,8 +621,8 @@ Pack( char * & buffer,
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray(indices[a]) );
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, &(var[indices[a]][0]), var.sizeOfArray(indices[a]) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, &(var[indices[a]][0]), var.sizeOfArray( indices[a] ) );
   }
   return sizeOfPackedChars;
 }
@@ -638,7 +638,7 @@ Unpack( char const * & buffer,
   localIndex numUnpackedIndices;
   sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
 
-  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number");
+  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
