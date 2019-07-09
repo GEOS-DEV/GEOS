@@ -1,10 +1,8 @@
 .. _2_ImportingExternalMesh:
 
-###############################
-Importing external meshes
-###############################
-
-
+########################################
+Single phase flow using an external mesh
+########################################
 
 GEOSX comes with a suite of simple data sets to get you started.
 We explore simple data sets with different geometrical objects.
@@ -86,7 +84,7 @@ format.
 
 The mesh looks like this:
 
-.. image:: ../img/cube_10x10x10_hex_blue.png
+.. image:: HexCube.png
    :width: 250px
 
 
@@ -318,10 +316,8 @@ At the end of your simulation, you should see something like:
 Visualization of results in VisIt
 ------------------------------------
 
-.. image:: ../img/hexa_single_phase_gravity0000.png
-   :width: 400px
-
-
+.. .. image:: HexResults.png
+..     :width: 400px
 
 All results are written in a format compatible with `VisIt
 <https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
@@ -399,8 +395,8 @@ format.
 
 The mesh looks like this:
 
-.. image:: img/no_image.png
-   :width: 250px
+.. .. image:: ImportingExternalMeshCube.png
+..   :width: 250px
 
 
 Events specification
@@ -721,8 +717,8 @@ In our case, the first lines are:
 Visualization of results in VisIt
 ------------------------------------
 
-.. image:: ../img/no_image_yet.png
-   :width: 400px
+.. .. image:: TetResults.png
+..   :width: 400px
 
 
 
