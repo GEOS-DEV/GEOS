@@ -23,7 +23,3 @@ Publications
 - Nicola Castelletto: **Fully-Implicit Solvers For Coupled Poromechanics Of Fractured Reservoirs — Workshop on Reactive Flows in Deformable, Complex Media.** Mathematical Research Institute of Oberwolfach, *Oberwolfach, Germany. August 2018*.
 - Joshua White, Nicola Castelletto, Sergey Klevtsov, Hamdi Tchelepi: **Preconditioning Strategies for Multiphase Poromechanics — Lorentz Workshop on the Computational and Mathematical Aspects of Porous Media**, *Leiden University, May 2018*.
 
-
-2017
-====
-- F.L. Author. A seminal paper. Journal of High Impact 1(33):101-214, 2017.

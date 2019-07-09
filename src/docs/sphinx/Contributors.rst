@@ -1,9 +1,12 @@
 ###############################################################################
-GEOSX Authors
+Contributors
 ###############################################################################
 
-The following is a list of contributors to the GEOSX code in alphabetical order (last updated January 2019):
+An up-to-date list of contributors can be found here:
 
+https://github.com/GEOSX/GEOSX/graphs/contributors
+
+The following is the list of GEOSX contributors as of January 2019:
 
 .. list-table::
    :widths: 10 30
