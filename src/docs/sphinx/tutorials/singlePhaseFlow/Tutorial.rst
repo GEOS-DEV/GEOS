@@ -1,8 +1,8 @@
-.. _1_SinglePhase:
+.. _SinglePhaseFlow:
 
-###############################
-Single Phase Flow example
-###############################
+#########################################
+Single phase flow  
+#########################################
 
 This example will use the single flow solver (see :ref:`SinglePhaseFlow`) from GEOSX on a cube test case. A pressure source term will be set in the top corner block and a sink pressure term will be set in the bottom corner block.
 
@@ -331,8 +331,15 @@ All results are written in a format compatible with `VisIt
 
 For instance, here are reported diagonal pressure profile from sink to source blocks with the time being increased (on the left) and the 3D plot of the transient pressure gradient to the linear solution (on the right)
 
-.. image:: ../img/1_plot_single_phase.png
+.. image:: Plots.png
    :width: 400px
 
-.. image:: ../img/1_singlePhase.gif
+.. image:: Animation.gif
    :width: 400px
+
+
+Using an external mesh
+^^^^^^^^^^^^^^^^^^^^^^
+
+TODO: To be written ...
+
