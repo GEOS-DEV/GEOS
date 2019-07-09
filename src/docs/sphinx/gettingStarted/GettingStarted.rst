@@ -1,9 +1,3 @@
-.. _GettingStartedWithGEOSX:
-
-###############################################################################
-Getting Started
-###############################################################################
-
 Getting Ready
 =================================
 GEOSX resides in a git repository hosted at https://github.com/GEOSX/GEOSX.
@@ -90,5 +84,3 @@ To execute a serial run enter the following command from a working directory:
 
     path-to-geosx-bin/geosx -i path-to-xml/LaplaceFEM.xml
 
-
-.. include:: ubuntu_instructions.rst
