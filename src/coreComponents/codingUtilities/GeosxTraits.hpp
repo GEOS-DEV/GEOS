@@ -97,6 +97,9 @@ struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> > : is_packable<
 template<typename T, int NDIM, typename INDEX_TYPE>
 struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
 
+template<typename T, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArrayOfArrays<T,INDEX_TYPE> > : is_packable<T> {};
+
 
 template<typename>
 struct is_packable_set : std::false_type {};
