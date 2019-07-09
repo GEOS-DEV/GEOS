@@ -166,13 +166,16 @@ public:
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
   ArrayOfArrays< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  ArrayOfArrays< localIndex > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  ArrayOfArraysView< localIndex const > const & elementRegionList() const
+  { return m_toElements.m_toElementRegion.toViewCC(); }
 
   ArrayOfArrays< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  ArrayOfArrays< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  ArrayOfArraysView< localIndex const > const & elementSubRegionList() const
+  { return m_toElements.m_toElementSubRegion.toViewCC(); }
 
   ArrayOfArrays< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
-  ArrayOfArrays< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
+  ArrayOfArraysView< localIndex const > const & elementList() const
+  { return m_toElements.m_toElementIndex.toViewCC(); }
 
   /**
    * @brief const accessor to the reference position array

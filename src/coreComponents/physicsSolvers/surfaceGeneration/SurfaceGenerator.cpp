@@ -1837,9 +1837,9 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
 
   arrayView1d<set<localIndex> > const & nodesToEdges = nodeManager.edgeList();
   arrayView1d<set<localIndex> > const & nodesToFaces = nodeManager.faceList();
-  ArrayOfArrays<localIndex> const & nodesToElementRegions = nodeManager.elementRegionList();
-  ArrayOfArrays<localIndex> const & nodesToElementSubRegions = nodeManager.elementSubRegionList();
-  ArrayOfArrays<localIndex> const& nodesToElementIndex = nodeManager.elementList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementRegions = nodeManager.elementRegionList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementSubRegions = nodeManager.elementSubRegionList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementIndex = nodeManager.elementList();
 
 
   arrayView2d<localIndex> const & edgesToNodes = edgeManager.nodeList();
