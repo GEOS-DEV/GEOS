@@ -168,7 +168,7 @@ Compiling GEOSX
 
   .. code-block:: sh
 
-   sudo apt install git gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
+   sudo apt install git git-lfs gcc g++ gfortran python cmake zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
 
 
 - Follow instructions provided at the `Getting Started with GEOSX <https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst>`__ page.
