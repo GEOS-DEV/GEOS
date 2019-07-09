@@ -48,7 +48,7 @@ The first is the main repository, which may be cloned and initialized by the fol
    cd ..
 
 Note that git-lfs may not funct-on properly (or may be very slow) if version of git and git-lfs are not current.
-If you are using an older version of git/git-lfs you may need to add `git lfs pull` after `git pull`
+If you are using an older version of git/git-lfs you may need to add "git lfs pull" after "git pull" in the above procedures.
 
 Compiling the Code
 =================================
