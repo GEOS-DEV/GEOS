@@ -21,7 +21,8 @@
  *
  */
 #include "TwoPointFluxApproximation.hpp"
-
+#include "CellElementStencilTPFA.hpp"
+#include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mesh/FaceElementRegion.hpp"
 
@@ -34,6 +35,11 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
                                                      ManagedGroup *const parent)
   : FluxApproximationBase(name, parent)
 {
+  RegisterViewWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
+
+  RegisterViewWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
 
 }
 
@@ -272,6 +278,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       // loop over all face elements attached to the connector and add them to the stencil
       for( localIndex kfe=0 ; kfe<numElems ; ++kfe )
       {
+
         localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
 
         // use straight difference between the edge center and face center for gradient length...maybe do something
