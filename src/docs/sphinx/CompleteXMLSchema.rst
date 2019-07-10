@@ -70,13 +70,6 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
 
 
-.. _XML_CompositionalMultiphaseFlow:
-
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
-
-
 .. _XML_CompositionalMultiphaseFluid:
 
 Element: CompositionalMultiphaseFluid
@@ -555,13 +548,6 @@ Datastructure: ChomboIO
 Datastructure: CompositeFunction
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseFlow:
-
-Datastructure: CompositionalMultiphaseFlow
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFluid:

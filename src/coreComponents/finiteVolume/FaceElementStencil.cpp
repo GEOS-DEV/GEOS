@@ -18,8 +18,8 @@ FaceElementStencil::FaceElementStencil():
   m_connectorIndices()
 {}
 
-FaceElementStencil::~FaceElementStencil()
-{}
+//FaceElementStencil::~FaceElementStencil()
+//{}
 
 void FaceElementStencil::add( localIndex const numPts,
                               localIndex  const * const elementRegionIndices,

@@ -38,7 +38,7 @@ public:
 
 
   FaceElementStencil();
-  ~FaceElementStencil();
+//  ~FaceElementStencil();
 
 
   void add( localIndex const numPts,
@@ -49,6 +49,10 @@ public:
             localIndex const connectorIndex );
 
   bool zero( localIndex const connectorIndex );
+
+  localIndex size() const { return m_elementRegionIndices.size(); }
+
+  localIndex stencilSize( localIndex index ) const { return m_elementRegionIndices.sizeOfArray(index); }
 
   INDEX_VIEW_CONST_TYPE const &  getElementRegionIndices() const { return m_elementRegionIndices; }
   INDEX_VIEW_CONST_TYPE const &  getElementSubRegionIndices() const { return m_elementSubRegionIndices; }

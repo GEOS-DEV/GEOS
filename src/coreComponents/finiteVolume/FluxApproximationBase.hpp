@@ -26,12 +26,49 @@
 
 #include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FluxStencil.hpp"
+#include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
 
+/**
+ * @struct A structure containing a single cell (element) identifier triplet
+ */
+struct CellDescriptor
+{
+  localIndex region;
+  localIndex subRegion;
+  localIndex index;
+
+  bool operator==( CellDescriptor const & other )
+  {
+    return( region==other.region && subRegion==other.subRegion && index==other.index );
+  }
+};
+/**
+ * @struct A structure describing an arbitrary point participating in a stencil
+ *
+ * Nodal and face center points are identified by local mesh index.
+ * Cell center points are identified by a triplet <region,subregion,index>.
+ *
+ * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
+ * cell and face centroids, so we have to discriminate between them at runtime
+ */
+struct PointDescriptor
+{
+  enum class Tag { CELL, FACE, NODE };
+
+  Tag tag;
+
+  union
+  {
+    localIndex nodeIndex;
+    localIndex faceIndex;
+    CellDescriptor cellIndex;
+  };
+};
 
 /**
  * @class FluxApproximationBase
@@ -50,18 +87,11 @@ public:
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
-  using CellStencil     = FluxStencil<localIndex, real64>;
   using BoundaryStencil = FluxStencil<PointDescriptor, real64>;
 
   FluxApproximationBase() = delete;
 
   FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
-
-  /// provides const access to the cell stencil collection
-  CellStencil const & getStencil() const;
-
-  /// provides access to the cell stencil collection
-  CellStencil & getStencil();
 
   /// return a boundary stencil by face set name
   BoundaryStencil const & getBoundaryStencil(string const & setName) const;
@@ -114,8 +144,7 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
-  virtual void computeCellStencil( DomainPartition const & domain,
-                                   CellStencil & stencil ) = 0;
+  virtual void computeCellStencil( DomainPartition const & domain ) = 0;
 
   /// actual computation of the boundary stencil, to be overridden by implementations
   virtual void computeBoundaryStencil( DomainPartition const & domain,
@@ -142,7 +171,8 @@ protected:
 template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappers<CellStencil,FaceElementStencil>([&] (auto const * const vw) -> void
+//TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
+  this->forViewWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const vw) -> void
   {
     lambda(vw->reference());
   });
