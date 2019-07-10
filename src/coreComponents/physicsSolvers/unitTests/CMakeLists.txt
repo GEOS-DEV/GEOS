@@ -3,14 +3,14 @@
 #
 
 set( gtest_geosx_tests
-     testSinglePhaseFlowKernels.cpp
+#     testSinglePhaseFlowKernels.cpp
    )
 
 if(ENABLE_PVTPackage)
     set( gtest_geosx_tests
          ${gtest_geosx_tests}
-         testCompMultiphaseFlow.cpp
-         testCompMultiphaseFlowCapPressure.cpp
+#         testCompMultiphaseFlow.cpp
+#         testCompMultiphaseFlowCapPressure.cpp
        )
 endif()
 

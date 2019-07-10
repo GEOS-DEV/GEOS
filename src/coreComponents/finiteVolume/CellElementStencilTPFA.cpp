@@ -22,18 +22,28 @@ CellElementStencilTPFA::CellElementStencilTPFA():
 
 }
 
-CellElementStencilTPFA::~CellElementStencilTPFA()
+//CellElementStencilTPFA::~CellElementStencilTPFA()
+//{
+//  // TODO Auto-generated destructor stub
+//}
+
+void CellElementStencilTPFA::reserve( localIndex const size )
 {
-  // TODO Auto-generated destructor stub
+  m_elementRegionIndices.reserve( size * 2 );
+  m_elementSubRegionIndices.reserve( size * 2 );
+  m_elementIndices.reserve( size * 2 );
+  m_weights.reserve( size * 2 );
 }
 
-void CellElementStencilTPFA::add( localIndex  const * const elementRegionIndices,
-                                  localIndex  const * const elementSubRegionIndices,
-                                  localIndex  const * const elementIndices,
+
+void CellElementStencilTPFA::add( localIndex const numPts,
+                                  localIndex const * const elementRegionIndices,
+                                  localIndex const * const elementSubRegionIndices,
+                                  localIndex const * const elementIndices,
                                   real64 const * const weights,
                                   localIndex const connectorIndex )
 {
-  constexpr localIndex numPts = 2;
+  GEOS_ERROR_IF( numPts!=2, "number of cells in TPFA stencil should be 2");
 
   localIndex const oldSize = m_elementRegionIndices.size(0);
   localIndex const newSize = oldSize + 1;

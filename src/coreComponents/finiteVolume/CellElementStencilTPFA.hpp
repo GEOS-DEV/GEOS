@@ -37,15 +37,27 @@ public:
   static localIndex constexpr MAX_STENCIL_SIZE = 2;
 
   CellElementStencilTPFA();
-  ~CellElementStencilTPFA();
+//  ~CellElementStencilTPFA();
 
-  void add( localIndex  const * const elementRegionIndices,
+  void reserve( localIndex const size );
+
+  void add( localIndex const numPts,
+            localIndex  const * const elementRegionIndices,
             localIndex  const * const elementSubRegionIndices,
             localIndex  const * const elementIndices,
             real64 const * const weights,
             localIndex const connectorIndex );
 
   bool zero( localIndex const connectorIndex );
+
+  localIndex size() const { return m_elementRegionIndices.size(0); }
+
+  constexpr localIndex stencilSize( localIndex index ) const { return MAX_STENCIL_SIZE; }
+
+  INDEX_VIEW_CONST_TYPE const &  getElementRegionIndices() const { return m_elementRegionIndices; }
+  INDEX_VIEW_CONST_TYPE const &  getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
+  INDEX_VIEW_CONST_TYPE const &  getElementIndices() const { return m_elementIndices; }
+  WEIGHT_VIEW_CONST_TYPE const & getWeights() const { return m_weights; }
 
 
 private:

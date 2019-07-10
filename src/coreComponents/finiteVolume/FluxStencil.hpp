@@ -68,9 +68,7 @@ public:
 
   /// add data for one connection
   void add( localIndex const numPts,
-            INDEX  const * const elementRegionIndices,
-            INDEX  const * const elementSubRegionIndices,
-            INDEX  const * const elementIndices,
+            INDEX  const * const indices,
             WEIGHT const * const weights,
             localIndex const connectorIndex );
 
@@ -80,19 +78,19 @@ public:
   /// called after adding connections is done to compress the data and release unused memory
   void compress();
 
-  ArrayOfArraysView<INDEX const, true> getElementRegionIndices() const { return m_elementRegionIndices; }
-  ArrayOfArraysView<INDEX const, true> getElementSubRegionIndices() const { return m_elementRegionIndices; }
-  ArrayOfArraysView<INDEX const, true> getElementIndices() const { return m_elementIndices; }
-  ArrayOfArraysView<WEIGHT const, true> getWeights() const { return m_weights; }
+  struct Entry
+  {
+    INDEX  index;
+    WEIGHT weight;
+  };
+
+  ArrayOfArraysView<Entry const, true> getConnections() const { return m_connections; }
 
 private:
 
-  ArrayOfArrays<INDEX>  m_elementRegionIndices;
-  ArrayOfArrays<INDEX>  m_elementSubRegionIndices;
-  ArrayOfArrays<INDEX>  m_elementIndices;
-  ArrayOfArrays<WEIGHT> m_weights;
-  
+  ArrayOfArrays<Entry> m_connections;
   map<localIndex, localIndex> m_connectorIndices;
+
 };
 
 template<typename INDEX, typename WEIGHT>
@@ -104,12 +102,8 @@ FluxStencil<INDEX, WEIGHT>::FluxStencil()
 
 template<typename INDEX, typename WEIGHT>
 FluxStencil<INDEX, WEIGHT>::FluxStencil( localIndex const numConn,
-                                         localIndex const avgStencilSize ):
-  m_elementRegionIndices(),
-  m_elementSubRegionIndices(),
-  m_elementIndices(),
-  m_weights(),
-  m_connectorIndices()
+                                                     localIndex const avgStencilSize )
+  : m_connections()
 {
   reserve(numConn, avgStencilSize);
 }
@@ -117,40 +111,33 @@ FluxStencil<INDEX, WEIGHT>::FluxStencil( localIndex const numConn,
 template<typename INDEX, typename WEIGHT>
 localIndex FluxStencil<INDEX, WEIGHT>::numConnections() const
 {
-  return m_weights.size();
+  return m_connections.size();
 }
 
 template<typename INDEX, typename WEIGHT>
 void FluxStencil<INDEX, WEIGHT>::reserve( localIndex const numConn,
                                           localIndex const avgStencilSize )
 {
-  m_elementRegionIndices.reserve( numConn );
-  m_elementSubRegionIndices.reserve( numConn );
-  m_elementIndices.reserve( numConn );
-  m_weights.reserve( numConn );
-
-  m_elementRegionIndices.reserveValues( numConn * avgStencilSize );
-  m_elementSubRegionIndices.reserveValues( numConn * avgStencilSize );
-  m_elementIndices.reserveValues( numConn * avgStencilSize );
-  m_weights.reserveValues( numConn * avgStencilSize );
+  m_connections.reserve( numConn );
+  m_connections.reserveValues( numConn * avgStencilSize );
 }
 
 template<typename INDEX, typename WEIGHT>
 void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
-                                      INDEX  const * const elementRegionIndices,
-                                      INDEX  const * const elementSubRegionIndices,
-                                      INDEX  const * const elementIndices,
+                                      INDEX  const * const indices,
                                       WEIGHT const * const weights,
                                       localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  m_elementRegionIndices.appendArray( elementRegionIndices, numPts );
-  m_elementSubRegionIndices.appendArray( elementSubRegionIndices, numPts );
-  m_elementIndices.appendArray( elementIndices, numPts );
-  m_weights.appendArray( weights, numPts );
+  stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
+  for (localIndex i = 0; i < numPts; ++i)
+  {
+    entries[i] = { indices[i], weights[i] };
+  }
 
-  m_connectorIndices[connectorIndex] = m_weights.size() - 1;
+  m_connections.appendArray( entries.data(), numPts );
+  m_connectorIndices[connectorIndex] = m_connections.size() - 1;
 }
 
 template<typename INDEX, typename WEIGHT>
@@ -159,9 +146,10 @@ bool FluxStencil<INDEX, WEIGHT>::zero( localIndex const connectorIndex )
   return
   executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
-    for (localIndex i = 0; i < m_weights.sizeOfArray( connectionListIndex ); ++i)
+    Entry * const entries = m_connections[connectionListIndex];
+    for (localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i)
     {
-      m_weights[connectionListIndex][i] = 0; // TODO remove entries altogether?
+      entries[i].weight = 0; // TODO remove entries altogether?
     }
 //    m_connections.resizeArray( connectionListIndex, 0 );
   });
@@ -173,46 +161,6 @@ void FluxStencil<INDEX, WEIGHT>::compress()
 {
   // nothing for the moment
 }
-
-
-/**
- * @struct A structure containing a single cell (element) identifier triplet
- */
-struct CellDescriptor
-{
-  localIndex region;
-  localIndex subRegion;
-  localIndex index;
-
-  bool operator==( CellDescriptor const & other )
-  {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
-  }
-};
-
-/**
- * @struct A structure describing an arbitrary point participating in a stencil
- *
- * Nodal and face center points are identified by local mesh index.
- * Cell center points are identified by a triplet <region,subregion,index>.
- *
- * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
- * cell and face centroids, so we have to discriminate between them at runtime
- */
-struct PointDescriptor
-{
-  enum class Tag { CELL, FACE, NODE };
-
-  Tag tag;
-
-  union
-  {
-    localIndex nodeIndex;
-    localIndex faceIndex;
-    CellDescriptor cellIndex;
-  };
-};
-
 
 }
 

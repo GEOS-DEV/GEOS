@@ -73,7 +73,7 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
 {
   GEOSX_MARK_FUNCTION_SCOPED;
 
-  computeCellStencil( domain, getStencil() );
+  computeCellStencil( domain );
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
@@ -93,17 +93,6 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
   });
 }
 
-FluxApproximationBase::CellStencil const &
-FluxApproximationBase::getStencil() const
-{
-  return this->getReference<CellStencil>(viewKeyStruct::cellStencilString);
-}
-
-FluxApproximationBase::CellStencil &
-FluxApproximationBase::getStencil()
-{
-  return this->getReference<CellStencil>(viewKeyStruct::cellStencilString);
-}
 
 FluxApproximationBase::BoundaryStencil const &
 FluxApproximationBase::getBoundaryStencil(string const & setName) const

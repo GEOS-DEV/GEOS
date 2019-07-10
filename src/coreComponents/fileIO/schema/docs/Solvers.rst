@@ -4,7 +4,6 @@
 Name                         Type     Default Description                             
 ============================ ======== ======= ======================================= 
 gravityVector                R1Tensor 0 0 0   (no description available)              
-CompositionalMultiphaseFlow  node             :ref:`XML_CompositionalMultiphaseFlow`  
 DummySolver                  node             :ref:`XML_DummySolver`                  
 Hydrofracture                node             :ref:`XML_Hydrofracture`                
 LaplaceFEM                   node             :ref:`XML_LaplaceFEM`                   

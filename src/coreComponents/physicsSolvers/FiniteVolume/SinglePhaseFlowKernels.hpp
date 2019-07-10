@@ -207,10 +207,10 @@ struct FluxKernel
    */
   inline static void
   Compute( localIndex const stencilSize,
-           arraySlice1d<localIndex> const & seri,
-           arraySlice1d<localIndex> const & sesri,
-           arraySlice1d<localIndex> const & sei,
-           arraySlice1d<real64> const & stencilWeights,
+           arraySlice1d<localIndex const> const & seri,
+           arraySlice1d<localIndex const> const & sesri,
+           arraySlice1d<localIndex const> const & sei,
+           arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
@@ -224,8 +224,8 @@ struct FluxKernel
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
   {
-    localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+    localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
     stackArray1d<real64, numElems>   densWeight(numElems);
     stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
@@ -321,8 +321,8 @@ struct FluxKernel
            arraySlice1d<real64> const & flux,
            arraySlice2d<real64> const & fluxJacobian )
   {
-    localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+    localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
     stackArray1d<real64, numElems> densWeight(numElems);
     stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
@@ -399,8 +399,8 @@ struct FluxKernel
    */
   inline static void
   ComputeJunction( localIndex const numFluxElems,
-                   arraySlice1d<localIndex> const & stencilElementIndices,
-                   arraySlice1d<real64> const & stencilWeights,
+                   arraySlice1d<localIndex const> const & stencilElementIndices,
+                   arraySlice1d<real64 const> const & stencilWeights,
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & dPres,
                    arrayView1d<real64 const> const & gravDepth,
