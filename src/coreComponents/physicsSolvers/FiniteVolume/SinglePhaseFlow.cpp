@@ -497,31 +497,32 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  localIndex constexpr maxNumFluxElems = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;//FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
-
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
+    constexpr localIndex maxNumFluxElems = STENCIL_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex maxStencilSize = STENCIL_TYPE::MAX_STENCIL_SIZE;
+
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
 
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
+      localIndex const stencilSize = stencil.stencilSize(iconn);
       localIndex const numFluxElems = stencilSize;
       stackArray1d<globalIndex, maxNumFluxElems> dofIndexRow( numFluxElems );
-      stackArray1d<globalIndex, maxStencil> dofIndexCol( stencilSize );
+      stackArray1d<globalIndex, maxStencilSize> dofIndexCol( stencilSize );
 
       for (localIndex i = 0; i < numFluxElems; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        dofIndexRow[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        dofIndexRow[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
       }
 
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        dofIndexCol[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+        dofIndexCol[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
       }
 
       sparsity->InsertGlobalIndices(integer_conversion<int>(numFluxElems),
@@ -555,13 +556,16 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   {
     ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
+    localIndex constexpr numFluxElems = FluxApproximationBase::BoundaryStencil::NUM_POINT_IN_FLUX;
+    localIndex constexpr maxStencil = FluxApproximationBase::BoundaryStencil::MAX_STENCIL_SIZE;
+
     forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
       localIndex const stencilSize = connections.sizeOfArray( iconn );
-      stackArray1d<globalIndex, maxNumFluxElems> dofIndexRow( maxNumFluxElems );
+      stackArray1d<globalIndex, maxStencil> dofIndexRow( numFluxElems );
       stackArray1d<globalIndex, maxStencil> dofIndexCol( stencilSize );
 
-      for (localIndex i = 0; i < maxNumFluxElems; ++i)
+      for (localIndex i = 0; i < numFluxElems; ++i)
       {
         PointDescriptor const & point = connections( iconn, i ).index;
 
@@ -741,18 +745,22 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
-
     typedef TYPEOFREF( stencil ) STENCIL_TYPE;
     constexpr localIndex maxNumFluxElems = STENCIL_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex maxStencilSize = STENCIL_TYPE::MAX_STENCIL_SIZE;
 
-    if( std::is_same< STENCIL_TYPE, FluxApproximationBase::CellStencil >::value )
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+
+
+    if( std::is_same< STENCIL_TYPE, CellElementStencilTPFA >::value )
     {
-      forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+      forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
       {
         localIndex const numFluxElems = maxNumFluxElems;
-        localIndex const stencilSize  = connections.sizeOfArray(iconn);
+        localIndex const stencilSize  = stencil.stencilSize(iconn);
 
         // working arrays
         stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
@@ -762,7 +770,10 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
         FluxKernel::Compute( stencilSize,
-                             connections[iconn],
+                             eri[iconn],
+                             esri[iconn],
+                             ei[iconn],
+                             weights[iconn],
                              pres,
                              dPres,
                              gravDepth,
@@ -780,14 +791,12 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         eqnRowIndices = -1;
         for (localIndex i = 0; i < numFluxElems; ++i)
         {
-          CellDescriptor const & cell = connections(iconn, i).index;
-          eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+          eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
         }
 
         for (localIndex i = 0; i < stencilSize; ++i)
         {
-          CellDescriptor const & cell = connections(iconn, i).index;
-          dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+          dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
         }
 
         // Add to global residual/jacobian
@@ -802,10 +811,10 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
     }
     else if( std::is_same< STENCIL_TYPE, FaceElementStencil >::value )
     {
-      forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+      forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
       {
-        localIndex const numFluxElems = connections.sizeOfArray(iconn);
-        localIndex const stencilSize  = connections.sizeOfArray(iconn);
+        localIndex const numFluxElems = stencil.stencilSize(iconn);
+        localIndex const stencilSize  = numFluxElems;
 
         // working arrays
         stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
@@ -814,11 +823,13 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
         stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
-        localIndex const er = connections[iconn][0].index.region;
-        localIndex const esr = connections[iconn][0].index.subRegion;
+        localIndex const er = eri[iconn][0];
+        localIndex const esr = esri[iconn][0];
+
 
         FluxKernel::ComputeJunction( numFluxElems,
-                                     connections[iconn],
+                                     ei[iconn],
+                                     weights[iconn],
                                      pres[er][esr],
                                      dPres[er][esr],
                                      gravDepth[er][esr],
@@ -836,14 +847,12 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
         eqnRowIndices = -1;
         for (localIndex i = 0; i < numFluxElems; ++i)
         {
-          CellDescriptor const & cell = connections(iconn, i).index;
-          eqnRowIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+          eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
         }
 
         for (localIndex i = 0; i < stencilSize; ++i)
         {
-          CellDescriptor const & cell = connections(iconn, i).index;
-          dofColIndices[i] = dofNumber[cell.region][cell.subRegion][cell.index];
+          dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
         }
 
         // Add to global residual/jacobian
@@ -1073,8 +1082,8 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit(DomainPartition * domain,
 
   // *** assembly loop ***
 
-  constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+  constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
   real64 densWeight[numElems] = { 0.5, 0.5 };
 
