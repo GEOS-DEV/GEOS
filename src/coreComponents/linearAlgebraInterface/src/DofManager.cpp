@@ -109,7 +109,7 @@ bool DofManager::keyInUse( string const & key ) const
 string DofManager::getKey( string const & field ) const
 {
   // check if the field name is already added
-  GEOS_ERROR_IF( !keyInUse( field ), "numGlobalDofs: requested field name must be already existing." );
+  GEOS_ERROR_IF( !keyInUse( field ), "getKey: requested field name must be already existing." );
 
   // get field index
   localIndex fieldIdx = fieldIndex( field );
@@ -223,7 +223,7 @@ void DofManager::addField( string const & field,
                            string_array const & regions )
 {
   // check if the field name is already being used
-  GEOS_ERROR_IF( keyInUse( field ), "Requested field name matches an existing field in the DofManager." );
+  GEOS_ERROR_IF( keyInUse( field ), "addField: requested field name matches an existing field in the DofManager." );
 
   // save field description to list of active fields
   FieldDescription description;
@@ -263,7 +263,7 @@ void DofManager::addField( string const & field,
   m_fields.push_back( description );
 
   localIndex numFields = m_fields.size();
-  GEOS_ERROR_IF( numFields > MAX_NUM_FIELDS, "Limit on DofManager's MAX_NUM_FIELDS exceeded." );
+  GEOS_ERROR_IF( numFields > MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
 
   // temp reference to last field
   FieldDescription & last = m_fields[numFields - 1];
@@ -276,7 +276,7 @@ void DofManager::addField( string const & field,
   {
     // Get region by name
     last.regionPtrs[er] = elemManager->GetRegion( last.regionNames[er] );
-    GEOS_ERROR_IF( last.regionPtrs[er] == nullptr, "Specified element region not found" );
+    GEOS_ERROR_IF( last.regionPtrs[er] == nullptr, "addField: specified element region not found" );
   }
 
   // based on location, allocate an index array for this field
@@ -408,7 +408,7 @@ void DofManager::addField( string const & field,
                            Connectivity const connectivity )
 {
   // check if the field name is already being used
-  GEOS_ERROR_IF( keyInUse( field ), "Requested field name matches an existing field in the DofManager." );
+  GEOS_ERROR_IF( keyInUse( field ), "addField: requested field name matches an existing field in the DofManager." );
 
   // save field description to list of active fields
   FieldDescription description;
@@ -427,7 +427,7 @@ void DofManager::addField( string const & field,
   m_fields.push_back( description );
 
   localIndex numFields = m_fields.size();
-  GEOS_ERROR_IF( numFields > MAX_NUM_FIELDS, "Limit on DofManager's MAX_NUM_FIELDS exceeded." );
+  GEOS_ERROR_IF( numFields > MAX_NUM_FIELDS, "addField: limit on DofManager's MAX_NUM_FIELDS exceeded." );
 
   // temp reference to last field
   FieldDescription & last = m_fields[numFields - 1];
@@ -718,7 +718,8 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       globalIndex_array & indexArray = subRegion->getReference<globalIndex_array>( field.key );
       integer_array const & ghostRank = subRegion->m_ghostRank;
 
-      GEOS_ERROR_IF( indexArray.size() != ghostRank.size(), "Mismatch in ghost rank and index array sizes." );
+      GEOS_ERROR_IF( indexArray.size() != ghostRank.size(),
+                     "createIndexArray_ElemVersion: mismatch in ghost rank and index array sizes." );
 
       for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
       {
@@ -732,7 +733,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   }
 
   GEOS_ERROR_IF( field.numLocalConnectivity != field.numLocalNodes,
-                 "Mismatch during assignment of local row indices" );
+                 "createIndexArray_ElemVersion: mismatch during assignment of local row indices" );
 
   // for starting the connectivity numbering
   globalIndex_array globalGather;
@@ -1106,7 +1107,7 @@ void DofManager::copyVectorToField( ParallelVector const & vector,
 {
   // check if the field name is already added
   GEOS_ERROR_IF( !keyInUse( field ),
-                 "printConnectivityLocationPattern: requested field name must be already existing." );
+                 "copyVectorToField: requested field name must be already existing." );
 
   // get field index
   localIndex fieldIdx = fieldIndex( field );
@@ -1135,19 +1136,19 @@ void DofManager::copyVectorToField( ParallelVector const & vector,
 }
 
 // Copy values from nodes to DOFs
-void DofManager::copyFieldToVector( ParallelVector const & vector,
+void DofManager::copyFieldToVector( ParallelVector & vector,
                                     string const & field,
-                                    dataRepository::ManagedGroup * const manager ) const
+                                    dataRepository::ManagedGroup const * const manager ) const
 {
   // check if the field name is already added
   GEOS_ERROR_IF( !keyInUse( field ),
-                 "printConnectivityLocationPattern: requested field name must be already existing." );
+                 "copyFieldToVector: requested field name must be already existing." );
 
   // get field index
   localIndex fieldIdx = fieldIndex( field );
 
   // Retrieve fieldVar
-  real64_array & fieldVar = manager->getReference<real64_array>( field );
+  real64_array const & fieldVar = manager->getReference<real64_array>( field );
 
   // Retrieve indexArray
   globalIndex_array const &
