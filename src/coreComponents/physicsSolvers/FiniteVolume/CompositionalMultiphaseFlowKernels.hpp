@@ -661,7 +661,10 @@ struct FluxKernel
   static inline void
   Compute( localIndex const NC, localIndex const NP,
            localIndex const stencilSize,
-           FluxApproximationBase::CellStencil::Entry const * const stencil,
+           arraySlice1d<localIndex const> const & seri,
+           arraySlice1d<localIndex const> const & sesri,
+           arraySlice1d<localIndex const> const & sei,
+           arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
@@ -687,8 +690,8 @@ struct FluxKernel
            arraySlice1d<real64> const & localFlux,
            arraySlice2d<real64> const & localFluxJacobian )
   {
-    localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+    localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
     localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
     localIndex const NDOF = NC + 1;
@@ -753,11 +756,9 @@ struct FluxKernel
       // calculate quantities on primary connected cells
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = stencil[i].index;
-
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
 
         // density
         real64 const density  = phaseDens[er][esr][fluidIndex][ei][0][ip];
@@ -784,12 +785,10 @@ struct FluxKernel
       // compute potential difference MPFA-style
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        FluxApproximationBase::CellStencil::Entry const & entry = stencil[i];
-
-        localIndex const er  = entry.index.region;
-        localIndex const esr = entry.index.subRegion;
-        localIndex const ei  = entry.index.index;
-        real64 const weight  = entry.weight;
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
+        real64 weight = stencilWeights[i];
 
         //capillary pressure
         real64 capPressure     = 0.0;
@@ -847,10 +846,9 @@ struct FluxKernel
       // choose upstream cell
       localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-      CellDescriptor const & cell_up = stencil[k_up].index;
-      localIndex er_up  = cell_up.region;
-      localIndex esr_up = cell_up.subRegion;
-      localIndex ei_up  = cell_up.index;
+      localIndex er_up  = seri[k_up];
+      localIndex esr_up = sesri[k_up];
+      localIndex ei_up  = sei[k_up];
 
       real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 

@@ -479,7 +479,6 @@ struct FluxKernel
     }
   }
 
-
 };
 
 } // namespace SinglePhaseFlowKernels
