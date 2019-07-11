@@ -528,7 +528,7 @@ public:
     }
     else
     {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES ... >( container, std::forward< LAMBDA >( lambda ) );
+      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
     }
     return rval;
   }
@@ -545,7 +545,7 @@ public:
     }
     else
     {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES ... >( container, std::forward< LAMBDA >( lambda ) );
+      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
     }
     return rval;
   }
@@ -575,7 +575,7 @@ public:
   {
     for( auto & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES ... >( subGroupIter.second, [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -587,7 +587,7 @@ public:
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES ... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -599,7 +599,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES ... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -612,7 +612,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES ... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -1055,10 +1055,10 @@ private:
   indexType m_size;             ///< The size/length wrappers in this group
   indexType m_capacity;         ///< The capacity for wrappers in this group
   RestartFlags m_restart_flags; ///< Restart flag for this group...and
-  ///< subsequently all wrappers in this group
+                                ///< subsequently all wrappers in this group
   InputFlags m_input_flags;     ///< Input flag for this group
   string m_name;                ///< the repository name of this group. This
-  ///< is the key in the parent group.
+                                ///< is the key in the parent group.
 
 };
 
