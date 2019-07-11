@@ -776,28 +776,32 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
   localIndex const NDOF = m_numDofPerCell;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+
+    forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
+      localIndex const stencilSize = stencil.stencilSize(iconn);
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
       stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
 
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex idof = 0; idof < NDOF; ++idof)
         {
@@ -807,8 +811,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex idof = 0; idof < NDOF; ++idof)
         {
@@ -1131,8 +1134,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   FluxKernel::MaterialView< arrayView3d<real64 const> > const & phaseCapPres                = m_phaseCapPressure.toViewConst();
   FluxKernel::MaterialView< arrayView4d<real64 const> > const & dPhaseCapPres_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac.toViewConst();
 
-  localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
@@ -1148,13 +1151,17 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   integer const gravityFlag     = m_gravityFlag;
   integer const capPressureFlag = m_capPressureFlag;
 
-  fluxApprox->forCellStencils( [&] ( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&] ( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.sizeOfArray(iconn);
+      localIndex const stencilSize = stencil.stencilSize(iconn);
 
       // create local work arrays
       stackArray1d<long long, maxSize1> eqnRowIndices( numElems * NC );
@@ -1165,7 +1172,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
       FluxKernel::Compute( NC, NP,
                            stencilSize,
-                           connections[iconn],
+                           eri[iconn],
+                           esri[iconn],
+                           ei[iconn],
+                           weights[iconn],
                            pres,
                            dPres,
                            gravDepth,
@@ -1194,8 +1204,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // set equation indices for both connected cells
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        globalIndex const offset = NDOF * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * blockLocalDofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex ic = 0; ic < NC; ++ic)
         {
@@ -1205,8 +1214,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        globalIndex const offset = NDOF * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * blockLocalDofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex jdof = 0; jdof < NDOF; ++jdof)
         {

@@ -713,6 +713,162 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 }
 
 
+void FluxAssemblyKernelSelector( CellElementStencilTPFA const & stencil,
+                                 real64 const dt,
+                                 localIndex const fluidIndex,
+                                 integer const gravityFlag,
+                                 ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
+                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+                                 Epetra_FECrsMatrix * const jacobian,
+                                 Epetra_FEVector * const residual
+                                 )
+{
+  constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+  constexpr localIndex stencilSize  = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+
+  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
+  typename CellElementStencilTPFA::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+
+  forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  {
+    // working arrays
+    stackArray1d<globalIndex, numFluxElems> eqnRowIndices(numFluxElems);
+    stackArray1d<globalIndex, maxNumFluxElems> dofColIndices(stencilSize);
+
+    stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+    stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
+
+    FluxKernel::Compute( stencilSize,
+                         eri[iconn],
+                         esri[iconn],
+                         ei[iconn],
+                         weights[iconn],
+                         pres,
+                         dPres,
+                         gravDepth,
+                         dens,
+                         dDens_dPres,
+                         mob,
+                         dMob_dPres,
+                         fluidIndex,
+                         gravityFlag,
+                         dt,
+                         localFlux,
+                         localFluxJacobian );
+
+    // extract DOF numbers
+    eqnRowIndices = -1;
+    for (localIndex i = 0; i < numFluxElems; ++i)
+    {
+      eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+    }
+
+    for (localIndex i = 0; i < stencilSize; ++i)
+    {
+      dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+    }
+
+    // Add to global residual/jacobian
+    jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
+                                   eqnRowIndices.data(),
+                                   integer_conversion<int>(stencilSize),
+                                   dofColIndices.data(),
+                                   localFluxJacobian.data() );
+
+    residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
+  } );
+}
+
+void FluxAssemblyKernelSelector( FaceElementStencil const & stencil,
+                                 real64 const dt,
+                                 localIndex const fluidIndex,
+                                 integer const gravityFlag,
+                                 ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
+                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
+                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+                                 Epetra_FECrsMatrix * const jacobian,
+                                 Epetra_FEVector * const residual
+                                 )
+{
+  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
+
+
+  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
+  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
+  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
+  typename FaceElementStencil::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+
+  forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  {
+    localIndex const numFluxElems = stencil.stencilSize(iconn);
+    localIndex const stencilSize  = numFluxElems;
+
+    // working arrays
+    stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
+    stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+
+    stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+    stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
+
+    localIndex const er = eri[iconn][0];
+    localIndex const esr = esri[iconn][0];
+
+    FluxKernel::ComputeJunction( numFluxElems,
+                                 ei[iconn],
+                                 weights[iconn],
+                                 pres[er][esr],
+                                 dPres[er][esr],
+                                 gravDepth[er][esr],
+                                 dens[er][esr][fluidIndex],
+                                 dDens_dPres[er][esr][fluidIndex],
+                                 mob[er][esr],
+                                 dMob_dPres[er][esr],
+                                 fluidIndex,
+                                 gravityFlag,
+                                 dt,
+                                 localFlux,
+                                 localFluxJacobian );
+
+    // extract DOF numbers
+    eqnRowIndices = -1;
+    for (localIndex i = 0; i < numFluxElems; ++i)
+    {
+      eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+    }
+
+    for (localIndex i = 0; i < stencilSize; ++i)
+    {
+      dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+    }
+
+    // Add to global residual/jacobian
+    jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
+                                   eqnRowIndices.data(),
+                                   integer_conversion<int>(stencilSize),
+                                   dofColIndices.data(),
+                                   localFluxJacobian.data() );
+
+    residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
+  } );
+}
+
+
 void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
                                          Epetra_FECrsMatrix * const jacobian,
                                          Epetra_FEVector * const residual,
@@ -745,126 +901,22 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
-    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
-    constexpr localIndex maxNumFluxElems = STENCIL_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex maxStencilSize = STENCIL_TYPE::MAX_STENCIL_SIZE;
+//    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
-    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
-
-
-    if( std::is_same< STENCIL_TYPE, CellElementStencilTPFA >::value )
-    {
-      forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
-      {
-        localIndex const numFluxElems = maxNumFluxElems;
-        localIndex const stencilSize  = stencil.stencilSize(iconn);
-
-        // working arrays
-        stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
-        stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
-
-        stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
-        stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
-
-        FluxKernel::Compute( stencilSize,
-                             eri[iconn],
-                             esri[iconn],
-                             ei[iconn],
-                             weights[iconn],
-                             pres,
-                             dPres,
-                             gravDepth,
-                             dens,
-                             dDens_dPres,
-                             mob,
-                             dMob_dPres,
-                             fluidIndex,
-                             gravityFlag,
-                             dt,
-                             localFlux,
-                             localFluxJacobian );
-
-        // extract DOF numbers
-        eqnRowIndices = -1;
-        for (localIndex i = 0; i < numFluxElems; ++i)
-        {
-          eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
-        }
-
-        for (localIndex i = 0; i < stencilSize; ++i)
-        {
-          dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
-        }
-
-        // Add to global residual/jacobian
-        jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                       eqnRowIndices.data(),
-                                       integer_conversion<int>(stencilSize),
-                                       dofColIndices.data(),
-                                       localFluxJacobian.data() );
-
-        residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
-      });
-    }
-    else if( std::is_same< STENCIL_TYPE, FaceElementStencil >::value )
-    {
-      forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize(iconn);
-        localIndex const stencilSize  = numFluxElems;
-
-        // working arrays
-        stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
-        stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
-
-        stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
-        stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
-
-        localIndex const er = eri[iconn][0];
-        localIndex const esr = esri[iconn][0];
-
-
-        FluxKernel::ComputeJunction( numFluxElems,
-                                     ei[iconn],
-                                     weights[iconn],
-                                     pres[er][esr],
-                                     dPres[er][esr],
-                                     gravDepth[er][esr],
-                                     dens[er][esr][m_fluidIndex],
-                                     dDens_dPres[er][esr][m_fluidIndex],
-                                     mob[er][esr],
-                                     dMob_dPres[er][esr],
-                                     fluidIndex,
-                                     gravityFlag,
-                                     dt,
-                                     localFlux,
-                                     localFluxJacobian );
-
-        // extract DOF numbers
-        eqnRowIndices = -1;
-        for (localIndex i = 0; i < numFluxElems; ++i)
-        {
-          eqnRowIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
-        }
-
-        for (localIndex i = 0; i < stencilSize; ++i)
-        {
-          dofColIndices[i] = dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
-        }
-
-        // Add to global residual/jacobian
-        jacobian->SumIntoGlobalValues( integer_conversion<int>(numFluxElems),
-                                       eqnRowIndices.data(),
-                                       integer_conversion<int>(stencilSize),
-                                       dofColIndices.data(),
-                                       localFluxJacobian.data() );
-
-        residual->SumIntoGlobalValues( integer_conversion<int>(numFluxElems), eqnRowIndices.data(), localFlux.data() );
-      });
-    }
+    FluxAssemblyKernelSelector( stencil,
+                                dt,
+                                fluidIndex,
+                                gravityFlag,
+                                dofNumber,
+                                pres,
+                                dPres,
+                                gravDepth,
+                                dens,
+                                dDens_dPres,
+                                mob,
+                                dMob_dPres,
+                                jacobian,
+                                residual );
   });
 
 }
