@@ -13,6 +13,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/FlowSolverBase.hpp
+     fluidFlow/GeochemicalModel.hpp     
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
@@ -65,6 +66,7 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/FlowSolverBase.cpp
+     fluidFlow/GeochemicalModel.cpp          
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp

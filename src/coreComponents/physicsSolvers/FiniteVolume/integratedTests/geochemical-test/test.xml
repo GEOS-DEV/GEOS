@@ -1,0 +1,162 @@
+<?xml version="1.0" ?>
+<!--# # -->
+
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+
+  <Solvers
+    gravityVector="0.0,0.0,-9.81">
+  
+    <GeochemicalModel name="GeochemicalModel"
+                     verboseLevel="1"
+                     gravityFlag="1"
+                     discretization="dummy"
+                     targetRegions="{Region2}"
+                     fluidName="water"
+                     reactiveFluidName="chem"		     
+                     solidName="rock"
+		     outputSpeciesFileName="speciesOutput.txt">
+
+    <SystemSolverParameters name="SystemSolverParameters"
+                              krylovTol="1.0e-12"
+                              newtonTol="1.0e-8"
+                              maxIterNewton="10"/>
+    </GeochemicalModel>
+  </Solvers>
+  
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 1}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{1}"
+                  ny="{1}"
+                  nz="{1}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh>
+
+  <Geometry>
+  </Geometry>
+
+
+  <Events maxTime="1.0">
+
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0"
+                   target="/Solvers/GeochemicalModel" />
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   cycleFrequency="1"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="dummy"
+                                 fieldName="pressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <ElementRegion name="Region2"
+                   cellBlocks="{cb1}"
+                   materialList="{water, chem, rock}"/>
+                   
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+
+    <EquilibratedChemicalFluid name="chem"
+			       databaseType="EQ36"
+			       databaseFile="data0.shv"
+			       basisSpeciesNames="{Na+, Cl-, HCO3-, H+}"
+			       activityCoefModel="BDot"/>
+
+  </Constitutive>
+
+  <InitialConditions>
+    
+  </InitialConditions>
+
+  <FieldSpecifications>
+    <FieldSpecification name="pressure"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="pressure"
+               scale="1.0132"/>
+
+    <FieldSpecification name="temperature"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="temperature"
+               scale="60.0"/>    
+
+    <FieldSpecification name="totalNa+"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="totalConcentration"
+               component="0"	       
+               scale="1.092"/>
+
+    <FieldSpecification name="totalCl-"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="totalConcentration"
+               component="1"	       
+               scale="1.12"/>
+
+    <FieldSpecification name="totalHCO3-"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="totalConcentration"
+               component="2"	       
+               scale="0.1161"/>
+
+    <FieldSpecification name="totalH+"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region2/cb1"
+               fieldName="totalConcentration"
+               component="3"	       
+               scale="7.7798E-07"/>	
+
+  </FieldSpecifications>
+
+  <Functions>
+  </Functions>
+
+  <Partition>
+    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
+  </Partition>
+
+  <Outputs>
+      <Silo name="siloOutput"/>
+  </Outputs>
+
+
+</Problem>

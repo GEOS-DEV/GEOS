@@ -497,8 +497,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // do line search in case residual has increased
+      /* disable line-search temporarily
       if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
           && residualNorm > lastResidual )
+      if( residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n,
@@ -526,6 +528,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           }
         }
       }
+      */
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
       LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
