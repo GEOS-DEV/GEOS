@@ -99,7 +99,7 @@
   </Functions>
 
   <Outputs>
-    <VTK name="siloOutput"/>
+    <Silo name="siloOutput"/>
     <Restart name="sidreRestart"/>
   </Outputs>
 
