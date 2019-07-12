@@ -118,6 +118,31 @@ namespace geosx
       auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
       // .... and the data array containg the positions
       CreatePDataArray( pPointsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id), "Position", 3, format );
+      
+      // Find all the node fields to output
+      auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
+      for( auto const & wrapperIter : nodeManager->wrappers() )
+      {
+        ViewWrapperBase const * const wrapper = wrapperIter.second;
+        if( wrapper->getPlotLevel() < m_plotLevel )
+        {
+           string const fieldName = wrapper->getName();
+           std::type_info const & typeID = wrapper->get_typeid();
+           rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
+           if( !m_geosxToVTKTypeMap.count(fieldType) )
+             continue;
+           int dimension = 0;
+           if( fieldType == rtTypes::TypeIDs::r1_array_id )
+           {
+             dimension = 3;
+           }
+           else
+           {
+             dimension = 1;
+           }
+           CreatePDataArray(pPointDataNode, m_geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
+        }
+      }
 
       // Declaration of the node PCells
       auto pCellsNode = pUnstructureGridNode.append_child("PCells");
@@ -126,7 +151,7 @@ namespace geosx
       CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1, format );
       CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1, format );
 
-      // Find all the fields to output
+      // Find all the cell fields to output
       auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
       elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                                        auto const * const elemRegion )
@@ -203,6 +228,44 @@ namespace geosx
   vtuWriter.WriteVertices( nodeManager->referencePosition(), m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Points" );
+
+  // Point data output
+  vtuWriter.OpenXMLNode( "PointData", {} );
+  for( auto const & wrapperIter : nodeManager->wrappers() )
+  {
+    ViewWrapperBase const * const wrapper = wrapperIter.second;
+    if( wrapper->getPlotLevel() < m_plotLevel )
+    {
+       string const fieldName = wrapper->getName();
+       std::type_info const & typeID = wrapper->get_typeid();
+       rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
+       if( !m_geosxToVTKTypeMap.count(fieldType) )
+         continue;
+       int dimension = 0;
+       if( fieldType == rtTypes::TypeIDs::r1_array_id )
+       {
+         dimension = 3;
+       }
+       else
+       {
+         dimension = 1;
+       }
+       vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( fieldType ) },
+                                             { "Name", fieldName },
+                                             { "NumberOfComponents", std::to_string( dimension ) },
+                                             { "format", format } } );
+       std::type_index typeIndex = std::type_index( typeID );
+       rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+                                       [&]( auto type ) -> void
+       {
+         using cType = decltype(type);
+         const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
+         vtuWriter.WriteData( view.reference(), m_binary );
+       });
+       vtuWriter.CloseXMLNode( "DataArray" );
+    }
+  }
+  vtuWriter.CloseXMLNode( "PointData" );
 
   // Definition of the node Cells
   vtuWriter.OpenXMLNode( "Cells", {} );
