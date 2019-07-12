@@ -75,11 +75,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 {
   NodeManager * const nodeManager = getNodeManager();
 
-  array1d<array1d<localIndex>> const & nodeToElementRegionList = nodeManager->elementRegionList();
+  ArrayOfArraysView<localIndex> const & nodeToElementRegionList = nodeManager->elementRegionList();
 
-  array1d<array1d<localIndex>> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView<localIndex> const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
 
-  array1d<array1d<localIndex>> const & nodeToElementList = nodeManager->elementList();
+  ArrayOfArraysView<localIndex> const & nodeToElementList = nodeManager->elementList();
 
 
   FaceManager * const faceManager = this->getFaceManager();
@@ -104,7 +104,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
   {
     for( auto const nodeIndex : nodeAdjacencySet )
     {
-      for( localIndex b=0 ; b<nodeToElementRegionList[nodeIndex].size() ; ++b )
+      for( localIndex b=0 ; b<nodeToElementRegionList.sizeOfArray(nodeIndex) ; ++b )
       {
         localIndex const regionIndex = nodeToElementRegionList[nodeIndex][b];
         localIndex const subRegionIndex = nodeToElementSubRegionList[nodeIndex][b];

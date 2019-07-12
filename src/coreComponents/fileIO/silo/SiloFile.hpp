@@ -984,7 +984,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
         matIndices[a] = constitutiveManager->
-                        GetConstitituveRelation( elemRegion->getMaterialList()[a] )->
+                        GetConstitutiveRelation( elemRegion->getMaterialList()[a] )->
                         getIndexInParent();
       }
 
@@ -997,7 +997,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
         {
           // if( field[er][esr][matIndices[matIndex]].size() > 0 )
           {
-            activeMaterialNames.push_back( constitutiveManager->GetConstitituveRelation( matIndices[matIndex] )->getName() );
+            activeMaterialNames.push_back( constitutiveManager->GetConstitutiveRelation( matIndices[matIndex] )->getName() );
             mixlen += subRegion->size();
           }
         }
@@ -1031,7 +1031,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
-        matIndices[a] = constitutiveManager->GetConstitituveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
+        matIndices[a] = constitutiveManager->GetConstitutiveRelation( elemRegion->getMaterialList()[a] )->getIndexInParent();
       }
 
       elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
