@@ -113,11 +113,11 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * fluid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_fluidName );
+  ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
   m_fluidIndex = fluid->getIndexInParent();
 
-  ConstitutiveBase const * solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidName );
+  ConstitutiveBase const * solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
   m_solidIndex = solid->getIndexInParent();
 

@@ -322,9 +322,9 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
   array1d<std::set<localIndex> > nodesToRupturedFaces;
   array1d<std::set<localIndex> > edgesToRupturedFaces;
 
-  arrayView1d<localIndex_array> & nodesToElementRegion = nodeManager.elementRegionList();
-  arrayView1d<localIndex_array> & nodesToElementSubRegion = nodeManager.elementSubRegionList();
-  arrayView1d<localIndex_array> & nodesToElementList = nodeManager.elementList();
+  ArrayOfArraysView<localIndex> const & nodesToElementRegion = nodeManager.elementRegionList();
+  ArrayOfArraysView<localIndex> const & nodesToElementSubRegion = nodeManager.elementSubRegionList();
+  ArrayOfArraysView<localIndex> const & nodesToElementList = nodeManager.elementList();
 
 
   std::map<string, string_array > fieldNames;
@@ -436,7 +436,7 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
           (   //isSeparable[a]
             true || prefrac)&&
           isNodeGhost[a]<0 &&
-          nodesToElementList[a].size()>1 &&
+          nodesToElementList.sizeOfArray(a)>1 &&
           CheckNodeSplitability( a, nodeManager, faceManager, edgeManager, prefrac ) > 0 )  //&&
         //          nodesToRupturedFaces[a].size()>0 )
         {
@@ -591,15 +591,15 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 //  const std::set< std::pair<CellBlockSubRegion*,localIndex> >&
 //  nodesToElements = nodeManager.m_toElementsRelation[nodeID] ;
 
-  arrayView1d<localIndex> const & nodeToElementRegion = nodeManager.elementRegionList()[nodeID];
-  arrayView1d<localIndex> const & nodeToElementSubRegion = nodeManager.elementSubRegionList()[nodeID];
-  arrayView1d<localIndex> const & nodeToElementIndex = nodeManager.elementList()[nodeID];
+  arraySlice1d<localIndex const> const & nodeToElementRegion = nodeManager.elementRegionList()[nodeID];
+  arraySlice1d<localIndex const> const & nodeToElementSubRegion = nodeManager.elementSubRegionList()[nodeID];
+  arraySlice1d<localIndex const> const & nodeToElementIndex = nodeManager.elementList()[nodeID];
 
   // ***** BACKWARDS COMPATIBLITY HACK
   std::set< std::pair<CellElementSubRegion*, localIndex> > nodesToElements;
 
 
-  for( localIndex k=0 ; k<nodeToElementRegion.size() ; ++k )
+  for( localIndex k=0 ; k<nodeManager.elementRegionList().sizeOfArray(nodeID) ; ++k )
   {
     nodesToElements.insert( std::make_pair( elemManager.GetRegion( nodeToElementRegion[k] )->
                                             GetSubRegion<CellElementSubRegion>( nodeToElementSubRegion[k] ),
@@ -1260,9 +1260,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView1d<R1Tensor> const & X = nodeManager.referencePosition();
   arrayView1d<set<localIndex> > & nodesToEdges = nodeManager.edgeList();
   arrayView1d<set<localIndex> > & nodesToFaces = nodeManager.faceList();
-  arrayView1d<localIndex_array> & nodesToElementRegions = nodeManager.elementRegionList();
-  arrayView1d<localIndex_array> & nodesToElementSubRegions = nodeManager.elementSubRegionList();
-  arrayView1d<localIndex_array> & nodesToElementIndex = nodeManager.elementList();
+  ArrayOfArrays<localIndex> & nodesToElementRegions = nodeManager.elementRegionList();
+  ArrayOfArrays<localIndex> & nodesToElementSubRegions = nodeManager.elementSubRegionList();
+  ArrayOfArrays<localIndex> & nodesToElementIndex = nodeManager.elementList();
 
 
   arrayView2d<localIndex> & edgesToNodes = edgeManager.nodeList();
@@ -1330,9 +1330,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   modifiedObjects.newNodes.insert( newNodeIndex );
   modifiedObjects.modifiedNodes.insert( nodeID );
 
-  nodesToElementRegions[newNodeIndex].clear();
-  nodesToElementSubRegions[newNodeIndex].clear();
-  nodesToElementIndex[newNodeIndex].clear();
+  nodesToElementRegions.clearArray(newNodeIndex);
+  nodesToElementSubRegions.clearArray(newNodeIndex);
+  nodesToElementIndex.clearArray(newNodeIndex);
 
   nodesToEdges[newNodeIndex].clear();
   nodesToFaces[newNodeIndex].clear();
@@ -1571,7 +1571,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             if( verboseLevel() > 1 )
             {
               std::cout<<"    nodeToElemMaps["<<elemsToNodes[elemIndex][a]<<"] = ( ";
-              for( localIndex k=0 ; k<nodesToElementRegions[elemsToNodes[elemIndex][a]].size() ; ++k )
+              for( localIndex k=0 ; k<nodesToElementRegions.sizeOfArray(elemsToNodes[elemIndex][a]) ; ++k )
               {
                 std::cout<<"["<<nodesToElementRegions[elemsToNodes[elemIndex][a]][k]<<","
                          <<nodesToElementSubRegions[elemsToNodes[elemIndex][a]][k]<<","
@@ -1584,7 +1584,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           if( verboseLevel() > 1 )
           {
             std::cout<<"    nodeToElemMaps["<<nodeID<<"] = ( ";
-            for( localIndex k=0 ; k<nodesToElementRegions[nodeID].size() ; ++k )
+            for( localIndex k=0 ; k<nodesToElementRegions.sizeOfArray(nodeID) ; ++k )
             {
               std::cout<<"["<<nodesToElementRegions[nodeID][k]<<","
                        <<nodesToElementSubRegions[nodeID][k]<<","
@@ -1837,9 +1837,9 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
 
   arrayView1d<set<localIndex> > const & nodesToEdges = nodeManager.edgeList();
   arrayView1d<set<localIndex> > const & nodesToFaces = nodeManager.faceList();
-  arrayView1d<localIndex_array> const & nodesToElementRegions = nodeManager.elementRegionList();
-  arrayView1d<localIndex_array> const & nodesToElementSubRegions = nodeManager.elementSubRegionList();
-  arrayView1d<localIndex_array> const & nodesToElementIndex = nodeManager.elementList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementRegions = nodeManager.elementRegionList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementSubRegions = nodeManager.elementSubRegionList();
+  ArrayOfArraysView<localIndex const> const & nodesToElementIndex = nodeManager.elementList();
 
 
   arrayView2d<localIndex> const & edgesToNodes = edgeManager.nodeList();
@@ -2052,7 +2052,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
     {
 
       std::set< std::pair<CellElementSubRegion const *, localIndex> > nodeToElements;
-      for( localIndex k=0 ; k<nodesToElementRegions[a].size() ; ++k )
+      for( localIndex k=0 ; k<nodesToElementRegions.sizeOfArray(a) ; ++k )
       {
         if( nodesToElementRegions[a][k]!=-1 && nodesToElementSubRegions[a][k]!=-1 && nodesToElementIndex[a][k]!=-1 )
         {

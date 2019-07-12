@@ -44,27 +44,21 @@ real64 BlasLapackLA::vectorNorm1( array1d<real64> const & X )
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  return dasum_( &N,
-                 X.data(),
-                 &INCX);
+  return GEOSX_dasum( &N, X.data(), &INCX);
 }
 
 real64 BlasLapackLA::vectorNorm2( array1d<real64> const & X )
 {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  return dnrm2_( &N,
-                 X.data(),
-                 &INCX);
+  return GEOSX_dnrm2( &N, X.data(), &INCX);
 }
 
 real64 BlasLapackLA::vectorNormInf( array1d<real64> const & X )
                                     {
   int const INCX = 1;
   int const N = integer_conversion<int>( X.size() );
-  int ind = idamax_( &N,
-                     X.data(),
-                     &INCX);
+  int ind = GEOSX_idamax( &N, X.data(), &INCX);
   ind -= 1; // Fortran convention, subtract 1
   return std::abs( X(ind) );
 }
@@ -124,17 +118,12 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A )
       int const NN = integer_conversion<int>( A.size(0) );
       int INFO;
       array1d<int> IPIV( NN );
-      array2d<double> LUfactor( A );
+      array2d<double> LUFactor( A );
 
       // We compute the LU factors for the transpose matrix, i.e. choosing the
       // LAPACK_COL_MAJOR ordering, to avoid transposition/copy requires for
       // LAPACK_ROW_MAJOR ordering.
-      dgetrf_( &NN,
-               &NN,
-               LUfactor.data(),
-               &NN,
-               IPIV.data(),
-               &INFO);
+      GEOSX_dgetrf( &NN, &NN,  LUFactor.data(), &NN, IPIV.data(), &INFO);
 
       GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
@@ -143,11 +132,11 @@ real64 BlasLapackLA::determinant( array2d<real64> const & A )
       {
         if( IPIV[i] != i + 1 ) //IPIV is based on Fortran convention (counting from 1)
         {
-          det *= -LUfactor( i, i);
+          det *= -LUFactor( i, i);
         }
         else
         {
-          det *= LUfactor( i, i);
+          det *= LUFactor( i, i);
         }
       }
 
@@ -165,12 +154,7 @@ real64 BlasLapackLA::matrixNormInf( array2d<real64> const & A )
   char const NORM = '1';
   int const  M = integer_conversion<int>( A.size(0) );
   int const  N = integer_conversion<int>( A.size(1) );
-  return dlange_(&NORM,
-                 &N,
-                 &M,
-                 A.data(),
-                 &N,
-                 nullptr);
+  return GEOSX_dlange(&NORM,  &N, &M, A.data(), &N, nullptr);
 
 }
 
@@ -181,7 +165,7 @@ real64 BlasLapackLA::matrixNorm1( array2d<real64> const & A )
   int const M = integer_conversion<int>( A.size(0) );
   int const N = integer_conversion<int>( A.size(1) );
   array1d<double> WORK(N);
-  return  dlange_( &NORM,
+  return  GEOSX_dlange( &NORM,
                    &N,
                    &M,
                    A.data(),
@@ -195,12 +179,7 @@ real64 BlasLapackLA::matrixNormFrobenius( array2d<real64> const & A )
   char const NORM = 'F';
   int const M = integer_conversion<int>( A.size(0) );
   int const N = integer_conversion<int>( A.size(1) );
-  return dlange_(&NORM,
-                 &N,
-                 &M,
-                 A.data(),
-                 &N,
-                 nullptr);
+  return GEOSX_dlange(&NORM, &N, &M, A.data(), &N, nullptr);
 
 }
 
@@ -215,12 +194,7 @@ void BlasLapackLA::vectorVectorAdd( array1d<real64> const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = static_cast<int>( X.size() );
-  daxpy_( &N,
-          &alpha,
-          X.data(),
-          &INCX,
-          Y.data(),
-          &INCY );
+  GEOSX_daxpy( &N, &alpha, X.data(), &INCX, Y.data(), &INCY );
 
   return;
 }
@@ -237,12 +211,7 @@ void BlasLapackLA::matrixMatrixAdd( array2d<real64> const & A,
   int const INCX = 1;
   int const INCY = 1;
   int const N = static_cast<int>( A.size() );
-  daxpy_( &N,
-          &alpha,
-          A.data(),
-          &INCX,
-          B.data(),
-          &INCY );
+  GEOSX_daxpy( &N, &alpha, A.data(), &INCX, B.data(), &INCY );
 
   return;
 }
@@ -253,10 +222,7 @@ void BlasLapackLA::vectorScale( real64 alpha,
 
   int const INCX = 1;
   int const N = static_cast<int>( X.size() );
-  dscal_( &N,
-          &alpha,
-          X.data(),
-          &INCX);
+  GEOSX_dscal( &N, &alpha, X.data(), &INCX );
 
   return;
 }
@@ -267,10 +233,7 @@ void BlasLapackLA::matrixScale( real64 alpha,
 
   int const INCX = 1;
   int const N = static_cast<int>( A.size() );
-  dscal_( &N,
-          &alpha,
-          A.data(),
-          &INCX);
+  GEOSX_dscal( &N, &alpha, A.data(), &INCX );
 
   return;
 }
@@ -284,11 +247,7 @@ real64 BlasLapackLA::vectorDot( array1d<real64> const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = static_cast<int>( X.size() );
-  return ddot_( &N,
-                X.data(),
-                &INCX,
-                Y.data(),
-                &INCY );
+  return GEOSX_ddot( &N, X.data(), &INCX, Y.data(), &INCY );
 
 }
 
@@ -311,19 +270,7 @@ void BlasLapackLA::matrixVectorMultiply( array2d<real64> const & A,
   char const TRANS1 = 'N';
   char const TRANS2 = 'N';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         X.data(),
-         &N,
-         A.data(),
-         &K,
-         &beta,
-         Y.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, X.data(),&N, A.data(), &K, &beta, Y.data(), &N);
 
   return;
 }
@@ -347,19 +294,7 @@ void BlasLapackLA::matrixTVectorMultiply( array2d<real64> const & A,
   char const TRANS1 = 'N';
   char const TRANS2 = 'T';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         X.data(),
-         &N,
-         A.data(),
-         &M,
-         &beta,
-         Y.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, X.data(), &N, A.data(), &M, &beta, Y.data(), &N);
 
   return;
 }
@@ -385,19 +320,7 @@ void BlasLapackLA::matrixMatrixMultiply( array2d<real64> const & A,
   char const TRANS1 = 'N';
   char const TRANS2 = 'N';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         B.data(),
-         &N,
-         A.data(),
-         &K,
-         &beta,
-         C.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &N, A.data(), &K, &beta, C.data(), &N);
 
   return;
 }
@@ -424,19 +347,7 @@ void BlasLapackLA::matrixTMatrixMultiply( array2d<real64> const & A,
   char const TRANS1 = 'N';
   char const TRANS2 = 'T';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         B.data(),
-         &N,
-         A.data(),
-         &M,
-         &beta,
-         C.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &N, A.data(), &M, &beta, C.data(), &N);
 
   return;
 }
@@ -463,19 +374,7 @@ void BlasLapackLA::matrixMatrixTMultiply( array2d<real64> const & A,
   char const TRANS1 = 'T';
   char const TRANS2 = 'N';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         B.data(),
-         &K,
-         A.data(),
-         &K,
-         &beta,
-         C.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &K, A.data(), &K, &beta, C.data(), &N);
 
   return;
 }
@@ -502,19 +401,7 @@ void BlasLapackLA::matrixTMatrixTMultiply( array2d<real64> const & A,
   char const TRANS1 = 'T';
   char const TRANS2 = 'T';
 
-  dgemm_(&TRANS1,
-         &TRANS2,
-         &N,
-         &M,
-         &K,
-         &alpha,
-         B.data(),
-         &K,
-         A.data(),
-         &M,
-         &beta,
-         C.data(),
-         &N);
+  GEOSX_dgemm(&TRANS1, &TRANS2, &N, &M, &K, &alpha, B.data(), &K, A.data(), &M, &beta, C.data(), &N);
 
   return;
 }
@@ -523,9 +410,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
                                   array2d<real64> & Ainv )
 {
   real64 detA;
-  matrixInverse( A,
-                 Ainv,
-                 detA );
+  matrixInverse( A, Ainv, detA );
 }
 
 void BlasLapackLA::matrixInverse( array2d<real64> const & A,
@@ -564,17 +449,12 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     INV_WORK.resize(NN);
 
     // Compute determinant (not done calling directly the function determinant
-    // (avoid computing twice LUfactors, currently stored in Ainv, needed for
+    // (avoid computing twice LUFactors, currently stored in Ainv, needed for
     // computing the inverse). Again we compute the LU factors for the
     // transpose matrix, i.e. choosing the LAPACK_COL_MAJOR ordering, to
     // avoid transposition/copy requires for LAPACK_ROW_MAJOR ordering.
     int INFO;
-    dgetrf_( &NN,
-             &NN,
-             Ainv.data(),
-             &NN,
-             IPIV.data(),
-             &INFO);
+    GEOSX_dgetrf( &NN, &NN, Ainv.data(), &NN, IPIV.data(), &INFO);
 
     GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
 
@@ -644,13 +524,7 @@ void BlasLapackLA::matrixInverse( array2d<real64> const & A,
     // Invert (LAPACK function DGETRI). The LU factors computed for the
     // transpose matrix stored in Ainv are used.
     int INFO;
-    dgetri_( &NN,
-             Ainv.data(),
-             &NN,
-             IPIV.data(),
-             INV_WORK.data(),
-             &NN,
-             &INFO);
+    GEOSX_dgetri( &NN, Ainv.data(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO);
 
     GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
 
@@ -669,11 +543,7 @@ void BlasLapackLA::vectorCopy( array1d<real64> const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = static_cast<int>( X.size() );
-  dcopy_( &N,
-          X.data(),
-          &INCX,
-          Y.data(),
-          &INCY );
+  GEOSX_dcopy( &N, X.data(), &INCX, Y.data(), &INCY );
 
   return;
 }
@@ -688,11 +558,7 @@ void BlasLapackLA::matrixCopy( array2d<real64> const & A,
   int const INCX = 1;
   int const INCY = 1;
   int const N = static_cast<int>( A.size() );
-  dcopy_( &N,
-          A.data(),
-          &INCX,
-          B.data(),
-          &INCY );
+  GEOSX_dcopy( &N, A.data(), &INCX, B.data(), &INCY );
 
   return;
 }
@@ -740,10 +606,7 @@ void BlasLapackLA::vectorRand( array1d<real64> & X,
   GEOS_ASSERT_MSG( N > 0,
                    "The vector cannot be empty");
 
-  dlarnv_( &IDIST,
-           ISEED,
-           &N,
-           X.data());
+  GEOSX_dlarnv( &IDIST, ISEED, &N, X.data());
 
   return;
 }
@@ -758,10 +621,7 @@ void BlasLapackLA::matrixRand( array2d<real64> & A,
   GEOS_ASSERT_MSG( NN > 0,
                    "The matrix cannot be empty");
 
-  dlarnv_( &IDIST,
-           ISEED,
-           &NN,
-           A.data());
+  GEOSX_dlarnv( &IDIST, ISEED, &NN, A.data());
 
   return;
 }
