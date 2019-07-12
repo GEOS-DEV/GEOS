@@ -9,20 +9,20 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Temperature"
                 verboseLevel="0"
-                targetRegions="Region1">
+                targetRegions="{Region1}">
     </LaplaceFEM>
   </Solvers>
 
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8"
-                  xCoords="0, 1"
-                  yCoords="0, 1"
-                  zCoords="0, 1"
-                  nx="50"
-                  ny="10"
-                  nz="5"
-                  cellBlockNames="cb1"/>
+                  elementTypes="{C3D8}"
+                  xCoords="{0, 1}"
+                  yCoords="{0, 1}"
+                  zCoords="{0, 1}"
+                  nx="{50}"
+                  ny="{10}"
+                  nz="{5}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Events maxTime="1.0">
@@ -60,7 +60,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region1" cellBlocks="cb1" materialList="shale" />
+    <ElementRegion name="Region1" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>
@@ -79,22 +79,22 @@
                fieldName="Temperature"
                objectPath="nodeManager"
                scale="1000.0"
-               setNames="source"/>
+               setNames="{source}"/>
     <FieldSpecification name="sinkTerm"
                fieldName="Temperature"
                objectPath="nodeManager"
                scale="0.0"
-               setNames="sink"/>
+               setNames="{sink}"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction name="timeFunction"
-                   inputVarNames="time"
-                   coordinates="0.0 1.0e-6 2.0e-6 1.0e9"
-                   values="0.0 1.0 1.0 1.0" />
+                   inputVarNames="{time}"
+                   coordinates="{0.0, 1.0e-6, 2.0e-6, 1.0e9}"
+                   values="{0.0, 1.0, 1.0, 1.0}" />
     <SymbolicFunction name="spaceFunction"
-                   inputVarNames="ReferencePosition"
-                   variableNames="x y z"
+                   inputVarNames="{ReferencePosition}"
+                   variableNames="{x, y, z}"
                    expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
   </Functions>
 

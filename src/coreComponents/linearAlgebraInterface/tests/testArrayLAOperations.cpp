@@ -1029,7 +1029,7 @@ void set_get_random_number_generator_seed_test()
 template<typename LAI>
 void performance_test()
 {
-  constexpr localIndex MAX_SIZE = 1024 * 8;
+  constexpr localIndex MAX_SIZE = 1024 * 8 * 4;
 
   array2d<double> a(MAX_SIZE, MAX_SIZE);
   array2d<double> b(MAX_SIZE, MAX_SIZE);
@@ -1184,7 +1184,7 @@ TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed)
 
 TEST( DenseLAInterface, performanceTest)
 {
-  //performance_test<BlasLapackLA>();
+  // performance_test<BlasLapackLA>();
   SUCCEED();
 }
 
