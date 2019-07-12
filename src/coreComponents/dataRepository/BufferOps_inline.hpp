@@ -583,7 +583,8 @@ Pack( char * & buffer,
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a], var.sizeOfArray( a ) );
+    T const * const data = var[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
   }
   return sizeOfPackedChars;
 }
@@ -622,7 +623,8 @@ Pack( char * & buffer,
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, &(var[indices[a]][0]), var.sizeOfArray( indices[a] ) );
+    T const * const data = &(var[indices[a]][0]);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.sizeOfArray( indices[a] ) );
   }
   return sizeOfPackedChars;
 }
