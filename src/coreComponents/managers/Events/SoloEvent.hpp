@@ -56,17 +56,25 @@ public:
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
-   * dt to exactly match the time frequency
+   * dt to exactly match the application time
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
 
   struct viewKeyStruct
   {
+    static constexpr auto targetTimeString = "targetTime";
+    static constexpr auto targetCycleString = "targetCycle";
+    static constexpr auto targetExactTimestepString = "targetExactTimestep";
+
     dataRepository::ViewKey targetTime = { "targetTime" };
     dataRepository::ViewKey targetCycle = { "targetCycle" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
   } SoloEventViewKeys;
+
+  real64 m_targetTime;
+  integer m_targetCycle;
+  integer m_targetExactTimestep;
 
 };
 

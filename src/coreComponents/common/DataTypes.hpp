@@ -145,7 +145,7 @@ using arraySlice2d = LvArray::ArraySlice< T, 2, localIndex >;
 template< typename T, int MAXSIZE >
 using stackArray2d = stack_array< T, 2, MAXSIZE >;
 
-template< typename T, bool CONST_SIZES=false >
+template< typename T, bool CONST_SIZES=std::is_const< T >::value >
 using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
 
 template< typename T >

@@ -56,7 +56,6 @@ void RestartOutput::Execute(real64 const time_n,
 #ifdef GEOSX_USE_ATK
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
-
   char fileName[200] = {0};
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 

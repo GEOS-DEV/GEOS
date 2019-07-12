@@ -38,16 +38,6 @@ namespace geosx
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
-
-#ifdef __INTEL_COMPILER
-  GEOS_ERROR_IF( mkl_set_threading_layer( MKL_THREADING_INTEL ) == -1, "Error." );
-#else
-  GEOS_ERROR_IF( mkl_set_threading_layer( MKL_THREADING_GNU ) == -1, "Error." );
-#endif
-
-  // Use the 32 bit integer interface, this seems to be what trilinos expects.
-  GEOS_ERROR_IF( mkl_set_interface_layer( MKL_INTERFACE_LP64 ) == -1, "Error." );
-
   GEOS_LOG_RANK( "MKL max threads: " << mkl_get_max_threads());
 #endif
 }

@@ -68,7 +68,7 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
   ConstitutiveBase const * const
-  constitutiveRelation = GetConstitituveRelation( constitutiveRelationInstanceName );
+  constitutiveRelation = GetConstitutiveRelation( constitutiveRelationInstanceName );
 
   std::unique_ptr<ConstitutiveBase> material;
   constitutiveRelation->DeliverClone( constitutiveRelationInstanceName, parent, material );

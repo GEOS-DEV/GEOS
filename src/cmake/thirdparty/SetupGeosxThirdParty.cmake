@@ -181,8 +181,8 @@ if( ENABLE_CALIPER )
             NO_SYSTEM_ENVIRONMENT_PATH
             NO_CMAKE_SYSTEM_PATH)
 
-    set( caliper_lib_list caliper caliper-reader caliper-common gotcha caliper-mpi )
-                        
+    set( caliper_lib_list caliper-mpi caliper )
+
     message(STATUS "looking for libs in ${CALIPER_DIR}")
     blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
                         NAMES ${caliper_lib_list}
@@ -316,33 +316,51 @@ set( thirdPartyLibs ${thirdPartyLibs} pugixml )
 ################################
 # BLAS/LAPACK
 ################################
-if (DEFINED ENABLE_LAPACK_SUITE AND ENABLE_LAPACK_SUITE)
-    set(BLAS_DIR ${GEOSX_TPL_DIR}/lapack_suite)
-    set(LAPACK_DIR ${GEOSX_TPL_DIR}/lapack_suite)
-    include( cmake/thirdparty/Find_BLAS.cmake )
-    include( cmake/thirdparty/Find_LAPACK.cmake )
-    include(${LAPACK_LIBRARY_DIRS}/cmake/cblas-3.8.0/cblas-targets-release.cmake)
-    include(${LAPACK_LIBRARY_DIRS}/cmake/lapack-3.8.0/lapack-targets-release.cmake)
-else()
-    include( cmake/thirdparty/Find_BLAS.cmake )
-    include( cmake/thirdparty/Find_LAPACK.cmake )
-endif()
 
+include( cmake/thirdparty/FindMathLibraries.cmake )
 
 blt_register_library( NAME blas
-                      INCLUDES ${BLAS_INCLUDE_DIR}
                       TREAT_INCLUDES_AS_SYSTEM ON
                       LIBRARIES ${BLAS_LIBRARIES}
-                      LINK_FLAGS ${BLAS_LINKER_FLAGS}
                       )
 
 blt_register_library( NAME lapack
                       DEPENDS_ON blas
-                      INCLUDES ${LAPACK_INCLUDE_DIR}
                       TREAT_INCLUDES_AS_SYSTEM ON
                       LIBRARIES ${LAPACK_LIBRARIES}
-                      LINK_FLAGS ${LAPACK_LINKER_FLAGS}
                       )
+
+################################
+# Intel MKL
+################################
+if (ENABLE_MKL)
+    message( STATUS "setting up Intel MKL" )
+
+    blt_register_library( NAME mkl
+                          INCLUDES ${MKL_INCLUDE_DIRS}
+                          LIBRARIES ${MKL_LIBRARIES}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
+    
+    set( TRILINOS_DEPENDS mkl )
+    set( thirdPartyLibs ${thirdPartyLibs} mkl )
+
+################################
+# IBM ESSL
+################################
+elseif (ENABLE_ESSL)
+    message( STATUS "setting up IBM ESSL" )
+
+    blt_register_library( NAME essl
+                          INCLUDES ${ESSL_INCLUDE_DIRS}
+                          LIBRARIES ${ESSL_LIBRARIES}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
+    
+    set( TRILINOS_DEPENDS essl )
+    set( thirdPartyLibs ${thirdPartyLibs} essl )
+else()
+    set( TRILINOS_DEPENDS blas lapack )
+    set( thirdPartyLibs ${thirdPartyLibs} blas lapack )
+endif()
 
 ################################
 # TRILINOS
@@ -364,11 +382,11 @@ if( ENABLE_TRILINOS )
   message(STATUS "Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
   
   blt_register_library( NAME trilinos
-                        DEPENDS_ON lapack
+                        DEPENDS_ON ${TRILINOS_DEPENDS}
                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
                         LIBRARIES ${Trilinos_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
-  set( thirdPartyLibs ${thirdPartyLibs} trilinos )  
+  set( thirdPartyLibs ${thirdPartyLibs} trilinos )
 
 endif()
 
@@ -532,54 +550,12 @@ if( ENABLE_HYPRE )
     endif()
 
     blt_register_library( NAME hypre
-                          DEPENDS_ON superlu_dist lapack
+                          DEPENDS_ON superlu_dist blas lapack
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
                           LIBRARIES ${HYPRE_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
 
     set( thirdPartyLibs ${thirdPartyLibs} hypre )
-endif()
-
-
-################################
-# Intel MKKL
-################################
-if (ENABLE_MKL AND EXISTS ${MKL_ROOT})
-    message( STATUS "setting up Intel MKL" )
-
-    find_path( MKL_INCLUDE_DIR 
-               NAMES  mkl.h
-               PATHS  ${MKL_ROOT}/include
-               NO_DEFAULT_PATH
-               NO_CMAKE_ENVIRONMENT_PATH
-               NO_CMAKE_PATH
-               NO_SYSTEM_ENVIRONMENT_PATH
-               NO_CMAKE_SYSTEM_PATH)
-               
-    find_library( MKL_LIBRARY 
-                  NAMES ${MKL_LIBRARY_NAMES}
-                  PATHS ${MKL_ROOT}/lib
-                  NO_DEFAULT_PATH
-                  NO_CMAKE_ENVIRONMENT_PATH
-                  NO_CMAKE_PATH
-                  NO_SYSTEM_ENVIRONMENT_PATH
-                  NO_CMAKE_SYSTEM_PATH)
-
-    find_package_handle_standard_args( MKL_LIBRARY 
-                                       DEFAULT_MSG
-                                       BLAS_DIR
-                                       BLAS_INCLUDE_DIR
-                                       BLAS_LIBRARY_DIR
-                                       BLAS_LIBRARIES
-                                       )
-
-    blt_register_library( NAME mkl
-                          INCLUDES ${MKL_INCLUDE_DIR}
-                          LIBRARIES ${MKL_LIBRARY}
-                          TREAT_INCLUDES_AS_SYSTEM ON )
-    
-    set( thirdPartyLibs ${thirdPartyLibs} mkl )
-
 endif()
 
 
