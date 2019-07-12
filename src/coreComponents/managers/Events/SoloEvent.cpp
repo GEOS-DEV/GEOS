@@ -38,17 +38,17 @@ SoloEvent::SoloEvent( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Event time");
+    setDescription("Target event time.");
 
   RegisterViewWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Event cycle");
+    setDescription("Target event cycle.");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Allows timesteps to be truncated to match time frequency perfectly");
+    setDescription("If this option is set, the event will reduce its timestep requests to match the specified execution time exactly.");
 }
 
 
