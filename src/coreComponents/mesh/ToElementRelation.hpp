@@ -63,12 +63,6 @@ public:
     return m_elemRegionManager;
   }
 
-//  template< bool DOPACK >
-//  friend localIndex Pack( char *& buffer,
-//                   localIndex_array const & packList,
-//                   ElementRegionManager const * const elemManager );
-
-//private:
   BASETYPE m_toElementRegion;
   BASETYPE m_toElementSubRegion;
   BASETYPE m_toElementIndex;
@@ -101,18 +95,8 @@ void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
   m_toElementIndex.resize(newdims...);
 }
 
-
-
-//typedef ToElementRelation<localIndex_array> OneToOneRelation;
-//<<<<<<< HEAD
-//typedef ToElementRelation<lArray2d> FixedToManyElementRelation;
-//typedef ToElementRelation<array<localIndex_array> > OrderedVariableToManyElementRelation;
-//typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
-
-
-
 typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
-typedef ToElementRelation<array1d<localIndex_array> > OrderedVariableToManyElementRelation;
+typedef ToElementRelation<ArrayOfArrays<localIndex> > OrderedVariableToManyElementRelation;
 typedef ToElementRelation<array1d<set<localIndex>> > UnorderedVariableToManyElementRelation;
 
 void erase( OrderedVariableToManyElementRelation & relation,
