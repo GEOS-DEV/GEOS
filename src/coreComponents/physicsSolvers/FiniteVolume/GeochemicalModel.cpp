@@ -914,7 +914,7 @@ void GeochemicalModel::WriteSpeciesToFile(DomainPartition * const domain)
 
 		      spC = pow(10.0, spLogC);
 	    
-		      if(fabs(spLogC) == 0 || spC < 1e-40)
+		      if(fabs(spLogC) < 1e-64 || spC < 1e-40)
 			continue;
 	    
 		      os <<  std::left << std::setw(25) << spName << std::setw(10) << std::scientific << std::setprecision(4)<< std::right << spC << std::fixed << std::setw(20) << spLogC << std::endl;
