@@ -147,14 +147,6 @@ void TableFunction::InitializeFunction()
   }
 }
 
-void TableFunction::Evaluate( dataRepository::ManagedGroup const * const group,
-                              real64 const time,
-                              set<localIndex> const & set,
-                              real64_array & result ) const
-{
-  FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
-}
-
 real64 TableFunction::Evaluate( real64 const * const input ) const
 {
   localIndex bounds[m_maxDimensions][2];

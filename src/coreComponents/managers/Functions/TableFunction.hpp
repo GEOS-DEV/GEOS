@@ -58,8 +58,11 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         set<localIndex> const & sets,
-                         real64_array & result ) const override final;
+                         SortedArrayView<localIndex const> const & set,
+                         real64_array & result ) const override final
+  {
+    FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
+  }
 
   /**
    * @brief Method to evaluate a function

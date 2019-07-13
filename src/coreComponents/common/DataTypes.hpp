@@ -190,6 +190,12 @@ using stackArray5d = stack_array< T, 5, MAXSIZE >;
 template< typename T >
 using set = LvArray::SortedArray< T, localIndex >;
 
+template< typename T >
+using SortedArray = LvArray::SortedArray< T, localIndex >;
+
+template< typename T >
+using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
+
 template< typename TKEY, typename TVAL >
 using map = std::map< TKEY, TVAL >;
 
