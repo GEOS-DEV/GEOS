@@ -35,24 +35,19 @@ using parallelHostPolicy = RAJA::loop_exec;
 
 #endif
 
-#if defined(GEOSX_ENABLE_CUDA) && defined(__CUDACC__)
+#if defined(GEOSX_USE_CUDA)
 
-template< int BLOCK_SIZE = 1024 >
+template< int BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
-
-#elif defined(GEOSX_ENABLE_CUDA) && !defined(__CUDACC__)
-
-template< int >
-using parallelDevicePolicy = void;
 
 #elif defined(GEOSX_USE_OPENMP)
 
-template< int >
+template< int BLOCK_SIZE = 0 >
 using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
 
 #else
 
-template< int >
+template< int BLOCK_SIZE = 0 >
 using parallelDevicePolicy = RAJA::loop_exec;
 
 #endif

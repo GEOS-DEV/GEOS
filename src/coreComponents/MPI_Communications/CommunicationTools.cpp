@@ -468,8 +468,6 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
   for( auto const & iter : newElems )
   {
-    localIndex const er = iter.first.first;
-    localIndex const esr = iter.first.second;
     std::set<localIndex> const & indexList = iter.second;
     numberOfNewObjectsHere += indexList.size();
   }

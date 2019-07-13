@@ -86,6 +86,10 @@ if( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
+if( ENABLE_CUDA )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
                    DEPENDS_ON geosx_core sidre

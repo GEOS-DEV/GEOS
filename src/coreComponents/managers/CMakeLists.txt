@@ -58,8 +58,17 @@ set(managers_sources
     FieldSpecification/SourceFluxBoundaryCondition.cpp)
 
 set( dependencyList dataRepository fileIO optionparser RAJA trilinos )
+
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
+endif()
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME                  managers
