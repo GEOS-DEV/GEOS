@@ -119,6 +119,7 @@ public:
   R1TensorT< T_dim >& operator=( const int& rhs );
 
   /// assignment to all data to a realT
+  GEOSX_HOST_DEVICE
   R1TensorT< T_dim >& operator=( const realT& rhs );
 
   /// assignment to another R1TensorT
@@ -279,6 +280,7 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
  * @return reference to *this
  */
 template<int T_dim>
+GEOSX_HOST_DEVICE
 inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );

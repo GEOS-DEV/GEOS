@@ -24,6 +24,14 @@ set( finiteVolume_sources
 
 set( dependencyList dataRepository codingUtilities managers )
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
