@@ -47,7 +47,6 @@ namespace timingHelpers
 #define GEOSX_MARK_FUNCTION_TAG(name) cali::Function __cali_ann##__LINE__(DO_STRINGIFY(name))
 
 #define GEOSX_MARK_FUNCTION_SCOPED cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
-#define GEOSX_MARK_FUNCTION_PRETTY cali::Function __cali_ann##__func__(__PRETTY_FUNCTION__))
 
 //#define GEOSX_MARK_FUNCTION CALI_CXX_MARK_FUNCTION
 #define GEOSX_MARK_FUNCTION GEOSX_MARK_FUNCTION_SCOPED
@@ -58,7 +57,6 @@ namespace timingHelpers
 #else
 #define GEOSX_MARK_FUNCTION_TAG(name)
 #define GEOSX_MARK_FUNCTION_SCOPED
-#define GEOSX_MARK_FUNCTION_PRETTY
 #define GEOSX_MARK_FUNCTION
 
 #define GEOSX_MARK_LOOP_BEGIN(loop, loopName)

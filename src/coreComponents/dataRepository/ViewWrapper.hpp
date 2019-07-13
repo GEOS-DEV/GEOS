@@ -956,8 +956,7 @@ public:
                        void,
                        ,
                        std::string const &,
-                       ""
-                       )
+                       "" )
 
   template< class U = T >
   typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
@@ -972,24 +971,31 @@ public:
   setUserCallBack()
   {}
 
-  HAS_MEMBER_FUNCTION( move,
-                       void,
-                       ,
-                       VA_LIST( chai::ExecutionSpace, bool ),
-                       VA_LIST( chai::CPU, true )
-                       )
 
-  template< class U = T >
-  typename std::enable_if< has_memberfunction_move< U >::value, void >::type
-  move( chai::ExecutionSpace space, bool touch )
+
+  struct move_wrapper
   {
-    m_data->move( space, touch );
-  }
+    HAS_MEMBER_FUNCTION( move,
+                         void,
+                         ,
+                         VA_LIST( chai::ExecutionSpace, bool ),
+                         VA_LIST( chai::CPU, true ) )
 
-  template< class U = T >
-  typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
-  move( chai::ExecutionSpace, bool )
-  {}
+    template< class U = T >
+    static typename std::enable_if< has_memberfunction_move< U >::value, void >::type
+    move( U & data, chai::ExecutionSpace space, bool touch )
+    {
+      data.move( space, touch );
+    }
+
+    template< class U = T >
+    static typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
+    move( U &, chai::ExecutionSpace, bool )
+    {}
+  };
+
+  virtual void move( chai::ExecutionSpace space, bool touch ) override
+  { return move_wrapper::move( *m_data, space, touch ); }
 
   HAS_ALIAS( value_type )
 

@@ -38,7 +38,7 @@
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-#include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
 
@@ -456,21 +456,22 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
-  ElementRegionManager * elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
-  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-  ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   localIndex const numNodes = nodes->size();
 
-  arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
-  arrayView1d<real64> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
-  arrayView1d<R1Tensor> & vel = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
+  arrayView1d<R1Tensor const> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
+  arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
+  arrayView1d<R1Tensor> const & vel = velocityArray;
 
-  arrayView1d<R1Tensor> & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
-  arrayView1d<R1Tensor> & uhat = nodes->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-  arrayView1d<R1Tensor> & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
+  arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView1d<R1Tensor> const & uhat = nodes->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
 
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
   std::map<string, string_array > fieldNames;
@@ -478,33 +479,39 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
 
-  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Acceleration );
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
-  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
   fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( FieldSpecificationBase const * const bc, set<localIndex> const & targetSet )->void
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
     {
       integer const component = bc->GetComponent();
-      for( auto const a : targetSet )
-      {
-        vel[a][component] = u[a][component];
-      }
+      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          vel[a][component] = u[a][component];
+        }
+      );
     },
-    [&]( FieldSpecificationBase const * const bc, set<localIndex> const & targetSet )->void
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
     {
       integer const component = bc->GetComponent();
-      for( auto const a : targetSet )
-      {
-        uhat[a][component] = u[a][component] - vel[a][component];
-        vel[a][component]  = uhat[a][component] / dt;
-      }
+      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          uhat[a][component] = u[a][component] - vel[a][component];
+          vel[a][component]  = uhat[a][component] / dt;
+        }
+      );
     }
   );
 
@@ -557,8 +564,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
 
-  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
+  // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
+  if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -599,8 +608,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
 
-  fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
+  // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
+  if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
 
   return dt;
