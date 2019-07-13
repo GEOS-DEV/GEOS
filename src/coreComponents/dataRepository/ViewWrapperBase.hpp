@@ -166,6 +166,8 @@ public:
   virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
                                                     ManagedGroup * const parent ) = 0;
 
+  virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
+
   /**
    *
    * @return

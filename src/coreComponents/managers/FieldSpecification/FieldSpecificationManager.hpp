@@ -92,16 +92,17 @@ public:
    * and calls FieldSpecificationBase::ApplyFieldValue().
    *
    */
+  template< typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( real64 const time,
-                                      dataRepository::ManagedGroup * domain,
-                                      string const & fieldPath,
-                                      string const & fieldName ) const
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
-	  ApplyFieldValue( time, domain, fieldPath, fieldName,
-                                   [&]( FieldSpecificationBase const * const,
-                                        set<localIndex> const & ){} );
+	  ApplyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
+                               [&]( FieldSpecificationBase const * const,
+                                    set<localIndex> const & ){} );
   }
 
   /**
@@ -133,14 +134,14 @@ public:
    * to apply any operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */
-  template< typename LAMBDA >
+  template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void ApplyFieldValue( real64 const time,
-                                      dataRepository::ManagedGroup * domain,
-                                      string const & fieldPath,
-                                      string const & fieldName,
-                                      LAMBDA && lambda ) const;
+                        dataRepository::ManagedGroup * domain,
+                        string const & fieldPath,
+                        string const & fieldName,
+                        LAMBDA && lambda ) const;
 
-  template< typename PRELAMBDA, typename POSTLAMBDA >
+  template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void ApplyFieldValue( real64 const time,
                         dataRepository::ManagedGroup * domain,
                         string const & fieldPath,
@@ -244,7 +245,7 @@ public:
             GEOS_ERROR_IF( targetGroup == nullptr,
                 "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
-          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
+          ApplyOnTargetRecursive( targetGroup, fs, targetName, std::forward< LAMBDA >( lambda ) );
         }
       }
     }
@@ -295,30 +296,30 @@ private:
   }
 };
 
-template< typename LAMBDA >
+template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                               dataRepository::ManagedGroup * domain,
-                               string const & fieldPath,
-                               string const & fieldName,
-                               LAMBDA && lambda ) const
+                 dataRepository::ManagedGroup * domain,
+                 string const & fieldPath,
+                 string const & fieldName,
+                 LAMBDA && lambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
-        string const &,
-        set<localIndex> const & targetSet,
-        ManagedGroup * const targetGroup,
-        string const & targetField )
+             string const &,
+             set<localIndex> const & targetSet,
+             ManagedGroup * const targetGroup,
+             string const & targetField )
     {
-      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+      fs->ApplyFieldValue<FieldSpecificationEqual, POLICY>( targetSet, time, targetGroup, targetField );
       lambda( fs, targetSet );
     } );
 }
 
-template< typename PRELAMBDA, typename POSTLAMBDA >
+template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
@@ -332,13 +333,13 @@ ApplyFieldValue( real64 const time,
 
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
-        string const &,
-        set<localIndex> const & targetSet,
-        ManagedGroup * const targetGroup,
-        string const & targetField )
+             string const &,
+             set<localIndex> const & targetSet,
+             ManagedGroup * const targetGroup,
+             string const & targetField )
     {
       preLambda( fs, targetSet );
-      fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet, time, targetGroup, targetField );
+      fs->ApplyFieldValue<FieldSpecificationEqual, POLICY>( targetSet, time, targetGroup, targetField );
       postLambda( fs, targetSet );
     } );
 }
