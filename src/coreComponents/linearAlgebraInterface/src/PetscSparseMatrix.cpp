@@ -147,7 +147,7 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                                localIndex const maxEntriesPerRow,
                                                MPI_Comm const & comm )
 {
-    PetscInt globalRows_ = static_cast<const PetscInt>(globalRows);
+  PetscInt globalRows_ = static_cast<const PetscInt>(globalRows);
 	PetscInt globalCols_ = static_cast<const PetscInt>(globalCols);
 	PetscInt maxEntriesPerRow_ = static_cast<const PetscInt>(maxEntriesPerRow);
 	// set up matrix
@@ -252,6 +252,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
 	PetscInt size_ = static_cast<PetscInt>(size); 
  	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
 }
+// / row, columns, values, number of nonzeros
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 globalIndex const * colIndices,
@@ -259,55 +260,90 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 localIndex size )
 {
 	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
- 	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices);  
+ 	// const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices);  
 	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values); 
 	PetscInt size_ = static_cast<PetscInt>(size); 
- 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
+
+	// hannah: debugging
+    // for(int j = 0; j < 5; j++){
+    //   printf("%d\n", static_cast<int>(colIndices[j])); 
+    // }
+    // printf("\n");
+
+ 	MatSetValues(_mat, 1, rows, size_, colIndices, values_, INSERT_VALUES);
 	// Hannah: insert vs set?
 }
 
 // 1xN with array1d 
 void PetscSparseMatrix::add( globalIndex const rowIndex,
-                        array1d<globalIndex> const &colIndices,
-                        array1d<real64> const &values )
+                             array1d<globalIndex> const &colIndices,
+                             array1d<real64> const &values )
 {
-	// Hannah: to do
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt size_ = static_cast<PetscInt>(values.size()); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, ADD_VALUES);
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
-                        array1d<globalIndex> const &colIndices,
-                        array1d<real64> const &values )
+                             array1d<globalIndex> const &colIndices,
+                             array1d<real64> const &values )
 {
-	// Hannah: to do
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt size_ = static_cast<PetscInt>(values.size()); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
-                           array1d<globalIndex> const &colIndices,
-                           array1d<real64> const &values )
+                                array1d<globalIndex> const &colIndices,
+                                array1d<real64> const &values )
 {
-	// Hannah: to do
+	PetscInt rows[1] = {static_cast<const PetscInt>(rowIndex)};
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt size_ = static_cast<PetscInt>(values.size()); 
+ 	MatSetValues(_mat, 1, rows, size_, colIndices_, values_, INSERT_VALUES);
 }
+// Hannah: should I factor this code?
 
 // MxN with array2d 
 void PetscSparseMatrix::add( array1d<globalIndex> const & rowIndices,
-                        array1d<globalIndex> const & colIndices,
-                        array2d<real64> const & values )
+                             array1d<globalIndex> const & colIndices,
+                             array2d<real64> const & values )
 {
-	// Hannah: to do
+	const PetscInt * rowIndices_ = reinterpret_cast<const PetscInt *>(rowIndices.data());
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt numrows = static_cast<PetscInt>(rowIndices.size());
+	PetscInt numcols = static_cast<PetscInt>(colIndices.size());  
+ 	MatSetValues(_mat, numrows, rowIndices_, numcols, colIndices_, values_, ADD_VALUES);
 }
 
 void PetscSparseMatrix::set( array1d<globalIndex> const & rowIndices,
-                        array1d<globalIndex> const & colIndices,
-                        array2d<real64> const & values )
+                             array1d<globalIndex> const & colIndices,
+                             array2d<real64> const & values )
 {
-	// Hannah: to do
+	const PetscInt * rowIndices_ = reinterpret_cast<const PetscInt *>(rowIndices.data());
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt numrows = static_cast<PetscInt>(rowIndices.size());
+	PetscInt numcols = static_cast<PetscInt>(colIndices.size());  
+ 	MatSetValues(_mat, numrows, rowIndices_, numcols, colIndices_, values_, INSERT_VALUES);
 }
 
 void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
-                           array1d<globalIndex> const & colIndices,
-                           array2d<real64> const & values )
+                                array1d<globalIndex> const & colIndices,
+                                array2d<real64> const & values )
 {
-	// Hannah: to do
+	const PetscInt * rowIndices_ = reinterpret_cast<const PetscInt *>(rowIndices.data());
+	const PetscInt * colIndices_ = reinterpret_cast<const PetscInt *>(colIndices.data());  
+	const PetscScalar * values_ = reinterpret_cast<const PetscScalar *>(values.data()); 
+	PetscInt numrows = static_cast<PetscInt>(rowIndices.size());
+	PetscInt numcols = static_cast<PetscInt>(colIndices.size());  
+ 	MatSetValues(_mat, numrows, rowIndices_, numcols, colIndices_, values_, INSERT_VALUES);
 }
 
 // -------------------------
@@ -332,7 +368,7 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 void PetscSparseMatrix::multiply(PetscSparseMatrix const & src, 
     							 PetscSparseMatrix & dst) const
 {
-	MatMatMult(_mat, src.getMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.getMat());
+	MatMatMult(_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedPointer2());
 	// Hannah: getPointer_ name?
 }
 
@@ -407,8 +443,8 @@ void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
 // The challenge here is that columns are stored with local, not global,
 // indices, so we need to do conversions back and forth
 void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
-                               array1d<globalIndex> & colIndices,
-                               array1d<real64> & values ) const
+                                    array1d<globalIndex> & colIndices,
+                                    array1d<real64> & values ) const
 {
   // Hannah: to do
 }
@@ -425,15 +461,15 @@ void PetscSparseMatrix::clearRow( globalIndex const row,
 	double diag = 1;
 
 	// who does this row belong to
-	int firstRow, lastRow;
+	PetscInt firstRow, lastRow;
 	MatGetOwnershipRange(_mat, &firstRow, &lastRow);
 
 	if(firstRow <= row && row < lastRow)
 	{
 		// get diagonal entry
 		const double* vals;
-		const int* inds;
-		int numEntries;
+		const PetscInt* inds;
+		PetscInt numEntries;
 
 		MatGetRow(_mat, rows[0], &numEntries, &inds, &vals);
 
@@ -455,10 +491,25 @@ void PetscSparseMatrix::clearRow( globalIndex const row,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get pointer.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+// Accessor for the pointer to the matrix
+Mat* PetscSparseMatrix::unwrappedPointer2()
+{
+	return &(_mat);
+}
+
 // Accessor for the pointer to the matrix
 const Mat* PetscSparseMatrix::unwrappedPointer() const
 {
 	return &(_mat);
+}
+
+// Accessor for the MPI communicator
+MPI_Comm PetscSparseMatrix::getComm()
+{
+	MPI_Comm comm;
+	PetscObjectGetComm(reinterpret_cast<PetscObject>(_mat), &comm);
+	return comm;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -467,8 +518,8 @@ const Mat* PetscSparseMatrix::unwrappedPointer() const
 // Accessor for the number of global rows
 globalIndex PetscSparseMatrix::globalRows() const
 {
-	globalIndex num_rows;
-	globalIndex num_cols;
+	PetscInt num_rows;
+	PetscInt num_cols;
 	// Hannah: type conversion
 	MatGetSize(_mat, &num_rows, &num_cols);
 	return num_rows;
@@ -480,9 +531,8 @@ globalIndex PetscSparseMatrix::globalRows() const
 // Accessor for the number of global columns
 globalIndex PetscSparseMatrix::globalCols() const
 {
-	globalIndex num_rows;
-	globalIndex num_cols;
-	// Hannah: type conversion
+	PetscInt num_rows;
+	PetscInt num_cols;
 	MatGetSize(_mat, &num_rows, &num_cols);
 	return num_cols;
 }
@@ -493,8 +543,8 @@ globalIndex PetscSparseMatrix::globalCols() const
 // Accessor for the index of the first global row
 globalIndex PetscSparseMatrix::ilower() const
 {
-	globalIndex firstrow;
-	globalIndex lastrow;
+	PetscInt firstrow;
+	PetscInt lastrow;
 	// Hannah: type conversion
 	MatGetOwnershipRange(_mat, &firstrow, &lastrow);
 	return firstrow; 
@@ -506,8 +556,8 @@ globalIndex PetscSparseMatrix::ilower() const
 // Accessor for the index of the last global row
 globalIndex PetscSparseMatrix::iupper() const
 {
- 	globalIndex firstrow;
- 	globalIndex lastrow;
+ 	PetscInt firstrow;
+ 	PetscInt lastrow;
  	MatGetOwnershipRange(_mat, &firstrow, &lastrow);
 	 // Hannah: off by one?
  	return lastrow; 
@@ -583,6 +633,12 @@ real64 PetscSparseMatrix::normFrobenius() const
 bool PetscSparseMatrix::isAssembled() const
 {
 	return assembled;
+}
+
+// Get PETSc object
+Mat PetscSparseMatrix::getConstMat() const
+{
+	return _mat;
 }
 
 /* get PETSc object */
