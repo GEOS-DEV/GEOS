@@ -26,9 +26,9 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCSOLVER_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCSOLVER_HPP_
 
-#include <../../../../../thirdPartyLibs/install-default-release/petsc/include/petscvec.h>
-#include <../../../../../thirdPartyLibs/install-default-release/petsc/include/petscmat.h>
-#include <../../../../../thirdPartyLibs/install-default-release/petsc/include/petscksp.h>
+#include <petscvec.h>
+#include <petscmat.h>
+#include <petscksp.h>
 
 #include "PetscVector.hpp"
 #include "PetscSparseMatrix.hpp"
@@ -66,9 +66,7 @@ public:
 
   void solve( PetscSparseMatrix &mat,
               PetscVector &sol,
-              PetscVector &rhs,
-              MPI_Comm const comm );
-              // Hannah: PETSc needs communicator for KSP
+              PetscVector &rhs );
 
 private:
 
@@ -77,7 +75,7 @@ private:
   void solve_direct( PetscSparseMatrix &mat,
                      PetscVector &sol,
                      PetscVector &rhs,
-                     MPI_Comm const comm );
+                     MPI_Comm const comm  );
 
   void solve_krylov( PetscSparseMatrix &mat,
                      PetscVector &sol,

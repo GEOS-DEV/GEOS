@@ -210,9 +210,9 @@ void PetscSparseMatrix::create( MPI_Comm const comm,
 //   * values: values to add to prescribed locations
 //   * cols: global column indices in which to add the values */
  void PetscSparseMatrix::insert( int const iRow,
-              					 int const nCols,
-              					 double const *values,
-              					 int const *cols )
+                                 int const *cols,
+                                 double const *values,
+                                 int const nCols )
   {
  	int rows[1];
  	rows[0] = iRow;
