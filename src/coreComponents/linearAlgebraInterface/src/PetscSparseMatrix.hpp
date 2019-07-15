@@ -436,11 +436,20 @@ public:
    * @brief Returns a pointer to the underlying matrix.
    */
   const Mat* unwrappedPointer() const;
+  Mat* unwrappedPointer2();
+
+  /* Returns vector */
+  Mat getConstMat() const;
 
   /**
    * @brief Returns underlying PETSc matrix.
    */
   Mat getMat();
+
+  /**
+   * @brief Returns the matrix MPI communicator.
+   */
+  MPI_Comm getComm();
 
   /**
    * @brief Returns the number of global rows.
