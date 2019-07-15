@@ -115,7 +115,7 @@ void PetscVector::set( globalIndex const globalRow,
 {
 	VecSetValue(_vec, static_cast<PetscInt>(globalRow), value, INSERT_VALUES);
 	VecAssemblyBegin(_vec);
-  	VecAssemblyEnd(_vec);
+  VecAssemblyEnd(_vec);
 }
 
 void PetscVector::add( globalIndex const globalRow,
@@ -123,7 +123,7 @@ void PetscVector::add( globalIndex const globalRow,
 {
 	VecSetValue(_vec, static_cast<PetscInt>(globalRow), value, ADD_VALUES);
 	VecAssemblyBegin(_vec);
-  	VecAssemblyEnd(_vec);
+  VecAssemblyEnd(_vec);
 }
 
 // multiple elements, arrays
@@ -147,14 +147,18 @@ void PetscVector::add( globalIndex const * globalIndices,
 
 // multiple elements, array1d
 void PetscVector::set( array1d<globalIndex> const & globalIndices,
-                        array1d<real64> const & values )
+                       array1d<real64> const & values )
 {
-	// Hannah: to do
+	VecSetValues(_vec, static_cast<PetscInt>(values.size()), reinterpret_cast<const PetscInt *>(globalIndices.data()), values.data(), INSERT_VALUES);
+  VecAssemblyBegin(_vec);
+  VecAssemblyEnd(_vec);
 }
 void PetscVector::add( array1d<globalIndex> const & globalIndices,
-                        array1d<real64> const & values )
+                       array1d<real64> const & values )
 {
-	// Hannah: to do
+	VecSetValues(_vec, static_cast<PetscInt>(values.size()), reinterpret_cast<const PetscInt *>(globalIndices.data()), values.data(), ADD_VALUES);
+  VecAssemblyBegin(_vec);
+  VecAssemblyEnd(_vec);
 }
 
 // set all elements
@@ -162,7 +166,7 @@ void PetscVector::set(real64 value)
 {
 	VecSet(_vec, value);
 	VecAssemblyBegin(_vec);
-  	VecAssemblyEnd(_vec);
+  VecAssemblyEnd(_vec);
 }
 
 // zero all entries
@@ -331,7 +335,7 @@ real64 PetscVector::get(globalIndex globalRow) const
 	real64 value[1];
 	PetscInt index[1] = {static_cast<PetscInt>(globalRow)};
 	VecGetValues(_vec, 1, index, value);
-  	return value[0];
+  return value[0];
 }
 
 void PetscVector::get( array1d<globalIndex> const & globalIndices,

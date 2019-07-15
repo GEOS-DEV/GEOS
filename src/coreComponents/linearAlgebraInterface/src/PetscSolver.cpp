@@ -57,9 +57,9 @@ PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
 
 void PetscSolver::solve( PetscSparseMatrix &mat,
                          PetscVector &sol,
-                         PetscVector &rhs,
-                         MPI_Comm const comm )
+                         PetscVector &rhs )
 {
+  MPI_Comm comm = mat.getComm();
   if( m_parameters.solverType == "direct" )
     solve_direct( mat, sol, rhs, comm );
   else
@@ -81,17 +81,24 @@ void PetscSolver::solve_direct( PetscSparseMatrix &mat,
   KSPSetOperators(ksp, mat.getMat(), mat.getMat());
   KSPSetType(ksp, KSPPREONLY);
 
-  // use direct solve preconditioner MUMPS
+  // use direct solve preconditioner SUPERLU DIST
   PC prec;
   KSPGetPC(ksp, &prec);
   PCSetType(prec, PCLU);
-  PCFactorSetMatSolverType(prec, MATSOLVERMUMPS);
-  // more MUMPS parameters can go here
+  PCFactorSetMatSolverType(prec, MATSOLVERSUPERLU_DIST);
+  
+  // mat.print();
+  // rhs.print();
+  // sol.print();
 
   // solve system
   // Hannah: output here
   KSPSetFromOptions(ksp);
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
+  printf("hannah was here");
+  // mat.print();
+  // rhs.print();
+  // sol.print();
 }
 
 
@@ -191,14 +198,14 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
     sprintf(smoother_type, "%s", translate[m_parameters.amg.smootherType].c_str());
     sprintf(coarse_type, "%s", translate[m_parameters.amg.coarseType].c_str());
 
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_max_levels", max_levels); 
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_cycle_type", cycle_type); 
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_max_levels", max_levels); 
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_cycle_type", cycle_type); 
     // relaxation method
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_all", smoother_type); // <symmetric-SOR/Jacobi> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type); // <Gaussian-elimination> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type); // <symmetric-SOR/Jacobi> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type); // <Gaussian-elimination> (choose one of) Jacobi sequential-Gauss-Seidel seqboundary-Gauss-Seidel SOR/Jacobi backward-SOR/Jacobi  symmetric-SOR/Jacobi  l1scaled-SOR/Jacobi Gaussian-elimination    l1-Gauss-Seidel backward-l1-Gauss-Seidel CG Chebyshev FCF-Jacobi l1scaled-Jacobi (None)
     // number of relaxation sweeps
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps); 
-    PetscOptionsSetValue(NULL, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps); // coarsest grid
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps); 
+    PetscOptionsSetValue(nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps); // coarsest grid
   }
   else
   {
@@ -211,8 +218,8 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   // display output
   if (m_parameters.verbosity > 0)
   {
-    PetscOptionsSetValue(NULL, "-ksp_monitor", NULL); 
-    // PetscOptionsSetValue(NULL, "-log_view", "true"); // Hannah: not working?
+    // PetscOptionsSetValue(nullptr, "-ksp_monitor", nullptr); 
+    // PetscOptionsSetValue(nullptr, "-log_view", "true"); // Hannah: not working?
   }
 
   // Actually solve
