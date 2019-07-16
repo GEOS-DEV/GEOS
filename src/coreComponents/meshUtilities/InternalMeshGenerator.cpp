@@ -911,6 +911,127 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   {
     RemapMesh( domain );
   }
+
+  /// Patch generation
+
+  {
+    // TODO input parameres?
+    localIndex const maxNumElemsInPatch = 8*8*8;
+    localIndex patchSize[3];
+
+    // TODO
+    localIndex const root = static_cast<localIndex>( std::cbrt( maxNumElemsInPatch ) );
+    patchSize[0] = root;
+    patchSize[1] = root;
+    patchSize[2] = root;
+
+    GEOS_ASSERT( patchSize[0] * patchSize[1] * patchSize[2] <= maxNumElemsInPatch );
+
+    localIndex numElemsInDirForRegion[3];
+
+    // TODO this nested looping is insane
+    localIndex iR = 0;
+    iterRegion = m_regionNames.begin();
+    for( localIndex iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
+    {
+      numElemsInDirForRegion[0] = lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1;
+
+      for( localIndex jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
+      {
+        numElemsInDirForRegion[1] = lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1;
+
+        for( localIndex kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
+        {
+          numElemsInDirForRegion[2] = lastElemIndexForBlockInPartition[2][kblock] - firstElemIndexForBlockInPartition[2][kblock] + 1;
+
+          // Element renumbering
+          CellBlock * elemRegion = elementManager->GetRegion(*iterRegion);
+          localIndex const numNodesPerElem = elemRegion->numNodesPerElement();
+          FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
+
+          std::set<localIndex> patchNodes;
+          array1d<localIndex> reorder( elemRegion->size() );
+
+          localIndex numPatchesInBlock[3];
+          localIndex numPatches = 1;
+
+          for( localIndex dir = 0 ; dir < 3 ; ++dir )
+          {
+            numPatchesInBlock[dir] = (numElemsInDirForRegion[dir] + patchSize[dir] - 1) / patchSize[dir];
+            numPatches *= numPatchesInBlock[dir];
+          }
+
+          elemRegion->m_patchOffsets.resize( numPatches + 1 ); // +1 for final offset
+          elemRegion->m_patchNodes.resize( numPatches );
+
+          // Compute the element reordering by looping sequentially over patches
+          localIndex patchIndex = 0;
+          localIndex newElemIndex = 0;
+          localIndex patchOffset[3]{};
+
+          patchOffset[0] = 0;
+          for( localIndex ipatch = 0; ipatch < numPatchesInBlock[0]; ++ipatch, patchOffset[0] += patchSize[0] )
+          {
+            patchOffset[1] = 0;
+            for( localIndex jpatch = 0; jpatch < numPatchesInBlock[1]; ++jpatch, patchOffset[1] += patchSize[1] )
+            {
+              patchOffset[2] = 0;
+              for( localIndex kpatch = 0; kpatch < numPatchesInBlock[2]; ++kpatch, patchOffset[2] += patchSize[2], ++patchIndex )
+              {
+                elemRegion->m_patchOffsets[patchIndex] = newElemIndex;
+                patchNodes.clear();
+
+                // Then loop within patch
+                for( localIndex i = 0; i < std::min(patchSize[0], numElemsInDirForRegion[0] - patchOffset[0]); ++i )
+                {
+                  for( localIndex j = 0; j < std::min(patchSize[1], numElemsInDirForRegion[1] - patchOffset[1]); ++j )
+                  {
+                    for( localIndex k = 0; k < std::min(patchSize[2], numElemsInDirForRegion[2] - patchOffset[2]); ++k )
+                    {
+                      // k is fastest-cycling index, see above
+                      localIndex oldElemIndex = (patchOffset[0] + i) * numElemsInDirForRegion[1] * numElemsInDirForRegion[2]
+                                              + (patchOffset[1] + j) * numElemsInDirForRegion[2]
+                                              + (patchOffset[2] + k);
+                      for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++newElemIndex, ++oldElemIndex )
+                      {
+                        elemRegion->m_elemIndex[newElemIndex] = newElemIndex;
+                        elemRegion->m_patchIndex[newElemIndex] = patchIndex;
+
+                        for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
+                        {
+                          patchNodes.insert( elemsToNodes[oldElemIndex][iN] );
+                        }
+
+                        reorder[oldElemIndex] = newElemIndex; // or vice versa
+                      }
+                    }
+                  }
+                }
+
+                std::vector<localIndex> patchNodesTemp( patchNodes.begin(), patchNodes.end() );
+                elemRegion->m_patchNodes[patchIndex].insertSorted( patchNodesTemp.data(), patchNodesTemp.size() );
+              }
+            }
+          }
+          elemRegion->m_patchOffsets[patchIndex] = newElemIndex; // final offset, aka total number of elements
+
+          // Apply the reordering and populate patches
+          array1d<globalIndex> localToGlobalMapOld = elemRegion->m_localToGlobalMap;
+          FixedOneToManyRelation elemsToNodesOld = elemRegion->nodeList();
+
+          for( localIndex ei = 0; ei < reorder.size(); ++ei )
+          {
+            elemRegion->m_localToGlobalMap[reorder[ei]] = localToGlobalMapOld[ei];
+
+            for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
+            {
+              elemsToNodes[reorder[ei]][iN] = elemsToNodesOld[ei][iN];
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -1250,6 +1371,7 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
   //  }
 
 }
+
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, ManagedGroup * const )
 }

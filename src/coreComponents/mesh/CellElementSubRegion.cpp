@@ -255,6 +255,11 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
       this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
     });
   });
+
+  this->m_elemIndex = source->m_elemIndex;
+  this->m_patchIndex = source->m_patchIndex;
+  this->m_patchOffsets = source->m_patchOffsets;
+  this->m_patchNodes = source->m_patchNodes;
 }
 
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
