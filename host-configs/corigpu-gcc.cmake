@@ -6,6 +6,7 @@ set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 # Silo configure script doesn't recognize systype
 #set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 
+set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
 set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 
