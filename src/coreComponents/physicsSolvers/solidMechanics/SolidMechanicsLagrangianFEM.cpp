@@ -553,8 +553,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    deviatorStress,
                                    dt );
 
-      // elementSubRegion->outputMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
-      // elementSubRegion->outputDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+#ifndef GEOSX_USE_CUDA
+      elementSubRegion->outputMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+      elementSubRegion->outputDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+#endif
     }); //Element Region
 
   } //Element Manager
