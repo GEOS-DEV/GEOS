@@ -962,7 +962,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
 
           elemRegion->m_patchOffsets.resize( numPatches + 1 ); // +1 for final offset
-          elemRegion->m_patchNodes.resize( numPatches );
 
           // Compute the element reordering by looping sequentially over patches
           localIndex patchIndex = 0;
@@ -1009,7 +1008,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 }
 
                 std::vector<localIndex> patchNodesTemp( patchNodes.begin(), patchNodes.end() );
-                elemRegion->m_patchNodes[patchIndex].insertSorted( patchNodesTemp.data(), patchNodesTemp.size() );
+                elemRegion->m_patchNodes.appendArray( patchNodesTemp.data(), patchNodesTemp.size() );
               }
             }
           }

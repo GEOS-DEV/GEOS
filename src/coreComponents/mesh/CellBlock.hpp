@@ -247,7 +247,7 @@ public:
 
   /// Element patch info
   array1d<localIndex> m_patchOffsets; // size numPatch+1
-  array1d< set<localIndex> > m_patchNodes; // size numPatch
+  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes; // size numPatch
 
   array1d<localIndex> m_patchIndex; // for visualization/debugging
   array1d<localIndex> m_elemIndex;  // for visualization/debugging

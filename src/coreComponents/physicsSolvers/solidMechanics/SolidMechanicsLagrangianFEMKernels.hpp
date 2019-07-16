@@ -195,6 +195,8 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView1d<localIndex const> const & elemPatchOffsets,
+          LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
           arrayView4d<real64 const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
