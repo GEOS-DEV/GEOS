@@ -93,21 +93,33 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 1024 >;
+    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
 #elif defined(GEOSX_USE_OPENMP)
     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
-    // GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
-    // GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
-    // GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
-    // GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+    static bool outputMessage = true;
+    if (outputMessage)
+    {
+      GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
+      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
+      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
+      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
+      outputMessage = false;
+    }
+
+#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
+  localIndex const numElems = elemsToNodes.size(0);
+#else
+  localIndex const numElems = elemsToNodes.size(1);
+#endif
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elemsToNodes.size(0) ),
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
     {
       real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
@@ -119,9 +131,9 @@ struct ExplicitKernel
       {
         for ( int b = 0; b < 3; ++b )
         {
-          v_local[ a ][ b ] = vel[ elemsToNodes[ k ][ a ] ][ b ];
+          v_local[ a ][ b ] = vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
 #if CALC_SHAPE_FUNCTION_DERIVATIVES==1
-          X_local[ b ][ a ] = X[ elemsToNodes[ k ][ a ] ][ b ];
+          X_local[ b ][ a ] = X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
 #endif
         }
       }
@@ -184,7 +196,7 @@ struct ExplicitKernel
       {
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
+          RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ], f_local[ a ][ b ] );
         }
       }
     });
