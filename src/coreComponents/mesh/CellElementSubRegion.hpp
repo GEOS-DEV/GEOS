@@ -27,6 +27,7 @@
 #define STANDARD_ELEMENT_DETJ_LAYOUT 0
 #define STANDARD_ELEMENT_MEANSTRESS_LAYOUT 0
 #define STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT 0
+#define STANDARD_ELEMENT_TONODESRELATION_LAYOUT 0
 
 #if STANDARD_ELEMENT_DNDX_LAYOUT
 #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
@@ -50,6 +51,12 @@
 #define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(k, q, i)
 #else
 #define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(i, q, k)
+#endif
+
+#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
+#define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(k, i)
+#else
+#define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(i, k)
 #endif
 
 namespace geosx
@@ -85,6 +92,11 @@ public:
 
   arrayView3d< double > const & getDeviatorStressReordered() const
   { return m_deviatorStress_reordered; }
+
+  void initializeToNodesRelationReordered();
+
+  arrayView2d< localIndex const > const & getToNodesRelationReordered() const
+  { return m_toNodesRelation_reordered; }
 
   void CopyFromCellBlock( CellBlock const * source );
 
@@ -158,6 +170,7 @@ public:
   array2d< double > m_detJ_reordered;
   array2d< double > m_meanStress_reordered;
   array3d< double > m_deviatorStress_reordered;
+  array2d< localIndex > m_toNodesRelation_reordered;
 
 private:
 

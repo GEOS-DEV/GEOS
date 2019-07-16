@@ -208,6 +208,30 @@ void CellElementSubRegion::outputDeviatorStressReordered(ElementRegionManager * 
   }
 }
 
+void CellElementSubRegion::initializeToNodesRelationReordered()
+{
+  static bool initialized = false;
+  if ( initialized ) return;
+
+#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
+  GEOS_LOG("Using the standard layout for toNodesRelation!!!!");
+  m_toNodesRelation_reordered.resize(m_toNodesRelation.size(0), m_toNodesRelation.size(1));
+#else
+  GEOS_LOG("Using the alternate layout for toNodesRelation!!!!");
+  m_toNodesRelation_reordered.resize(m_toNodesRelation.size(1), m_toNodesRelation.size(0));
+#endif
+
+  for (localIndex k = 0; k < m_toNodesRelation.size(0); ++k)
+  {
+    for (localIndex i = 0; i < m_toNodesRelation.size(1); ++i)
+    {
+      TONODESRELATION_ACCESSOR(m_toNodesRelation_reordered, k, i) = m_toNodesRelation(k, i);
+    }
+  }
+
+  initialized = true;
+}
+
 
 void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
 {

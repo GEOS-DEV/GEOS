@@ -533,7 +533,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
       elementSubRegion->initializeDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
       arrayView3d< double > const & deviatorStress = elementSubRegion->getDeviatorStressReordered();
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      elementSubRegion->initializeToNodesRelationReordered();
+      arrayView2d<localIndex const> const & elemsToNodes = elementSubRegion->getToNodesRelationReordered();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
