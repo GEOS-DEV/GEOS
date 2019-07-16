@@ -83,18 +83,122 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 1024 >;
+   //using KERNEL_POLICY = RAJA::cuda_exec< 1024 >;
 #elif defined(GEOSX_USE_OPENMP)
-    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+    //using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
-    using KERNEL_POLICY = RAJA::loop_exec;
+    //using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
     // GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
     // GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
     // GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
     // GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+    
+    
+#if 1
+   //printf("Building RAJA kernel \n");
 
+    //using RAJA::statement;
+    
+    using MY_KERNEL_POLICY =
+      RAJA::KernelPolicy<
+          RAJA::statement::For<0,RAJA::loop_exec,
+           RAJA::statement::InitLocalMem<RAJA::cpu_tile_mem,RAJA::ParamList<0, 1>,                               
+            RAJA::statement::Lambda<0>,
+              RAJA::statement::Lambda<1>
+        >
+       >
+      >;
+
+
+    using TILE_MEM =
+      RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<NUM_NODES_PER_ELEM, 3>>;
+
+    TILE_MEM ext_v_local, ext_f_local;
+        
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    
+    RAJA::kernel_param<MY_KERNEL_POLICY>
+      (RAJA::make_tuple(RAJA::TypedRangeSegment< localIndex>(0, elemsToNodes.size(0))),
+       RAJA::make_tuple(ext_v_local, ext_f_local),
+
+       [=] (localIndex const k, TILE_MEM &v_local, TILE_MEM /*f_local */) {
+
+        for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+          {
+            for ( int b = 0; b < 3; ++b )
+              {
+                v_local( a , b ) = vel[ elemsToNodes[ k ][ a ] ][ b ];
+              }
+          }
+      
+      },
+       
+     [=](localIndex const k, TILE_MEM &v_local, TILE_MEM &f_local) {
+      
+       real64 c[ 6 ][ 6 ];
+       constitutive.GetStiffness( k, c );
+         
+       //Compute Quadrature
+       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+         {
+           real64 p_stress[ 6 ] = { 0 };
+           for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+             {
+               real64 const v0_x_dNdXa0 = v_local( a , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+               real64 const v1_x_dNdXa1 = v_local( a , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+               real64 const v2_x_dNdXa2 = v_local( a , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
+               
+               p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
+               p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
+               p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
+               p_stress[ 3 ] += ( v_local( a , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + v_local( a , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
+               p_stress[ 4 ] += ( v_local( a , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local( a , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
+               p_stress[ 5 ] += ( v_local( a , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local( a , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
+             }
+           
+           real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
+           MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
+           
+           p_stress[ 0 ] -= dMeanStress;
+           p_stress[ 1 ] -= dMeanStress;
+           p_stress[ 2 ] -= dMeanStress;
+           
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += p_stress[ 0 ];
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += p_stress[ 1 ];
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += p_stress[ 2 ];
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
+           DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
+           
+           for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+             {
+               f_local( a , 0 ) -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
+                                     + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
+                                     + DNDX_ACCESSOR(dNdX, k, q, a, 0) * ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
+               f_local( a , 1 ) -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
+                                     + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
+                                     + DNDX_ACCESSOR(dNdX, k, q, a, 1) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
+               f_local( a , 2 ) -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
+                                     + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
+                                     + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
+             }
+         }//quadrature loop
+       
+       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+         {
+           for ( int b = 0; b < 3; ++b )
+             {
+               RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local( a , b ) );
+             }
+         }
+       
+     });
+    
+    //printf("quit early \n");
+    //exit(-1);
+#else
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elemsToNodes.size(0) ),
@@ -168,7 +272,10 @@ struct ExplicitKernel
         }
       }
     });
+#endif
 
+
+    
     return dt;
   }
 };
