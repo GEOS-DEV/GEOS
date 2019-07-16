@@ -36,6 +36,8 @@
 
 #define GEOSX_DEVICE_LAMBDA [=] __device__
 
+#define GEOSX_FORCE_INLINE __forceinline__
+
 #else
 
 #define GEOSX_HOST
@@ -44,6 +46,7 @@
 
 #define GEOSX_DEVICE_LAMBDA [=]
 
+#define GEOSX_FORCE_INLINE
 #endif
 
 #endif // COMMON_GEOSXMACROS_HPP_

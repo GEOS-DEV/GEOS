@@ -26,6 +26,7 @@
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
@@ -36,6 +37,7 @@
 
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
+
 
 namespace geosx
 {
@@ -71,9 +73,17 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d< double const> const & dNdX,
+          arrayView4d< double const> const &
+#if CALC_SHAPE_FUNCTION_DERIVATIVES!=1
+          dNdX
+#endif
+          ,
           arrayView2d<real64 const> const & detJ,
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+          arrayView1d<R1Tensor const> const & X,
+#else
           arrayView1d<R1Tensor const> const & u,
+#endif
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
@@ -102,12 +112,17 @@ struct ExplicitKernel
     {
       real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
       real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
-
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+      real64 X_local[3][8] = {};
+#endif
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         for ( int b = 0; b < 3; ++b )
         {
           v_local[ a ][ b ] = vel[ elemsToNodes[ k ][ a ] ][ b ];
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+          X_local[ b ][ a ] = X[ elemsToNodes[ k ][ a ] ][ b ];
+#endif
         }
       }
 
@@ -117,6 +132,11 @@ struct ExplicitKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+        real64 dNdX[3][8];
+        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+#endif
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {

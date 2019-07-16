@@ -546,7 +546,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    elemsToNodes,
                                    dNdX,
                                    detJ,
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+                                   X,
+#else
                                    u,
+#endif
                                    vel,
                                    acc,
                                    meanStress,

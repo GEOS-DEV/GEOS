@@ -15,7 +15,7 @@ set( finiteElement_headers
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
      quadrature/QuadratureRuleManager.hpp
-   )
+     FiniteElementShapeFunctionKernel.hpp   )
 #
 # Specify all sources
 #
@@ -33,6 +33,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
      basis/BasisFunctionManager.cpp
      quadrature/QuadratureRuleManager.cpp
+     FiniteElementShapeFunctionKernel.cpp
    )
 
 set( dependencyList dataRepository codingUtilities )

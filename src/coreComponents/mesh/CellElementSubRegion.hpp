@@ -23,6 +23,8 @@
 #include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
+#define CALC_SHAPE_FUNCTION_DERIVATIVES 1
+
 #define STANDARD_ELEMENT_DNDX_LAYOUT 0
 #define STANDARD_ELEMENT_DETJ_LAYOUT 0
 #define STANDARD_ELEMENT_MEANSTRESS_LAYOUT 0
@@ -31,7 +33,11 @@
 #if STANDARD_ELEMENT_DNDX_LAYOUT
 #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
 #else
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX[i][n]
+#else
 #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(i, n, q, k)
+#endif
 #endif
 
 #if STANDARD_ELEMENT_DETJ_LAYOUT
