@@ -123,13 +123,14 @@ struct ExplicitKernel
       (RAJA::make_tuple(RAJA::TypedRangeSegment< localIndex>(0, elemsToNodes.size(0))),
        RAJA::make_tuple(ext_v_local, ext_f_local),
 
-       [=] (localIndex const k, TILE_MEM &v_local, TILE_MEM /*f_local */) {
+       [=] (localIndex const k, TILE_MEM &v_local, TILE_MEM &f_local ) {
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
           {
             for ( int b = 0; b < 3; ++b )
               {
                 v_local( a , b ) = vel[ elemsToNodes[ k ][ a ] ][ b ];
+                f_local( a, b ) = 0.0;
               }
           }
       
