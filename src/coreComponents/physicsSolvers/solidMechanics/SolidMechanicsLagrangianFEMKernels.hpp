@@ -80,15 +80,13 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<real64 const> const & mass, 
                             arrayView1d<R1Tensor> const & velocity,
-                            real64 const dt,
-                            LvArray::SortedArrayView<localIndex const, localIndex> const & indices )
+                            real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
+                                 GEOSX_DEVICE_LAMBDA ( localIndex const a )
   {
-    localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
     {
       acceleration[ a ][ j ] /= mass[ a ];
@@ -197,69 +195,70 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView4d<real64 const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
-          arrayView2d<R2SymTensor> const & devStress,
+          arrayView3d<real64> const & devStress,
           real64 const dt )
   {
-    forall_in_set<serialPolicy>( elementList.values(),
-                              elementList.size(),
-                              GEOSX_LAMBDA ( localIndex k) mutable
-    {
-      R1Tensor v_local[NUM_NODES_PER_ELEM];
-      R1Tensor u_local[NUM_NODES_PER_ELEM];
-      R1Tensor f_local[NUM_NODES_PER_ELEM];
+    GEOS_ERROR("SolidMechanicsLagrangianFEMKernels::ExplicitKernel::Launch has been commented out!");
+  //   forall_in_set<serialPolicy>( elementList.values(),
+  //                             elementList.size(),
+  //                             GEOSX_LAMBDA ( localIndex k) mutable
+  //   {
+  //     R1Tensor v_local[NUM_NODES_PER_ELEM];
+  //     R1Tensor u_local[NUM_NODES_PER_ELEM];
+  //     R1Tensor f_local[NUM_NODES_PER_ELEM];
 
-      CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
-                                                      u, vel,
-                                                      u_local, v_local );
+  //     CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
+  //                                                     u, vel,
+  //                                                     u_local, v_local );
 
-      //Compute Quadrature
-      for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
-      {
-        R2Tensor dUhatdX, dUdX;
-        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q]);
-        dUhatdX *= dt;
+  //     //Compute Quadrature
+  //     for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
+  //     {
+  //       R2Tensor dUhatdX, dUdX;
+  //       CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q]);
+  //       dUhatdX *= dt;
 
-        R2Tensor F,Ldt, fInv;
+  //       R2Tensor F,Ldt, fInv;
 
-        // calculate du/dX
-        F = dUhatdX;
-        F *= 0.5;
-        F += dUdX;
-        F.PlusIdentity(1.0);
-        fInv.Inverse(F);
+  //       // calculate du/dX
+  //       F = dUhatdX;
+  //       F *= 0.5;
+  //       F += dUdX;
+  //       F.PlusIdentity(1.0);
+  //       fInv.Inverse(F);
 
-        // chain rule: calculate dv/du = dv/dX * dX/du
-        Ldt.AijBjk(dUhatdX, fInv);
+  //       // chain rule: calculate dv/du = dv/dX * dX/du
+  //       Ldt.AijBjk(dUhatdX, fInv);
 
-        // calculate gradient (end of step)
-        F = dUhatdX;
-        F += dUdX;
-        F.PlusIdentity(1.0);
-        real64 detF = F.Det();
-        fInv.Inverse(F);
-
-
-        R2Tensor Rot;
-        R2SymTensor Dadt;
-        HughesWinget(Rot, Dadt, Ldt);
-
-        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
-
-        R2SymTensor TotalStress = devStress[k][q];
-        TotalStress.PlusIdentity( meanStress[k][q] );
-
-        Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
-      }//quadrature loop
+  //       // calculate gradient (end of step)
+  //       F = dUhatdX;
+  //       F += dUdX;
+  //       F.PlusIdentity(1.0);
+  //       real64 detF = F.Det();
+  //       fInv.Inverse(F);
 
 
-      AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
-    });
+  //       R2Tensor Rot;
+  //       R2SymTensor Dadt;
+  //       HughesWinget(Rot, Dadt, Ldt);
+
+  //       constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+
+  //       R2SymTensor TotalStress = devStress[k][q];
+  //       TotalStress.PlusIdentity( meanStress[k][q] );
+
+  //       Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+  //     }//quadrature loop
+
+
+  //     AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
+  //   });
 
     return dt;
   }

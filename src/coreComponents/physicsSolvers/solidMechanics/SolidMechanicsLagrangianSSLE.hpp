@@ -50,13 +50,13 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
                                arrayView2d<localIndex const> const & elemsToNodes,
-                               arrayView3d< R1Tensor const> const & dNdX,
+                               arrayView4d<real64 const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & u,
                                arrayView1d<R1Tensor const> const & vel,
                                arrayView1d<R1Tensor> const & acc,
                                arrayView2d<real64> const & meanStress,
-                               arrayView2d<R2SymTensor> const & devStress,
+                               arrayView3d<real64> const & devStress,
                                real64 const dt ) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;

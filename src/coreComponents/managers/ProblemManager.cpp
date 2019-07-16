@@ -760,6 +760,7 @@ void ProblemManager::GenerateMesh()
 
       elemManager->GenerateMesh( cellBlockManager );
 
+#ifndef GEOSX_USE_CUDA
       faceManager->BuildFaces( nodeManager, elemManager );
 
       edgeManager->BuildEdges(faceManager, nodeManager );
@@ -767,7 +768,7 @@ void ProblemManager::GenerateMesh()
       nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
       nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
-
+#endif
 
       domain->GenerateSets();
 

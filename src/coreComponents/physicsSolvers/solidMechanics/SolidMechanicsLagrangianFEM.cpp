@@ -508,12 +508,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
-
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const devStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
-
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
@@ -524,11 +518,20 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     ElementRegion * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion * const elementSubRegion )
     {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
 
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+      elementSubRegion->initializeDNDXReordered();
+      arrayView4d< double const > const & dNdX = elementSubRegion->getDNDXReordered();
+
+      elementSubRegion->initializeDetJReordered();
+      arrayView2d< double const > const & detJ = elementSubRegion->getDetJReordered();
+
+      elementSubRegion->initializeMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+      arrayView2d< double > const & meanStress = elementSubRegion->getMeanStressReordered();
+
+      elementSubRegion->initializeDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+      arrayView3d< double > const & deviatorStress = elementSubRegion->getDeviatorStressReordered();
 
       arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
 
@@ -546,58 +549,22 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   meanStress,
+                                   deviatorStress,
                                    dt );
 
+      // elementSubRegion->outputMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+      // elementSubRegion->outputDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
     }); //Element Region
 
   } //Element Manager
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2 );
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
-
-    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
-
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
-    {
-      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-
-      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
-
-      localIndex const numNodesPerElement = elemsToNodes.size(1);
-
-      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
-
-      ExplicitElementKernelLaunch( numNodesPerElement,
-                                   numQuadraturePoints,
-                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
-                                   this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
-                                   elemsToNodes,
-                                   dNdX,
-                                   detJ,
-                                   u,
-                                   vel,
-                                   acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
-                                   dt );
-    }); //Element Region
-
-  } //Element Manager
-
-  // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );
 

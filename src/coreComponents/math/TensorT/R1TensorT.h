@@ -131,11 +131,17 @@ public:
   /// non-const access to data
   GEOSX_HOST_DEVICE inline realT& operator()( const int i )       { return this->t_data[i]; }
 
+#ifdef __CUDACC__
+#define FORCE_INLINE __forceinline__
+#else
+#define FORCE_INLINE inline
+#endif
+
   /// const access to data
-  GEOSX_HOST_DEVICE inline realT  operator[]( const int i ) const { return this->t_data[i]; }
+  GEOSX_HOST_DEVICE FORCE_INLINE realT  operator[]( const int i ) const { return this->t_data[i]; }
 
   /// non-const access to data
-  GEOSX_HOST_DEVICE inline realT& operator[]( const int i )       { return this->t_data[i]; }
+  GEOSX_HOST_DEVICE FORCE_INLINE realT& operator[]( const int i )       { return this->t_data[i]; }
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor

@@ -21,6 +21,36 @@
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_CELLBLOCKSUBREGION_HPP_
 
 #include "CellBlock.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+
+#define STANDARD_ELEMENT_DNDX_LAYOUT 0
+#define STANDARD_ELEMENT_DETJ_LAYOUT 0
+#define STANDARD_ELEMENT_MEANSTRESS_LAYOUT 0
+#define STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT 0
+
+#if STANDARD_ELEMENT_DNDX_LAYOUT
+#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
+#else
+#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(i, n, q, k)
+#endif
+
+#if STANDARD_ELEMENT_DETJ_LAYOUT
+#define DETJ_ACCESSOR(detJ, k, q) detJ(k, q)
+#else
+#define DETJ_ACCESSOR(detJ, k, q) detJ(q, k)
+#endif
+
+#if STANDARD_ELEMENT_MEANSTRESS_LAYOUT
+#define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(k, q)
+#else
+#define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(q, k)
+#endif
+
+#if STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT
+#define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(k, q, i)
+#else
+#define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(i, q, k)
+#endif
 
 namespace geosx
 {
@@ -30,6 +60,31 @@ class CellElementSubRegion : public CellBlock
 public:
   CellElementSubRegion( string const & name, ManagedGroup * const parent );
   virtual ~CellElementSubRegion() override;
+
+  void initializeDNDXReordered();
+
+  arrayView4d< double const > const & getDNDXReordered() const
+  { return m_dNdX_reordered; }
+
+
+  void initializeDetJReordered();
+
+  arrayView2d< double const > const & getDetJReordered() const
+  { return m_detJ_reordered; }
+
+  void initializeMeanStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex);
+
+  void outputMeanStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex);
+
+  arrayView2d< double > const & getMeanStressReordered() const
+  { return m_meanStress_reordered; }
+
+  void initializeDeviatorStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex);
+
+  void outputDeviatorStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex);
+
+  arrayView3d< double > const & getDeviatorStressReordered() const
+  { return m_deviatorStress_reordered; }
 
   void CopyFromCellBlock( CellBlock const * source );
 
@@ -99,6 +154,10 @@ public:
 
   array3d< R1Tensor > m_dNdX;
 
+  array4d< double > m_dNdX_reordered;
+  array2d< double > m_detJ_reordered;
+  array2d< double > m_meanStress_reordered;
+  array3d< double > m_deviatorStress_reordered;
 
 private:
 
