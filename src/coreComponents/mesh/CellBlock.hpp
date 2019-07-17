@@ -248,6 +248,7 @@ public:
   /// Element patch info
   array1d<localIndex> m_patchOffsets; // size numPatch+1
   LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes; // size numPatch
+  LvArray::ArrayOfArrays<localIndex, localIndex > m_patchElemToNodeMaps;
 
   array1d<localIndex> m_patchIndex; // for visualization/debugging
   array1d<localIndex> m_elemIndex;  // for visualization/debugging

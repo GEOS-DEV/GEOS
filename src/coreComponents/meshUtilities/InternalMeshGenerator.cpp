@@ -950,7 +950,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
 
           std::set<localIndex> patchNodes;
-          array1d<localIndex> reorder( elemRegion->size() );
+          array1d<localIndex> elemReorder( elemRegion->size() );
 
           localIndex numPatchesInBlock[3];
           localIndex numPatches = 1;
@@ -1001,14 +1001,49 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                           patchNodes.insert( elemsToNodes[oldElemIndex][iN] );
                         }
 
-                        reorder[oldElemIndex] = newElemIndex; // or vice versa
+                        elemReorder[oldElemIndex] = newElemIndex;
                       }
                     }
                   }
                 }
 
-                std::vector<localIndex> patchNodesTemp( patchNodes.begin(), patchNodes.end() );
-                elemRegion->m_patchNodes.appendArray( patchNodesTemp.data(), patchNodesTemp.size() );
+                // create a local (within patch) numbering of nodes
+                std::vector<localIndex> patchNodesList( patchNodes.begin(), patchNodes.end() );
+                elemRegion->m_patchNodes.appendArray( patchNodesList.data(), patchNodesList.size() );
+
+                std::map<localIndex, localIndex> nodeGlobalToPatchIndexMap;
+                for( std::vector<localIndex>::size_type i = 0; i < patchNodesList.size(); ++i )
+                {
+                  nodeGlobalToPatchIndexMap.emplace( patchNodesList[i], i );
+                }
+
+                array1d<localIndex> patchLocalElemToNodeMap( elemRegion->size() * numNodesPerElem );
+
+                // loop over patch elements again, now populating the local elem to node map
+                localIndex localElemIndex = 0;
+                for( localIndex i = 0; i < std::min(patchSize[0], numElemsInDirForRegion[0] - patchOffset[0]); ++i )
+                {
+                  for( localIndex j = 0; j < std::min(patchSize[1], numElemsInDirForRegion[1] - patchOffset[1]); ++j )
+                  {
+                    for( localIndex k = 0; k < std::min(patchSize[2], numElemsInDirForRegion[2] - patchOffset[2]); ++k )
+                    {
+                      // k is fastest-cycling index, see above
+                      localIndex oldElemIndex = (patchOffset[0] + i) * numElemsInDirForRegion[1] * numElemsInDirForRegion[2]
+                                              + (patchOffset[1] + j) * numElemsInDirForRegion[2]
+                                              + (patchOffset[2] + k);
+                      for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++oldElemIndex, ++localElemIndex )
+                      {
+                        for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
+                        {
+                          patchLocalElemToNodeMap[localElemIndex + iN * elemRegion->size()] =
+                            nodeGlobalToPatchIndexMap[ elemsToNodes[oldElemIndex][iN] ];
+                        }
+                      }
+                    }
+                  }
+                }
+
+                elemRegion->m_patchElemToNodeMaps.appendArray( patchLocalElemToNodeMap.data(), patchLocalElemToNodeMap.size() );
               }
             }
           }
@@ -1018,13 +1053,13 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           array1d<globalIndex> localToGlobalMapOld = elemRegion->m_localToGlobalMap;
           FixedOneToManyRelation elemsToNodesOld = elemRegion->nodeList();
 
-          for( localIndex ei = 0; ei < reorder.size(); ++ei )
+          for( localIndex ei = 0; ei < elemReorder.size(); ++ei )
           {
-            elemRegion->m_localToGlobalMap[reorder[ei]] = localToGlobalMapOld[ei];
+            elemRegion->m_localToGlobalMap[elemReorder[ei]] = localToGlobalMapOld[ei];
 
             for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
             {
-              elemsToNodes[reorder[ei]][iN] = elemsToNodesOld[ei][iN];
+              elemsToNodes[elemReorder[ei]][iN] = elemsToNodesOld[ei][iN];
             }
           }
         }
