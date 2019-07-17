@@ -536,9 +536,14 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
       elementSubRegion->initializeToNodesRelationReordered();
       arrayView2d<localIndex const> const & elemsToNodes = elementSubRegion->getToNodesRelationReordered();
 
+#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
       localIndex const numNodesPerElement = elemsToNodes.size(1);
+#else
+      localIndex const numNodesPerElement = elemsToNodes.size(0);
+#endif
 
       localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
+
 
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,

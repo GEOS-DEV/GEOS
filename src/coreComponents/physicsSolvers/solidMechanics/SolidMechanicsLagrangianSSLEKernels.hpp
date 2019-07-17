@@ -93,7 +93,7 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+    using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
 #elif defined(GEOSX_USE_OPENMP)
     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
@@ -103,7 +103,9 @@ struct ExplicitKernel
     static bool outputMessage = true;
     if (outputMessage)
     {
+#if CALC_SHAPE_FUNCTION_DERIVATIVES!=1
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
+#endif
       GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
       GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
