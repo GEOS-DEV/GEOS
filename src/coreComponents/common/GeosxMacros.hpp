@@ -32,13 +32,15 @@
 #define STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT 0
 #define STANDARD_ELEMENT_TONODESRELATION_LAYOUT 0
 
-#define STORE_NODE_DATA_LOCALLY 1
+#define STORE_NODE_DATA_LOCALLY 0
 
-#define CALC_SHAPE_FUNCTION_DERIVATIVES 1
+#define CALC_SHAPE_FUNCTION_DERIVATIVES 0
 
 #define GEOSX_LAMBDA [=]
 
 #if defined(__CUDACC__)
+
+#define FORCE_INLINE __forceinline__
 
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
@@ -49,6 +51,8 @@
 #define GEOSX_FORCE_INLINE __forceinline__
 
 #else
+
+#define FORCE_INLINE inline
 
 #define GEOSX_HOST
 #define GEOSX_DEVICE

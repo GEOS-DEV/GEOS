@@ -132,7 +132,6 @@ public:
       c[5][5] = G;
     }
 
-  private:
     arrayView1d<real64 const> const m_bulkModulus;
     arrayView1d<real64 const> const m_shearModulus;
   };
