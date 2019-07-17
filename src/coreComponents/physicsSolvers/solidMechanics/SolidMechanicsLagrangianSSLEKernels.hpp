@@ -38,12 +38,77 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
+#if STORE_NODE_DATA_LOCALLY
+#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#else
+#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
 
 namespace geosx
 {
 
 namespace SolidMechanicsLagrangianSSLEKernels
 {
+
+template< type CONSTITUTIVE_KERNEL_WRAPPER, int NUM_NODES_PER_ELEMENT >
+void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
+                   localIndex const k,
+                   localIndex const q,
+                   arrayView2d<localIndex const> const & elemsToNodes,
+#ifdef STORE_NODE_DATA_LOCALLY
+                   real64 const (&v_local)[NUM_NODES_PER_ELEMENT][3],
+#else
+                   arrayView1d<R1Tensor const> const & vel,
+#endif
+#ifdef CALC_SHAPE_FUNCTION_DERIVATIVES
+                   real64 const (&dNdX)[3][8],
+#else
+                   arrayView4d<real64 const> const & dNdX,
+#endif
+                   arrayView2d<real64> const & meanStress,
+                   arrayView3d<real64> const & devStress )
+{
+  real64 const G = m_shearModulus[k];
+  real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+  real64 const Lame2G = Lame + 2 * G;
+
+  real64 dMeanStress = 0;
+  for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+  {
+    real64 const temp0 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame2G +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += temp0;
+    dMeanStress += temp0;
+    
+    real64 const temp1 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame2G +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += temp1;
+    dMeanStress += temp1;
+
+    real64 const temp2 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame2G ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += temp2;
+    dMeanStress += temp2;
+
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
+                                                     VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
+  }
+
+  dMeanStress /= 3.0;
+  MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
+
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) -= dMeanStress;
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) -= dMeanStress;
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) -= dMeanStress;
+}
+
 
 /**
  * @struct Structure to wrap templated function that implements the explicit time integration kernels.
@@ -72,7 +137,7 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d< double const> const &
+          arrayView4d<real64 const> const &
 #if !CALC_SHAPE_FUNCTION_DERIVATIVES
           dNdX
 #endif
@@ -142,10 +207,6 @@ struct ExplicitKernel
           v_local[ a ][ b ] = vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
         }
       }
-
-      #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#else
-      #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
 #endif
 
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
