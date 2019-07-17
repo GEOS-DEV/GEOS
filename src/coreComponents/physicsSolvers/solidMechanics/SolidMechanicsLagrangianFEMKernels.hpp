@@ -159,10 +159,10 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
     {
       rval = KERNELWRAPPER::template Launch<8,8, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)... );
     }
-    else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
-    {
-      rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)... );
-    }
+    // else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
+    // {
+    //   rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)... );
+    // }
     else
     {
       GEOS_ERROR("Unknown combination of nodes and quadrature points: " << NUM_NODES_PER_ELEM << ", " << NUM_QUADRATURE_POINTS);

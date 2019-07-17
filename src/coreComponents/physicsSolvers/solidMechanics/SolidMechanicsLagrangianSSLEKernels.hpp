@@ -26,6 +26,7 @@
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
@@ -36,6 +37,7 @@
 
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
+
 
 namespace geosx
 {
@@ -70,9 +72,17 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d<real64 const> const & dNdX,
+          arrayView4d< double const> const &
+#if !CALC_SHAPE_FUNCTION_DERIVATIVES
+          dNdX
+#endif
+          ,
           arrayView2d<real64 const> const & detJ,
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+          arrayView1d<R1Tensor const> const & X,
+#else
           arrayView1d<R1Tensor const> const & u,
+#endif
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
@@ -82,7 +92,7 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+    using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
 #elif defined(GEOSX_USE_OPENMP)
     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
@@ -99,7 +109,11 @@ struct ExplicitKernel
     if (outputMessage)
     {
       GEOS_LOG("numElems = " << numElems);
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+      GEOS_LOG("Calculating shape function derivatives on the fly");
+#else
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
+#endif
       GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
       GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
@@ -134,12 +148,27 @@ struct ExplicitKernel
       #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
 #endif
 
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+      real64 X_local[3][8];
+      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        for ( int b = 0; b < 3; ++b )
+        {
+          X_local[ b ][ a ] = X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
+        }
+      }
+#endif
+
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+        real64 dNdX[3][8];
+        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+#endif
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {

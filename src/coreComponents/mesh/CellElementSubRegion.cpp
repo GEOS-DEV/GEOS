@@ -77,7 +77,9 @@ void CellElementSubRegion::initializeDNDXReordered()
       {
         for (int i = 0; i < 3; ++i)
         {
+#if !CALC_SHAPE_FUNCTION_DERIVATIVES
           DNDX_ACCESSOR(m_dNdX_reordered, k, q, n, i) = m_dNdX(k, q, n)[i];
+#endif
         }
       }
     }

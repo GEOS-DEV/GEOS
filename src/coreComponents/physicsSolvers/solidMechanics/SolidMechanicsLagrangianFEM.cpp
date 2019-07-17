@@ -544,13 +544,18 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
+
       ExplicitElementKernelLaunch( numNodesPerElement,
                                    numQuadraturePoints,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    elemsToNodes,
                                    dNdX,
                                    detJ,
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+                                   X,
+#else
                                    u,
+#endif
                                    vel,
                                    acc,
                                    meanStress,
