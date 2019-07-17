@@ -26,6 +26,7 @@
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
@@ -36,6 +37,7 @@
 
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
+
 
 namespace geosx
 {
@@ -69,14 +71,21 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView1d<localIndex const> const & elemPatchOffsets,
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchElemsToNodes,
-          arrayView4d< double const> const & dNdX,
+          arrayView4d< double const> const &
+#if !CALC_SHAPE_FUNCTION_DERIVATIVES
+          dNdX
+#endif
+          ,
           arrayView2d<real64 const> const & detJ,
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+          arrayView1d<R1Tensor const> const & X,
+#else
           arrayView1d<R1Tensor const> const & u,
+#endif
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
@@ -86,29 +95,39 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    //using KERNEL_POLICY = RAJA::cuda_exec< 1024 >;
+    //using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
 #elif defined(GEOSX_USE_OPENMP)
     //using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     //using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
-    static bool outputMessage = true;
-    if (outputMessage)
-    {
-      GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
-      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
-      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
-      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
-      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
-      outputMessage = false;
-    }
-
 #if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
     localIndex const numElems = elemsToNodes.size(0);
 #else
     localIndex const numElems = elemsToNodes.size(1);
 #endif
+
+    static bool outputMessage = true;
+    if (outputMessage)
+    {
+      GEOS_LOG("numElems = " << numElems);
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+      GEOS_LOG("Calculating shape function derivatives on the fly");
+#else
+      GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
+#endif
+      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
+      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
+      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
+#if STORE_NODE_DATA_LOCALLY
+      GEOS_LOG("Moving node data into local arrays.");
+#else
+      GEOS_LOG("Not storing node data locally.");
+#endif
+      outputMessage = false;
+    }
 
 #if 1
     //printf("Building RAJA kernel \n");
@@ -150,32 +169,33 @@ struct ExplicitKernel
 #else
 
 
-#define SSLE_KERNEL_BLOCK_SIZE 512
+#define SSLE_KERNEL_MAX_ELEMS_PER_PATCH 512
+#define SSLE_KERNEL_MAX_NODES_PER_PATCH 1024
 
     using KERNEL_POLICY =
       RAJA::KernelPolicy<
-        RAJA::statement::TileTCount<0, RAJA::statement::Param<0>, RAJA::statement::tile_fixed<SSLE_KERNEL_BLOCK_SIZE>, RAJA::loop_exec,
-          RAJA::statement::InitLocalMem<RAJA::cpu_tile_mem, RAJA::ParamList<2, 3>,
-            RAJA::statement::ForICount<0, RAJA::statement::Param<1>, RAJA::loop_exec,
-              RAJA::statement::Lambda<0>,
-              RAJA::statement::Lambda<1>,
-              RAJA::statement::Lambda<2>
-            >
+        RAJA::statement::For<0, RAJA::loop_exec,
+          RAJA::statement::InitLocalMem<RAJA::cpu_tile_mem, RAJA::ParamList<0, 1>,
+            RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<0>>,
+            RAJA::statement::For<1, RAJA::loop_exec, RAJA::statement::Lambda<1>>,
+            RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<2>>
           >
         >
       >;
 
 #endif
 
-    using TILE_MEM = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_KERNEL_BLOCK_SIZE, 3>>;
+    using PATCH_NODAL_DATA = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_KERNEL_MAX_NODES_PER_PATCH, 3>>;
 
-    TILE_MEM ext_v_block, ext_f_block;
+    PATCH_NODAL_DATA ext_v_block, ext_f_block;
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
     RAJA::kernel_param<KERNEL_POLICY>
-      ( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, numElems ) ),
-        RAJA::make_tuple( localIndex(0), localIndex(0), ext_v_block, ext_f_block ),
+      ( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elemPatchOffsets.size() - 1 ),
+                          RAJA::TypedRangeSegment<localIndex>( 0, SSLE_KERNEL_MAX_ELEMS_PER_PATCH ),
+                          RAJA::TypedRangeSegment<localIndex>( 0, SSLE_KERNEL_MAX_NODES_PER_PATCH ) ),
+        RAJA::make_tuple( ext_v_block, ext_f_block ),
 
         /*
          * k = global thread (node) index
@@ -184,27 +204,17 @@ struct ExplicitKernel
          *
          * The first lambda loads nodal data from global memory into shared memory arrays
          */
-        GEOSX_DEVICE_LAMBDA( localIndex const k, localIndex const p, localIndex const i,
-                             TILE_MEM & v_block, TILE_MEM & f_block )
+        GEOSX_DEVICE_LAMBDA( localIndex const patch, localIndex const, localIndex const node,
+                             PATCH_NODAL_DATA & v_block, PATCH_NODAL_DATA & f_block )
         {
-          // If we have more nodes in a patch than elements/threads, we need multiple iterations
-          // to load nodal data in shared memory. Ideally, we'd use RAJA constructs for this loop,
-          // but I don't know how to set variable number of iterations based on runtime values
-          //
-          // TODO: replace iterations with a RAJA construct, if possible
-          localIndex const numNodes = elemPatchNodes.sizeOfArray( p );
-          localIndex const numIters = ( numNodes + SSLE_KERNEL_BLOCK_SIZE - 1 ) / SSLE_KERNEL_BLOCK_SIZE;
+          localIndex const numNodes = elemPatchNodes.sizeOfArray( patch );
 
-          localIndex n = i; // local index of node within a patch
-          for ( localIndex iter = 0 ; iter < numIters ; ++iter, n+= SSLE_KERNEL_BLOCK_SIZE )
+          if( node < numNodes )
           {
-            if( n < numNodes )
+            for( int b = 0 ; b < 3 ; ++b )
             {
-              for( int b = 0 ; b < 3 ; ++b )
-              {
-                v_block( n, b ) = vel[ elemPatchNodes[p][n] ][b];
-                f_block( n, b ) = 0.0;
-              }
+              v_block( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
+              f_block( node, b ) = 0.0;
             }
           }
         },
@@ -216,9 +226,15 @@ struct ExplicitKernel
          *
          * The second lambda performs update of local
          */
-        GEOSX_DEVICE_LAMBDA( localIndex const k, localIndex const p, localIndex const i,
-                             TILE_MEM & v_block, TILE_MEM & f_block )
+        GEOSX_DEVICE_LAMBDA( localIndex const patch, localIndex const elem, localIndex const,
+                             PATCH_NODAL_DATA & v_block, PATCH_NODAL_DATA & f_block )
         {
+          localIndex const k = elemPatchOffsets[patch] + elem;
+
+          if( elem >= (elemPatchOffsets[patch+1] - elemPatchOffsets[patch]) )
+          {
+            return;
+          }
 
           real64 c[ 6 ][ 6 ];
           constitutive.GetStiffness( k, c );
@@ -229,7 +245,7 @@ struct ExplicitKernel
             real64 p_stress[ 6 ] = { 0 };
             for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
-              localIndex const a_block = elemPatchElemsToNodes[p][ i + a * numElems ];
+              localIndex const a_block = elemPatchElemsToNodes[patch][ elem + a * numElems ];
 
               real64 const v0_x_dNdXa0 = v_block( a_block , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
               real64 const v1_x_dNdXa1 = v_block( a_block , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
@@ -259,7 +275,7 @@ struct ExplicitKernel
 
             for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
-              localIndex const a_block = elemPatchElemsToNodes[p][ i + a * numElems ];
+              localIndex const a_block = elemPatchElemsToNodes[patch][ elem + a * numElems ];
 
               RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &f_block( a_block , 0 ),
                 - ( ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
@@ -282,24 +298,17 @@ struct ExplicitKernel
          * p = block (patch) index
          * i = local thread (node) index (within a block)
          *
-         * The third lambda pushes nodal updates from shared mamory arrays into global memory
+         * The third lambda pushes nodal updates from shared memory arrays into global memory
          */
-        GEOSX_DEVICE_LAMBDA( localIndex const k, localIndex const p, localIndex const i,
-                             TILE_MEM & v_block, TILE_MEM & f_block )
+        GEOSX_DEVICE_LAMBDA( localIndex const patch, localIndex const, localIndex const node,
+                             PATCH_NODAL_DATA & v_block, PATCH_NODAL_DATA & f_block )
         {
-          // TODO: replace iterations with a RAJA construct, if possible
-          localIndex const numNodes = elemPatchNodes.sizeOfArray( p );
-          localIndex const numIters = ( numNodes + SSLE_KERNEL_BLOCK_SIZE - 1 ) / SSLE_KERNEL_BLOCK_SIZE;
-
-          localIndex n = i; // local index of node within a patch
-          for ( localIndex iter = 0 ; iter < numIters ; ++iter, n+= SSLE_KERNEL_BLOCK_SIZE )
+          localIndex const numNodes = elemPatchNodes.sizeOfArray( patch );
+          if( node < numNodes )
           {
-            if( n < numNodes )
+            for( int b = 0 ; b < 3 ; ++b )
             {
-              for( int b = 0 ; b < 3 ; ++b )
-              {
-                RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemPatchNodes[p][n] ][ b ], f_block( n , b ) );
-              }
+              RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemPatchNodes[patch][node] ][ b ], f_block( node , b ) );
             }
           }
         } );
@@ -312,9 +321,10 @@ struct ExplicitKernel
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
     {
-      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
       real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
 
+#if STORE_NODE_DATA_LOCALLY
+      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         for ( int b = 0; b < 3; ++b )
@@ -323,25 +333,45 @@ struct ExplicitKernel
         }
       }
 
+      #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#else
+      #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
+
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+      real64 X_local[3][8];
+      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        for ( int b = 0; b < 3; ++b )
+        {
+          X_local[ b ][ a ] = X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
+        }
+      }
+#endif
+
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+        real64 dNdX[3][8];
+        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+#endif
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0);
-          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1);
-          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2);
+          real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+          real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+          real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
           p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
           p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
           p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1) + v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
+          p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
+          p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
+          p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
         }
 
         real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
