@@ -916,7 +916,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   {
     // TODO input parameres?
-    localIndex const maxNumElemsInPatch = 8*8*8;
+    localIndex const maxNumElemsInPatch = 4*4*4;
     localIndex patchSize[3];
 
     // TODO
@@ -943,6 +943,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
         for( localIndex kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
         {
           numElemsInDirForRegion[2] = lastElemIndexForBlockInPartition[2][kblock] - firstElemIndexForBlockInPartition[2][kblock] + 1;
+
+          GEOS_LOG_RANK_0( "Generating element patch information for region " << *iterRegion );
 
           // Element renumbering
           CellBlock * elemRegion = elementManager->GetRegion(*iterRegion);
@@ -981,6 +983,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 patchNodes.clear();
 
                 // Then loop within patch
+                localIndex localElemIndex = 0;
                 for( localIndex i = 0; i < std::min(patchSize[0], numElemsInDirForRegion[0] - patchOffset[0]); ++i )
                 {
                   for( localIndex j = 0; j < std::min(patchSize[1], numElemsInDirForRegion[1] - patchOffset[1]); ++j )
@@ -991,7 +994,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                       localIndex oldElemIndex = (patchOffset[0] + i) * numElemsInDirForRegion[1] * numElemsInDirForRegion[2]
                                               + (patchOffset[1] + j) * numElemsInDirForRegion[2]
                                               + (patchOffset[2] + k);
-                      for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++newElemIndex, ++oldElemIndex )
+                      for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++newElemIndex, ++oldElemIndex, ++localElemIndex )
                       {
                         elemRegion->m_elemIndex[newElemIndex] = newElemIndex;
                         elemRegion->m_patchIndex[newElemIndex] = patchIndex;
@@ -1006,6 +1009,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                     }
                   }
                 }
+                localIndex const numElemsInPatch = localElemIndex;
 
                 // create a local (within patch) numbering of nodes
                 std::vector<localIndex> patchNodesList( patchNodes.begin(), patchNodes.end() );
@@ -1017,10 +1021,10 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                   nodeGlobalToPatchIndexMap.emplace( patchNodesList[i], i );
                 }
 
-                array1d<localIndex> patchLocalElemToNodeMap( elemRegion->size() * numNodesPerElem );
+                array1d<localIndex> patchLocalElemToNodeMap( numElemsInPatch * numNodesPerElem );
 
                 // loop over patch elements again, now populating the local elem to node map
-                localIndex localElemIndex = 0;
+                localElemIndex = 0;
                 for( localIndex i = 0; i < std::min(patchSize[0], numElemsInDirForRegion[0] - patchOffset[0]); ++i )
                 {
                   for( localIndex j = 0; j < std::min(patchSize[1], numElemsInDirForRegion[1] - patchOffset[1]); ++j )
@@ -1035,7 +1039,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                       {
                         for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                         {
-                          patchLocalElemToNodeMap[localElemIndex + iN * elemRegion->size()] =
+                          patchLocalElemToNodeMap[localElemIndex + iN * numElemsInPatch] =
                             nodeGlobalToPatchIndexMap[ elemsToNodes[oldElemIndex][iN] ];
                         }
                       }
@@ -1063,6 +1067,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
             }
           }
         }
+
+        GEOS_LOG_RANK_0( "Done!" );
       }
     }
   }
