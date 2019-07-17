@@ -50,7 +50,7 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-template< class CONSTITUTIVE_KERNEL_WRAPPER, int NUM_NODES_PER_ELEM >
+template< int NUM_NODES_PER_ELEM >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
 void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
                    localIndex const k,
@@ -176,20 +176,29 @@ struct ExplicitKernel
     if (outputMessage)
     {
       GEOS_LOG("numElems = " << numElems);
+
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
       GEOS_LOG("Calculating shape function derivatives on the fly");
 #else
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
 #endif
-      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
-      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
-      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
-      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
+
 #if STORE_NODE_DATA_LOCALLY
       GEOS_LOG("Moving node data into local arrays.");
 #else
       GEOS_LOG("Not storing node data locally.");
 #endif
+
+#if INLINE_STRESS_UPDATE
+      GEOS_LOG("Inlining stress update.");
+#else
+      GEOS_LOG("Not inlining stress update.");
+#endif
+
+      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
+      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
+      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
       outputMessage = false;
     }
 
@@ -222,8 +231,10 @@ struct ExplicitKernel
       }
 #endif
 
+#if !INLINE_STRESS_UPDATE
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
+#endif
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
@@ -232,6 +243,23 @@ struct ExplicitKernel
         real64 dNdX[3][8];
         FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
 #endif
+
+#if INLINE_STRESS_UPDATE
+        stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
+                                            k,
+                                            q,
+                                            elemsToNodes,
+#if STORE_NODE_DATA_LOCALLY
+                                            v_local,
+#else
+                                            vel,
+#endif
+                                            dNdX,
+                                            dt,
+                                            meanStress,
+                                            devStress
+                      );
+#else
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -260,6 +288,7 @@ struct ExplicitKernel
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
+#endif
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
