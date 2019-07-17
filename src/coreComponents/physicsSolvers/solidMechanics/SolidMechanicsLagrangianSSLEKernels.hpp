@@ -69,9 +69,8 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d< double const> const & dNdX,
+          arrayView4d<real64 const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
@@ -90,9 +89,16 @@ struct ExplicitKernel
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
+#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
+    localIndex const numElems = elemsToNodes.size(0);
+#else
+    localIndex const numElems = elemsToNodes.size(1);
+#endif
+
     static bool outputMessage = true;
     if (outputMessage)
     {
+      GEOS_LOG("numElems = " << numElems);
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
       GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
@@ -100,12 +106,6 @@ struct ExplicitKernel
       GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
       outputMessage = false;
     }
-
-#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
-  localIndex const numElems = elemsToNodes.size(0);
-#else
-  localIndex const numElems = elemsToNodes.size(1);
-#endif
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 

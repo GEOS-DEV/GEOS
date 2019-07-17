@@ -163,6 +163,10 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
     {
       rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)... );
     }
+    else
+    {
+      GEOS_ERROR("Unknown combination of nodes and quadrature points: " << NUM_NODES_PER_ELEM << ", " << NUM_QUADRATURE_POINTS);
+    }
   });
   return rval;
 }
@@ -193,7 +197,6 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView4d<real64 const> const & dNdX,
           arrayView2d<real64 const> const & detJ,

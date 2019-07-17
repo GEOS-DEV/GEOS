@@ -21,6 +21,7 @@
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "ElementRegionManager.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -53,6 +54,8 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::initializeDNDXReordered()
 {
+  GEOSX_MARK_FUNCTION;
+
   static bool initialized = false;
   if ( initialized ) return;
 
@@ -85,6 +88,8 @@ void CellElementSubRegion::initializeDNDXReordered()
 
 void CellElementSubRegion::initializeDetJReordered()
 {
+  GEOSX_MARK_FUNCTION;
+
   static bool initialized = false;
   if ( initialized ) return;
 
@@ -113,6 +118,8 @@ void CellElementSubRegion::initializeDetJReordered()
 
 void CellElementSubRegion::initializeMeanStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex)
 {
+  GEOSX_MARK_FUNCTION;
+
   static bool initialized = false;
   if ( initialized ) return;
 
@@ -142,6 +149,8 @@ void CellElementSubRegion::initializeMeanStressReordered(ElementRegionManager * 
 
 void CellElementSubRegion::outputMeanStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex)
 {
+  GEOSX_MARK_FUNCTION;
+
   m_meanStress_reordered.move(chai::CPU, false);
 
   arrayView2d<real64> const & meanStress =
@@ -159,6 +168,8 @@ void CellElementSubRegion::outputMeanStressReordered(ElementRegionManager * elem
 
 void CellElementSubRegion::initializeDeviatorStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex)
 {
+  GEOSX_MARK_FUNCTION;
+
   static bool initialized = false;
   if ( initialized ) return;
 
@@ -191,6 +202,8 @@ void CellElementSubRegion::initializeDeviatorStressReordered(ElementRegionManage
 
 void CellElementSubRegion::outputDeviatorStressReordered(ElementRegionManager * elemManager, constitutive::ConstitutiveManager * constitutiveManager, localIndex const er, localIndex const esr, localIndex const matIndex)
 {
+  GEOSX_MARK_FUNCTION;
+
   m_deviatorStress_reordered.move(chai::CPU, false);
 
   arrayView2d<R2SymTensor> const & deviatorStress =
@@ -210,6 +223,8 @@ void CellElementSubRegion::outputDeviatorStressReordered(ElementRegionManager * 
 
 void CellElementSubRegion::initializeToNodesRelationReordered()
 {
+  GEOSX_MARK_FUNCTION;
+
   static bool initialized = false;
   if ( initialized ) return;
 
@@ -220,6 +235,8 @@ void CellElementSubRegion::initializeToNodesRelationReordered()
   GEOS_LOG("Using the alternate layout for toNodesRelation!!!!");
   m_toNodesRelation_reordered.resize(m_toNodesRelation.size(1), m_toNodesRelation.size(0));
 #endif
+
+  m_toNodesRelation_reordered.setUserCallBack("toNodesRelation_reordered");
 
   for (localIndex k = 0; k < m_toNodesRelation.size(0); ++k)
   {
