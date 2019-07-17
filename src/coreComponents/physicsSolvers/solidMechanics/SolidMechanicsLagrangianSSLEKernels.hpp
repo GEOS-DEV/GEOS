@@ -50,26 +50,28 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-template< type CONSTITUTIVE_KERNEL_WRAPPER, int NUM_NODES_PER_ELEMENT >
+template< class CONSTITUTIVE_KERNEL_WRAPPER, int NUM_NODES_PER_ELEM >
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
 void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
                    localIndex const k,
                    localIndex const q,
                    arrayView2d<localIndex const> const & elemsToNodes,
-#ifdef STORE_NODE_DATA_LOCALLY
-                   real64 const (&v_local)[NUM_NODES_PER_ELEMENT][3],
+#if STORE_NODE_DATA_LOCALLY
+                   real64 const (&v_local)[NUM_NODES_PER_ELEM][3],
 #else
                    arrayView1d<R1Tensor const> const & vel,
 #endif
-#ifdef CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
                    real64 const (&dNdX)[3][8],
 #else
                    arrayView4d<real64 const> const & dNdX,
 #endif
+                   real64 const dt,
                    arrayView2d<real64> const & meanStress,
                    arrayView3d<real64> const & devStress )
 {
-  real64 const G = m_shearModulus[k];
-  real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+  real64 const G = constitutive.m_shearModulus[k];
+  real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
   real64 const Lame2G = Lame + 2 * G;
 
   real64 dMeanStress = 0;
