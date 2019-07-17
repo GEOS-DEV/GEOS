@@ -14,7 +14,8 @@ class FiniteElementShapeKernel
 public:
   constexpr static localIndex numNodes = 8;
   constexpr static real64 weight = 8.0 / numNodes;
-  constexpr static real64 quadratureFactor = 0.577350269;
+  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+
 
 
   GEOSX_HOST_DEVICE
@@ -46,7 +47,7 @@ public:
                                               real64 const xi2,
                                               real64 (&dNdXi)[3] )
   {
-    dNdXi[0] = 0.125 * parentCoords(0,a) * ( 1 + xi1*parentCoords(0,a) ) * ( 1 + xi2*parentCoords(0,a) ) ;
+    dNdXi[0] = 0.125 * parentCoords(0,a) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
     dNdXi[1] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * parentCoords(1,a) * ( 1 + xi2*parentCoords(2,a) ) ;
     dNdXi[2] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * parentCoords(2,a) ;
   }
