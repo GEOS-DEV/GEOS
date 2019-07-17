@@ -23,12 +23,6 @@
 #include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-#define STANDARD_ELEMENT_DNDX_LAYOUT 0
-#define STANDARD_ELEMENT_DETJ_LAYOUT 0
-#define STANDARD_ELEMENT_MEANSTRESS_LAYOUT 0
-#define STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT 0
-#define STANDARD_ELEMENT_TONODESRELATION_LAYOUT 0
-
 #if STANDARD_ELEMENT_DNDX_LAYOUT
 #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
 #else

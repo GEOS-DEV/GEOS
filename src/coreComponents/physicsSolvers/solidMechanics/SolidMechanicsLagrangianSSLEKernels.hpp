@@ -104,6 +104,11 @@ struct ExplicitKernel
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
       GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
       GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
+#if STORE_NODE_DATA_LOCALLY
+      GEOS_LOG("Moving node data into local arrays.");
+#else
+      GEOS_LOG("Not storing node data locally.");
+#endif
       outputMessage = false;
     }
 
@@ -112,9 +117,10 @@ struct ExplicitKernel
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
     {
-      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
       real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
 
+#if STORE_NODE_DATA_LOCALLY
+      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         for ( int b = 0; b < 3; ++b )
@@ -122,6 +128,11 @@ struct ExplicitKernel
           v_local[ a ][ b ] = vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
         }
       }
+
+      #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#else
+      #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
 
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
@@ -132,16 +143,16 @@ struct ExplicitKernel
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0);
-          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1);
-          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2);
+          real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+          real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+          real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
           p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
           p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
           p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1) + v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_local[ a ][ 0 ] * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
+          p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
+          p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
+          p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
         }
 
         real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
