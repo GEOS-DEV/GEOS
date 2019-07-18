@@ -38,12 +38,79 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
+#if STORE_NODE_DATA_LOCALLY
+#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#else
+#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
 
 namespace geosx
 {
 
 namespace SolidMechanicsLagrangianSSLEKernels
 {
+
+template< int NUM_NODES_PER_ELEM >
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
+void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
+                   localIndex const k,
+                   localIndex const q,
+                   arrayView2d<localIndex const> const & elemsToNodes,
+#if STORE_NODE_DATA_LOCALLY
+                   real64 const (&v_local)[NUM_NODES_PER_ELEM][3],
+#else
+                   arrayView1d<R1Tensor const> const & vel,
+#endif
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+                   real64 const (&dNdX)[3][8],
+#else
+                   arrayView4d<real64 const> const & dNdX,
+#endif
+                   real64 const dt,
+                   arrayView2d<real64> const & meanStress,
+                   arrayView3d<real64> const & devStress )
+{
+  real64 const G = constitutive.m_shearModulus[k];
+  real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
+  real64 const Lame2G = Lame + 2 * G;
+
+  real64 dMeanStress = 0;
+  for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+  {
+    real64 const temp0 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame2G +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += temp0;
+    dMeanStress += temp0;
+
+    real64 const temp1 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame2G +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += temp1;
+    dMeanStress += temp1;
+
+    real64 const temp2 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
+                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame2G ) * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += temp2;
+    dMeanStress += temp2;
+
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
+                                                     VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
+  }
+
+  dMeanStress /= 3.0;
+  MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
+
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) -= dMeanStress;
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) -= dMeanStress;
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) -= dMeanStress;
+}
+
 
 /**
  * @struct Structure to wrap templated function that implements the explicit time integration kernels.
@@ -77,7 +144,7 @@ struct ExplicitKernel
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchElemsToNodes,
 #endif
-          arrayView4d< double const> const &
+          arrayView4d<real64 const> const &
 #if !CALC_SHAPE_FUNCTION_DERIVATIVES
           dNdX
 #endif
@@ -106,20 +173,29 @@ struct ExplicitKernel
     if (outputMessage)
     {
       GEOS_LOG("numElems = " << numElems);
+
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
       GEOS_LOG("Calculating shape function derivatives on the fly");
 #else
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
 #endif
-      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
-      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
-      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
-      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
+
 #if STORE_NODE_DATA_LOCALLY
       GEOS_LOG("Moving node data into local arrays.");
 #else
       GEOS_LOG("Not storing node data locally.");
 #endif
+
+#if INLINE_STRESS_UPDATE
+      GEOS_LOG("Inlining stress update.");
+#else
+      GEOS_LOG("Not inlining stress update.");
+#endif
+
+      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
+      GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
+      GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
+      GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
 
 #if SSLE_USE_PATCH_KERNEL
       GEOS_LOG("Using patch-based SSLE kernel");
@@ -359,10 +435,6 @@ struct ExplicitKernel
           v_local[ a ][ b ] = vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
         }
       }
-
-      #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#else
-      #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
 #endif
 
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
@@ -376,8 +448,10 @@ struct ExplicitKernel
       }
 #endif
 
+#if !INLINE_STRESS_UPDATE
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
+#endif
 
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
@@ -386,6 +460,23 @@ struct ExplicitKernel
         real64 dNdX[3][8];
         FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
 #endif
+
+#if INLINE_STRESS_UPDATE
+        stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
+                                            k,
+                                            q,
+                                            elemsToNodes,
+#if STORE_NODE_DATA_LOCALLY
+                                            v_local,
+#else
+                                            vel,
+#endif
+                                            dNdX,
+                                            dt,
+                                            meanStress,
+                                            devStress
+                      );
+#else
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -414,6 +505,7 @@ struct ExplicitKernel
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
         DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
+#endif
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {

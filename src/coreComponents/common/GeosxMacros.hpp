@@ -36,6 +36,8 @@
 
 #define CALC_SHAPE_FUNCTION_DERIVATIVES 0
 
+#define INLINE_STRESS_UPDATE 1
+
 #define SSLE_USE_PATCH_KERNEL 1
 
 #if SSLE_USE_PATCH_KERNEL
@@ -49,6 +51,8 @@
 
 #if defined(__CUDACC__)
 
+#define FORCE_INLINE __forceinline__
+
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
 #define GEOSX_HOST_DEVICE __host__ __device__
@@ -58,6 +62,8 @@
 #define GEOSX_FORCE_INLINE __forceinline__
 
 #else
+
+#define FORCE_INLINE inline
 
 #define GEOSX_HOST
 #define GEOSX_DEVICE
