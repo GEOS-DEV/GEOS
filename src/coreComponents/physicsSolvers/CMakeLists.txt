@@ -20,6 +20,7 @@ set( physicsSolvers_headers
      src/DummySolver.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp
      )
 
 #

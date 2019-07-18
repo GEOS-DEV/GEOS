@@ -28,16 +28,16 @@ public:
     return pCoords[i][j];
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64
-  parentShapeFunctionValue( localIndex const a,
-                            real64 const xi0,
-                            real64 const xi1,
-                            real64 const xi2 )
-  {
-    return 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
-  }
+  // GEOSX_HOST_DEVICE
+  // GEOSX_FORCE_INLINE
+  // static real64
+  // parentShapeFunctionValue( localIndex const a,
+  //                           real64 const xi0,
+  //                           real64 const xi1,
+  //                           real64 const xi2 )
+  // {
+  //   return 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
+  // }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -47,49 +47,60 @@ public:
                                               real64 const xi2,
                                               real64 (&dNdXi)[3] )
   {
-    dNdXi[0] = 0.125 * parentCoords(0,a) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
-    dNdXi[1] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * parentCoords(1,a) * ( 1 + xi2*parentCoords(2,a) ) ;
-    dNdXi[2] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * parentCoords(2,a) ;
+    real64 const pC_0_a = parentCoords(0,a);
+    real64 const pC_1_a = parentCoords(1,a);
+    real64 const pC_2_a = parentCoords(2,a);
+
+    dNdXi[0] = 0.125 * pC_0_a * ( 1 + xi1*pC_1_a ) * ( 1 + xi2*pC_2_a ) ;
+    dNdXi[1] = 0.125 * ( 1 + xi0*pC_0_a ) * pC_1_a * ( 1 + xi2*pC_2_a ) ;
+    dNdXi[2] = 0.125 * ( 1 + xi0*pC_0_a ) * ( 1 + xi1*pC_1_a ) * pC_2_a ;
   }
 
 
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 shapeFunctionDerivatives( real64 const xi0,
+  static real64 shapeFunctionDerivatives( localIndex const k,
+                                          localIndex const q,
+                                          arrayView2d<localIndex const> const & elemsToNodes,
+                                          real64 const xi0,
                                           real64 const xi1,
                                           real64 const xi2,
-                                          real64 const X[3][numNodes],
+                                        #if SSLE_USE_PATCH_KERNEL
+                                          PATCH_NODAL_DATA & X_patch,
+                                        #elif STORE_NODE_DATA_LOCALLY
+                                          real64 const (&x_local)[3][numNodes],
+                                        #else
+                                          arrayView1d<R1Tensor const> const & X,
+                                        #endif
                                           real64 (&dNdX)[3][numNodes] )
   {
     real64 J[3][3] = {{0}};
+    real64 dNdXi[3];
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      real64 dNdXi[3];
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-      J[0][0] += X[0][a] * dNdXi[0];
-      J[0][1] += X[0][a] * dNdXi[1];
-      J[0][2] += X[0][a] * dNdXi[2];
 
-      J[1][0] += X[1][a] * dNdXi[0];
-      J[1][1] += X[1][a] * dNdXi[1];
-      J[1][2] += X[1][a] * dNdXi[2];
-
-      J[2][0] += X[2][a] * dNdXi[0];
-      J[2][1] += X[2][a] * dNdXi[1];
-      J[2][2] += X[2][a] * dNdXi[2];
+      for ( int i = 0; i < 3; ++i )
+      {
+        real64 const pos_k_a_i = POSITION_ACCESSOR(k, a, i);
+        for ( int j = 0; j < 3; ++j )
+        {
+          J[i][j] += pos_k_a_i * dNdXi[j];
+        }
+      }
     }
 
     real64 detJ = inverse( J );
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      real64 dNdXi[3];
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-      dNdX[0][a] = J[0][0] * dNdXi[0] + J[1][0] * dNdXi[1] + J[2][0] * dNdXi[2];
-      dNdX[1][a] = J[0][1] * dNdXi[0] + J[1][1] * dNdXi[1] + J[2][1] * dNdXi[2];
-      dNdX[2][a] = J[0][2] * dNdXi[0] + J[1][2] * dNdXi[1] + J[2][2] * dNdXi[2];
+      for ( int i = 0; i < 3; ++i )
+      {
+        dNdX[i][a] = J[0][i] * dNdXi[0] + J[1][i] * dNdXi[1] + J[2][i] * dNdXi[2];
+      }
     }
 
     return detJ;
@@ -97,11 +108,22 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 shapeFunctionDerivatives( localIndex q,
-                                          real64 const X[3][numNodes],
+  static real64 shapeFunctionDerivatives( localIndex const k,
+                                          localIndex const q,
+                                          arrayView2d<localIndex const> const & elemsToNodes,
+                                        #if SSLE_USE_PATCH_KERNEL
+                                          PATCH_NODAL_DATA & X,
+                                        #elif STORE_NODE_DATA_LOCALLY
+                                          real64 const (&X)[3][numNodes],
+                                        #else
+                                          arrayView1d<R1Tensor const> const & X,
+                                        #endif
                                           real64 (&dNdXi)[3][numNodes] )
   {
-    return shapeFunctionDerivatives( quadratureFactor*parentCoords(0,q),
+    return shapeFunctionDerivatives( k,
+                                     q,
+                                     elemsToNodes,
+                                     quadratureFactor*parentCoords(0,q),
                                      quadratureFactor*parentCoords(1,q),
                                      quadratureFactor*parentCoords(2,q),
                                      X,
@@ -110,7 +132,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 J[3][3] )
+  static real64 inverse( real64 (&J)[3][3] )
   {
     real64 const o1 = J[1][1]*J[2][2] - J[1][2]*J[2][1];
     real64 const o2 = J[0][2]*J[2][1] - J[0][1]*J[2][2];

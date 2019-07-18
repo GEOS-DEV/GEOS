@@ -17,40 +17,22 @@
  */
 
 /**
- * @file GeosxMacros.hpp
- * This file contains various macro definitions
+ * @file CellBlock.hpp
  */
 
-#include "common/GeosxConfig.hpp"
+#ifndef GEOSX_SOLIDMECHANICSLAGRANGIANSSLEKERNELCONFIG_HPP
+#define GEOSX_SOLIDMECHANICSLAGRANGIANSSLEKERNELCONFIG_HPP
 
-#ifndef COMMON_GEOSXMACROS_HPP_
-#define COMMON_GEOSXMACROS_HPP_
+#define INLINE_STRESS_UPDATE 1
+#define STORE_NODE_DATA_LOCALLY 0
 
-#define GEOSX_LAMBDA [=]
+#define SSLE_USE_PATCH_KERNEL 1
 
-#if defined(__CUDACC__)
-
-#define FORCE_INLINE __forceinline__
-
-#define GEOSX_HOST __host__
-#define GEOSX_DEVICE __device__
-#define GEOSX_HOST_DEVICE __host__ __device__
-
-#define GEOSX_DEVICE_LAMBDA [=] __device__
-
-#define GEOSX_FORCE_INLINE __forceinline__
-
-#else
-
-#define FORCE_INLINE inline
-
-#define GEOSX_HOST
-#define GEOSX_DEVICE
-#define GEOSX_HOST_DEVICE
-
-#define GEOSX_DEVICE_LAMBDA [=]
-
-#define GEOSX_FORCE_INLINE
+#if SSLE_USE_PATCH_KERNEL
+#define SSLE_PATCH_KERNEL_VIZ_OUTPUT 0
+#define SSLE_PATCH_KERNEL_MAX_ELEMS 64
+#define SSLE_PATCH_KERNEL_MAX_NODES 128
+#define SSLE_PATCH_KERNEL_REORDER_NODES 1
 #endif
 
-#endif // COMMON_GEOSXMACROS_HPP_
+#endif //GEOSX_SOLIDMECHANICSLAGRANGIANSSLEKERNELCONFIG_HPP

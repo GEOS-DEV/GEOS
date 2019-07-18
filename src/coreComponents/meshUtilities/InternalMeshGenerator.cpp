@@ -38,6 +38,9 @@
 
 #include "mesh/MeshBody.hpp"
 
+// TODO: BAD!
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;

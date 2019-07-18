@@ -22,6 +22,28 @@
 
 #pragma once
 
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
+
+#if SSLE_USE_PATCH_KERNEL
+#define VELOCITY_ACCESSOR(k, a, b) v_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a) , b )
+#define POSITION_ACCESSOR(k, a, b) X_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) , b )
+#elif STORE_NODE_DATA_LOCALLY
+#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
+#else
+#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#define POSITION_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
+
+#include "RAJA/RAJA.hpp"
+
+#if SSLE_USE_PATCH_KERNEL
+namespace geosx
+{
+using PATCH_NODAL_DATA = RAJA::LocalArray< geosx::real64, RAJA::Perm< 0, 1 >, RAJA::SizeList< SSLE_PATCH_KERNEL_MAX_NODES, 3>>;
+}
+#endif
+
 #include "common/DataTypes.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -30,31 +52,18 @@
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
-#include "RAJA/RAJA.hpp"
-
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"
 
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
-#if SSLE_USE_PATCH_KERNEL
-#define VELOCITY_ACCESSOR(k, a, b) v_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a) , b )
-#elif STORE_NODE_DATA_LOCALLY
-#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#else
-#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#endif
 
 namespace geosx
 {
 
 namespace SolidMechanicsLagrangianSSLEKernels
 {
-
-#if SSLE_USE_PATCH_KERNEL
-using PATCH_NODAL_DATA = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_PATCH_KERNEL_MAX_NODES, 3>>;
-#endif
 
 template< int NUM_NODES_PER_ELEM >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
@@ -82,41 +91,38 @@ void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & c
   real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
   real64 const Lame2G = Lame + 2 * G;
 
-  real64 dMeanStress = 0;
+  real64 p_stress[ 6 ] = { 0 };
   for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
   {
-    real64 const temp0 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame2G +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += temp0;
-    dMeanStress += temp0;
+    real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+    real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+    real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
-    real64 const temp1 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame2G +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += temp1;
-    dMeanStress += temp1;
+    p_stress[ 0 ] += ( v0_x_dNdXa0 * Lame2G + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame ) * dt;
+    p_stress[ 1 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame2G + v2_x_dNdXa2*Lame ) * dt;
+    p_stress[ 2 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame2G ) * dt;
 
-    real64 const temp2 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame2G ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += temp2;
-    dMeanStress += temp2;
-
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
-                                                     VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
+    p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
+                       VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
   }
 
-  dMeanStress /= 3.0;
+  real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
   MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
 
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) -= dMeanStress;
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) -= dMeanStress;
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) -= dMeanStress;
+  p_stress[ 0 ] -= dMeanStress;
+  p_stress[ 1 ] -= dMeanStress;
+  p_stress[ 2 ] -= dMeanStress;
+
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += p_stress[ 0 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += p_stress[ 1 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += p_stress[ 2 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
 }
 
 
@@ -321,18 +327,6 @@ struct ExplicitKernel
 
           localIndex const k = elemPatchOffsets[patch] + elem;
 
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
-          real64 X_local[3][NUM_NODES_PER_ELEM];
-          for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-          {
-            localIndex const a_patch = TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a);
-            for( int b = 0; b < 3; ++b )
-            {
-              X_local[ b ][ a ] = X_patch( a_patch, b );
-            }
-          }
-#endif
-
 #if !INLINE_STRESS_UPDATE
           real64 c[ 6 ][ 6 ];
           constitutive.GetStiffness( k, c );
@@ -343,7 +337,11 @@ struct ExplicitKernel
           {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
             real64 dNdX[3][8];
-            FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+            FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                                q,
+                                                                elemPatchElemsToNodes,
+                                                                X_patch,
+                                                                dNdX );
 #endif
 
 #if INLINE_STRESS_UPDATE
@@ -437,8 +435,8 @@ struct ExplicitKernel
 
 #if defined(__CUDACC__)
     using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
-#elif defined(GEOSX_USE_OPENMP)
-    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+//#elif defined(GEOSX_USE_OPENMP)
+//    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
@@ -459,7 +457,7 @@ struct ExplicitKernel
       }
 #endif
 
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES && STORE_NODE_DATA_LOCALLY
       real64 X_local[3][8];
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
@@ -480,7 +478,15 @@ struct ExplicitKernel
       {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
         real64 dNdX[3][8];
-        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                            q,
+                                                            elemsToNodes,
+                                                          #if STORE_NODE_DATA_LOCALLY
+                                                            X_local,
+                                                          #else
+                                                            X,
+                                                          #endif
+                                                            dNdX );
 #endif
 
 #if INLINE_STRESS_UPDATE

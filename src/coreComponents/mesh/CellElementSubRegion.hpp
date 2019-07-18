@@ -23,38 +23,45 @@
 #include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
-#if STANDARD_ELEMENT_DNDX_LAYOUT
-#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
-#else
+#define STANDARD_ELEMENT_DNDX_LAYOUT 0
+#define STANDARD_ELEMENT_DETJ_LAYOUT 0
+#define STANDARD_ELEMENT_MEANSTRESS_LAYOUT 0
+#define STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT 0
+#define STANDARD_ELEMENT_TONODESRELATION_LAYOUT 0
+
+#define CALC_SHAPE_FUNCTION_DERIVATIVES 1
+
+
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX[i][n]
+  #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX[i][n]
+#elif STANDARD_ELEMENT_DNDX_LAYOUT
+  #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(k, q, n, i)
 #else
-#define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(i, n, q, k)
-#endif
+  #define DNDX_ACCESSOR(dNdX, k, q, n, i) dNdX(i, n, q, k)
 #endif
 
 #if STANDARD_ELEMENT_DETJ_LAYOUT
-#define DETJ_ACCESSOR(detJ, k, q) detJ(k, q)
+  #define DETJ_ACCESSOR(detJ, k, q) detJ(k, q)
 #else
-#define DETJ_ACCESSOR(detJ, k, q) detJ(q, k)
+  #define DETJ_ACCESSOR(detJ, k, q) detJ(q, k)
 #endif
 
 #if STANDARD_ELEMENT_MEANSTRESS_LAYOUT
-#define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(k, q)
+  #define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(k, q)
 #else
-#define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(q, k)
+  #define MEANSTRESS_ACCESSOR(meanStress, k, q) meanStress(q, k)
 #endif
 
 #if STANDARD_ELEMENT_DEVIATORSTRESS_LAYOUT
-#define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(k, q, i)
+  #define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(k, q, i)
 #else
-#define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(i, q, k)
+  #define DEVIATORSTRESS_ACCESSOR(deviatorStress, k, q, i) deviatorStress(i, q, k)
 #endif
 
 #if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
-#define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(k, i)
+  #define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(k, i)
 #else
-#define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(i, k)
+  #define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(i, k)
 #endif
 
 namespace geosx
