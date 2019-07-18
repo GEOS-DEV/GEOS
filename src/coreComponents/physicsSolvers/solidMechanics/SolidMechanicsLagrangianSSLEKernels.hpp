@@ -38,12 +38,6 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
-#if STORE_NODE_DATA_LOCALLY
-#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#else
-#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#endif
-
 namespace geosx
 {
 
@@ -220,7 +214,7 @@ struct ExplicitKernel
       }
 #endif
 
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES && STORE_NODE_DATA_LOCALLY
       real64 X_local[3][8];
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
@@ -241,7 +235,15 @@ struct ExplicitKernel
       {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
         real64 dNdX[3][8];
-        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                            q,
+                                                            elemsToNodes,
+                                                          #if STORE_NODE_DATA_LOCALLY
+                                                            X_local,
+                                                          #else
+                                                            X,
+                                                          #endif
+                                                            dNdX );
 #endif
 
 #if INLINE_STRESS_UPDATE

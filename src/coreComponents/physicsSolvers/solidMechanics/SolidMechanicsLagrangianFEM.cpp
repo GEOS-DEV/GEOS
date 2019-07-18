@@ -370,28 +370,28 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size(1);
         }
 
-        bool isAttachedToGhostNode = false;
-        for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
-        {
-          if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
-          {
-            isAttachedToGhostNode = true;
-            m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
-          }
-          else
-          {
-            m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-          }
-        }
+        // bool isAttachedToGhostNode = false;
+        // for( localIndex a=0 ; a<elementSubRegion->numNodesPerElement() ; ++a )
+        // {
+        //   if( nodes->GhostRank()[elemsToNodes[k][a]] >= -1 )
+        //   {
+        //     isAttachedToGhostNode = true;
+        //     m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+        //   }
+        //   else
+        //   {
+        //     m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+        //   }
+        // }
 
-        if( isAttachedToGhostNode )
-        {
-          m_elemsAttachedToSendOrReceiveNodes[er][esr].insert(k);
-        }
-        else
-        {
-          m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
-        }
+        // if( isAttachedToGhostNode )
+        // {
+        //   m_elemsAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        // }
+        // else
+        // {
+        //   m_elemsNotAttachedToSendOrReceiveNodes[er][esr].insert(k);
+        // }
       }
     });
   }
@@ -520,15 +520,14 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion * const elementSubRegion )
     {
+      elementSubRegion->initializeMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
+      arrayView2d< double > const & meanStress = elementSubRegion->getMeanStressReordered();
 
       elementSubRegion->initializeDNDXReordered();
       arrayView4d< double const > const & dNdX = elementSubRegion->getDNDXReordered();
 
       elementSubRegion->initializeDetJReordered();
       arrayView2d< double const > const & detJ = elementSubRegion->getDetJReordered();
-
-      elementSubRegion->initializeMeanStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
-      arrayView2d< double > const & meanStress = elementSubRegion->getMeanStressReordered();
 
       elementSubRegion->initializeDeviatorStressReordered(elemManager, constitutiveManager, er, esr, m_solidMaterialFullIndex);
       arrayView3d< double > const & deviatorStress = elementSubRegion->getDeviatorStressReordered();
