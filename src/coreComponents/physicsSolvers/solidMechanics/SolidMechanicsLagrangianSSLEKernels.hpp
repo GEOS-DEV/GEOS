@@ -52,7 +52,7 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-#ifdef SSLE_USE_PATCH_KERNEL
+#if SSLE_USE_PATCH_KERNEL
 using PATCH_NODAL_DATA = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_PATCH_KERNEL_MAX_NODES, 3>>;
 #endif
 
