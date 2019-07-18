@@ -912,20 +912,15 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     RemapMesh( domain );
   }
 
+#if SSLE_USE_PATCH_KERNEL
   /// Patch generation
-
   {
     // TODO input parameres?
-    localIndex const maxNumElemsInPatch = 4*4*4;
-    localIndex patchSize[3];
+    localIndex const root = static_cast<localIndex>( std::cbrt( SSLE_PATCH_KERNEL_MAX_ELEMS ) );
+    localIndex patchSize[3] = { root, root, root };
 
-    // TODO
-    localIndex const root = static_cast<localIndex>( std::cbrt( maxNumElemsInPatch ) );
-    patchSize[0] = root;
-    patchSize[1] = root;
-    patchSize[2] = root;
-
-    GEOS_ASSERT( patchSize[0] * patchSize[1] * patchSize[2] <= maxNumElemsInPatch );
+    GEOS_ASSERT( patchSize[0] * patchSize[1] * patchSize[2] <= SSLE_PATCH_KERNEL_MAX_ELEMS );
+    GEOS_ASSERT( (patchSize[0]+1) * (patchSize[1]+1) * (patchSize[2]+1) <= SSLE_PATCH_KERNEL_MAX_NODES );
 
     localIndex numElemsInDirForRegion[3];
 
@@ -996,8 +991,10 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                                               + (patchOffset[2] + k);
                       for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++newElemIndex, ++oldElemIndex, ++localElemIndex )
                       {
+#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
                         elemRegion->m_elemIndex[newElemIndex] = newElemIndex;
                         elemRegion->m_patchIndex[newElemIndex] = patchIndex;
+#endif
 
                         for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                         {
@@ -1039,7 +1036,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                       {
                         for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                         {
-                          patchLocalElemToNodeMap[localElemIndex + iN * numElemsInPatch] =
+                          TONODESRELATION_PATCH_ACCESSOR( patchLocalElemToNodeMap, localElemIndex, iN, numNodesPerElem, numElemsInPatch ) =
                             nodeGlobalToPatchIndexMap[ elemsToNodes[oldElemIndex][iN] ];
                         }
                       }
@@ -1071,7 +1068,12 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
         GEOS_LOG_RANK_0( "Done!" );
       }
     }
+
+#if SSLE_PATCH_KERNEL_REORDER_NODES
+    // TODO: node reordering
+#endif
   }
+#endif // SSLE_USE_PATCH_KERNEL
 }
 
 /**

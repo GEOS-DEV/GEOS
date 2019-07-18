@@ -244,14 +244,15 @@ public:
     }
   }
 
-
-  /// Element patch info
-  array1d<localIndex> m_patchOffsets; // size numPatch+1
-  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes; // size numPatch
+#if SSLE_USE_PATCH_KERNEL
+  array1d<localIndex> m_patchOffsets;
+  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
   LvArray::ArrayOfArrays<localIndex, localIndex > m_patchElemToNodeMaps;
-
+#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
   array1d<localIndex> m_patchIndex; // for visualization/debugging
   array1d<localIndex> m_elemIndex;  // for visualization/debugging
+#endif
+#endif
 
 protected:
 

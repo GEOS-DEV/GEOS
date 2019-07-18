@@ -49,9 +49,11 @@ public:
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                arrayView2d<localIndex const> const & elemsToNodes,
+#if SSLE_USE_PATCH_KERNEL
                                arrayView1d<localIndex const> const & elemPatchOffsets,
                                LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
                                LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchElemsToNodes,
+#endif
                                arrayView4d<real64 const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & u,
@@ -67,9 +69,11 @@ public:
                                                         NUM_QUADRATURE_POINTS,
                                                         constitutiveRelation,
                                                         elemsToNodes,
+#if SSLE_USE_PATCH_KERNEL
                                                         elemPatchOffsets,
                                                         elemPatchNodes,
                                                         elemPatchElemsToNodes,
+#endif
                                                         dNdX,
                                                         detJ,
                                                         u,

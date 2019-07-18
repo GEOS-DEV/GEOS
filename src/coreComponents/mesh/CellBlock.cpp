@@ -47,6 +47,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
   RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
 
+#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
   RegisterViewWrapper( "patchIndex", &m_patchIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
     setDefaultValue( -1 )->
     setDescription( "Index of element patch" );
@@ -54,6 +55,7 @@ CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   RegisterViewWrapper( "elemIndex", &m_elemIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
     setDefaultValue( -1 )->
     setDescription( "Local index of element" );
+#endif
 }
 
 

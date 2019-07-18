@@ -275,11 +275,15 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
     });
   });
 
-  this->m_elemIndex = source->m_elemIndex;
-  this->m_patchIndex = source->m_patchIndex;
+#if SSLE_USE_PATCH_KERNEL
   this->m_patchOffsets = source->m_patchOffsets;
   this->m_patchNodes = source->m_patchNodes;
   this->m_patchElemToNodeMaps = source->m_patchElemToNodeMaps;
+#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
+  this->m_elemIndex = source->m_elemIndex;
+  this->m_patchIndex = source->m_patchIndex;
+#endif
+#endif
 }
 
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,

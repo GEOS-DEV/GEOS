@@ -549,9 +549,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    numQuadraturePoints,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    elemsToNodes,
+#if SSLE_USE_PATCH_KERNEL
                                    elementSubRegion->m_patchOffsets,
                                    elementSubRegion->m_patchNodes,
                                    elementSubRegion->m_patchElemToNodeMaps,
+#endif
                                    dNdX,
                                    detJ,
 #if CALC_SHAPE_FUNCTION_DERIVATIVES==1
