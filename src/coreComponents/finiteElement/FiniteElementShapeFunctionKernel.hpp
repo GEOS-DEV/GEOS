@@ -6,16 +6,6 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 
-#define STORE_NODE_DATA_LOCALLY 0
-
-#if STORE_NODE_DATA_LOCALLY
-#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
-#else
-#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#define POSITION_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#endif
-
 namespace geosx
 {
 
@@ -38,16 +28,16 @@ public:
     return pCoords[i][j];
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64
-  parentShapeFunctionValue( localIndex const a,
-                            real64 const xi0,
-                            real64 const xi1,
-                            real64 const xi2 )
-  {
-    return 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
-  }
+  // GEOSX_HOST_DEVICE
+  // GEOSX_FORCE_INLINE
+  // static real64
+  // parentShapeFunctionValue( localIndex const a,
+  //                           real64 const xi0,
+  //                           real64 const xi1,
+  //                           real64 const xi2 )
+  // {
+  //   return 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
+  // }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -57,9 +47,13 @@ public:
                                               real64 const xi2,
                                               real64 (&dNdXi)[3] )
   {
-    dNdXi[0] = 0.125 * parentCoords(0,a) * ( 1 + xi1*parentCoords(1,a) ) * ( 1 + xi2*parentCoords(2,a) ) ;
-    dNdXi[1] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * parentCoords(1,a) * ( 1 + xi2*parentCoords(2,a) ) ;
-    dNdXi[2] = 0.125 * ( 1 + xi0*parentCoords(0,a) ) * ( 1 + xi1*parentCoords(1,a) ) * parentCoords(2,a) ;
+    real64 const pC_0_a = parentCoords(0,a);
+    real64 const pC_1_a = parentCoords(1,a);
+    real64 const pC_2_a = parentCoords(2,a);
+
+    dNdXi[0] = 0.125 * pC_0_a * ( 1 + xi1*pC_1_a ) * ( 1 + xi2*pC_2_a ) ;
+    dNdXi[1] = 0.125 * ( 1 + xi0*pC_0_a ) * pC_1_a * ( 1 + xi2*pC_2_a ) ;
+    dNdXi[2] = 0.125 * ( 1 + xi0*pC_0_a ) * ( 1 + xi1*pC_1_a ) * pC_2_a ;
   }
 
 
@@ -80,33 +74,31 @@ public:
                                           real64 (&dNdX)[3][numNodes] )
   {
     real64 J[3][3] = {{0}};
+    real64 dNdXi[3];
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      real64 dNdXi[3];
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-      J[0][0] += POSITION_ACCESSOR(k, a, 0) * dNdXi[0];
-      J[0][1] += POSITION_ACCESSOR(k, a, 0) * dNdXi[1];
-      J[0][2] += POSITION_ACCESSOR(k, a, 0) * dNdXi[2];
 
-      J[1][0] += POSITION_ACCESSOR(k, a, 1) * dNdXi[0];
-      J[1][1] += POSITION_ACCESSOR(k, a, 1) * dNdXi[1];
-      J[1][2] += POSITION_ACCESSOR(k, a, 1) * dNdXi[2];
-
-      J[2][0] += POSITION_ACCESSOR(k, a, 2) * dNdXi[0];
-      J[2][1] += POSITION_ACCESSOR(k, a, 2) * dNdXi[1];
-      J[2][2] += POSITION_ACCESSOR(k, a, 2) * dNdXi[2];
+      for ( int i = 0; i < 3; ++i )
+      {
+        real64 const pos_k_a_i = POSITION_ACCESSOR(k, a, i);
+        for ( int j = 0; j < 3; ++j )
+        {
+          J[i][j] += pos_k_a_i * dNdXi[j];
+        }
+      }
     }
 
     real64 detJ = inverse( J );
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
-      real64 dNdXi[3];
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-      dNdX[0][a] = J[0][0] * dNdXi[0] + J[1][0] * dNdXi[1] + J[2][0] * dNdXi[2];
-      dNdX[1][a] = J[0][1] * dNdXi[0] + J[1][1] * dNdXi[1] + J[2][1] * dNdXi[2];
-      dNdX[2][a] = J[0][2] * dNdXi[0] + J[1][2] * dNdXi[1] + J[2][2] * dNdXi[2];
+      for ( int i = 0; i < 3; ++i )
+      {
+        dNdX[i][a] = J[0][i] * dNdXi[0] + J[1][i] * dNdXi[1] + J[2][i] * dNdXi[2];
+      }
     }
 
     return detJ;
@@ -136,7 +128,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 J[3][3] )
+  static real64 inverse( real64 (&J)[3][3] )
   {
     real64 const o1 = J[1][1]*J[2][2] - J[1][2]*J[2][1];
     real64 const o2 = J[0][2]*J[2][1] - J[0][1]*J[2][2];

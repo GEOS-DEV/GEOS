@@ -22,6 +22,18 @@
 
 #pragma once
 
+#define INLINE_STRESS_UPDATE 1
+#define STORE_NODE_DATA_LOCALLY 0
+
+#if STORE_NODE_DATA_LOCALLY
+#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
+#else
+#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#define POSITION_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
+
+
 #include "common/DataTypes.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -37,8 +49,6 @@
 
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
-
-#define INLINE_STRESS_UPDATE 1
 
 namespace geosx
 {
@@ -70,41 +80,38 @@ void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & c
   real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
   real64 const Lame2G = Lame + 2 * G;
 
-  real64 dMeanStress = 0;
+  real64 p_stress[ 6 ] = { 0 };
   for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
   {
-    real64 const temp0 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame2G +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += temp0;
-    dMeanStress += temp0;
-    
-    real64 const temp1 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame2G +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += temp1;
-    dMeanStress += temp1;
+    real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+    real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+    real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
-    real64 const temp2 = ( VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1) * Lame +
-                           VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2) * Lame2G ) * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += temp2;
-    dMeanStress += temp2;
+    p_stress[ 0 ] += ( v0_x_dNdXa0 * Lame2G + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame ) * dt;
+    p_stress[ 1 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame2G + v2_x_dNdXa2*Lame ) * dt;
+    p_stress[ 2 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame2G ) * dt;
 
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
-                                                     VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
-    DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                                                     VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
+    p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
+                       VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+    p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
   }
 
-  dMeanStress /= 3.0;
+  real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
   MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
 
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) -= dMeanStress;
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) -= dMeanStress;
-  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) -= dMeanStress;
+  p_stress[ 0 ] -= dMeanStress;
+  p_stress[ 1 ] -= dMeanStress;
+  p_stress[ 2 ] -= dMeanStress;
+
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += p_stress[ 0 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += p_stress[ 1 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += p_stress[ 2 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
+  DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
 }
 
 
@@ -156,8 +163,8 @@ struct ExplicitKernel
 
 #if defined(__CUDACC__)
     using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
-#elif defined(GEOSX_USE_OPENMP)
-    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+// #elif defined(GEOSX_USE_OPENMP)
+//     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
