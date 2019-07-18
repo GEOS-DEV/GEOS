@@ -38,7 +38,9 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
-#if STORE_NODE_DATA_LOCALLY
+#if SSLE_USE_PATCH_KERNEL
+#define VELOCITY_ACCESSOR(k, a, b) v_block( TONODESRELATION_PATCH_ACCESSOR(elemsToNodes, k, a, NUM_NODES_PER_ELEM, patchSize) , b )
+#elif STORE_NODE_DATA_LOCALLY
 #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
 #else
 #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
@@ -50,13 +52,24 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
+#ifdef SSLE_USE_PATCH_KERNEL
+using PATCH_NODAL_DATA = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_PATCH_KERNEL_MAX_NODES, 3>>;
+#endif
+
 template< int NUM_NODES_PER_ELEM >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
 void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
                    localIndex const k,
                    localIndex const q,
+#if SSLE_USE_PATCH_KERNEL
+                   LvArray::ArraySlice1d_rval<localIndex const, localIndex> const & elemsToNodes,
+                   localIndex const patchSize,
+#else
                    arrayView2d<localIndex const> const & elemsToNodes,
-#if STORE_NODE_DATA_LOCALLY
+#endif
+#if SSLE_USE_PATCH_KERNEL
+                   PATCH_NODAL_DATA & v_block,
+#elif STORE_NODE_DATA_LOCALLY
                    real64 const (&v_local)[NUM_NODES_PER_ELEM][3],
 #else
                    arrayView1d<R1Tensor const> const & vel,
@@ -248,8 +261,6 @@ struct ExplicitKernel
 
 #endif
 
-    using PATCH_NODAL_DATA = RAJA::LocalArray<real64, RAJA::Perm<0, 1>, RAJA::SizeList<SSLE_PATCH_KERNEL_MAX_NODES, 3>>;
-
     PATCH_NODAL_DATA ext_v_block, ext_f_block;
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
     PATCH_NODAL_DATA ext_X_block;
@@ -327,8 +338,10 @@ struct ExplicitKernel
           }
 #endif
 
+#if !INLINE_STRESS_UPDATE
           real64 c[ 6 ][ 6 ];
           constitutive.GetStiffness( k, c );
+#endif
 
           //Compute Quadrature
           for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
@@ -337,6 +350,20 @@ struct ExplicitKernel
             real64 dNdX[3][8];
             FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
 #endif
+
+#if INLINE_STRESS_UPDATE
+            stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
+                                                elem,
+                                                q,
+                                                toNodes,
+                                                patchSize,
+                                                v_block,
+                                                dNdX,
+                                                dt,
+                                                meanStress,
+                                                devStress
+            );
+#else
             real64 p_stress[ 6 ] = { 0 };
             for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
@@ -367,6 +394,7 @@ struct ExplicitKernel
             DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
             DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
             DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
+#endif
 
             for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
