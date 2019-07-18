@@ -247,7 +247,7 @@ public:
 #if SSLE_USE_PATCH_KERNEL
   array1d<localIndex> m_patchOffsets;
   LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
-  LvArray::ArrayOfArrays<localIndex, localIndex > m_patchElemToNodeMaps;
+  NodeMapType m_patchToNodesRelation;
 #if SSLE_PATCH_KERNEL_VIZ_OUTPUT
   array1d<localIndex> m_patchIndex; // for visualization/debugging
   array1d<localIndex> m_elemIndex;  // for visualization/debugging

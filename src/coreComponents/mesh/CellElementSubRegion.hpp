@@ -57,12 +57,6 @@
 #define TONODESRELATION_ACCESSOR(toNodes, k, i) toNodes(i, k)
 #endif
 
-#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
-#define TONODESRELATION_PATCH_ACCESSOR(toNodes, k, i, nodePerElem, patchSize) toNodes[ k * nodePerElem + i ]
-#else
-#define TONODESRELATION_PATCH_ACCESSOR(toNodes, k, i, nodePerElem, patchSize) toNodes[ k + i * patchSize ]
-#endif
-
 namespace geosx
 {
 

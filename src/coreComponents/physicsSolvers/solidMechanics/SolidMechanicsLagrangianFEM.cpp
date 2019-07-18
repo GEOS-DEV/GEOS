@@ -552,7 +552,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 #if SSLE_USE_PATCH_KERNEL
                                    elementSubRegion->m_patchOffsets,
                                    elementSubRegion->m_patchNodes,
-                                   elementSubRegion->m_patchElemToNodeMaps,
+                                   elementSubRegion->m_patchToNodesRelation,
 #endif
                                    dNdX,
                                    detJ,

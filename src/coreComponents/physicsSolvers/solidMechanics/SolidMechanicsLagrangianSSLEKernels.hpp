@@ -39,7 +39,7 @@
 #include "Epetra_SerialDenseVector.h"
 
 #if SSLE_USE_PATCH_KERNEL
-#define VELOCITY_ACCESSOR(k, a, b) v_block( TONODESRELATION_PATCH_ACCESSOR(elemsToNodes, k, a, NUM_NODES_PER_ELEM, patchSize) , b )
+#define VELOCITY_ACCESSOR(k, a, b) v_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a) , b )
 #elif STORE_NODE_DATA_LOCALLY
 #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
 #else
@@ -61,14 +61,9 @@ GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
 void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & constitutive,
                    localIndex const k,
                    localIndex const q,
-#if SSLE_USE_PATCH_KERNEL
-                   LvArray::ArraySlice1d_rval<localIndex const, localIndex> const & elemsToNodes,
-                   localIndex const patchSize,
-#else
                    arrayView2d<localIndex const> const & elemsToNodes,
-#endif
 #if SSLE_USE_PATCH_KERNEL
-                   PATCH_NODAL_DATA & v_block,
+                   PATCH_NODAL_DATA & v_patch,
 #elif STORE_NODE_DATA_LOCALLY
                    real64 const (&v_local)[NUM_NODES_PER_ELEM][3],
 #else
@@ -155,7 +150,7 @@ struct ExplicitKernel
 #if SSLE_USE_PATCH_KERNEL
           arrayView1d<localIndex const> const & elemPatchOffsets,
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
-          LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchElemsToNodes,
+          arrayView2d<localIndex const> const & elemPatchElemsToNodes,
 #endif
           arrayView4d<real64 const> const &
 #if !CALC_SHAPE_FUNCTION_DERIVATIVES
@@ -261,9 +256,9 @@ struct ExplicitKernel
 
 #endif
 
-    PATCH_NODAL_DATA ext_v_block, ext_f_block;
+    PATCH_NODAL_DATA ext_v_patch, ext_f_patch;
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-    PATCH_NODAL_DATA ext_X_block;
+    PATCH_NODAL_DATA ext_X_patch;
 #endif
 
     RAJA::kernel_param<KERNEL_POLICY>
@@ -273,10 +268,10 @@ struct ExplicitKernel
                         ),
         RAJA::make_tuple(
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-                          ext_X_block,
+                          ext_X_patch,
 #endif
-                          ext_v_block,
-                          ext_f_block
+                          ext_v_patch,
+                          ext_f_patch
                         ),
 
         /*
@@ -286,19 +281,19 @@ struct ExplicitKernel
                              localIndex const /* unused */,
                              localIndex const node,
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-                             PATCH_NODAL_DATA & X_block,
+                             PATCH_NODAL_DATA & X_patch,
 #endif
-                             PATCH_NODAL_DATA & v_block,
-                             PATCH_NODAL_DATA & f_block )
+                             PATCH_NODAL_DATA & v_patch,
+                             PATCH_NODAL_DATA & f_patch )
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
             for( int b = 0 ; b < 3 ; ++b )
             {
-              f_block( node, b ) = 0.0;
-              v_block( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
+              f_patch( node, b ) = 0.0;
+              v_patch( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-              X_block( node, b ) = X[ elemPatchNodes[patch][node] ][b];
+              X_patch( node, b ) = X[ elemPatchNodes[patch][node] ][b];
 #endif
             }
           }
@@ -311,10 +306,10 @@ struct ExplicitKernel
                              localIndex const elem,
                              localIndex const /* unused */,
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-                             PATCH_NODAL_DATA & X_block,
+                             PATCH_NODAL_DATA & X_patch,
 #endif
-                             PATCH_NODAL_DATA & v_block,
-                             PATCH_NODAL_DATA & f_block )
+                             PATCH_NODAL_DATA & v_patch,
+                             PATCH_NODAL_DATA & f_patch )
         {
           localIndex const patchSize = elemPatchOffsets[patch+1] - elemPatchOffsets[patch];
 
@@ -324,16 +319,15 @@ struct ExplicitKernel
           }
 
           localIndex const k = elemPatchOffsets[patch] + elem;
-          LvArray::ArraySlice1d_rval<localIndex const, localIndex> const & toNodes = elemPatchElemsToNodes[patch];
 
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
           real64 X_local[3][NUM_NODES_PER_ELEM];
           for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
           {
-            localIndex const a_block = TONODESRELATION_PATCH_ACCESSOR( toNodes, elem, a, NUM_NODES_PER_ELEM, patchSize );
+            localIndex const a_patch = TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a);
             for( int b = 0; b < 3; ++b )
             {
-              X_local[ b ][ a ] = X_block( a_block, b );
+              X_local[ b ][ a ] = X_patch( a_patch, b );
             }
           }
 #endif
@@ -353,11 +347,10 @@ struct ExplicitKernel
 
 #if INLINE_STRESS_UPDATE
             stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
-                                                elem,
+                                                k,
                                                 q,
-                                                toNodes,
-                                                patchSize,
-                                                v_block,
+                                                elemPatchElemsToNodes,
+                                                v_patch,
                                                 dNdX,
                                                 dt,
                                                 meanStress,
@@ -367,18 +360,18 @@ struct ExplicitKernel
             real64 p_stress[ 6 ] = { 0 };
             for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
-              localIndex const a_block = TONODESRELATION_PATCH_ACCESSOR( toNodes, elem, a, NUM_NODES_PER_ELEM, patchSize );
+              localIndex const a_patch = TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a);
 
-              real64 const v0_x_dNdXa0 = v_block( a_block , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
-              real64 const v1_x_dNdXa1 = v_block( a_block , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
-              real64 const v2_x_dNdXa2 = v_block( a_block , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
+              real64 const v0_x_dNdXa0 = v_patch( a_patch , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
+              real64 const v1_x_dNdXa1 = v_patch( a_patch , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
+              real64 const v2_x_dNdXa2 = v_patch( a_patch , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
               p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
               p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
               p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-              p_stress[ 3 ] += ( v_block( a_block , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + v_block( a_block , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
-              p_stress[ 4 ] += ( v_block( a_block , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_block( a_block , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
-              p_stress[ 5 ] += ( v_block( a_block , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_block( a_block , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
+              p_stress[ 3 ] += ( v_patch( a_patch , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + v_patch( a_patch , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
+              p_stress[ 4 ] += ( v_patch( a_patch , 2 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_patch( a_patch , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
+              p_stress[ 5 ] += ( v_patch( a_patch , 1 ) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + v_patch( a_patch , 0 ) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
             }
 
             real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
@@ -398,19 +391,19 @@ struct ExplicitKernel
 
             for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
-              localIndex const a_block = TONODESRELATION_PATCH_ACCESSOR( toNodes, elem, a, NUM_NODES_PER_ELEM, patchSize );
+              localIndex const a_patch = TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a);
 
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_block( a_block , 0 ),
+              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 0 ),
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 0) * ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
 
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_block( a_block , 1 ),
+              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 1 ),
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 1) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
 
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_block( a_block , 2 ),
+              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 2 ),
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
@@ -428,13 +421,13 @@ struct ExplicitKernel
                              PATCH_NODAL_DATA & /* unused */,
 #endif
                              PATCH_NODAL_DATA & /* unused */,
-                             PATCH_NODAL_DATA & f_block )
+                             PATCH_NODAL_DATA & f_patch )
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
             for( int b = 0 ; b < 3 ; ++b )
             {
-              RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemPatchNodes[patch][node] ][ b ], f_block( node , b ) );
+              RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemPatchNodes[patch][node] ][ b ], f_patch( node , b ) );
             }
           }
         } );
