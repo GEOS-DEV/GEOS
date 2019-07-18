@@ -232,12 +232,13 @@ void CellElementSubRegion::initializeToNodesRelationReordered()
 
 #if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
   GEOS_LOG("Using the standard layout for toNodesRelation!!!!");
-  m_toNodesRelation_reordered.resize(m_toNodesRelation.size(0), m_toNodesRelation.size(1));
+  localIndex const dim = 0;
 #else
   GEOS_LOG("Using the alternate layout for toNodesRelation!!!!");
-  m_toNodesRelation_reordered.resize(m_toNodesRelation.size(1), m_toNodesRelation.size(0));
+  localIndex const dim = 1;
 #endif
 
+  m_toNodesRelation_reordered.resize(m_toNodesRelation.size(dim), m_toNodesRelation.size(1-dim));
   m_toNodesRelation_reordered.setUserCallBack("toNodesRelation_reordered");
 
   for (localIndex k = 0; k < m_toNodesRelation.size(0); ++k)
@@ -247,6 +248,19 @@ void CellElementSubRegion::initializeToNodesRelationReordered()
       TONODESRELATION_ACCESSOR(m_toNodesRelation_reordered, k, i) = m_toNodesRelation(k, i);
     }
   }
+
+#if SSLE_USE_PATCH_KERNEL
+  m_patchToNodesRelation_reordered.resize(m_patchToNodesRelation.size(dim), m_patchToNodesRelation.size(1-dim));
+  m_patchToNodesRelation_reordered.setUserCallBack("patchToNodesRelation_reordered");
+
+  for (localIndex k = 0; k < m_patchToNodesRelation.size(0); ++k)
+  {
+    for (localIndex i = 0; i < m_patchToNodesRelation.size(1); ++i)
+    {
+      TONODESRELATION_ACCESSOR(m_patchToNodesRelation_reordered, k, i) = m_patchToNodesRelation(k, i);
+    }
+  }
+#endif
 
   initialized = true;
 }
@@ -276,9 +290,9 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   });
 
 #if SSLE_USE_PATCH_KERNEL
-  this->m_patchOffsets = source->m_patchOffsets;
-  this->m_patchNodes = source->m_patchNodes;
-  this->m_patchToNodesRelation = source->m_patchToNodesRelation;
+  this->m_patchOffsets = source->patchOffsets();
+  this->m_patchNodes = source->patchNodes();
+  this->m_patchToNodesRelation = source->patchNodeList();
 
   this->m_patchOffsets.setUserCallBack( "patchOffsets" );
   this->m_patchToNodesRelation.setUserCallBack( "patchToNodesRelation" );

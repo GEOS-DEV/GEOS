@@ -535,6 +535,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       elementSubRegion->initializeToNodesRelationReordered();
       arrayView2d<localIndex const> const & elemsToNodes = elementSubRegion->getToNodesRelationReordered();
+#if SSLE_USE_PATCH_KERNEL
+      arrayView2d<localIndex const> const & patchElemsToNodes = elementSubRegion->getPatchToNodesRelationReordered();
+#endif
 
 #if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
       localIndex const numNodesPerElement = elemsToNodes.size(1);
@@ -550,9 +553,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    elemsToNodes,
 #if SSLE_USE_PATCH_KERNEL
-                                   elementSubRegion->m_patchOffsets,
-                                   elementSubRegion->m_patchNodes,
-                                   elementSubRegion->m_patchToNodesRelation,
+                                   elementSubRegion->patchOffsets(),
+                                   elementSubRegion->patchNodes(),
+                                   patchElemsToNodes,
 #endif
                                    dNdX,
                                    detJ,

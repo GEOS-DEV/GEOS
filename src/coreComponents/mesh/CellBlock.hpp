@@ -245,17 +245,34 @@ public:
   }
 
 #if SSLE_USE_PATCH_KERNEL
-  array1d<localIndex> m_patchOffsets;
-  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
-  NodeMapType m_patchToNodesRelation;
-#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
-  array1d<localIndex> m_patchIndex; // for visualization/debugging
-  array1d<localIndex> m_elemIndex;  // for visualization/debugging
+
+  NodeMapType & patchNodeList()
+  { return m_patchToNodesRelation; }
+
+  NodeMapType const & patchNodeList() const
+  { return m_patchToNodesRelation; }
+
+  LvArray::ArrayOfArrays< localIndex, localIndex > & patchNodes()
+  { return m_patchNodes; }
+
+  LvArray::ArrayOfArrays< localIndex, localIndex > const & patchNodes() const
+  { return m_patchNodes; }
+
+  array1d< localIndex > & patchOffsets()
+  { return m_patchOffsets; }
+
+  array1d< localIndex > const & patchOffsets() const
+  { return m_patchOffsets; }
+
+#if SSLE_USE_PATCH_KERNEL
+
 #endif
+
 #endif
+
+
 
 protected:
-
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
@@ -265,6 +282,21 @@ protected:
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
+
+#if SSLE_USE_PATCH_KERNEL
+  array1d<localIndex> m_patchOffsets;
+
+  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
+
+  NodeMapType m_patchToNodesRelation;
+
+#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
+  array1d<localIndex> m_patchIndex; // for visualization/debugging
+
+  array1d<localIndex> m_elemIndex;  // for visualization/debugging
+#endif
+
+#endif
 
 private:
   /// Name of the properties register from an external mesh

@@ -949,16 +949,11 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
           FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
           FixedOneToManyRelation elemsToNodesOrig = elemsToNodes;
-          FixedOneToManyRelation & elemsToNodesPatch = elemRegion->m_patchToNodesRelation;
+          FixedOneToManyRelation & elemsToNodesPatch = elemRegion->patchNodeList();
+          elemsToNodesPatch.resize( elemsToNodes.size(0), elemsToNodes.size(1) );
 
           array1d<globalIndex> & localToGlobalMap = elemRegion->m_localToGlobalMap;
           array1d<globalIndex> localToGlobalMapOld = localToGlobalMap;
-
-#if STANDARD_ELEMENT_TONODESRELATION_LAYOUT
-          elemsToNodesPatch.resize( elemsToNodes.size(0), elemsToNodes.size(1) );
-#else
-          elemsToNodesPatch.resize( elemsToNodes.size(1), elemsToNodes.size(0) );
-#endif
 
           localIndex numPatchesInBlock[3];
           localIndex numPatches = 1;
@@ -969,7 +964,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
             numPatches *= numPatchesInBlock[dir];
           }
 
-          elemRegion->m_patchOffsets.push_back( 0 );
+          elemRegion->patchOffsets().push_back( 0 );
 
           localIndex patchIndex = 0;
           localIndex patchOffset[3]{};
@@ -1015,7 +1010,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                 // create a local (within patch) numbering of nodes
                 std::vector<localIndex> patchNodesList( patchNodes.begin(), patchNodes.end() );
-                elemRegion->m_patchNodes.appendArray( patchNodesList.data(), patchNodesList.size() );
+                elemRegion->patchNodes().appendArray( patchNodesList.data(), patchNodesList.size() );
 
                 // create the inverse lookup (global node index -> local index in patch)
                 std::map<localIndex, localIndex> nodeGlobalToPatchIndexMap;
@@ -1026,7 +1021,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                 for( localIndex localElemIndex = 0; localElemIndex < patchElems.size(); ++localElemIndex )
                 {
-                  localIndex const newElemIndex = elemRegion->m_patchOffsets[patchIndex] + localElemIndex;
+                  localIndex const newElemIndex = elemRegion->patchOffsets()[patchIndex] + localElemIndex;
                   localIndex const oldElemIndex = patchElems[localElemIndex];
 
                   localToGlobalMap[newElemIndex] = localToGlobalMapOld[oldElemIndex];
@@ -1035,7 +1030,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                   {
                     localIndex const nodeIndex = elemsToNodesOrig[oldElemIndex][iN];
                     elemsToNodes( newElemIndex, iN ) = nodeIndex;
-                    TONODESRELATION_ACCESSOR( elemsToNodesPatch, newElemIndex, iN ) = nodeGlobalToPatchIndexMap[ nodeIndex ];
+                    elemsToNodesPatch( newElemIndex, iN ) = nodeGlobalToPatchIndexMap[ nodeIndex ];
                   }
 
 #if SSLE_PATCH_KERNEL_VIZ_OUTPUT
@@ -1044,7 +1039,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 #endif
                 }
 
-                elemRegion->m_patchOffsets.push_back( elemRegion->m_patchOffsets.back() + patchElems.size() );
+                elemRegion->patchOffsets().push_back( elemRegion->patchOffsets().back() + patchElems.size() );
               }
             }
           }

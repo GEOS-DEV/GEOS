@@ -313,6 +313,7 @@ struct ExplicitKernel
         {
           localIndex const patchSize = elemPatchOffsets[patch+1] - elemPatchOffsets[patch];
 
+          // The check is needed since we are launching on non-uniformly sized patches
           if( elem >= patchSize )
           {
             return;

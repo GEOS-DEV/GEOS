@@ -96,6 +96,11 @@ public:
   arrayView2d< localIndex const > const & getToNodesRelationReordered() const
   { return m_toNodesRelation_reordered; }
 
+#if SSLE_USE_PATCH_KERNEL
+  arrayView2d< localIndex const > const & getPatchToNodesRelationReordered() const
+  { return m_patchToNodesRelation_reordered; }
+#endif
+
   void CopyFromCellBlock( CellBlock const * source );
 
   void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
@@ -169,6 +174,9 @@ public:
   array2d< double > m_meanStress_reordered;
   array3d< double > m_deviatorStress_reordered;
   array2d< localIndex > m_toNodesRelation_reordered;
+#if SSLE_USE_PATCH_KERNEL
+  array2d< localIndex > m_patchToNodesRelation_reordered;
+#endif
 
 private:
 
