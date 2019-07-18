@@ -6,6 +6,16 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 
+#define STORE_NODE_DATA_LOCALLY 0
+
+#if STORE_NODE_DATA_LOCALLY
+#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
+#else
+#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#define POSITION_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#endif
+
 namespace geosx
 {
 
@@ -63,7 +73,7 @@ public:
                                           real64 const xi1,
                                           real64 const xi2,
                                         #if STORE_NODE_DATA_LOCALLY
-                                          real64 const x_local[3][numNodes],
+                                          real64 const (&x_local)[3][numNodes],
                                         #else
                                           arrayView1d<R1Tensor const> const & X,
                                         #endif
@@ -108,7 +118,7 @@ public:
                                           localIndex const q,
                                           arrayView2d<localIndex const> const & elemsToNodes,
                                         #if STORE_NODE_DATA_LOCALLY
-                                          real64 const X[3][numNodes],
+                                          real64 const (&X)[3][numNodes],
                                         #else
                                           arrayView1d<R1Tensor const> const & X,
                                         #endif

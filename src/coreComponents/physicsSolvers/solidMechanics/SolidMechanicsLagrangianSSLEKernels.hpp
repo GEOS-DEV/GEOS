@@ -38,6 +38,8 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
+#define INLINE_STRESS_UPDATE 1
+
 namespace geosx
 {
 
