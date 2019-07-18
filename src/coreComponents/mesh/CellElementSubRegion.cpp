@@ -111,7 +111,9 @@ void CellElementSubRegion::initializeDetJReordered()
   {
     for (localIndex q = 0; q < detJ.size(1); ++q)
     {
+#if !CALC_SHAPE_FUNCTION_DERIVATIVES
       DETJ_ACCESSOR(m_detJ_reordered, k, q) = detJ(k, q);
+#endif
     }
   }
 

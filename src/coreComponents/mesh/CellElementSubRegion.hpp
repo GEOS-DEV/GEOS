@@ -36,7 +36,11 @@
 #if STANDARD_ELEMENT_DETJ_LAYOUT
 #define DETJ_ACCESSOR(detJ, k, q) detJ(k, q)
 #else
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#define DETJ_ACCESSOR(detJ, k, q) detJ
+#else
 #define DETJ_ACCESSOR(detJ, k, q) detJ(q, k)
+#endif
 #endif
 
 #if STANDARD_ELEMENT_MEANSTRESS_LAYOUT

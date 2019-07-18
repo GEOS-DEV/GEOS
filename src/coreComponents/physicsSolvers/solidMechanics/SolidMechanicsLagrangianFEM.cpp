@@ -26,6 +26,7 @@
 #include <math.h>
 #include <sys/time.h>
 
+#include "KernelMacros.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -556,7 +557,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 #else
                                    u,
 #endif
+#if UPDATE_STRESS
                                    vel,
+#else
+                                   u,
+#endif
                                    acc,
                                    meanStress,
                                    deviatorStress,

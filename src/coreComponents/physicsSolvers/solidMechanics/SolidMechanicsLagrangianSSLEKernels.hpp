@@ -26,7 +26,6 @@
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
@@ -38,11 +37,17 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
+#include "KernelMacros.hpp"
+
 #if STORE_NODE_DATA_LOCALLY
 #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
+#define X_ACCESSOR(k, a, b) X_local[ a ][ b ]
 #else
 #define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
+#define X_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
 #endif
+
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 
 namespace geosx
 {
@@ -139,15 +144,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d<real64 const> const &
-#if !CALC_SHAPE_FUNCTION_DERIVATIVES
-          dNdX
-#endif
-          ,
-          arrayView2d<real64 const> const & detJ,
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+          arrayView4d<real64 const> const &,
+          arrayView2d<real64 const> const &,
           arrayView1d<R1Tensor const> const & X,
 #else
+          arrayView4d<real64 const> const & dNdX,
+          arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
 #endif
           arrayView1d<R1Tensor const> const & vel,
@@ -180,8 +183,8 @@ struct ExplicitKernel
       GEOS_LOG("Calculating shape function derivatives on the fly");
 #else
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
-#endif
       GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
+#endif
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
       GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
       GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
@@ -202,25 +205,21 @@ struct ExplicitKernel
 
 #if STORE_NODE_DATA_LOCALLY
       real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+      real64 X_local[3][8];
+#endif
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         for ( int b = 0; b < 3; ++b )
         {
           v_local[ a ][ b ] = vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
+          X_local[ b ][ a ] = X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
+#endif
         }
       }
 #endif
 
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
-      real64 X_local[3][8];
-      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        for ( int b = 0; b < 3; ++b )
-        {
-          X_local[ b ][ a ] = X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ];
-        }
-      }
-#endif
 
       real64 c[ 6 ][ 6 ];
       constitutive.GetStiffness( k, c );
@@ -230,8 +229,10 @@ struct ExplicitKernel
       {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
         real64 dNdX[3][8];
-        FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, k, X, elemsToNodes, dNdX );
 #endif
+
+#if UPDATE_STRESS
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -273,6 +274,45 @@ struct ExplicitKernel
                         + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                         + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
         }
+
+
+#else
+        real64 const dNdXa0 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 0) + DNDX_ACCESSOR(dNdX, k, q, 1, 0) + DNDX_ACCESSOR(dNdX, k, q, 2, 0) + DNDX_ACCESSOR(dNdX, k, q, 3, 0) + DNDX_ACCESSOR(dNdX, k, q, 4, 0) + DNDX_ACCESSOR(dNdX, k, q, 5, 0) + DNDX_ACCESSOR(dNdX, k, q, 6, 0 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 0 ) );
+        real64 const dNdXa1 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 1) + DNDX_ACCESSOR(dNdX, k, q, 1, 1) + DNDX_ACCESSOR(dNdX, k, q, 2, 1) + DNDX_ACCESSOR(dNdX, k, q, 3, 1) + DNDX_ACCESSOR(dNdX, k, q, 4, 1) + DNDX_ACCESSOR(dNdX, k, q, 5, 1) + DNDX_ACCESSOR(dNdX, k, q, 6, 1 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 1 ) );
+        real64 const dNdXa2 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 2) + DNDX_ACCESSOR(dNdX, k, q, 1, 2) + DNDX_ACCESSOR(dNdX, k, q, 2, 2) + DNDX_ACCESSOR(dNdX, k, q, 3, 2) + DNDX_ACCESSOR(dNdX, k, q, 4, 2) + DNDX_ACCESSOR(dNdX, k, q, 5, 2) + DNDX_ACCESSOR(dNdX, k, q, 6, 2 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 2 ) );
+        for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
+        {
+            f_local[b][0] -= ( ( c[0][0]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[0][1]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[0][2]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                              ) * DETJ_ACCESSOR(detJ, k, q);
+
+            f_local[b][1] -= ( ( c[0][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[1][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[1][2]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                              ) * DETJ_ACCESSOR(detJ, k, q);
+
+            f_local[b][2] -= ( ( c[0][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[1][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[2][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                             ) * DETJ_ACCESSOR(detJ, k, q);
+
+        }
+#endif
+
+
       }//quadrature loop
 
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )

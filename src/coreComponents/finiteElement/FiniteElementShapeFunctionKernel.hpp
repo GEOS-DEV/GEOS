@@ -59,7 +59,9 @@ public:
   static real64 shapeFunctionDerivatives( real64 const xi0,
                                           real64 const xi1,
                                           real64 const xi2,
-                                          real64 const X[3][numNodes],
+                                          localIndex const k,
+                                          arrayView1d<R1Tensor const> const & X,
+                                          arrayView2d<localIndex const> const & elemsToNodes,
                                           real64 (&dNdX)[3][numNodes] )
   {
     real64 J[3][3] = {{0}};
@@ -68,17 +70,17 @@ public:
     {
       real64 dNdXi[3];
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-      J[0][0] += X[0][a] * dNdXi[0];
-      J[0][1] += X[0][a] * dNdXi[1];
-      J[0][2] += X[0][a] * dNdXi[2];
+      J[0][0] += X_ACCESSOR(k, a, 0) * dNdXi[0];
+      J[0][1] += X_ACCESSOR(k, a, 0) * dNdXi[1];
+      J[0][2] += X_ACCESSOR(k, a, 0) * dNdXi[2];
 
-      J[1][0] += X[1][a] * dNdXi[0];
-      J[1][1] += X[1][a] * dNdXi[1];
-      J[1][2] += X[1][a] * dNdXi[2];
+      J[1][0] += X_ACCESSOR(k, a, 1) * dNdXi[0];
+      J[1][1] += X_ACCESSOR(k, a, 1) * dNdXi[1];
+      J[1][2] += X_ACCESSOR(k, a, 1) * dNdXi[2];
 
-      J[2][0] += X[2][a] * dNdXi[0];
-      J[2][1] += X[2][a] * dNdXi[1];
-      J[2][2] += X[2][a] * dNdXi[2];
+      J[2][0] += X_ACCESSOR(k, a, 2) * dNdXi[0];
+      J[2][1] += X_ACCESSOR(k, a, 2) * dNdXi[1];
+      J[2][2] += X_ACCESSOR(k, a, 2) * dNdXi[2];
     }
 
     real64 detJ = inverse( J );
@@ -98,13 +100,17 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static real64 shapeFunctionDerivatives( localIndex q,
-                                          real64 const X[3][numNodes],
+                                          localIndex const k,
+                                          arrayView1d<R1Tensor const> const & X,
+                                          arrayView2d<localIndex const> const & elemsToNodes,
                                           real64 (&dNdXi)[3][numNodes] )
   {
     return shapeFunctionDerivatives( quadratureFactor*parentCoords(0,q),
                                      quadratureFactor*parentCoords(1,q),
                                      quadratureFactor*parentCoords(2,q),
+                                     k,
                                      X,
+                                     elemsToNodes,
                                      dNdXi );
   }
 

@@ -20,7 +20,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="5.0e-4">
+  <Events maxTime="1.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -74,7 +74,15 @@
                fieldName="shale_MeanStress"
                component="-1"
                scale="-1.0e6"/>
-               <!--objectPath="ElementRegions/Region2/cb1" -->
+
+    <FieldSpecification name="xconstraint" 
+               initialCondition="1"
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="0"  
+               scale="1.0" 
+               setNames="{xpos}"/>
+               
   </FieldSpecifications>
 
   <Geometry>
