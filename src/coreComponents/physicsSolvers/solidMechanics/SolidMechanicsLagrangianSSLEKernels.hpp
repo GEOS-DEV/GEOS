@@ -320,15 +320,17 @@ struct ExplicitKernel
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
+            localIndex const nodeIndex = elemPatchNodes[patch][node];
+            //GEOS_LOG( "Prefetching node " << nodeIndex );
             for( int b = 0 ; b < 3 ; ++b )
             {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
-              X_patch( node, b ) = X[ elemPatchNodes[patch][node] ][b];
+              X_patch( node, b ) = X[ nodeIndex ][b];
 #endif
 #if SSLE_PATCH_KERNEL_SHARED_FVEC
               f_patch( node, b ) = 0.0;
 #endif
-              v_patch( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
+              v_patch( node, b ) = vel[ nodeIndex ][b];
             }
           }
         },

@@ -927,8 +927,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
     localIndex numElemsInDirForRegion[3];
 
-    array1d<localIndex> nodeReorder( nodeManager->size() );
-
     // TODO this nested looping is insane
     localIndex iR = 0;
     iterRegion = m_regionNames.begin();
@@ -951,7 +949,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           localIndex const numNodesPerElem = elemRegion->numNodesPerElement();
 
           FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
-          FixedOneToManyRelation elemsToNodesOrig = elemsToNodes;
+          FixedOneToManyRelation elemsToNodesOld = elemsToNodes;
           FixedOneToManyRelation & elemsToNodesPatch = elemRegion->patchNodeList();
           elemsToNodesPatch.resize( elemsToNodes.size(0), elemsToNodes.size(1) );
 
@@ -1004,7 +1002,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                         patchElems.push_back( oldElemIndex );
                         for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                         {
-                          patchNodes.insert( elemsToNodesOrig[oldElemIndex][iN] );
+                          patchNodes.insert( elemsToNodesOld[oldElemIndex][iN] );
                         }
                       }
                     }
@@ -1031,7 +1029,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-                    localIndex const nodeIndex = elemsToNodesOrig[oldElemIndex][iN];
+                    localIndex const nodeIndex = elemsToNodesOld[oldElemIndex][iN];
                     elemsToNodes( newElemIndex, iN ) = nodeIndex;
                     elemsToNodesPatch( newElemIndex, iN ) = nodeGlobalToPatchIndexMap[ nodeIndex ];
                   }
@@ -1053,7 +1051,100 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     }
 
 #if SSLE_PATCH_KERNEL_REORDER_NODES
-    // TODO
+
+    array1d<localIndex> nodeReorder( nodeManager->size() );
+    nodeReorder = -1;
+
+    // build the reordering
+    localIndex newNodeIndex = 0;
+    for( string const & cellBlockName : m_regionNames )
+    {
+      CellBlock * elemRegion = elementManager->GetRegion( cellBlockName );
+      LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & nodes = elemRegion->patchNodes();
+
+      for( localIndex patch = 0; patch < nodes.size(); ++patch )
+      {
+        for( localIndex inode = 0; inode < nodes.sizeOfArray(patch); ++inode )
+        {
+          localIndex const node = nodes[patch][inode];
+          if( nodeReorder[node] < 0 ) // node yet not assigned a new index
+          {
+            nodeReorder[node] = newNodeIndex++;
+          }
+        }
+      }
+    }
+
+    // apply the reordering
+    array1d<R1Tensor> & referencePosition = nodeManager->referencePosition();
+    array1d<R1Tensor> referencePositionOld = referencePosition;
+
+    for( localIndex node = 0; node < nodeReorder.size(); ++node )
+    {
+      referencePosition[nodeReorder[node]] = referencePositionOld[node];
+    }
+
+    for( string const & cellBlockName : m_regionNames )
+    {
+      CellBlock * elemRegion = elementManager->GetRegion( cellBlockName );
+
+      FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
+      FixedOneToManyRelation & elemsToNodesPatch = elemRegion->patchNodeList();
+      LvArray::ArrayOfArrays<localIndex, localIndex> & patchNodes = elemRegion->patchNodes();
+
+
+      for( localIndex ei = 0; ei < elemsToNodes.size(0); ++ei )
+      {
+        for( localIndex iN = 0; iN < elemsToNodes.size(1); ++iN )
+        {
+          elemsToNodes[ei][iN] = nodeReorder[elemsToNodes[ei][iN]];
+        }
+      }
+
+      LvArray::ArrayOfArrays<localIndex, localIndex> patchNodesOld = patchNodes;
+      std::map<localIndex, localIndex> newNodePatchMap;
+
+      for( localIndex patch = 0; patch < patchNodes.size(); ++patch )
+      {
+        newNodePatchMap.clear();
+
+        for( localIndex node = 0; node < patchNodes.sizeOfArray(patch); ++node )
+        {
+          //patchNodes[patch][node] = nodeReorder[patchNodes[patch][node]];
+          newNodePatchMap.emplace( nodeReorder[patchNodes[patch][node]], 0 );
+        }
+
+        localIndex inode = 0;
+        for( auto & pair : newNodePatchMap )
+        {
+          patchNodes[patch][inode] = pair.first;
+          pair.second = inode++;
+        }
+
+        for( localIndex ei = elemRegion->patchOffsets()[patch]; ei < elemRegion->patchOffsets()[patch+1]; ++ei )
+        {
+          for( localIndex iN = 0; iN < elemsToNodesPatch.size(1); ++iN )
+          {
+            localIndex const nodeIndexOld = patchNodesOld[patch][elemsToNodesPatch[ei][iN]];
+            localIndex const nodeIndexNew = nodeReorder[nodeIndexOld];
+            elemsToNodesPatch[ei][iN] = newNodePatchMap[nodeIndexNew];
+          }
+        }
+      }
+    }
+
+    nodeSets->forViewWrappers<localIndex_set>( [&]( ViewWrapper<localIndex_set> * vw )
+    {
+      localIndex_set & set = vw->reference();
+      localIndex_set setOld = set;
+      set.clear();
+      for( localIndex & node : setOld )
+      {
+        set.insert( nodeReorder[node] );
+      }
+
+    } );
+
 #endif
   }
 #endif // SSLE_USE_PATCH_KERNEL
