@@ -65,6 +65,15 @@ EpetraVector::EpetraVector( EpetraVector const &src )
 // ----------------------------
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Create from EpetraVector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+void EpetraVector::create( EpetraVector const &src )
+{
+  GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "source vector appears to be empty" );
+  m_vector = std::unique_ptr<Epetra_FEVector>( new Epetra_FEVector( *src.unwrappedPointer()));
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create from Epetra_Map
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from an Epetra_Map.
@@ -85,7 +94,10 @@ void EpetraVector::create( Epetra_Map const &map )
 // into the vector length.
 void EpetraVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  Epetra_Map map = Epetra_Map( -1, integer_conversion<int, localIndex>( localSize ), 0, Epetra_MpiComm( comm ) );
+  Epetra_Map map = Epetra_Map( integer_conversion<globalIndex>( -1 ),
+                               integer_conversion<int, localIndex>( localSize ),
+                               0,
+                               Epetra_MpiComm( comm ) );
   create( map );
 }
 
@@ -289,9 +301,23 @@ void EpetraVector::print() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
 //       if we prefer that.
-void EpetraVector::write( string const & filename ) const
+void EpetraVector::write( string const & filename,
+                          bool const mtxFormat ) const
 {
-  EpetraExt::MultiVectorToMatlabFile( filename.c_str(), *m_vector );
+  if( mtxFormat )
+  {
+    // Ensure the ".mtx" extension
+    string name( filename );
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    {
+      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
+    }
+    EpetraExt::MultiVectorToMatrixMarketFile( name.c_str(), *m_vector );
+  }
+  else
+  {
+    EpetraExt::MultiVectorToMatlabFile( filename.c_str(), *m_vector );
+  }
 }
 
 // ----------------------------
@@ -345,6 +371,25 @@ globalIndex EpetraVector::globalSize() const
 localIndex EpetraVector::localSize() const
 {
   return m_vector.get()->MyLength();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
+{
+  return m_vector->Map().LID( index );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// extractLocalVector
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Extract a view of the local portion of the array
+void EpetraVector::extractLocalVector( real64 ** localVector ) const
+{
+  int dummy;
+  m_vector->ExtractView( localVector, &dummy );
 }
 
 } // end geosx

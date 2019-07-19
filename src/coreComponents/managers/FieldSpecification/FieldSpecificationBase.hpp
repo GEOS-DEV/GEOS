@@ -29,11 +29,11 @@
 #include "dataRepository/ManagedGroup.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
 class Function;
-
 
 /**
  * @struct FieldSpecificationEqual
@@ -54,10 +54,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     field[index] = static_cast<T>(value);
   }
@@ -75,10 +75,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     field[index].Data()[component] = value;
   }
@@ -96,10 +96,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     if( component >= 0 )
     {
@@ -127,10 +127,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     if( component >= 0)
     {
@@ -160,10 +160,10 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -187,20 +187,21 @@ struct FieldSpecificationEqual
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> & field,
+  SpecifyFieldValue( arrayView3d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
       for( localIndex b=0; b<field.size( 2 ) ; ++b )
       {
-        field[index][a][b].Data()[component] = value;
+        field[index][a][b][component] = value;
       }
     }
   }
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
    *        equations.
@@ -235,6 +236,36 @@ struct FieldSpecificationEqual
     }
   }
 
+  /**
+   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
+   *        equations.
+   * @param[in] dof The degree of freedom that is to be set.
+   * @param[inout] matrix A ParallelMatrix object: the system matrix.
+   * @param[out] rhs The rhs contribution resulting from the application of the BC.
+   * @param[in] bcValue The target value of the Boundary Condition
+   * @param[in] fieldValue The current value of the variable to be set.
+   *
+   * This function clears the rows in all blocks for the specified \p dof, sets the diagonal to some
+   * appropriate scaled value, and sets \p rhs to the product of the scaled value of the diagonal and
+   * the difference between \p bcValue and \p fieldValue.
+   */
+  template<typename LAI>
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                        typename LAI::ParallelMatrix & matrix,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
+  {
+    if( matrix.getLocalRowID( dof ) >= 0 )
+    {
+      matrix.clearRow( dof, 1.0 );
+      rhs = bcValue;
+    }
+    else
+    {
+      rhs = 0.0;
+    }
+  }
 
   /**
    * @brief Function to replace some values of a vector.
@@ -249,6 +280,22 @@ struct FieldSpecificationEqual
                                           real64 const * const values )
   {
     rhs->ReplaceGlobalValues( num, dof, values );
+  }
+
+  /**
+   * @brief Function to add some values of a vector.
+   * @param rhs A ParallelVector object.
+   * @param num The number of values in \p rhs to replace
+   * @param dof A pointer to the global DOF to be replaced
+   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
+   */
+  template<typename LAI>
+  static inline void ReplaceGlobalValues( typename LAI::ParallelVector & rhs,
+                                          localIndex const num,
+                                          globalIndex * const dof,
+                                          real64 * const values )
+  {
+    rhs.set( dof, values, num );
   }
 };
 
@@ -271,10 +318,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
     field[index] += static_cast<T>(value);
   }
@@ -292,12 +339,12 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> & field,
+  SpecifyFieldValue( arrayView1d<T> const & field,
                 localIndex const index,
                 int const component,
-                real64 const & value )
+                real64 const value )
   {
-    field[index].Data()[component] += value;
+    field[index][component] += value;
   }
 
   /**
@@ -312,10 +359,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -336,10 +383,10 @@ struct FieldSpecificationAdd
    */
   template< typename T >
   static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> & field,
+  SpecifyFieldValue( arrayView2d<T> const & field,
                      localIndex const index,
                      int const component,
-                     real64 const & value )
+                     real64 const value )
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
@@ -347,6 +394,7 @@ struct FieldSpecificationAdd
     }
   }
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a value to a vector field for a single dof.
    * @param[in] dof The degree of freedom that is to be modified.
@@ -371,6 +419,28 @@ struct FieldSpecificationAdd
   }
 
   /**
+   * @brief Function to apply a value to a vector field for a single dof.
+   * @param[in] dof The degree of freedom that is to be modified.
+   * @param[in] matrix A ParalleMatrix object: the system matrix.
+   * @param[out] rhs The rhs contribution to be modified
+   * @param[in] bcValue The value to add to rhs
+   * @param[in] fieldValue unused.
+   *
+   */
+  template<typename LAI>
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                        typename LAI::ParallelMatrix & matrix,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
+  {
+    if( true )//node_is_ghost[*nd] < 0 )
+    {
+      rhs += bcValue;
+    }
+  }
+
+  /**
    * @brief Function to add some values of a vector.
    * @param rhs A pointer to the global vector
    * @param num The number of values in \p rhs to replace
@@ -385,6 +455,21 @@ struct FieldSpecificationAdd
     rhs->SumIntoGlobalValues( num, dof, values );
   }
 
+  /**
+   * @brief Function to add some values of a vector.
+   * @param rhs A ParallelVector object.
+   * @param num The number of values in \p rhs to replace
+   * @param dof A pointer to the global DOF to be replaced
+   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
+   */
+  template<typename LAI>
+  static inline void ReplaceGlobalValues( typename LAI::ParallelVector & rhs,
+                                          localIndex const num,
+                                          globalIndex * const dof,
+                                          real64 * const values )
+  {
+    rhs.set( dof, values, num );
+  }
 
 };
 
@@ -417,11 +502,11 @@ public:
 
   static string CatalogName() { return "FieldSpecification"; }
 
-  virtual const string getCatalogName() const 
+  virtual const string getCatalogName() const
   {
     return FieldSpecificationBase::CatalogName();
   }
-  
+
   /**
    * @}
    */
@@ -463,6 +548,7 @@ public:
 //                               dataRepository::ManagedGroup * dataGroup,
 //                               LAMBDA && lambda );
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
@@ -495,6 +581,7 @@ public:
                                        systemSolverInterface::BlockIDs const blockID ) const;
 
 
+  // TODO: to be removed. The new version works with LAI
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
@@ -545,7 +632,77 @@ public:
                                   systemSolverInterface::BlockIDs const blockID,
                                   LAMBDA && lambda ) const;
 
-  
+// calls user-provided lambda to apply computed boundary value
+//  template<typename LAMBDA>
+//  void ApplyBoundaryCondition( set<localIndex> const & targetSet,
+//                               real64 const time,
+//                               dataRepository::ManagedGroup * dataGroup,
+//                               LAMBDA && lambda );
+
+  /**
+   * @brief Function to apply a boundary condition to a system of equations
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] fieldName The name of the field to apply the boundary condition to.
+   * @param[in] dofMapName The name of the map from the local index of the primary field to the
+   *                       global degree of freedom number.
+   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
+   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
+   *                   degree of freedom.
+   * @param[inout] matrix A ParallelMatrix object: the system matrix.
+   * @param[inout] rhs A ParallelVector object: the right-hand side.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
+  template< typename FIELD_OP, typename LAI >
+  void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                       real64 const time,
+                                       dataRepository::ManagedGroup * dataGroup,
+                                       string const & fieldName,
+                                       string const & dofMapName,
+                                       integer const & dofDim,
+                                       typename LAI::ParallelMatrix & matrix,
+                                       typename LAI::ParallelVector & rhs ) const;
+
+
+  /**
+   * @brief Function to apply a boundary condition to a system of equations
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *               Either \ref BcEqual or \ref BcAdd.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dofMapName The name of the map from the local index of the primary field to the
+   *                       global degree of freedom number.
+   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
+   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
+   *                   degree of freedom.
+   * @param[inout] matrix A ParallelMatrix object: the system matrix.
+   * @param[inout] rhs A ParallelVector object: the right-hand side
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                provided by the FIELD_OP templated type.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
+  template< typename FIELD_OP, typename LAI, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                  real64 const time,
+                                  dataRepository::ManagedGroup * dataGroup,
+                                  arrayView1d<globalIndex const> const & dofMap,
+                                  integer const & dofDim,
+                                  typename LAI::ParallelMatrix & matrix,
+                                  typename LAI::ParallelVector & rhs,
+                                  LAMBDA && lambda ) const;
+
   struct viewKeyStruct
   {
     constexpr static auto setNamesString = "setNames";
@@ -697,11 +854,11 @@ private:
 
 template< typename FIELD_OP >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
-                                                           real64 const time,
-                                                           ManagedGroup * dataGroup,
-                                                           string const & fieldName ) const
+                                              real64 const time,
+                                              ManagedGroup * dataGroup,
+                                              string const & fieldName ) const
 {
-
+  LvArray::SortedArrayView<localIndex const, localIndex> const & targetSetView = targetSet;
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -712,48 +869,49 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto type, auto baseType ) -> void
+  {
+    using fieldType = decltype(type);
+    dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
+
+    auto & field = view.referenceAsView();
+    if( functionName.empty() )
     {
-      using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dataRepository::ViewWrapper<fieldType>::cast( *vw );
-      fieldType & field = view.reference();
-      if( functionName.empty() )
+      forall_in_set<parallelHostPolicy>(targetSetView.values(), targetSetView.size(), GEOSX_LAMBDA (localIndex const a)
       {
-        for( auto a : targetSet )
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+      });
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+      GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+      if( function->isFunctionOfTime()==2 )
+      {
+        real64 value = m_scale * function->Evaluate( &time );
+        forall_in_set<parallelHostPolicy>(targetSetView.values(), targetSetView.size(), GEOSX_LAMBDA (localIndex const a)
         {
-          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
-        }
+          FIELD_OP::SpecifyFieldValue( field, a, component, value );
+        });
       }
       else
       {
-        FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
-
-        GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
-
-        if( function->isFunctionOfTime()==2 )
+        real64_array result( static_cast<localIndex>(targetSetView.size()) );
+        function->Evaluate( dataGroup, time, targetSet, result );
+        arrayView1d<real64 const> const & resultView = result;
+        forall_in_range<parallelHostPolicy>(0, targetSetView.size(), GEOSX_LAMBDA (localIndex const i)
         {
-          real64 value = m_scale * function->Evaluate( &time );
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, value );
-          }
-        }
-        else
-        {
-          real64_array result( static_cast<localIndex>(targetSet.size()) );
-          function->Evaluate( dataGroup, time, targetSet, result );
-          integer count=0;
-          for( auto a : targetSet )
-          {
-            FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*result[count] );
-            ++count;
-          }
-        }
+          localIndex const a = targetSetView[ i ];
+          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
+        });
       }
-    } );
+    }
+  } );
 }
 
 
-
+// TODO: to be removed. The new version works with LAI
 template< typename FIELD_OP >
 void FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
@@ -813,6 +971,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    std::forward<LAMBDA&&>(lambda) );
 }
 
+// TODO: to be removed. The new version works with LAI
 template< typename FIELD_OP, typename LAMBDA >
 void
 FieldSpecificationBase::
@@ -899,6 +1058,115 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
 }
 
+template< typename FIELD_OP, typename LAI >
+void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                                            real64 const time,
+                                                            dataRepository::ManagedGroup * dataGroup,
+                                                            string const & fieldName,
+                                                            string const & dofMapName,
+                                                            integer const & dofDim,
+                                                            typename LAI::ParallelMatrix & matrix,
+                                                            typename LAI::ParallelVector & rhs ) const
+{
+  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
+  integer const component = GetComponent();
+
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+    [&]( auto type ) -> void
+    {
+      using fieldType = decltype(type);
+      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+      fieldType & field = view.reference();
+
+      this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
+        [&]( localIndex const a )->real64
+        {
+          return static_cast<real64>(rtTypes::value( field[a], component ));
+        }
+      );
+    }
+  );
+}
+
+template< typename FIELD_OP, typename LAI, typename LAMBDA >
+void
+FieldSpecificationBase::
+ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                real64 const time,
+                                dataRepository::ManagedGroup * dataGroup,
+                                arrayView1d<globalIndex const> const & dofMap,
+                                integer const & dofDim,
+                                typename LAI::ParallelMatrix & matrix,
+                                typename LAI::ParallelVector & rhs,
+                                LAMBDA && lambda ) const
+{
+  integer const component = GetComponent();
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  globalIndex_array  dof( targetSet.size() );
+  real64_array rhsContribution( targetSet.size() );
+
+  if( functionName.empty() )
+  {
+
+    integer counter=0;
+    for( auto a : targetSet )
+    {
+      dof( counter ) = dofDim*dofMap[a]+component;
+      FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+                                                 matrix,
+                                                 rhsContribution( counter ),
+                                                 m_scale,
+                                                 lambda( a ) );
+      ++counter;
+    }
+    FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+    if( function->isFunctionOfTime()==2 )
+    {
+      real64 value = m_scale * function->Evaluate( &time );
+      integer counter=0;
+      for( auto a : targetSet )
+      {
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   value,
+                                                   lambda( a ) );
+        ++counter;
+      }
+      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+    else
+    {
+      real64_array result;
+      result.resize( integer_conversion<localIndex>( targetSet.size()));
+      function->Evaluate( dataGroup, time, targetSet, result );
+      integer counter=0;
+      for( auto a : targetSet )
+      {
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   m_scale*result[counter],
+                                                   lambda( a ) );
+        ++counter;
+      }
+      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+  }
+}
 
 //template<typename LAMBDA>
 //void BoundaryConditionBase::ApplyBoundaryCondition( set<localIndex> const & targetSet,

@@ -20,100 +20,125 @@
 #define __GEOS_RAJA_POLICY__HPP
 
 #include "RAJA/RAJA.hpp"
+#include "common/DataTypes.hpp"
 
-#if defined(RAJA_ENABLE_CUDA)
-typedef RAJA::cuda_exec<256> elemPolicy;
-typedef RAJA::cuda_exec<256> onePointPolicy;
 
-typedef RAJA::cuda_exec<256> memSetPolicy;
-typedef RAJA::cuda_exec<256> computeForcePolicy;
+using serialPolicy = RAJA::loop_exec;
 
-typedef RAJA::cuda_exec<256> quadraturePolicy;
-typedef RAJA::atomic::cuda_atomic atomicPolicy;
+#if defined(GEOSX_USE_OPENMP)
 
-typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
-
-#elif defined(GEOSX_USE_OPENMP)
-typedef RAJA::omp_parallel_for_exec elemPolicy;
-typedef RAJA::omp_parallel_for_exec onePointPolicy;
-
-typedef RAJA::omp_parallel_for_exec memSetPolicy;
-typedef RAJA::omp_parallel_for_exec computeForcePolicy;
-
-typedef RAJA::omp_parallel_for_exec quadraturePolicy;
-typedef RAJA::atomic::omp_atomic atomicPolicy;
-
-typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::omp_reduce_ordered reducePolicy;
-
-typedef RAJA::omp_parallel_for_exec parallelHostPolicy;
+using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 
 #else
-typedef RAJA::loop_exec elemPolicy;
-typedef RAJA::loop_exec onePointPolicy;
 
-typedef RAJA::loop_exec memSetPolicy;
-typedef RAJA::loop_exec computeForcePolicy;
-
-typedef RAJA::seq_exec quadraturePolicy;
-typedef RAJA::atomic::seq_atomic atomicPolicy;
-
-typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::seq_reduce reducePolicy;
-
-typedef RAJA::loop_exec parallelHostPolicy;
-
-typedef RAJA::loop_exec materialUpdatePolicy;
-
+using parallelHostPolicy = RAJA::loop_exec;
 
 #endif
 
-#if defined(RAJA_ENABLE_CUDA)
-#define GEOSX_LAMBDA [=] RAJA_DEVICE
+#if defined(GEOSX_ENABLE_CUDA) && defined(__CUDACC__)
+
+template< int BLOCK_SIZE = 1024 >
+using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
+
+#elif defined(GEOSX_ENABLE_CUDA) && !defined(__CUDACC__)
+
+template< int >
+using parallelDevicePolicy = void;
+
+#elif defined(GEOSX_USE_OPENMP)
+
+template< int >
+using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
+
 #else
-#define GEOSX_LAMBDA [&]
+
+template< int >
+using parallelDevicePolicy = RAJA::loop_exec;
+
 #endif
 
 namespace geosx
-{  
-
-//Alias to RAJA reduction operators
-template< typename POLICY, typename T >
-using ReduceSum = RAJA::ReduceSum<POLICY, T>;
-  
-//
-template<typename POLICY=atomicPolicy, typename T>
-RAJA_INLINE void atomicAdd(T *acc, T value)
 {
-  RAJA::atomic::atomicAdd<POLICY>(acc, value);
-}
 
 //RAJA wrapper for loops over ranges - local index
-template<class POLICY=elemPolicy, typename LAMBDA=void>
+template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), body);
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
 //RAJA wrapper for loops over ranges - local index
-template<class POLICY=elemPolicy, typename LAMBDA=void>
+template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), body);
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
 //RAJA wrapper for loops over sets
-template<class POLICY=elemPolicy, typename T, typename LAMBDA=void>
+template<class POLICY=serialPolicy, typename T, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), std::forward<LAMBDA>(body));
+}
+
+template< typename T , typename atomicPol=RAJA::atomic::auto_atomic>
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & localField,
+                              arraySlice1d< T const >& globalField,
+                              localIndex const N )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
+  }
+}
+
+template< typename atomicPol=RAJA::atomic::auto_atomic>
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d<R1Tensor const> const & localField,
+                              arraySlice1d<R1Tensor>& globalField,
+                              localIndex const N )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[2], lData[2] );
+  }
+}
+
+template< localIndex N, typename atomicPol=RAJA::atomic::auto_atomic>
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              R1Tensor const * const restrict localField,
+                              arraySlice1d<R1Tensor> & globalField )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
+    real64 const * __restrict__ const lData = localField[a].Data();
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[2], lData[2] );
+  }
+}
+
+template< typename T, typename atomicPol=RAJA::atomic::auto_atomic >
+inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+                              arraySlice1d< T const > const & localField1,
+                              arraySlice1d< T const > const & localField2,
+                              arraySlice1d< T > & globalField1,
+                              arraySlice1d< T > & globalField2,
+                              localIndex const N )
+{
+  for( localIndex a=0 ; a<N ; ++a )
+  {
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
+  }
 }
 
 }
-
-#define FOR_ALL_IN_SET( POLICY, INDICES_SET, INDEX ) \
-    geosx::forall_in_set<POLICY>( INDICES_SET.data(), \
-                                  INDICES_SET.size(), \
-                                  GEOSX_LAMBDA ( INDEX )->void
 
 #endif

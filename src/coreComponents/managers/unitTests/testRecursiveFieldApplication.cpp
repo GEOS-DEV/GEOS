@@ -16,28 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Copyright (c) 2015, Lawrence Livermore National Security, LLC.
- * Produced at the Lawrence Livermore National Laboratory.
- *
- * All rights reserved.
- *
- * This source code cannot be distributed without permission and
- * further review from Lawrence Livermore National Laboratory.
- */
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -45,6 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 using namespace geosx;
 using namespace geosx::constitutive;
@@ -182,7 +162,7 @@ TEST(FieldSpecification, Recursive)
                                                    ElementRegion * const region,
                                                    ElementSubRegionBase const * const subRegion )
   {
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       GEOS_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
     });
@@ -190,18 +170,18 @@ TEST(FieldSpecification, Recursive)
 
   reg0->forElementSubRegionsIndex( [&](localIndex const esr, ElementSubRegionBase * const subRegion )->void
   {
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       GEOS_ERROR_IF(field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set");
     });
   });
 
-  forall_in_range<elemPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     GEOS_ERROR_IF(field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set");
   });
 
-  forall_in_range<elemPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     GEOS_ERROR_IF(field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set");
   });
@@ -238,7 +218,3 @@ int main(int argc, char** argv)
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

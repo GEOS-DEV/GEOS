@@ -32,11 +32,17 @@ using namespace dataRepository;
 
 DummySolver::DummySolver( const std::string& name,
                                                   ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_randScale(0.0),
+  m_randSeed(0)
 {
-
-  RegisterViewWrapper<real64>( dummyViewKeys.rand_scale.Key() )->
+  RegisterViewWrapper(viewKeyStruct::randScaleString, &m_randScale, false )->
     setApplyDefaultValue(1e-9)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Scale for modifying requested dt");
+
+  RegisterViewWrapper(viewKeyStruct::randSeedString, &m_randSeed, false )->
+    setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale for modifying requested dt");
 }
@@ -51,8 +57,11 @@ DummySolver::~DummySolver()
 
 void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
 {
-  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
-  std::srand(rank * 12345);
+  if (m_randSeed > 0)
+  {
+    integer const rank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+    std::srand((1 + rank) * m_randSeed);
+  }
 }
 
 
@@ -61,20 +70,13 @@ real64 DummySolver::SolverStep( real64 const& time_n,
                                         const int cycleNumber,
                                         DomainPartition * domain )
 {
-  std::this_thread::sleep_for(std::chrono::seconds(1));
   return dt;
 }
 
 
 real64 DummySolver::GetTimestepRequest(real64 const time)
 {
-  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
-
-  real64 const rand_scale = this->getReference<real64>(dummyViewKeys.rand_scale);
-  real64 dt_request = std::rand() * rand_scale;
-
-  std::cout << "time=" << time << ", solver=" << this->getName() << ", rank=" << rank << ", dt_r=" << dt_request << std::endl;
-
+  real64 dt_request = 1.0 + std::rand() * m_randScale;
   return dt_request;
 }
 

@@ -37,7 +37,8 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
-  std::map< std::string, std::set<localIndex> > modifiedElements;
+  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
 };
@@ -135,6 +136,11 @@ public:
                         const bool prefrac,
                         const realT time);
 
+  /**
+   * @brief Function to generate new global indices of a simple object (node, edge, face)
+   * @param[in/out] object A reference to the object that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
 
@@ -168,7 +174,19 @@ public:
     constexpr static auto SIF_IString = "SIF_I";
     constexpr static auto SIF_IIString = "SIF_II";
     constexpr static auto SIF_IIIString = "SIF_III";
+
+    constexpr static auto fractureRegionNameString = "fractureRegion";
+
   }; //SurfaceGenViewKeys;
+
+  /**
+   * @brief Function to generate new global indices for elements
+   * @param[in/out] elementManager A reference to the ElementRegionManager that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
+  void
+  AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+                                std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
@@ -496,16 +514,6 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager );
 
-  /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-   */
-  /*struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto ruptureStateString = "ruptureState";
-    constexpr static auto failCriterionString = "failCriterion";
-    constexpr static auto degreeFromCrackString = "degreeFromCrack";
-    constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
-  }; //SurfaceGenViewKeys;*/
 
 private:
   /// choice of failure criterion
@@ -535,6 +543,9 @@ private:
 
   realT m_saturationPressureCuttoff;
 
+  /// set of separable faces
+  localIndex_set m_separableFaceSet;
+
   /// copy of the original node->face mapping prior to any separation
   array1d< set<localIndex> > m_originalNodetoFaces;
 
@@ -556,6 +567,8 @@ private:
   /// copy of the original face->elemIndex mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemIndex;
 
+  /// name of the element region to place all new fractures
+  string m_fractureRegionName;
 
 };
 
