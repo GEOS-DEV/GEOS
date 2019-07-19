@@ -27,6 +27,13 @@
 #if SSLE_USE_PATCH_KERNEL
 #define VELOCITY_ACCESSOR(k, a, b) v_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a) , b )
 #define POSITION_ACCESSOR(k, a, b) X_patch( TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) , b )
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+#define FORCE_ACCESSOR(k, a, b) f_patch( TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a) , b )
+#define FORCE_SUB(k, a, b, expr) RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &FORCE_ACCESSOR(k, a, b), (expr) )
+#else
+#define FORCE_ACCESSOR(k, a, b) f_local[ a ][ b ]
+#define FORCE_SUB(k, a, b, expr) FORCE_ACCESSOR(k, a, b) -= (expr)
+#endif
 #elif STORE_NODE_DATA_LOCALLY
 #define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
 #define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
@@ -213,6 +220,11 @@ struct ExplicitKernel
 
 #if SSLE_USE_PATCH_KERNEL
       GEOS_LOG("Using patch-based SSLE kernel");
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+      GEOS_LOG("Using shared memory to store force updates");
+#else
+      GEOS_LOG("Not using shared memory to store force updates");
+#endif
 #else
       GEOS_LOG("Not using patch-based SSLE kernel");
 #endif
@@ -223,10 +235,12 @@ struct ExplicitKernel
 
 #if SSLE_USE_PATCH_KERNEL
 
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES && SSLE_PATCH_KERNEL_SHARED_FVEC
     using InitMemParamList = RAJA::ParamList<0, 1, 2>;
-#else
+#elif CALC_SHAPE_FUNCTION_DERIVATIVES || SSLE_PATCH_KERNEL_SHARED_FVEC
     using InitMemParamList = RAJA::ParamList<0, 1>;
+#else
+    using InitMemParamList = RAJA::ParamList<0>;
 #endif
 
 #if defined(__CUDACC__)
@@ -238,10 +252,12 @@ struct ExplicitKernel
           RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
             RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<0>>,
             RAJA::statement::CudaSyncThreads,
-            RAJA::statement::For<1, RAJA::cuda_thread_x_direct, RAJA::statement::Lambda<1>>,
-            RAJA::statement::CudaSyncThreads,
-            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>,
+            RAJA::statement::For<1, RAJA::cuda_thread_x_direct, RAJA::statement::Lambda<1>>
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+            ,
             RAJA::statement::CudaSyncThreads
+            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>,
+#endif
           >
         >
       >
@@ -254,18 +270,24 @@ struct ExplicitKernel
         RAJA::statement::For<0, RAJA::loop_exec,
           RAJA::statement::InitLocalMem<RAJA::cpu_tile_mem, InitMemParamList,
             RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<0>>,
-            RAJA::statement::For<1, RAJA::loop_exec, RAJA::statement::Lambda<1>>,
+            RAJA::statement::For<1, RAJA::loop_exec, RAJA::statement::Lambda<1>>
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+            ,
             RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<2>>
+#endif
           >
         >
       >;
 
 #endif
 
-    PATCH_NODAL_DATA ext_v_patch, ext_f_patch;
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
     PATCH_NODAL_DATA ext_X_patch;
 #endif
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+    PATCH_NODAL_DATA ext_f_patch;
+#endif
+    PATCH_NODAL_DATA ext_v_patch;
 
     RAJA::kernel_param<KERNEL_POLICY>
       ( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elemPatchOffsets.size() - 1 ),
@@ -276,8 +298,10 @@ struct ExplicitKernel
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
                           ext_X_patch,
 #endif
-                          ext_v_patch,
-                          ext_f_patch
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+                          ext_f_patch,
+#endif
+                          ext_v_patch
                         ),
 
         /*
@@ -289,18 +313,22 @@ struct ExplicitKernel
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
                              PATCH_NODAL_DATA & X_patch,
 #endif
-                             PATCH_NODAL_DATA & v_patch,
-                             PATCH_NODAL_DATA & f_patch )
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+                             PATCH_NODAL_DATA & f_patch,
+#endif
+                             PATCH_NODAL_DATA & v_patch )
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
             for( int b = 0 ; b < 3 ; ++b )
             {
-              f_patch( node, b ) = 0.0;
-              v_patch( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
               X_patch( node, b ) = X[ elemPatchNodes[patch][node] ][b];
 #endif
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+              f_patch( node, b ) = 0.0;
+#endif
+              v_patch( node, b ) = vel[ elemPatchNodes[patch][node] ][b];
             }
           }
         },
@@ -314,8 +342,10 @@ struct ExplicitKernel
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
                              PATCH_NODAL_DATA & X_patch,
 #endif
-                             PATCH_NODAL_DATA & v_patch,
-                             PATCH_NODAL_DATA & f_patch )
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+                             PATCH_NODAL_DATA & f_patch,
+#endif
+                             PATCH_NODAL_DATA & v_patch )
         {
           localIndex const patchSize = elemPatchOffsets[patch+1] - elemPatchOffsets[patch];
 
@@ -330,6 +360,10 @@ struct ExplicitKernel
 #if !INLINE_STRESS_UPDATE
           real64 c[ 6 ][ 6 ];
           constitutive.GetStiffness( k, c );
+#endif
+
+#if ! SSLE_PATCH_KERNEL_SHARED_FVEC
+          real64 f_local[NUM_NODES_PER_ELEM][3]{};
 #endif
 
           //Compute Quadrature
@@ -390,25 +424,36 @@ struct ExplicitKernel
 
             for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
             {
-              localIndex const a_patch = TONODESRELATION_ACCESSOR(elemPatchElemsToNodes, k, a);
-
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 0 ),
+              FORCE_SUB(k, a, 0,
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 0) * ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
 
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 1 ),
+              FORCE_SUB(k, a, 1,
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 1) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
 
-              RAJA::atomic::atomicSub<RAJA::atomic::auto_atomic>( &f_patch( a_patch , 2 ),
+              FORCE_SUB(k, a, 2,
                 ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
                 + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                 + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q) );
             }
           }//quadrature loop
-        },
+
+#if ! SSLE_PATCH_KERNEL_SHARED_FVEC
+          for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+          {
+            for ( int b = 0; b < 3; ++b )
+            {
+              RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ], f_local[ a ][ b ] );
+            }
+          }
+#endif
+        }
+
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+        ,
 
         /*
          * The third lambda pushes nodal updates from shared memory arrays into global memory
@@ -419,8 +464,8 @@ struct ExplicitKernel
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
                              PATCH_NODAL_DATA & /* unused */,
 #endif
-                             PATCH_NODAL_DATA & /* unused */,
-                             PATCH_NODAL_DATA & f_patch )
+                             PATCH_NODAL_DATA & f_patch,
+                             PATCH_NODAL_DATA & /* unused */ )
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
@@ -429,7 +474,9 @@ struct ExplicitKernel
               RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemPatchNodes[patch][node] ][ b ], f_patch( node , b ) );
             }
           }
-        } );
+        }
+#endif
+        );
 
 #else // SSSL_USE_SHARED_MEMORY_KERNEL
 
