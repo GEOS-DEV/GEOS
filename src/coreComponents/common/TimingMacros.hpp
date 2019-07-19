@@ -15,6 +15,7 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+/* UNCRUSTIFY-OFF */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_
 #define SRC_COMPONENTS_CORE_SRC_COMMON_TIMING_MACROS_HPP_

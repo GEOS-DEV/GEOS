@@ -73,37 +73,37 @@ inline InputFlags IntToInputFlag( int const val )
 
 inline int InputFlagToInt( InputFlags const val )
 {
-  return static_cast<int>(val);
+  return static_cast< int >(val);
 }
 
-inline bool operator==( InputFlags const left, InputFlags const right)
+inline bool operator==( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) == static_cast<int>(right);
+  return static_cast< int >(left) == static_cast< int >(right);
 }
 
-inline bool operator!=( InputFlags const left, InputFlags const right)
+inline bool operator!=( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) != static_cast<int>(right);
+  return static_cast< int >(left) != static_cast< int >(right);
 }
 
-inline bool operator<( InputFlags const left, InputFlags const right)
+inline bool operator<( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) < static_cast<int>(right);
+  return static_cast< int >(left) < static_cast< int >(right);
 }
 
-inline bool operator>( InputFlags const left, InputFlags const right)
+inline bool operator>( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) > static_cast<int>(right);
+  return static_cast< int >(left) > static_cast< int >(right);
 }
 
-inline bool operator<=( InputFlags const left, InputFlags const right)
+inline bool operator<=( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) <= static_cast<int>(right);
+  return static_cast< int >(left) <= static_cast< int >(right);
 }
 
-inline bool operator>=( InputFlags const left, InputFlags const right)
+inline bool operator>=( InputFlags const left, InputFlags const right )
 {
-  return static_cast<int>(left) >= static_cast<int>(right);
+  return static_cast< int >(left) >= static_cast< int >(right);
 }
 }
 

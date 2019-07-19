@@ -115,14 +115,18 @@ void DomainPartition::SetMaps(  )
 
 void DomainPartition::GenerateSets(  )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup * nodeManager = mesh->getNodeManager();
+  ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
+  dataRepository::ManagedGroup const * const
+  nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
-  std::map< string, integer_array > nodeInSet;
-  string_array setNames;
+  std::map< string, integer_array > nodeInSet; // map to contain indicator of whether a node is in a set.
+  string_array setNames; // just a holder for the names of the sets
 
+  // loop over all wrappers and fill the nodeIndSet arrays for each set
   for( auto & viewWrapper : nodeSets->wrappers() )
   {
     string name = viewWrapper.second->getName();
@@ -141,42 +145,36 @@ void DomainPartition::GenerateSets(  )
   }
 
 
-  ElementRegionManager * elementRegionManager = mesh->getElemManager();
+  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
-  for( auto & subGroup : elementRegionManager->GetGroup( dataRepository::keys::elementRegions )->GetSubGroups() )
+  elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
   {
-    ElementRegion * elementRegion = subGroup.second->group_cast<ElementRegion *>();
-    for( auto & subRegionIter : elementRegion->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions)->GetSubGroups() )
+    dataRepository::ManagedGroup * elementSets = subRegion->sets();
+    std::map< string, integer_array > numNodesInSet;
+
+    for( auto & setName : setNames )
     {
-      ElementSubRegionBase * const subRegion = subRegionIter.second->group_cast<ElementSubRegionBase *>();
-//      array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
-      dataRepository::ManagedGroup * elementSets = subRegion->sets();
-      std::map< string, integer_array > numNodesInSet;
 
-      for( auto & setName : setNames )
+      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-
-        set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
-        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
+        localIndex const numNodes = subRegion->numNodesPerElement( k );
+        integer count = 0;
+        for( localIndex a = 0 ; a<numNodes ; ++a )
         {
-          arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
-          localIndex const numNodes = subRegion->numNodesPerElement( k );
-          integer count = 0;
-          for( localIndex a = 0 ; a<numNodes ; ++a )
+          if( nodeInSet[setName][elemToNodes[a]] == 1 )
           {
-            if( nodeInSet[setName][elemToNodes[a]] == 1 )
-            {
-              ++count;
-            }
+            ++count;
           }
-          if( count == numNodes )
-          {
-            targetSet.insert(k);
-          }
+        }
+        if( count == numNodes )
+        {
+          targetSet.insert(k);
         }
       }
     }
-  }
+  });
 }
 
 

@@ -60,10 +60,10 @@ public:
    * This method will inform the object that it expects to execute
    * during the next timestep
    */
-  virtual void SignalToPrepareForExecution(real64 const time,
-                                           real64 const dt,  
-                                           integer const cycle,
-                                           dataRepository::ManagedGroup * domain) {}
+  virtual void SignalToPrepareForExecution( real64 const time,
+                                            real64 const dt,
+                                            integer const cycle,
+                                            dataRepository::ManagedGroup * domain ) {}
   /*
    * This method is called as the code exits the main run loop
    */
@@ -77,11 +77,11 @@ public:
    * This supplies the timestep request for each executable
    * target to the event manager
    */
-  virtual real64 GetTimestepRequest(real64 const time) {return std::numeric_limits<integer>::max();}
+  virtual real64 GetTimestepRequest( real64 const time ) {return std::numeric_limits< integer >::max();}
 
 
   /// These set and supply the timestep behavior for a target
-  void SetTimestepBehavior(integer behavior){ m_timestepType = behavior; }
+  void SetTimestepBehavior( integer behavior ){ m_timestepType = behavior; }
 
   integer GetTimestepBehavior(){ return m_timestepType; }
 
