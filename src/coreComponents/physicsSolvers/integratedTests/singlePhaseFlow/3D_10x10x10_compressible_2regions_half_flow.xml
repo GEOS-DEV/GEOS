@@ -12,7 +12,7 @@
                      discretization="singlePhaseTPFA"
                      fluidName="water"
                      solidName="rock"
-                     targetRegions="Region2">
+                     targetRegions="{Region2}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -21,14 +21,14 @@
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="0, 10"
-                  yCoords="0, 10"
-                  zCoords="0, 5, 10"
-                  nx="10"
-                  ny="10"
-                  nz="5 , 10"
-                  cellBlockNames="cb1 cb2"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 10}"
+                  yCoords="{0, 10}"
+                  zCoords="{0, 5, 10}"
+                  nx="{10}"
+                  ny="{10}"
+                  nz="{5, 10}"
+                  cellBlockNames="{cb1, cb2}"/>
   </Mesh>
 
   <Geometry>
@@ -44,7 +44,7 @@
                    forceDt="20.0"
                    target="/Solvers/SinglePhaseFlow" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    <!-- This event is applied every 1.0s. The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
@@ -66,21 +66,23 @@
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
                                  coefficientName="permeability"
-                                 targetRegions="Region2"/>
+                                 targetRegions="{Region2}"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <ElementRegion name="Region1"
-                   cellBlocks="cb1"
-                   materialList=""/>
+                   cellBlocks="{cb1}"
+                   materialList="{}"/>
     <ElementRegion name="Region2"
-                   cellBlocks="cb2"
-                   materialList="water rock"/>
+                   cellBlocks="{cb2}"
+                   materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
@@ -93,10 +95,11 @@
   </Constitutive>
 
   <FieldSpecifications>
+
     <FieldSpecification name="permx"
                component="0"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="permeability"
                scale="2.0e-16"/>
@@ -104,7 +107,7 @@
     <FieldSpecification name="permy"
                component="1"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="permeability"
                scale="2.0e-16"/>
@@ -112,36 +115,37 @@
     <FieldSpecification name="permz"
                component="2"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="permeability"
                scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
-               setNames="all"
+               setNames="{all}"
                objectPath="ElementRegions/Region2"
                fieldName="pressure"
                scale="5e6"/>
+
 
     <FieldSpecification name="sourceTerm"
                objectPath="faceManager"
                fieldName="facePressure"
                scale="1e7"
-               setNames="source"/>
+               setNames="{source}"/>
 
     <FieldSpecification name="sinkTerm"
                objectPath="faceManager"
                fieldName="facePressure"
                scale="0.0"
-               setNames="sink"/>
+               setNames="{sink}"/>
   </FieldSpecifications>
 
   <Functions>

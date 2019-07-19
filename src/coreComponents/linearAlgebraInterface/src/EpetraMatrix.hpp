@@ -135,6 +135,25 @@ public:
                              localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm );
 
+  /**
+   * @brief Create a rectangular matrix from number of local rows/global columns.
+   * \param comm MPI communicator.
+   * \param localRows Local number of rows.
+   * \param globalCols Global number of columns.
+   * \param maxEntriesPerRow Maximum number of entries per row (hint).
+   */
+  void createWithLocalRowGlobalCol( localIndex const localRows,
+                                    globalIndex const globalCols,
+                                    localIndex const maxEntriesPerRow,
+                                    MPI_Comm const & comm );
+
+  /**
+   * @brief Reinitialize the matrix.
+   *
+   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
+   *
+   */
+  void set( real64 const value );
 
   /**
    * @brief Reinitialize the matrix.
@@ -335,10 +354,10 @@ public:
    * \param src Input matrix (B).
    * \param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same 
+   * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
    * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B. 
+   * the nonzero entries produced by the product this*B.
    */
   void multiply( EpetraMatrix const &src,
                  EpetraMatrix &dst ) const;
@@ -492,7 +511,42 @@ public:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
+
+  /**
+   * @brief Performe a matrix matrix product with Parallel Matrix
+   */
+  void MatrixMatrixMultiply( bool const transA,
+                             EpetraMatrix const &B,
+                             bool const transB,
+                             EpetraMatrix &C,
+                             bool const call_FillComplete = true ) const;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  localIndex getGlobalRowID( localIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  localIndex getGlobalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  localIndex numMyCols() const;
+
+  /**
+   * @brief Print the given parallel matrix in Matrix Market format (MTX file)
+   */
+  void printParallelMatrix( string const & fileName ) const;
 
   //@}
 

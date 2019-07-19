@@ -47,12 +47,6 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "OutputBase"; }
 
-  OutputBase() = default;
-  OutputBase( OutputBase const & ) = default;
-  OutputBase( OutputBase &&) = default;
-  OutputBase& operator=( OutputBase const & ) = default;
-  OutputBase& operator=( OutputBase&& ) = default;
-
   /// Method for setting up output directories
   virtual void SetupDirectoryStructure();
 

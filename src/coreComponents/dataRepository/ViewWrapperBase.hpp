@@ -56,7 +56,7 @@ class ViewWrapperBase
 public:
 
   /**
-   * @brief default destuctor
+   * @brief default destructor
    */
   virtual ~ViewWrapperBase();
 
@@ -66,15 +66,17 @@ public:
    * @param[in] parent pointer to ManagedGroup that holds this ViewWrapperBase
    */
   explicit ViewWrapperBase( string const & name,
-                            ManagedGroup * const parent);
+                            ManagedGroup * const parent );
 
 
   /**
    * @brief move operator
    * @param[in] source
    */
-  ViewWrapperBase( ViewWrapperBase&& source );
+  ViewWrapperBase( ViewWrapperBase && source );
 
+
+  virtual void CopyWrapperAttributes( ViewWrapperBase const & source );
 
   /**
    * @brief Virtual function to return the typeid of T.
@@ -105,20 +107,20 @@ public:
    * @brief function to call T::size(int)
    * @return result of T::size(int)
    */
-  virtual localIndex size(int i) const = 0;
+  virtual localIndex size( int i ) const = 0;
 
   /**
    * @brief function to call T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
    */
-  virtual void resize(int num_dims, localIndex const * const dims) = 0;
+  virtual void resize( int num_dims, localIndex const * const dims ) = 0;
 
   /**
    * @brief function to call T::resize( new_cap )
    * @param[in] new_cap the new capacity of the T
    */
-  virtual void reserve(std::size_t new_cap) = 0;
+  virtual void reserve( std::size_t new_cap ) = 0;
 
   /**
    * @brief function to call T::capacity()
@@ -149,7 +151,7 @@ public:
    * @param[in] newsize parameter to pass to T::resize(newsize)
    * @return result of T::resize(newsize)
    */
-  virtual void resize(localIndex newsize) = 0;
+  virtual void resize( localIndex newsize ) = 0;
 
 
   /**
@@ -161,8 +163,8 @@ public:
    * The overridden function will create a copy of the derived ViewWrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr<ViewWrapperBase> clone( string const & name,
-                                                  ManagedGroup * const parent ) = 0;
+  virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
+                                                    ManagedGroup * const parent ) = 0;
 
   /**
    *
@@ -186,31 +188,31 @@ public:
    *
    * @param view
    */
-  virtual void registerDataPtr(axom::sidre::View * view=nullptr) const = 0; 
+  virtual void registerDataPtr( axom::sidre::View * view=nullptr ) const = 0;
 
   /**
    *
    * @param view
    */
-  virtual void registerToWrite(axom::sidre::View * view=nullptr) const = 0;
+  virtual void registerToWrite( axom::sidre::View * view=nullptr ) = 0;
 
   /**
    *
    * @param view
    */
-  virtual void finishWriting(axom::sidre::View * view=nullptr) const = 0;
+  virtual void finishWriting( axom::sidre::View * view=nullptr ) const = 0;
 
   /**
    *
    * @param view
    */
-  virtual void registerToRead(axom::sidre::View * view=nullptr) = 0;
+  virtual void registerToRead( axom::sidre::View * view=nullptr ) = 0;
 
   /**
    *
    * @param view
    */
-  virtual void finishReading(axom::sidre::View * view=nullptr) = 0;
+  virtual void finishReading( axom::sidre::View * view=nullptr ) = 0;
 
   /**
    * @brief function to call resize( newsize ) where newsize is taken from the parent ManagedGroup
@@ -235,7 +237,7 @@ public:
    * @param buffer
    * @return
    */
-  virtual localIndex Pack( char *& buffer ) const = 0;
+  virtual localIndex Pack( char * & buffer ) const = 0;
 
   /**
    *
@@ -243,7 +245,7 @@ public:
    * @param packList
    * @return
    */
-  virtual localIndex Pack( char *& buffer, arrayView1d<localIndex const> const & packList ) const = 0;
+  virtual localIndex Pack( char * & buffer, arrayView1d< localIndex const > const & packList ) const = 0;
 
   /**
    *
@@ -256,14 +258,14 @@ public:
    * @param packList
    * @return
    */
-  virtual localIndex PackSize( arrayView1d<localIndex const> const & packList ) const = 0;
+  virtual localIndex PackSize( arrayView1d< localIndex const > const & packList ) const = 0;
 
   /**
    *
    * @param buffer
    * @return
    */
-  virtual localIndex Unpack( char const *& buffer ) = 0;
+  virtual localIndex Unpack( char const * & buffer ) = 0;
 
   /**
    *
@@ -271,7 +273,7 @@ public:
    * @param unpackIndices
    * @return
    */
-  virtual localIndex Unpack( char const *& buffer, arrayView1d<localIndex const> const & unpackIndices ) = 0;
+  virtual localIndex Unpack( char const * & buffer, arrayView1d< localIndex const > const & unpackIndices ) = 0;
 
   /**
    *
@@ -304,7 +306,7 @@ public:
    * @param flags
    * @return
    */
-  ViewWrapperBase * setRestartFlags( RestartFlags flags)
+  ViewWrapperBase * setRestartFlags( RestartFlags flags )
   {
     m_restart_flags = flags;
     return this;
@@ -345,7 +347,7 @@ public:
    */
   ViewWrapperBase * setPlotLevel( int const flag )
   {
-    m_plotLevel = IntToPlotLevel(flag);
+    m_plotLevel = IntToPlotLevel( flag );
     return this;
   }
 
@@ -367,7 +369,7 @@ public:
   {
     if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
     {
-      this->setSizedFromParent(0);
+      this->setSizedFromParent( 0 );
     }
     m_inputFlag = input;
     return this;
@@ -393,6 +395,17 @@ public:
     return this;
   }
 
+  std::vector< string > const & getRegisteringObjects() const
+  {
+    return m_registeringObjects;
+  }
+
+  ViewWrapperBase * setRegisteringObjects( string const & objectName )
+  {
+    m_registeringObjects.push_back( objectName );
+    return this;
+  }
+
   /**
    *
    * @return
@@ -402,7 +415,22 @@ public:
     return m_description;
   }
 
+#ifndef NDEBUG
+  /**
+   * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
+   *                represented by a ViewWrapperBase *.
+   * @return A string that contains the typename for use in totalview.
+   */
+  virtual string totalviewTypeName() const = 0;
 
+  /**
+   * @brief Function to execute the TV_tff_add_row() calls that represent each data member that
+   *        will be displayed.
+   * @return 0
+   */
+  virtual int setTotalviewDisplay() const;
+//  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
+#endif
 
 private:
 
@@ -427,16 +455,18 @@ private:
   /// a string description of the wrapped object
   string m_description;
 
+  std::vector< string > m_registeringObjects;
+
   #ifdef GEOSX_USE_ATK
-  /// a pointer to the corrosponding sidre view
-  axom::sidre::View* m_sidreView;
+  /// a pointer to the corresponding sidre view
+  axom::sidre::View * m_sidreView;
 #endif
 
 
   ViewWrapperBase() = delete;
   ViewWrapperBase( ViewWrapperBase const & ) = delete;
-  ViewWrapperBase& operator=( ViewWrapperBase const & ) = delete;
-  ViewWrapperBase& operator=( ViewWrapperBase&& ) = delete;
+  ViewWrapperBase & operator=( ViewWrapperBase const & ) = delete;
+  ViewWrapperBase & operator=( ViewWrapperBase && ) = delete;
 
 };
 

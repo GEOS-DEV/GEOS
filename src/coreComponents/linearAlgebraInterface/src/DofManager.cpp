@@ -26,11 +26,18 @@ namespace geosx
 {
 
 // .... DOF MANAGER :: CONSTRUCTOR
-DofManager::DofManager()
+DofManager::DofManager( localIndex const verbosity )
 {
   mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
   mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
 
+  m_verbosity = verbosity;
+
+  initializeDataStructure();
+}
+
+// Initialize data structure for connectivity and sparsity pattern
+void DofManager::initializeDataStructure() {
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
   m_connectivity.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
@@ -60,7 +67,12 @@ void DofManager::setMesh( DomainPartition * const domain,
                           localIndex const meshLevelIndex,
                           localIndex const meshBodyIndex )
 {
-  GEOS_ERROR_IF( m_meshLevel != nullptr, "A mesh is already assigned to this DofManager." );
+  if( m_domain != nullptr )
+  {
+    // Domain is changed! Delete old data structure and create new
+    cleanUp();
+    initializeDataStructure();
+  }
   m_domain = domain;
   m_meshLevel = m_domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->
                 getMeshLevel( integer_conversion<int>( meshLevelIndex ) );
@@ -91,6 +103,18 @@ bool DofManager::keyInUse( string const & key ) const
     }
   }
   return false;
+}
+
+// Get key.
+string DofManager::getKey( string const & field ) const
+{
+  // check if the field name is already added
+  GEOS_ERROR_IF( !keyInUse( field ), "numGlobalDofs: requested field name must be already existing." );
+
+  // get field index
+  localIndex fieldIdx = fieldIndex( field );
+
+  return m_fields[fieldIdx].key;
 }
 
 // Return global number of dofs across all processors. If field argument is empty, return monolithic size.
@@ -138,6 +162,30 @@ localIndex DofManager::numLocalDofs( string const & field ) const
       sumLocalDofs += m_fields[i].numLocalRows;
     }
     return sumLocalDofs;
+  }
+}
+
+// Return the sum of local dofs across all previous processors w.r.t. to the calling one for the specified field.
+localIndex DofManager::offsetLocalDofs( string const & field ) const
+{
+  if( field.length() > 0 )
+  {
+    // check if the field name is already added
+    GEOS_ERROR_IF( !keyInUse( field ), "offsetLocalDofs: requested field name must be already existing." );
+
+    // get field index
+    localIndex fieldIdx = fieldIndex( field );
+
+    return m_fields[fieldIdx].firstLocalRow;
+  }
+  else
+  {
+    localIndex sumOffsetLocalDofs = 0;
+    for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
+      sumOffsetLocalDofs += m_fields[i].firstLocalRow;
+    }
+    return sumOffsetLocalDofs;
   }
 }
 
@@ -275,17 +323,34 @@ void DofManager::addField( string const & field,
 
   last.connLocPattern = new ParallelMatrix();
   ParallelMatrix* connLocPattDistr = last.connLocPattern;
-  connLocPattDistr->createWithGlobalSize( connLocPattLocal.nRows,
-                                          connLocPattLocal.nCols,
-                                          maxEntriesPerRow,
-                                          MPI_COMM_GEOSX );
+  if( connectivity == Connectivity::Elem )
+  {
+    // In case of elemental connectivity, it reflects the mesh partitioning also in the connLoc matrix
+    connLocPattDistr->createWithLocalSize( last.numLocalConnectivity,
+                                           last.numLocalRows,
+                                           maxEntriesPerRow,
+                                           MPI_COMM_GEOSX );
+  }
+  else
+  {
+    // Simply divide into homogeneous chunks
+    connLocPattDistr->createWithGlobalSize( connLocPattLocal.nRows,
+                                            connLocPattLocal.nCols,
+                                            maxEntriesPerRow,
+                                            MPI_COMM_GEOSX );
+  }
+
   for( globalIndex i = 0 ; i < connLocPattLocal.nRows ; ++i )
   {
     localIndex nnz = connLocPattLocal.rowLengths[i + 1] - connLocPattLocal.rowLengths[i];
     if( nnz > 0 )
     {
       real64_array values( nnz );
-      values = 1;
+      // Keep track of the original order
+      for( localIndex iLoc = 0 ; iLoc < nnz ; ++iLoc)
+      {
+        values[iLoc] = static_cast<real64>( connLocPattLocal.nnzEntries[connLocPattLocal.rowLengths[i]+iLoc] + 1 );
+      }
       connLocPattDistr->insert( i,
                                 connLocPattLocal.colIndices.data( connLocPattLocal.rowLengths[i] ),
                                 values.data(),
@@ -295,9 +360,12 @@ void DofManager::addField( string const & field,
   connLocPattDistr->close();
 
   // log some basic info
-  GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
-  GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
-  GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  if( m_verbosity>0 )
+  {
+    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
+    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
+    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  }
 }
 
 // addField: allow the usage of a predefine location-connection pattern (user-defined)
@@ -382,7 +450,7 @@ void DofManager::addField( string const & field,
   last.connLocPattern = new ParallelMatrix(connLocInput);
 
   // compute useful values (number of local and global rows)
-  last.numLocalRows = numMyCols(connLocInput);
+  last.numLocalRows = connLocInput.numMyCols();
   last.numLocalNodes = last.numLocalRows / components;
 
   localIndex_array localGather;
@@ -407,11 +475,12 @@ void DofManager::addField( string const & field,
   {
     globalIndex_array globalGather;
 
-    last.firstLocalConnectivity = connLocInput.unwrappedPointer()->NumMyRows();
+    last.numLocalConnectivity = integer_conversion<localIndex>( connLocInput.unwrappedPointer()->NumMyRows() );
 
-    CommunicationTools::allGather( last.firstLocalConnectivity, globalGather );
+    CommunicationTools::allGather( integer_conversion<globalIndex>( last.numLocalConnectivity ),
+                                   globalGather );
 
-    last.firstLocalConnectivity = 0;
+    last.numLocalConnectivity = 0;
     for( localIndex p = 0 ; p < mpiRank ; ++p )
     {
       last.firstLocalConnectivity += globalGather[p];
@@ -423,14 +492,17 @@ void DofManager::addField( string const & field,
   }
 
   // log some basic info
-  GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
-  GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
-  GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  if( m_verbosity>0 )
+  {
+    GEOS_LOG_RANK_0( "DofManager :: Added field .... " << last.docstring );
+    GEOS_LOG_RANK_0( "DofManager :: Global dofs .... " << last.numGlobalRows );
+    GEOS_LOG_RANK_0( "DofManager :: Field offset ... " << last.fieldOffset );
+  }
 }
 
 // .... DOF MANAGER :: CREATE INDEX ARRAY
 void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
-                                                     localIndex_array const & activeRegionsInput ) const
+                                                     localIndex_array const & activeRegionsInput )
 {
   // step 0. register an index array with default = LocationStatus::notAssigned
   ObjectManagerBase *
@@ -458,7 +530,7 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   //         and sequentially number objects
   field.numLocalNodes = 0;
   localIndex numLocalNodesWithGhost = 0;
-  globalIndex numLocalConnectivity = 0;
+  field.numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
   {
@@ -501,7 +573,10 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
               }
             }
           }
-          ++numLocalConnectivity;
+          if( ghostRank[e] < 0 )
+          {
+            ++field.numLocalConnectivity;
+          }
         }
       }
     }
@@ -526,7 +601,8 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
 
   // for starting the connectivity numbering
   globalIndex_array globalGather;
-  CommunicationTools::allGather( numLocalConnectivity, globalGather );
+  CommunicationTools::allGather( integer_conversion<globalIndex>( field.numLocalConnectivity ),
+                                 globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
@@ -537,7 +613,8 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   // step 3. adjust local values to reflect processor offset
   for( localIndex n = 0 ; n < indexArray.size() ; ++n )
   {
-    if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) )
+    if( indexArray[n] != static_cast<globalIndex>( LocationStatus::notAssigned ) and
+      indexArray[n] != static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
     {
       indexArray[n] += field.firstLocalRow;
     }
@@ -565,12 +642,26 @@ void DofManager::createIndexArray_NodeOrFaceVersion( FieldDescription & field,
   field.firstLocalRow *= field.numComponents;
 
   // Replace LocationStatus::notMyGhostLocation with LocationStatus::notAssigned (if any)
+  localIndex notAssignedSum = 0;
   for( localIndex i = 0 ; i < indexArray.size() ; ++i )
   {
     if( indexArray[i] == static_cast<globalIndex>( LocationStatus::notMyGhostLocation ) )
     {
       indexArray[i] = static_cast<globalIndex>( LocationStatus::notAssigned );
+      ++notAssignedSum;
     }
+  }
+
+  CommunicationTools::allGather( notAssignedSum, localGather );
+
+  // Check if in the whole mesh there are notAssigned DoFs
+  if( std::accumulate( localGather.begin(), localGather.end(), 0.0 ) > 0 )
+  {
+    // Need of a second sync
+    m_doubleSync = true;
+    CommunicationTools::
+    SynchronizeFields( fieldNames, m_meshLevel,
+                       m_domain->getReference<array1d<NeighborCommunicator> >( m_domain->viewKeys.neighbors ) );
   }
 }
 
@@ -611,7 +702,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
   // step 3. loop again (sequential policy)
   //         allocate the index array
   //         set unique global indices
-  globalIndex count = 0;
+  field.numLocalConnectivity = 0;
 
   for( localIndex er = 0 ; er < field.regionPtrs.size() ; ++er )
   {
@@ -633,19 +724,21 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
       {
         if( ghostRank[elem] < 0 )
         {
-          indexArray[elem] = field.firstLocalRow + count;
-          count++;
+          indexArray[elem] = field.firstLocalRow + field.numLocalConnectivity;
+          field.numLocalConnectivity++;
         }
       }
     }
   }
 
-  GEOS_ERROR_IF( count != field.numLocalNodes, "Mismatch during assignment of local row indices" );
+  GEOS_ERROR_IF( field.numLocalConnectivity != field.numLocalNodes,
+                 "Mismatch during assignment of local row indices" );
 
   // for starting the connectivity numbering
   globalIndex_array globalGather;
 
-  CommunicationTools::allGather( count, globalGather );
+  CommunicationTools::allGather( integer_conversion<globalIndex>( field.numLocalConnectivity ),
+                                 globalGather );
 
   field.firstLocalConnectivity = 0;
   for( localIndex p = 0 ; p < mpiRank ; ++p )
@@ -668,7 +761,7 @@ void DofManager::createIndexArray_ElemVersion( FieldDescription & field ) const
 }
 
 // Create the sparsity pattern (location-location). High level interface
-void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
                                      string const & rowField,
                                      string const & colField ) const
 {
@@ -677,7 +770,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
   if( rowField.length() > 0 )
   {
     // check if the row field name is already added
-    GEOS_ERROR_IF( !keyInUse( rowField ), "getSparsityPattern: requested field name must be already existing." );
+    GEOS_ERROR_IF( !keyInUse( rowField ), "setSparsityPattern: requested field name must be already existing." );
 
     // get row field index
     rowFieldIndex = fieldIndex( rowField );
@@ -690,7 +783,7 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
   if( colField.length() > 0 )
   {
     // check if the col field name is already added
-    GEOS_ERROR_IF( !keyInUse( colField ), "getSparsityPattern: requested field name must be already existing." );
+    GEOS_ERROR_IF( !keyInUse( colField ), "setSparsityPattern: requested field name must be already existing." );
 
     // get col field index
     colFieldIndex = fieldIndex( colField );
@@ -702,20 +795,20 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
   if( rowFieldIndex * colFieldIndex < 0 )
   {
-    GEOS_ERROR( "getSparsityPattern accepts both two field names and none, instead just one is provided." );
+    GEOS_ERROR( "setSparsityPattern accepts both two field names and none, instead just one is provided." );
   }
 
   // Call the low level routine
-  getSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
+  setSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
 }
 
 // Create the sparsity pattern (location-location). Low level interface
-void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
                                      localIndex const rowFieldIndex,
                                      localIndex const colFieldIndex ) const
 {
   GEOS_ERROR_IF( rowFieldIndex * colFieldIndex < 0,
-                 "getSparsityPattern accepts both two existing field indices (positive values) and "
+                 "setSparsityPattern accepts both two existing field indices (positive values) and "
                  "two negative values (entire Jacobian rows/columns), instead just one index is positive.");
 
   if( rowFieldIndex >= 0 and colFieldIndex == rowFieldIndex )
@@ -723,8 +816,18 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
     // Diagonal block
     ParallelMatrix const * connLocPattDistr = m_fields[rowFieldIndex].connLocPattern;
 
-    locLocDistr.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
-    MatrixMatrixMultiply( *connLocPattDistr, true, *connLocPattDistr, false, locLocDistr );
+    if( m_connectivity[rowFieldIndex][colFieldIndex] == Connectivity::Elem )
+    {
+      locLocDistr.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows, 1, MPI_COMM_GEOSX );
+    }
+    else
+    {
+      locLocDistr.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
+    }
+    connLocPattDistr->MatrixMatrixMultiply( true,
+                                            *connLocPattDistr,
+                                            false,
+                                            locLocDistr );
   }
   else if( rowFieldIndex >= 0 and colFieldIndex >= 0 )
   {
@@ -740,7 +843,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           colConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
-        MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, locLocDistr, false );
+        rowConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                   *colConnLocPattDistr,
+                                                   false,
+                                                   locLocDistr,
+                                                   false );
       }
       else
       {
@@ -751,7 +858,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
                                           rowConnLocPattDistr->globalCols(),
                                           1,
                                           MPI_COMM_GEOSX );
-        MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, locLocDistr, false );
+        colConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                   *rowConnLocPattDistr,
+                                                   false,
+                                                   locLocDistr,
+                                                   false );
       }
     }
     else
@@ -785,8 +896,18 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
           // Diagonal block
           ParallelMatrix const * connLocPattDistr = m_fields[iGlo].connLocPattern;
 
-          localPattern.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
-          MatrixMatrixMultiply( *connLocPattDistr, true, *connLocPattDistr, false, localPattern );
+          if( m_connectivity[iGlo][jGlo] == Connectivity::Elem )
+          {
+            localPattern.createWithLocalSize( m_fields[iGlo].numLocalRows, 1, MPI_COMM_GEOSX );
+          }
+          else
+          {
+            localPattern.createWithGlobalSize( connLocPattDistr->globalCols(), 1, MPI_COMM_GEOSX );
+          }
+          connLocPattDistr->MatrixMatrixMultiply( true,
+                                                  *connLocPattDistr,
+                                                  false,
+                                                  localPattern );
 
           for( globalIndex i = localPattern.ilower() ; i < localPattern.iupper() ; ++i )
           {
@@ -813,7 +934,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( rowConnLocPattDistr->globalCols(), colConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            MatrixMatrixMultiply( *rowConnLocPattDistr, true, *colConnLocPattDistr, false, localPattern, false );
+            rowConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                       *colConnLocPattDistr,
+                                                       false,
+                                                       localPattern,
+                                                       false );
           }
           else
           {
@@ -822,7 +947,11 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
 
             localPattern.createWithGlobalSize( colConnLocPattDistr->globalCols(), rowConnLocPattDistr->globalCols(),
                                                1, MPI_COMM_GEOSX );
-            MatrixMatrixMultiply( *colConnLocPattDistr, true, *rowConnLocPattDistr, false, localPattern, false );
+            colConnLocPattDistr->MatrixMatrixMultiply( true,
+                                                       *rowConnLocPattDistr,
+                                                       false,
+                                                       localPattern,
+                                                       false );
           }
 
           // Assembly (with right offsets)
@@ -847,6 +976,106 @@ void DofManager::getSparsityPattern( ParallelMatrix & locLocDistr,
   locLocDistr.close();
 }
 
+// Allocate a vector (location-location). High level interface
+void DofManager::setVector( ParallelVector & vector,
+                            string const & rowField,
+                            string const & colField ) const
+{
+  localIndex rowFieldIndex, colFieldIndex;
+
+  if( rowField.length() > 0 )
+  {
+    // check if the row field name is already added
+    GEOS_ERROR_IF( !keyInUse( rowField ), "setVector: requested field name must be already existing." );
+
+    // get row field index
+    rowFieldIndex = fieldIndex( rowField );
+  }
+  else
+  {
+    rowFieldIndex = -1;
+  }
+
+  if( colField.length() > 0 )
+  {
+    // check if the col field name is already added
+    GEOS_ERROR_IF( !keyInUse( colField ), "setVector: requested field name must be already existing." );
+
+    // get col field index
+    colFieldIndex = fieldIndex( colField );
+  }
+  else
+  {
+    colFieldIndex = -1;
+  }
+
+  if( rowFieldIndex * colFieldIndex < 0 )
+  {
+    GEOS_ERROR( "setVector accepts both two field names and none, instead just one is provided." );
+  }
+
+  // Call the low level routine
+  setVector( vector, rowFieldIndex, colFieldIndex );
+}
+
+// Allocate a vector (location-location). Low level interface
+void DofManager::setVector( ParallelVector & vector,
+                            localIndex const rowFieldIndex,
+                            localIndex const colFieldIndex ) const
+{
+  GEOS_ERROR_IF( rowFieldIndex * colFieldIndex < 0,
+                 "setVector accepts both two existing field indices (positive values) and "
+                 "two negative values (entire Jacobian rows/columns), instead just one index is positive.");
+
+  if( rowFieldIndex >= 0 and colFieldIndex == rowFieldIndex )
+  {
+    // Diagonal block
+    if( m_connectivity[rowFieldIndex][colFieldIndex] == Connectivity::Elem )
+    {
+      vector.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows, MPI_COMM_GEOSX );
+    }
+    else
+    {
+      ParallelMatrix const * connLocPattDistr = m_fields[rowFieldIndex].connLocPattern;
+      vector.createWithGlobalSize( connLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+    }
+  }
+  else if( rowFieldIndex >= 0 and colFieldIndex >= 0 )
+  {
+    // ExtraDiagonal (coupling) block
+    if( m_connectivity[rowFieldIndex][colFieldIndex] != Connectivity::None )
+    {
+      if( m_sparsityPattern[rowFieldIndex][colFieldIndex].first != nullptr )
+      {
+        ParallelMatrix const * rowConnLocPattDistr = m_sparsityPattern[rowFieldIndex][colFieldIndex].first;
+        vector.createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+      }
+      else
+      {
+        ParallelMatrix const * rowConnLocPattDistr = m_sparsityPattern[colFieldIndex][rowFieldIndex].first;
+        vector.createWithGlobalSize( rowConnLocPattDistr->globalCols(), MPI_COMM_GEOSX );
+      }
+    }
+    else
+    {
+      // Empty block
+      globalIndex nRows = m_fields[rowFieldIndex].connLocPattern->globalCols();
+      vector.createWithGlobalSize( nRows, MPI_COMM_GEOSX );
+    }
+  }
+  else if( rowFieldIndex < 0 and colFieldIndex < 0 )
+  {
+    // Create the global matrix
+    globalIndex sumGlobalDofs = 0;
+    for( localIndex i = 0 ; i < m_fields.size() ; ++i )
+    {
+      sumGlobalDofs += m_fields[i].numGlobalRows;
+    }
+    vector.createWithGlobalSize( sumGlobalDofs, MPI_COMM_GEOSX );
+  }
+  vector.close();
+}
+
 // Permute the GLOBAL sparsity pattern (location-location). Low level interface
 void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
                                          ParallelMatrix const & permutation,
@@ -857,17 +1086,93 @@ void DofManager::permuteSparsityPattern( ParallelMatrix const & locLocDistr,
   ParallelMatrix productStep1;
 
   productStep1.createWithGlobalSize( locLocDistr.globalRows(), permutation.globalCols(), 1, MPI_COMM_GEOSX );
-  MatrixMatrixMultiply( locLocDistr, false, permutation, false, productStep1 );
+  locLocDistr.MatrixMatrixMultiply( false,
+                                    permutation,
+                                    false,
+                                    productStep1 );
 
   // Matrix B = P*C
   permutedMatrix.createWithGlobalSize( permutation.globalCols(), productStep1.globalCols(), 1, MPI_COMM_GEOSX );
-  MatrixMatrixMultiply( permutation, true, productStep1, false, permutedMatrix );
+  permutation.MatrixMatrixMultiply( true,
+                                    productStep1,
+                                    false,
+                                    permutedMatrix );
+}
+
+// Copy values from DOFs to nodes
+void DofManager::copyVectorToField( ParallelVector const & vector,
+                                    string const & field,
+                                    dataRepository::ManagedGroup * const manager ) const
+{
+  // check if the field name is already added
+  GEOS_ERROR_IF( !keyInUse( field ),
+                 "printConnectivityLocationPattern: requested field name must be already existing." );
+
+  // get field index
+  localIndex fieldIdx = fieldIndex( field );
+
+  // Retrieve fieldVar
+  real64_array & fieldVar = manager->getReference<real64_array>( field );
+
+  // Retrieve indexArray
+  globalIndex_array const &
+  indexArray = manager->getReference<globalIndex_array>( m_fields[fieldIdx].key );
+
+  // Get local vector
+  real64 * localVector = nullptr;
+  vector.extractLocalVector( &localVector );
+
+  // Map values from localVector to fieldVar
+  for( localIndex r = 0 ; r < indexArray.size() ; ++r )
+  {
+    localIndex lid = vector.getLocalRowID( indexArray[r] );
+    // Check if it is available
+    if( lid >= 0 )
+    {
+      fieldVar[r] = localVector[lid];
+    }
+  }
+}
+
+// Copy values from nodes to DOFs
+void DofManager::copyFieldToVector( ParallelVector const & vector,
+                                    string const & field,
+                                    dataRepository::ManagedGroup * const manager ) const
+{
+  // check if the field name is already added
+  GEOS_ERROR_IF( !keyInUse( field ),
+                 "printConnectivityLocationPattern: requested field name must be already existing." );
+
+  // get field index
+  localIndex fieldIdx = fieldIndex( field );
+
+  // Retrieve fieldVar
+  real64_array & fieldVar = manager->getReference<real64_array>( field );
+
+  // Retrieve indexArray
+  globalIndex_array const &
+  indexArray = manager->getReference<globalIndex_array>( m_fields[fieldIdx].key );
+
+  // Get local vector
+  real64 * localVector = nullptr;
+  vector.extractLocalVector( &localVector );
+
+  // Map values from fieldVar to localVector
+  for( localIndex r = 0 ; r < indexArray.size() ; ++r )
+  {
+    localIndex lid = vector.getLocalRowID( indexArray[r] );
+    // Check if it is available
+    if( lid >= 0 )
+    {
+      localVector[lid] = fieldVar[r];
+    }
+  }
 }
 
 // Just an interface to allow only three parameters
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
-                              Connectivity const connectivity ) const
+                              Connectivity const connectivity )
 {
   addCoupling( rowField, colField, connectivity, string_array(), true );
 }
@@ -876,7 +1181,7 @@ void DofManager::addCoupling( string const & rowField,
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
-                              string_array const & regions = string_array() ) const
+                              string_array const & regions = string_array() )
 {
   addCoupling( rowField, colField, connectivity, regions, true );
 }
@@ -885,7 +1190,7 @@ void DofManager::addCoupling( string const & rowField,
 void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
-                              bool const symmetric ) const
+                              bool const symmetric )
 {
   addCoupling( rowField, colField, connectivity, string_array(), symmetric );
 }
@@ -895,7 +1200,7 @@ void DofManager::addCoupling( string const & rowField,
                               string const & colField,
                               Connectivity const connectivity,
                               string_array const & regions,
-                              bool const symmetric ) const
+                              bool const symmetric )
 {
   // check if the row field name is already added
   GEOS_ERROR_IF( !keyInUse( rowField ), "addCoupling: requested field name must be already existing." );
@@ -1051,16 +1356,16 @@ void DofManager::getIndices( globalIndex_array & indices,
       // get field description
       FieldDescription const & fieldDesc = m_fields[fieldIdx];
 
-      globalIndex_array firstLocalConnectivity( fieldDesc.regionPtrs.size() );
+      globalIndex firstLocalConnectivity = 0;
 
       if( region < fieldDesc.regionPtrs.size() )
       {
         if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
         {
-          for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
+          for( localIndex er = 0 ; er < region ; ++er )
           {
             localIndex localCount = 0;
-            for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
+            for( localIndex esr = 0 ; esr < subregion ; esr++ )
             {
               CellElementSubRegion const * const
               subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
@@ -1078,54 +1383,28 @@ void DofManager::getIndices( globalIndex_array & indices,
             localIndex_array localGather;
             CommunicationTools::allGather( localCount, localGather );
 
-            firstLocalConnectivity[er] = 0;
             for( localIndex p = 0 ; p < mpiRank ; ++p )
             {
-              firstLocalConnectivity[er] += localGather[p];
+              firstLocalConnectivity += localGather[p];
             }
           }
         }
       }
 
-      if( region < fieldDesc.regionPtrs.size() )
+      // Retrieve row
+      real64_array values;
+      globalIndex
+      globalRow = fieldDesc.connLocPattern->getGlobalRowID(
+        firstLocalConnectivity + integer_conversion<globalIndex>( index ) );
+      if( globalRow >= 0 )
       {
-        if( subregion < fieldDesc.regionPtrs[region]->numSubRegions() )
+        globalIndex_array indicesOrig;
+        fieldDesc.connLocPattern->getRowCopy( globalRow, indicesOrig, values );
+        indices.resize( indicesOrig.size() );
+        // Add offset
+        for( localIndex i = 0 ; i < indicesOrig.size() ; ++i )
         {
-          globalIndex globalCount = fieldDesc.firstLocalConnectivity;
-          for( localIndex er = 0 ; er < fieldDesc.regionPtrs.size() ; ++er )
-          {
-            globalIndex localCount = firstLocalConnectivity[er];
-            for( localIndex esr = 0 ; esr < fieldDesc.regionPtrs[er]->numSubRegions() ; esr++ )
-            {
-              CellElementSubRegion const * const
-              subRegion = fieldDesc.regionPtrs[er]->GetSubRegion<CellElementSubRegion>( esr );
-              integer_array const & ghostRank = subRegion->m_ghostRank;
-
-              for( localIndex elem = 0 ; elem < ghostRank.size() ; ++elem )
-              {
-                if( ghostRank[elem] < 0 )
-                {
-                  if( er == region && esr == subregion && index == localCount )
-                  {
-                    localIndex localRow = ParallelMatrixGetLocalRowID( *fieldDesc.connLocPattern, globalCount );
-                    if( localRow >= 0 )
-                    {
-                      // Retrieve row
-                      real64_array values;
-                      fieldDesc.connLocPattern->getRowCopy( globalCount, indices, values );
-                      // Add offset
-                      for( localIndex i = 0 ; i < indices.size() ; ++i )
-                      {
-                        indices[i] += m_fields[fieldIdx].fieldOffset;
-                      }
-                    }
-                  }
-                  ++localCount;
-                  ++globalCount;
-                }
-              }
-            }
-          }
+          indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
         }
       }
     }
@@ -1153,15 +1432,26 @@ void DofManager::getIndices( globalIndex_array & indices,
     // get field description
     const FieldDescription & fieldDesc = m_fields[fieldIdx];
 
-    if( index >= fieldDesc.connLocPattern->ilower() and index < fieldDesc.connLocPattern->iupper() )
+    // Retrieve row
+    real64_array values;
+    globalIndex globalRow = fieldDesc.connLocPattern->getGlobalRowID( index );
+    if( globalRow >= 0 )
     {
-      // Retrieve row
-      real64_array values;
-      fieldDesc.connLocPattern->getRowCopy( index, indices, values );
+      globalIndex_array indicesOrig;
+      fieldDesc.connLocPattern->getRowCopy( globalRow, indicesOrig, values );
+      indices.resize( indicesOrig.size() );
       // Add offset
       for( localIndex i = 0 ; i < indices.size() ; ++i )
       {
-        indices[i] += m_fields[fieldIdx].fieldOffset;
+        // To handle elements order when not connected through elements
+        if( connectivity == Connectivity::Elem )
+        {
+          indices[static_cast<localIndex>( values[i] ) - 1] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
+        }
+        else
+        {
+          indices[i] = indicesOrig[i] + m_fields[fieldIdx].fieldOffset;
+        }
       }
     }
   }
@@ -1178,7 +1468,7 @@ void DofManager::createPermutation( ParallelMatrix & permutation ) const
   {
     sumGlobalDofs += m_fields[i].numGlobalRows;
     ParallelMatrix pattern;
-    getSparsityPattern( pattern, i, i );
+    setSparsityPattern( pattern, i, i );
     ilower[i] = pattern.ilower();
     iupper[i] = pattern.iupper();
     offset += iupper[i] - ilower[i];
@@ -1216,7 +1506,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
                                               localIndex const & colFieldIndex,
                                               localIndex_array const & rowActiveRegions,
                                               localIndex_array const & colActiveRegions,
-                                              Connectivity const connectivity ) const
+                                              Connectivity const connectivity )
 {
   // Row field description
   FieldDescription const & rowFieldDesc = m_fields[rowFieldIndex];
@@ -1241,7 +1531,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
 
   rowConnLocPattDistr = new ParallelMatrix();
   rowConnLocPattDistr->createWithGlobalSize( rowPatternLocal.nRows,
-                                             rowPatternLocal.nCols,
+                                             m_fields[rowFieldIndex].connLocPattern->globalCols(),
                                              maxEntriesPerRow,
                                              MPI_COMM_GEOSX );
   for( globalIndex i = 0 ; i < rowPatternLocal.nRows ; ++i )
@@ -1262,7 +1552,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
   // Pattern of connections and column locations
   colConnLocPattDistr = new ParallelMatrix();
   colConnLocPattDistr->createWithGlobalSize( colPatternLocal.nRows,
-                                             colPatternLocal.nCols,
+                                             m_fields[colFieldIndex].connLocPattern->globalCols(),
                                              maxEntriesPerRow,
                                              MPI_COMM_GEOSX );
   for( globalIndex i = 0 ; i < colPatternLocal.nRows ; ++i )
@@ -1286,7 +1576,7 @@ void DofManager::addExtraDiagSparsityPattern( ParallelMatrix *& rowConnLocPattDi
 void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                          localIndex const & fieldIdx,
                                          Connectivity const connectivity,
-                                         localIndex_array const & activeRegionsInput ) const
+                                         localIndex_array const & activeRegionsInput )
 {
   // get field description
   FieldDescription const & fieldDesc = m_fields[fieldIdx];
@@ -1364,8 +1654,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
               {
                 for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                 {
-                  pairs.push_back( std::make_pair( firstLocalConnectivity + count,
-                                                   fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i ) );
+                  pairs.push_back( std::make_tuple( firstLocalConnectivity + count,
+                                                    fieldDesc.numComponents * ( fieldDesc.firstLocalConnectivity + elemIndex ) + i,
+                                                    fieldDesc.numComponents * e + i ) );
                 }
                 ++count;
               }
@@ -1440,8 +1731,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( firstLocalConnectivity + elemIndex,
-                                                     fieldDesc.numComponents * indexArray[map[e][n]] + i ) );
+                    pairs.push_back( std::make_tuple( firstLocalConnectivity + elemIndex,
+                                                      fieldDesc.numComponents * indexArray[map[e][n]] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
                 ++elemIndex;
@@ -1518,8 +1810,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                   {
                     if( indexArrayFace[map[e][n]] >= 0 )
                     {
-                      pairs.push_back( std::make_pair( indexArrayFace[map[e][n]],
-                                                       fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i ) );
+                      pairs.push_back( std::make_tuple( indexArrayFace[map[e][n]],
+                                                        fieldDesc.numComponents * indexArrayFaceOrig[map[e][n]] + i,
+                                                        fieldDesc.numComponents * n + i ) );
                     }
                   }
                 }
@@ -1581,8 +1874,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                   {
                     if( indexArrayFace[map[e][n]] >= 0 )
                     {
-                      pairs.push_back( std::make_pair( indexArrayFace[map[e][n]],
-                                                       fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                      pairs.push_back( std::make_tuple( indexArrayFace[map[e][n]],
+                                                        fieldDesc.numComponents * indexArrayElem[e] + i,
+                                                        fieldDesc.numComponents * n + i ) );
                     }
                   }
                 }
@@ -1655,8 +1949,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                     {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                       {
-                        pairs.push_back( std::make_pair( faceId,
-                                                         fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i ) );
+                        pairs.push_back( std::make_tuple( faceId,
+                                                          fieldDesc.numComponents * indexArrayNode[nodeIndices[j]] + i,
+                                                          fieldDesc.numComponents * j + i ) );
                       }
                     }
                   }
@@ -1732,8 +2027,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i ) );
+                    pairs.push_back( std::make_tuple( indexArrayNode[map[e][n]],
+                                                      fieldDesc.numComponents * indexArrayNodeOrig[map[e][n]] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
               }
@@ -1792,8 +2088,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                 {
                   for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                   {
-                    pairs.push_back( std::make_pair( indexArrayNode[map[e][n]],
-                                                     fieldDesc.numComponents * indexArrayElem[e] + i ) );
+                    pairs.push_back( std::make_tuple( indexArrayNode[map[e][n]],
+                                                      fieldDesc.numComponents * indexArrayElem[e] + i,
+                                                      fieldDesc.numComponents * n + i ) );
                   }
                 }
               }
@@ -1866,8 +2163,9 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                     {
                       for( localIndex i = 0 ; i < fieldDesc.numComponents ; ++i )
                       {
-                        pairs.push_back( std::make_pair( indexArrayNode[nodeIndices[j]],
-                                                         fieldDesc.numComponents * faceId + i ) );
+                        pairs.push_back( std::make_tuple( indexArrayNode[nodeIndices[j]],
+                                                          fieldDesc.numComponents * faceId + i,
+                                                          fieldDesc.numComponents * j + i ) );
                       }
                     }
                   }
@@ -1893,10 +2191,10 @@ void DofManager::addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
     pairs.resize( endPairs - pairs.begin() );
   }
 
-  localIndex nRowsLoc = ( emptyPairs ) ? 0 : pairs.back().first;
+  localIndex nRowsLoc = ( emptyPairs ) ? 0 : std::get<0>( pairs.back() );
   localIndex nColsLoc = ( emptyPairs ) ?
                         0 :
-                        std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() )->second ;
+                        std::get<1>( *std::max_element( pairs.begin(), pairs.end(), pairSecondComparison() ) ) ;
 
   // Find the global number of rows
   localIndex_array localGather;
@@ -1947,6 +2245,7 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   // Allocate matrix with right sizes
   pattern.rowLengths.resize( nRows + 1 );
   pattern.colIndices.resize( nnz );
+  pattern.nnzEntries.resize( nnz );
 
   // Convert
   localIndex irow0 = 0;
@@ -1955,8 +2254,9 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   pattern.rowLengths[0] = 0;
   for( localIndex i = 0 ; i < nnz ; ++i )
   {
-    irow1 = pairs[i].first;
-    pattern.colIndices[k++] = pairs[i].second;
+    irow1 = std::get<0>( pairs[i] );
+    pattern.colIndices[k] = std::get<1>( pairs[i] );
+    pattern.nnzEntries[k++] = std::get<2>( pairs[i] );
     if( irow1 > irow0 )
     {
       for( localIndex j = irow0 ; j < irow1 ; ++j )
@@ -1972,41 +2272,6 @@ void DofManager::vectorOfPairsToCSR( array1d<indexPair> const & pairs,
   {
     pattern.rowLengths[j] = nnz;
   }
-}
-
-// Perform the matrix-matrix product A*src = dst.
-void DofManager::MatrixMatrixMultiply( EpetraMatrix const &A,
-                                       bool const transA,
-                                       EpetraMatrix const &B,
-                                       bool const transB,
-                                       EpetraMatrix &C,
-                                       bool const call_FillComplete ) const
-{
-  int
-  err = EpetraExt::MatrixMatrix::Multiply( *A.unwrappedPointer(), transA,
-                                           *B.unwrappedPointer(), transB, *C.unwrappedPointer(), call_FillComplete );
-
-  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
-
-  // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
-  // case the function does not work. After the multiplication is performed, call close().
-  if( !call_FillComplete )
-  {
-    C.close();
-  }
-}
-
-// Map a global row index to local row index
-localIndex DofManager::ParallelMatrixGetLocalRowID( EpetraMatrix const &A, globalIndex const index ) const
-{
-  return A.unwrappedPointer()->LRID( index );
-}
-
-// Return the local number of columns on each processor
-// NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
-localIndex DofManager::numMyCols( EpetraMatrix const &A ) const
-{
-  return A.unwrappedPointer()->DomainMap().NumMyElements();
 }
 
 // Release internal memory
@@ -2065,20 +2330,7 @@ void DofManager::printConnectivityLocationPattern( string const & field, string 
   }
 
   // Print the selected pattern
-  printParallelMatrix( *pattern, name );
-}
-
-// Print the given parallel matrix in Matrix Market format (MTX file)
-void DofManager::printParallelMatrix( ParallelMatrix const & matrix, string const & fileName ) const
-{
-  // Ensure the ".mtx" extension
-  string name( fileName );
-  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" )
-  {
-    name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
-  }
-
-  EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *matrix.unwrappedPointer() );
+  pattern->printParallelMatrix( name );
 }
 
 // Print a CSR pattern on file or on screen
@@ -2093,7 +2345,7 @@ void DofManager::printSparsityPattern( Dof_SparsityPattern const & pattern, stri
       {
         for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
         {
-          std::cout << i + 1 << " " << pattern.colIndices[j] + 1 << std::endl;
+          std::cout << i + 1 << " " << pattern.colIndices[j] + 1 << " " << pattern.nnzEntries[j] + 1 << std::endl;
         }
       }
     }
@@ -2108,7 +2360,7 @@ void DofManager::printSparsityPattern( Dof_SparsityPattern const & pattern, stri
     {
       for( localIndex j = pattern.rowLengths[i] ; j < pattern.rowLengths[i + 1] ; ++j )
       {
-        fid << i + 1 << " " << pattern.colIndices[j] + 1 << " " << 1 << std::endl;
+        fid << i + 1 << " " << pattern.colIndices[j] + 1 << " " << pattern.nnzEntries[j] + 1 << std::endl;
       }
     }
     fid.close();

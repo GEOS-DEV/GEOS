@@ -27,9 +27,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "fileIO/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-
-//#include "ObjectManagers/PhysicalDomainT.h"
-//#include "SimpleGeometricObjects.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -51,7 +49,7 @@ MeshUtilities::~MeshUtilities()
 void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
                                       ObjectManagerBase * const nodeManager )
 {
-
+  GEOSX_MARK_FUNCTION; 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
   ManagedGroup * sets = nodeManager->sets();
 

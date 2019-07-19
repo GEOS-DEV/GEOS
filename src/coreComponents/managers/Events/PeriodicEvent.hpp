@@ -85,7 +85,7 @@ public:
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
   /// A pointer to an optional function
   dataRepository::ManagedGroup * m_functionTarget;

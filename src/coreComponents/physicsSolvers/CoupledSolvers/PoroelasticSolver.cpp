@@ -239,7 +239,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
     elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
 
-  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitituveRelation( fluidSolver.solidIndex() )->getIndexInParent();
+  localIndex const solidIndex = domain->getConstitutiveManager()->GetConstitutiveRelation( fluidSolver.solidIndex() )->getIndexInParent();
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {

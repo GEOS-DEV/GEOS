@@ -26,11 +26,11 @@
 
 #include "NodeManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
-//using namespace constitutive;
-
 
 CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
   ElementSubRegionBase( name, parent ),
@@ -391,6 +391,17 @@ void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
   this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
+}
+
+void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                     FaceManager const & facemanager )
+{
+  array1d<R1Tensor> const & X = nodeManager.referencePosition();
+
+  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+  {
+    CalculateCellVolumesKernel( k, X );
+  });
 }
 
 
