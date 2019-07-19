@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SINGLEFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -40,6 +41,10 @@ public:
   virtual ~SingleFluidBase() override;
 
   // *** ConstitutiveBase interface
+
+  virtual void DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
 
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -96,9 +101,11 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr auto defaultDensityString      = "defaultDensity";
     static constexpr auto densityString      = "density";
     static constexpr auto dDens_dPresString  = "dPressure_dDensity";
 
+    static constexpr auto defaultViscosityString    = "defaultViscosity";
     static constexpr auto viscosityString    = "viscosity";
     static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
 
@@ -122,7 +129,7 @@ protected:
    * @tparam LAMBDA type the target function
    * @param lambda the kernel function
    */
-  template< typename POLICY=elemPolicy, typename LAMBDA >
+  template< typename POLICY=serialPolicy, typename LAMBDA >
   void LaunchKernel( LAMBDA && lambda );
 
   /**
@@ -135,7 +142,7 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                           ARGS && ... args );
 
@@ -149,7 +156,7 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
                                  ARGS && ... args );
 
@@ -163,9 +170,12 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
                                    ARGS && ... args );
+
+  real64 m_defaultDensity;
+  real64 m_defaultViscosity;
 
   array2d<real64> m_density;
   array2d<real64> m_dDensity_dPressure;

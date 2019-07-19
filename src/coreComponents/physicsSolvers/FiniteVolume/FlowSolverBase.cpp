@@ -89,6 +89,18 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
+    ElementRegionManager * const elemManager = mesh->getElemManager();
+
+    elemManager->forElementSubRegions<FaceElementSubRegion>( [&] ( FaceElementSubRegion * const subRegion )
+    {
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
+        setApplyDefaultValue( 1.0 )->
+        setPlotLevel(PlotLevel::LEVEL_0);
+
+      subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+    });
+
     FaceManager * const faceManager = mesh->getFaceManager();
     faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
   }
@@ -101,11 +113,11 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * fluid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_fluidName );
+  ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_fluidName );
   GEOS_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
   m_fluidIndex = fluid->getIndexInParent();
 
-  ConstitutiveBase const * solid  = cm->GetConstitituveRelation<ConstitutiveBase>( m_solidName );
+  ConstitutiveBase const * solid  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_solidName );
   GEOS_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
   m_solidIndex = solid->getIndexInParent();
 
@@ -162,7 +174,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d<real64> const & gravityDepth =
       subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex a )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex a )
     {
       gravityDepth[a] = Dot( elemCenter[a], gravityVector );
     } );
@@ -175,7 +187,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d<real64> const & gravityDepth =
       faceManager->getReference<array1d<real64>>(viewKeyStruct::gravityDepthString);
 
-    forall_in_range<elemPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex a )
+    forall_in_range<serialPolicy>( 0, faceManager->size(), GEOSX_LAMBDA ( localIndex a )
     {
       gravityDepth[a] = Dot( faceCenter[a], gravityVector );
     } );

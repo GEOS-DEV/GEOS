@@ -22,7 +22,6 @@
 
 #include "TableFunction.hpp"
 #include "common/DataTypes.hpp"
-//#include "mathpresso.h"
 #include "codingUtilities/IOUtilities.hpp"
 #include <algorithm>
 

@@ -11,7 +11,7 @@
                                   timeIntegrationOption="QuasiStatic"
                                   verboseLevel="0"
                                   discretization="FE1"
-                                  targetRegions="Region2"
+                                  targetRegions="{Region2}"
                                   solidMaterialName="granite"
                                   >
       <SystemSolverParameters krylovTol="1.0e-10"
@@ -22,21 +22,22 @@
   
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="3"
-                      targetRegions="Region2">
+                      fractureRegion="Fracture"
+                      targetRegions="{Region2}">
     </SurfaceGenerator>
   </Solvers>
 
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="0, 2"
-                  yCoords="-1, 1"
-                  zCoords="-1, 1"
-                  nx="2"
-                  ny="2"
-                  nz="2"
-                  cellBlockNames="cb1"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{0, 2}"
+                  yCoords="{-1, 1}"
+                  zCoords="{-1, 1}"
+                  nx="{2}"
+                  ny="{2}"
+                  nz="{2}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
@@ -82,7 +83,8 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" materialList="granite" />
+    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
+    <FaceElementRegion name="Fracture" materialList="{granite}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -97,7 +99,7 @@
   <FieldSpecifications>
     <FieldSpecification name="frac"
                initialCondition="1"
-               setNames="fracPlane"
+               setNames="{fracPlane}"
                objectPath="faceManager"
                fieldName="ruptureState"
                scale="1"/>
@@ -108,37 +110,37 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="yneg ypos"/>
+               setNames="{yneg, ypos}"/>
 
     <FieldSpecification name="z" 
                component="2" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="yneg ypos"/>
+               setNames="{yneg, ypos}"/>
                               
     <FieldSpecification name="bot" 
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="-0.1" 
-               setNames="yneg"/>
+               setNames="{yneg}"/>
                
     <FieldSpecification name="top" 
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.1" 
-               setNames="ypos"/>
+               setNames="{ypos}"/>
                
   </FieldSpecifications>
 
 
   <Functions>
     <TableFunction name="timeFunction"
-                   inputVarNames="time"
-                   coordinates= "0.0 1.0 1.0e9"
-                   values     = "0.0 1.0 1.0" />
+                   inputVarNames="{time}"
+                   coordinates= "{0.0, 1.0, 1.0e9}"
+                   values     = "{0.0, 1.0, 1.0}" />
     
   </Functions>
 

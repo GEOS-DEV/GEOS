@@ -23,6 +23,7 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_DOFMANAGER_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_DOFMANAGER_HPP_
 
+#include <numeric>
 #include "common/DataTypes.hpp"
 #include "managers/DomainPartition.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
@@ -55,9 +56,11 @@ struct Dof_SparsityPattern
   localIndex nCols; //<! number of columns
   localIndex_array rowLengths; //<! row lengths, size numLocalRows
   globalIndex_array colIndices; //<! packed column indices, size numLocalNonZeros
+  localIndex_array nnzEntries; //! packed values (of type localIndex), size numLocalNonZeros
 };
 
 using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
+using ParallelVector = typename TrilinosInterface::ParallelVector;
 
 /**
  * The DoFManager is responsible for allocating global dofs, constructing
@@ -71,7 +74,7 @@ public:
   /**
    * Constructor
    */
-  DofManager();
+  DofManager( localIndex const verbosity = 0 );
 
   /**
    * Destructor
@@ -219,7 +222,7 @@ public:
    */
   void addCoupling( string const & rowField,
                     string const & colField,
-                    Connectivity const connectivity ) const;
+                    Connectivity const connectivity );
 
   /**
    * Just another interface to allow four parameters (no symmetry)
@@ -227,7 +230,7 @@ public:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    string_array const & regions ) const;
+                    string_array const & regions );
 
   /**
    * Just another interface to allow four parameters (no regions)
@@ -235,7 +238,7 @@ public:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    bool const symmetric ) const;
+                    bool const symmetric );
 
   /**
    * The real function, allowing the creation of coupling blocks
@@ -244,7 +247,12 @@ public:
                     string const & colField,
                     Connectivity const connectivity,
                     string_array const & regions,
-                    bool const symmetric ) const;
+                    bool const symmetric );
+
+  /**
+   * Get key.
+   */
+  string getKey( string const & field ) const;
 
   /**
    * Return global number of dofs across all processors. If field argument is empty, return monolithic size.
@@ -252,24 +260,45 @@ public:
   globalIndex numGlobalDofs( string const & field = "" ) const;
 
   /**
-   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size
+   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size.
    */
   localIndex numLocalDofs( string const & field = "" ) const;
 
   /**
-   * Get a sparsity pattern.  Without additional arguments, this function routines the sparsity pattern for the
-   * monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
+   * Return the sum of local dofs across all previous processors w.r.t. to the calling one for the specified field.
    */
-  void getSparsityPattern( ParallelMatrix & locLocDistr,
+  localIndex offsetLocalDofs( string const & field = "" ) const;
+
+  /**
+   * Set a sparsity pattern.  Without additional arguments, this function provides the sparsity pattern
+   * for the monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
+   */
+  void setSparsityPattern( ParallelMatrix & locLocDistr,
                            string const & rowField = "",
                            string const & colField = "" ) const;
 
   /**
-   * Get a sparsity pattern. Low level version
+   * Set a sparsity pattern. Low level version
    */
-  void getSparsityPattern( ParallelMatrix & locLocDistr,
+  void setSparsityPattern( ParallelMatrix & locLocDistr,
                            localIndex const rowFieldIndex,
                            localIndex const colFieldIndex ) const;
+
+  /**
+   * Allocate a vector.  Without additional arguments, this function provides the a vector consistent
+   * with the sparsity pattern for the monolithic matrix.  Sub-vectors can be extracted, however, using
+   * row and column field keys.
+   */
+  void setVector( ParallelVector & vector,
+                  string const & rowField = "",
+                  string const & colField = "" ) const;
+
+  /**
+   * Allocate a vector. Low level version
+   */
+  void setVector( ParallelVector & vector,
+                  localIndex const rowFieldIndex,
+                  localIndex const colFieldIndex ) const;
 
   /**
    * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
@@ -314,6 +343,20 @@ public:
                                ParallelMatrix & permutedMatrix ) const;
 
   /**
+   * Copy values from DOFs to nodes
+   */
+  void copyVectorToField( ParallelVector const & vector,
+                          string const & field,
+                          dataRepository::ManagedGroup * const manager ) const;
+
+  /**
+   * Copy values from nodes to DOFs
+   */
+  void copyFieldToVector( ParallelVector const & vector,
+                          string const & field,
+                          dataRepository::ManagedGroup * const manager ) const;
+
+  /**
    * Print the global connectivity matrix
    */
   void printConnectivityMatrix() const;
@@ -324,17 +367,23 @@ public:
   void printConnectivityLocationPattern( string const & field, string const & fileName = "" ) const;
 
   /**
-   * Print the given parallel matrix in Matrix Market format (MTX file)
-   */
-  void printParallelMatrix( ParallelMatrix const & matrix,
-                            string const & filename ) const;
-
-  /**
    * Print a CSR pattern on file or on screen
    */
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
+  /**
+   * Getter for m_doubleSync
+   */
+  inline bool needDoubleSync() const {
+    return m_doubleSync;
+  }
+
 private:
+  /**
+   * Verbosity level
+   */
+  localIndex m_verbosity = 0;
+
   /**
    *  Limit on max number of fields
    */
@@ -351,10 +400,57 @@ private:
   MeshLevel * m_meshLevel = nullptr;
 
   /**
+   * To fix the case when a processor handles just one layer of cells
+   */
+  bool m_doubleSync = false;
+
+  /**
    * Field description
    */
   struct FieldDescription
   {
+    FieldDescription()
+    {}
+    
+    ~FieldDescription()
+    {}
+
+    FieldDescription( FieldDescription const & src ) :
+      name( src.name ),
+      regionNames( src.regionNames ),
+      regionPtrs( src.regionPtrs ),
+      location( src.location ),
+      numComponents( src.numComponents ),
+      key( src.key ),
+      docstring( src.docstring ),
+      numLocalNodes( src.numLocalNodes ),
+      numLocalRows( src.numLocalRows ),
+      numLocalConnectivity( src.numLocalConnectivity ),
+      numGlobalRows( src.numGlobalRows ),
+      firstLocalRow( src.firstLocalRow ),
+      fieldOffset( src.fieldOffset ),
+      firstLocalConnectivity( src.firstLocalConnectivity ),
+      connLocPattern( src.connLocPattern )
+    {}
+
+    FieldDescription( FieldDescription && src ) :
+      name( std::move( src.name ) ),
+      regionNames( std::move( src.regionNames ) ),
+      regionPtrs( std::move( src.regionPtrs ) ),
+      location( std::move( src.location ) ),
+      numComponents( std::move( src.numComponents ) ),
+      key( std::move( src.key ) ),
+      docstring( std::move( src.docstring ) ),
+      numLocalNodes( std::move( src.numLocalNodes ) ),
+      numLocalRows( std::move( src.numLocalRows ) ),
+      numLocalConnectivity( std::move( src.numLocalConnectivity ) ),
+      numGlobalRows( std::move( src.numGlobalRows ) ),
+      firstLocalRow( std::move( src.firstLocalRow ) ),
+      fieldOffset( std::move( src.fieldOffset ) ),
+      firstLocalConnectivity( std::move( src.firstLocalConnectivity ) ),
+      connLocPattern( std::move( src.connLocPattern ) )
+    {}
+
     string name; //!< field name
     array1d<string> regionNames; //!< active element regions
     array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
@@ -364,6 +460,7 @@ private:
     string docstring; //!< documentation string
     localIndex numLocalNodes; //!< number of local nodes
     localIndex numLocalRows; //!< number of local rows
+    localIndex numLocalConnectivity; //!< number of local connectors
     globalIndex numGlobalRows; //!< number of ghost rows
     globalIndex firstLocalRow; //!< first row on this processor (without field offset)
     globalIndex fieldOffset; //!< global row offset for multi-field problems
@@ -402,6 +499,11 @@ private:
   int mpiRank;
 
   /**
+   * Initialize data structure for connectivity and sparsity pattern
+   */
+  void initializeDataStructure();
+
+  /**
    * Check if string key is already being used
    */
   bool keyInUse( string const & key ) const;
@@ -415,7 +517,7 @@ private:
    * Create index array
    */
   void createIndexArray_NodeOrFaceVersion( FieldDescription & field,
-                                           localIndex_array const & activeRegionsInput = localIndex_array() ) const;
+                                           localIndex_array const & activeRegionsInput = localIndex_array() );
 
   /**
    * Create element index array
@@ -429,7 +531,7 @@ private:
   void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
                                localIndex const & fieldIdx,
                                Connectivity const connectivity,
-                               localIndex_array const & activeRegionsInput = localIndex_array() ) const;
+                               localIndex_array const & activeRegionsInput = localIndex_array() );
 
   /**
    * Create sparsity pattern for two fields (extra-diagonal entries in the
@@ -441,12 +543,12 @@ private:
                                     localIndex const & colFieldIndex,
                                     localIndex_array const & rowActiveRegions,
                                     localIndex_array const & colActiveRegions,
-                                    Connectivity const connectivity ) const;
+                                    Connectivity const connectivity );
 
   /**
    * Definifion for entries of sparse matrix in COO format
    */
-  typedef std::pair<localIndex, globalIndex> indexPair;
+  typedef std::tuple<localIndex, globalIndex, localIndex> indexPair;
 
   /**
    * Compare structure used to create CSR matrix from COO format
@@ -455,10 +557,10 @@ private:
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
     {
-      if( lhs.first < rhs.first )
+      if( std::get<0>( lhs ) < std::get<0>( rhs ) )
         return true;
-      else if( lhs.first == rhs.first )
-        return lhs.second < rhs.second;
+      else if( std::get<0>( lhs ) == std::get<0>( rhs ) )
+        return std::get<1>( lhs ) < std::get<1>( rhs );
       else
         return false;
     }
@@ -471,7 +573,7 @@ private:
   {
     inline bool operator()( const indexPair& lhs, const indexPair& rhs ) const
     {
-      return ( lhs.second < rhs.second );
+      return ( std::get<1>( lhs ) < std::get<1>( rhs ) );
     }
   };
 
@@ -487,28 +589,6 @@ private:
    * Release internal storage
    */
   void cleanUp();
-
-  /**
-   * Performe a matrix matrix product with Parallel Matrix
-   */
-  void MatrixMatrixMultiply( EpetraMatrix const &A,
-                             bool const transA,
-                             EpetraMatrix const &B,
-                             bool const transB,
-                             EpetraMatrix &C,
-                             bool const call_FillComplete = true ) const;
-
-  /**
-   * Map a global row index to local row index
-   */
-  localIndex ParallelMatrixGetLocalRowID( EpetraMatrix const &A,
-                                          globalIndex const index ) const;
-
-  /**
-   * Return the local number of columns on each processor
-   */
-  localIndex numMyCols( EpetraMatrix const &A ) const;
-
 };
 
 } /* namespace geosx */

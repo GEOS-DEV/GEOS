@@ -63,8 +63,8 @@ public:
    * @param[in] key the key that defines the KeyIndex
    */
   KeyIndexT( KEY_TYPE const & key ):
-    m_key(key),
-    m_index(INVALID_INDEX)
+    m_key( key ),
+    m_index( INVALID_INDEX )
   {}
 
   /// default copy constructor
@@ -139,7 +139,7 @@ private:
  * @return a reference to the stream \p os
  */
 template< typename KEY_TYPE, typename INDEX_TYPE, int INVALID_INDEX >
-std::ostream& operator<<( std::ostream& os, const KeyIndexT< KEY_TYPE, INDEX_TYPE, INVALID_INDEX > key )
+std::ostream & operator<<( std::ostream & os, const KeyIndexT< KEY_TYPE, INDEX_TYPE, INVALID_INDEX > key )
 {
   os << key.Key();
   return os;

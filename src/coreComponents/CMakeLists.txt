@@ -51,7 +51,7 @@ endif()
 blt_combine_static_libraries( NAME          geosx_core
                               SOURCE_LIBS   ${coreLibs}
                               LIB_TYPE SHARED
-                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG} 
+                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
                               LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                             )
 
@@ -62,5 +62,9 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents
 
 geosx_add_code_checks(PREFIX core )
 
+add_test( NAME testUncrustifyCheck
+          COMMAND ${CMAKE_MAKE_PROGRAM} common_uncrustify_check dataRepository_uncrustify_check
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+          )
 
 add_subdirectory( unitTests )
