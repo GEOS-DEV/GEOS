@@ -49,6 +49,8 @@
 #include "Epetra_SerialDenseMatrix.h"
 #include "Epetra_SerialDenseVector.h"
 
+#include "KernelMacros.hpp"
+
 namespace geosx
 {
 
@@ -142,15 +144,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView4d<real64 const> const &
-#if !CALC_SHAPE_FUNCTION_DERIVATIVES
-          dNdX
-#endif
-          ,
-          arrayView2d<real64 const> const & detJ,
-#if CALC_SHAPE_FUNCTION_DERIVATIVES
+#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+          arrayView4d<real64 const> const &,
+          arrayView2d<real64 const> const &,
           arrayView1d<R1Tensor const> const & X,
 #else
+          arrayView4d<real64 const> const & dNdX,
+          arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
 #endif
           arrayView1d<R1Tensor const> const & vel,
@@ -184,6 +184,7 @@ struct ExplicitKernel
       GEOS_LOG("Calculating shape function derivatives on the fly");
 #else
       GEOS_LOG("dNdX::shape = (" << dNdX.size(0) << ", " << dNdX.size(1) << ", " << dNdX.size(2) << ", " << dNdX.size(3) << ")");
+      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
 #endif
 
 #if STORE_NODE_DATA_LOCALLY
@@ -192,13 +193,6 @@ struct ExplicitKernel
       GEOS_LOG("Not storing node data locally.");
 #endif
 
-#if INLINE_STRESS_UPDATE
-      GEOS_LOG("Inlining stress update.");
-#else
-      GEOS_LOG("Not inlining stress update.");
-#endif
-
-      GEOS_LOG("detJ::shape = (" << detJ.size(0) << ", " << detJ.size(1) << ")");
       GEOS_LOG("meanStress::shape = (" << meanStress.size(0) << ", " << meanStress.size(1) << ")");
       GEOS_LOG("devStress::shape = (" << devStress.size(0) << ", " << devStress.size(1) << ", " << devStress.size(2)  << ")");
       GEOS_LOG("elemsToNodes::shape = (" << elemsToNodes.size(0) << ", " << elemsToNodes.size(1) << ")");
@@ -253,6 +247,7 @@ struct ExplicitKernel
         real64 const detJ_k_q = DETJ_ACCESSOR(detJ, k, q);
 #endif
 
+#if UPDATE_STRESS
         stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
                                             k,
                                             q,
@@ -286,6 +281,46 @@ struct ExplicitKernel
                         + devStress_k_q_4 * DNDX_ACCESSOR(dNdX, k, q, a, 1)
                         + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + meanStress_k_q ) ) * detJ_k_q;
         }
+
+#else
+
+        real64 c[ 6 ][ 6 ];
+        constitutive.GetStiffness( k, c );
+        real64 const dNdXa0 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 0) + DNDX_ACCESSOR(dNdX, k, q, 1, 0) + DNDX_ACCESSOR(dNdX, k, q, 2, 0) + DNDX_ACCESSOR(dNdX, k, q, 3, 0) + DNDX_ACCESSOR(dNdX, k, q, 4, 0) + DNDX_ACCESSOR(dNdX, k, q, 5, 0) + DNDX_ACCESSOR(dNdX, k, q, 6, 0 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 0 ) );
+        real64 const dNdXa1 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 1) + DNDX_ACCESSOR(dNdX, k, q, 1, 1) + DNDX_ACCESSOR(dNdX, k, q, 2, 1) + DNDX_ACCESSOR(dNdX, k, q, 3, 1) + DNDX_ACCESSOR(dNdX, k, q, 4, 1) + DNDX_ACCESSOR(dNdX, k, q, 5, 1) + DNDX_ACCESSOR(dNdX, k, q, 6, 1 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 1 ) );
+        real64 const dNdXa2 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 2) + DNDX_ACCESSOR(dNdX, k, q, 1, 2) + DNDX_ACCESSOR(dNdX, k, q, 2, 2) + DNDX_ACCESSOR(dNdX, k, q, 3, 2) + DNDX_ACCESSOR(dNdX, k, q, 4, 2) + DNDX_ACCESSOR(dNdX, k, q, 5, 2) + DNDX_ACCESSOR(dNdX, k, q, 6, 2 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 2 ) );
+        #pragma unroll
+        for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
+        {
+            f_local[b][0] -= ( ( c[0][0]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[0][1]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[0][2]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                              ) * detJ_k_q;
+
+            f_local[b][1] -= ( ( c[0][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[1][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[1][2]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                              ) * detJ_k_q;
+
+            f_local[b][2] -= ( ( c[0][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
+                               ( c[1][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
+                               ( c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
+                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
+                                 c[2][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
+                             ) * detJ_k_q;
+
+        }
+#endif
       }//quadrature loop
 
       #pragma unroll

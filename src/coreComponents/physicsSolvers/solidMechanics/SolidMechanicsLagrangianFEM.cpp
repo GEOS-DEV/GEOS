@@ -41,6 +41,7 @@
 #include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
+#include "KernelMacros.hpp"
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -555,7 +556,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 #else
                                    u,
 #endif
+#if UPDATE_STRESS
                                    vel,
+#else
+                                   u,
+#endif
                                    acc,
                                    meanStress,
                                    deviatorStress,

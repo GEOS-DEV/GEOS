@@ -20,12 +20,12 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 parentCoords( localIndex const i, localIndex const j )
+  static real64 parentCoords( localIndex const i, localIndex const a )
   {
     constexpr static  real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
                                                { -1, -1,  1,  1, -1, -1,  1,  1 },
                                                { -1, -1, -1, -1,  1,  1,  1,  1 } };
-    return pCoords[i][j];
+    return pCoords[i][a];
   }
 
   // GEOSX_HOST_DEVICE
@@ -84,7 +84,7 @@ public:
       for ( int i = 0; i < 3; ++i )
       {
         real64 const pos_k_a_i = POSITION_ACCESSOR(k, a, i);
-        
+
         #pragma unroll
         for ( int j = 0; j < 3; ++j )
         {
