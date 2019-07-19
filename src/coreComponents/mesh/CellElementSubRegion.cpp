@@ -23,6 +23,9 @@
 #include "ElementRegionManager.hpp"
 #include "common/TimingMacros.hpp"
 
+// TODO: BAD!
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;

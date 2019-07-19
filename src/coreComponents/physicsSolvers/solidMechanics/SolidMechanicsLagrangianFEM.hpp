@@ -30,6 +30,7 @@
 #include "MPI_Communications/CommunicationTools.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "SolidMechanicsLagrangianSSLEKernelConfig.hpp"
 
 
 namespace ML_Epetra

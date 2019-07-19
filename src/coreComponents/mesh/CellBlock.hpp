@@ -28,8 +28,6 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-// TODO: BAD!
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
 
 class StableTimeStep;
 
@@ -246,7 +244,6 @@ public:
     }
   }
 
-#if SSLE_USE_PATCH_KERNEL
 
   NodeMapType & patchNodeList()
   { return m_patchToNodesRelation; }
@@ -266,12 +263,6 @@ public:
   array1d< localIndex > const & patchOffsets() const
   { return m_patchOffsets; }
 
-#if SSLE_USE_PATCH_KERNEL
-
-#endif
-
-#endif
-
 
 
 protected:
@@ -285,20 +276,12 @@ protected:
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
 
-#if SSLE_USE_PATCH_KERNEL
+
   array1d<localIndex> m_patchOffsets;
-
   LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
-
   NodeMapType m_patchToNodesRelation;
-
-#if SSLE_PATCH_KERNEL_VIZ_OUTPUT
   array1d<localIndex> m_patchIndex; // for visualization/debugging
-
   array1d<localIndex> m_elemIndex;  // for visualization/debugging
-#endif
-
-#endif
 
 private:
   /// Name of the properties register from an external mesh
