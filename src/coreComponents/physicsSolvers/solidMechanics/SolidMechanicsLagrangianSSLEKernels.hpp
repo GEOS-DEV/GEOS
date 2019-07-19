@@ -22,7 +22,6 @@
 
 #pragma once
 
-#define INLINE_STRESS_UPDATE 1
 #define STORE_NODE_DATA_LOCALLY 0
 
 #if STORE_NODE_DATA_LOCALLY
@@ -76,27 +75,28 @@ void stressUpdate( constitutive::LinearElasticIsotropic::KernelWrapper const & c
                    arrayView2d<real64> const & meanStress,
                    arrayView3d<real64> const & devStress )
 {
-  real64 const G = constitutive.m_shearModulus[k];
-  real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
-  real64 const Lame2G = Lame + 2 * G;
+  real64 const Gdt = constitutive.m_shearModulus[k] * dt;
+  real64 const Lamedt = constitutive.m_bulkModulus[k] * dt - 2.0/3.0 * Gdt;
+  real64 const Lame2Gdt = Lamedt + 2 * Gdt;
 
   real64 p_stress[ 6 ] = { 0 };
+  #pragma unroll
   for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
   {
     real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
     real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
     real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
 
-    p_stress[ 0 ] += ( v0_x_dNdXa0 * Lame2G + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame ) * dt;
-    p_stress[ 1 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame2G + v2_x_dNdXa2*Lame ) * dt;
-    p_stress[ 2 ] += ( v0_x_dNdXa0 * Lame + v1_x_dNdXa1 * Lame + v2_x_dNdXa2*Lame2G ) * dt;
+    p_stress[ 0 ] += ( v0_x_dNdXa0 * Lame2Gdt + v1_x_dNdXa1 * Lamedt   + v2_x_dNdXa2 * Lamedt );
+    p_stress[ 1 ] += ( v0_x_dNdXa0 * Lamedt   + v1_x_dNdXa1 * Lame2Gdt + v2_x_dNdXa2 * Lamedt );
+    p_stress[ 2 ] += ( v0_x_dNdXa0 * Lamedt   + v1_x_dNdXa1 * Lamedt   + v2_x_dNdXa2 * Lame2Gdt );
 
     p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) +
-                       VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+                       VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * Gdt;
     p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * G * dt;
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * Gdt;
     p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) +
-                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * G * dt;
+                       VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * Gdt;
   }
 
   real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
@@ -162,9 +162,9 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 128 >;
-// #elif defined(GEOSX_USE_OPENMP)
-//     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+    using KERNEL_POLICY = RAJA::cuda_exec< 64 >;
+#elif defined(GEOSX_USE_OPENMP)
+    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
@@ -234,16 +234,12 @@ struct ExplicitKernel
       }
 #endif
 
-#if !INLINE_STRESS_UPDATE
-      real64 c[ 6 ][ 6 ];
-      constitutive.GetStiffness( k, c );
-#endif
-
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
         real64 dNdX[3][8];
+        real64 const detJ_k_q =
         FiniteElementShapeKernel::shapeFunctionDerivatives( k,
                                                             q,
                                                             elemsToNodes,
@@ -253,9 +249,10 @@ struct ExplicitKernel
                                                             X,
                                                           #endif
                                                             dNdX );
+#else
+        real64 const detJ_k_q = DETJ_ACCESSOR(detJ, k, q);
 #endif
 
-#if INLINE_STRESS_UPDATE
         stressUpdate< NUM_NODES_PER_ELEM >( constitutive,
                                             k,
                                             q,
@@ -270,53 +267,31 @@ struct ExplicitKernel
                                             meanStress,
                                             devStress
                       );
-#else
-        real64 p_stress[ 6 ] = { 0 };
+
+        real64 const devStress_k_q_1 = DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1);
+        real64 const devStress_k_q_3 = DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3);
+        real64 const devStress_k_q_4 = DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4);
+        real64 const meanStress_k_q = MEANSTRESS_ACCESSOR(meanStress, k, q);
+
+        #pragma unroll
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 0);
-          real64 const v1_x_dNdXa1 = VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1);
-          real64 const v2_x_dNdXa2 = VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 2);
-
-          p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
-          p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
-          p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 1) + VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( VELOCITY_ACCESSOR(k, a, 2) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 2) ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( VELOCITY_ACCESSOR(k, a, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0) + VELOCITY_ACCESSOR(k, a, 0) * DNDX_ACCESSOR(dNdX, k, q, a, 1) ) * c[ 5 ][ 5 ] * dt;
-        }
-
-        real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
-        MEANSTRESS_ACCESSOR(meanStress, k, q) += dMeanStress;
-
-        p_stress[ 0 ] -= dMeanStress;
-        p_stress[ 1 ] -= dMeanStress;
-        p_stress[ 2 ] -= dMeanStress;
-
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) += p_stress[ 0 ];
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) += p_stress[ 1 ];
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) += p_stress[ 2 ];
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) += p_stress[ 3 ];
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) += p_stress[ 4 ];
-        DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) += p_stress[ 5 ];
-#endif
-
-        for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-        {
-          f_local[ a ][ 0 ] -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
-                          + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
-                          + DNDX_ACCESSOR(dNdX, k, q, a, 0) * ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
-          f_local[ a ][ 1 ] -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 1) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
-                        + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 2)
-                        + DNDX_ACCESSOR(dNdX, k, q, a, 1) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
-          f_local[ a ][ 2 ] -= ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 3) * DNDX_ACCESSOR(dNdX, k, q, a, 0)
-                        + DEVIATORSTRESS_ACCESSOR(devStress, k, q, 4) * DNDX_ACCESSOR(dNdX, k, q, a, 1)
-                        + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + MEANSTRESS_ACCESSOR(meanStress, k, q) ) ) * DETJ_ACCESSOR(detJ, k, q);
+          f_local[ a ][ 0 ] -= ( devStress_k_q_1 * DNDX_ACCESSOR(dNdX, k, q, a, 1)
+                          + devStress_k_q_3 * DNDX_ACCESSOR(dNdX, k, q, a, 2)
+                          + DNDX_ACCESSOR(dNdX, k, q, a, 0) * ( DEVIATORSTRESS_ACCESSOR(devStress, k, q, 0) + meanStress_k_q ) ) * detJ_k_q;
+          f_local[ a ][ 1 ] -= ( devStress_k_q_1 * DNDX_ACCESSOR(dNdX, k, q, a, 0)
+                        + devStress_k_q_4 * DNDX_ACCESSOR(dNdX, k, q, a, 2)
+                        + DNDX_ACCESSOR(dNdX, k, q, a, 1) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 2) + meanStress_k_q ) ) * detJ_k_q;
+          f_local[ a ][ 2 ] -= ( devStress_k_q_3 * DNDX_ACCESSOR(dNdX, k, q, a, 0)
+                        + devStress_k_q_4 * DNDX_ACCESSOR(dNdX, k, q, a, 1)
+                        + DNDX_ACCESSOR(dNdX, k, q, a, 2) * (DEVIATORSTRESS_ACCESSOR(devStress, k, q, 5) + meanStress_k_q ) ) * detJ_k_q;
         }
       }//quadrature loop
 
+      #pragma unroll
       for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
+        #pragma unroll
         for ( int b = 0; b < 3; ++b )
         {
           RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ], f_local[ a ][ b ] );

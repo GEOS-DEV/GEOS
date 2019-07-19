@@ -20,6 +20,8 @@
  * @file SolidMechanicsLagrangianSSLE.hpp
  */
 
+#define RAJA_BLOCKS_PER_SM 6
+
 #include "SolidMechanicsLagrangianSSLE.hpp"
 
 #include "codingUtilities/Utilities.hpp"

@@ -79,10 +79,13 @@ public:
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
-
+      
+      #pragma unroll
       for ( int i = 0; i < 3; ++i )
       {
         real64 const pos_k_a_i = POSITION_ACCESSOR(k, a, i);
+        
+        #pragma unroll
         for ( int j = 0; j < 3; ++j )
         {
           J[i][j] += pos_k_a_i * dNdXi[j];
@@ -90,11 +93,14 @@ public:
       }
     }
 
-    real64 detJ = inverse( J );
+    real64 const detJ = inverse( J );
 
+    #pragma unroll
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       parentShapeFunctionDerivatives( a, xi0, xi1, xi2, dNdXi );
+
+      #pragma unroll
       for ( int i = 0; i < 3; ++i )
       {
         dNdX[i][a] = J[0][i] * dNdXi[0] + J[1][i] * dNdXi[1] + J[2][i] * dNdXi[2];
