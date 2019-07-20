@@ -21,7 +21,10 @@
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="0"
                       fractureRegion="Fracture"
-                      targetRegions="{Fracture}">
+                      targetRegions="{Fracture}"
+                      solidMaterialName="granite"
+                      rockToughness="1e6"
+                      >
     </SurfaceGenerator>
   </Solvers>
   

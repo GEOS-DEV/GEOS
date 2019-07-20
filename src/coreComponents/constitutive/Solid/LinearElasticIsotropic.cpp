@@ -35,39 +35,31 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
+  m_defaultPoissonRatio(),
+  m_defaultYoungsModulus(),
   m_bulkModulus(),
-  m_shearModulus()
+  m_shearModulus(),
+  m_postProcessed(false)
 {
-  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
+  RegisterViewWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Bulk Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
+  RegisterViewWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::poissonRatio0String, &m_defaultPoissonRatio, 0 )->
+  RegisterViewWrapper( viewKeyStruct::defaultPoissonRatioString, &m_defaultPoissonRatio, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Poisson ratio Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::youngsModulus0String, &m_defaultYoungsModulus, 0 )->
+  RegisterViewWrapper( viewKeyStruct::defaultYoungsModulusString, &m_defaultYoungsModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Young's Modulus Parameter");
-
-
-//  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
-//    setApplyDefaultValue(-1)->
-//    setInputFlag(InputFlags::OPTIONAL)->
-//    setDescription("Elastic Young's Modulus.");
-//
-//  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
-//    setApplyDefaultValue(-1)->
-//    setInputFlag(InputFlags::OPTIONAL)->
-//    setDescription("Poisson's ratio");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
@@ -76,15 +68,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
-
-  RegisterViewWrapper( viewKeyStruct::poissonRatioString, &m_poissonRatio, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("Poisson ratio Field");
-
-  RegisterViewWrapper( viewKeyStruct::youngsModulusString, &m_youngsModulus, 0 )->
-    setApplyDefaultValue(-1)->
-    setDescription("Yound's Modulus Field");
-
 }
 
 
@@ -113,8 +96,6 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
   newConstitutiveRelation->m_defaultPoissonRatio = m_defaultPoissonRatio;
   newConstitutiveRelation->m_defaultYoungsModulus = m_defaultYoungsModulus;
-  newConstitutiveRelation->m_poissonRatio = m_poissonRatio;
-  newConstitutiveRelation->m_youngsModulus = m_youngsModulus;
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
@@ -128,61 +109,86 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
   this->resize( parent->size() );
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
-  m_poissonRatio.resize( parent->size() );
-  m_youngsModulus.resize( parent->size() );
 
   m_bulkModulus = m_defaultBulkModulus;
   m_shearModulus = m_defaultShearModulus;
-  m_poissonRatio = m_defaultPoissonRatio;
-  m_youngsModulus = m_defaultYoungsModulus;
 
 }
 
 void LinearElasticIsotropic::PostProcessInput()
 {
-//  real64 & nu = getReference<real64>( viewKeyStruct::poissonRatioString );
-//  real64 & E  = getReference<real64>( viewKeyStruct::youngsModulus0String );
-  real64 & nu = m_defaultPoissonRatio;
-  real64 & E  = m_defaultYoungsModulus;
-  real64 & K  = m_defaultBulkModulus;
-  real64 & G  = m_defaultShearModulus;
 
-  int numConstantsSpecified = 0;
-  if( nu >= 0.0 )
+  if( !m_postProcessed )
   {
-    ++numConstantsSpecified;
-  }
-  if( E >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
-  if( K >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
-  if( G >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
+    real64 & nu = m_defaultPoissonRatio;
+    real64 & E  = m_defaultYoungsModulus;
+    real64 & K  = m_defaultBulkModulus;
+    real64 & G  = m_defaultShearModulus;
 
-  if( numConstantsSpecified == 2 )
-  {
+    string errorCheck( "( ");
+    int numConstantsSpecified = 0;
+    if( nu >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "nu, ";
+    }
+    if( E >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "E, ";
+    }
+    if( K >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "K, ";
+    }
+    if( G >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "G, ";
+    }
+    errorCheck += ")";
+
+    GEOS_ERROR_IF( numConstantsSpecified != 2,
+                   "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                   "You have specified "<<errorCheck );
+
     if( nu >= 0.0 && E >= 0.0 )
     {
       K = E / (3 * ( 1 - 2*nu ) );
       G = E / (2 * ( 1 + nu ) );
     }
-    else if( !( K >= 0.0 && G >= 0.0 ) )
+    else if( nu >= 0.0 && G >= 0.0 )
     {
-      string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
-      GEOS_ERROR( message );
+      E = 2 * G * ( 1 + nu );
+      K = E / (3 * ( 1 - 2*nu ) );
     }
-    else
+    else if( nu >= 0 && K >= 0.0 )
+    {
+      E = 3 * K * ( 1 - 2 * nu );
+      G = E / ( 2 * ( 1 + nu ) );
+    }
+    else if( E >= 0.0 && K >=0 )
+    {
+      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
+      G = E / ( 2 * ( 1 + nu ) );
+    }
+    else if( E >= 0.0 && G >= 0 )
+    {
+      nu = 0.5 * E / G - 1.0;
+      K = E / (3 * ( 1 - 2*nu ) );
+    }
+    else if( K >= 0.0 && G >= 0.0)
     {
       E = 9 * K * G / ( 3 * K + G );
       nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
     }
+    else
+    {
+      GEOS_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
+    }
   }
+  m_postProcessed = true;
 }
 
 void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
