@@ -26,11 +26,13 @@
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 
 #ifdef USE_GEOSX_PTP
 #include "GEOSX_PTP/ParallelTopologyChange.hpp"
@@ -202,6 +204,9 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
     setInputFlag(dataRepository::InputFlags::OPTIONAL)->
     setApplyDefaultValue("FractureRegion");
 
+  RegisterViewWrapper( viewKeyStruct::tipNodesString, &m_tipNodes, 0 )->
+    setDescription("Set containing all the nodes at the fracture tip");
+
 
 }
 
@@ -304,7 +309,9 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 
     elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const elementSubRegion )->void
     {
-      elementSubRegion->RegisterViewWrapper< array2d<R1Tensor> >( viewKeyStruct::nodalForceFromElementString )->setPlotLevel(dataRepository::PlotLevel::LEVEL_0);
+      elementSubRegion->RegisterViewWrapper< array2d<R1Tensor> >( viewKeyStruct::nodalForceFromElementString )->
+        setSizedFromParent(0)->
+        setPlotLevel(dataRepository::PlotLevel::LEVEL_0);
     });
 
   }
@@ -1386,11 +1393,17 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
 
-  arrayView1d<localIndex> const & parentFaceIndices =
-    faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
-  arrayView1d<localIndex const> const & parentEdgeIndices =
-    edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  arrayView1d<localIndex> const &
+  parentFaceIndices = faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
 
+  arrayView1d<localIndex const> const &
+  parentEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+  arrayView1d<localIndex const> const &
+  parentNodeIndices = faceManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+  arrayView1d<localIndex const> const &
+  childNodeIndices = faceManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
 
 
 //  integer_array* flowEdgeType = edgeManager.getReferencePointer<int>("flowEdgeType");
@@ -1444,6 +1457,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   degreeFromCrack[nodeID] = 0;
   degreeFromCrack[newNodeIndex] = 0;
+  m_tipNodes.erase( nodeID );
 
   //TODO HACK...should recalculate mass
 //  const real64 newMass = 0.5 * (*nodeManager.m_mass)[nodeID];
@@ -1561,6 +1575,10 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         }
         for( auto nodeIndex : faceManager.nodeList()[faceIndex] )
         {
+          if( parentNodeIndices[nodeIndex]==-1 && childNodeIndices[nodeIndex]==-1 )
+          {
+            m_tipNodes.insert( nodeIndex );
+          }
           if( nodeManager.m_isExternal[nodeIndex] )
           {
             nodeManager.m_isExternal[nodeIndex] = 2;
@@ -3006,6 +3024,34 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const youndsModulus =
       elementManager.ConstructFullMaterialViewAccessor<array1d<real64>, arrayView1d<real64> >( "YoungsModulus", constitutiveManager);
 
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
+  meanStress = elementManager.ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                               arrayView2d<real64> >("MeanStress",
+                                                                                     constitutiveManager);
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  devStress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+                                                                                         constitutiveManager);
+
+
+  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+
+  FiniteElementDiscretizationManager const *
+  feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+
+  FiniteElementDiscretization const *
+  feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
+  localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
+
+
+  ElementRegionManager::ElementViewAccessor<array3d<R1Tensor> > const
+  dNdX = elementManager.ConstructViewAccessor<array3d< R1Tensor > >(keys::dNdX);
+
+  ElementRegionManager::ElementViewAccessor< array2d<real64> > const
+  detJ = elementManager.ConstructViewAccessor< array2d<real64> >(keys::detJ);
+
 
   localIndex nElemEachSide[2];
   nElemEachSide[0] = 0;
@@ -3053,7 +3099,15 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
             R1Tensor temp;
 
             //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-            temp = nodalForceFromElement[er][esr][iEle][n];
+            SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
+            CalculateSingleNodalForce( iEle,
+                                       n,
+                                       numQuadraturePoints,
+                                       dNdX[er][esr],
+                                       detJ[er][esr],
+                                       meanStress[er][esr][m_solidMaterialFullIndex],
+                                       devStress[er][esr][m_solidMaterialFullIndex],
+                                       temp );
             temp *= youndsModulus[er][esr][m_solidMaterialFullIndex][iEle];
             temp /= (1 - poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]*poissonRatio[er][esr][m_solidMaterialFullIndex][iEle]);
 

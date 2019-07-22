@@ -266,6 +266,39 @@ struct ExplicitKernel
 
 
 
+
+  static inline real64
+  CalculateSingleNodalForce( localIndex const k,
+                             localIndex const targetNode,
+                             localIndex const numQuadraturePoints,
+                             arrayView3d< R1Tensor const> const & dNdX,
+                             arrayView2d<real64 const> const & detJ,
+                             arrayView2d<real64 const> const & meanStress,
+                             arrayView2d<R2SymTensor const> const & devStress,
+                             R1Tensor & force )
+  {
+    GEOSX_MARK_FUNCTION;
+    localIndex const & a = targetNode;
+
+    //Compute Quadrature
+    for ( localIndex q = 0; q < numQuadraturePoints; ++q )
+    {
+      real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+
+      force[ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+    }//quadrature loop
+
+    return 0;
+  }
+
   template< localIndex NUM_QUADRATURE_POINTS >
   static inline real64
   CalculateSingleNodalForce( arrayView1d<localIndex const> const & elementList,
@@ -277,14 +310,6 @@ struct ExplicitKernel
                              arrayView1d< R1Tensor > const & force )
   {
    GEOSX_MARK_FUNCTION;
-
-#if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
-#else
-    using KERNEL_POLICY = RAJA::loop_exec;
-#endif
 
     // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -300,18 +325,18 @@ struct ExplicitKernel
         localIndex const a = targetNodeInElemList[ i ];
 
         force[i][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                          p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                          dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+                           p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
         force[i][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                          p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                          dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
         force[i][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                          p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                          dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
       }//quadrature loop
     });
 
-    return dt;
+    return 0;
   }
 
 };
