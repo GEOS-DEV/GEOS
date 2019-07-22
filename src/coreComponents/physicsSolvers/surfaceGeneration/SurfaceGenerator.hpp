@@ -175,6 +175,8 @@ public:
     constexpr static auto SIF_IIString = "SIF_II";
     constexpr static auto SIF_IIIString = "SIF_III";
 
+    constexpr static auto tipNodesString = "tipNodes";
+
     constexpr static auto fractureRegionNameString = "fractureRegion";
 
   }; //SurfaceGenViewKeys;
@@ -569,6 +571,8 @@ private:
 
   /// name of the element region to place all new fractures
   string m_fractureRegionName;
+
+  set< localIndex > m_tipNodes;
 
 };
 
