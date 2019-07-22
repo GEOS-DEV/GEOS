@@ -516,11 +516,15 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
+  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                               arrayView2d<real64> >("MeanStress",
+                                                                                     constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const devStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+                                                                                         constitutiveManager);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
