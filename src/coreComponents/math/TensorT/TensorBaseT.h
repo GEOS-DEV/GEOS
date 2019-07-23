@@ -254,6 +254,7 @@ public:
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE
   realT* Data( void )
   {
     return t_data;
@@ -264,6 +265,7 @@ public:
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE
   const realT* Data( void ) const
   {
     return t_data;

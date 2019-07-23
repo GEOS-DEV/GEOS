@@ -55,15 +55,9 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################
     # Add define we can use when debug builds are enabled
     ######################################################
-    if( CMAKE_BUILD_TYPE MATCHES "(Debug|RelWithDebInfo)" )
-        add_definitions(-DGEOSX_DEBUG)
+    if (CMAKE_BUILD_TYPE MATCHES "Debug")
+        set(ENABLE_ARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE)
         add_definitions(-DAXOM_DEBUG)
-        set(ENABLE_ARRAY_BOUNDS_CHECK "ON" CACHE PATH "" FORCE)
     endif()
-else ()
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
-      $<$<CONFIG:Debug>:GEOSX_DEBUG>
-      $<$<CONFIG:RelWithDebInfo>:GEOSX_DEBUG>
-    )
 endif()
 
