@@ -160,7 +160,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
     } else if (terminate) {
       break ;
     }
-
     // Determine the cycle timestep
     if (m_currentSubEvent == 0)
     {
@@ -178,7 +177,6 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 #ifdef GEOSX_USE_MPI
       // Find the min dt across procfesses
       GEOSX_MARK_BEGIN("EventManager::MPI calls");
-
       real64 dt_global;
       MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
       m_dt = dt_global;
