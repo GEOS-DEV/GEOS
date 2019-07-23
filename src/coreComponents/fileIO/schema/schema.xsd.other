@@ -490,7 +490,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
-		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::SolidMechanicsLagrangianFEM::timeIntegrationOption" />
+		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::timeIntegrationOption" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -501,7 +501,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
-		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::SolidMechanicsLagrangianFEM::timeIntegrationOption" />
+		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::timeIntegrationOption" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
