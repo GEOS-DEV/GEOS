@@ -1,12 +1,16 @@
 
+add_subdirectory(coupling/hdf5_interface)
+
 #
 # Specify all headers
 #
 set(fileIO_headers
   xmlWrapper.hpp
   silo/SiloFile.hpp
+  vtm/VtmFile.hpp
   blueprint/Blueprint.hpp
   schema/SchemaUtilities.hpp
+  coupling/ChomboCoupler.hpp
   utils/utils.hpp )
 
 #
@@ -15,10 +19,12 @@ set(fileIO_headers
 set(fileIO_sources
   xmlWrapper.cpp
   silo/SiloFile.cpp
+  vtm/VtmFile.cpp
   schema/SchemaUtilities.cpp
-  blueprint/Blueprint.cpp )
+  blueprint/Blueprint.cpp
+  coupling/ChomboCoupler.cpp )
 
-set( dependencyList common silo hdf5 mpi pugixml RAJA )
+set( dependencyList common silo hdf5 mpi pugixml RAJA hdf5_interface )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
 endif()
@@ -31,5 +37,6 @@ blt_add_library( NAME                  fileIO
                
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-
 geosx_add_code_checks(PREFIX fileIO )
+
+add_subdirectory( unitTests )

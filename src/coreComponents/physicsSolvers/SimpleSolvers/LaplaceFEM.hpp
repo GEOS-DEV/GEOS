@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,19 +16,15 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewtonianMechanics.hpp
- *
- *  Created on: Dec 4, 2014
- *      Author: rrsettgast
- */
-
 #ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
+#include "DofManager.hpp"
+#include "TrilinosInterface.hpp"
 
 struct stabledt
 {
@@ -44,9 +40,14 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
-class BoundaryConditionBase;
+class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
+
+using LAI = TrilinosInterface;
+using ParallelMatrix = typename LAI::ParallelMatrix;
+using ParallelVector = typename LAI::ParallelVector;
+using LinearSolver = typename LAI::LinearSolver;
 
 class LaplaceFEM : public SolverBase
 {
@@ -54,18 +55,13 @@ public:
   LaplaceFEM( const std::string& name,
               ManagedGroup * const parent );
 
-
   virtual ~LaplaceFEM() override;
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void FillDocumentationNode() override final;
+  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
-  virtual void FillOtherDocumentationNodes( dataRepository::ManagedGroup * const group ) override final;
-
-  virtual void InitializePreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
-
-  virtual void ReadXML_PostProcess() override final;
+  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -129,41 +125,17 @@ public:
 //                           integer const cycleNumber,
 //                           DomainPartition * const domain );
 
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( DomainPartition * const domain,
+                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
-                                     localIndex offset );
-
-  void SetupMLPreconditioner( DomainPartition const & domain,
-                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
-
-
-  realT CalculateElementResidualAndDerivative( real64 const density,
-                                               FiniteElementBase const * const fe,
-                                               const multidimensionalArray::ArrayView<R1Tensor, 2, localIndex> dNdX,
-                                               const realT* const detJ,
-                                               R2SymTensor const * const refStress,
-                                               array1d<R1Tensor> const & u,
-                                               array1d<R1Tensor> const & uhat,
-                                               array1d<R1Tensor> const & uhattilde,
-                                               array1d<R1Tensor> const & vtilde,
-                                               realT const dt,
-                                               Epetra_SerialDenseMatrix& dRdU,
-                                               Epetra_SerialDenseVector& R,
-                                               real64 c[6][6] );
+  // TODO: can I remove this?
+//  void SetupMLPreconditioner( DomainPartition const & domain,
+//                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DomainPartition & domain,
-                                  systemSolverInterface::EpetraBlockSystem & blockSystem );
-
-
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs );
 
   enum class timeIntegrationOption
   {
@@ -183,21 +155,32 @@ public:
 
   } laplaceFEMViewKeys;
 
-//  struct groupKeyStruct
-//  {
-//  } groupKeys;
+  inline ParallelVector const * getSolution() const {
+    return & m_solution;
+  }
 
+  inline globalIndex getSize() const {
+    return m_matrix.globalRows();
+  }
 
-  SystemSolverParameters * getSystemSolverParameters() {return this->GetGroup<SystemSolverParameters>(groupKeys.systemSolverParameters); }
+protected:
+  virtual void PostProcessInput() override final;
 
 private:
-
+  string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();
 
-};
+  // Data structure to handle degrees of freedom
+  DofManager dofManager;
 
+  // System matrix, rhs and solution
+  ParallelMatrix m_matrix;
+  ParallelVector m_rhs;
+  ParallelVector m_solution;
+  LinearSolverParameters m_parameters;
+};
 
 } /* namespace geosx */
 

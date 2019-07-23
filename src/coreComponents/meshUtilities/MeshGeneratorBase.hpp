@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -49,15 +49,9 @@ public:
 
   static string CatalogName() { return "MeshGeneratorBase"; }
 
-  MeshGeneratorBase() = default;
-  MeshGeneratorBase( MeshGeneratorBase const & ) = default;
-  MeshGeneratorBase( MeshGeneratorBase &&) = default;
-  MeshGeneratorBase& operator=( MeshGeneratorBase const & ) = default;
-  MeshGeneratorBase& operator=( MeshGeneratorBase&& ) = default;
-
   virtual void GenerateElementRegions( DomainPartition& domain ) = 0;
 
-  virtual void GenerateMesh( dataRepository::ManagedGroup * const domain ) = 0;
+  virtual void GenerateMesh( DomainPartition * const domain ) = 0;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) = 0;
@@ -70,7 +64,7 @@ public:
 
   virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
 
-  int m_delayMeshDeformation;
+  int m_delayMeshDeformation = 0;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();

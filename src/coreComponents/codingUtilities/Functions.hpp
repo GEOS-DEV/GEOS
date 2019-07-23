@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -161,8 +161,6 @@ private:
 
 
 #include "managers/Tables/Table.hpp"
-//#include "managers/TableManager.hpp"
-#include "managers/Tables/TableTypes.hpp"
 
 /// Function wrapper for 4D tables
 class Lookup4DTable : public Function

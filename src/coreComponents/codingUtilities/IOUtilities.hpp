@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -77,7 +77,7 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
   }
   else
   {
-    throw std::invalid_argument("Could not read input file!");
+    GEOS_ERROR("Could not read input file!");
   }
 }
 
@@ -115,7 +115,7 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
    }
    else
    {
-    SLIC_ERROR("dlmreadVector: Failed to load file:" + filename + " \n");
+    GEOS_ERROR("dlmreadVector: Failed to load file:" + filename + " \n");
    }
    }
 
@@ -154,7 +154,7 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
    }
    else
    {
-    SLIC_ERROR("dlmreadArray: Failed to load file:" + filename + " \n");
+    GEOS_ERROR("dlmreadArray: Failed to load file:" + filename + " \n");
    }
    }
 
@@ -204,7 +204,7 @@ void IOUtilities::parse_file( array1d<T> & target, std::string filename, char de
    }
    else
    {
-    SLIC_ERROR("dlmreadArrayTranspose: Failed to load file:" + filename + "
+    GEOS_ERROR("dlmreadArrayTranspose: Failed to load file:" + filename + "
        \n");
    }
    }

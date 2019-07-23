@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -32,50 +32,20 @@ using namespace dataRepository;
 
 FunctionBase::FunctionBase( const std::string& name,
                             ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
-{}
+  ManagedGroup( name, parent ),
+  m_inputVarNames()
+{
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
+  RegisterViewWrapper( keys::inputVarNames, &m_inputVarNames, 0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setSizedFromParent(0)->
+    setDescription("Name of fields are input to function.");
+}
 
 
 FunctionBase::~FunctionBase()
 {}
-
-
-void FunctionBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName(this->CatalogName());
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Function Base");
-
-  docNode->AllocateChildNode( keys::inputVarNames,
-                              keys::inputVarNames,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Name of fields are input to function.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( keys::inputVarTypes,
-                              keys::inputVarTypes,
-                              -1,
-                              "string_array",
-                              "string_array",
-                              "Name of fields are input to function.",
-                              "",
-                              "REQUIRED",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-
-}
 
 integer FunctionBase::isFunctionOfTime() const
 {

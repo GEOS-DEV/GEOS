@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -35,6 +35,7 @@ namespace dataRepository
 {
 class ManagedGroup;
 }
+class ObjectManagerBase;
 class xmlWrapper;
 
 class MeshUtilities
@@ -46,7 +47,7 @@ public:
 
 
   static void GenerateNodesets( dataRepository::ManagedGroup const * geometry,
-                                dataRepository::ManagedGroup * nodeManager );
+                                ObjectManagerBase * const nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
 //                                                     ManagedGroup&

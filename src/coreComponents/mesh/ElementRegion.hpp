@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,41 +16,18 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
- */
-
 #ifndef ELEMENTREGION_H
 #define ELEMENTREGION_H
 
+#include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "FaceManager.hpp"
-
-
-
-class StableTimeStep;
+#include "FaceElementSubRegion.hpp"
 
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const defaultMaterial = "material";
-//string const numNodesPerElement = "numNodesPerElement";
-//string const nodeList = "nodeList";
-//string const constitutiveMap = "constitutiveMap";
-string const numericalMethod = "numericalMethod";
-string const cellBlockSubRegions = "cellBlockSubRegions";
-string const cellBlockSubRegionNames = "cellBlocks";
-}
-}
-
-class CellBlockSubRegion;
-
+class StableTimeStep;
 
 
 /**
@@ -68,7 +45,7 @@ public:
   static const string CatalogName()
   { return "ElementRegion"; }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const override
   { return ElementRegion::CatalogName(); }
 
 
@@ -81,122 +58,144 @@ public:
 
 
   ElementRegion(const ElementRegion& init);
-//  ElementRegion( ElementRegion&& init);
-
-
-  virtual void FillDocumentationNode() override final;
-
-  virtual void ReadXML_PostProcess() override;
-
-//  void SetConstitutiveMap( dataRepository::ManagedGroup const * domain,
-//                           map<string,localIndex> & counts );
-
-  void HangConstitutiveRelations( ManagedGroup const * problemManager );
 
   virtual ~ElementRegion() override;
 
-//  array2d<integer> & m_toNodesRelation;
+  virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
 
-
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override final;
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
 
   subGroupMap & GetSubRegions()
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
-  CellBlockSubRegion const * GetSubRegion( string const & regionName ) const
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
-  CellBlockSubRegion * GetSubRegion( string const & regionName )
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(regionName);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
 
-  CellBlockSubRegion const * GetSubRegion( localIndex const & index ) const
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
-  CellBlockSubRegion * GetSubRegion( localIndex const & index )
+  template< typename SUBREGIONTYPE=ElementSubRegionBase >
+  SUBREGIONTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetGroup<CellBlockSubRegion>(index);
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
 
   localIndex numSubRegions() const
   {
-    return this->GetGroup(dataRepository::keys::cellBlockSubRegions)->GetSubGroups().size();
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
-
-  template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda )
+  void AddCellBlockName( string const & cellBlockName )
   {
-    ManagedGroup * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
-
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
+    m_cellBlockNames.push_back( cellBlockName );
   }
 
 
   template< typename LAMBDA >
-  void forCellBlocks( LAMBDA lambda ) const
+  void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * cellBlockSubRegions = this->GetGroup(dataRepository::keys::cellBlockSubRegions);
-
-    cellBlockSubRegions->forSubGroups<CellBlockSubRegion>( [&]( CellBlockSubRegion const * subRegion ) -> void
-      {
-        lambda( subRegion );
-      });
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda ) const
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
+  }
+
+
+  template< typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
+  {
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda )
+  {
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+  }
+
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion const * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      ElementSubRegionBase const * const subRegion = this->GetSubRegion(esr);
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE, SUBREGIONTYPES...>( subRegion, [&]( auto const * const castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      });
     }
   }
 
-  template< typename LAMBDA >
-  void forCellBlocksIndex( LAMBDA lambda )
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsIndex( LAMBDA && lambda )
   {
     for( localIndex esr=0 ;  esr<this->numSubRegions() ; ++esr )
     {
-      CellBlockSubRegion * cellBlock = this->GetSubRegion(esr);
-      lambda( esr, cellBlock );
+      ElementSubRegionBase * const subRegion = this->GetSubRegion(esr);
+      applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      });
     }
-  }
-
-
-  string const & getNumericalMethod() const
-  {
-    return this->getData<string>(dataRepository::keys::numericalMethod);
   }
 
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-
-  } m_regionViewKeys;
+    static constexpr auto coarseningRatioString = "coarseningRatio"; 
+    static constexpr auto elementSubRegions = "elementSubRegions";
+    static constexpr auto sourceCellBlockNames = "cellBlocks";
+  };
 
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
-  private:
+protected:
+  virtual void PostProcessInput() override;
+
+private:
+
   ElementRegion& operator=(const ElementRegion& rhs);
+
+  string_array m_cellBlockNames;
   string_array m_materialList;
-//  string & m_elementType;
+  string m_numericalMethod;
+  real64 m_coarseningRatio;
 
 };
 

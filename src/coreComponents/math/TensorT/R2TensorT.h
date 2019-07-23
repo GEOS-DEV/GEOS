@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,63 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
-//  Produced at the Lawrence Livermore National Laboratory
-//
-//  GEOS Computational Framework - Core Package, Version 3.0.0
-//
-//  Written by:
-//  Randolph Settgast (settgast1@llnl.gov)
-//  Stuart Walsh(walsh24@llnl.gov)
-//  Pengcheng Fu (fu4@llnl.gov)
-//  Joshua White (white230@llnl.gov)
-//  Chandrasekhar Annavarapu Srinivas
-//  Eric Herbold
-//  Michael Homel
-//
-//
-//  All rights reserved.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
-// SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-//  1. This notice is required to be provided under our contract with the U.S.
-// Department of Energy (DOE). This work was produced at Lawrence Livermore
-//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National
-// Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy,
-// completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe
-// privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or
-// services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or
-// favoring by the United States Government or Lawrence Livermore National
-// Security,
-//     LLC. The views and opinions of authors expressed herein do not
-// necessarily state or reflect those of the United States Government or
-// Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising
-// or product endorsement purposes.
-//
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The
-// BSD  License statment is included in this distribution in src/bsd_notice.txt.
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * @brief This file contains the definition of the R2TensorT class
  * @file R2TensorT.h
@@ -506,20 +449,20 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
 {
-  int ij;
-  int jk;
-  int ik;
+  // int ij;
+  // int jk;
+  // int ik;
 
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[2];
-    this->t_data[1] = A.t_data[0]*B.t_data[1] + A.t_data[1]*B.t_data[3];
-
-    this->t_data[2] = A.t_data[2]*B.t_data[0] + A.t_data[3]*B.t_data[2];
-    this->t_data[3] = A.t_data[2]*B.t_data[1] + A.t_data[3]*B.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
+//  if( T_dim == 2 )
+//  {
+//    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[2];
+//    this->t_data[1] = A.t_data[0]*B.t_data[1] + A.t_data[1]*B.t_data[3];
+//
+//    this->t_data[2] = A.t_data[2]*B.t_data[0] + A.t_data[3]*B.t_data[2];
+//    this->t_data[3] = A.t_data[2]*B.t_data[1] + A.t_data[3]*B.t_data[3];
+//  }
+//  else if( T_dim == 3 )
+//  {
     this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[3] + A.t_data[2]*B.t_data[6];
     this->t_data[1] = A.t_data[0]*B.t_data[1] + A.t_data[1]*B.t_data[4] + A.t_data[2]*B.t_data[7];
     this->t_data[2] = A.t_data[0]*B.t_data[2] + A.t_data[1]*B.t_data[5] + A.t_data[2]*B.t_data[8];
@@ -531,22 +474,22 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
     this->t_data[6] = A.t_data[6]*B.t_data[0] + A.t_data[7]*B.t_data[3] + A.t_data[8]*B.t_data[6];
     this->t_data[7] = A.t_data[6]*B.t_data[1] + A.t_data[7]*B.t_data[4] + A.t_data[8]*B.t_data[7];
     this->t_data[8] = A.t_data[6]*B.t_data[2] + A.t_data[7]*B.t_data[5] + A.t_data[8]*B.t_data[8];
-  }
-  else
-  {
-    for( int i=1 ; i<=T_dim ; ++i )
-      for( int k=1 ; k<=T_dim ; ++k )
-      {
-        ik =  (i-1)*T_dim + (k-1);
-        this->t_data[ik] = 0.0;
-        for( int j=1 ; j<=T_dim ; ++j )
-        {
-          ij = (i-1)*T_dim + (j-1);
-          jk = (j-1)*T_dim + (k-1);
-          this->t_data[ik] += A.t_data[ij] * B.t_data[jk];
-        }
-      }
-  }
+//  }
+//  else
+//  {
+//    for( int i=1 ; i<=T_dim ; ++i )
+//      for( int k=1 ; k<=T_dim ; ++k )
+//      {
+//        ik =  (i-1)*T_dim + (k-1);
+//        this->t_data[ik] = 0.0;
+//        for( int j=1 ; j<=T_dim ; ++j )
+//        {
+//          ij = (i-1)*T_dim + (j-1);
+//          jk = (j-1)*T_dim + (k-1);
+//          this->t_data[ik] += A.t_data[ij] * B.t_data[jk];
+//        }
+//      }
+//  }
 }
 
 
@@ -562,10 +505,6 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
 template< int T_dim >
 inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
 {
-  int ij;
-  int kj;
-  int ik;
-
   if( T_dim == 2 )
   {
     this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1];
@@ -590,6 +529,9 @@ inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT
   }
   else
   {
+    int ij;
+    int kj;
+    int ik;
     for( int i=1 ; i<=T_dim ; ++i )
       for( int k=1 ; k<=T_dim ; ++k )
       {
@@ -753,7 +695,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
   }
   else
   {
-    std::cout<<"R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 ");
   }
 }
 
@@ -773,16 +715,16 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
 //  int jk;
 //  int ik;
 
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1];
-    this->t_data[1] = A.t_data[0]*B.t_data[2] + A.t_data[1]*B.t_data[3];
-
-    this->t_data[2] = A.t_data[1]*B.t_data[0] + A.t_data[2]*B.t_data[1];
-    this->t_data[3] = A.t_data[1]*B.t_data[2] + A.t_data[2]*B.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
+//  if( T_dim == 2 )
+//  {
+//    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1];
+//    this->t_data[1] = A.t_data[0]*B.t_data[2] + A.t_data[1]*B.t_data[3];
+//
+//    this->t_data[2] = A.t_data[1]*B.t_data[0] + A.t_data[2]*B.t_data[1];
+//    this->t_data[3] = A.t_data[1]*B.t_data[2] + A.t_data[2]*B.t_data[3];
+//  }
+//  else if( T_dim == 3 )
+//  {
     this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1] + A.t_data[3]*B.t_data[2];
     this->t_data[1] = A.t_data[0]*B.t_data[3] + A.t_data[1]*B.t_data[4] + A.t_data[3]*B.t_data[5];
     this->t_data[2] = A.t_data[0]*B.t_data[6] + A.t_data[1]*B.t_data[7] + A.t_data[3]*B.t_data[8];
@@ -794,11 +736,11 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
     this->t_data[6] = A.t_data[3]*B.t_data[0] + A.t_data[4]*B.t_data[1] + A.t_data[5]*B.t_data[2];
     this->t_data[7] = A.t_data[3]*B.t_data[3] + A.t_data[4]*B.t_data[4] + A.t_data[5]*B.t_data[5];
     this->t_data[8] = A.t_data[3]*B.t_data[6] + A.t_data[4]*B.t_data[7] + A.t_data[5]*B.t_data[8];
-  }
-  else
-  {
-    std::cout<<"R2TensorT::AijBkj(R2SymTensorT,R2TensorT) not implemented for dimension > 3";
-  }
+//  }
+//  else
+//  {
+//    GEOS_WARNING("R2TensorT::AijBkj(R2SymTensorT,R2TensorT) not implemented for dimension > 3");
+//  }
 }
 
 /**
@@ -838,7 +780,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    std::cout<<"R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
   }
 }
 
@@ -879,7 +821,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    std::cout<<"R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
   }
 }
 
@@ -895,16 +837,16 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
 template< int T_dim >
 inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = a.t_data[0]*b.t_data[0];
-    this->t_data[1] = a.t_data[0]*b.t_data[1];
-
-    this->t_data[2] = a.t_data[1]*b.t_data[0];
-    this->t_data[3] = a.t_data[1]*b.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
+//  if( T_dim == 2 )
+//  {
+//    this->t_data[0] = a.t_data[0]*b.t_data[0];
+//    this->t_data[1] = a.t_data[0]*b.t_data[1];
+//
+//    this->t_data[2] = a.t_data[1]*b.t_data[0];
+//    this->t_data[3] = a.t_data[1]*b.t_data[1];
+//  }
+//  else if( T_dim == 3 )
+//  {
     this->t_data[0] = a.t_data[0]*b.t_data[0];
     this->t_data[1] = a.t_data[0]*b.t_data[1];
     this->t_data[2] = a.t_data[0]*b.t_data[2];
@@ -916,11 +858,11 @@ inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1Tens
     this->t_data[6] = a.t_data[2]*b.t_data[0];
     this->t_data[7] = a.t_data[2]*b.t_data[1];
     this->t_data[8] = a.t_data[2]*b.t_data[2];
-  }
-  else
-  {
-    std::cout<<"R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3";
-  }
+//  }
+//  else
+//  {
+//    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+//  }
 }
 
 
@@ -960,7 +902,7 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
   }
   else
   {
-    std::cout<<"R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
   }
 }
 
@@ -976,16 +918,16 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
 template< int T_dim >
 inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
-  if( T_dim == 2 )
-  {
-    this->t_data[0] += a.t_data[0]*b.t_data[0];
-    this->t_data[1] += a.t_data[0]*b.t_data[1];
-
-    this->t_data[2] += a.t_data[1]*b.t_data[0];
-    this->t_data[3] += a.t_data[1]*b.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
+//  if( T_dim == 2 )
+//  {
+//    this->t_data[0] += a.t_data[0]*b.t_data[0];
+//    this->t_data[1] += a.t_data[0]*b.t_data[1];
+//
+//    this->t_data[2] += a.t_data[1]*b.t_data[0];
+//    this->t_data[3] += a.t_data[1]*b.t_data[1];
+//  }
+//  else if( T_dim == 3 )
+//  {
     this->t_data[0] += a.t_data[0]*b.t_data[0];
     this->t_data[1] += a.t_data[0]*b.t_data[1];
     this->t_data[2] += a.t_data[0]*b.t_data[2];
@@ -997,11 +939,11 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
     this->t_data[6] += a.t_data[2]*b.t_data[0];
     this->t_data[7] += a.t_data[2]*b.t_data[1];
     this->t_data[8] += a.t_data[2]*b.t_data[2];
-  }
-  else
-  {
-    std::cout<<"R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3";
-  }
+//  }
+//  else
+//  {
+//    GEOS_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+//  }
 }
 
 /**
@@ -1056,7 +998,7 @@ inline realT R2TensorT<T_dim>::Det(void) const
           + this->t_data[6]*( this->t_data[1]*(this->t_data[5]) - this->t_data[2]*(this->t_data[4]) );
   else
   {
-    std::cout<<"R2TensorT::Det() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return det;
@@ -1084,7 +1026,7 @@ inline realT R2TensorT<T_dim>::Inner(void) const
            + this->t_data[8]*(this->t_data[8]);
   else
   {
-    std::cout<<"R2TensorT::Inner() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
   }
 
   return rval;
@@ -1117,7 +1059,7 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
               - ( this->t_data[2]*(this->t_data[3])*(this->t_data[7]) + this->t_data[1]*(this->t_data[5])*(this->t_data[6]) );
   else
   {
-    std::cout<<"R2TensorT::Det() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return One_Det;
@@ -1135,23 +1077,23 @@ template< int T_dim >
 inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
 {
   realT o1,o2,o3,o4,o5,o6,o7,o8,o9,o10,o11;
-  if (T_dim == 2)
-  {
-    /* temps - incase matrix is *this */
-    realT A0 = a.t_data[0];
-    realT A1 = a.t_data[1];
-    realT A2 = a.t_data[2];
-    realT A3 = a.t_data[3];
-
-    o10 = (A0*A3 - A1*A2);
-    realT idet = 1 / o10;
-
-    this->t_data[0] =  A3*idet;
-    this->t_data[1] =-A1*idet;
-    this->t_data[2] =-A2*idet;
-    this->t_data[3] =  A0*idet;
-  }
-  else if (T_dim == 3)
+//  if (T_dim == 2)
+//  {
+//    /* temps - incase matrix is *this */
+//    realT A0 = a.t_data[0];
+//    realT A1 = a.t_data[1];
+//    realT A2 = a.t_data[2];
+//    realT A3 = a.t_data[3];
+//
+//    o10 = (A0*A3 - A1*A2);
+//    realT idet = 1 / o10;
+//
+//    this->t_data[0] =  A3*idet;
+//    this->t_data[1] =-A1*idet;
+//    this->t_data[2] =-A2*idet;
+//    this->t_data[3] =  A0*idet;
+//  }
+//  else if (T_dim == 3)
   {
 
     o1 = a.t_data[4]*a.t_data[8] - a.t_data[5]*a.t_data[7];
@@ -1171,15 +1113,9 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
     o10 = a.Det();
 
     const realT tol = 1.0e-14 * a.MaxVal();
-    if( o10<=tol && o10>=-tol )
-    {
-      throw std::exception();
-    }
-    else
-    {
-      o11 = 1.0/o10;
-    }
-
+    GEOS_ERROR_IF(o10<=tol && o10>=-tol, "Tolerance error");
+    
+    o11 = 1.0/o10;
 
     this->t_data[0] = o1*o11;
     this->t_data[1] = o2*o11;
@@ -1192,113 +1128,112 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
     this->t_data[8] = o9*o11;
 
   }
-  else
-  {
-#if 1
-    throw 1;
-    std::cout<<"R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3";
-#else
-    R2TensorT<T_dim> a0;
-    R1TensorT<T_dim> ipiv, indxr, indxc;
-    realT big,piv,dum,pivin;
-    int irow,icol;
-
-    ipiv = 0;
-    a0 = a;
-
-    // FIND A PIVOT AMAONG THE ROWS OF A THAT HAVE NOT ALREADU BEEN REDUCED
-    for(int i=0 ; i<T_dim ; ++i)
-    {
-      big=0.;
-      for(int j=0 ; j<T_dim ; ++j)
-      {
-        if(ipiv[j]!=1)
-        {
-          for (int k=0 ; k<T_dim ; ++k)
-          {
-            if(ipiv[k]==0)
-            {
-              if(abs(a(j,k))>=big)
-              {
-                big=abs(a(j,k));
-                irow=j;
-                icol=k;
-                piv=a(j,k);
-              }
-            }
-            else if(ipiv[k]>1)
-            {
-              std::cout << "Singular Matrix" << "\n";
-              //throw GPException("Singular Matrix.\n");
-            }
-          }
-        }
-      }
-
-      ipiv[icol]+=1;
-      indxr[i]=irow;
-      indxc[i]=icol;
-
-      //INTERCHANGE THE ROWS TO PUT THE PIVOT ON THE DIAGONAL
-      if(irow!=icol)
-      {
-        for (int l=0 ; l<T_dim ; ++l)
-        {
-          dum=a(irow,l);
-          a(irow,l)=a(icol,l);
-          a(icol,l)=dum;
-        }
-      }
-
-      // REDUCTION OF THE ROW OF THE PIVOT
-      if(piv==0)
-        std::cout << "Singular Matrix" << "\n";
-      //throw GPException("Singular Matrix.\n");
-
-      pivin=1./piv;
-      a(icol,icol)=1.;
-
-      for(int m=0 ; m<T_dim ; ++m)
-      {
-        a(icol,m)*=pivin;
-      }
-
-
-      //REDUCTION OF THE COLUMN OF THE PIVOT
-      for(int ll=0 ; ll<T_dim ; ++ll)
-      {
-        if(ll!=icol)
-        {
-          dum=a(ll,icol);
-          a(ll,icol)=0.;
-          for (int n=0 ; n<T_dim ; ++n)
-          {
-            a(ll,n)-=a(icol,n)*dum;
-          }
-        }
-      }
-    }
-
-    for (int j=T_dim-1 ; j>=0 ; --j)
-    {
-      for (int k=0 ; k<T_dim ; ++k)
-      {
-        dum=a(k,indxr(j));
-        a(k,indxr(j))=a(k,indxc(j));
-        a(k,indxc(j))=dum;
-      }
-    }
-
-    for (int i=0 ; i<T_dim*T_dim ; ++i)
-    {
-      this->t_data[i]=a.t_data[i];
-    }
-
-    //a = a0;
-
-
-#endif
-  }
+//  else
+//  {
+//#if 1
+//    GEOS_ERROR("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
+//#else
+//    R2TensorT<T_dim> a0;
+//    R1TensorT<T_dim> ipiv, indxr, indxc;
+//    realT big,piv,dum,pivin;
+//    int irow,icol;
+//
+//    ipiv = 0;
+//    a0 = a;
+//
+//    // FIND A PIVOT AMAONG THE ROWS OF A THAT HAVE NOT ALREADU BEEN REDUCED
+//    for(int i=0 ; i<T_dim ; ++i)
+//    {
+//      big=0.;
+//      for(int j=0 ; j<T_dim ; ++j)
+//      {
+//        if(ipiv[j]!=1)
+//        {
+//          for (int k=0 ; k<T_dim ; ++k)
+//          {
+//            if(ipiv[k]==0)
+//            {
+//              if(abs(a(j,k))>=big)
+//              {
+//                big=abs(a(j,k));
+//                irow=j;
+//                icol=k;
+//                piv=a(j,k);
+//              }
+//            }
+//            else if(ipiv[k]>1)
+//            {
+//              std::cout << "Singular Matrix" << "\n";
+//              //throw GPException("Singular Matrix.\n");
+//            }
+//          }
+//        }
+//      }
+//
+//      ipiv[icol]+=1;
+//      indxr[i]=irow;
+//      indxc[i]=icol;
+//
+//      //INTERCHANGE THE ROWS TO PUT THE PIVOT ON THE DIAGONAL
+//      if(irow!=icol)
+//      {
+//        for (int l=0 ; l<T_dim ; ++l)
+//        {
+//          dum=a(irow,l);
+//          a(irow,l)=a(icol,l);
+//          a(icol,l)=dum;
+//        }
+//      }
+//
+//      // REDUCTION OF THE ROW OF THE PIVOT
+//      if(piv==0)
+//        std::cout << "Singular Matrix" << "\n";
+//      //throw GPException("Singular Matrix.\n");
+//
+//      pivin=1./piv;
+//      a(icol,icol)=1.;
+//
+//      for(int m=0 ; m<T_dim ; ++m)
+//      {
+//        a(icol,m)*=pivin;
+//      }
+//
+//
+//      //REDUCTION OF THE COLUMN OF THE PIVOT
+//      for(int ll=0 ; ll<T_dim ; ++ll)
+//      {
+//        if(ll!=icol)
+//        {
+//          dum=a(ll,icol);
+//          a(ll,icol)=0.;
+//          for (int n=0 ; n<T_dim ; ++n)
+//          {
+//            a(ll,n)-=a(icol,n)*dum;
+//          }
+//        }
+//      }
+//    }
+//
+//    for (int j=T_dim-1 ; j>=0 ; --j)
+//    {
+//      for (int k=0 ; k<T_dim ; ++k)
+//      {
+//        dum=a(k,indxr(j));
+//        a(k,indxr(j))=a(k,indxc(j));
+//        a(k,indxc(j))=dum;
+//      }
+//    }
+//
+//    for (int i=0 ; i<T_dim*T_dim ; ++i)
+//    {
+//      this->t_data[i]=a.t_data[i];
+//    }
+//
+//    //a = a0;
+//
+//
+//#endif
+//  }
 
   return o10;
 }
@@ -1363,7 +1298,7 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
   }
   else
   {
-    std::cout<<"R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3";;
+    GEOS_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return *this;
 }
@@ -1432,7 +1367,7 @@ inline void R2TensorT<T_dim>::Aijkl_to_Bmn( const R4minSymTensorT<3>& A)
   int n_dim = 6;
 
   if (T_dim!=6)
-    std::cout<< "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6";
+    GEOS_WARNING( "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6");
   else
   {
     for(int ii=0,m=0,j=0 ; m<n_dim ; m+=++ii)
@@ -1498,7 +1433,7 @@ void R2TensorT<T_dim>::SetMaxVal( const R2TensorT<T_dim>& A )
 
   }
   else
-    std::cout<<"R1TensorT not implemented for nsdof>3";
+    GEOS_WARNING("R1TensorT not implemented for nsdof>3");
 
 }
 #endif

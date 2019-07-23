@@ -7,7 +7,6 @@ message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 # OPTIONS
 option( ENABLE_CALIPER "" OFF )
-set( CALIPER_INSTALL "" CACHE PATH "")
 
 option( ENABLE_MATHPRESSO "" ON )
 
@@ -21,6 +20,9 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( ENABLE_GEOSX_PTP "" OFF)
+option( ENABLE_PAMELA "" ON )
+option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_FPARSER "Enables FPARSER" OFF )
 
@@ -32,6 +34,9 @@ option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
 
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
+option( ENABLE_METIS "Enables METIS" ON )
+option( ENABLE_PARMETIS "Enables PARMETIS" ON )
+option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 
 option( ENABLE_MPI "" ON )
@@ -43,7 +48,6 @@ if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
-
 
 #set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
 #set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )
@@ -75,9 +79,15 @@ message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                 GNU "-pedantic-errors -Wno-abi  -Wshadow -Wfloat-equal	-Wcast-align	-Wpointer-arith	-Wwrite-strings	-Wcast-qual	-Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function" 
-                                 CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro -Wno-weak-vtables -Wno-undefined-func-template" 
+                                 GNU "-Wall -Wextra -pedantic-errors -Wignored-qualifiers -Wno-abi -Wshadow -Wfloat-equal -Wcast-align -Wpointer-arith -Wwrite-strings -Wcast-qual -Wswitch-default -Wno-vla -Wno-switch-default -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function"
+                                 CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro -Wno-weak-vtables -Wno-undefined-func-template -Wno-global-constructors -Wno-exit-time-destructors -Wno-documentation-unknown-command -Wno-unused-function -Wno-used-but-marked-unused -Wno-unused-template -Wno-unused-macros"
                                )
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.0.0")
+  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS
+                                  CLANG "-Wno-unused-template"
+                                  )
+endif()
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
                                  GNU "" 

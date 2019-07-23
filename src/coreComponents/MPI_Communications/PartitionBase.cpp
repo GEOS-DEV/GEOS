@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -29,10 +29,6 @@
 //#include "IO/BinStream.h"
 //#include "ObjectManagers/DomainPartition.h"
 #include <limits.h>
-
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
 
 namespace geosx
 {
@@ -583,9 +579,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //
 //  if( sendArray.size() != m_neighbors.size() || recvArray.size() != m_neighbors.size() )
 //  {
-//#ifdef GEOSX_USE_ATK
-//    SLIC_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
-//#endif
+//    GEOS_ERROR("PartitionBase::SendRecieve: size of arrays do not equal number of neighbors");
 //  }
 //
 //
@@ -818,9 +812,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //// bufvector>::iterator itmp =
 //// neighbor->tempNeighborData.objectsToSend.find(*it);
 ////        if(itmp == neighbor->tempNeighborData.objectsToSend.end())
-////#ifdef GEOSX_USE_ATK
-////          SLIC_ERROR("Cannot find name " + toString<int>(*it) + " in
-//// objectsToSend");
+////          GEOS_ERROR("Cannot find name " + toString<int>(*it) + " in
 ////#endif
 ////
 ////        bufvector& send = itmp->second;
@@ -1106,9 +1098,7 @@ void PartitionBase::SetDomain( DomainPartition * domain )
 //        {
 //          st<< *failed <<"\n";
 //        }
-////#ifdef GEOSX_USE_ATK
-////        SLIC_ERROR(st.str().c_str());
-////#endif
+////        GEOS_ERROR(st.str().c_str());
 //
 //      }
 //
@@ -3395,9 +3385,7 @@ void PartitionBase::ModifyGhostsAndNeighborLists( const ModifiedObjectLists& mod
 //      {
 //        if (colorByRank[listNeighbors[rank][i]] ==  colorByRank[rank])
 //        {
-//#ifdef GEOSX_USE_ATK
-//          SLIC_ERROR("ERROR: Two neighbors were assigned the same color.");
-//#endif
+//          GEOS_ERROR("ERROR: Two neighbors were assigned the same color.");
 //        }
 //      }
 //    }

@@ -1,4 +1,22 @@
 /*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/*
  * ComputationalGeometry.hpp
  *
  *  Created on: Jun 26, 2018
@@ -25,10 +43,11 @@ namespace computationalGeometry
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& points,
-                         R1Tensor& center,
-                         R1Tensor& normal );
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance = 0.0 );
 
 /**
  * @author settgast
@@ -41,14 +60,20 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& pointReferences,
-                         const array1d<R1Tensor>& pointDisplacements,
-                         R1Tensor& center,
-                         R1Tensor& normal );
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal );
 
 
 real64 HexVolume( R1Tensor const * const points );
+
+real64 TetVolume( R1Tensor const * const points );
+
+real64 WedgeVolume( R1Tensor const * const points );
+
+real64 PyramidVolume( R1Tensor const * const points );
 
 inline void VectorDifference( array1d< R1Tensor > const & X,
                               localIndex const index0,

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,20 +25,10 @@
 
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-//#include "../../../cxx-utilities/src/src/DocumentationNode.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const stateData( "StateData" );
-string const parameterData( "ParameterData" );
-}
-}
 
 namespace constitutive
 {
@@ -58,99 +48,71 @@ public:
   inline static string makeFieldName(string const & prefix, string const & name) { return prefix + "_" + name; }
 
 
-  ConstitutiveBase( std::string const & name,
+  ConstitutiveBase( string const & name,
                     ManagedGroup * const parent );
 
   virtual ~ConstitutiveBase() override;
 
-  virtual std::unique_ptr<ConstitutiveBase> DeliverClone( string const & name,
-                                                          ManagedGroup * const parent ) const = 0;
+  /**
+   * @brief create a clone of this constitutive model
+   * @param[in]  name   The name of the clone in the repository
+   * @param[in]  parent A pointer to the group that contains the instance of the new clone
+   * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
+   */
+  virtual void DeliverClone( string const & name,
+                             ManagedGroup * const parent,
+                             std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
 
 
-  virtual void SetParamStatePointers( void *& ) {}
+  virtual void StateUpdatePointPressure( real64 const & pres,
+                                         localIndex const k,
+                                         localIndex const q ) {}
 
-
-  typedef void (*UpdateFunctionPointer)( R2SymTensor const & D,
-                                         R2Tensor const & Rot,
-                                         localIndex const i,
-                                         void * dataPtrs,
-                                         integer const systemAssembleFlag );
-
-  virtual UpdateFunctionPointer GetStateUpdateFunctionPointer( ) { assert(false); return nullptr; }
-
-  virtual void StateUpdate( dataRepository::ManagedGroup const * const input,
-                            dataRepository::ManagedGroup const * const parameters,
-                            dataRepository::ManagedGroup * const stateVariables,
-                            integer const systemAssembleFlag ) const = 0;
-
-
-  virtual R2SymTensor StateUpdatePoint( R2SymTensor const & D,
-                                        R2Tensor const & Rot,
-                                        localIndex const i,
-                                        localIndex const q,
-                                        integer const systemAssembleFlag ) { return R2SymTensor(); }
-
-  virtual void FluidDensityCompute( real64 const & pres,
-                                    localIndex const i,
-                                    real64 & dens,
-                                    real64 & dDens_dPres ) {}
-
-  virtual void FluidViscosityCompute( real64 const & pres,
-                                      localIndex const i,
-                                      real64 & visc,
-                                      real64 & dVisc_dPres ) {}
-
-
-  virtual void PoreVolumeMultiplierCompute( real64 const & pres,
-                                            localIndex const i,
-                                            real64 & poro,
-                                            real64 & dPVMult_dPres ) {}
-
-  virtual void PressureUpdatePoint( real64 const & pres,
-                                    localIndex const k,
-                                    localIndex const q ) {}
-
-  virtual void FillDocumentationNode() override = 0;
-
-  virtual void resize( localIndex ) override;
-
-  virtual void GetStiffness( realT c[6][6] ) const {}
+  /**
+   * @brief function to resize the fields in this constitutive model
+   * @param[in] newSize the new size of the fields
+   */
+  virtual void resize( localIndex newSize ) override;
 
 
   using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
+  /**
+   * @brief function to return the catalog name of the derived class
+   * @return a string that contains the catalog name of the derived class
+   */
   virtual string GetCatalogName() = 0;
 
+  /**
+   * @brief Allocate constitutive data and make views to data on parent objects
+   * @param[in] parent pointer to the group that holds the constitutive relation
+   * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
+   *
+   * This function does 2 things:
+   *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
+   *   2) Create wrappers to the constitutive data in the parent for easier access
+   */
   virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
   {
-    static constexpr auto densityString  = "density";
-    static constexpr auto dDens_dPresString  = "dPressure_dDensity";
-
-    static constexpr auto viscosityString  = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dViscosity_dDensity";
-
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 
-
-  } m_ConstitutiveBaseViewKeys;
+  };
 
   struct groupKeyStruct
-  {} m_ConstitutiveBaseGroupKeys;
+  {};
 
-  virtual viewKeyStruct       & viewKeys()        { return m_ConstitutiveBaseViewKeys; }
-  virtual viewKeyStruct const & viewKeys() const  { return m_ConstitutiveBaseViewKeys; }
 
-  virtual groupKeyStruct       & groupKeys()       { return m_ConstitutiveBaseGroupKeys; }
-  virtual groupKeyStruct const & groupKeys() const { return m_ConstitutiveBaseGroupKeys; }
+  localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
 protected:
 
 private:
+  localIndex m_numQuadraturePoints;
   ManagedGroup * m_constitutiveDataGroup = nullptr;
 
   ConstitutiveBase( ConstitutiveBase const & ) = delete;

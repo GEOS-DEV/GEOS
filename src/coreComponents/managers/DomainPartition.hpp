@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -55,7 +55,8 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void FillDocumentationNode() override;
+  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+
 
   void InitializationOrder( string_array & order ) override final;
 
@@ -70,11 +71,6 @@ public:
 
 //  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 //                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
-
-  void SetMpiComm( MPI_Comm comm )
-  {
-    MPI_Comm_dup( comm, &m_mpiComm );
-  }
 
 //  static std::set<int> & getFreeCommIDs();
 //  static int reserveCommID();
@@ -111,7 +107,7 @@ public:
   struct groupKeysStruct
   {
     static constexpr auto meshBodiesString = "MeshBodies";
-    static constexpr auto constitutiveManagerString = "ConstitutiveManager";
+    static constexpr auto constitutiveManagerString = "Constitutive";
 
     dataRepository::GroupKey meshBodies           = { meshBodiesString };
     dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
@@ -141,11 +137,12 @@ public:
   MeshBody * getMeshBody( integer const index )
   { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
+  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
+  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
 
 private:
-  MPI_Comm m_mpiComm;
-//  std::set<int> m_freeCommID;
 
+  std::set<int> m_metisNeighborList;
 
 };
 

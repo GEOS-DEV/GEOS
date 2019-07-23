@@ -40,18 +40,6 @@ NewComponent::~NewComponent()
 
 
 
-void NewComponent::InitializePreSubGroups( ManagedGroup * const )
-{}
-
-void NewComponent::InitializePostSubGroups( ManagedGroup * const )
-{}
-
-
-
-void NewComponent::ReadXML_PostProcess( )
-{}
-
-
 
 
 real64 NewComponent::SolverStep( real64 const & /*time_n*/,

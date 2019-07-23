@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,12 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshManager.hpp
- *
- *  Created on: Sep 7, 2016
- *      Author: rrsettgast
- */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MESHMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MESHMANAGER_HPP_
@@ -41,9 +35,10 @@ public:
 
   virtual ~MeshManager() override;
 
-  virtual void FillDocumentationNode() override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
   void GenerateMeshes( DomainPartition * const domain );
   void GenerateMeshLevels( DomainPartition * const domain );

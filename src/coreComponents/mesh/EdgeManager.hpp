@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -67,24 +67,23 @@ public:
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
-  template< typename T_indices >
-  unsigned int PackEdges( const T_indices& sendedges,
-                          const NodeManager& nodeManager,
-                          const FaceManager& faceManager,
-//                          bufvector& buffer,
-                          const bool packConnectivityToGlobal,
-                          const bool packFields,
-                          const bool packMaps,
-                          const bool packSets  ) const;
 
-  unsigned int UnpackEdges( const char*& buffer,
-                            const NodeManager& nodeManager,
-                            const FaceManager& faceManager,
-                            localIndex_array& edgeReceiveLocalIndices,
-                            const bool unpackConnectivityToLocal,
-                            const bool unpackFields,
-                            const bool unpackMaps,
-                            const bool unpackSets  );
+  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d<localIndex const> const & packList ) const override;
+
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
+
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
+                         array1d< array1d< localIndex > > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
                                       const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
@@ -93,12 +92,6 @@ public:
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const set<localIndex>& newEdgeIndices,
 //                                     const set<localIndex>& modifiedEdgeIndices );
-
-//  void EdgeCenter(const NodeManager& nodeManager, localIndex edge, R1Tensor&
-// center)const;
-//  void EdgeVector(const NodeManager& nodeManager, localIndex edge, R1Tensor&
-// vector)const;
-//  realT EdgeLength(const NodeManager& nodeManager, localIndex edge) const;
 
   void AddToEdgeToFaceMap( const FaceManager * faceManager,
                            const localIndex_array& newFaceIndices );
@@ -109,6 +102,14 @@ public:
                   array1d<set<localIndex>>& nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
+
+  void calculateCenter( localIndex const edgeIndex,
+                        arraySlice1d<R1Tensor const> const & X,
+                        R1Tensor & center ) const;
+
+  void calculateLength( localIndex const edgeIndex,
+                        arraySlice1d<R1Tensor const> const & X,
+                        R1Tensor & center ) const;
 
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
@@ -161,6 +162,32 @@ private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+
+  template<bool DOPACK>
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d<localIndex const> const & packList ) const;
+
 };
+
+inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                          arraySlice1d<R1Tensor const> const & X,
+                                          R1Tensor & center ) const
+{
+  center = X[m_toNodesRelation[edgeIndex][0]];
+  center += X[m_toNodesRelation[edgeIndex][1]];
+  center *= 0.5;
+}
+
+inline void EdgeManager::calculateLength( localIndex const edgeIndex,
+                                          arraySlice1d<R1Tensor const> const & X,
+                                          R1Tensor & center ) const
+{
+  center = X[m_toNodesRelation[edgeIndex][1]];
+  center -= X[m_toNodesRelation[edgeIndex][0]];
+}
+
 }
 #endif /* EDGEMANAGERT_H_ */

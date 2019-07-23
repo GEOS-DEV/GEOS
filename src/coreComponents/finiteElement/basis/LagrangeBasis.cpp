@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,111 +25,30 @@
 namespace geosx
 {
 
+using namespace dataRepository;
+
 template <int dim>
-LagrangeBasis<dim> :: LagrangeBasis(const int degree)
+LagrangeBasis<dim>::LagrangeBasis(std::string const & name, ManagedGroup * const parent)
   :
-  m_degree(degree),
-  n_shape_functions(StructuredGrid::dimpower<dim>(degree+1))
+  BasisBase(name, parent),
+  m_degree(0),
+  n_shape_functions(0)
 {
-  std::vector<std::vector<double> > coeff( degree+1, std::vector<double>(degree+1) );
-
-  switch(degree)
-  {
-  case 0:
-    coeff[0][0] =  1.0;
-    break;
-
-  case 1:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -1.0;
-
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  1.0;
-    break;
-
-  case 2:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -3.0;
-    coeff[0][2] =  2.0;
-
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  4.0;
-    coeff[1][2] = -4.0;
-
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -1.0;
-    coeff[2][2] =  2.0;
-    break;
-
-  case 3:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -11.0/2.0;
-    coeff[0][2] =  9.0;
-    coeff[0][3] = -9.0/2.0;
-
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  9.0;
-    coeff[1][2] = -45.0/2.0;
-    coeff[1][3] =  27.0/2.0;
-
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -9.0/2.0;
-    coeff[2][2] =  18.0;
-    coeff[2][3] = -27.0/2.0;
-
-    coeff[3][0] =  0.0;
-    coeff[3][1] =  1.0;
-    coeff[3][2] = -9.0/2.0;
-    coeff[3][3] =  9.0/2.0;
-    break;
-
-  case 4:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -25.0/3.0;
-    coeff[0][2] =  70.0/3.0;
-    coeff[0][3] = -80.0/3.0;
-    coeff[0][4] =  32.0/3.0;
-
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  16.0;
-    coeff[1][2] = -208.0/3.0;
-    coeff[1][3] =  96.0;
-    coeff[1][4] = -128.0/3.0;
-
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -12.0;
-    coeff[2][2] =  76.0;
-    coeff[2][3] = -128.0;
-    coeff[2][4] =  64.0;
-
-    coeff[3][0] =  0.0;
-    coeff[3][1] =  16.0/3.0;
-    coeff[3][2] = -112.0/3.0;
-    coeff[3][3] =  224.0/3.0;
-    coeff[3][4] = -128.0/3.0;
-
-    coeff[4][0] =  0.0;
-    coeff[4][1] = -1.0;
-    coeff[4][2] =  22.0/3.0;
-    coeff[4][3] = -16.0;
-    coeff[4][4] =  32.0/3.0;
-    break;
-
-  default:
-    assert(degree<5);
-  }
-
-  for(int n=0 ; n<degree+1 ; ++n)
-    m_polynomials.push_back(Polynomial(coeff[n]));
+  RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Basis degree");
 }
 
+template <int dim>
+LagrangeBasis<dim>::~LagrangeBasis()
+{}
 
 /*
  * Number of degrees of freedom in basis
  */
 
 template <int dim>
-int LagrangeBasis<dim> :: size() const
+int LagrangeBasis<dim>::size() const
 {
   return n_shape_functions;
 }
@@ -138,10 +57,8 @@ int LagrangeBasis<dim> :: size() const
 /*
  * Evaluate the basis at a particular point in parent coordinates
  */
-
-
 template <int dim>
-double LagrangeBasis<dim> :: value(const int       index,
+double LagrangeBasis<dim>::value(const int       index,
                                    const R1Tensor &point) const
 {
   std::vector<int> indices(dim);
@@ -158,9 +75,8 @@ double LagrangeBasis<dim> :: value(const int       index,
 /*
  * Evaluate the gradient at a particular point in parent coordinates.
  */
-
 template <int dim>
-R1Tensor LagrangeBasis<dim> :: gradient(const int index,
+R1Tensor LagrangeBasis<dim>::gradient(const int index,
                                         const R1Tensor &point) const
 {
   std::vector<int> indices(dim);
@@ -194,7 +110,7 @@ R1Tensor LagrangeBasis<dim> :: gradient(const int index,
  */
 
 template <int dim>
-R1Tensor LagrangeBasis<dim> :: support_point(const int index)
+R1Tensor LagrangeBasis<dim>::support_point(const int index)
 {
   R1Tensor pt;
 
@@ -218,9 +134,8 @@ R1Tensor LagrangeBasis<dim> :: support_point(const int index)
 }
 
 template <int dim>
-void LagrangeBasis<dim>::ReadXML( xmlWrapper::xmlNode const & targetNode )
+void LagrangeBasis<dim>::PostProcessInput()
 {
-  m_degree = targetNode.attribute("degree").as_int(1);
   n_shape_functions = StructuredGrid::dimpower<dim>(m_degree+1);
 
   std::vector<std::vector<double> > coeff( m_degree+1, std::vector<double>(m_degree+1) );
@@ -324,7 +239,7 @@ void LagrangeBasis<dim>::ReadXML( xmlWrapper::xmlNode const & targetNode )
 //template class LagrangeBasis<3>;
 
 //REGISTER_CATALOG_ENTRY( BasisBase, LagrangeBasis<1>,void )
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<1> > catEntry_LagrangeBasis1; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<2> > catEntry_LagrangeBasis2; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase,LagrangeBasis<3> > catEntry_LagrangeBasis3; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis1; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis2; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis3; }
 }

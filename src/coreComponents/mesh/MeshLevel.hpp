@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshLevel.hpp
- *
- *  Created on: Sep 13, 2017
- *      Author: settgast
+/**
+ * @file MeshLevel.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
@@ -42,14 +39,16 @@ public:
              ManagedGroup * const parent );
   virtual ~MeshLevel() override;
 
-  void InitializePostSubGroups( ManagedGroup * const ) override;
-
   void GenerateAdjacencyLists( localIndex_array & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
                                localIndex_array & edgeAdjacencyList,
                                localIndex_array & faceAdjacencyList,
-                               ElementRegionManager::ElementViewAccessor<localIndex_array> & elementAdjacencyList,
+                               ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> & elementAdjacencyList,
                                integer const depth );
+
+
+  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const ) override;
+
 
   struct viewStructKeys
   {

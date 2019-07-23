@@ -49,53 +49,47 @@
 #  
 #  If found, the conduit CMake targets will also be imported
 
-# first Check for ATK_DIR
+if (NOT EXISTS ${ATK_DIR})
+    message(STATUS "Using axom from thirdPartyLibs")
+    set(ATK_DIR "${GEOSX_TPL_DIR}/axom" CACHE PATH "")
+endif()
 
-if( EXISTS ${ATK_DIR})
+if (EXISTS ${ATK_DIR})
+    message(STATUS "Using axom found at ${ATK_DIR}")
 
+    set(ATK_FOUND TRUE)
+    set(ATK_INCLUDE_DIRS ${ATK_DIR}/include)
     set(ATK_CMAKE ${ATK_DIR}/lib/cmake)
 
-    if(NOT EXISTS ${ATK_CMAKE}/axom_utils-targets.cmake)
-        MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/axom_utils-targets.cmake)")
-    endif()
-    include(${ATK_CMAKE}/axom_utils-targets.cmake)
-
-
-    #if(ENABLE_MPI)
-      if(NOT EXISTS ${ATK_CMAKE}/lumberjack-targets.cmake)
-          MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/lumberjack-targets.cmake)")
-      endif()
+    include(${ATK_CMAKE}/fmt-targets.cmake)
+    include(${ATK_CMAKE}/sparsehash-targets.cmake)
+    include(${ATK_CMAKE}/core-targets.cmake)
     include(${ATK_CMAKE}/lumberjack-targets.cmake)
-    #endif(ENABLE_MPI)
-
-    if(NOT EXISTS ${ATK_CMAKE}/slic-targets.cmake)
-        MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/slic-targets.cmake)")
-    endif()
     include(${ATK_CMAKE}/slic-targets.cmake)
-
-
-    if(NOT EXISTS ${ATK_CMAKE}/sidre-targets.cmake)
-        MESSAGE(FATAL_ERROR "Could not find ATK cmake include file (${ATK_CMAKE}/sidre-targets.cmake)")
-    endif()
-
-
-    include("${ATK_CMAKE}/fmt-targets.cmake")
-    include("${ATK_CMAKE}/sparsehash-targets.cmake")
     include(${ATK_CMAKE}/sidre-targets.cmake)
 
+    if (CONDUIT_FOUND)
+        blt_register_library( NAME sidre
+                              INCLUDES ${ATK_INCLUDE_DIRS} 
+                              LIBRARIES  sidre
+                              TREAT_INCLUDES_AS_SYSTEM ON )
+        set(thirdPartyLibs ${thirdPartyLibs} sidre )
+    else()
+        message("Conduit not found turning off sidre")
+    endif()
 
-    #include("${ATK_CMAKE}/lumberjack-targets.cmake")
-    #include("${ATK_CMAKE}/sidre-targets.cmake")
-    #include("${ATK_CMAKE}/slic-targets.cmake")
-    include("${ATK_CMAKE}/mint-targets.cmake")
-    include("${ATK_CMAKE}/primal-targets.cmake")
-    include("${ATK_CMAKE}/slam-targets.cmake")
-    include("${ATK_CMAKE}/quest-targets.cmake")
-    include("${ATK_CMAKE}/slam-targets.cmake")
+    blt_register_library( NAME slic
+                          INCLUDES ${ATK_INCLUDE_DIRS} 
+                          LIBRARIES  slic
+                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ATK_FOUND TRUE)    
-    
-    set(ATK_INCLUDE_DIRS ${ATK_DIR}/include)
+    blt_register_library( NAME lumberjack
+                          INCLUDES ${ATK_INCLUDE_DIRS} 
+                          LIBRARIES  lumberjack
+                          TREAT_INCLUDES_AS_SYSTEM ON)
+
+    set(thirdPartyLibs ${thirdPartyLibs} slic lumberjack )
 else()
     set(ATK_FOUND FALSE)
+    message("Not using axom")
 endif()

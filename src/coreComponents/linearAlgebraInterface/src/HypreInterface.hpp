@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -38,6 +38,9 @@ namespace geosx
 class HypreInterface
 {
 public:
+
+  using laiLID = hypreTypes::lid;
+  using laiGID = hypreTypes::gid;
 
   // Epetra matrix and vector wrappers
   using ParallelMatrix = HypreSparseMatrix;

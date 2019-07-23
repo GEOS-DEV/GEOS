@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -41,9 +41,6 @@ public:
 
   static string CatalogName() { return "DummySolver"; }
 
-  virtual void FillDocumentationNode() override;
-
-  virtual void Initialize( ManagedGroup * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,
@@ -52,10 +49,19 @@ public:
 
   virtual real64 GetTimestepRequest(real64 const time) override;
 
-  struct viewKeysStruct
+  struct viewKeyStruct
   {
-    dataRepository::ViewKey rand_scale = { "rand_scale" };
-  } dummyViewKeys;
+    static constexpr auto randScaleString = "scale";
+    static constexpr auto randSeedString = "seed";
+    dataRepository::ViewKey randScale = { "scale" };
+    dataRepository::ViewKey randSeed = { "seed" };
+    } viewKeysDummySolver;
+
+protected:
+  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override final;
+
+  real64 m_randScale;
+  integer m_randSeed;
 
 };
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -31,5 +31,10 @@ namespace geosx
 //template class FiniteElement<1>;
 //template class FiniteElement<2>;
 //template class FiniteElement<3>;
+
+typedef FiniteElement<3> FiniteElement3d;
+
+REGISTER_CATALOG_ENTRY( FiniteElementBase, FiniteElement3d, BasisBase const &, QuadratureBase const &, const int )
+
 
 }

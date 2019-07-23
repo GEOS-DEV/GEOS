@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -30,8 +30,7 @@
 #include <string>
 
 #ifdef GEOSX_USE_ATK
-#include "sidre/DataStore.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 #include <mpi.h>
 
@@ -45,16 +44,16 @@ class SidreWrapper
 public:
   SidreWrapper();
   ~SidreWrapper();
-  
+
 #ifdef GEOSX_USE_ATK
-  static axom::sidre::DataStore& dataStore();
+  static axom::sidre::DataStore & dataStore();
 #endif
 
-  static void writeTree(int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm);
+  static void writeTree( int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm );
 
-  static void reconstructTree(const std::string & root_path, const std::string & protocol, MPI_Comm comm);
+  static void reconstructTree( const std::string & root_path, const std::string & protocol, MPI_Comm comm );
 
-  static void loadExternalData(const std::string & root_path, MPI_Comm comm);
+  static void loadExternalData( const std::string & root_path, MPI_Comm comm );
 
 private:
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -30,20 +30,21 @@
 #include <mpi.h>
 #include <vector>
 #include "common/DataTypes.hpp"
-#include "common/integer_conversion.hpp"
+#include "dataRepository/ReferenceWrapper.hpp"
+#include "IntegerConversion.hpp"
 
 namespace geosx
 {
 inline int CommTag( int const senderRank, int const receiverRank, int const comm )
 {
-  int m_size;
-  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
-  return senderRank * m_size + receiverRank + m_size * m_size * comm;
+//  int m_size;
+//  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+//  return senderRank * m_size + receiverRank + m_size * m_size * comm;
+  return comm;
 }
 
 class MeshLevel;
-
-
+class ObjectManagerBase;
 class NeighborCommunicator
 {
 public:
@@ -162,19 +163,25 @@ public:
   void UnpackGhosts( MeshLevel * const meshLevel,
                      int const commID );
 
-
   void RebuildSyncLists( MeshLevel * const meshLevel,
                          int const commID );
 
-  void PackBufferForSync( std::map<string, string_array > const & fieldNames,
-                          MeshLevel * const meshLevel,
-                          int const commID );
+  void PackCommBufferForSync( std::map<string, string_array > const & fieldNames,
+                              MeshLevel * const meshLevel,
+                              int const commID );
+
+  int PackCommSizeForSync( std::map<string, string_array > const & fieldNames,
+                           MeshLevel * const meshLevel,
+                           int const commID );
+
+  void SendRecvBuffers( int const commID );
 
   void UnpackBufferForSync( std::map<string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
                             int const commID );
 
-  int Rank();
+  static int Rank();
+  static int MPISize();
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank() const { return m_neighborRank; }
@@ -192,6 +199,16 @@ public:
     return m_receiveBuffer[commID];
   }
 
+  int const & ReceiveBufferSize( int commID ) const
+  {
+    return m_receiveBufferSize[commID];
+  }
+  int & ReceiveBufferSize( int commID )
+  {
+    return m_receiveBufferSize[commID];
+  }
+
+
   buffer_type const & SendBuffer( int commID ) const
   {
     return m_sendBuffer[commID];
@@ -199,6 +216,18 @@ public:
   buffer_type & SendBuffer( int commID )
   {
     return m_sendBuffer[commID];
+  }
+
+  void resizeSendBuffer( int const commID, int const newSize )
+  {
+    m_sendBufferSize[commID] = newSize;
+    m_sendBuffer[commID].resize(newSize);
+  }
+
+  void resizeRecvBuffer( int const commID, int const newSize )
+  {
+    m_receiveBufferSize[commID] = newSize;
+    m_receiveBuffer[commID].resize(newSize);
   }
 
   void AddNeighborGroupToMesh( MeshLevel * const mesh ) const;

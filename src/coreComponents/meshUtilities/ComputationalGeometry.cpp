@@ -1,4 +1,22 @@
 /*
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+
+/*
  * ComputationalGeometry.cpp
  *
  *  Created on: Jun 26, 2018
@@ -13,7 +31,6 @@ namespace computationalGeometry
 {
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -22,20 +39,22 @@ namespace computationalGeometry
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& points,
-                         R1Tensor& center,
-                         R1Tensor& normal )
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
+  normal=0.;
 
   if( n>2 )
   {
     const R1Tensor& x0 = points[pointsIndices[0]];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
       v2  = points[pointsIndices[a+2]];
@@ -47,32 +66,33 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
       v1 -= x0;
       v2 -= x0;
 
-      normal.Cross(v1,v2);
-      const real64 triangleArea = normal.Normalize();
+      R1Tensor triangleNormal;
+      triangleNormal.Cross( v1,v2 );
+      const real64 triangleArea = triangleNormal.Normalize();
+      triangleNormal *= triangleArea;
+      normal += triangleNormal;
       area += triangleArea;
       vc *= triangleArea;
       center += vc;
     }
-    if(area > 0.0)
+    if( area > areaTolerance )
     {
       center /= (area * 3.0);
+      normal.Normalize();
       area *= 0.5;
+    }
+    else if( area < -areaTolerance )
+    {
+      for( localIndex a=0 ; a<n ; ++a )
+        GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
+                      << points[pointsIndices[a]](1) << " "
+                      << points[pointsIndices[a]](2) << " "
+                      << pointsIndices[a]);
+      GEOS_ERROR("Negative area found : " + std::to_string( area ) );
     }
     else
     {
-      center = 0.0;
-      for( localIndex_array::size_type a=0 ; a<n ; ++a )
-      {
-        center += points[a];
-      }
-      std::cout << "Randy's bug: area = " << area << std::endl;
-      for( localIndex_array::size_type a=0 ; a<n ; ++a )
-        std::cout << points[pointsIndices[a]](0) << " "
-                  << points[pointsIndices[a]](1) << " "
-                  << points[pointsIndices[a]](2) << " "
-                  << pointsIndices[a] << std::endl;
-      GEOS_ERROR("");
-      center /= n;
+      return 0.;
     }
   }
   else if( n==1 )
@@ -95,12 +115,10 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
     area = Dot(x1_x0, x1_x0);
     area = sqrt(area);
   }
-
   return area;
 }
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -110,22 +128,22 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
-                         const array1d<R1Tensor>& pointReferences,
-                         const array1d<R1Tensor>& pointDisplacements,
-                         R1Tensor& center,
-                         R1Tensor& normal )
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex_array::size_type n = pointsIndices.size();
+  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
   if( n==3 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    const localIndex_array::size_type a1 = pointsIndices[1];
-    const localIndex_array::size_type a2 = pointsIndices[2];
+    const localIndex a0 = pointsIndices[0];
+    const localIndex a1 = pointsIndices[1];
+    const localIndex a2 = pointsIndices[2];
 
     v1  = pointReferences[a1];
     v1 += pointDisplacements[a1];
@@ -178,11 +196,11 @@ real64 Centroid_3DPolygon(const localIndex_array& pointsIndices,
   }
   else if( n>4 )
   {
-    const localIndex_array::size_type a0 = pointsIndices[0];
-    for( localIndex_array::size_type a=0 ; a<(n-2) ; ++a )
+    const localIndex a0 = pointsIndices[0];
+    for( localIndex a=0 ; a<(n-2) ; ++a )
     {
-      const localIndex_array::size_type a1 = pointsIndices[a+1];
-      const localIndex_array::size_type a2 = pointsIndices[a+2];
+      const localIndex a1 = pointsIndices[a+1];
+      const localIndex a2 = pointsIndices[a+2];
 
       v1  = pointReferences[a1];
       v1 += pointDisplacements[a1];
@@ -284,6 +302,49 @@ real64 HexVolume( R1Tensor const * const X )
                       Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
 }
 
+real64 TetVolume( R1Tensor const * const X ) {
+    R1Tensor X1_X0( X[1] );
+    X1_X0 -= X[0];
+    R1Tensor X2_X0( X[2] );
+    X2_X0 -= X[0];
+    R1Tensor X3_X0( X[3] );
+    X3_X0 -= X[0];
+    return std::fabs(Dot(X1_X0, Cross(X2_X0, X3_X0)) / 6.0);
+}
+
+real64 WedgeVolume( R1Tensor const * const X ) {
+    R1Tensor tet1[4];
+    tet1[0] = X[0];
+    tet1[1] = X[1];
+    tet1[2] = X[2];
+    tet1[3] = X[4];
+    R1Tensor tet2[4];
+    tet2[0] = X[0];
+    tet2[1] = X[2];
+    tet2[2] = X[4];
+    tet2[3] = X[5];
+    R1Tensor tet3[4];
+    tet3[0] = X[0];
+    tet3[1] = X[3];
+    tet3[2] = X[4];
+    tet3[3] = X[5];
+    return TetVolume(tet1) + TetVolume(tet2) + TetVolume(tet3);
+}
+
+
+real64 PyramidVolume( R1Tensor const * const X ) {
+    R1Tensor tet1[4];
+    tet1[0] = X[0];
+    tet1[1] = X[1];
+    tet1[2] = X[2];
+    tet1[3] = X[4];
+    R1Tensor tet2[4];
+    tet2[0] = X[0];
+    tet2[1] = X[2];
+    tet2[2] = X[3];
+    tet2[3] = X[4];
+    return TetVolume(tet1) + TetVolume(tet2);
+}
 
 }
 } /* namespace geosx */

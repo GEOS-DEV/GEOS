@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -83,10 +83,6 @@ public:
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
 
-
-  void FillDocumentationNode() override final;
-
-
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
   void SetFaceMaps( FaceManager const * const faceManager );
@@ -97,13 +93,22 @@ public:
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-  virtual localIndex PackUpDownMapsSize( localIndex_array const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                              localIndex_array const & packList ) const override;
+                                     arrayView1d<localIndex const> const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                localIndex_array const & packList ) override;
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
+
+  void FixUpDownMaps( bool const clearIfUnmapped );
+
+  void depopulateUpMaps( std::set<localIndex> const & receivedNodes,
+                         array2d< localIndex > const & edgesToNodes,
+                         array1d< array1d< localIndex > > const & facesToNodes,
+                         ElementRegionManager const & elemRegionManager );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -160,23 +165,17 @@ public:
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
-  array1d<localIndex_array>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array1d<localIndex_array> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  ArrayOfArrays< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
+  ArrayOfArraysView< localIndex const > const & elementRegionList() const
+  { return m_toElements.m_toElementRegion.toViewCC(); }
 
-  array1d<localIndex_array>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array1d<localIndex_array> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  ArrayOfArrays< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+  ArrayOfArraysView< localIndex const > const & elementSubRegionList() const
+  { return m_toElements.m_toElementSubRegion.toViewCC(); }
 
-  array1d<localIndex_array>        & elementList()       { return m_toElements.m_toElementIndex; }
-  array1d<localIndex_array>  const & elementList() const { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
-//  array1d<set<localIndex>> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-//
-//  array1d<set<localIndex>>       & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-//  array1d<set<localIndex>> const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
-//
-//  array1d<set<localIndex>>        & elementList()       { return m_toElements.m_toElementIndex; }
-//  array1d<set<localIndex>>  const & elementList() const { return m_toElements.m_toElementIndex; }
-
+  ArrayOfArrays< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
+  ArrayOfArraysView< localIndex const > const & elementList() const
+  { return m_toElements.m_toElementIndex.toViewCC(); }
 
   /**
    * @brief const accessor to the reference position array
@@ -205,7 +204,7 @@ private:
    */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    localIndex_array const & packList ) const;
+                                    arrayView1d<localIndex const> const & packList ) const;
 
    /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
@@ -218,6 +217,12 @@ private:
 
   /// nodeToElement relation
   OrderedVariableToManyElementRelation m_toElements;
+
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< array1d< set<globalIndex> > > > m_unmappedGlobalIndicesInToElems;
+
+
 
   /// deleted constructor
   NodeManager() = delete;

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,7 +21,6 @@
  */
 
 #include "OutputBase.hpp"
-#include "DocumentationNode.hpp"
 
 
 namespace geosx
@@ -32,8 +31,21 @@ using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
                         ManagedGroup * const parent ):
-  ExecutableGroup( name, parent)
+  ExecutableGroup( name, parent),
+  m_slaveDirectory(),
+  m_parallelThreads(1)
 {
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+
+  RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("slave directory path");
+
+  RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Number of plot files.");
+
 }
 
 OutputBase::~OutputBase()
@@ -45,42 +57,8 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
   return catalog;
 }
 
-void OutputBase::FillDocumentationNode()
-{
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
 
-  docNode->setName("OutputBase");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Outputs Base Class");
-
-  docNode->AllocateChildNode( outputBaseViewKeys.slaveDirectory.Key(),
-                              outputBaseViewKeys.slaveDirectory.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "slave directory path",
-                              "slave directory path",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-    docNode->AllocateChildNode( outputBaseViewKeys.parallelThreads.Key(),
-                                outputBaseViewKeys.parallelThreads.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "plot file threads",
-                              "plot file threads",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-}
-
-void OutputBase::Initialize( ManagedGroup * const group )
+void OutputBase::InitializePreSubGroups( ManagedGroup * const group )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
@@ -89,7 +67,7 @@ void OutputBase::Initialize( ManagedGroup * const group )
 
 void OutputBase::SetupDirectoryStructure()
 {
-  string slaveDirectory = this->getReference<string>(outputBaseViewKeys.slaveDirectory);
+  string slaveDirectory = m_slaveDirectory;
 
   int rank;
   MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
@@ -98,7 +76,8 @@ void OutputBase::SetupDirectoryStructure()
     if (!slaveDirectory.empty())
     {
       string cmd = "mkdir -p " + slaveDirectory;
-      std::system(cmd.c_str());
+      int ret = std::system(cmd.c_str());
+      GEOS_ERROR_IF(ret != 0, "Command '" << cmd << "' exited with code " << std::to_string(ret));
     }
   }
 }

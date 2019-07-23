@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,10 +24,11 @@
 #include <string>
 #include <limits>
 
-#include "cxx-utilities/src/src/DocumentationNode.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
+#include "common/DataTypes.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-#include "common/DataTypes.hpp"
+#include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/SystemSolverParameters.hpp"
 #include "systemSolverInterface/LinearSolverWrapper.hpp"
@@ -64,16 +65,16 @@ public:
   explicit SolverBase( std::string const & name,
                        ManagedGroup * const parent );
 
+  SolverBase( SolverBase && ) = default;
+
   virtual ~SolverBase() override;
 
+  SolverBase() = delete;
+  SolverBase( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase const & ) = delete;
+  SolverBase& operator=( SolverBase&& ) = delete;
+
   static string CatalogName() { return "SolverBase"; }
-
-  SolverBase() = default;
-  SolverBase( SolverBase const & ) = default;
-  SolverBase( SolverBase && ) = default;
-  SolverBase& operator=( SolverBase const & ) = default;
-  SolverBase& operator=( SolverBase&& ) = default;
-
 
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
@@ -82,9 +83,11 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const & time_n,
-                        real64 const & dt,
-                        int const cycleNumber,
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
                         dataRepository::ManagedGroup * domain ) override;
 
   /**
@@ -141,6 +144,27 @@ public:
                                         integer const cycleNumber,
                                         DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
+  /**
+   * @brief Function to perform line search
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @return return true if line search succeeded, false otherwise
+   *
+   * This function implements a nonlinear newton method for implicit problems. It requires that the
+   * other functions in the solver interface are implemented in the derived physics solver. The
+   * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
+   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   */
+  virtual bool LineSearch( real64 const & time_n,
+                           real64 const & dt,
+                           integer const cycleNumber,
+                           DomainPartition * const domain,
+                           systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                           real64 & lastResidual );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -243,6 +267,21 @@ public:
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params );
 
+  /**
+ * @brief Function to check system solution for physical consistency and constraint violation
+ * @param blockSystem the entire block system
+ * @param scalingFactor factor to scale the solution prior to application
+ * @param objectManager the object manager that holds the fields we wish to apply the solution to
+ * @return true if solution can be safely applied without violating physical constraints, false otherwise
+ *
+ * @note This function must be overridden in the derived physics solver in order to use an implict
+ * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
+ *
+ */
+  virtual bool
+  CheckSystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain );
 
   /**
    * @brief Function to apply the solution vector to the state
@@ -307,14 +346,8 @@ public:
                     systemSolverInterface::BlockIDs const blockID );
 
 
-
-  virtual void FillDocumentationNode() override;
-
-  virtual void
-  FillOtherDocumentationNodes( dataRepository::ManagedGroup * const rootGroup ) override;
-
-
-//  virtual void CreateChild( string const & childKey, string const & childName ) override;
+  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
@@ -323,13 +356,16 @@ public:
   {
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
+    constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto maxStableDtString = "maxStableDt";
+    static constexpr auto discretizationString = "discretization";
+    constexpr static auto targetRegionsString = "targetRegions";
 
   } viewKeys;
 
   struct groupKeyStruct
   {
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
-    dataRepository::GroupKey systemSolverParameters = { systemSolverParametersString };
   } groupKeys;
 
 
@@ -358,25 +394,94 @@ public:
     return &m_systemSolverParameters;
   }
 
-//  localIndex_array & blockLocalDofNumber() { return m_blockLocalDofNumber; }
-//  localIndex_array const & blockLocalDofNumber() const { return m_blockLocalDofNumber; }
+  string getDiscretization() const {return m_discretizationName;}
+
+  string_array const & getTargetRegions() const {return m_targetRegions;}
+
+
+  template<bool CONST>
+  using SubregionFunc = std::function<void ( add_const_if_t<ElementSubRegionBase, CONST> * )>;
+
+  template<typename MESH, typename LAMBDA>
+  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
+                          std::is_convertible<LAMBDA, SubregionFunc<std::is_const<MESH>::value>>::value,
+                          void>::type
+  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  {
+    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>(lambda) );
+  }
+
+  template<bool CONST>
+  using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
+                                                     add_const_if_t<ElementRegion, CONST> *,
+                                                     add_const_if_t<ElementSubRegionBase, CONST> * )>;
+
+  template<typename MESH, typename LAMBDA>
+  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
+                          std::is_convertible<LAMBDA, SubregionFuncComplete<std::is_const<MESH>::value>>::value,
+                          void>::type
+  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  {
+    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward<LAMBDA>(lambda) );
+  }
 
 protected:
   /// This is a wrapper for the linear solver package
   systemSolverInterface::LinearSolverWrapper m_linearSolverWrapper;
 
+  void PostProcessInput() override;
 
-private:
+  string getDiscretizationName() const {return m_discretizationName;}
+
+  template<typename BASETYPE>
+  static BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
+
+  template<typename BASETYPE>
+  static BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
+
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
   SystemSolverParameters m_systemSolverParameters;
+
+  real64 m_cflFactor;
+  real64 m_maxStableDt;
+
+  /// name of the FV discretization object in the data repository
+  string m_discretizationName;
+
+  string_array m_targetRegions;
+
 
 //  localIndex_array m_blockLocalDofNumber;
 
 
 };
 
+template<typename BASETYPE>
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+{
+  ManagedGroup const * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
+  BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
+
+template<typename BASETYPE>
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+{
+  ManagedGroup * const constitutiveModels =
+    dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
+
+  BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  GEOS_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
+
+  return model;
+}
 
 } /* namespace ANST */
 

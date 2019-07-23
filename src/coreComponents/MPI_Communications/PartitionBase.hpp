@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -54,9 +54,6 @@ public:
 
 
   void SetDomain( DomainPartition * domain );
-
-
-  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
 
 
   virtual bool IsCoordInPartition( const R1Tensor& elemCenter ) = 0;
@@ -128,6 +125,9 @@ public:
 protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
+
+  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
+
 //
   array1d<NeighborCommunicator> m_neighbors;
 

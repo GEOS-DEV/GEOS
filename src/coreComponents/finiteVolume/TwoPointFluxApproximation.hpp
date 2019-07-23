@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file TwoPointFluxApproximation.hpp
  *
  */
@@ -41,9 +41,15 @@ public:
 
 protected:
 
-  void computeMainStencil(DomainPartition * domain, CellStencil & stencil) override;
+  virtual void computeCellStencil( DomainPartition const & domain,
+                                   CellStencil & stencil ) override;
 
-  void computeBoundaryStencil(DomainPartition * domain, set<localIndex> const & faceSet, BoundaryStencil & stencil) override;
+  virtual void addToFractureStencil( DomainPartition const & domain,
+                                     string const & faceElementRegionName ) override;
+
+  virtual void computeBoundaryStencil( DomainPartition const & domain,
+                                       set<localIndex> const & faceSet,
+                                       BoundaryStencil & stencil ) override;
 
 };
 

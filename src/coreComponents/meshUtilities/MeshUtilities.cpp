@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -27,9 +27,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "fileIO/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-
-//#include "ObjectManagers/PhysicalDomainT.h"
-//#include "SimpleGeometricObjects.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -49,11 +47,11 @@ MeshUtilities::~MeshUtilities()
 
 
 void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
-                                      dataRepository::ManagedGroup * nodeManager )
+                                      ObjectManagerBase * const nodeManager )
 {
-
+  GEOSX_MARK_FUNCTION; 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-  ManagedGroup * sets = nodeManager->GetGroup(keys::sets);
+  ManagedGroup * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,159 +16,24 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * packer_inline.hpp
- *
- *  Created on: Jan 5, 2018
- *      Author: settgast
- */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_COMMBUFFEROPS_INLINE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_COMMBUFFEROPS_INLINE_HPP_
 
-#include "common/integer_conversion.hpp"
+#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_H_
+#define DATAREPOSITORY_BUFFEROPS_INLINE_H_
+
+#include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/static_if.hpp"
+#include "codingUtilities/GeosxTraits.hpp"
+#include "IntegerConversion.hpp"
+
+#include <type_traits>
+
 namespace geosx
 {
+
 namespace bufferOps
 {
-
-template< bool DO_PACKING,
-          typename T,
-          typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer,
-      T const * const var,
-      INDEX_TYPE const length )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  sizeOfPackedChars += length*sizeof(T);
-  static_if( DO_PACKING )
-  {
-    memcpy( buffer, var, length*sizeof(T) );
-    buffer += length*sizeof(T);
-  }
-  end_static_if
-
-  return sizeOfPackedChars;
-}
-
-
-template< bool DO_PACKING,
-          typename T,
-          typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer,
-      T const * const var,
-      INDEX_TYPE const length )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( INDEX_TYPE a=0 ; a<length ; ++a )
-  {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ a ] );
-  }
-
-  return sizeOfPackedChars;
-}
-
-template< typename T,
-          typename INDEX_TYPE >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer,
-        T * const var,
-        INDEX_TYPE const expectedLength )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-
-  INDEX_TYPE length;
-  sizeOfUnpackedChars += Unpack( buffer, length );
-
-  GEOS_ERROR_IF( length != expectedLength, "CommBufferOps::Unpack(): expected length != length" );
-
-//  char * const ptr_var = reinterpret_cast<char *>(var);
-  memcpy( var, buffer, length * sizeof(T) );
-  buffer += length * sizeof(T);
-
-  return sizeOfUnpackedChars;
-}
-
-template< typename T,
-          typename INDEX_TYPE >
-typename std::enable_if< !std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer,
-        T * const var,
-        INDEX_TYPE const expectedLength )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  INDEX_TYPE length;
-  sizeOfUnpackedChars += Unpack( buffer, length );
-
-  GEOS_ERROR_IF( length != expectedLength,
-               "CommBufferOps::Unpack(): expected length != length ("
-               <<expectedLength<<"!="<<length<<")" );
-
-  for( INDEX_TYPE a=0 ; a<length ; ++a )
-  {
-    sizeOfUnpackedChars += Unpack( buffer, var[a] );
-  }
-
-  return sizeOfUnpackedChars;
-}
-
-
-
-template< bool DO_PACKING,
-          typename T,
-          typename INDEX_TYPE >
-localIndex
-Pack( char*&  buffer,
-      T const * const var,
-      INDEX_TYPE const * const indices,
-      INDEX_TYPE const length )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( INDEX_TYPE a=0 ; a<length ; ++a )
-  {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[ indices[a] ] );
-  }
-
-  return sizeOfPackedChars;
-}
-
-template< typename T,
-          typename INDEX_TYPE >
-localIndex
-Unpack( char const *& buffer,
-        T * const var,
-        INDEX_TYPE const * const indices,
-        INDEX_TYPE & length )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  sizeOfUnpackedChars += Unpack( buffer, length );
-
-  for( INDEX_TYPE a=0 ; a<length ; ++a )
-  {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
-  }
-
-  return sizeOfUnpackedChars;
-}
-
-
-
-
 
 /**
  *
@@ -177,8 +42,8 @@ Unpack( char const *& buffer,
  * @return
  */
 template< bool DO_PACKING, typename T >
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Pack( char*&  buffer, T const & var )
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   static_if( DO_PACKING )
@@ -195,119 +60,748 @@ Pack( char*&  buffer, T const & var )
  * @param var
  * @return size (in bytes) of unpacked data
  */
-template< typename T>
-typename std::enable_if< std::is_trivial<T>::value, localIndex >::type
-Unpack( char const *& buffer, T & var )
+template< typename T >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T & var )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
-  memcpy( &var,
-          buffer,
-          sizeOfUnpackedChars );
+  memcpy( &var, buffer, sizeOfUnpackedChars );
   buffer += sizeOfUnpackedChars;
   return sizeOfUnpackedChars;
 }
 
 
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,  const std::string& var )
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
-  string::size_type sizeOfPackedChars = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  Pack<DO_PACKING>( buffer, sizeOfPackedChars );
-
+  sizeOfPackedChars += length * sizeof(T);
   static_if( DO_PACKING )
   {
-    for( string::size_type i=0 ; i<sizeOfPackedChars ; ++i )
-    {
-      *buffer = var[i];
-      buffer++;
-    }
+    memcpy( buffer, var, length * sizeof(T) );
+    buffer += length * sizeof(T);
   }
   end_static_if
 
-  sizeOfPackedChars += sizeof( localIndex );
-  return integer_conversion<localIndex>(sizeOfPackedChars);
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
+{
+  INDEX_TYPE length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+
+  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                   expectedLength << " != " << length );
+
+  memcpy( var, buffer, length * sizeof(T) );
+  sizeOfUnpackedChars += length * sizeof(T);
+  buffer += length * sizeof(T);
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex Pack( char * & buffer, const std::string & var )
+{
+  const string::size_type varSize = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
+
+  static_if( DO_PACKING )
+  {
+    memcpy( buffer, var.data(), varSize );
+    buffer += varSize;
+  }
+  end_static_if
+
+    sizeOfPackedChars += varSize;
+  return sizeOfPackedChars;
+}
+
+
+inline localIndex Unpack( char const * & buffer, string & var )
+{
+  string::size_type stringsize = 0;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
+
+  var.resize( stringsize );
+  var.assign( buffer, stringsize );
+  buffer += stringsize;
+  sizeOfUnpackedChars += stringsize;
+
+  return sizeOfUnpackedChars;
 }
 
 
 template< bool DO_PACKING, typename T >
-typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
-Pack( char*& buffer, T const & var )
+typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
+Pack( char * & buffer, T const & var )
 {
   localIndex sizeOfPackedChars = 0;
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.Data(), var.Length());
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.Data(), var.Length());
   return sizeOfPackedChars;
 }
 
+
 template< typename T >
-typename std::enable_if< traits::is_tensorT<T>::value, localIndex >::type
-Unpack( char const *& buffer, T & var )
+typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
+Unpack( char const * & buffer, T & var )
 {
   localIndex sizeOfUnpackedChars = 0;
   real64 * const pVar = var.Data();
-  int length = var.Length();
+  int const length = var.Length();
   sizeOfUnpackedChars += Unpack( buffer, pVar, length );
   return sizeOfUnpackedChars;
 }
 
 
-template< bool DO_PACKING,
-          typename T >
-localIndex Pack( char *& buffer, set<T> const & var )
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  localIndex sizeOfPackedChars = 0;
-
-  const localIndex length = integer_conversion<localIndex>(var.size());
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( typename set<T>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, *i);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
   }
 
   return sizeOfPackedChars;
 }
 
 
-template< typename T>
-localIndex Unpack( char const *& buffer, set<T> & setToRead )
+template< typename T, typename INDEX_TYPE >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
 {
-  setToRead.clear();
+  INDEX_TYPE length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
+  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                   expectedLength << " != " << length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[a] );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      T const * const restrict var,
+      arraySlice1d< INDEX_TYPE const > const & indices,
+      INDEX_TYPE const length )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        T * const restrict var,
+        arraySlice1d< INDEX_TYPE const > const & indices,
+        INDEX_TYPE & length )
+{
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+#ifdef GEOSX_USE_ARRAY_BOUNDS_CHECK
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
+      INDEX_TYPE const length )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+  sizeOfPackedChars += length * sizeof(T);
+
+  static_if( DO_PACKING )
+  {
+    T * const restrict buffer_T = reinterpret_cast< T * >( buffer );
+    for( INDEX_TYPE i = 0 ; i < length ; ++i )
+    {
+      buffer_T[ i ] = var[ i ];
+    }
+
+    buffer += length * sizeof(T);
+  }
+  end_static_if
+
+  return sizeOfPackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
+      INDEX_TYPE const length )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
+        INDEX_TYPE const expectedLength )
+{
+  INDEX_TYPE length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+
+  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                   expectedLength << " != " << length );
+
+  T const * const restrict buffer_T = reinterpret_cast< T const * >( buffer );
+  for( INDEX_TYPE i = 0 ; i < length ; ++i )
+  {
+    var[ i ] = buffer_T[ i ];
+  }
+
+  buffer += length * sizeof(T);
+  sizeOfUnpackedChars += length * sizeof(T);
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
+        INDEX_TYPE const expectedLength )
+{
+  INDEX_TYPE length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+
+  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                   expectedLength << " != " << length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[a] );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      arraySlice1d< T > const & var,
+      arraySlice1d< INDEX_TYPE > const & indices,
+      INDEX_TYPE const length )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        arraySlice1d< T > & var,
+        arraySlice1d< INDEX_TYPE > const & indices,
+        INDEX_TYPE & length )
+{
   localIndex sizeOfUnpackedChars = 0;
 
-  localIndex set_length;
-  sizeOfUnpackedChars += Unpack( buffer, set_length );
+  sizeOfUnpackedChars += Unpack( buffer, length );
 
+  for( INDEX_TYPE a=0 ; a<length ; ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+#endif /* GEOSX_USE_ARRAY_BOUNDS_CHECK */
+
+
+template< bool DO_PACKING, typename T >
+localIndex Pack( char * & buffer, set< T > const & var )
+{
+  const localIndex length = integer_conversion< localIndex >( var.size());
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( typename set< T >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T >
+localIndex Unpack( char const * & buffer, set< T > & var )
+{
+  var.clear();
+
+  localIndex set_length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
 
   for( localIndex a=0 ; a<set_length ; ++a )
   {
     T temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
-    setToRead.insert( temp );
+    var.insert( temp );
   }
 
   return sizeOfUnpackedChars;
 }
 
 template< bool DO_PACKING >
-localIndex Pack( char *& buffer,
-                 set<localIndex> const & var,
-                 array1d<globalIndex> const & localToGlobal )
+localIndex Pack( char * & buffer,
+                 set< localIndex > const & var,
+                 set< globalIndex > const & unmappedGlobalIndices,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
+{
+  const localIndex length = integer_conversion< localIndex >( var.size()+unmappedGlobalIndices.size());
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( typename set< localIndex >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[*i] );
+  }
+
+  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+       i!=unmappedGlobalIndices.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+  }
+
+
+  return sizeOfPackedChars;
+}
+
+inline
+localIndex Unpack( char const * & buffer,
+                   set< localIndex > & var,
+                   set< globalIndex > & unmappedGlobalIndices,
+                   map< globalIndex, localIndex > const & globalToLocalMap,
+                   bool const clearExistingSet )
+{
+  if( clearExistingSet )
+  {
+    var.clear();
+  }
+  localIndex set_length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
+
+  for( localIndex a=0 ; a<set_length ; ++a )
+  {
+    globalIndex temp;
+    sizeOfUnpackedChars += Unpack( buffer, temp );
+    map< globalIndex, localIndex >::const_iterator iter = globalToLocalMap.find( temp );
+    if( iter==globalToLocalMap.end() )
+    {
+      unmappedGlobalIndices.insert( temp );
+    }
+    else
+    {
+      var.insert( iter->second );
+    }
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+
+template< bool DO_PACKING >
+localIndex Pack( char * & buffer,
+                 set< localIndex > const & var,
+                 arrayView1d< localIndex const > const & packList,
+                 set< globalIndex > const & unmappedGlobalIndices,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
 {
 
+  localIndex length = 0;
+  array1d< localIndex > temp( var.size());
+
+  for( auto a : packList )
+  {
+    if( var.count( a ) )
+    {
+      temp[length] = a;
+      ++length;
+    }
+  }
+  temp.resize( length );
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
+  }
+
+  for( typename set< globalIndex >::const_iterator i=unmappedGlobalIndices.begin() ;
+       i!=unmappedGlobalIndices.end() ; ++i )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
+typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Pack( char * & buffer,
+      LvArray::ArrayView< T, NDIM, INDEX_TYPE > const & var )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.dims(), NDIM );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.strides(), NDIM );
+
+  const localIndex length = var.size();
+  T const * const data = var.data();
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, length );
+
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, int NDIM, typename INDEX_TYPE >
+typename std::enable_if< bufferOps::is_packable_array< LvArray::Array< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Unpack( char const * & buffer, LvArray::Array< T, NDIM, INDEX_TYPE > & var )
+{
+  INDEX_TYPE dims[NDIM];
+  localIndex sizeOfUnpackedChars = Unpack( buffer, dims, NDIM );
+
+  var.resize( NDIM, dims );
+
+  INDEX_TYPE strides[NDIM];
+  sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
+
+  INDEX_TYPE const * const existingStrides = var.strides();
+  for( int i=0 ; i<NDIM ; ++i )
+  {
+    GEOS_ASSERT_MSG( strides[i] == existingStrides[i], "Strides are inconsistent: " <<
+                     strides[i] << " != " << existingStrides[i] );
+  }
+
+  sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
+typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, INDEX_TYPE > >::value, localIndex >::type
+Pack( char * & buffer,
+      LvArray::ArrayView< T, NDIM, INDEX_TYPE > const & var,
+      const T_indices & indices )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.strides(), NDIM );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    T const * const data = var.data( indices[a] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.strides()[0] );
+  }
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, int NDIM, typename T_indices, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayView< T, NDIM, INDEX_TYPE > & var,
+        const T_indices & indices )
+{
+  INDEX_TYPE strides[NDIM];
+  localIndex sizeOfUnpackedChars = Unpack( buffer, strides, NDIM );
+
+  for( int dim=0 ; dim<NDIM ; ++dim )
+  {
+    GEOS_ASSERT_MSG( strides[dim] == var.strides()[dim], "Strides are inconsistent: " <<
+                     strides[dim] << " != " << var.strides()[dim] );
+  }
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), strides[0] );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var )
+{
   localIndex sizeOfPackedChars = 0;
 
-  const localIndex length = integer_conversion<localIndex>(var.size());
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( typename set<localIndex>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
+  for( localIndex a=0 ; a<var.size() ; ++a )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobal[*i]);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
+    T const * const data = var[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
+  }
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numOfArrays;
+  sizeOfUnpackedChars += Unpack( buffer, numOfArrays );
+  var.resize( numOfArrays );
+
+  for( localIndex a=0 ; a<numOfArrays ; ++a )
+  {
+    localIndex sizeOfArray;
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfArray );
+    var.resizeArray( a, sizeOfArray );
+    sizeOfUnpackedChars += Unpack( buffer, var[a], sizeOfArray );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var,
+      T_indices const & indices )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
+    T const * const data = &(var[indices[a]][0]);
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.sizeOfArray( indices[a] ) );
+  }
+  return sizeOfPackedChars;
+}
+
+
+template< typename T, typename INDEX_TYPE, typename T_indices >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfArrays< T, INDEX_TYPE > & var,
+        T_indices const & indices )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numUnpackedIndices;
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+
+  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex sizeOfSubArray;
+    sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray );
+    var.resizeArray( indices[a], sizeOfSubArray );
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]], sizeOfSubArray );
+  }
+
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arraySlice1d< localIndex const > const & var,
+      arraySlice1d< globalIndex const > const & unmappedGlobalIndices,
+      localIndex const length,
+      arraySlice1d< globalIndex const > const & localToGlobalMap )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+  sizeOfPackedChars += length*sizeof(globalIndex);
+
+  static_if( DO_PACKING )
+  {
+    globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
+    for( localIndex a=0 ; a<length ; ++a )
+    {
+      if( var[a] != unmappedLocalIndexValue )
+      {
+        buffer_GI[ a ] = localToGlobalMap[var[a]];
+      }
+      else
+      {
+        buffer_GI[ a ] = unmappedGlobalIndices[a];
+      }
+    }
+
+    buffer += length * sizeof(globalIndex);
+  }
+  end_static_if
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        localIndex_array & var,
+        array1d< globalIndex > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  var.resize( length );
+  unmappedGlobalIndices.resize( length );
+  unmappedGlobalIndices = unmappedLocalIndexValue;
+
+  bool unpackedGlobalFlag = false;
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+
+    map< globalIndex, localIndex >::const_iterator
+      iter = globalToLocalMap.find( unpackedGlobalIndex );
+    if( iter == globalToLocalMap.end() )
+    {
+      var[a] = unmappedLocalIndexValue;
+      unmappedGlobalIndices[a] = unpackedGlobalIndex;
+      unpackedGlobalFlag = true;
+    }
+    else
+    {
+      var[a] = iter->second;
+    }
+  }
+  if( !unpackedGlobalFlag )
+  {
+    unmappedGlobalIndices.clear();
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        arraySlice1d< localIndex > & var,
+        array1d< globalIndex > & unmappedGlobalIndices,
+        localIndex const expectedLength,
+        map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex sizeOfUnpackedChars = 0;
+
+  localIndex length;
+  sizeOfUnpackedChars += Unpack( buffer, length );
+
+  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                   expectedLength << " != " << length );
+
+  unmappedGlobalIndices.resize( length );
+  unmappedGlobalIndices = unmappedLocalIndexValue;
+
+  bool unpackedGlobalFlag = false;
+  for( localIndex a=0 ; a<length ; ++a )
+  {
+    globalIndex unpackedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
+
+    map< globalIndex, localIndex >::const_iterator
+      iter = globalToLocalMap.find( unpackedGlobalIndex );
+    if( iter == globalToLocalMap.end() )
+    {
+      var[a] = unmappedLocalIndexValue;
+      unmappedGlobalIndices[a] = unpackedGlobalIndex;
+      unpackedGlobalFlag = true;
+    }
+    else
+    {
+      var[a] = iter->second;
+    }
+  }
+  if( !unpackedGlobalFlag )
+  {
+    unmappedGlobalIndices.clear();
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arrayView1d< localIndex const > const & var,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars=0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex const li = indices[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+    if( var[li] != -1 )
+    {
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                               relatedObjectLocalToGlobalMap[var[li]] );
+    }
+    else
+    {
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                               localIndex( -1 ) );
+    }
   }
 
   return sizeOfPackedChars;
@@ -315,135 +809,533 @@ localIndex Pack( char *& buffer,
 
 
 inline
-localIndex Unpack( char const *& buffer,
-                   set<localIndex> & setToRead,
-                   map<globalIndex,localIndex> const & globalToLocalMap )
+localIndex
+Unpack( char const * & buffer,
+        arrayView1d< localIndex > & var,
+        array1d< localIndex > const & indices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
-  setToRead.clear();
+  localIndex numIndicesUnpacked;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
 
-  localIndex sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  localIndex set_length;
-  sizeOfUnpackedChars += Unpack( buffer, set_length );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
-
-  for( localIndex a=0 ; a<set_length ; ++a )
+  for( localIndex a=0 ; a<indices.size() ; ++a )
   {
-    globalIndex temp;
-    sizeOfUnpackedChars += Unpack( buffer, temp );
-    map<globalIndex,localIndex>::const_iterator iter = globalToLocalMap.find(temp);
-    if( iter==globalToLocalMap.end() )
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
     {
-      setToRead.insert(-1);
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
-      setToRead.insert( globalToLocalMap.at(temp) );
+      li = globalToLocalMap.at( gi );
     }
+
+    globalIndex mappedGlobalIndex;
+    sizeOfUnpackedChars += Unpack( buffer, mappedGlobalIndex );
+    if( mappedGlobalIndex != -1 )
+    {
+      var[li] = relatedObjectGlobalToLocalMap.at( mappedGlobalIndex );
+    }
+    else
+    {
+      var[li] = -1;
+    }
+
+  }
+  return sizeOfUnpackedChars;
+}
+
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arrayView1d< localIndex_array const > const & var,
+      map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars=0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex const li = indices[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    map< localIndex, array1d< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
+
+    array1d< globalIndex > junk;
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
+
+
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             var[li].size(),
+                                             relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        arrayView1d< localIndex_array > & var,
+        array1d< localIndex > & indices,
+        map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
+{
+  localIndex numIndicesUnpacked;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
+
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+      li = globalToLocalMap.at( gi );
+    }
+
+    array1d< globalIndex > unmappedIndices;
+#if 1
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   var[li],
+                                   unmappedIndices,
+                                   relatedObjectGlobalToLocalMap );
+#else
+    array1d< globalIndex > tempUnmappedIndices;
+    array1d< localIndex > unpackedIndices;
+    set< localIndex > unpackedIndicesSet;
+
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   unpackedIndices,
+                                   tempUnmappedIndices,
+                                   relatedObjectGlobalToLocalMap );
+    unmappedIndices.resize( tempUnmappedIndices.size() );
+    bool const unmappedFlag = tempUnmappedIndices.size()>0 ? true : false;
+
+    if( var[li].size() == 0 )
+    {
+      var[li] = unpackedIndices;
+      unmappedIndices = tempUnmappedIndices;
+    }
+    else if( var[li].size() == unpackedIndices.size() )
+    {
+      localIndex const numElems = var[li].size();
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        unpackedIndicesSet.insert( unpackedIndices[c] );
+      }
+      bool isSame = true;
+      for( localIndex c=0 ; c<numElems ; ++c )
+      {
+        if( unpackedIndicesSet.count( var[li][c] )==0 )
+        {
+          isSame = false;
+        }
+      }
+      if( !isSame )
+      {
+        localIndex shift = INT_MIN;
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex existingIndex = var[li][b];
+          for( localIndex c=0 ; c<numElems ; ++c )
+          {
+            localIndex newIndex = unpackedIndices[c];
+            if( existingIndex==newIndex )
+            {
+              shift = c - b;
+              break;
+            }
+          }
+          if( shift != INT_MIN )
+          {
+            break;
+          }
+        }
+        GEOS_ERROR_IF( shift==INT_MIN, "Trying to unpack indices with no valid localIndices...can't set order." );
+        for( localIndex b=0 ; b<numElems ; ++b )
+        {
+          localIndex c = b + shift;
+          if( c < 0 )
+          {
+            c += numElems;
+          }
+          else if( c >= numElems )
+          {
+            c -= numElems;
+          }
+          var[li][b] = unpackedIndices[c];
+          if( unmappedFlag )
+          {
+            unmappedIndices[b] = tempUnmappedIndices[c];
+          }
+        }
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Unpacked indices do not match the expected size of unpacked indices" );
+    }
+#endif
+
+    if( unmappedIndices.size() > 0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
+  }
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arrayView1d< set< localIndex > const > const & var,
+      map< localIndex, set< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap,
+      arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
+
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    map< localIndex, set< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
+
+    set< globalIndex > junk;
+    set< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                            junk :
+                                            iterUnmappedGI->second;
+
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        arrayView1d< set< localIndex > > & var,
+        localIndex_array & indices,
+        map< localIndex, set< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap,
+        bool const clearFlag )
+{
+  localIndex sizeOfUnpackedChars=0;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+
+  for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
+  {
+
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+      li = globalToLocalMap.at( gi );
+    }
+
+    set< globalIndex > unmappedIndices;
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   var[li],
+                                   unmappedIndices,
+                                   relatedObjectGlobalToLocalMap,
+                                   clearFlag );
+
+    unmappedGlobalIndices[li].insert( unmappedIndices.values(), unmappedIndices.size() );
+  }
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arrayView2d< localIndex > const & var,
+      arrayView1d< localIndex > const & indices,
+      arraySlice1d< globalIndex > const & localToGlobalMap )
+{
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[li], var.size( 1 ) );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        arrayView2d< localIndex > & var,
+        array1d< localIndex > & indices,
+        map< globalIndex, localIndex > const & globalToLocalMap )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+
+  for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+      li = globalToLocalMap.at( gi );
+    }
+
+    localIndex * const varSlice = var[li];
+    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size( 1 ) );
+  }
+
+
+  return sizeOfUnpackedChars;
+}
+
+
+template< bool DO_PACKING >
+localIndex
+Pack( char * & buffer,
+      arrayView2d< localIndex const > const & var,
+      map< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
+      arrayView1d< localIndex const > const & indices,
+      arraySlice1d< globalIndex const > const & localToGlobalMap,
+      arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
+{
+  localIndex sizeOfPackedChars = 0;
+
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
+  for( localIndex a=0 ; a<indices.size() ; ++a )
+  {
+    localIndex li = indices[a];
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
+
+    map< localIndex, array1d< globalIndex > >::const_iterator
+      iterUnmappedGI = unmappedGlobalIndices.find( li );
+
+    array1d< globalIndex > junk;
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+                                                junk :
+                                                iterUnmappedGI->second;
+
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer,
+                                             var[li],
+                                             unmappedGI,
+                                             var.size( 1 ),
+                                             relatedObjectLocalToGlobalMap );
+  }
+
+  return sizeOfPackedChars;
+}
+
+
+inline
+localIndex
+Unpack( char const * & buffer,
+        arrayView2d< localIndex > & var,
+        localIndex_array & indices,
+        map< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        map< globalIndex, localIndex > const & globalToLocalMap,
+        map< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
+{
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex const sizeOfIndicesPassedIn = indices.size();
+
+  localIndex numIndicesUnpacked;
+  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+
+  indices.resize( numIndicesUnpacked );
+
+  for( localIndex a=0 ; a<numIndicesUnpacked ; ++a )
+  {
+    globalIndex gi;
+    sizeOfUnpackedChars += Unpack( buffer, gi );
+
+    localIndex & li = indices[a];
+    if( sizeOfIndicesPassedIn > 0 )
+    {
+      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                    <<li<<" for localIndex "<<li<<" on this rank" );
+    }
+    else
+    {
+      li = globalToLocalMap.at( gi );
+    }
+
+    arraySlice1d< localIndex > varSlice = var[li];
+    array1d< globalIndex > unmappedIndices;
+
+    sizeOfUnpackedChars += Unpack( buffer,
+                                   varSlice,
+                                   unmappedIndices,
+                                   var.size( 1 ),
+                                   relatedObjectGlobalToLocalMap );
+
+    if( unmappedIndices.size()>0 )
+    {
+      unmappedGlobalIndices[li] = unmappedIndices;
+    }
+
   }
 
   return sizeOfUnpackedChars;
 }
 
 
-//********************************************************************************************************************
-template< bool DO_PACKING , typename T_KEY, typename T_VAL >
-typename std::enable_if<
-is_packable_map< map<T_KEY,T_VAL> >::value,
-localIndex >::type
-Pack( char*& buffer,
-      std::map<T_KEY,T_VAL> const & var )
+template< bool DO_PACKING, typename T_KEY, typename T_VAL >
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
+Pack( char * & buffer, map< T_KEY, T_VAL > const & var )
 {
+  const typename std::map< T_KEY, T_VAL >::size_type length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  localIndex sizeOfPackedChars = 0;
-
-  const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename std::map< T_KEY, T_VAL >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->first );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->second );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second );
   }
 
   return sizeOfPackedChars;
 }
 
+
 template< typename T_KEY, typename T_VAL >
-typename std::enable_if<
-is_packable_map< map<T_KEY,T_VAL> >::value,
-localIndex >::type
-Unpack( char const *& buffer, std::map<T_KEY,T_VAL>& map )
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value, localIndex >::type
+Unpack( char const * & buffer, std::map< T_KEY, T_VAL > & map )
 {
   map.clear();
+  typename std::map< T_KEY, T_VAL >::size_type map_length;
 
-  localIndex sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  typename std::map<T_KEY,T_VAL>::size_type map_length;
-  sizeOfUnpackedChars += Unpack( buffer, map_length );
-
-
-  for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
+  for( typename std::map< T_KEY, T_VAL >::size_type a=0 ; a<map_length ; ++a )
   {
     T_KEY key;
     T_VAL value;
     sizeOfUnpackedChars += Unpack( buffer, key );
     sizeOfUnpackedChars += Unpack( buffer, value );
 
-    map[key] = value;
-    map.insert(std::make_pair(key, std::move(value)));
+    map[key] = std::move( value );
   }
 
   return sizeOfUnpackedChars;
 }
 
-template< bool DO_PACKING ,
-          typename T_KEY,
-          typename T_VAL,
-          typename T_INDICES >
-typename std::enable_if<
-is_packable_map< map<T_KEY,T_VAL> >::value && is_packable_by_index<T_VAL>::value,
-localIndex >::type
- Pack( char*& buffer,
-       std::map<T_KEY,T_VAL> const & var,
-       T_INDICES const & packIndices )
+
+template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename T_INDICES >
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value && bufferOps::is_packable_by_index< T_VAL >::value, localIndex >::type
+Pack( char * & buffer, std::map< T_KEY, T_VAL > const & var, T_INDICES const & packIndices )
 {
+  const typename std::map< T_KEY, T_VAL >::size_type length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  localIndex sizeOfPackedChars = 0;
-
-  const typename std::map<T_KEY,T_VAL>::size_type length = var.size();
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  for( typename std::map<T_KEY,T_VAL>::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename std::map< T_KEY, T_VAL >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->first );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, i->second, packIndices );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second, packIndices );
   }
 
   return sizeOfPackedChars;
 }
 
-template< typename T_KEY,
-          typename T_VAL,
-          typename T_INDICES >
-typename std::enable_if<
-is_packable_map< map<T_KEY,T_VAL> >::value && is_packable_by_index<T_VAL>::value,
-localIndex >::type
-Unpack( char const *& buffer,
-        std::map<T_KEY,T_VAL>& map,
-        T_INDICES const & unpackIndices )
+
+template< typename T_KEY, typename T_VAL, typename T_INDICES >
+typename std::enable_if< bufferOps::is_packable_map< map< T_KEY, T_VAL > >::value && bufferOps::is_packable_by_index< T_VAL >::value, localIndex >::type
+Unpack( char const * & buffer, std::map< T_KEY, T_VAL > & map, T_INDICES const & unpackIndices )
 {
   map.clear();
+  typename std::map< T_KEY, T_VAL >::size_type map_length;
 
-  localIndex sizeOfUnpackedChars = 0;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  typename std::map<T_KEY,T_VAL>::size_type map_length;
-  sizeOfUnpackedChars += Unpack( buffer, map_length );
-
-
-  for( typename std::map<T_KEY,T_VAL>::size_type a=0 ; a<map_length ; ++a )
+  for( typename std::map< T_KEY, T_VAL >::size_type a=0 ; a<map_length ; ++a )
   {
     T_KEY key;
     T_VAL value;
@@ -457,415 +1349,26 @@ Unpack( char const *& buffer,
 }
 
 
-template< bool DO_PACKING, typename T, int NDIM, typename INDEX_TYPE >
-typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
-localIndex >::type
-Pack( char*& buffer,
-      multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var )
+template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
+localIndex
+Pack( char * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
 {
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.dims(), NDIM );
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
-
-  const localIndex length = var.size();
-  localIndex sizeOfPackedArrayChars = length*sizeof(T);
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), length );
-
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.first );
+  sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.second );
   return sizeOfPackedChars;
 }
 
 
-template< typename T, int NDIM, typename INDEX_TYPE >
-typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
-localIndex >::type
-Unpack( char const *& buffer,
-        multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var )
+template< typename T_FIRST, typename T_SECOND >
+localIndex
+Unpack( char const * & buffer, std::pair< T_FIRST, T_SECOND > & var )
 {
-  localIndex sizeOfUnpackedChars = 0;
-
-  INDEX_TYPE dims[NDIM];
-  sizeOfUnpackedChars += Unpack( buffer, dims, NDIM );
-
-  var.resize( NDIM, dims );
-
-  INDEX_TYPE strides[NDIM];
-  sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
-
-  INDEX_TYPE const * const existingStrides = var.strides();
-  for( int i=0 ; i<NDIM ; ++i )
-  {
-    GEOS_ERROR_IF( strides[i] != existingStrides[i], "CommBufferOps::Unpack(): strides are inconsistent." );
-  }
-
-  sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
-
-  return sizeOfUnpackedChars;
-
-}
-
-
-template< bool DO_PACKING,
-          typename T,
-          int NDIM,
-          typename T_indices,
-          typename INDEX_TYPE >
-typename std::enable_if<
-is_packable_array< multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> >::value,
-localIndex >::type
-Pack( char*& buffer,
-      multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> const & var,
-      const T_indices& indices )
-{
-
-
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.strides(), NDIM );
-
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, string("test") );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(indices[a]), var.strides()[0] );
-  }
-//  const localIndex length = indices.size();
-//  localIndex sizeOfPackedArrayChars = length*sizeof(T);
-//
-//  sizeOfPackedChars += Pack<DO_PACKING>( buffer, var.data(), indices.data(), length );
-
-  return sizeOfPackedChars;
-}
-
-
-
-template< typename T,
-          int NDIM,
-          typename T_indices,
-          typename INDEX_TYPE >
-localIndex Unpack( char const *& buffer,
-                   multidimensionalArray::ManagedArray<T,NDIM,INDEX_TYPE> & var,
-                   const T_indices& indices )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-
-  INDEX_TYPE strides[NDIM];
-  sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    string test;
-    sizeOfUnpackedChars += Unpack( buffer, test );
-    localIndex temp = strides[var.getSingleParameterResizeIndex()];
-    sizeOfUnpackedChars += Unpack( buffer, var.data( indices[a] ), temp );
-  }
-
-  return sizeOfUnpackedChars;
-
-}
-
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
-          localIndex const * const var,
-          localIndex const length,
-          globalIndex_array const & localToGlobalMap )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, length );
-
-  sizeOfPackedChars += length*sizeof(globalIndex);
-  static_if( DO_PACKING )
-  {
-    for( localIndex a=0 ; a<length ; ++a )
-    {
-      memcpy( buffer, &(localToGlobalMap[var[a]]), sizeof(globalIndex) );
-      buffer += sizeof(globalIndex);
-    }
-  }
-  end_static_if
-
-  return sizeOfPackedChars;
-}
-
-inline
-localIndex Unpack( char const *& buffer,
-            localIndex_array & var,
-            map<globalIndex,localIndex> const & globalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex length;
-  sizeOfUnpackedChars += Unpack( buffer, length );
-  var.resize(length);
-
-  for( localIndex a=0 ; a<length ; ++a )
-  {
-    globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
-//    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
-    var[a] = softMapLookup( globalToLocalMap,
-                            unpackedGlobalIndex,
-                            localIndex(-1) );
-  }
-
+  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first );
+  sizeOfUnpackedChars += Unpack( buffer, var.second );
   return sizeOfUnpackedChars;
 }
 
+} /* namespace bufferOps */
+} /* namespace geosx */
 
-
-inline
-localIndex Unpack( char const *& buffer,
-            localIndex * const var,
-            localIndex const length,
-            map<globalIndex,localIndex> const & globalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex lengthUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, lengthUnpacked );
-
-  GEOS_ERROR_IF( length != lengthUnpacked, "CommBufferOps::Unpack(): length incorrect." );
-
-  for( localIndex a=0 ; a<length ; ++a )
-  {
-    globalIndex unpackedGlobalIndex;
-    sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
-    var[a] = globalToLocalMap.at(unpackedGlobalIndex);
-  }
-
-  return sizeOfUnpackedChars;
-}
-
-
-
-
-//
-//template< bool DO_PACKING >
-//int Pack( char*& buffer,
-//          multidimensionalArray::ManagedArray<localIndex,2,localIndex> const & var,
-//          localIndex_array const & indices,
-//          globalIndex_array const & localToGlobalMap )
-//{
-//  int sizeOfPackedChars;
-//
-//  return sizeOfPackedChars;
-//}
-//
-//inline
-//int Unpack( char const *& buffer,
-//            multidimensionalArray::ManagedArray<localIndex,2,localIndex> & var,
-//            localIndex_array const & indices,
-//            globalIndex_array const & globalToLocalMap )
-//{
-//  int sizeOfUnpackedChars;
-//
-//  return sizeOfUnpackedChars;
-//}
-
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
-          array1d< localIndex_array > const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap,
-          globalIndex_array const & relatedObjectLocalToGlobalMap )
-{
-  localIndex sizeOfPackedChars=0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
-  }
-
-  return sizeOfPackedChars;
-}
-
-inline
-localIndex Unpack( char const *& buffer,
-            array1d< localIndex_array > & var,
-            localIndex_array const & indices,
-            map<globalIndex,localIndex> const & globalToLocalMap,
-            map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars=0;
-
-  localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-
-    globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
-
-    sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
-  }
-  return sizeOfUnpackedChars;
-}
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
-          array1d< set<localIndex> > const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap,
-          globalIndex_array const & relatedObjectLocalToGlobalMap )
-{
-  localIndex sizeOfPackedChars=0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li].data(), var[li].size(), relatedObjectLocalToGlobalMap );
-  }
-
-  return sizeOfPackedChars;
-}
-
-inline
-localIndex Unpack( char const *& buffer,
-            array1d< set<localIndex> > & var,
-            localIndex_array const & indices,
-            map<globalIndex,localIndex> const & globalToLocalMap,
-            map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars=0;
-
-  localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-
-    globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
-
-    sizeOfUnpackedChars += Unpack( buffer, var[li], relatedObjectGlobalToLocalMap );
-  }
-  return sizeOfUnpackedChars;
-}
-
-
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
-          array2d<localIndex> const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1) );
-  }
-
-  return sizeOfPackedChars;
-}
-
-
-inline
-localIndex Unpack( char const *& buffer,
-            array2d<localIndex> & var,
-            localIndex_array const & indices,
-            map<globalIndex,localIndex> const & globalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-
-    globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
-
-    localIndex * const varSlice = var[li];
-    sizeOfUnpackedChars += Unpack( buffer, varSlice, var.size(1) );
-  }
-
-
-  return sizeOfUnpackedChars;
-}
-
-
-template< bool DO_PACKING >
-localIndex Pack( char*& buffer,
-          array2d<localIndex> const & var,
-          localIndex_array const & indices,
-          globalIndex_array const & localToGlobalMap,
-          globalIndex_array const & relatedObjectLocalToGlobalMap )
-{
-  localIndex sizeOfPackedChars = 0;
-
-  sizeOfPackedChars += Pack<DO_PACKING>( buffer, indices.size() );
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, localToGlobalMap[li] );
-
-    sizeOfPackedChars += Pack<DO_PACKING>( buffer, var[li], var.size(1), relatedObjectLocalToGlobalMap );
-  }
-
-  return sizeOfPackedChars;
-}
-
-
-inline
-localIndex Unpack( char const *& buffer,
-            array2d<localIndex> & var,
-            localIndex_array const & indices,
-            map<globalIndex,localIndex> const & globalToLocalMap,
-            map<globalIndex,localIndex> const & relatedObjectGlobalToLocalMap )
-{
-  localIndex sizeOfUnpackedChars = 0;
-
-  localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != indices.size(), "CommBufferOps::Unpack(): Incorrect number of indices unpacked." );
-
-  for( localIndex a=0 ; a<indices.size() ; ++a )
-  {
-    localIndex li = indices[a];
-
-    globalIndex gi;
-    sizeOfUnpackedChars += Unpack( buffer, gi );
-    // do a check here on the global Index??
-
-    sizeOfUnpackedChars += Unpack( buffer, var[li], var.size(1), relatedObjectGlobalToLocalMap );
-  }
-
-
-  return sizeOfUnpackedChars;
-}
-
-
-}
-}
-
-
-
-#endif /* SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_COMMBUFFEROPS_INLINE_HPP_ */
+#endif /* DATAREPOSITORY_BUFFEROPS_INLINE_H_ */

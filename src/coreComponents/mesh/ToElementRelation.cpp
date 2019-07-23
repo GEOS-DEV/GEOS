@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -25,7 +25,6 @@
 
 #include "ToElementRelation.hpp"
 
-#include "../dataRepository/BufferOps.hpp"
 #include "ElementRegionManager.hpp"
 
 namespace geosx
@@ -38,15 +37,15 @@ void erase( OrderedVariableToManyElementRelation & relation,
             localIndex const esr,
             localIndex const ei )
 {
-  for( localIndex a=relation.m_toElementRegion[firstIndex].size()-1 ; a>=0 ; --a )
+  for( localIndex a=relation.m_toElementRegion.sizeOfArray(firstIndex)-1 ; a>=0 ; --a )
   {
     if( er==relation.m_toElementRegion[firstIndex][a] &&
         esr==relation.m_toElementSubRegion[firstIndex][a] &&
         ei==relation.m_toElementIndex[firstIndex][a] )
     {
-      relation.m_toElementRegion[firstIndex].erase( relation.m_toElementRegion[firstIndex].begin() + a);
-      relation.m_toElementSubRegion[firstIndex].erase( relation.m_toElementSubRegion[firstIndex].begin() + a);
-      relation.m_toElementIndex[firstIndex].erase( relation.m_toElementIndex[firstIndex].begin() + a);
+      relation.m_toElementRegion.eraseFromArray(firstIndex,a);
+      relation.m_toElementSubRegion.eraseFromArray( firstIndex,a);
+      relation.m_toElementIndex.eraseFromArray(firstIndex,a);
     }
   }
 }
@@ -58,7 +57,7 @@ void insert( OrderedVariableToManyElementRelation & relation,
              localIndex const ei )
 {
   bool alreadyPresent = false;
-  for( localIndex a=0 ; a<relation.m_toElementRegion[firstIndex].size() ; ++a )
+  for( localIndex a=0 ; a<relation.m_toElementRegion.sizeOfArray(firstIndex) ; ++a )
   {
     if( er==relation.m_toElementRegion[firstIndex][a] &&
         esr==relation.m_toElementSubRegion[firstIndex][a] &&
@@ -69,9 +68,9 @@ void insert( OrderedVariableToManyElementRelation & relation,
   }
   if( !alreadyPresent )
   {
-    relation.m_toElementRegion[firstIndex].push_back( er );
-    relation.m_toElementSubRegion[firstIndex].push_back( esr );
-    relation.m_toElementIndex[firstIndex].push_back( ei );
+    relation.m_toElementRegion.appendToArray( firstIndex, er );
+    relation.m_toElementSubRegion.appendToArray( firstIndex, esr );
+    relation.m_toElementIndex.appendToArray( firstIndex, ei );
   }
 }
 

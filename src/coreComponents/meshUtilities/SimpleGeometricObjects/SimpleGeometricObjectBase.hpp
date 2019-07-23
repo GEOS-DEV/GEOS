@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -54,12 +54,6 @@ public:
   virtual ~SimpleGeometricObjectBase();
 
   static string CatalogName() { return "SimpleGeometricObjectBase"; }
-
-  SimpleGeometricObjectBase() = default;
-  SimpleGeometricObjectBase( SimpleGeometricObjectBase const & ) = default;
-  SimpleGeometricObjectBase( SimpleGeometricObjectBase &&) = default;
-  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase const & ) = default;
-  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase&& ) = default;
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -38,20 +38,7 @@ template < typename BASETYPE >
 class InterObjectRelation : public BASETYPE
 {
 public:
-  InterObjectRelation();
 
-  //InterObjectRelation( const ObjectDataStructureBaseT& relatedObject );
-
-//  ~InterObjectRelation() {}
-
-  InterObjectRelation( const InterObjectRelation& copiedRelationship );
-
-  InterObjectRelation & operator=(const InterObjectRelation& copiedRelationship);
-
-  operator BASETYPE() const
-  {
-    return static_cast<BASETYPE>(this);
-  }
 
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
@@ -59,7 +46,6 @@ public:
     BASETYPE::operator=(rhs);
     return (*this);
   }
-
 
   const BASETYPE& Base() const { return static_cast<const BASETYPE&>(*this); }
   BASETYPE& Base() { return dynamic_cast<BASETYPE&>(*this); }
@@ -71,54 +57,27 @@ public:
   { return m_relatedObject; }
 
   globalIndex_array const & RelatedObjectLocalToGlobal() const
-  {
-    return this->m_relatedObject->m_localToGlobalMap;
-  }
+  { return this->m_relatedObject->m_localToGlobalMap; }
 
   const std::map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const
-  {
-    return this->m_relatedObject->m_globalToLocalMap;
-  }
+  { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:
   ObjectDataStructureBaseT const * m_relatedObject = nullptr;
-
-
 };
 
+typedef InterObjectRelation<array1d<localIndex>>                OneToOneRelation;
+typedef InterObjectRelation<array1d<localIndex const>>          OneToOneConstRelation;
 
-template < typename BASETYPE >
-InterObjectRelation<BASETYPE>::InterObjectRelation( ):
-  m_relatedObject(nullptr)
-{}
+typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
+typedef InterObjectRelation<array2d<localIndex const>>          FixedOneToManyConstRelation;
 
+typedef InterObjectRelation<array1d<array1d<localIndex>>>       OrderedVariableOneToManyRelation;
+typedef InterObjectRelation<array1d<array1d<localIndex const>>> OrderedVariableOneToManyConstRelation;
 
-template < typename BASETYPE >
-InterObjectRelation<BASETYPE>::InterObjectRelation( const InterObjectRelation& copiedRelationship ):
-  BASETYPE( static_cast<BASETYPE const&>(copiedRelationship)),
-  m_relatedObject(copiedRelationship.m_relatedObject)
-{}
-template < typename BASETYPE >
-InterObjectRelation<BASETYPE> & InterObjectRelation<BASETYPE>::operator=(const InterObjectRelation& copiedRelationship)
-{
-  BASETYPE::operator=( static_cast<BASETYPE const&>(copiedRelationship) );
-  m_relatedObject = copiedRelationship.m_relatedObject;
-  return *this;
+typedef InterObjectRelation<array1d<set<localIndex>>>           UnorderedVariableOneToManyRelation;
+typedef InterObjectRelation<array1d<set<localIndex const>>>     UnorderedVariableOneToManyConstRelation;
+
 }
-
-
-
-
-typedef InterObjectRelation<localIndex_array> OneToOneRelation;
-typedef InterObjectRelation<array2d<localIndex>> FixedOneToManyRelation;
-typedef InterObjectRelation<array1d<localIndex_array> > OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<set<localIndex>> > UnorderedVariableOneToManyRelation;
-
-typedef InterObjectRelation<array1d<array1d<localIndex_array> > > OrderedVariableOneToManyToManyRelation;
-
-//typedef InterObjectRelation<array1d< pArray1d > > OrderedVariableOneToManyPairRelation;
-//typedef InterObjectRelation<array1d< pSet > > UnorderedVariableOneToManyPairRelation;
-}
-
 
 #endif /* INTEROBJECTRELATION_H_ */

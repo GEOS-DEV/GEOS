@@ -2,22 +2,38 @@
 # Specify all headers
 #
 set( linearAlgebraInterface_headers
-     EpetraSparseMatrix.hpp
+     BlockMatrixView.hpp
+     BlockVectorView.hpp
+     DofManager.hpp
+     EpetraMatrix.hpp
      EpetraVector.hpp
+     HypreInterface.hpp 
      InterfaceTypes.hpp
+     LinearSolverParameters.hpp
+     NativeCG.hpp
+     NativeBICGSTAB.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
-     HypreInterface.hpp )
+     HypreInterface.hpp 
+     LinearSolverParameters.hpp
+     BlasLapackLA.hpp
+     BlasLapackFunctions.h)
 
 #
 # Specify all sources
 #
 set( linearAlgebraInterface_sources
-     EpetraSparseMatrix.cpp
+     BlockVectorView.cpp
+     BlockMatrixView.cpp
+     DofManager.cpp
+     EpetraMatrix.cpp
      EpetraVector.cpp
-     TrilinosSolver.cpp)
+     TrilinosSolver.cpp
+     BlockVectorView.cpp
+     BlockMatrixView.cpp
+     BlasLapackLA.cpp)
 
-set( dependencyList common trilinos hypre mpi)
+set( dependencyList common blas lapack trilinos hypre raja hdf5 pugixml mpi )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )

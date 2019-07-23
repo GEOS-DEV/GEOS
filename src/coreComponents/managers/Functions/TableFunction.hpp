@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -45,9 +45,6 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "TableFunction"; }
-
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override final;
   
   /// Initialize the function
   virtual void InitializeFunction() override;

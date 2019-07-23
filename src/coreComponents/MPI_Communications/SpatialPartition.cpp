@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -28,11 +28,6 @@
 
 //#include "Common/intrinsic_typedefs.h"
 #include <cmath>
-
-#ifdef GEOSX_USE_ATK
-#include "slic/slic.hpp"
-#endif
-
 
 
 namespace
@@ -101,7 +96,7 @@ void SpatialPartition::InitializePostSubGroups( ManagedGroup * const )
   //check to make sure our dimensions agree
   {
     int check = 1;
-    for( unsigned int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0 ; i < nsdof ; i++ )
     {
       check *= this->m_Partitions( i );
     }
@@ -225,10 +220,8 @@ int SpatialPartition::GetColor()
 //         int nbrSetId = 1-mySetId;
 //         if(theSets[nbrSetId]->size() > 0)
 //         {
-//#ifdef GEOSX_USE_ATK
-//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " +
+//           GEOS_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " +
 // setnames[0] + " and " + setnames[1] + " present on same partition\n");
-//#endif
 //         }
 //         set<localIndex>& mySet =  *(theSets[mySetId]);
 //
@@ -284,11 +277,9 @@ int SpatialPartition::GetColor()
 //         // should have same number of nodes in both sets
 //         if(nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
 //         {
-//#ifdef GEOSX_USE_ATK
-//           SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
+//           GEOS_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
 // Size of " + setnames[mySetId] + " does not match size of " +
 // setnames[nbrSetId] + " on neighboring partition\n");
-//#endif
 //         }
 //
 //
@@ -325,11 +316,9 @@ int SpatialPartition::GetColor()
 //           if(setLocalAndGlobalIds[0].size() !=
 //  setLocalAndGlobalIds[1].size() )
 //           {
-//#ifdef GEOSX_USE_ATK
-//             SLIC_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
+//             GEOS_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects:
 // Size of " + setnames[0] + " does not match size of " + setnames[1] + " on
 // process " +toString(m_rank) +  "\n");
-//#endif
 //           }
 //
 //           // assign new global ids and make global to local map point to
@@ -672,7 +661,6 @@ int SpatialPartition::GetColor()
 //#ifdef SRC_EXTERNAL
 //        selfCommunication[a].FindPackGhostsFaultElement( elementGhostingDepth
 // );
-//#endif
 //      }
 //
 //
@@ -1117,7 +1105,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   if( idim == nsdof )
   {
     bool me = true;
-    for( unsigned int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0 ; i < nsdof ; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -1140,11 +1128,11 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = this->m_Partitions( idim );
-    const bool periodic = this->m_Periodic( idim );
+    const int dim = this->m_Partitions( integer_conversion<localIndex>( idim ) );
+    const bool periodic = this->m_Periodic( integer_conversion<localIndex>(idim) );
     for( int i = -1 ; i < 2 ; i++ )
     {
-      ncoords[idim] = this->m_coords( idim ) + i;
+      ncoords[idim] = this->m_coords( integer_conversion<localIndex>(idim) ) + i;
       bool ok = true;
       if( periodic )
       {
@@ -1223,10 +1211,8 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[0].empty()) && (m_Partitions(0)-1) !=
 // static_cast<int>( m_PartitionLocations[0].size() ) )
 //      {
-//#ifdef GEOSX_USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition
+//        GEOS_ERROR( "SpatialPartition::ReadXMLInput(): number of x-partition
 // locations does not equal number of partitions - 1\n");
-//#endif
 //      }
 //    }
 //    if( m_Partitions(1) > 1 )
@@ -1235,10 +1221,8 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[1].empty()) && (m_Partitions(1)-1) !=
 // static_cast<int>( m_PartitionLocations[1].size() ) )
 //      {
-//#ifdef GEOSX_USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition
+//        GEOS_ERROR( "SpatialPartition::ReadXMLInput(): number of y-partition
 // locations does not equal number of partitions - 1\n");
-//#endif
 //      }
 //    }
 //    if( m_Partitions(2) > 1 )
@@ -1247,10 +1231,8 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //      if( !(m_PartitionLocations[2].empty()) && (m_Partitions(2)-1) !=
 // static_cast<int>( m_PartitionLocations[2].size() ) )
 //      {
-//#ifdef GEOSX_USE_ATK
-//        SLIC_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition
+//        GEOS_ERROR( "SpatialPartition::ReadXMLInput(): number of z-partition
 // locations does not equal number of partitions - 1\n");
-//#endif
 //      }
 //    }
 //
@@ -1277,11 +1259,9 @@ void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
 //        m_periodicSets.push_back(periodicSet);
 //
 //        if( m_Periodic( periodicSet.m_dimension ) != 1 ){
-//#ifdef GEOSX_USE_ATK
-//          SLIC_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set
+//          GEOS_ERROR( "SpatialPartition::ReadXMLInput(): Periodic set
 // requested for non-periodic dimension " + toString(periodicSet.m_dimension) +
 // " \n");
-//#endif
 //        }
 //      }
 //    }
@@ -1352,7 +1332,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     //check to make sure our dimensions agree
     {
       int check = 1;
-      for( unsigned int i = 0 ; i < nsdof ; i++ )
+      for( int i = 0 ; i < nsdof ; i++ )
       {
         check *= this->m_Partitions( i );
       }
@@ -1394,7 +1374,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
   m_blockSize = m_gridSize;
 
   m_min = min;
-  for( unsigned int i=0 ; i<nsdof ; ++i )
+  for( int i=0 ; i<nsdof ; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
     const localIndex nlocl = static_cast<localIndex>(nloc);
@@ -1433,9 +1413,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
-#endif
+      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }
@@ -1483,7 +1461,7 @@ bool SpatialPartition::IsCoordInPartition( const realT& coord, const int dir )
 bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1513,7 +1491,7 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter, const int
     m_xBoundingBoxMaxTemp( i ) = m_max( i ) + numDistPartition*m_blockSize( i );
   }
 
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1538,7 +1516,7 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor& elemCenter )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1562,7 +1540,7 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter
 
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -1596,7 +1574,7 @@ void SpatialPartition::SetContactGhostRange( const realT bufferSize )
 bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
 {
   bool rval = true;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0 ; i < nsdof ; i++ )
   {
     if( m_Periodic( i ))
     {

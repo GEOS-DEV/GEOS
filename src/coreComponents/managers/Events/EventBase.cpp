@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -10,8 +10,8 @@
  *
  * This file is part of the GEOSX Simulation Framework.
  *
- * GEOSX is a free software; you can redistrubute it and/or modify it under
- * the terms of the GNU Lesser General Public Liscense (as published by the
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
@@ -21,8 +21,10 @@
  */
 
 #include "EventBase.hpp"
-#include "common/Logger.hpp"
 #include <cstring>
+
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -33,8 +35,75 @@ using namespace dataRepository;
 EventBase::EventBase( const std::string& name,
                       ManagedGroup * const parent ):
   ExecutableGroup(name, parent),
+  m_lastTime(-1.0e100),
+  m_lastCycle(-1.0e9),
+  m_eventTarget(""),
+  m_beginTime(0.0),
+  m_endTime(1e100),
+  m_forceDt(-1.0),
+  m_maxEventDt(-1.0),
+  m_targetExactStartStop(0),
+  m_currentSubEvent(0),
+  m_targetExecFlag(0),
+  m_eventForecast(0),
+  m_exitFlag(0),
+  m_eventCount(0),
+  m_timeStepEventCount(0),
+  m_eventProgress(0),
+  m_verbosity(0),
+  m_currentEventDtRequest(0.0),
   m_target(nullptr)
-{}
+{
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  
+  RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("event target");
+
+  RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
+    setApplyDefaultValue(0.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Start time of this event");
+
+  RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
+    setApplyDefaultValue(1e100)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("End time of this event");
+
+  RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Forced timestep for this event");
+
+  RegisterViewWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
+    setApplyDefaultValue(-1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Forced timestep for this event");
+
+  RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("allows timesteps to be truncated to match the start/stop times exactly");
+ 
+ RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
+    setApplyDefaultValue(-1.0e100)->
+    setDescription("last event occurrence (time)");
+
+  RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
+    setApplyDefaultValue(-1.0e9)->
+    setDescription("last event occurrence (cycle)");
+
+  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+    setDescription("index of the current subevent");
+
+  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
+    setDescription("index of the current subevent");
+
+  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Verbosity level");
+}
 
 
 EventBase::~EventBase()
@@ -47,149 +116,33 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
   return catalog;
 }
 
-
-void EventBase::FillDocumentationNode()
+ManagedGroup * EventBase::CreateChild( string const & childKey, string const & childName )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  docNode->setName("EventBase");
-  docNode->setSchemaType("Node");
-  docNode->setShortDescription("Describes the timing of the solver application");
-
-  docNode->AllocateChildNode( viewKeys.eventTarget.Key(),
-                              viewKeys.eventTarget.Key(),
-                              -1,
-                              "string",
-                              "string",
-                              "event target",
-                              "event target",
-                              "",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.beginTime.Key(),
-                              viewKeys.beginTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "start time",
-                              "start time",
-                              "0.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.endTime.Key(),
-                              viewKeys.endTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "end time",
-                              "end time",
-                              "1.0e100",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.forceDt.Key(),
-                              viewKeys.forceDt.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "forced application dt",
-                              "forced application dt",
-                              "-1.0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.lastTime.Key(),
-                              viewKeys.lastTime.Key(),
-                              -1,
-                              "real64",
-                              "real64",
-                              "last event occurance (time)",
-                              "last event occurance (time)",
-                              "-1",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.lastCycle.Key(),
-                              viewKeys.lastCycle.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "last event occurance (time)",
-                              "last event occurance (time)",
-                              "-1",
-                              "",
-                              0,
-                              0,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.allowSuperstep.Key(),
-                              viewKeys.allowSuperstep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows event super-stepping",
-                              "allows event super-stepping (dt_super=dt+t-t_last)",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.allowSubstep.Key(),
-                              viewKeys.allowSubstep.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "allows event sub-stepping",
-                              "allows event sub-stepping",
-                              "0",
-                              "",
-                              0,
-                              1,
-                              0 );
-
-  docNode->AllocateChildNode( viewKeys.substepFactor.Key(),
-                              viewKeys.substepFactor.Key(),
-                              -1,
-                              "integer",
-                              "integer",
-                              "integer substep factor",
-                              "integer substep factor (dt_sub=dt/f)",
-                              "1",
-                              "",
-                              0,
-                              1,
-                              0 );
-
+  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
 
 
-void EventBase::CreateChild( string const & childKey, string const & childName )
+void EventBase::ExpandObjectCatalogs()
 {
-  std::cout << "Adding Event: " << childKey << ", " << childName << std::endl;
-  std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  this->RegisterGroup<EventBase>( childName, std::move(event) );
+  // Only add children if the parent is of type EventManager
+  // otherwise, this would fall into a loop
+  if (strcmp(this->getParent()->getName().c_str(), "Events") == 0)
+  {
+    for (auto& catalogIter: EventBase::GetCatalog())
+    {
+      CreateChild( catalogIter.first, catalogIter.first );
+    }
+  }
 }
 
 
 void EventBase::GetTargetReferences()
 {
-  string eventTarget = this->getReference<string>(viewKeys.eventTarget);
-  if (!eventTarget.empty())
+  if (!m_eventTarget.empty())
   {
-    ManagedGroup * tmp = this->GetGroupByPath(eventTarget);
+    ManagedGroup * tmp = this->GetGroupByPath(m_eventTarget);
     m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
     GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
@@ -206,11 +159,8 @@ void EventBase::CheckEvents(real64 const time,
                             integer const cycle,
                             ManagedGroup * domain)
 {
-  real64 const beginTime = this->getReference<real64>(viewKeys.beginTime);
-  real64 const endTime = this->getReference<real64>(viewKeys.endTime);
-  
   // Check event status
-  if (time < beginTime)
+  if (time < m_beginTime)
   {
     if (dt <= 0)
     {
@@ -218,10 +168,10 @@ void EventBase::CheckEvents(real64 const time,
     }
     else
     {
-      m_eventForecast = int((beginTime - time) / dt);
+      m_eventForecast = int((m_beginTime - time) / dt);
     }
   }
-  else if (time >= endTime)
+  else if (time >= m_endTime)
   {
     m_eventForecast = std::numeric_limits<integer>::max();
   }
@@ -258,116 +208,122 @@ void EventBase::SignalToPrepareForExecution(real64 const time,
 }
 
 
-void EventBase::Execute(real64 const& time_n,
-                        real64 const& dt,
-                        const int cycleNumber,
+void EventBase::Execute(real64 const time_n,
+                        real64 const dt,
+                        const integer cycleNumber,
+                        integer const,
+                        real64 const,
                         ManagedGroup * domain)
 {
-  real64& lastTime = *(this->getData<real64>(viewKeys.lastTime));
-  integer& lastCycle = *(this->getData<integer>(viewKeys.lastCycle));
-  integer const allowSuperstep = this->getReference<integer>(viewKeys.allowSuperstep);
-  integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
-  integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
-
-  if (allowSuperstep > 0)
+  GEOSX_MARK_FUNCTION;
+  
+  // If m_targetExecFlag is set, then the code has resumed at a point
+  // after the target has executed. 
+  if ((m_target != nullptr) && (m_targetExecFlag == 0))
   {
-    real64 actualDt = dt + time_n - lastTime;
-    Step(lastTime, actualDt, cycleNumber, domain);     // Should we use the lastTime or time here?
+    m_targetExecFlag = 1;
+    m_target->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
-  else if (allowSubstep > 0)
+  
+  // Iterate through the sub-event list using the managed integer m_currentSubEvent
+  // This allows for  restart runs to pick up where they left off.
+  for ( ; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent)
   {
-    real64 actualDt = dt / substepFactor;
-    real64 actualTime = time_n;
+    EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
+    integer subEventForecast = subEvent->GetForecast();
 
-    for (integer ii=0; ii<substepFactor; ii++)
+    if (m_verbosity > 0)
     {
-      Step(actualTime, actualDt, cycleNumber, domain);
-      actualTime += actualDt;
+      GEOS_LOG_RANK_0("          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << subEventForecast);
+    }
+
+    if (subEventForecast <= 0)
+    {
+      subEvent->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
     }
   }
-  else
-  {
-    Step(time_n, dt, cycleNumber, domain);
-  }
 
-  lastTime = time_n;
-  lastCycle = cycleNumber;
-}
-
-
-void EventBase::Step(real64 const time,
-                     real64 const dt,  
-                     integer const cycle,
-                     dataRepository::ManagedGroup * domain )
-{
-  // Note: do we need an mpi barrier here?
-
-  if (m_target != nullptr)
-  {
-    m_target->Execute(time, dt, cycle, domain);
-  }
-
-  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
-  {
-    if (subEvent->GetForecast() <= 0)
-    {
-      subEvent->Execute(time, dt, cycle, domain);
-    }
-  });
+  // Update the event status
+  m_targetExecFlag = 0;
+  m_currentSubEvent = 0;
+  m_lastTime = time_n;
+  m_lastCycle = cycleNumber;
 }
 
 
 real64 EventBase::GetTimestepRequest(real64 const time)
 {
-  real64 nextDt = std::numeric_limits<integer>::max();
-  real64 requestedDt = std::numeric_limits<integer>::max();
-  real64 const forceDt = this->getReference<real64>(viewKeys.forceDt);
-  integer const allowSubstep = this->getReference<integer>(viewKeys.allowSubstep);
-  integer const substepFactor = this->getReference<integer>(viewKeys.substepFactor);
+  m_currentEventDtRequest = std::numeric_limits<real64>::max();
 
-  if (forceDt > 0)
+  // Events and their targets may request a max dt when active
+  if ((time >= m_beginTime) && (time < m_endTime))
   {
-    nextDt = forceDt;
-  }
-  else
-  {
-    if (m_target != nullptr)
+    if (m_forceDt > 0)
     {
-      requestedDt = m_target->GetTimestepRequest(time);
-      nextDt = std::min(requestedDt, nextDt);
+      // Override the event dt request
+      m_currentEventDtRequest = m_forceDt;
     }
-
-    this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+    else
     {
-      if (subEvent->GetForecast() <= 1)
+      if (m_maxEventDt > 0)
       {
-        requestedDt = subEvent->GetTimestepRequest(time);
-        nextDt = std::min(requestedDt, nextDt);
+        // Limit the event dt request
+        m_currentEventDtRequest = std::min(m_maxEventDt, m_currentEventDtRequest);
       }
-    });
 
-    if (allowSubstep > 0)
-    {
-      nextDt *= substepFactor;
+      // Get the event-specific dt request
+      m_currentEventDtRequest = std::min(m_currentEventDtRequest, GetEventTypeDtRequest(time));
+
+      // Get the target's dt request if the event has the potential to execute this cycle
+      if ((m_eventForecast <= 1) && (m_target != nullptr))
+      {
+        m_currentEventDtRequest = std::min(m_currentEventDtRequest, m_target->GetTimestepRequest(time));
+      }
+
+      // Get the sub-event dt requests
+      this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+      {
+        m_currentEventDtRequest = std::min(m_currentEventDtRequest, subEvent->GetTimestepRequest(time));
+      });
     }
   }
 
-  return nextDt;
+  // Try to respect the start/stop times of the event window
+  if (m_targetExactStartStop == 1)
+  {
+    // Using this instead of the raw time will prevent falling into dt = 0 loops:
+    real64 tmp_t = std::nextafter(time, time + 1.0);
+
+    if (tmp_t < m_beginTime)
+    {
+      m_currentEventDtRequest = std::min(m_beginTime - time, m_currentEventDtRequest);
+    }
+    else if (tmp_t < m_endTime)
+    {
+      m_currentEventDtRequest = std::min(m_endTime - time, m_currentEventDtRequest);
+    }
+  }
+
+  return m_currentEventDtRequest;
 }
 
 
-void EventBase::Cleanup(real64 const& time_n,
-                        const int cycleNumber,
+void EventBase::Cleanup(real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
                         ManagedGroup * domain)
 {
   if (m_target != nullptr)
   {
-    m_target->Cleanup(time_n, cycleNumber, domain);
+    // Cleanup the target
+    m_target->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
 
+  // Cleanup any sub-events
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time_n, cycleNumber, domain);
+    subEvent->Cleanup(time_n, cycleNumber, m_eventCount, m_eventProgress, domain);
   });
 }
 
@@ -381,6 +337,48 @@ integer EventBase::GetExitFlag()
   });
 
   return m_exitFlag;
+}
+
+
+
+void EventBase::GetExecutionOrder(array1d<integer> & eventCounters)
+{
+  // The first entry counts all events, the second tracks solver events
+  m_eventCount = eventCounters[0];
+  m_timeStepEventCount = eventCounters[1];
+
+  // Increment counters
+  ++eventCounters[0];
+  if (m_target != nullptr)
+  {
+    if (m_target->GetTimestepBehavior() > 0)
+    {
+      ++eventCounters[1];
+    }
+  }
+
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->GetExecutionOrder(eventCounters);
+  });
+}
+
+
+void EventBase::SetProgressIndicator(array1d<integer> & eventCounters)
+{
+  // Calculate the event progress indicator
+  // This is defined as the percent completion through the executaion loop
+  // with respect to the beginning of the event.
+  if (eventCounters[1] > 0)
+  {
+    m_eventProgress = static_cast<real64>(m_timeStepEventCount) / static_cast<real64>(eventCounters[1]);
+  }
+  
+  // Do this for child events
+  this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
+  {
+    subEvent->SetProgressIndicator(eventCounters);
+  });
 }
 
 

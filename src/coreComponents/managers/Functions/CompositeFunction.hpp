@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,7 +24,10 @@
 #define COMPOSITEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
+
+#ifdef GEOSX_USE_MATHPRESSO
 #include <mathpresso/mathpresso.h>
+#endif
 
 namespace geosx
 {
@@ -46,9 +49,6 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "CompositeFunction"; }
-  
-  /// Documentation assignment
-  virtual void FillDocumentationNode() override;
   
   /// Function initialization
   virtual void InitializeFunction() override;
@@ -72,15 +72,21 @@ public:
   virtual real64 Evaluate( real64 const * const input) const override final;
 
 private:
+
+  string_array m_functionNames;
+  string_array m_variableNames;
+  string       m_expression;
+
+#ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
+#endif
 
   localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
   std::vector<FunctionBase*> m_subFunctions;
 
 };
-
 
 } /* namespace geosx */
 

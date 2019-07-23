@@ -3,27 +3,33 @@
 # Specify all headers
 #
 set(common_headers
-    integer_conversion.hpp
+    ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     DataTypes.hpp
-    Logger.hpp )
+    GeosxMacros.hpp
+    TimingMacros.hpp
+    initialization.hpp )
 
 #
 # Specify all sources
 #
 set(common_sources
-    Logger.cpp
-    DataTypes.cpp )
+    DataTypes.cpp
+    initialization.cpp)
 
-
-set( dependencyList cxx-utilities mpi )
+set( dependencyList cxx-utilities managers mpi pugixml trilinos )
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} slic conduit lumberjack )
+  set( dependencyList ${dependencyList} conduit )
 endif()
 
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 endif()
+
+if( ENABLE_RAJA )
+  set( dependencyList ${dependencyList} RAJA )
+endif()
+
 
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )
@@ -42,7 +48,6 @@ blt_add_library( NAME                  common
                
                
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-#target_include_directories( common PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/../../include)
                
 geosx_add_code_checks(PREFIX common )
 

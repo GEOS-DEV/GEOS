@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,75 +16,15 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
-//  Produced at the Lawrence Livermore National Laboratory
-//
-//  GEOS Computational Framework - Core Package, Version 3.0.0
-//
-//  Written by:
-//  Randolph Settgast (settgast1@llnl.gov)
-//  Stuart Walsh(walsh24@llnl.gov)
-//  Pengcheng Fu (fu4@llnl.gov)
-//  Joshua White (white230@llnl.gov)
-//  Chandrasekhar Annavarapu Srinivas
-//  Eric Herbold
-//  Michael Homel
-//
-//
-//  All rights reserved.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
-// SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-//  1. This notice is required to be provided under our contract with the U.S.
-// Department of Energy (DOE). This work was produced at Lawrence Livermore
-//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National
-// Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy,
-// completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe
-// privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or
-// services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or
-// favoring by the United States Government or Lawrence Livermore National
-// Security,
-//     LLC. The views and opinions of authors expressed herein do not
-// necessarily state or reflect those of the United States Government or
-// Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising
-// or product endorsement purposes.
-//
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The
-// BSD  License statment is included in this distribution in src/bsd_notice.txt.
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * @brief This file contains the definition of the R2SymTensorT.h class
  * @file R2SymTensorT.h
- * @author Randolph Settgast
  */
 
 #ifndef R2_SYM_TENSOR_T_H_
 #define R2_SYM_TENSOR_T_H_
 
 #include "TensorBaseT.h"
-//#include "TensorT.h"
-
 
 // PRAGMAS to suppress somewhat incorrect out of bounds errors in xlc and icc
 #ifdef __INTEL_COMPILER
@@ -92,11 +32,9 @@
 #pragma warning disable 175
 #endif
 
-#ifdef  __IBMC__
+#ifdef __IBMC__
 #pragma report(disable, "1540-2907")
 #endif
-
-
 
 /// Function to determine the size of the a symmetric rank-2 tensor
 template<int N>
@@ -120,7 +58,6 @@ template< int T_dim > class R6minSymTensorT;
 
 /**
  * @brief R2SymTensorT is a symetic rank-2 tensor object type
- * @author Randolph Settgast
  * @tparam T_dim length of tensor index
  *
  * R2symTensorT derives from TensorBaseT, and defines basic operations that can
@@ -137,11 +74,10 @@ public:
   R2SymTensorT(void);
 
   /**
-   * @author Randolph Settgast
+
    * @param[in] data use for initialization of t_data
    */
   explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
-
 
   /// default destructor
   ~R2SymTensorT(void);
@@ -168,7 +104,7 @@ public:
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
-  const realT& operator()(const int i, const int j) const;
+  realT operator()(const int i, const int j) const;
 
   /// non-const access to data
   realT& operator()(const int i, const int j);
@@ -237,9 +173,13 @@ public:
   /// add identity
   void PlusIdentity(const realT rhs)
   {
-    int c = 0;
-    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
-      this->t_data[c] += rhs;
+//    int c = 0;
+//    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
+//      this->t_data[c] += rhs;
+//
+    this->t_data[0] += rhs;
+    this->t_data[2] += rhs;
+    this->t_data[5] += rhs;
   }
 
   void
@@ -260,7 +200,6 @@ private:
 };
 
 /**
- * @author Randolph Settgast
  * @param os output stream
  *
  * This function prints the contents of the tensor
@@ -340,7 +279,7 @@ inline R2SymTensorT<T_dim>& R2SymTensorT<T_dim>::operator+=( const R2SymTensorT<
 }
 
 template<int T_dim>
-inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) const
+inline realT R2SymTensorT< T_dim >::operator()(const int i, const int j) const
 {
   int i_sym = i;
   int j_sym = j;
@@ -359,8 +298,9 @@ inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) 
 
   return this->t_data[index];
 }
+
 template<>
-inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
+inline realT R2SymTensorT<2>::operator()(const int i, const int j) const
 {
   static constexpr int map[2][2] = {
     {0,1},
@@ -371,7 +311,7 @@ inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
 }
 
 template<>
-inline const realT& R2SymTensorT<3>::operator()(const int i, const int j) const
+inline realT R2SymTensorT<3>::operator()(const int i, const int j) const
 {
   static constexpr int map[3][3] = {
     {0,1,3},
@@ -381,7 +321,6 @@ inline const realT& R2SymTensorT<3>::operator()(const int i, const int j) const
 
   return this->t_data[map[i][j]];
 }
-
 
 template<int T_dim>
 inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
@@ -406,9 +345,7 @@ inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
   return this->t_data[index];
 }
 
-
 /**
- * @author Randolph Settgast
  * @return trace of (*this)
  *
  * This function returns the trace of the tensor that it is called from.
@@ -419,18 +356,20 @@ inline realT R2SymTensorT< T_dim >::Trace(void) const
   realT trace = 0;
   int c = 0;
 
-  if (T_dim == 2)
-    trace = this->t_data[0] + this->t_data[2];
-  else if (T_dim == 3)
-    trace = this->t_data[0] + this->t_data[2] + this->t_data[5];
-  else
-    for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
-      trace += this->t_data[c];
+  for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
+  {
+    trace += this->t_data[c];
+  }
+
   return trace;
 }
 
+template<>
+inline realT R2SymTensorT< 3 >::Trace(void) const
+{ return this->t_data[0] + this->t_data[2] + this->t_data[5]; }
+
+
 /**
- * @author Randolph Settgast
  * @return determinant of (*this)
  *
  * This function returns the determinate of the tensor that it is called from.
@@ -453,7 +392,7 @@ inline realT R2SymTensorT< T_dim >::Det(void) const
                                t_data[3]));
   else
   {
-    std::cout << "R2TensorT::Det() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
   }
 
   return det;
@@ -472,7 +411,6 @@ inline realT R2SymTensorT< T_dim >::AijAij(void) const
 }
 
 /**
- * @author Randolph Settgast
  * @return inner product of (*this) with itself
  *
  * This function returns the inner product of the tensor that it is called from
@@ -489,14 +427,13 @@ inline realT R2SymTensorT< T_dim >::Inner(void) const
            * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
   else
   {
-    std::cout << "R2TensorT::Inner() not implemented for dimension > 3";
+    GEOS_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
   }
 
   return rval;
 }
 
 /**
- * @author Randolph Settgast
  * @param tensor tensor to invert
  * @return determinant of tensor
  */
@@ -557,13 +494,12 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
   }
   else
   {
-    std::cout<<"R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
   }
   return det;
 }
 
 /**
- * @author Randolph Settgast
  * @param[out] eigenvals naked array that holds the Eigenvalues
  *
  * This function calculates the eigenvalues of *this.
@@ -574,7 +510,7 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVals not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVals not implemented for dimension != 3");
     return;
   }
 
@@ -657,7 +593,6 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
 
 
 /**
- * @author Randolph Settgast
  * @param[in] lambda naked array that holds the Eigenvalues
  * @param[out] v a naked array of R1TensorT's that hold the eigenvectors
  *
@@ -668,7 +603,7 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVecs not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVecs not implemented for dimension != 3");
     return;
   }
 
@@ -841,7 +776,6 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 
 
 /**
- * @author Randolph Settgast
  * @param[in] lambda the eigenvalues
  * @param[out] v R1TensorT that holds the eigenvector
  *
@@ -852,7 +786,7 @@ inline void R2SymTensorT< T_dim >::EigenVector(const realT lambda, R1TensorT< T_
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::EigenVector not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::EigenVector not implemented for dimension != 3");
     return;
   }
 
@@ -891,7 +825,6 @@ inline void R2SymTensorT< T_dim >::EigenVector(const realT lambda, R1TensorT< T_
 }
 
 /**
- * @author Randolph Settgast
  *
  * This function takes the square root of *this
  */
@@ -900,7 +833,7 @@ void R2SymTensorT< T_dim >::Sqrt()
 {
   if(T_dim != 3)
   {
-    std::cout<<"R2SymTensorT::Sqrt not implemented for dimension != 3";
+    GEOS_WARNING("R2SymTensorT::Sqrt not implemented for dimension != 3");
     return;
   }
 
@@ -925,7 +858,6 @@ void R2SymTensorT< T_dim >::Sqrt()
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] r exponent
  *
  * This function takes power of *this
@@ -967,7 +899,6 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
  *
@@ -996,7 +927,7 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
   }
   else
   {
-    std::cout << "R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
@@ -1005,7 +936,6 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
 #include "R4minSymTensorT.h"
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or-
@@ -1033,13 +963,12 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or-
@@ -1067,13 +996,12 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ");
   }
 
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or-
@@ -1120,13 +1048,12 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
   }
   else
   {
-    std::cout << "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 ";
+    GEOS_WARNING("R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3");
   }
 
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$
@@ -1155,13 +1082,12 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    std::cout<<"R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$
@@ -1190,14 +1116,13 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
   }
   else
   {
-    std::cout<<"R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3");
     return;
   }
 }
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$
@@ -1226,14 +1151,13 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
   }
   else
   {
-    std::cout<<"R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3");
     return;
   }
 }
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] Q rank-2 tensor
  *
@@ -1245,15 +1169,15 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
 template<int T_dim>
 inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, const R2TensorT< T_dim >& Q)
 {
-  if (T_dim == 2)
-  {
-    this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] + Q.t_data[1] * Q.t_data[1] * A.t_data[2];
-    this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1] * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
-                      * Q.t_data[4] * A.t_data[2];
-    this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] + Q.t_data[4] * Q.t_data[4] * A.t_data[2];
-  }
-  else if (T_dim == 3)
-  {
+//  if (T_dim == 2)
+//  {
+//    this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] + Q.t_data[1] * Q.t_data[1] * A.t_data[2];
+//    this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1] * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
+//                      * Q.t_data[4] * A.t_data[2];
+//    this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] + Q.t_data[4] * Q.t_data[4] * A.t_data[2];
+//  }
+//  else if (T_dim == 3)
+//  {
     realT o1,o2,o3,o4,o5,o6,o7,o8,o9,o10,o11,o12,o13,o14,o15,o16,o17,o18,o19,o20,o21,o22,o23,o24;
     o1 = A.t_data[0] * Q.t_data[3];
     o2 = A.t_data[1] * Q.t_data[4];
@@ -1289,17 +1213,16 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
     this->t_data[3] = o16 * Q.t_data[0] + o20 * Q.t_data[1] + o24 * Q.t_data[2];
     this->t_data[4] = o16 * Q.t_data[3] + o20 * Q.t_data[4] + o24 * Q.t_data[5];
     this->t_data[5] = o16 * Q.t_data[6] + o20 * Q.t_data[7] + o24 * Q.t_data[8];
-  }
-  else
-  {
-    std::cout << "R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3 ";
-  }
+//  }
+//  else
+//  {
+//    GEOS_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
+//  }
 
 }
 
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  *
  * This function performs a dyadic product of a rank-1 tensor with itself
@@ -1337,7 +1260,6 @@ inline void R2SymTensorT< T_dim >::dyadic_aa(const R1TensorT< T_dim >& a)
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @return none
  *
@@ -1352,7 +1274,6 @@ R2SymTensorT< T_dim > DyadicProduct(const R1TensorT< T_dim >& a){
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
  *
@@ -1379,7 +1300,7 @@ inline void R2SymTensorT< T_dim >::dyadic_ab_plus_ba(const R1TensorT< T_dim >& a
   }
   else
   {
-    std::cout << "R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3";
+    GEOS_WARNING("R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension )> 3");
   }
 }
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -16,22 +16,16 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataObjectManager.cpp
- *
- *  Created on: Nov 21, 2014
- *      Author: rrsettgast
- */
-
 #include "ManagedGroup.hpp"
 
+#include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 #include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
-#include "sidre/IOManager.hpp"
+#include "axom/sidre/core/sidre.hpp"
 #endif
 
 namespace geosx
@@ -39,7 +33,7 @@ namespace geosx
 namespace dataRepository
 {
 
-axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
+axom::sidre::Group * ManagedGroup::setSidreGroup( string const & name,
                                                   ManagedGroup * const parent )
 {
 
@@ -55,13 +49,13 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
     sidreParent = parent->m_sidreGroup;
   }
 
-  if( sidreParent->hasGroup(name) )
+  if( sidreParent->hasGroup( name ) )
   {
-    sidreGroup = sidreParent->getGroup(name);
+    sidreGroup = sidreParent->getGroup( name );
   }
   else
   {
-    sidreGroup = sidreParent->createGroup(name);
+    sidreGroup = sidreParent->createGroup( name );
   }
   return sidreGroup;
 #else
@@ -72,99 +66,37 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const& name,
 
 ManagedGroup::ManagedGroup( std::string const & name,
                             ManagedGroup * const parent ):
-  m_docNode(nullptr),
-  m_parent(parent),
+  m_parent( parent ),
   m_wrappers(),
   m_subGroups(),
 #ifdef GEOSX_USE_ATK
-  m_sidreGroup(ManagedGroup::setSidreGroup(name,parent)),
+  m_sidreGroup( ManagedGroup::setSidreGroup( name, parent )),
 #endif
-  m_size(0),
-  m_restart_flags(RestartFlags::WRITE_AND_READ),
-  m_name(name)
-{
-
-  // Setup DocumentationNode
-  if( parent != nullptr )
-  {
-    if( parent->m_docNode != nullptr  )
-    {
-      if( this->m_docNode == nullptr )
-      {
-        m_docNode = parent->m_docNode->AllocateChildNode( name,
-                                                          name,
-                                                          0,
-                                                          "",
-                                                          "Node",
-                                                          "",
-                                                          "",
-                                                          "",
-                                                          parent->getName(),
-                                                          0,
-                                                          0,
-                                                          0 );
-      }
-    }
-    else
-    {
-      m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                        name,
-                                                        -1,
-                                                        "Node",
-                                                        "Node",
-                                                        "The Root DocumentationNode for " + name,
-                                                        "",
-                                                        "",
-                                                        "",
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        0,
-                                                        nullptr );
-    }
-  }
-  else
-  {
-    m_docNode = new cxx_utilities::DocumentationNode( name,
-                                                      name,
-                                                      -1,
-                                                      "Node",
-                                                      "Node",
-                                                      "The Root DocumentationNode for " + name,
-                                                      "",
-                                                      "",
-                                                      "",
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      0,
-                                                      nullptr );
-  }
-
-//  RegisterViewWrapper( "size", &(this->m_size), false );
-//  RegisterViewWrapper( "name", &(this->m_name), false );
-
-
-  RegisterDocumentationNodes();
-}
+  m_size( 0 ),
+  m_capacity( 0 ),
+  m_restart_flags( RestartFlags::WRITE_AND_READ ),
+  m_input_flags( InputFlags::INVALID ),
+  m_name( name )
+{}
 
 ManagedGroup::~ManagedGroup()
 {}
 
-ManagedGroup::ManagedGroup( ManagedGroup&& source ):
-  m_parent( std::move(source.m_parent) ),
-  m_wrappers( std::move(source.m_wrappers) ),
+ManagedGroup::ManagedGroup( ManagedGroup && source ):
+  m_parent( std::move( source.m_parent ) ),
+  m_wrappers( std::move( source.m_wrappers ) ),
 #ifdef GEOSX_USE_ATK
-  m_sidreGroup( std::move(source.m_sidreGroup) ),
+  m_sidreGroup( std::move( source.m_sidreGroup ) ),
 #endif
   m_size( source.m_size ),
+  m_capacity( source.m_capacity ),
   m_restart_flags( source.m_restart_flags ),
   m_name( source.m_name )
 {}
 
 
 
-ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
+ManagedGroup::CatalogInterface::CatalogType & ManagedGroup::GetCatalog()
 {
   static ManagedGroup::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -173,9 +105,9 @@ ManagedGroup::CatalogInterface::CatalogType& ManagedGroup::GetCatalog()
 ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda1( type,
-                                    [this, &name]( auto a ) -> ViewWrapperBase*
+                                    [this, &name]( auto a ) -> ViewWrapperBase *
       {
-        return this->RegisterViewWrapper<decltype(a)>(name);
+        return this->RegisterViewWrapper< decltype(a) >( name );
       } );
 }
 
@@ -187,14 +119,19 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
                             true );
 }
 
+void ManagedGroup::DeregisterViewWrapper( string const & name )
+{
+  m_wrappers.erase( name );
+}
+
 
 void ManagedGroup::resize( indexType const newsize )
 {
-  for( auto&& i : this->wrappers() )
+  for( auto && i : this->wrappers() )
   {
     if( i.second->sizedFromParent() == 1 )
     {
-      i.second->resize(newsize);
+      i.second->resize( newsize );
     }
   }
   m_size = newsize;
@@ -206,211 +143,137 @@ void ManagedGroup::resize( indexType const newsize )
 
 void ManagedGroup::reserve( indexType const newsize )
 {
-  for( auto&& i : this->wrappers() )
+  for( auto && i : this->wrappers() )
   {
     if( i.second->sizedFromParent() == 1 )
     {
-      i.second->reserve(newsize);
+      i.second->reserve( newsize );
     }
   }
   m_capacity = newsize;
 }
 
-
-void ManagedGroup::RegisterDocumentationNodes()
+void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
-  for( auto&& subNode : m_docNode->getChildNodes() )
-  {
-    if( ( subNode.second.getSchemaType().find("Node") == std::string::npos ) &&
-        ( subNode.second.m_isRegistered == 0 ) )
-    {
-      std::string childType = subNode.second.getDataType();
-      rtTypes::TypeIDs const typeID = rtTypes::typeID(childType);
+  xmlWrapper::addIncludedXML( targetNode );
 
-      ViewWrapperBase * const view = RegisterViewWrapper( subNode.second.getStringKey(),
-                                                          typeID );
-
-      view->setSizedFromParent( subNode.second.m_managedByParent);
-      view->setRestartFlags( subNode.second.getRestartFlags() );
-      view->setPlotLevel( subNode.second.getVerbosity() );
-      subNode.second.m_isRegistered = 1;
-
-      string defVal = subNode.second.getDefault();
-
-      if( subNode.second.getIsInput() && defVal != "NONE" )
-      {
-        rtTypes::ApplyTypeLambda2 ( typeID,
-                                    [&]( auto a, auto b ) -> void
-        {
-
-          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-          std::vector<decltype(b)> values;
-          stringutilities::StringToType( values, defVal );
-          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
-          dataView.resize( size );
-          typename ViewWrapper<decltype(a)>::rtype data = dataView.data();
-          cxx_utilities::equateStlVector(data,values);
-        });
-      }
-//      else if( defVal != "NONE" && defVal != "" )
-//      {
-//        rtTypes::ApplyTypeLambda2( typeID,
-//                                   [&]( auto a, auto b ) -> void
-//        {
-//
-//          ViewWrapper<decltype(a)>& dataView = ViewWrapper<decltype(a)>::cast(*view);
-//          std::vector<decltype(b)> values;
-//          stringutilities::StringToType( values, defVal );
-//          localIndex const size = multidimensionalArray::integer_conversion<localIndex>(values.size());
-//          if( size != 1 )
-//          {
-//            GEOS_ERROR("Expect size of default value to be a scalar");
-//          }
-//          decltype(a) & data = dataView.reference();
-//          for( localIndex c=0 ; c<size ; ++c )
-//          {
-//            data[c] = values[0];
-//          }
-//          //data = values[0];
-//        });
-//      }
-    }
-  }
-
-  for( auto& subGroupIter : m_subGroups )
-  {
-    subGroupIter.second->RegisterDocumentationNodes();
-  }
-
-}
-
-void ManagedGroup::BuildDataStructure( dataRepository::ManagedGroup * const rootGroup )
-{
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->BuildDataStructure( rootGroup );
-  }
-}
-
-// These fill the documentation and initialize fields on this:
-void ManagedGroup::FillDocumentationNode()
-{}
-
-void ManagedGroup::SetDocumentationNodes()
-{
-  FillDocumentationNode();
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetDocumentationNodes();
-  }
-  RegisterDocumentationNodes();
-
-}
-
-// These fill the documentation and initialize fields on other objects:
-void ManagedGroup::SetOtherDocumentationNodes(dataRepository::ManagedGroup * const rootGroup)
-{
-  FillOtherDocumentationNodes(rootGroup);
-  for( auto&& subGroup : m_subGroups )
-  {
-    subGroup.second->SetOtherDocumentationNodes(rootGroup);
-  }
-}
-
-void ManagedGroup::FillOtherDocumentationNodes( dataRepository::ManagedGroup * const )
-{
-}
-
-
-
-void ManagedGroup::AddChildren( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  // loop over the child nodes of the targetNode
+  for( xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
-    std::string childName = childNode.attribute("name").value();
-    if (childName.empty())
+    std::string childName = childNode.attribute( "name" ).value();
+    if( childName.empty())
     {
       childName = childNode.name();
     }
 
     // Create children
-    CreateChild(childNode.name(), childName);
+    ManagedGroup * newChild = CreateChild( childNode.name(), childName );
+    if( newChild == nullptr )
+    {
+      newChild = GetGroup( childName );
+    }
+    if( newChild != nullptr )
+    {
+      newChild->ProcessInputFileRecursive( childNode );
+    }
+  }
 
-    // Add grandchildren
-    ManagedGroup * newChild = this->GetGroup<ManagedGroup>(childName);
-    if (newChild != nullptr)
+  ProcessInputFile( targetNode );
+//  ProcessInputFile_PostProcess();
+}
+
+void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+{
+
+  std::set< string > processedXmlNodes;
+  for( auto wrapperPair : m_wrappers )
+  {
+    ViewWrapperBase * const wrapper = wrapperPair.second;
+    InputFlags const inputFlag = wrapper->getInputFlag();
+    if( inputFlag >= InputFlags::OPTIONAL )
     {
-      newChild->AddChildren(childNode);
+      string const & wrapperName = wrapperPair.first;
+      rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
+
+      rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
+                                          [&]( auto a, auto b ) -> void
+          {
+//        using BASE_TYPE = decltype(b);
+            using COMPOSITE_TYPE = decltype(a);
+
+            ViewWrapper< COMPOSITE_TYPE > & typedWrapper = ViewWrapper< COMPOSITE_TYPE >::cast( *wrapper );
+            COMPOSITE_TYPE & objectReference = typedWrapper.reference();
+            processedXmlNodes.insert( wrapperName );
+
+            if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
+            {
+              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, inputFlag == InputFlags::REQUIRED );
+            }
+            else
+            {
+              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
+            }
+          } );
     }
-    else
+  }
+
+  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
+  {
+    string const childName = attribute.name();
+    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
     {
-      if( !this->hasView(childName) )
-      {
-        //GEOS_ERROR("group with name " + childName + " not found in " + this->getName());
-      }
+      GEOS_ERROR_IF( processedXmlNodes.count( childName )==0,
+                     "XML Node ("<<targetNode.name()<<") with attribute name=("<<
+                     targetNode.attribute( "name" ).value()<<") contains child node named ("<<
+                     childName<<") that is not read." );
     }
+  }
+
+}
+
+void ManagedGroup::PostProcessInputRecursive()
+{
+  for( auto const & subGroupIter : m_subGroups )
+  {
+    subGroupIter.second->PostProcessInputRecursive();
+  }
+  PostProcessInput();
+}
+
+
+
+void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
+{
+  RegisterDataOnMesh( meshBodies );
+  for( auto && subGroup : m_subGroups )
+  {
+    subGroup.second->RegisterDataOnMeshRecursive( meshBodies );
   }
 }
 
 
-void ManagedGroup::CreateChild( string const & childKey, string const & childName )
+ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const & childName )
 {
-  std::cout << "Child not recognized: " << childKey << ", " << childName << std::endl;
+  GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+                 "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog." );
+  return RegisterGroup( childName,
+                        CatalogInterface::Factory( childKey, childName, this ) );
 }
 
 
-void ManagedGroup::ReadXML( xmlWrapper::xmlNode const & targetNode )
+void ManagedGroup::PrintDataHierarchy( integer indent )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
-
-  for( auto const & subDocEntry : docNode->m_child )
+  for( auto & view : this->wrappers() )
   {
-    cxx_utilities::DocumentationNode subDocNode = subDocEntry.second;
-
-    if (subDocNode.getIsInput() == 1)
-    {
-      xmlWrapper::ReadAttributeAsType( *this, subDocNode, targetNode );
-    }
+    GEOS_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->get_typeid().name());
   }
 
-  ReadXMLsub(targetNode);
-  ReadXML_PostProcess();
-}
-
-
-
-void ManagedGroup::ReadXMLsub( xmlWrapper::xmlNode const & targetNode )
-{
-  for (xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  for( auto & group : this->m_subGroups )
   {
-    // Get the child tag and name
-    std::string childName = childNode.attribute("name").value();
-    if (childName.empty())
-    {
-      childName = childNode.name();
-    }
-
-    // Read the xml on children
-    ManagedGroup * child = this->GetGroup<ManagedGroup>(childName);
-    if (child != nullptr)
-    {
-      child->ReadXML(childNode);
-    }
-  }
-}
-
-void ManagedGroup::PrintDataHierarchy(integer indent)
-{
-  for( auto& view : this->wrappers() )
-  {
-    std::cout<<string(indent, '\t')<<view.second->getName()<<", "<<view.second->get_typeid().name()<<std::endl;
-  }
-
-  for( auto& group : this->m_subGroups )
-  {
-    std::cout<<string(indent, '\t')<<group.first<<':'<<std::endl;
-    group.second->PrintDataHierarchy(indent + 1);
+    GEOS_LOG( string( indent, '\t' )<<group.first<<':' );
+    group.second->PrintDataHierarchy( indent + 1 );
   }
 }
 
@@ -418,16 +281,15 @@ void ManagedGroup::InitializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
-    order.push_back(subGroupIter.first);
+    order.push_back( subGroupIter.first );
   }
 }
 
 void ManagedGroup::Initialize( ManagedGroup * const group )
 {
   static localIndex indent = 0;
- // std::cout<<string(indent*2, ' ')<<"Calling ManagedGroup::Initialize() on"<<this->getName()<<" of type"<<cxx_utilities::demangle(this->get_typeid().name())<<std::endl;
 
-  InitializePreSubGroups(group);
+  InitializePreSubGroups( group );
 
   string_array initOrder;
   InitializationOrder( initOrder );
@@ -435,40 +297,41 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup(groupName)->Initialize(group);
+    this->GetGroup( groupName )->Initialize( group );
     --indent;
   }
 
-//  forSubGroups( [&]( ManagedGroup * subGroup ) -> void
-//  {
-//    ++indent;
-//    subGroup->Initialize(group);
-//    --indent;
-//  });
-  InitializePostSubGroups(group);
+  InitializePostSubGroups( group );
 }
 
-void ManagedGroup::FinalInitializationRecursive( ManagedGroup * const rootGroup)
+
+void ManagedGroup::InitializePostInitialConditions( ManagedGroup * const rootGroup )
 {
-  FinalInitialization(rootGroup);
-  for( auto&& subGroup : m_subGroups )
+  InitializePostInitialConditions_PreSubGroups( rootGroup );
+
+  string_array initOrder;
+  InitializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
   {
-    subGroup.second->FinalInitializationRecursive(rootGroup);
+    this->GetGroup( groupName )->InitializePostInitialConditions( rootGroup );
   }
+
+  InitializePostInitialConditions_PostSubGroups( rootGroup );
 }
 
 
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                            localIndex_array const & packList,
-                            integer const recursive ) const
+                                   arrayView1d< localIndex const > const & packList,
+                                   integer const recursive ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::PackSize(this->getName());
+  packedSize += bufferOps::PackSize( this->getName());
 
-  packedSize += bufferOps::PackSize( string("Wrappers"));
+  packedSize += bufferOps::PackSize( string( "Wrappers" ));
   if( wrapperNames.size()==0 )
   {
-    packedSize += bufferOps::PackSize( static_cast<int>(m_wrappers.size()) );
+    packedSize += bufferOps::PackSize( static_cast< int >(m_wrappers.size()) );
     for( auto const & wrapperPair : this->m_wrappers )
     {
       packedSize += bufferOps::PackSize( wrapperPair.first );
@@ -478,16 +341,16 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
       }
       else
       {
-        packedSize += wrapperPair.second->PackSize(packList);
+        packedSize += wrapperPair.second->PackSize( packList );
       }
     }
   }
   else
   {
-    packedSize += bufferOps::PackSize( static_cast<int>(wrapperNames.size()) );
+    packedSize += bufferOps::PackSize( static_cast< int >(wrapperNames.size()) );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
@@ -495,13 +358,13 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
       }
       else
       {
-        packedSize += wrapper->PackSize(packList);
+        packedSize += wrapper->PackSize( packList );
       }
     }
   }
   if( recursive > 0 )
   {
-    packedSize += bufferOps::PackSize( string("SubGroups"));
+    packedSize += bufferOps::PackSize( string( "SubGroups" ));
     packedSize += bufferOps::PackSize( m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
@@ -515,28 +378,28 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
 
 
 localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                            integer const recursive ) const
+                                   integer const recursive ) const
 {
-  localIndex_array nullArray;
-  return PackSize(wrapperNames,nullArray,recursive);
+  arrayView1d< localIndex > nullArray;
+  return PackSize( wrapperNames, nullArray, recursive );
 }
 
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
                                string_array const & wrapperNames,
-                               localIndex_array const & packList,
+                               arrayView1d< localIndex const > const & packList,
                                integer const recursive ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::Pack<true>( buffer, this->getName() );
+  packedSize += bufferOps::Pack< true >( buffer, this->getName() );
 
-  packedSize += bufferOps::Pack<true>( buffer, string("Wrappers") );
+  packedSize += bufferOps::Pack< true >( buffer, string( "Wrappers" ) );
   if( wrapperNames.size()==0 )
   {
-    packedSize += bufferOps::Pack<true>( buffer, m_wrappers.size() );
+    packedSize += bufferOps::Pack< true >( buffer, m_wrappers.size() );
     for( auto const & wrapperPair : this->m_wrappers )
     {
-      packedSize += bufferOps::Pack<true>( buffer, wrapperPair.first );
+      packedSize += bufferOps::Pack< true >( buffer, wrapperPair.first );
       if( packList.empty() )
       {
         packedSize += wrapperPair.second->Pack( buffer );
@@ -549,11 +412,11 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
   }
   else
   {
-    packedSize += bufferOps::Pack<true>( buffer, wrapperNames.size() );
+    packedSize += bufferOps::Pack< true >( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
-      packedSize += bufferOps::Pack<true>( buffer, wrapperName );
+      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
+      packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
         packedSize += wrapper->Pack( buffer );
@@ -568,11 +431,11 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
 
   if( recursive > 0 )
   {
-    packedSize += bufferOps::Pack<true>( buffer, string("SubGroups") );
-    packedSize += bufferOps::Pack<true>( buffer, m_subGroups.size() );
+    packedSize += bufferOps::Pack< true >( buffer, string( "SubGroups" ) );
+    packedSize += bufferOps::Pack< true >( buffer, m_subGroups.size() );
     for( auto const & keyGroupPair : this->m_subGroups )
     {
-      packedSize += bufferOps::Pack<true>( buffer, keyGroupPair.first );
+      packedSize += bufferOps::Pack< true >( buffer, keyGroupPair.first );
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive );
     }
   }
@@ -581,34 +444,34 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
 }
 
 localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                            string_array const & wrapperNames,
-                            integer const recursive ) const
+                               string_array const & wrapperNames,
+                               integer const recursive ) const
 {
-  localIndex_array nullArray;
+  arrayView1d< localIndex > nullArray;
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
-localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
-                          localIndex_array & packList,
-                          integer const recursive )
+localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
+                                 arrayView1d< localIndex > & packList,
+                                 integer const recursive )
 {
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match");
+  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match" );
 
   string wrappersLabel;
-  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect");
+  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
-  unpackedSize += bufferOps::Unpack( buffer, numWrappers);
+  unpackedSize += bufferOps::Unpack( buffer, numWrappers );
   for( localIndex a=0 ; a<numWrappers ; ++a )
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-    wrapper->Unpack(buffer,packList);
+    ViewWrapperBase * const wrapper = this->getWrapperBase( wrapperName );
+    wrapper->Unpack( buffer, packList );
   }
 
 
@@ -616,17 +479,17 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
+    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->m_subGroups )
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
+      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive );
     }
   }
 
@@ -634,34 +497,37 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const *& buffer,
 }
 
 
-void ManagedGroup::prepareToWrite() const
+void ManagedGroup::prepareToWrite()
 {
 #ifdef GEOSX_USE_ATK
-  if (getRestartFlags() == RestartFlags::NO_WRITE)
+  if( getRestartFlags() == RestartFlags::NO_WRITE )
   {
     return;
   }
 
-  if (!SidreWrapper::dataStore().hasAttribute("__sizedFromParent__"))
+  if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ))
   {
-    SidreWrapper::dataStore().createAttributeScalar("__sizedFromParent__", -1);
+    SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
   }
 
-  for (auto & pair : m_wrappers)
+  for( auto & pair : m_wrappers )
   {
     pair.second->registerToWrite();
   }
 
-  if ( m_sidreGroup->hasView("__size__") ) {
-    m_sidreGroup->getView("__size__")->setScalar(m_size);
-  } else {
-    m_sidreGroup->createView("__size__")->setScalar(m_size);  
+  if( m_sidreGroup->hasView( "__size__" ) )
+  {
+    m_sidreGroup->getView( "__size__" )->setScalar( m_size );
+  }
+  else
+  {
+    m_sidreGroup->createView( "__size__" )->setScalar( m_size );
   }
 
-  forSubGroups([](const ManagedGroup * subGroup) -> void 
-  {
-    subGroup->prepareToWrite();
-  });
+  forSubGroups([]( ManagedGroup * subGroup ) -> void
+      {
+        subGroup->prepareToWrite();
+      } );
 #endif
 }
 
@@ -669,23 +535,23 @@ void ManagedGroup::prepareToWrite() const
 void ManagedGroup::finishWriting() const
 {
 #ifdef GEOSX_USE_ATK
-  if (getRestartFlags() == RestartFlags::NO_WRITE)
+  if( getRestartFlags() == RestartFlags::NO_WRITE )
   {
     return;
   }
 
-  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
-  m_sidreGroup->destroyView("__size__");
+  axom::sidre::View * temp = m_sidreGroup->getView( "__size__" );
+  m_sidreGroup->destroyView( "__size__" );
 
-  for (auto & pair : m_wrappers)
+  for( auto & pair : m_wrappers )
   {
     pair.second->finishWriting();
   }
 
-  forSubGroups([](const ManagedGroup * subGroup) -> void 
-  {
-    subGroup->finishWriting();
-  });
+  forSubGroups([]( const ManagedGroup * subGroup ) -> void
+      {
+        subGroup->finishWriting();
+      } );
 #endif
 }
 
@@ -693,27 +559,27 @@ void ManagedGroup::finishWriting() const
 void ManagedGroup::prepareToRead()
 {
 #ifdef GEOSX_USE_ATK
-  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
+  if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
   {
     return;
   }
 
-  axom::sidre::View* temp = m_sidreGroup->getView("__size__");
-  if ( temp != nullptr )
+  axom::sidre::View * temp = m_sidreGroup->getView( "__size__" );
+  if( temp != nullptr )
   {
     m_size = temp->getScalar();
-    m_sidreGroup->destroyView("__size__");
+    m_sidreGroup->destroyView( "__size__" );
   }
 
-  for (auto & pair : m_wrappers)
+  for( auto & pair : m_wrappers )
   {
     pair.second->registerToRead();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->prepareToRead();
-  });  
+  forSubGroups([]( ManagedGroup * subGroup ) -> void
+      {
+        subGroup->prepareToRead();
+      } );
 #endif
 }
 
@@ -721,20 +587,20 @@ void ManagedGroup::prepareToRead()
 void ManagedGroup::finishReading()
 {
 #ifdef GEOSX_USE_ATK
-  if (getRestartFlags() != RestartFlags::WRITE_AND_READ)
+  if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
   {
     return;
   }
 
-  for (auto & pair : m_wrappers)
+  for( auto & pair : m_wrappers )
   {
     pair.second->finishReading();
   }
 
-  forSubGroups([](ManagedGroup * subGroup) -> void 
-  {
-    subGroup->finishReading();
-  });
+  forSubGroups([]( ManagedGroup * subGroup ) -> void
+      {
+        subGroup->finishReading();
+      } );
 #endif
 }
 

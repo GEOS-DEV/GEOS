@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -100,12 +100,12 @@ int main(int argc, char* argv[] )
   }
 
 
-  std::cout<<"\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot<<std::endl;
-  std::cout<<"\t\t\t\t"<<Tot(0)<<' '<<Tot(1)<<' '<<Tot(2)<<std::endl;
-//  std::cout<<"baseline CPU time    = "<<t2-t1<<std::endl;
-//  std::cout<<"Tensor CPU time      = "<<t3-t2<<std::endl<<std::endl;
+  GEOS_LOG("\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot);
+  GEOS_LOG("\t\t\t\t"<<Tot(0)<<' '<<Tot(1)<<' '<<Tot(2));
+//  GEOS_LOG("baseline CPU time    = "<<t2-t1);
+//  GEOS_LOG("Tensor CPU time      = "<<t3-t2<<std::endl);
 
-  std::cout<<num_nodes<<' '<<t2-t1<<std::endl<<std::endl;
+  GEOS_LOG(num_nodes<<' '<<t2-t1<<std::endl);
 
   delete [] xdisp;
   delete [] ydisp;

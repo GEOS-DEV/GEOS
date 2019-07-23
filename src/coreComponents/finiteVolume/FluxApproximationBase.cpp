@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,7 +23,7 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/BoundaryConditions/BoundaryConditionManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -31,16 +31,40 @@ namespace geosx
 using namespace dataRepository;
 
 FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent)
+  : ManagedGroup(name, parent),
+    m_fieldName(),
+    m_boundaryFieldName(),
+    m_coeffName()
 {
-  m_boundarySetData = this->RegisterGroup(groupKeyStruct::boundarySetDataString);
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  this->RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false);
-  this->RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false);
-  this->RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false);
+  RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of primary solution field");
 
-  ViewWrapper<CellStencil> * stencil = this->RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString);
-  stencil->setRestartFlags(RestartFlags::NO_WRITE);
+  RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Name of boundary (face) field");
+
+  RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of coefficient field");
+
+  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of regions to build the stencil for");
+
+  RegisterViewWrapper(viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol, false)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setApplyDefaultValue(1.0e-8)->
+    setDescription("Relative tolerance for area calculations.");
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
+
+  RegisterViewWrapper<CellStencil>(viewKeyStruct::fractureStencilString)->
+    setRestartFlags(RestartFlags::NO_WRITE);
+
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -50,69 +74,31 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::FillDocumentationNode()
+void FluxApproximationBase::compute( DomainPartition const & domain )
 {
-  cxx_utilities::DocumentationNode * const docNode = this->getDocumentationNode();
+  GEOSX_MARK_FUNCTION_SCOPED;
 
-  docNode->AllocateChildNode(viewKeyStruct::fieldNameString,
-                             viewKeyStruct::fieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of primary solution field",
-                             "Name of primary solution field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
+  computeCellStencil( domain, getStencil() );
 
-  docNode->AllocateChildNode(viewKeyStruct::boundaryFieldNameString,
-                             viewKeyStruct::boundaryFieldNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of boundary (face) field",
-                             "Name of boundary (face) field",
-                             "",
-                             "",
-                             0,
-                             1,
-                             0 );
+//  computeFractureStencil( domain,
+//                          this->getReference<CellStencil>(viewKeyStruct::fractureStencilString),
+//                          getStencil() );
 
-  docNode->AllocateChildNode(viewKeyStruct::coeffNameString,
-                             viewKeyStruct::coeffNameString,
-                             -1,
-                             "string",
-                             "string",
-                             "Name of coefficient field",
-                             "Name of coefficient field",
-                             "REQUIRED",
-                             "",
-                             0,
-                             1,
-                             0 );
-}
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-void FluxApproximationBase::compute(DomainPartition * domain)
-{
-  computeMainStencil(domain, getStencil());
-
-  BoundaryConditionManager * bcManager = BoundaryConditionManager::get();
-
-  bcManager->ApplyBoundaryCondition( 0.0,
-                                     domain,
-                                     "faceManager",
-                                     m_boundaryFieldName,
-                                     [&] ( BoundaryConditionBase const * bc,
-                                           string const & setName,
-                                           set<localIndex> const & targetSet,
-                                           ManagedGroup * targetGroup,
-                                           string const & targetName) -> void
+  fsManager->Apply( 0.0,
+                    const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
+                    "faceManager",
+                    m_boundaryFieldName,
+                    [&] ( FieldSpecificationBase const * bc,
+                          string const & setName,
+                          set<localIndex> const & targetSet,
+                          ManagedGroup const * targetGroup,
+                          string const & targetName)
   {
-    ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>(setName);
+    ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
-    computeBoundaryStencil(domain, targetSet, stencil->reference());
+    computeBoundaryStencil( domain, targetSet, stencil->reference() );
   });
 }
 
@@ -145,10 +131,10 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::FinalInitialization(ManagedGroup * const rootGroup)
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
-  DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
-  compute(domain);
+  DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
+  compute( *domain );
 }
 
 } //namespace geosx

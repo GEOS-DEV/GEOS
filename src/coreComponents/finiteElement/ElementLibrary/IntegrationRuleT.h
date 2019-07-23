@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -142,7 +142,7 @@ inline void CalculateShapeFunctionDerivative( const realT y[8],
                                 { 1, -1,  1, -1,  1, -1, 1, -1},
                                 {-1,  1, -1,  1,  1, -1, 1, -1} };
 
-   const realT volinv = 1.0 / vol;;
+   const realT volinv = 1.0 / vol;
 
 
    // compute the hourglass modes

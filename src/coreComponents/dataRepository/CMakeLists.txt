@@ -3,8 +3,9 @@
 # Specify all headers
 #
 set(dataRepository_headers
-    BufferOps.hpp
     BufferOps_inline.hpp
+    BufferOps.hpp
+    InputFlags.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
     ExecutableGroup.hpp
@@ -13,26 +14,25 @@ set(dataRepository_headers
     SidreWrapper.hpp
     ViewWrapper.hpp
     ViewWrapperBase.hpp
-    Buffer.hpp
-    RestartFlags.hpp )
+    RestartFlags.hpp
+    )
 
 #
 # Specify all sources
 #
 set(dataRepository_sources
-    BufferOps.cpp
     ManagedGroup.cpp
     SidreWrapper.cpp
     ViewWrapper.cpp
-    ViewWrapperBase.cpp )
-    
+    ViewWrapperBase.cpp
+    )
 
 
-set( extraComponentsListLink "")
+set( extraComponentsLinkList "")
 
 
 if( ENABLE_MPI )
-  set( extraComponentsListLink ${extraComponentsListLink} mpi )
+  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
 
@@ -54,7 +54,6 @@ blt_add_library( NAME                  dataRepository
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
-
 
 geosx_add_code_checks(PREFIX dataRepository )
 

@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -48,6 +48,11 @@ public:
     return m_toElementRegion.size();
   }
 
+  localIndex size( int const dim ) const
+  {
+    return m_toElementRegion.size( dim );
+  }
+
   void setElementRegionManager( ElementRegionManager const * const input )
   {
     m_elemRegionManager = input;
@@ -58,12 +63,6 @@ public:
     return m_elemRegionManager;
   }
 
-//  template< bool DOPACK >
-//  friend localIndex Pack( char *& buffer,
-//                   localIndex_array const & packList,
-//                   ElementRegionManager const * const elemManager );
-
-//private:
   BASETYPE m_toElementRegion;
   BASETYPE m_toElementSubRegion;
   BASETYPE m_toElementIndex;
@@ -96,18 +95,8 @@ void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
   m_toElementIndex.resize(newdims...);
 }
 
-
-
-//typedef ToElementRelation<localIndex_array> OneToOneRelation;
-//<<<<<<< HEAD
-//typedef ToElementRelation<lArray2d> FixedToManyElementRelation;
-//typedef ToElementRelation<array<localIndex_array> > OrderedVariableToManyElementRelation;
-//typedef ToElementRelation<array<lSet> > UnorderedVariableToManyElementRelation;
-
-
-
 typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
-typedef ToElementRelation<array1d<localIndex_array> > OrderedVariableToManyElementRelation;
+typedef ToElementRelation<ArrayOfArrays<localIndex> > OrderedVariableToManyElementRelation;
 typedef ToElementRelation<array1d<set<localIndex>> > UnorderedVariableToManyElementRelation;
 
 void erase( OrderedVariableToManyElementRelation & relation,
