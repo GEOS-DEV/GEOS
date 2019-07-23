@@ -17,29 +17,29 @@
  */
 
 /**
- * @file CellElementStencilTPFA.hpp
+ * @file CellElementStencilMPFA.cpp
  */
 
-#ifndef SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
-#define SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
+#ifndef SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
+#define SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_
 
 #include "common/DataTypes.hpp"
 
 namespace geosx
 {
 
-class CellElementStencilTPFA
+class CellElementStencilMPFA
 {
 public:
 
-  using INDEX_TYPE = array2d<localIndex>;
-  using WEIGHT_TYPE = array2d<real64>;
+  using INDEX_TYPE = ArrayOfArrays<localIndex>;
+  using WEIGHT_TYPE = ArrayOfArrays<real64>;
 
-  using INDEX_VIEW_TYPE = arrayView2d<localIndex>;
-  using INDEX_VIEW_CONST_TYPE = arrayView2d<localIndex const>;
+  using INDEX_VIEW_TYPE = ArrayOfArraysView<localIndex>;
+  using INDEX_VIEW_CONST_TYPE = ArrayOfArraysView<localIndex const>;
 
-  using WEIGHT_VIEW_TYPE = arrayView2d<real64>;
-  using WEIGHT_VIEW_CONST_TYPE = arrayView2d<real64 const>;
+  using WEIGHT_VIEW_TYPE = ArrayOfArraysView<real64>;
+  using WEIGHT_VIEW_CONST_TYPE = ArrayOfArraysView<real64 const>;
 
   /**
    * @brief Number of points the flux is between (normally 2)
@@ -49,10 +49,10 @@ public:
   /**
    * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
    */
-  static localIndex constexpr MAX_STENCIL_SIZE = 2;
+  static localIndex constexpr MAX_STENCIL_SIZE = 18;
 
-  CellElementStencilTPFA();
-//  ~CellElementStencilTPFA();
+  CellElementStencilMPFA();
+//  ~CellElementStencilMPFA();
 
   void reserve( localIndex const size );
 
@@ -65,7 +65,7 @@ public:
 
   bool zero( localIndex const connectorIndex );
 
-  localIndex size() const { return m_elementRegionIndices.size(0); }
+  localIndex size() const { return m_elementRegionIndices.size(); }
 
   constexpr localIndex stencilSize( localIndex index ) const { return MAX_STENCIL_SIZE; }
 
@@ -86,4 +86,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_ */
+#endif /* SRC_CORECOMPONENTS_FINITEVOLUME_CELLELEMENTSTENCILMPFA_HPP_ */
