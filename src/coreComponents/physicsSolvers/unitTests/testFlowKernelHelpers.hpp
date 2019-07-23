@@ -72,6 +72,8 @@ struct AccessorHelper<false>
   static ElementAccessor<NDIM, T>
   makeElementAccessor( T const * const data,
                        localIndex const stencilSize,
+                       arraySlice1d<localIndex const> const & stencilRegIndices,
+                       arraySlice1d<localIndex const> const & stencilSubRegIndices,
                        arraySlice1d<localIndex const> const & stencilElemIndices,
                        DIMS... otherDims )
   {
