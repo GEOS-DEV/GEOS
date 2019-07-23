@@ -228,14 +228,14 @@ struct FluxKernel
           real64 const dt,
           localIndex const fluidIndex,
           integer const gravityFlag,
-          ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber,
-          FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
-          FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
-          FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
-          FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
-          FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
-          FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
-          FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+          ElementView < arrayView1d<globalIndex const > > const & dofNumber,
+          ElementView < arrayView1d<real64 const> > const & pres,
+          ElementView < arrayView1d<real64 const> > const & dPres,
+          ElementView < arrayView1d<real64 const> > const & gravDepth,
+          MaterialView< arrayView2d<real64 const> > const & dens,
+          MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
+          ElementView < arrayView1d<real64 const> > const & mob,
+          ElementView < arrayView1d<real64 const> > const & dMob_dPres,
           Epetra_FECrsMatrix * const jacobian,
           Epetra_FEVector * const residual );
 
@@ -347,21 +347,23 @@ struct FluxKernel
    * See above for a general version.
    */
   inline static void
-  ComputeCellTPFA( localIndex const stencilSize,
-                   arraySlice1d<localIndex> const & stencilElementIndices,
-                   arraySlice1d<real64> const & stencilWeights,
-                   arrayView1d<real64 const> const & pres,
-                   arrayView1d<real64 const> const & dPres,
-                   arrayView1d<real64 const> const & gravDepth,
-                   arrayView2d<real64 const> const & dens,
-                   arrayView2d<real64 const> const & dDens_dPres,
-                   arrayView1d<real64 const> const & mob,
-                   arrayView1d<real64 const> const & dMob_dPres,
-                   localIndex const fluidIndex,
-                   integer const gravityFlag,
-                   real64 const dt,
-                   arraySlice1d<real64> const & flux,
-                   arraySlice2d<real64> const & fluxJacobian )
+  Compute( localIndex const stencilSize,
+           arraySlice1d<localIndex const> const &,
+           arraySlice1d<localIndex const> const &,
+           arraySlice1d<localIndex const> const & stencilElementIndices,
+           arraySlice1d<real64 const> const & stencilWeights,
+           arrayView1d<real64 const> const & pres,
+           arrayView1d<real64 const> const & dPres,
+           arrayView1d<real64 const> const & gravDepth,
+           arrayView2d<real64 const> const & dens,
+           arrayView2d<real64 const> const & dDens_dPres,
+           arrayView1d<real64 const> const & mob,
+           arrayView1d<real64 const> const & dMob_dPres,
+           localIndex const fluidIndex,
+           integer const gravityFlag,
+           real64 const dt,
+           arraySlice1d<real64> const & flux,
+           arraySlice2d<real64> const & fluxJacobian )
   {
     localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
     localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
