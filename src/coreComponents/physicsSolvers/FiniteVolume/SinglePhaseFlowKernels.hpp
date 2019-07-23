@@ -192,7 +192,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::asViewConst;
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   /**
    * @brief The type for element-based constitutive data parameters.
@@ -202,7 +202,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
