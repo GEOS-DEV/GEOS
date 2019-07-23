@@ -24,12 +24,7 @@
 #include <sys/time.h>
 #include "managers/ProblemManager.hpp"
 
-#include <functional>
-#include "coupling/TribolCoupling.hpp"
-
 using namespace geosx;
-
-
 
 
 int main( int argc, char *argv[] )

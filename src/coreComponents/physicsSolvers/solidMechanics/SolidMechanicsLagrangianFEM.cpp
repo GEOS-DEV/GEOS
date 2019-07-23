@@ -396,13 +396,14 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     });
   }
 
+#if HAVE_TRIBOLCOUPLING
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
+#endif
 }
 
 real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,

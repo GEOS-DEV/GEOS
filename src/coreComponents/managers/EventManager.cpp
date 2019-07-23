@@ -25,7 +25,9 @@
 #include "common/TimingMacros.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 
+#if HAVE_TRIBOLCOUPLING
 #include "coupling/TribolCoupling.hpp"
+#endif
 
 namespace geosx
 {
