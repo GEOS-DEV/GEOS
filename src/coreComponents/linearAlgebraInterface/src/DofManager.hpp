@@ -481,7 +481,11 @@ private:
   /**
    * Definifion for entries of sparse matrices collection
    */
-  typedef std::pair<ParallelMatrix*, ParallelMatrix*> matrixPair;
+  struct matrixPair
+  {
+    ParallelMatrix* first;
+    ParallelMatrix* second;
+  };
 
   /**
    * Table of sparsity patterns within and between fields
