@@ -17,17 +17,17 @@
  */
 
 /**
- * @file CellElementStencilTPFA.cpp
+ * @file CellElementStencilMPFA.cpp
  */
 
 
-#include "CellElementStencilTPFA.hpp"
+#include "CellElementStencilMPFA.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geosx
 {
 
-CellElementStencilTPFA::CellElementStencilTPFA():
+CellElementStencilMPFA::CellElementStencilMPFA():
   m_elementRegionIndices(),
   m_elementSubRegionIndices(),
   m_elementIndices(),
@@ -38,52 +38,43 @@ CellElementStencilTPFA::CellElementStencilTPFA():
 
 }
 
-//CellElementStencilTPFA::~CellElementStencilTPFA()
+//CellElementStencilMPFA::~CellElementStencilMPFA()
 //{
 //  // TODO Auto-generated destructor stub
 //}
 
-void CellElementStencilTPFA::reserve( localIndex const size )
+void CellElementStencilMPFA::reserve( localIndex const size )
 {
-  m_elementRegionIndices.reserve( size * 2 );
-  m_elementSubRegionIndices.reserve( size * 2 );
-  m_elementIndices.reserve( size * 2 );
-  m_weights.reserve( size * 2 );
+  m_elementRegionIndices.reserve( size * 9 );
+  m_elementSubRegionIndices.reserve( size * 9 );
+  m_elementIndices.reserve( size * 9 );
+  m_weights.reserve( size * 9 );
 }
 
 
-void CellElementStencilTPFA::add( localIndex const numPts,
+void CellElementStencilMPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
                                   real64 const * const weights,
                                   localIndex const connectorIndex )
 {
-  GEOS_ERROR_IF( numPts!=2, "number of cells in TPFA stencil should be 2");
+  GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  localIndex const oldSize = m_elementRegionIndices.size(0);
-  localIndex const newSize = oldSize + 1;
-  m_elementRegionIndices.resize( newSize, numPts );
-  m_elementSubRegionIndices.resize( newSize, numPts );
-  m_elementIndices.resize( newSize, numPts );
-  m_weights.resize( newSize, numPts );
+  m_elementRegionIndices.appendArray( elementRegionIndices, numPts );
+  m_elementSubRegionIndices.appendArray( elementSubRegionIndices, numPts );
+  m_elementIndices.appendArray( elementIndices, numPts );
+  m_weights.appendArray( weights, numPts );
 
-  for( localIndex a=0 ; a<numPts ; ++a )
-  {
-    m_elementRegionIndices(oldSize,a) = elementRegionIndices[a];
-    m_elementSubRegionIndices(oldSize,a) = elementSubRegionIndices[a];
-    m_elementIndices(oldSize,a) = elementIndices[a];
-    m_weights(oldSize,a) = weights[a];
-  }
-  m_connectorIndices[connectorIndex] = oldSize;
+  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
 }
 
-bool CellElementStencilTPFA::zero( localIndex const connectorIndex )
+bool CellElementStencilMPFA::zero( localIndex const connectorIndex )
 {
   return
   executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
-    for (localIndex i = 0; i < 2; ++i)
+    for (localIndex i = 0; i < m_weights.sizeOfArray(connectionListIndex) ; ++i)
     {
       m_weights[connectionListIndex][i] = 0;
     }
