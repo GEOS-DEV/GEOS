@@ -729,7 +729,7 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber = m_dofNumber;
+  FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber = m_dofNumber.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
