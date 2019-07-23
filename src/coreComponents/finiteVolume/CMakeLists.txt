@@ -2,6 +2,7 @@
 # Specify all headers
 #
 set( finiteVolume_headers
+     CellElementStencilMPFA.hpp
      CellElementStencilTPFA.hpp
      FaceElementStencil.hpp
      FiniteVolumeManager.hpp
@@ -13,6 +14,7 @@ set( finiteVolume_headers
 # Specify all sources
 #
 set( finiteVolume_sources
+     CellElementStencilMPFA.cpp
      CellElementStencilTPFA.cpp
      FaceElementStencil.cpp
      FiniteVolumeManager.cpp
