@@ -327,13 +327,16 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
       }
    }
 
-   tribol::setInterfacePairs(numPairs, meshId1, pairType, pairIndex1, meshId2, pairType, pairIndex2) ;
+   //tribol::setInterfacePairs(numPairs, meshId1, pairType, pairIndex1, meshId2, pairType, pairIndex2) ;
 
    // register the coupling scheme
-   tribol::registerCouplingScheme(slaveMesh, slaveMesh, tribol::SURFACE_TO_SURFACE,
-                                  tribol::SINGLE_MORTAR,
-                                  tribol::FRICTIONLESS_MODEL,
-                                  tribol::PENALTY_ENFORCEMENT);
+   tribol::registerCouplingScheme(0, slaveMesh, slaveMesh,
+                                  tribol::SURFACE_TO_SURFACE,
+                                  tribol::AUTO,
+                                  tribol::COMMON_PLANE,
+                                  tribol::FRICTIONLESS,
+                                  tribol::PENALTY,
+                                  tribol::BINNING_CARTERIAN_PRODUCT);
 
    // call the contact update routine. For the serial problem it doesn't matter if this is
    // in the domain loop or outside
