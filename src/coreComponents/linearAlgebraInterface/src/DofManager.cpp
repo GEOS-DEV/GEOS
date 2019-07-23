@@ -57,7 +57,7 @@ void DofManager::initializeDataStructure() {
   {
     for( localIndex j = 0 ; j < MAX_NUM_FIELDS ; ++j )
     {
-      m_sparsityPattern[i][j] = std::make_pair( nullptr, nullptr );
+      m_sparsityPattern[i][j] = { nullptr, nullptr };
     }
   }
 }
