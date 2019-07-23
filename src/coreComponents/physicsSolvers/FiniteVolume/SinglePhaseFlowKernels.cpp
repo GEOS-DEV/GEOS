@@ -166,7 +166,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
   typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
 
-  forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     // working arrays
     stackArray1d<globalIndex, numFluxElems> eqnRowIndices(numFluxElems);
@@ -242,7 +242,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
 
-  forall_in_range<stencilPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
     localIndex const stencilSize  = numFluxElems;

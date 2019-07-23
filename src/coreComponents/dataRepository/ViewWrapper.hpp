@@ -85,6 +85,8 @@ public:
     {
       this->setSizedFromParent( 0 );
     }
+
+    setUserCallBack();
   }
 
   /**
@@ -104,6 +106,8 @@ public:
     {
       this->setSizedFromParent( 0 );
     }
+
+    setUserCallBack();
   }
 
   /**
@@ -125,6 +129,8 @@ public:
     {
       this->setSizedFromParent( 0 );
     }
+
+    setUserCallBack();
   }
 
   /**
@@ -758,32 +764,73 @@ public:
 
 
   /**
-   * @brief acccessor for m_data
+   * @brief accessor for m_data
    * @return reference to T
    */
   T & reference()
   { return *m_data; }
 
   /**
-   * @brief acccessor for m_data
+   * @brief accessor for m_data
    * @return reference to const T
    */
   T const & reference() const
   { return *m_data; }
 
   /**
-   * @brief acccessor for m_data
+   * @brief accessor for m_data
    * @return pointer to T
    */
   T * getPointer()
   { return m_data; }
 
   /**
-   * @brief acccessor for m_data
+   * @brief accessor for m_data
    * @return pointer to const T
-   */T const * getPointer() const
+   */
+  T const * getPointer() const
   { return m_data; }
 
+  HAS_ALIAS( ViewType )
+
+  template< class U=T,
+            bool HASPOINTERTYPE = has_alias_ViewType< U >::value >
+  struct Get_View_Type
+  {
+    using ViewType = T &;
+    using ViewTypeConst = T const &;
+  };
+
+  template< class U >
+  struct Get_View_Type< U, true >
+  {
+    using ViewType = typename T::ViewType const &;
+    using ViewTypeConst = typename T::ViewTypeConst const &;
+  };
+
+  using ViewType      = typename Get_View_Type< T >::ViewType;
+
+  using ViewTypeConst = typename Get_View_Type< T >::ViewTypeConst;
+
+  template< class U=T >
+  typename std::enable_if< has_alias_ViewType< U >::value, ViewType >::type
+  referenceAsView()
+  { return m_data->toView(); }
+
+  template< class U=T >
+  typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
+  referenceAsView()
+  { return *m_data; }
+
+  template< class U=T >
+  typename std::enable_if< has_alias_ViewType< U >::value, ViewTypeConst >::type
+  referenceAsView() const
+  { return m_data->toViewConst(); }
+
+  template< class U=T >
+  typename std::enable_if< !has_alias_ViewType< U >::value, ViewType >::type
+  referenceAsView() const
+  { return *m_data; }
 
   /**
    * @brief accessor for m_default
@@ -904,6 +951,45 @@ public:
   {
     return m_data;
   }
+
+  HAS_MEMBER_FUNCTION( setUserCallBack,
+                       void,
+                       ,
+                       std::string const &,
+                       ""
+                       )
+
+  template< class U = T >
+  typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
+  setUserCallBack()
+  {
+    std::string const path = getSidreView()->getPathName();
+    m_data->setUserCallBack( path );
+  }
+
+  template< class U = T >
+  typename std::enable_if< !has_memberfunction_setUserCallBack< U >::value, void >::type
+  setUserCallBack()
+  {}
+
+  HAS_MEMBER_FUNCTION( move,
+                       void,
+                       ,
+                       VA_LIST( chai::ExecutionSpace, bool ),
+                       VA_LIST( chai::CPU, true )
+                       )
+
+  template< class U = T >
+  typename std::enable_if< has_memberfunction_move< U >::value, void >::type
+  move( chai::ExecutionSpace space, bool touch )
+  {
+    m_data->move( space, touch );
+  }
+
+  template< class U = T >
+  typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
+  move( chai::ExecutionSpace, bool )
+  {}
 
   HAS_ALIAS( value_type )
 
@@ -1070,7 +1156,7 @@ public:
   }
 
   /* Register the pointer to data with the associated sidre::View. */
-  void registerToWrite( axom::sidre::View * view=nullptr ) const override
+  void registerToWrite( axom::sidre::View * view=nullptr ) override
   {
 #ifdef GEOSX_USE_ATK
     if( getRestartFlags() == RestartFlags::NO_WRITE )
@@ -1079,6 +1165,8 @@ public:
       unregisterDataPtr( view );
       return;
     }
+
+    move( chai::CPU, false );
 
     view = (view != nullptr) ? view : getSidreView();
     storeSizedFromParent( view );

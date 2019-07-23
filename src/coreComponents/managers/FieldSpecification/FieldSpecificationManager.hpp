@@ -97,6 +97,8 @@ public:
                                       string const & fieldPath,
                                       string const & fieldName ) const
   {
+    GEOSX_MARK_FUNCTION;
+
 	  ApplyFieldValue( time, domain, fieldPath, fieldName,
                                    [&]( FieldSpecificationBase const * const,
                                         set<localIndex> const & ){} );
@@ -302,6 +304,8 @@ ApplyFieldValue( real64 const time,
                                string const & fieldName,
                                LAMBDA && lambda ) const
 {
+  GEOSX_MARK_FUNCTION;
+
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
         string const &,
@@ -324,6 +328,8 @@ ApplyFieldValue( real64 const time,
                  PRELAMBDA && preLambda,
                  POSTLAMBDA && postLambda ) const
 {
+  GEOSX_MARK_FUNCTION;
+
   Apply( time, domain, fieldPath, fieldName,
         [&]( FieldSpecificationBase const * const fs,
         string const &,

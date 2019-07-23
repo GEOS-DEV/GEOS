@@ -646,7 +646,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::asViewConst;
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   /**
    * @brief The type for element-based constitutive data parameters.
@@ -656,7 +656,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   static inline void
   Compute( localIndex const NC, localIndex const NP,
@@ -1069,32 +1069,18 @@ namespace helpers
 {
 
 template<typename T, typename LAMBDA>
-bool KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
+void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral<T>::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
 
   switch (value)
   {
-    case 1:  lambda( std::integral_constant<T, 1>() );  return true;
-    case 2:  lambda( std::integral_constant<T, 2>() );  return true;
-    case 3:  lambda( std::integral_constant<T, 3>() );  return true;
-    case 4:  lambda( std::integral_constant<T, 4>() );  return true;
-    case 5:  lambda( std::integral_constant<T, 5>() );  return true;
-    default: return false;
-  }
-}
-
-template<typename T, typename LAMBDA>
-bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral<T>::value, "KernelLaunchSelectorPhaseSwitch: type should be integral" );
-
-  switch (value)
-  {
-    case 1:  lambda( std::integral_constant<T, 1>() ); return true;
-    case 2:  lambda( std::integral_constant<T, 2>() ); return true;
-    case 3:  lambda( std::integral_constant<T, 3>() ); return true;
-    default: return false;
+    case 1:  lambda( std::integral_constant<T, 1>() ); return;
+    case 2:  lambda( std::integral_constant<T, 2>() ); return;
+    case 3:  lambda( std::integral_constant<T, 3>() ); return;
+    case 4:  lambda( std::integral_constant<T, 4>() ); return;
+    case 5:  lambda( std::integral_constant<T, 5>() ); return;
+    default: GEOS_ERROR("Unknown numComp value: " << value);
   }
 }
 
@@ -1103,39 +1089,25 @@ bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
 template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
-  bool const run =
   helpers::KernelLaunchSelectorCompSwitch( numComp, [&] (auto NC)
   {
     KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>(args)... );
   });
-
-  if (!run)
-  {
-    KERNELWRAPPER::Launch( numComp, std::forward<ARGS>(args)... );
-  }
 }
 
 template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
 {
-  bool run2 = false;
-  // gcc-7 produces bugged code without explicit capture list here...
-  bool const run =
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
+  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
-    run2 =
-    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&args...] ( auto NP )
+    switch (numPhase)
     {
-      // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
-      auto constexpr NC_ = decltype(NC)::value;
-      KERNELWRAPPER::template Launch<NC_, NP()>( std::forward<ARGS>(args)... );
-    });
+      case 1: KERNELWRAPPER::template Launch<NC(), 1>( std::forward<ARGS>(args)... ); return;
+      case 2: KERNELWRAPPER::template Launch<NC(), 2>( std::forward<ARGS>(args)... ); return;
+      case 3: KERNELWRAPPER::template Launch<NC(), 3>( std::forward<ARGS>(args)... ); return;
+      default: GEOS_ERROR("Unknown numPhase value: " << numPhase);
+    }
   });
-
-  if (!run || !run2)
-  {
-    KERNELWRAPPER::Launch( numComp, numPhase, std::forward<ARGS>(args)... );
-  }
 }
 
 } // namespace CompositionalMultiphaseFlowKernels

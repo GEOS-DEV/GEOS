@@ -190,15 +190,11 @@ void ProblemManager::ProblemSetup()
 
   RegisterDataOnMeshRecursive( nullptr );
 
-  GEOSX_MARK_BEGIN("problemManager.Initialize");
   Initialize( this );
-  GEOSX_MARK_END("problemManager.Initialize");
 
   ApplyInitialConditions();
 
-  GEOSX_MARK_BEGIN("problemManager.InitializePostInitialConditions");
   InitializePostInitialConditions( this );
-  GEOSX_MARK_END("problemManager.InitializePostInitialConditions");
 }
 
 
