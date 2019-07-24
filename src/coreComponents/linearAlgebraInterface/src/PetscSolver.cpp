@@ -86,19 +86,10 @@ void PetscSolver::solve_direct( PetscSparseMatrix &mat,
   KSPGetPC(ksp, &prec);
   PCSetType(prec, PCLU);
   PCFactorSetMatSolverType(prec, MATSOLVERSUPERLU_DIST);
-  
-  // mat.print();
-  // rhs.print();
-  // sol.print();
 
   // solve system
-  // Hannah: output here
   KSPSetFromOptions(ksp);
   KSPSolve(ksp, rhs.getVec(), sol.getVec());
-  printf("hannah was here");
-  // mat.print();
-  // rhs.print();
-  // sol.print();
 }
 
 
@@ -133,8 +124,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else
   {
-    printf("The requested linear solverType doesn't seem to exist\n");
-    // GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
   }
   
   // create a preconditioner and pick type
@@ -151,13 +141,11 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-    printf("The requested linear preconditionerType isn't availbe in PETSc\n");
-    // GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
-    printf("The requested linear preconditionerType isn't availbe in PETSc\n");
-    // GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
+    GEOS_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
