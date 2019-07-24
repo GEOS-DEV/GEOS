@@ -38,10 +38,6 @@ CellElementStencilTPFA::CellElementStencilTPFA():
 
 }
 
-//CellElementStencilTPFA::~CellElementStencilTPFA()
-//{
-//  // TODO Auto-generated destructor stub
-//}
 
 void CellElementStencilTPFA::reserve( localIndex const size )
 {
