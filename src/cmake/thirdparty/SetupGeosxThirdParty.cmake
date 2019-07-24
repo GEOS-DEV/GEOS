@@ -627,6 +627,25 @@ endif()
   
   # PETSc version?
   # include(${PETSC_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+
+  find_path( Petsc_INCLUDE_DIRS petscvec.h
+             PATHS  ${PETSC_DIR}/include
+             NO_DEFAULT_PATH
+             NO_CMAKE_ENVIRONMENT_PATH
+             NO_CMAKE_PATH
+             NO_SYSTEM_ENVIRONMENT_PATH
+             NO_CMAKE_SYSTEM_PATH)
+
+find_library( Petsc_LIBRARIES NAMES petsc
+              PATHS ${PETSC_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "Petsc_INCLUDE_DIRS = ${Petsc_INCLUDE_DIRS}" )
+message( "Petsc_LIBRARIES = ${Petsc_LIBRARIES}" )
   
   
   blt_register_library( NAME petsc
