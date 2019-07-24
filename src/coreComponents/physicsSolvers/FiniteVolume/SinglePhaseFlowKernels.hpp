@@ -317,6 +317,7 @@ struct FluxKernel
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
+    real64 sumWeightGrav = 0.0;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const er  = seri[ke];
@@ -327,10 +328,9 @@ struct FluxKernel
 
       real64 const gravD = gravDepth[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
+      sumWeightGrav += weight * gravD * gravityFlag;
 
       potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
-      dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -347,7 +347,8 @@ struct FluxKernel
     real64 const fluxVal = mobility * potDif;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
-      dFlux_dP[ke] *= mobility;
+      real64 const weight = stencilWeights[ke];
+      dFlux_dP[ke] = mobility * ( weight - dDensMean_dP[ke] * sumWeightGrav);
     }
 
     dFlux_dP[k_up] += dMobility_dP * potDif;
@@ -417,6 +418,7 @@ struct FluxKernel
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0;
+    real64 sumWeightGrav = 0.0;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
       localIndex const ei = stencilElementIndices[ke];
@@ -424,11 +426,11 @@ struct FluxKernel
 
       real64 const gravD = gravDepth[ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
-
+      sumWeightGrav += weight * gravD * gravityFlag;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
-      dFlux_dP[ke] = weight * (1.0 - dGrav_dP); // Is this correct?
     }
+
+
 
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -442,7 +444,8 @@ struct FluxKernel
     real64 const fluxVal = mobility * potDif;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
     {
-      dFlux_dP[ke] *= mobility;
+      real64 const weight = stencilWeights[ke];
+      dFlux_dP[ke] = mobility * ( weight - dDensMean_dP[ke] * sumWeightGrav);
     }
 
     dFlux_dP[k_up] += dMobility_dP * potDif;
