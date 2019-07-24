@@ -178,6 +178,29 @@ struct AccumulationKernel
     localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
     //localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
   }
+
+  inline static void
+  ComputeFaceElement( real64 const & densNew,
+                      real64 const & densOld,
+                      real64 const & dDens_dPres,
+                      real64 const & volume,
+                      real64 const & dVol,
+                      real64 const & faceArea,
+                      real64 & localAccum,
+                      real64 & localAccumJacobian,
+                      real64 & dRdAperture )
+  {
+    real64 const volNew = volume + dVol;
+
+    // Residual contribution is mass conservation in the cell
+    localAccum = densNew * volNew - densOld * volume;
+
+    // Derivative of residual wrt to pressure in the cell
+    localAccumJacobian =  dDens_dPres * volNew;
+
+    // Derivative of residual wrt to the aperture in the cell
+    dRdAperture = densNew * faceArea;
+  }
 };
 
 /******************************** FluxKernel ********************************/
@@ -236,6 +259,7 @@ struct FluxKernel
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+          ElementView < arrayView1d<real64 const> > const & aperture,
           Epetra_FECrsMatrix * const jacobian,
           Epetra_FEVector * const residual );
 
@@ -403,7 +427,7 @@ struct FluxKernel
       real64 const dGrav_dP = gravityFlag ? dDensMean_dP[ke] * gravD : 0.0;
 
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
-      dFlux_dP[ke] = weight * (1.0 - dGrav_dP);
+      dFlux_dP[ke] = weight * (1.0 - dGrav_dP); // Is this correct?
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -451,6 +475,7 @@ struct FluxKernel
                    arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & dMob_dPres,
+                   arrayView1d<real64 const> const & aperture,
                    localIndex const fluidIndex,
                    integer const gravityFlag,
                    real64 const dt,
@@ -460,7 +485,10 @@ struct FluxKernel
     real64 sumOfWeights = 0;
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
-      sumOfWeights += stencilWeights[k];
+      sumOfWeights += aperture[stencilElementIndices[k]] *
+                      aperture[stencilElementIndices[k]] *
+                      aperture[stencilElementIndices[k]] *
+          stencilWeights[k];
     }
 
     localIndex k[2];
@@ -473,9 +501,8 @@ struct FluxKernel
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
 
-        real64 const weight[2] = {   stencilWeights[k[0]] * stencilWeights[k[1]] / sumOfWeights,
-                                     - stencilWeights[k[0]] * stencilWeights[k[1]] / sumOfWeights };
-
+        real64 const weight = ( stencilWeights[k[0]]*aperture[ei[0]]*aperture[ei[0]]*aperture[ei[0]] ) *
+                              ( stencilWeights[k[1]]*aperture[ei[1]]*aperture[ei[1]]*aperture[ei[1]] ) / sumOfWeights;
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
@@ -483,16 +510,8 @@ struct FluxKernel
         real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
                                          0.5 * dDens_dPres[ei[1]][0] };
 
-        real64 potDif = 0.0;
-        for( localIndex i = 0 ; i < 2 ; ++i )
-        {
-          real64 const gravD = gravDepth[ei[i]];
-          real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-          real64 const dGrav_dP = gravityFlag ? dDensMean_dP[i] * gravD : 0.0;
-
-          potDif += weight[i] * (pres[ei[i]] + dPres[ei[i]] - gravTerm);
-          dFlux_dP[i] = weight[i] * (1.0 - dGrav_dP);
-        }
+        real64 const potDif = weight * ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
+                                         densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -504,8 +523,9 @@ struct FluxKernel
 
         // compute the final flux and derivatives
         real64 const fluxVal = mobility * potDif;
-        dFlux_dP[0] *= mobility;
-        dFlux_dP[1] *= mobility;
+
+        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         dFlux_dP[k_up] += dMobility_dP * potDif;
 
