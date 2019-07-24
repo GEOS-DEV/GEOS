@@ -153,6 +153,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 Epetra_FECrsMatrix * const jacobian,
                                 Epetra_FEVector * const residual )
 {
@@ -230,6 +231,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
                             Epetra_FECrsMatrix * const jacobian,
                             Epetra_FEVector * const residual )
 {
@@ -267,6 +269,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  dDens_dPres[er][esr][fluidIndex],
                                  mob[er][esr],
                                  dMob_dPres[er][esr],
+                                 aperture[er][esr],
                                  fluidIndex,
                                  gravityFlag,
                                  dt,
