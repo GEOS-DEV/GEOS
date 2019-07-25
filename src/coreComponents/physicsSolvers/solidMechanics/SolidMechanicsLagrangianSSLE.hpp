@@ -44,6 +44,10 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
+  virtual void ImplicitStepComplete( real64 const & time,
+                                 real64 const & dt,
+                                 DomainPartition * const domain ) override;
+
 
   virtual real64
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
