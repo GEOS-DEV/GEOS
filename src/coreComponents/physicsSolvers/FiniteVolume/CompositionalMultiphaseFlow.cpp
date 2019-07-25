@@ -788,10 +788,10 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
-    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
 
     forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
@@ -1154,10 +1154,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   fluxApprox->forCellStencils( [&] ( auto const & stencil )
   {
     typedef TYPEOFREF( stencil ) STENCIL_TYPE;
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & eri = stencil.getElementRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & esri = stencil.getElementSubRegionIndices();
-    typename STENCIL_TYPE::INDEX_VIEW_CONST_TYPE const & ei = stencil.getElementIndices();
-    typename STENCIL_TYPE::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
 
     forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
