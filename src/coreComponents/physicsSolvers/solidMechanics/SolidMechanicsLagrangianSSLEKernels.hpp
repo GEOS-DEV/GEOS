@@ -133,7 +133,7 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           arrayView2d<localIndex const> const & elemsToNodes,
-#if CALC_SHAPE_FUNCTION_DERIVATIVES==1
+#if CALC_SHAPE_FUNCTION_DERIVATIVES
           arrayView4d<real64 const> const &,
           arrayView2d<real64 const> const &,
           arrayView1d<R1Tensor const> const & X,
@@ -169,9 +169,10 @@ struct ExplicitKernel
     {
       GEOS_LOG("numElems = " << numElems);
 #if UPDATE_STRESS
-      GEOS_LOG("Updating stress."):
+      GEOS_LOG("Updating stress.");
 #else
-      GEOS_LOG("Not updating stress."):
+      GEOS_LOG("Not updating stress.");
+#endif
 
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
       GEOS_LOG("Calculating shape function derivatives on the fly");
@@ -277,40 +278,45 @@ struct ExplicitKernel
 
 #else
 
-        real64 c[ 6 ][ 6 ];
-        constitutive.GetStiffness( k, c );
+        real64 const G = constitutive.m_shearModulus[k];
+        real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
+        real64 const Lame2G = Lame + 2 * G;
         real64 const dNdXa0 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 0) + DNDX_ACCESSOR(dNdX, k, q, 1, 0) + DNDX_ACCESSOR(dNdX, k, q, 2, 0) + DNDX_ACCESSOR(dNdX, k, q, 3, 0) + DNDX_ACCESSOR(dNdX, k, q, 4, 0) + DNDX_ACCESSOR(dNdX, k, q, 5, 0) + DNDX_ACCESSOR(dNdX, k, q, 6, 0 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 0 ) );
         real64 const dNdXa1 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 1) + DNDX_ACCESSOR(dNdX, k, q, 1, 1) + DNDX_ACCESSOR(dNdX, k, q, 2, 1) + DNDX_ACCESSOR(dNdX, k, q, 3, 1) + DNDX_ACCESSOR(dNdX, k, q, 4, 1) + DNDX_ACCESSOR(dNdX, k, q, 5, 1) + DNDX_ACCESSOR(dNdX, k, q, 6, 1 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 1 ) );
         real64 const dNdXa2 = ( DNDX_ACCESSOR(dNdX, k, q, 0, 2) + DNDX_ACCESSOR(dNdX, k, q, 1, 2) + DNDX_ACCESSOR(dNdX, k, q, 2, 2) + DNDX_ACCESSOR(dNdX, k, q, 3, 2) + DNDX_ACCESSOR(dNdX, k, q, 4, 2) + DNDX_ACCESSOR(dNdX, k, q, 5, 2) + DNDX_ACCESSOR(dNdX, k, q, 6, 2 ) + DNDX_ACCESSOR(dNdX, k, q, 7, 2 ) );
         #pragma unroll
         for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
         {
-            f_local[b][0] -= ( ( c[0][0]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
-                                 c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
-                               ( c[5][5]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[0][1]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 1) +
-                               ( c[4][4]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[0][2]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
-                              ) * detJ_k_q;
+          real64 const dNdXkqb0 = DNDX_ACCESSOR(dNdX, k, q, b, 0);
+          real64 const dNdXkqb1 = DNDX_ACCESSOR(dNdX, k, q, b, 1);
+          real64 const dNdXkqb2 = DNDX_ACCESSOR(dNdX, k, q, b, 2);
 
-            f_local[b][1] -= ( ( c[0][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 1) ) * VELOCITY_ACCESSOR(k, b, 0) +
-                               ( c[5][5]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[1][1]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
-                                 c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
-                               ( c[3][3]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
-                                 c[1][2]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
-                              ) * detJ_k_q;
+          f_local[b][0] -= ( ( Lame2G  * dNdXa0 * dNdXkqb0 +
+                               G       * dNdXa1 * dNdXkqb1 +
+                               G       * dNdXa2 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 0) +
+                             ( G       * dNdXa1 * dNdXkqb0 +
+                               Lame    * dNdXa0 * dNdXkqb1 ) * VELOCITY_ACCESSOR(k, b, 1) +
+                             ( G       * dNdXa2 * dNdXkqb0 +
+                               Lame    * dNdXa0 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 2)
+                            ) * detJ_k_q;
 
-            f_local[b][2] -= ( ( c[0][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 0) +
-                               ( c[1][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
-                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 1) +
-                               ( c[4][4]*dNdXa0*DNDX_ACCESSOR(dNdX, k, q, b, 0) +
-                                 c[3][3]*dNdXa1*DNDX_ACCESSOR(dNdX, k, q, b, 1) +
-                                 c[2][2]*dNdXa2*DNDX_ACCESSOR(dNdX, k, q, b, 2) ) * VELOCITY_ACCESSOR(k, b, 2)
-                             ) * detJ_k_q;
+          f_local[b][1] -= ( ( Lame    * dNdXa1 * dNdXkqb0 +
+                               G       * dNdXa0 * dNdXkqb1 ) * VELOCITY_ACCESSOR(k, b, 0) +
+                             ( G       * dNdXa0 * dNdXkqb0 +
+                               Lame2G  * dNdXa1 * dNdXkqb1 +
+                               G       * dNdXa2 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 1) +
+                             ( G       * dNdXa2 * dNdXkqb1 +
+                               Lame    * dNdXa1 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 2)
+                            ) * detJ_k_q;
+
+          f_local[b][2] -= ( ( Lame    * dNdXa2 * dNdXkqb0 +
+                               G       * dNdXa0 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 0) +
+                             ( Lame    * dNdXa2 * dNdXkqb1 +
+                               G       * dNdXa1 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 1) +
+                             ( G       * dNdXa0 * dNdXkqb0 +
+                               G       * dNdXa1 * dNdXkqb1 +
+                               Lame2G  * dNdXa2 * dNdXkqb2 ) * VELOCITY_ACCESSOR(k, b, 2)
+                            ) * detJ_k_q;
 
         }
 #endif
