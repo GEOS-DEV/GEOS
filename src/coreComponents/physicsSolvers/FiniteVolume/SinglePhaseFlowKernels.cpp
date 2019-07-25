@@ -162,10 +162,10 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
   constexpr localIndex maxStencilSize = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   constexpr localIndex stencilSize  = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
-  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & seri = stencil.getElementRegionIndices();
-  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & sesri = stencil.getElementSubRegionIndices();
-  typename CellElementStencilTPFA::INDEX_VIEW_CONST_TYPE const & sei = stencil.getElementIndices();
-  typename CellElementStencilTPFA::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
@@ -239,10 +239,10 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
 
 
-  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::INDEX_VIEW_CONST_TYPE const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WEIGHT_VIEW_CONST_TYPE const & weights = stencil.getWeights();
+  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {

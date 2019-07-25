@@ -22,26 +22,15 @@
 
 
 #include "CellElementStencilMPFA.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geosx
 {
 
 CellElementStencilMPFA::CellElementStencilMPFA():
-  m_elementRegionIndices(),
-  m_elementSubRegionIndices(),
-  m_elementIndices(),
-  m_weights(),
-  m_connectorIndices()
+  StencilBase<CellElementStencilMPFA_Traits,CellElementStencilMPFA>()
 {
-  // TODO Auto-generated constructor stub
-
 }
 
-//CellElementStencilMPFA::~CellElementStencilMPFA()
-//{
-//  // TODO Auto-generated destructor stub
-//}
 
 void CellElementStencilMPFA::reserve( localIndex const size )
 {
@@ -50,7 +39,6 @@ void CellElementStencilMPFA::reserve( localIndex const size )
   m_elementIndices.reserve( size * 9 );
   m_weights.reserve( size * 9 );
 }
-
 
 void CellElementStencilMPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
@@ -69,15 +57,4 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
 }
 
-bool CellElementStencilMPFA::zero( localIndex const connectorIndex )
-{
-  return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
-  {
-    for (localIndex i = 0; i < m_weights.sizeOfArray(connectionListIndex) ; ++i)
-    {
-      m_weights[connectionListIndex][i] = 0;
-    }
-  });
-}
 } /* namespace geosx */
