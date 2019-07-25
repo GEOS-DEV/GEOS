@@ -23,64 +23,69 @@
 #ifndef SRC_CORECOMPONENTS_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
 #define SRC_CORECOMPONENTS_FINITEVOLUME_FACEELEMENTSTENCIL_HPP_
 
-#include "common/DataTypes.hpp"
+#include "StencilBase.hpp"
 
 namespace geosx
 {
 
-class FaceElementStencil
+
+/**
+ * @struct FaceElementStencil_Traits
+ * Struct to predeclare the types and consexpr values of FaceElementStencil so that they may be used in
+ * StencilBase.
+ */
+struct FaceElementStencil_Traits
 {
-public:
-  using INDEX_TYPE = ArrayOfArrays<localIndex>;
-  using WEIGHT_TYPE = ArrayOfArrays<real64>;
+  /// The array type that will be used to store the indices of the stencil contributors
+  using IndexContainerType = ArrayOfArrays<localIndex>;
 
-  using INDEX_VIEW_TYPE = ArrayOfArraysView<localIndex>;
-  using INDEX_VIEW_CONST_TYPE = ArrayOfArraysView<localIndex const>;
+  /// The array view type for the stencil indices
+  using IndexContainerViewType = ArrayOfArraysView<localIndex>;
 
-  using WEIGHT_VIEW_TYPE = ArrayOfArraysView<real64>;
-  using WEIGHT_VIEW_CONST_TYPE = ArrayOfArraysView<real64 const>;
+  /// The array view to const type for the stencil indices
+  using IndexContainerViewConstType = ArrayOfArraysView<localIndex const>;
 
-  /**
-   * @brief Number of points the flux is between (normally 2)
-   */
+  /// The array type that is used to store the weights of the stencil contributors
+  using WeightContainerType = ArrayOfArrays<real64>;
+
+  /// The array view type for the stencil weights
+  using WeightContainerViewType = ArrayOfArraysView<real64>;
+
+  /// The array view to const type for the stencil weights
+  using WeightContainerViewConstType = ArrayOfArraysView<real64 const>;
+
+  /// Number of points the flux is between (normally 2)
   static localIndex constexpr NUM_POINT_IN_FLUX = 6;
 
-  /**
-   * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
-   */
+  /// Maximum number of points in a stencil
   static localIndex constexpr MAX_STENCIL_SIZE = 6;
+};
 
+/**
+ * @class FaceElementStencil
+ *
+ * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
+ */
+class FaceElementStencil : public StencilBase<FaceElementStencil_Traits,FaceElementStencil>,
+                           public FaceElementStencil_Traits
+{
+public:
 
-
+  /// default constructor
   FaceElementStencil();
-//  ~FaceElementStencil();
 
+  virtual void add( localIndex const numPts,
+                    localIndex  const * const elementRegionIndices,
+                    localIndex  const * const elementSubRegionIndices,
+                    localIndex  const * const elementIndices,
+                    real64 const * const weights,
+                    localIndex const connectorIndex ) override final;
 
-  void add( localIndex const numPts,
-            localIndex  const * const elementRegionIndices,
-            localIndex  const * const elementSubRegionIndices,
-            localIndex  const * const elementIndices,
-            real64 const * const weights,
-            localIndex const connectorIndex );
+  virtual localIndex size() const  override final
+  { return m_elementRegionIndices.size(); }
 
-  bool zero( localIndex const connectorIndex );
-
-  localIndex size() const { return m_elementRegionIndices.size(); }
-
-  localIndex stencilSize( localIndex index ) const { return m_elementRegionIndices.sizeOfArray(index); }
-
-  INDEX_VIEW_CONST_TYPE const &  getElementRegionIndices() const { return m_elementRegionIndices; }
-  INDEX_VIEW_CONST_TYPE const &  getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
-  INDEX_VIEW_CONST_TYPE const &  getElementIndices() const { return m_elementIndices; }
-  WEIGHT_VIEW_CONST_TYPE const & getWeights() const { return m_weights; }
-
-private:
-  INDEX_TYPE  m_elementRegionIndices;
-  INDEX_TYPE  m_elementSubRegionIndices;
-  INDEX_TYPE  m_elementIndices;
-  WEIGHT_TYPE m_weights;
-  map<localIndex, localIndex> m_connectorIndices;
-
+  localIndex stencilSize( localIndex index ) const
+  { return m_elementRegionIndices.sizeOfArray(index); }
 };
 
 } /* namespace geosx */
