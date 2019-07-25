@@ -106,9 +106,6 @@ public:
   template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
 
-  template<typename LAMBDA>
-  void forStencilConnections(LAMBDA && lambda) const;
-
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forBoundaryStencils(LAMBDA && lambda) const;

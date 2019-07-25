@@ -26,15 +26,9 @@ namespace geosx
 {
 
 FaceElementStencil::FaceElementStencil():
-  m_elementRegionIndices(),
-  m_elementSubRegionIndices(),
-  m_elementIndices(),
-  m_weights(),
-  m_connectorIndices()
+  StencilBase<FaceElementStencil_Traits,FaceElementStencil>()
 {}
 
-//FaceElementStencil::~FaceElementStencil()
-//{}
 
 void FaceElementStencil::add( localIndex const numPts,
                               localIndex  const * const elementRegionIndices,
@@ -57,18 +51,17 @@ void FaceElementStencil::add( localIndex const numPts,
   }
   else
   {
-    m_elementRegionIndices.clearArray( iter->second );
-    m_elementSubRegionIndices.clearArray( iter->second );
-    m_elementIndices.clearArray( iter->second );
-    m_weights.clearArray( iter->second );
+    localIndex const stencilIndex = iter->second;
+    m_elementRegionIndices.clearArray( stencilIndex );
+    m_elementSubRegionIndices.clearArray( stencilIndex );
+    m_elementIndices.clearArray( stencilIndex );
+    m_weights.clearArray( stencilIndex );
 
-    m_elementRegionIndices.appendToArray( iter->second, elementRegionIndices, numPts );
-    m_elementSubRegionIndices.appendToArray( iter->second, elementSubRegionIndices, numPts );
-    m_elementIndices.appendToArray( iter->second, elementIndices, numPts );
-    m_weights.appendToArray( iter->second, weights, numPts );
+    m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, numPts );
+    m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, numPts );
+    m_elementIndices.appendToArray( stencilIndex, elementIndices, numPts );
+    m_weights.appendToArray( stencilIndex, weights, numPts );
   }
-
-
 }
 
 

@@ -28,23 +28,8 @@ namespace geosx
 {
 
 CellElementStencilTPFA::CellElementStencilTPFA():
-  m_elementRegionIndices(),
-  m_elementSubRegionIndices(),
-  m_elementIndices(),
-  m_weights(),
-  m_connectorIndices()
+  StencilBase<CellElementStencilTPFA_Traits,CellElementStencilTPFA>()
 {
-  // TODO Auto-generated constructor stub
-
-}
-
-
-void CellElementStencilTPFA::reserve( localIndex const size )
-{
-  m_elementRegionIndices.reserve( size * 2 );
-  m_elementSubRegionIndices.reserve( size * 2 );
-  m_elementIndices.reserve( size * 2 );
-  m_weights.reserve( size * 2 );
 }
 
 
@@ -74,15 +59,4 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = oldSize;
 }
 
-bool CellElementStencilTPFA::zero( localIndex const connectorIndex )
-{
-  return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
-  {
-    for (localIndex i = 0; i < 2; ++i)
-    {
-      m_weights[connectionListIndex][i] = 0;
-    }
-  });
-}
 } /* namespace geosx */
