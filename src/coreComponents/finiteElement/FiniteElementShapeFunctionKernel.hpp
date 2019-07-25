@@ -5,6 +5,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "physicsSolvers/solidMechanics/KernelMacros.hpp"
 
 namespace geosx
 {

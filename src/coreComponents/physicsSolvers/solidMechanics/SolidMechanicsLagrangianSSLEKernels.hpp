@@ -22,17 +22,6 @@
 
 #pragma once
 
-#define STORE_NODE_DATA_LOCALLY 0
-
-#if STORE_NODE_DATA_LOCALLY
-#define VELOCITY_ACCESSOR(k, a, b) v_local[ a ][ b ]
-#define POSITION_ACCESSOR(k, a, b) x_local[ b ][ a ]
-#else
-#define VELOCITY_ACCESSOR(k, a, b) vel[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#define POSITION_ACCESSOR(k, a, b) X[ TONODESRELATION_ACCESSOR(elemsToNodes, k, a ) ][ b ]
-#endif
-
-
 #include "common/DataTypes.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -179,6 +168,10 @@ struct ExplicitKernel
     if (outputMessage)
     {
       GEOS_LOG("numElems = " << numElems);
+#if UPDATE_STRESS
+      GEOS_LOG("Updating stress."):
+#else
+      GEOS_LOG("Not updating stress."):
 
 #if CALC_SHAPE_FUNCTION_DERIVATIVES
       GEOS_LOG("Calculating shape function derivatives on the fly");

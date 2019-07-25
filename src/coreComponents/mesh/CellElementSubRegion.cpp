@@ -23,6 +23,8 @@
 #include "ElementRegionManager.hpp"
 #include "common/TimingMacros.hpp"
 
+#include "physicsSolvers/solidMechanics/KernelMacros.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
