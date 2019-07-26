@@ -85,8 +85,12 @@ before_script:
       cd thirdPartyLibs;
       wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
       tar -xf tpl-osx-clang10-20190625.tar.gz;
+      cd install-darwin-clang-release/chai/include/chai;
+      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
+      mv ManagedArray.hpp.1 ManagedArray.hpp;
       sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      cd ../../../..;
       cd ../GEOSX;  
     fi
 script: 
