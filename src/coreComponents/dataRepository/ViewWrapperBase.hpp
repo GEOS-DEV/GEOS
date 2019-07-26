@@ -56,7 +56,7 @@ class ViewWrapperBase
 public:
 
   /**
-   * @brief default destuctor
+   * @brief default destructor
    */
   virtual ~ViewWrapperBase();
 
@@ -194,7 +194,7 @@ public:
    *
    * @param view
    */
-  virtual void registerToWrite( axom::sidre::View * view=nullptr ) const = 0;
+  virtual void registerToWrite( axom::sidre::View * view=nullptr ) = 0;
 
   /**
    *
@@ -458,7 +458,7 @@ private:
   std::vector< string > m_registeringObjects;
 
   #ifdef GEOSX_USE_ATK
-  /// a pointer to the corrosponding sidre view
+  /// a pointer to the corresponding sidre view
   axom::sidre::View * m_sidreView;
 #endif
 

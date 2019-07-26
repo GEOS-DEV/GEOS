@@ -2158,7 +2158,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
     for( localIndex a=0 ; a<faceManager.size() ; ++a )
     {
 
-      array1d< std::pair<CellElementSubRegion const *, localIndex> > faceToElements;
+      std::vector< std::pair<CellElementSubRegion const *, localIndex> > faceToElements;
       for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
       {
         // TODO This only works for a single region
@@ -2173,7 +2173,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
 
       std::cout<<"m_FaceToElementMap["<<a<<"] = ( ";
 
-      for( array1d<std::pair<CellElementSubRegion const *, localIndex > >::const_iterator
+      for( std::vector<std::pair<CellElementSubRegion const *, localIndex > >::const_iterator
            ielem=faceToElements.begin() ;
            ielem!=faceToElements.end() ; ++ielem )
       {
