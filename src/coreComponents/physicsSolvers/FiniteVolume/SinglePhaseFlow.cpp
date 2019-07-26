@@ -500,20 +500,16 @@ void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
   fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
     typedef TYPEOFREF( stencil ) STENCIL_TYPE;
-    constexpr localIndex maxNumFluxElems = STENCIL_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex maxStencilSize = STENCIL_TYPE::MAX_STENCIL_SIZE;
-
     typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
     typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
     typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
-
 
     forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
       localIndex const stencilSize = stencil.stencilSize(iconn);
       localIndex const numFluxElems = stencilSize;
-      stackArray1d<globalIndex, maxNumFluxElems> dofIndexRow( numFluxElems );
-      stackArray1d<globalIndex, maxStencilSize> dofIndexCol( stencilSize );
+      stackArray1d<globalIndex, STENCIL_TYPE::NUM_POINT_IN_FLUX> dofIndexRow( numFluxElems );
+      stackArray1d<globalIndex, STENCIL_TYPE::MAX_STENCIL_SIZE> dofIndexCol( stencilSize );
 
       for (localIndex i = 0; i < numFluxElems; ++i)
       {
