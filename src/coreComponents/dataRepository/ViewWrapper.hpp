@@ -68,6 +68,8 @@ class ViewWrapper : public ViewWrapperBase
 {
 
 public:
+
+  using TYPE = T;
   /**
    * @param name name of the object
    * @param parent parent group which owns the ViewWrapper
