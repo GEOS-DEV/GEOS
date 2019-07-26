@@ -22,6 +22,7 @@
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
+#include "common/TimingMacros.hpp"
 #include "cxx-utilities/src/src/ChaiVector.hpp"
 #include "cxx-utilities/src/src/SparsityPattern.hpp"
 
@@ -191,6 +192,8 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
 
 void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   if(m_coarseningRatio <= 0.)
   {
     return;

@@ -59,6 +59,12 @@ template<typename T>
 {
   T const delta = std::abs( v1 - v2 );
   T const value = std::max( std::abs(v1), std::abs(v2) );
+
+  if (delta < 1E-14)
+  {
+    return ::testing::AssertionSuccess();
+  }
+
   if (delta > relTol * value)
   {
     return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
