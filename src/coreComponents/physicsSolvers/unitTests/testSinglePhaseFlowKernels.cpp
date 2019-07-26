@@ -142,17 +142,17 @@ void computeFlux( arraySlice1d<real64 const> const & weight,
     dDensMean_dP[i] = 0.5 * dDens_dPres[i];
   }
   real64 potDif = 0.0;
-  real64 dPotDif_dP[stencilSize] {};
+  real64 sumWeightGrav = 0;
   for (localIndex i = 0; i < stencilSize; ++i)
   {
     potDif += weight[i] * (pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i]);
-    dPotDif_dP[i] = weight[i] * (1 - gravityFlag * dDensMean_dP[i] * gravDepth[i]);
+    sumWeightGrav += weight[i] * gravityFlag * gravDepth[i];
   }
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
   flux = dt * potDif * mob[k_up];
   for (localIndex i = 0; i < stencilSize; ++i)
   {
-    dFlux_dP[i] = dt * dPotDif_dP[i] * mob[k_up];
+    dFlux_dP[i] = dt * ( weight[i] - sumWeightGrav * dDensMean_dP[i] ) * mob[k_up];
   }
   dFlux_dP[k_up] += dt * potDif * dMob_dPres[k_up];
 }
