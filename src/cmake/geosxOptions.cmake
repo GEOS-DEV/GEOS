@@ -10,6 +10,8 @@ option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
+option( ENABLE_TOTALVIEW_OUTPUT "" OFF )
+
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
