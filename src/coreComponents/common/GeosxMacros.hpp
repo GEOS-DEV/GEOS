@@ -32,17 +32,13 @@
   #define GEOSX_HOST __host__
   #define GEOSX_DEVICE __device__
   #define GEOSX_HOST_DEVICE __host__ __device__
-
   #define GEOSX_DEVICE_LAMBDA [=] __device__
-
   #define GEOSX_FORCE_INLINE __forceinline__
 #else
   #define GEOSX_HOST
   #define GEOSX_DEVICE
   #define GEOSX_HOST_DEVICE
-
   #define GEOSX_DEVICE_LAMBDA [=]
-
   #define GEOSX_FORCE_INLINE inline
 #endif
 
