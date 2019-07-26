@@ -1469,7 +1469,7 @@ public:
 
   ///@}
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override final
   {
     return cxx_utilities::demangle( typeid( ViewWrapper< T > ).name() );
