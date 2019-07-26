@@ -368,9 +368,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
-		<xsd:attribute name="cellStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
+		<xsd:attribute name="cellStencil" type="geosx::CellElementStencilTPFA" />
 		<!--fractureStencil => (no description available)-->
-		<xsd:attribute name="fractureStencil" type="geosx::FluxStencil&lt;geosx::CellDescriptor, double&gt;" />
+		<xsd:attribute name="fractureStencil" type="geosx::FaceElementStencil" />
 	</xsd:complexType>
 	<xsd:complexType name="QuadratureRulesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

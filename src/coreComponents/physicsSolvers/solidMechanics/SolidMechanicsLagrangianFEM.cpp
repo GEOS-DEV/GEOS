@@ -1211,26 +1211,36 @@ ApplyBoundaryConditions( DomainPartition * const domain,
                                    GEOSX_LAMBDA ( localIndex const kfe )
       {
 
-        R1Tensor nBar = faceNormal[faceMap[kfe][0]];
-        nBar -= faceNormal[faceMap[kfe][1]];
-        nBar.Normalize();
+        R1Tensor Nbar = faceNormal[faceMap[kfe][0]];
+        Nbar -= faceNormal[faceMap[kfe][1]];
+        Nbar.Normalize();
+        std::cout<<"kfe, faceIndices = "<<kfe<<", ("<<faceMap[kfe][0]<<", "<<faceMap[kfe][1]<<")"<<std::endl;
+
+        std::cout<<"Nbar = "<<Nbar<<std::endl;
 
         globalIndex nodeDOF[20];
         real64 nodeRHS[20];
 
+        localIndex const numNodes = facesToNodes[faceMap[kfe][0]].size();
+        real64 nodalForce = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * faceArea[faceMap[kfe][0]] / numNodes;
+        std::cout<<"nodalForce = "<<nodalForce<<std::endl;
+
         for( localIndex kf=0 ; kf<2 ; ++kf )
         {
           localIndex const faceIndex = faceMap[kfe][kf];
-          localIndex const numNodes = facesToNodes[faceIndex].size();
+          std::cout<<"faceIndex = "<<faceIndex<<std::endl;
 
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
+
+            std::cout<<facesToNodes[faceIndex][a]<<", ";
             for( int component=0 ; component<3 ; ++component )
             {
               nodeDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-              nodeRHS[3*a+component] = - (fluidPressure[kfe]+deltaFluidPressure[kfe]) * pow(-1,kf) * nBar[component] * faceArea[faceIndex] / numNodes;
+              nodeRHS[3*a+component] = - nodalForce * pow(-1,kf) * Nbar[component];
             }
           }
+          std::cout<<std::endl;
 
           rhs->SumIntoGlobalValues( integer_conversion<int>(numNodes*3), nodeDOF, nodeRHS );
         }

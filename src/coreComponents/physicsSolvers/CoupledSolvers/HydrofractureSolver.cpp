@@ -258,7 +258,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
     }
     if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
     {
-      this->UpdateDeformationForCoupling(domain);
+//      this->UpdateDeformationForCoupling(domain);
     }
     ++iter;
   }

@@ -70,22 +70,24 @@ struct AccessorHelper<false>
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>
-  makeElementAccessor( T const * const data, localIndex const stencilSize,
-                       FluxApproximationBase::CellStencil::Entry const * const stencil,
+  makeElementAccessor( T const * const data,
+                       localIndex const stencilSize,
+                       arraySlice1d<localIndex const> const & stencilRegIndices,
+                       arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                       arraySlice1d<localIndex const> const & stencilElemIndices,
                        DIMS... otherDims )
   {
     localIndex numElems = 0;
     for (int i = 0; i < stencilSize; ++i)
     {
-      numElems = std::max( numElems, stencil[i].index.index + 1 );
+      numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
     ElementAccessor<NDIM, T> acc( numElems, otherDims... );
 
     for (int i = 0; i < stencilSize; ++i)
     {
-      CellDescriptor const & cell = stencil[i].index;
-      detail::setArrayElement( acc, cell.index, i, data );
+      detail::setArrayElement( acc, stencilElemIndices[i], i, data );
     }
 
     return acc;
@@ -93,22 +95,24 @@ struct AccessorHelper<false>
 
   template<int NDIM, typename T, typename... DIMS >
   static MaterialAccessor<NDIM, T>
-  makeMaterialAccessor( T const * const data, localIndex const stencilSize,
-                        FluxApproximationBase::CellStencil::Entry const * const stencil,
+  makeMaterialAccessor( T const * const data,
+                        localIndex const stencilSize,
+                        arraySlice1d<localIndex const> const & stencilRegIndices,
+                        arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                        arraySlice1d<localIndex const> const & stencilElemIndices,
                         localIndex matIndex, DIMS... otherDims )
   {
     localIndex numElems = 0;
     for (int i = 0; i < stencilSize; ++i)
     {
-      numElems = std::max( numElems, stencil[i].index.index + 1 );
+      numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
     MaterialAccessor<NDIM, T> acc( numElems, 1, otherDims... );
 
     for (int i = 0; i < stencilSize; ++i)
     {
-      CellDescriptor const & cell = stencil[i].index;
-      detail::setArrayElement( acc, cell.index, i, data );
+      detail::setArrayElement( acc, stencilElemIndices[i], i, data );
     }
 
     return acc;
@@ -126,16 +130,19 @@ struct AccessorHelper<true>
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>
-  makeElementAccessor( T const * const data, localIndex const stencilSize,
-                       FluxApproximationBase::CellStencil::Entry const * const stencil,
+  makeElementAccessor( T const * const data,
+                       localIndex const stencilSize,
+                       arraySlice1d<localIndex const> const & stencilRegIndices,
+                       arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                       arraySlice1d<localIndex const> const & stencilElemIndices,
                        DIMS... otherDims )
   {
     localIndex numRegions = 0, numSubRegions = 0, numElems = 0;
     for (int i = 0; i < stencilSize; ++i)
     {
-      numRegions = std::max( numRegions, stencil[i].index.region + 1 );
-      numSubRegions = std::max( numSubRegions, stencil[i].index.subRegion + 1 );
-      numElems = std::max( numElems, stencil[i].index.index + 1 );
+      numRegions = std::max( numRegions, stencilRegIndices[i] + 1 );
+      numSubRegions = std::max( numSubRegions, stencilSubRegIndices[i] + 1 );
+      numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
     ElementAccessor<NDIM, T> acc;
@@ -151,8 +158,7 @@ struct AccessorHelper<true>
 
     for (int i = 0; i < stencilSize; ++i)
     {
-      CellDescriptor const & cell = stencil[i].index;
-      detail::setArrayElement( acc[cell.region][cell.subRegion], cell.index, i, data );
+      detail::setArrayElement( acc[stencilRegIndices[i]][stencilSubRegIndices[i]], stencilElemIndices[i], i, data );
     }
 
     return acc;
@@ -160,16 +166,20 @@ struct AccessorHelper<true>
 
   template<int NDIM, typename T, typename... DIMS>
   static MaterialAccessor<NDIM, T>
-  makeMaterialAccessor( T const * const data, localIndex const stencilSize,
-                        FluxApproximationBase::CellStencil::Entry const * const stencil,
-                        localIndex matIndex, DIMS... otherDims )
+  makeMaterialAccessor( T const * const data,
+                        localIndex const stencilSize,
+                        arraySlice1d<localIndex const> const & stencilRegIndices,
+                        arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                        arraySlice1d<localIndex const> const & stencilElemIndices,
+                        localIndex matIndex,
+                        DIMS... otherDims )
   {
     localIndex numRegions = 0, numSubRegions = 0, numElems = 0;
     for (int i = 0; i < stencilSize; ++i)
     {
-      numRegions = std::max( numRegions, stencil[i].index.region + 1 );
-      numSubRegions = std::max( numSubRegions, stencil[i].index.subRegion + 1 );
-      numElems = std::max( numElems, stencil[i].index.index + 1 );
+      numRegions = std::max( numRegions, stencilRegIndices[i] + 1 );
+      numSubRegions = std::max( numSubRegions, stencilSubRegIndices[i] + 1 );
+      numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
     MaterialAccessor<NDIM, T> acc;
@@ -186,8 +196,10 @@ struct AccessorHelper<true>
 
     for (int i = 0; i < stencilSize; ++i)
     {
-      CellDescriptor const & cell = stencil[i].index;
-      detail::setArrayElement( acc[cell.region][cell.subRegion][matIndex], cell.index, i, data );
+      detail::setArrayElement( acc[stencilRegIndices[i]][stencilSubRegIndices[i]][matIndex],
+                               stencilElemIndices[i],
+                               i,
+                               data );
     }
 
     return acc;
