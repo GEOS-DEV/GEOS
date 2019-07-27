@@ -130,8 +130,17 @@ struct AssembleAccumulationTermsHelper<false>
   }
 };
 
+
+template< typename REGIONTYPE >
 struct AccumulationKernel
 {
+
+};
+
+template<>
+struct AccumulationKernel<CellElementSubRegion>
+{
+
 
   template<bool COUPLED>
   inline static void
@@ -178,17 +187,22 @@ struct AccumulationKernel
     localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
     //localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
   }
+};
 
+
+template<>
+struct AccumulationKernel<FaceElementSubRegion>
+{
+
+  template<bool COUPLED>
   inline static void
-  ComputeFaceElement( real64 const & densNew,
-                      real64 const & densOld,
-                      real64 const & dDens_dPres,
-                      real64 const & volume,
-                      real64 const & dVol,
-                      real64 const & faceArea,
-                      real64 & localAccum,
-                      real64 & localAccumJacobian,
-                      real64 & dRdAperture )
+  Compute( real64 const & densNew,
+           real64 const & densOld,
+           real64 const & dDens_dPres,
+           real64 const & volume,
+           real64 const & dVol,
+           real64 & localAccum,
+           real64 & localAccumJacobian )
   {
     real64 const volNew = volume + dVol;
 
@@ -199,9 +213,10 @@ struct AccumulationKernel
     localAccumJacobian =  dDens_dPres * volNew;
 
     // Derivative of residual wrt to the aperture in the cell
-    dRdAperture = densNew * faceArea;
+//    dRdAperture = densNew * faceArea;
   }
 };
+
 
 /******************************** FluxKernel ********************************/
 
