@@ -132,6 +132,23 @@ public:
                                       real64 const & dt,
                                       DomainPartition * const domain ) override;
 
+  template< bool ISPORO >
+  void AccumulationLaunch( localIndex const er,
+                           localIndex const esr,
+                           CellElementSubRegion const * const subRegion,
+                           Epetra_FECrsMatrix * const jacobian,
+                           Epetra_FEVector * const residual,
+                           real64 const dt );
+
+  template< bool ISPORO >
+  void AccumulationLaunch( localIndex const er,
+                           localIndex const esr,
+                           FaceElementSubRegion const * const subRegion,
+                           Epetra_FECrsMatrix * const jacobian,
+                           Epetra_FEVector * const residual,
+                           real64 const dt );
+
+
   /**
    * @brief assembles the accumulation terms for all cells
    * @param domain the physical domain object

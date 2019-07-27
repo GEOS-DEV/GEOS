@@ -639,6 +639,111 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   }
 }
 
+template< bool ISPORO >
+void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
+                                          localIndex const esr,
+                                          CellElementSubRegion const * const subRegion,
+                                          Epetra_FECrsMatrix * const jacobian,
+                                          Epetra_FEVector * const residual,
+                                          real64 const dt )
+{
+  arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
+  arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
+
+  arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
+  arrayView1d<real64>       const & poro          = m_porosity[er][esr];
+  arrayView1d<real64 const> const & poroOld       = m_porosityOld[er][esr];
+  arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
+  arrayView1d<real64 const> const & volume        = m_volume[er][esr];
+  arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
+  arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
+  arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
+  arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
+  arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
+
+  arrayView1d<real64 const> const & dPres              = m_poroElasticFlag ? m_deltaPressure[er][esr]             : poroOld;
+  arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
+  arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
+  arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
+  real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
+
+
+
+  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+  {
+    if (elemGhostRank[ei] < 0)
+    {
+      real64 localAccum, localAccumJacobian;
+      globalIndex const elemDOF = dofNumber[ei];
+
+      AccumulationKernel<CellElementSubRegion>::template Compute<ISPORO>( dPres[ei],
+                                           dens[ei][0],
+                                           densOld[ei],
+                                           dDens_dPres[ei][0],
+                                           volume[ei],
+                                           dVol[ei],
+                                           poroRef[ei],
+                                           poroOld[ei],
+                                           pvmult[ei][0],
+                                           dPVMult_dPres[ei][0],
+                                           biotCoefficient,
+                                           bulkModulus[ei],
+                                           totalMeanStress[ei],
+                                           oldTotalMeanStress[ei],
+                                           poro[ei],
+                                           localAccum,
+                                           localAccumJacobian );
+
+        // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+    }
+  } );
+
+}
+
+template< bool ISPORO >
+void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
+                                          localIndex const esr,
+                                          FaceElementSubRegion const * const subRegion,
+                                          Epetra_FECrsMatrix * const jacobian,
+                                          Epetra_FEVector * const residual,
+                                          real64 const dt )
+{
+
+
+  arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
+  arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
+
+  arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
+  arrayView1d<real64 const> const & volume        = m_volume[er][esr];
+  arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
+  arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
+  arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
+  arrayView1d<real64 const> const & aperture      = m_elementAperture[er][esr];
+
+
+  forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+  {
+    if (elemGhostRank[ei] < 0)
+    {
+      real64 localAccum, localAccumJacobian;
+      globalIndex const elemDOF = dofNumber[ei];
+
+      AccumulationKernel<FaceElementSubRegion>::template Compute<ISPORO>( dens[ei][0],
+                                                                          densOld[ei],
+                                                                          dDens_dPres[ei][0],
+                                                                          volume[ei],
+                                                                          dVol[ei],
+                                                                          localAccum,
+                                                                          localAccumJacobian );
+
+        // add contribution to global residual and jacobian
+      residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
+      jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+    }
+  } );
+}
 
 template< bool ISPORO >
 void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
@@ -651,60 +756,16 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion const * const region,
-                                 ElementSubRegionBase const * const subRegion )
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  elemManager->forElementSubRegionsComplete<CellElementSubRegion,
+                                            FaceElementSubRegion>( [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegion const * const region,
+                                                                         auto const * const subRegion )
   {
-    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
-
-    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
-    arrayView1d<real64>       const & poro          = m_porosity[er][esr];
-    arrayView1d<real64 const> const & poroOld       = m_porosityOld[er][esr];
-    arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
-    arrayView1d<real64 const> const & volume        = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
-    arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
-    arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
-    arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
-    arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
-
-    arrayView1d<real64 const> const & dPres              = m_poroElasticFlag ? m_deltaPressure[er][esr]             : poroOld;
-    arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
-    arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
-    arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
-    real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
-
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if (elemGhostRank[ei] < 0)
-      {
-        real64 localAccum, localAccumJacobian;
-        globalIndex const elemDOF = dofNumber[ei];
-
-        AccumulationKernel::Compute<ISPORO>( dPres[ei],
-                                             dens[ei][0],
-                                             densOld[ei],
-                                             dDens_dPres[ei][0],
-                                             volume[ei],
-                                             dVol[ei],
-                                             poroRef[ei],
-                                             poroOld[ei],
-                                             pvmult[ei][0],
-                                             dPVMult_dPres[ei][0],
-                                             biotCoefficient,
-                                             bulkModulus[ei],
-                                             totalMeanStress[ei],
-                                             oldTotalMeanStress[ei],
-                                             poro[ei],
-                                             localAccum,
-                                             localAccumJacobian );
-
-          // add contribution to global residual and jacobian
-        residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
-        jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
-      }
-    } );
+    AccumulationLaunch<ISPORO>( er, esr, subRegion, jacobian, residual, dt );
   } );
 }
 

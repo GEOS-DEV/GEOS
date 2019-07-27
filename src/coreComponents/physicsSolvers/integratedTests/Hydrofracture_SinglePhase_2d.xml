@@ -212,7 +212,7 @@
     <FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="1.0e6"
+               scale="1.0e7"
                setNames="{source}"/>
   </FieldSpecifications>
 
