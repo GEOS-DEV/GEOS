@@ -13,7 +13,7 @@ if(NOT TRIBOL_DIR)
 endif()
 
 #find includes
-find_path( TRIBOL_INCLUDE_DIRS tribol/tribol.hpp
+find_path( TRIBOL_INCLUDE_DIRS tribol/interface/tribol.hpp
            PATHS  ${TRIBOL_DIR}/include/
            NO_DEFAULT_PATH
            NO_CMAKE_ENVIRONMENT_PATH

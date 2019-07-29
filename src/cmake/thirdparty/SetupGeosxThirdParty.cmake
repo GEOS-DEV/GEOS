@@ -44,7 +44,9 @@ endif()
 ################################
 # AXOM
 ################################
+if(NOT ENABLE_TRIBOL)
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
+endif()
 
 
 ################################
@@ -114,7 +116,9 @@ set( thirdPartyLibs ${thirdPartyLibs} raja )
 ################################
 # CHAI
 ################################
+if (NOT ENABLE_TRIBOL)
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+endif()
 
 ################################
 # FPARSER
@@ -582,19 +586,29 @@ endif()
 # TRIBOL
 ################################
 if (ENABLE_TRIBOL)
+  set(AXOM_DIR ${GEOSX_TPL_DIR}/axom)
   set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
   set(TRIBOL_DIR ${GEOSX_TPL_DIR}/tribol)
+  set(UMPIRE_DIR ${GEOSX_TPL_DIR}/umpire)
   set(VISTA_DIR ${GEOSX_TPL_DIR}/vista)
+  set(RAVI_DIR ${GEOSX_TPL_DIR}/ravi)
   set(RXB_DIR ${GEOSX_TPL_DIR}/rxb)
   set(WORLDS_CORE_DIR ${GEOSX_TPL_DIR}/worlds_core)
   set(LLNL_GLOBALID_DIR ${GEOSX_TPL_DIR}/LLNL_GlobalID)
 
   # ale3d chai version differs from github version
-  include (${CHAI_DIR}/lib/cmake/chai-targets.cmake)
+  include (${CHAI_DIR}/share/chai/cmake/chai-targets.cmake)
   set (CHAI_INCLUDE_DIRS ${CHAI_DIR}/include)
   blt_register_library( NAME chai
+                        DEPENDS_ON umpire
                         INCLUDES ${CHAI_INCLUDE_DIRS}
                         LIBRARIES ${CHAI_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
+  include("${UMPIRE_DIR}/share/umpire/cmake/umpire-targets.cmake")
+  blt_register_library( NAME umpire
+                        INCLUDES ${UMPIRE_DIR}/include
+                        LIBRARIES ${UMPIRE_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
   include(cmake/thirdparty/FindLLNL_GlobalID.cmake)
@@ -602,28 +616,34 @@ if (ENABLE_TRIBOL)
                         INCLUDES ${LLNL_GLOBALID_INCLUDE_DIRS} 
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
-  # Register extra axom libraries needed for tribol
-  blt_register_library( NAME axom_utils
+  # Register newer axom library needed for tribol
+  include (${AXOM_DIR}/lib/cmake/fmt-targets.cmake)
+  include (${AXOM_DIR}/lib/cmake/sparsehash-targets.cmake)
+  include (${AXOM_DIR}/lib/cmake/axom-targets.cmake)
+  set(ATK_FOUND TRUE)
+  blt_register_library( NAME axom
                         INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  axom_utils
+                        LIBRARIES  axom
                         TREAT_INCLUDES_AS_SYSTEM ON)
                         
-  blt_register_library( NAME mint
-                        INCLUDES ${ATK_INCLUDE_DIRS} 
-                        LIBRARIES  mint
-                        TREAT_INCLUDES_AS_SYSTEM ON)
-                        
-  set( thirdPartyLibs ${thirdPartyLibs} mint axom_utils)
+  set( thirdPartyLibs ${thirdPartyLibs} axom)
   include(cmake/thirdparty/FindTribol.cmake)
   blt_register_library( NAME tribol
-                        DEPENDS_ON slic mint
+                        DEPENDS_ON axom
                         INCLUDES ${TRIBOL_INCLUDE_DIRS} 
                         LIBRARIES  ${TRIBOL_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
+  include(cmake/thirdparty/FindRAVI.cmake)
+  blt_register_library( NAME ravi
+                        DEPENDS_ON llnl_globalid chai
+                        INCLUDES ${VISTA_INCLUDE_DIRS} 
+                        LIBRARIES  ${VISTA_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
   include(cmake/thirdparty/FindVista.cmake)
   blt_register_library( NAME vista
-                        DEPENDS_ON llnl_globalid chai
+                        DEPENDS_ON llnl_globalid ravi chai
                         INCLUDES ${VISTA_INCLUDE_DIRS} 
                         LIBRARIES  ${VISTA_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )

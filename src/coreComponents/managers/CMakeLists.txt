@@ -74,6 +74,8 @@ blt_add_library( NAME                  managers
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+if( ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()
 
 geosx_add_code_checks( PREFIX managers )

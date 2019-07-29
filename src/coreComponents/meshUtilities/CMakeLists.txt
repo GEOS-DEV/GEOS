@@ -51,6 +51,8 @@ blt_add_library( NAME                  meshUtilities
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+if( ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()
 
 geosx_add_code_checks(PREFIX meshUtilities )

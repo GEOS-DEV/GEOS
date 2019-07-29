@@ -41,6 +41,9 @@
 #include "../../rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 
+#if HAVE_TRIBOLCOUPLING
+#include "coupling/TribolCoupling.hpp"
+#endif
 
 //#define verbose 0 //Need to move this somewhere else
 
@@ -471,7 +474,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  localIndex const numNodes = nodes->size();
 
   arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
   arrayView1d<real64> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
@@ -491,16 +493,16 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
 #if HAVE_TRIBOLCOUPLING
   // rewind for leapfrog
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, -dt/2, numNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, -dt/2 );
 #endif
 
 
 #if HAVE_TRIBOLCOUPLING
   TribolCoupling::ApplyTribolForces(domain, time_n, dt, cycleNumber) ;
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt, numNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt );
 #else
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2, numNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 #endif
 
   fsManager->ApplyFieldValue( time_n, domain, "nodeManager", keys::Velocity );

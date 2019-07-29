@@ -44,7 +44,7 @@ if( CONDUIT_FOUND )
 endif()
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} sidre )
+  set( dependencyList ${dependencyList} axom )
 endif()
 
 blt_add_library( NAME                  dataRepository
@@ -57,4 +57,6 @@ target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreCompon
 
 geosx_add_code_checks(PREFIX dataRepository )
 
-add_subdirectory( unitTests )
+if( ENABLE_TESTS )
+   add_subdirectory( unitTests )
+endif()

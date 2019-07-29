@@ -140,7 +140,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   while(1) {
     int terminate = ((m_time < m_maxTime) && (m_cycle < m_maxCycle) && (exitFlag == 0)) ? 0 : 1 ;
 
-    if (cycle > 0) {
+    if (m_cycle > 0) {
 #if HAVE_TRIBOLCOUPLING
        TribolCoupling::SyncTermination(&terminate) ;
 #endif
@@ -153,15 +153,16 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
        real64 newDt ;
        TribolCoupling::SyncTimestep(&newDt) ;
 
-       if (newDt < dt)
+       if (newDt < m_dt)
        {
-           std::cout << "     dt: " << dt << ", coupled dt=" << newDt << std::endl;
+           std::cout << "     dt: " << m_dt << ", coupled dt=" << newDt << std::endl;
            GEOS_ERROR( "TRIBOL coupling error" );
        }
 #endif
     } else if (terminate) {
       break ;
     }
+
     // Determine the cycle timestep
     if (m_currentSubEvent == 0)
     {

@@ -32,7 +32,7 @@
 #include "worlds/SlideWorldAdapter.h"
 
 #include <algorithm>
-#include "tribol/tribol.hpp"
+#include "tribol/interface/tribol.hpp"
 #include "axom/mint/mesh/CellTypes.hpp"
 
 static void GEOSXSlideWorldErrorHandler(const char* msg, int etype, int)
@@ -67,9 +67,9 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   const int nodesPerFace = 4 ;
   const int nodesPerElem = 8 ;
 
-  real64& currentTime = *(eventManager->getData<real64>("time"));
-  real64& dt = *(eventManager->getData<real64>("dt"));
-  integer& cycle = *(eventManager->getData<integer>("cycle"));
+  const real64& currentTime = eventManager->getReference<real64>("time");
+  real64& dt = eventManager->getReference<real64>("dt");
+  integer& cycle = eventManager->getReference<integer>("cycle");
 
   // Currently we need the previous dt, but we assume fixed dt for now.
   // We probably want to pass in prevDt in the update anyway.
@@ -78,7 +78,7 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   // Assuming only a single element region
   MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->getMeshBody(0)->getMeshLevel(0);
-  CellBlockSubRegion * const subRegion = meshLevel->getElemManager()->GetRegion(0)->GetSubRegion(0);
+  CellElementSubRegion * const subRegion = meshLevel->getElemManager()->GetRegion(0)->GetSubRegion<CellElementSubRegion>(0);
   NodeManager * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
@@ -336,12 +336,11 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
                                   tribol::COMMON_PLANE,
                                   tribol::FRICTIONLESS,
                                   tribol::PENALTY,
-                                  tribol::BINNING_CARTERIAN_PRODUCT);
+                                  tribol::BINNING_CARTESIAN_PRODUCT);
 
    // call the contact update routine. For the serial problem it doesn't matter if this is
    // in the domain loop or outside
-   bool outputCycle = false ;
-   int err = tribol::update(cycleNumber, time_n, dt, outputCycle);
+   int err = tribol::update(cycleNumber, time_n, dt);
 
    if (err) {
       GEOS_ERROR( "TRIBOL update error" );

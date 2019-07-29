@@ -71,5 +71,7 @@ endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
 
-add_subdirectory( unitTests )
+if( ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()
 message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

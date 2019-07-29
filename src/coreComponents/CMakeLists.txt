@@ -68,4 +68,6 @@ add_test( NAME testUncrustifyCheck
           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
           )
 
-add_subdirectory( unitTests )
+if( ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()
