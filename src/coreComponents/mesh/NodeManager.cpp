@@ -138,14 +138,18 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
-  for( localIndex a=0 ; a<size() ; ++a )
-  {
-    toElementRegionList.clearArray(a);
-    toElementSubRegionList.clearArray(a);
-    toElementList.clearArray(a);
-  }
+  // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
+  // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
+  toElementRegionList.resize(0);
+  toElementRegionList.resize(size(), 10);
 
-  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
+  toElementSubRegionList.resize(0);
+  toElementSubRegionList.resize(size(), 10);
+
+  toElementList.resize(0);
+  toElementList.resize(size(), 10);
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
     ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
 
