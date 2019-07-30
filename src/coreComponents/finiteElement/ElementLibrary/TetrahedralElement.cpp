@@ -48,18 +48,17 @@ TetrahedralElement::~TetrahedralElement()
 
 
 
-void TetrahedralElement::reinit( array1d<R1TensorT<3> > const & mapped_support_points )
+void TetrahedralElement::reinit( arrayView1d< R1Tensor const > const & X_global, arraySlice1d< localIndex const > const & mapped_support_points )
 {
-
-  assert(mapped_support_points.size() == n_dofs);
-
   const unsigned int q = 0;
 
-  array1d<R1TensorT<3> > const & X = mapped_support_points;
+  R1Tensor const X[4] = { X_global[ mapped_support_points[0] ],
+                          X_global[ mapped_support_points[1] ],
+                          X_global[ mapped_support_points[2] ],
+                          X_global[ mapped_support_points[3] ] };
 
   realT V, a[4], b[4], c[4];
   const realT sixth = 1.0 / 6.0;
-
 
   //a[1]=(y4-y2)*(z3-z2)-(y3-y2)*(z4-z2)
   a[0] = (X[3][1] - X[1][1]) * (X[2][2] - X[1][2]) - (X[2][1] - X[1][1]) * (X[3][2] - X[1][2]);
