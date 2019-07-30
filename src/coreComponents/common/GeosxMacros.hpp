@@ -28,6 +28,18 @@
 
 #define GEOSX_LAMBDA [=]
 
+// This will interpret A as a string
+#define STRINGIZE_NX( A ) #A
+
+// This will macro expand A and then interpret that as a string.
+#define STRINGIZE( A ) STRINGIZE_NX( A )
+
+#if defined(GEOSX_USE_OPENMP)
+  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
+#else
+  #define PRAGMA_OMP( clause )
+#endif
+
 #if defined(__CUDACC__)
   #define GEOSX_HOST __host__
   #define GEOSX_DEVICE __device__
