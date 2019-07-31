@@ -21,6 +21,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "MPI_Communications/SpatialPartition.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -58,6 +59,8 @@ void MeshManager::ExpandObjectCatalogs()
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );

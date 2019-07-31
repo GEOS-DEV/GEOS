@@ -37,6 +37,14 @@ set( finiteElement_sources
 
 set( dependencyList dataRepository codingUtilities )
 
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}

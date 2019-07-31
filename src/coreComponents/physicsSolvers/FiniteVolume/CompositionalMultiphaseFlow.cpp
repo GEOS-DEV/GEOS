@@ -543,7 +543,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
     arrayView2d<real64 const> const & totalDens = m_totalDens[er][esr][m_fluidIndex];
     arrayView2d<real64> compDens = m_globalCompDensity[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
       {
@@ -657,7 +657,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     arrayView3d<real64> const & phaseCompFracOld = m_phaseCompFracOld[er][esr];
     arrayView1d<real64> const & poroOld          = m_porosityOld[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -741,10 +741,10 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   }
 
   // loop over all elements and set the dof number if the element is not a ghost
-  ReduceSum< reducePolicy, localIndex  > localCount(0);
-  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, GEOSX_LAMBDA ( localIndex const er,
-                                                               localIndex const esr,
-                                                               localIndex const ei )
+  localIndex localCount = 0;
+  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [&] ( localIndex const er,
+                                                      localIndex const esr,
+                                                      localIndex const ei )
   {
     if( elemGhostRank[er][esr][ei] < 0 )
     {
@@ -776,28 +776,32 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
   localIndex const NDOF = m_numDofPerCell;
 
   //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&]( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
+
+    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
+      localIndex const stencilSize = stencil.stencilSize(iconn);
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
       stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
 
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex idof = 0; idof < NDOF; ++idof)
         {
@@ -807,8 +811,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex idof = 0; idof < NDOF; ++idof)
         {
@@ -850,7 +853,7 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
       localIndex const stencilSize = connections.sizeOfArray( iconn );
       stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
@@ -1039,7 +1042,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     arrayView4d<real64 const> const & dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres[er][esr][m_fluidIndex];
     arrayView5d<real64 const> const & dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[er][esr][m_fluidIndex];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
@@ -1131,8 +1134,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   FluxKernel::MaterialView< arrayView3d<real64 const> > const & phaseCapPres                = m_phaseCapPressure.toViewConst();
   FluxKernel::MaterialView< arrayView4d<real64 const> > const & dPhaseCapPres_dPhaseVolFrac = m_dPhaseCapPressure_dPhaseVolFrac.toViewConst();
 
-  localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
@@ -1148,13 +1151,17 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
   integer const gravityFlag     = m_gravityFlag;
   integer const capPressureFlag = m_capPressureFlag;
 
-  fluxApprox->forCellStencils( [&] ( FluxApproximationBase::CellStencil const & stencil )
+  fluxApprox->forCellStencils( [&] ( auto const & stencil )
   {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
+    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
+    typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
+    typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
+    typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      localIndex const stencilSize = connections.sizeOfArray(iconn);
+      localIndex const stencilSize = stencil.stencilSize(iconn);
 
       // create local work arrays
       stackArray1d<long long, maxSize1> eqnRowIndices( numElems * NC );
@@ -1165,7 +1172,10 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
       FluxKernel::Compute( NC, NP,
                            stencilSize,
-                           connections[iconn],
+                           eri[iconn],
+                           esri[iconn],
+                           ei[iconn],
+                           weights[iconn],
                            pres,
                            dPres,
                            gravDepth,
@@ -1194,8 +1204,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // set equation indices for both connected cells
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        globalIndex const offset = NDOF * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * blockLocalDofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex ic = 0; ic < NC; ++ic)
         {
@@ -1205,8 +1214,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
 
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        CellDescriptor const & cell = connections(iconn, i).index;
-        globalIndex const offset = NDOF * blockLocalDofNumber[cell.region][cell.subRegion][cell.index];
+        globalIndex const offset = NDOF * blockLocalDofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
 
         for (localIndex jdof = 0; jdof < NDOF; ++jdof)
         {
@@ -1266,7 +1274,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
     arrayView2d<real64 const> const & pvMult        = m_pvMult[er][esr][m_solidIndex];
     arrayView2d<real64 const> const & dPvMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
       {
@@ -1513,22 +1521,20 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
     arrayView1d<real64 const>      const & refPoro       = m_porosityRef[er][esr];
     arrayView1d<real64 const>      const & volume        = m_volume[er][esr];
 
-    localResidualNorm += sum_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    localIndex const subRegionSize = subRegion->size();
+    for ( localIndex ei = 0; ei < subRegionSize; ++ei )
     {
       if (elemGhostRank[ei] < 0)
       {
-        real64 cell_norm = 0.0;
         globalIndex const offset = m_numDofPerCell * dofNumber[ei];
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
           int const lid = rowMap->LID(integer_conversion<int>(offset + idof));
           real64 const val = localResidual[lid] / (refPoro[ei] * volume[ei]);
-          cell_norm += val * val;
+          localResidualNorm += val * val;
         }
-        return cell_norm;
       }
-      return 0.0;
-    } );
+    }
   } );
 
   // compute global residual norm
@@ -1574,7 +1580,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
   double* local_solution = nullptr;
   solution->ExtractView(&local_solution,&dummy);
 
-  RAJA::ReduceMin<reducePolicy, integer> result(1);
+  bool result = 1;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegion const * const region,
@@ -1588,7 +1594,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
     arrayView2d<real64 const> const & compDens  = m_globalCompDensity[er][esr];
     arrayView2d<real64 const> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), [&] ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1600,7 +1606,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
         real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * local_solution[lid];
         if (newPres < 0.0)
         {
-          result.min(0);
+          result = 0;
         }
       }
 
@@ -1610,13 +1616,13 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
         real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * local_solution[lid];
         if (newDens < 0.0)
         {
-          result.min(0);
+          result = 0;
         }
       }
     });
   });
 
-  return result.get() > 0;
+  return result;
 }
 
 void
@@ -1643,7 +1649,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] >= 0)
         return;
@@ -1687,7 +1693,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
     arrayView2d<real64> const & dCompDens = m_deltaGlobalCompDensity[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
@@ -1717,7 +1723,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
     arrayView1d<real64> const & pres     = m_pressure[er][esr];
     arrayView2d<real64> const & compDens = m_globalCompDensity[er][esr];
 
-    forall_in_range<elemPolicy>(0,subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<serialPolicy>(0,subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)

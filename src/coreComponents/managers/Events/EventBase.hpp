@@ -58,10 +58,6 @@ public:
                                            dataRepository::ManagedGroup * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * There are three types of time-steps that are allowed:
-   *   - Regular steps (default).  This will call execute the solver with the dt specified by this event's parent.
-   *   - Superstep (allowSuperstep = 1).  The dt for the step will be set to (dt + time_n - lastTime)
-   *   - Substep (allowSubstep = 1, substepFactor >= 1).  This will repeatedly step with timestep=dt/substepFactor
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -135,6 +131,12 @@ public:
   virtual real64 GetTimestepRequest(real64 const time) override;
 
 
+  /**
+   * This method is used to get event-specifit dt requests
+   */
+  virtual real64 GetEventTypeDtRequest(real64 const time){ return std::numeric_limits<real64>::max(); }
+
+
   /// This method is used to count the number of events/sub-events
   void GetExecutionOrder(array1d<integer> & eventCounters);
 
@@ -150,38 +152,30 @@ public:
 
   struct viewKeyStruct
   {
-
     static constexpr auto eventTargetString = "target";
     static constexpr auto beginTimeString = "beginTime";
     static constexpr auto endTimeString = "endTime";
     static constexpr auto forceDtString = "forceDt";
+    static constexpr auto maxEventDtString = "maxEventDt";
     static constexpr auto lastTimeString = "lastTime";
     static constexpr auto lastCycleString = "lastCycle";
-
-    static constexpr auto allowSuperstepString = "allowSuperstep";
-    static constexpr auto allowSubstepString = "allowSubstep";
-    static constexpr auto substepFactorString = "substepFactor";
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
-
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
-
+    static constexpr auto verbosityString = "verbosity";
 
     dataRepository::ViewKey eventTarget = { "target" };
     dataRepository::ViewKey beginTime = { "beginTime" };
     dataRepository::ViewKey endTime = { "endTime" };
     dataRepository::ViewKey forceDt = { "forceDt" };
+    dataRepository::ViewKey maxEventDt = { "maxEventDt" };
     dataRepository::ViewKey lastTime = { "lastTime" };
     dataRepository::ViewKey lastCycle = { "lastCycle" };
-
-    dataRepository::ViewKey allowSuperstep = { "allowSuperstep" };
-    dataRepository::ViewKey allowSubstep = { "allowSubstep" };
-    dataRepository::ViewKey substepFactor = { "substepFactor" };
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
-
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
-  } viewKeys;
+    dataRepository::ViewKey verbosity = { "verbosity" };
+    } viewKeys;
 
   ///Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
@@ -197,25 +191,30 @@ public:
   integer GetEventCount() const { return m_eventCount; }
   real64  GetEventProgress() const { return m_eventProgress; }
 
+  real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
+
+
+protected:
+  real64 m_lastTime;
+  integer m_lastCycle;
+
+
 private:
   string m_eventTarget;
   real64 m_beginTime;
   real64 m_endTime;
   real64 m_forceDt;
-  integer m_allowSuperstep;
-  integer m_allowSubstep;
-  integer m_substepFactor;
+  real64 m_maxEventDt;
   integer m_targetExactStartStop;
-
   integer m_currentSubEvent;
-  integer m_isTargetExecuting;
-  integer m_eventForecast = 0;
-  integer m_exitFlag = 0;
-  integer m_eventCount = 0;
-  integer m_timeStepEventCount = 0;
-  real64 m_eventProgress = 0;
-  real64 m_lastTime;
-  integer m_lastCycle;
+  integer m_targetExecFlag;
+  integer m_eventForecast;
+  integer m_exitFlag;
+  integer m_eventCount;
+  integer m_timeStepEventCount;
+  real64 m_eventProgress;
+  integer m_verbosity;
+  real64 m_currentEventDtRequest;
 
   /// A pointer to the optional event target
   ExecutableGroup * m_target;

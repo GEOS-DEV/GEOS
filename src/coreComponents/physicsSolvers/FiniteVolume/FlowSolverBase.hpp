@@ -172,6 +172,9 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
+
 };
 
 }
