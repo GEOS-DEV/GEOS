@@ -145,7 +145,7 @@ using arraySlice2d = LvArray::ArraySlice< T, 2, localIndex >;
 template< typename T, int MAXSIZE >
 using stackArray2d = stack_array< T, 2, MAXSIZE >;
 
-template< typename T, bool CONST_SIZES=false >
+template< typename T, bool CONST_SIZES=std::is_const< T >::value >
 using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
 
 template< typename T >
@@ -189,6 +189,12 @@ using stackArray5d = stack_array< T, 5, MAXSIZE >;
 
 template< typename T >
 using set = LvArray::SortedArray< T, localIndex >;
+
+template< typename T >
+using SortedArray = LvArray::SortedArray< T, localIndex >;
+
+template< typename T >
+using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
 template< typename TKEY, typename TVAL >
 using map = std::map< TKEY, TVAL >;

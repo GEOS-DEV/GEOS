@@ -309,8 +309,8 @@ void vectorOfPairsToCSR( array1d<indexPair> const & pairs,
 
 // Case of connectivity = Face and location = Elem
 void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
-                             DomainPartition * domain,
-                             MeshLevel * meshLevel,
+                             DomainPartition * const domain,
+                             MeshLevel * const meshLevel,
                              const string & fieldName,
                              array1d<ElementRegion*> const & regionPtrs,
                              localIndex const numComponents)
@@ -509,51 +509,5 @@ void createConnLocPattern( DomainPartition * const domain,
 
   regionPtrs.clear();
 }
-
-/*
-// Create the location-location pattern for the Laplace equation with FEM
-void createLocLocPattern( DomainPartition * const domain,
-                          localIndex const meshBodyIndex,
-                          localIndex const meshLevelIndex,
-                          ParallelMatrix & locLocPattern )
-{
-  LaplaceFEM laplaceFEM( "laplaceFEM", domain );
-
-  MeshLevel * const
-  mesh = domain->getMeshBodies()->GetGroup<MeshBody>( meshBodyIndex )->
-         getMeshLevel( integer_conversion<int>( meshLevelIndex ) );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-
-  nodeManager->RegisterViewWrapper<array1d<globalIndex> >( laplaceFEM.laplaceFEMViewKeys.blockLocalDofNumberString )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-    setDescription("Global DOF numbers for the primary field variable");
-
-  localIndex n_ghost_rows = nodeManager->GetNumberOfGhosts();
-  localIndex n_local_rows = nodeManager->size()-n_ghost_rows;
-  globalIndex n_global_rows = 0;
-
-  localIndex_array displacementIndices;
-  laplaceFEM.SetNumRowsAndTrilinosIndices( nodeManager,
-                                           n_local_rows,
-                                           n_global_rows,
-                                           displacementIndices,
-                                           0 );
-  std::map<string, string_array > fieldNames;
-  fieldNames["node"].push_back( laplaceFEM.laplaceFEMViewKeys.blockLocalDofNumberString );
-
-  CommunicationTools::
-  SynchronizeFields(fieldNames, mesh,
-                    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
-  Epetra_Map rowMap( n_global_rows, 0, Epetra_MpiComm( MPI_COMM_GEOSX ) );
-  Epetra_FECrsGraph sparsity( Copy, rowMap, 0 );
-  laplaceFEM.SetSparsityPattern( domain, &sparsity );
-  sparsity.FillComplete();
-
-  locLocPattern.create( sparsity );
-  locLocPattern.unwrappedPointer()->PutScalar( 1.0 );
-}
-*/
 
 }

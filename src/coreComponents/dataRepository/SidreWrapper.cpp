@@ -23,6 +23,7 @@
  *      Author: rrsettgast
  */
 #include "SidreWrapper.hpp"
+#include "common/TimingMacros.hpp"
 
 #include <string>
 #include <cstdio>
@@ -59,6 +60,7 @@ DataStore & SidreWrapper::dataStore()
 void SidreWrapper::writeTree( int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
+  GEOSX_MARK_FUNCTION;
   axom::sidre::IOManager ioManager( comm );
   ioManager.write( SidreWrapper::dataStore().getRoot(), num_files, path, protocol );
 #endif
@@ -68,6 +70,8 @@ void SidreWrapper::writeTree( int num_files, const std::string & path, const std
 void SidreWrapper::reconstructTree( const std::string & root_path, const std::string & protocol, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
+  GEOSX_MARK_FUNCTION;
+
   if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ))
   {
     SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
@@ -83,6 +87,8 @@ void SidreWrapper::reconstructTree( const std::string & root_path, const std::st
 void SidreWrapper::loadExternalData( const std::string & root_path, MPI_Comm comm )
 {
 #ifdef GEOSX_USE_ATK
+  GEOSX_MARK_FUNCTION;
+
   axom::sidre::IOManager ioManager( comm );
   ioManager.loadExternalData( SidreWrapper::dataStore().getRoot(), root_path );
 #endif
