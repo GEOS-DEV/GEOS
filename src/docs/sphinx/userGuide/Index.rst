@@ -9,7 +9,7 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/mesh/docs/Mesh
 
-   /coreComponents/physicsSolvers/docs/Solvers
+   /coreComponents/physicsSolvers/docs/PhysicsSolvers
 
    /coreComponents/constitutive/docs/Constitutive
 
