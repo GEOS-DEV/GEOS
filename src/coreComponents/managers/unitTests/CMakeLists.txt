@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
      testRecursiveFieldApplication.cpp
+     testMeshGeneration.cpp
    )
 
 set( dependencyList geosx_core gtest )
