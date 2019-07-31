@@ -192,10 +192,10 @@
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
 		<!--maxCycle => Maximum simulation cycle.-->
-		<xsd:attribute name="maxCycle" type="integer" default="-1" />
+		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
 		<!--maxTime => Maximum simulation time.-->
-		<xsd:attribute name="maxTime" type="real64" default="-1" />
-		<!--verbosity => Maximum simulation time.-->
+		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
+		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
@@ -204,24 +204,22 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--allowSubstep => allows event sub-stepping-->
-		<xsd:attribute name="allowSubstep" type="integer" default="0" />
-		<!--allowSuperstep => allows event super-stepping (dt_super=dt+t-t_last)-->
-		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
 		<!--beginTime => Start time of this event-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
 		<!--forceDt => Forced timestep for this event-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
+		<!--maxEventDt => Forced timestep for this event-->
+		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--maxRuntime => max runtime-->
-		<xsd:attribute name="maxRuntime" type="real64" default="0" />
-		<!--substepFactor => integer substep factor (dt_sub=dt/f)-->
-		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<xsd:attribute name="maxRuntime" type="real64" use="required" />
 		<!--target => event target-->
-		<xsd:attribute name="target" type="string" use="required" />
+		<xsd:attribute name="target" type="string" default="" />
 		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
-		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -231,10 +229,6 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--allowSubstep => allows event sub-stepping-->
-		<xsd:attribute name="allowSubstep" type="integer" default="0" />
-		<!--allowSuperstep => allows event super-stepping (dt_super=dt+t-t_last)-->
-		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
 		<!--beginTime => Start time of this event-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--cycleFrequency => event frequency (cycle, Default)-->
@@ -245,24 +239,26 @@
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of the symbolic math function-->
 		<xsd:attribute name="function" type="string" default="" />
+		<!--maxEventDt => Forced timestep for this event-->
+		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--object => Path of the function input object (directory format)-->
 		<xsd:attribute name="object" type="string" default="" />
 		<!--set => Setname of the input object (if empty, default to everything)-->
 		<xsd:attribute name="set" type="string" default="" />
 		<!--stat => Selection of the min/avg/max for functions that target vectors-->
 		<xsd:attribute name="stat" type="integer" default="0" />
-		<!--substepFactor => integer substep factor (dt_sub=dt/f)-->
-		<xsd:attribute name="substepFactor" type="integer" default="1" />
 		<!--target => event target-->
-		<xsd:attribute name="target" type="string" use="required" />
+		<xsd:attribute name="target" type="string" default="" />
 		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
-		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
+		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
 		<!--targetExactTimestep => allows timesteps to be truncated to match time frequency perfectly-->
-		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
+		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
 		<!--threshold => event threshold-->
-		<xsd:attribute name="threshold" type="real64" default="1e+10" />
+		<xsd:attribute name="threshold" type="real64" default="0" />
 		<!--timeFrequency => event frequency (time)-->
 		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -272,28 +268,26 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--allowSubstep => allows event sub-stepping-->
-		<xsd:attribute name="allowSubstep" type="integer" default="0" />
-		<!--allowSuperstep => allows event super-stepping (dt_super=dt+t-t_last)-->
-		<xsd:attribute name="allowSuperstep" type="integer" default="0" />
 		<!--beginTime => Start time of this event-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
 		<!--endTime => End time of this event-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
 		<!--forceDt => Forced timestep for this event-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--substepFactor => integer substep factor (dt_sub=dt/f)-->
-		<xsd:attribute name="substepFactor" type="integer" default="1" />
+		<!--maxEventDt => Forced timestep for this event-->
+		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--target => event target-->
-		<xsd:attribute name="target" type="string" use="required" />
-		<!--targetCycle => event cycle-->
+		<xsd:attribute name="target" type="string" default="" />
+		<!--targetCycle => Event cycle-->
 		<xsd:attribute name="targetCycle" type="integer" default="-1" />
 		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
-		<xsd:attribute name="targetExactStartStop" type="integer" default="0" />
-		<!--targetExactTimestep => allows timesteps to be truncated to match time frequency perfectly-->
-		<xsd:attribute name="targetExactTimestep" type="integer" default="-1" />
+		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
+		<!--targetExactTimestep => Allows timesteps to be truncated to match time frequency perfectly-->
+		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
 		<!--targetTime => Event time-->
 		<xsd:attribute name="targetTime" type="real64" default="-1" />
+		<!--verbosity => Verbosity level-->
+		<xsd:attribute name="verbosity" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -751,8 +745,10 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--rand_scale => Scale for modifying requested dt-->
-		<xsd:attribute name="rand_scale" type="real64" default="1e-09" />
+		<!--scale => Scale for modifying requested dt-->
+		<xsd:attribute name="scale" type="real64" default="1e-09" />
+		<!--seed => Scale for modifying requested dt-->
+		<xsd:attribute name="seed" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->

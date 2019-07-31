@@ -20,7 +20,7 @@
   
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  verboseLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="rock"
@@ -32,7 +32,7 @@
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="3"
+                     verboseLevel="2"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -159,14 +159,14 @@
 
     <FieldSpecification name="waterDensity"
                initialCondition="1"
-               setNames="{fracture}"
+               setNames="{fracture, fracture2}"
                objectPath="ElementRegions"
                fieldName="water_density"
                scale="1000"/>
 
     <FieldSpecification name="frac"
                initialCondition="1"
-               setNames="{fracture}"
+               setNames="{fracture, fracture2}"
                objectPath="faceManager"
                fieldName="ruptureState"
                scale="1"/>
@@ -185,7 +185,7 @@
                fieldName="TotalDisplacement"
                component="1"
                scale="0.0"
-               setNames="{all}"/>
+               setNames="{yneg, ypos}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
@@ -198,7 +198,7 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="0.0"
+               scale="-0.0"
                setNames="{xneg}"/>
 
     <FieldSpecification name="right"

@@ -39,12 +39,20 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(mesh_dependencies managers metis)
+set(dependencyList managers metis)
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            ${mesh_dependencies}
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

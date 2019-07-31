@@ -111,7 +111,7 @@ protected:
    * @param phaseVolumeFraction array containing the phase volume fraction, which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 

@@ -497,7 +497,7 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
 }
 
 
-void ManagedGroup::prepareToWrite() const
+void ManagedGroup::prepareToWrite()
 {
 #ifdef GEOSX_USE_ATK
   if( getRestartFlags() == RestartFlags::NO_WRITE )
@@ -524,7 +524,7 @@ void ManagedGroup::prepareToWrite() const
     m_sidreGroup->createView( "__size__" )->setScalar( m_size );
   }
 
-  forSubGroups([]( const ManagedGroup * subGroup ) -> void
+  forSubGroups([]( ManagedGroup * subGroup ) -> void
       {
         subGroup->prepareToWrite();
       } );

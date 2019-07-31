@@ -9,7 +9,7 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Temperature"
                 verboseLevel="0"
-                targetRegions="{Region1,Region2}">
+                targetRegions="{Region1}">
     </LaplaceFEM>
   </Solvers>
 
@@ -86,17 +86,6 @@
                scale="0.0"
                setNames="{sink}"/>
   </FieldSpecifications>
-
-  <Functions>
-    <TableFunction name="timeFunction"
-                   inputVarNames="{time}"
-                   coordinates="{0.0, 1.0e-6, 2.0e-6, 1.0e9}"
-                   values="{0.0, 1.0, 1.0, 1.0}" />
-    <SymbolicFunction name="spaceFunction"
-                   inputVarNames="{ReferencePosition}"
-                   variableNames="{x, y, z}"
-                   expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-  </Functions>
 
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot"/>
