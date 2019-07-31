@@ -596,6 +596,12 @@ if (ENABLE_TRIBOL)
   set(WORLDS_CORE_DIR ${GEOSX_TPL_DIR}/worlds_core)
   set(LLNL_GLOBALID_DIR ${GEOSX_TPL_DIR}/LLNL_GlobalID)
 
+  include("${UMPIRE_DIR}/share/umpire/cmake/umpire-targets.cmake")
+  blt_register_library( NAME umpire
+                        INCLUDES ${UMPIRE_DIR}/include
+                        LIBRARIES umpire
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+
   # ale3d chai version differs from github version
   include (${CHAI_DIR}/share/chai/cmake/chai-targets.cmake)
   set (CHAI_INCLUDE_DIRS ${CHAI_DIR}/include)
@@ -603,12 +609,6 @@ if (ENABLE_TRIBOL)
                         DEPENDS_ON umpire
                         INCLUDES ${CHAI_INCLUDE_DIRS}
                         LIBRARIES ${CHAI_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
-
-  include("${UMPIRE_DIR}/share/umpire/cmake/umpire-targets.cmake")
-  blt_register_library( NAME umpire
-                        INCLUDES ${UMPIRE_DIR}/include
-                        LIBRARIES ${UMPIRE_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
 
   include(cmake/thirdparty/FindLLNL_GlobalID.cmake)

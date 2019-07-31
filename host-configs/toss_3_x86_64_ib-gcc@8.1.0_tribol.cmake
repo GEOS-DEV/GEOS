@@ -42,7 +42,7 @@ set(ENABLE_MKL OFF CACHE BOOL "")
 
 option(ENABLE_TRIBOL "Enables TRIBOL" ON)
 option( RAJA_ENABLE_TBB "" OFF)
-option(ENABLE_CHAI "Enables CHAI" ON)
+option(ENABLE_CHAI "Enables CHAI" OFF)
 
 option( ENABLE_CALIPER "Enables CALIPER" OFF )
 
