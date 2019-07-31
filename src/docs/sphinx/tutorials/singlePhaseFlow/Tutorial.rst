@@ -1,14 +1,17 @@
 .. _SinglePhaseFlow:
 
 #########################################
-Single phase flow  
+Single-phase flow  
 #########################################
 
-This example will use the single flow solver (see :ref:`SinglePhaseFlow`) from GEOSX on a cube test case. A pressure source term will be set in the top corner block and a sink pressure term will be set in the bottom corner block.
+This example will use the single flow solver (see :ref:`SinglePhaseFlow`) from GEOSX.
+
+We begin with a simple a cube test case, before exploring more complex examples. 
+A pressure source term will be set in the top corner block and a sink pressure term will be set in the bottom corner block.
 
 Building the input XML file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Building the input XML file, it will require the definition of the following XML tags:
+Building the input XML file requires the definition of the following XML tags:
 
  #. :ref:`Solver <Solver_tag>`
  #. :ref:`Mesh <Mesh_tag>`
@@ -22,12 +25,11 @@ Building the input XML file, it will require the definition of the following XML
  #. *Partition*
  #. :ref:`Outputs <Outputs_tag>`
 
-Let us open the XML file by putting the header,
+We open the XML file with a standard header,
 
 .. code-block:: xml
 
    <?xml version="1.0" ?>
-   <!--# # -->
    <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
 
 .. _Solver_tag:
@@ -35,7 +37,9 @@ Let us open the XML file by putting the header,
 Solvers tag
 ------------
 
-Specifying the Solvers tag, the space discretization will be handle by a standard Two-Point Flux approximation. This is done using ``singlePhaseTPFA`` value for the discretization node.
+The Solvers tag defines the particular physics solver to be use.  
+Here, we will use a standard Two-Point Flux Approximation (TPFA) finite volume scheme.
+This is done using ``singlePhaseTPFA`` value for the discretization node.
 
 .. code-block:: xml
 
@@ -59,7 +63,8 @@ Specifying the Solvers tag, the space discretization will be handle by a standar
 
 Mesh tag 
 -------------
-GEOSX  allows you to either internally build your mesh or import it from a compatible format thanks to PAMELA (see :ref:`2_ImportingExternalMesh`). For this test case, let us go with the internally generated with a 10x10x10 uniform regular mesh
+GEOSX  allows you to either internally build your mesh or import it from a compatible format thanks to PAMELA (see :ref:`2_ImportingExternalMesh`). 
+For this test case, we will use an internally generated 10x10x10 uniform regular mesh
 
 .. code-block:: xml
 
@@ -90,7 +95,7 @@ On the Geometry side, we will define and name our boxes for source and sink pres
     <Box name="sink"   xMin="8.99, 8.99, 8.99" xMax="10.01, 10.01, 10.01"/>
    </Geometry>
 
-One could also define surfaces on which to specified a Dirichlet bud condition.
+One could also define surfaces on which to specified a Dirichlet boundary condition.
 
 .. _Events_tag:
 
@@ -121,7 +126,7 @@ The Event tag includes the final time of our simulation under ``maxTime`` node. 
 NumericalMethods tag
 ------------------------
 
-The two-point flux approximation, which was aforementioned under the *Solver>SinglePhaseFlow* child tag as the value of ``discretization`` node, is defined there. 
+The two-point flux approximation, which was first introduced under the *Solver>SinglePhaseFlow* child tag as the value of ``discretization`` node, is defined here. 
 
 .. code-block:: xml
 
@@ -250,7 +255,7 @@ And finally, we specify a constant homogeneous porosity for the whole domain as,
    </FieldSpecifications>
 
 
-Here we leave ``Functions`` and ``Partition`` tags unspecified as the description of their use are detailed in (TODO ref)
+Here we leave ``Functions`` and ``Partition`` tags unspecified as the description of their use are detailed in other tutorials.
 
 .. code-block:: xml
 
@@ -264,7 +269,7 @@ Here we leave ``Functions`` and ``Partition`` tags unspecified as the descriptio
 
 Outputs tag
 ----------------
-In order to get the results from simulation stored, we specify path to the output directory:
+In order to get the results from simulation written to file, we specify the output path:
 
 .. code-block:: xml
 
@@ -272,7 +277,7 @@ In order to get the results from simulation stored, we specify path to the outpu
     <Silo name="siloOutput" />
    </Outputs>
 
-An this conclude our XML setting file build. Let us close it and run it now
+And this conclude our XML file:
 
 .. code-block:: xml
 

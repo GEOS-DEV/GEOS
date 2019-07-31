@@ -7,8 +7,19 @@ Welcome to the GEOSX user guide.
 .. toctree::
    :maxdepth: 2
 
-   CodeModules
-   ExternalMesh
-   LinearSolver
+   /coreComponents/mesh/docs/Mesh
+
+   /coreComponents/physicsSolvers/docs/Solvers
+
+   /coreComponents/constitutive/docs/Constitutive
+
+   /coreComponents/managers/docs/NumericalMethodsManager
+
+   /coreComponents/managers/docs/EventManager
+
+   /coreComponents/managers/docs/FunctionManager
+
+   /coreComponents/linearAlgebraInterface/docs/LinearSolver.rst
+
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
