@@ -1,13 +1,13 @@
 .. _SolidMechanicsLagrangianFEM:
 
 #####################################
-Lagrangian solid mechanics FEM solver
+Solid Mechanics Solver
 #####################################
 
 Introduction
 ============
-The `SolidMechanics_LagrangianFEM` solver applies the finite element method to solve the equations of motion.
-The primary field variable is the displacement which is held at the nodes.
+The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
+The primary variable is the displacement field which is discretized at the nodes.
 
 Usage
 =========================

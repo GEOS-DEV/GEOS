@@ -22,7 +22,7 @@ Internal Mesh Generation
 ************************
 
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
-them into several regions.  The following is an example XML mesh block:
+them into several regions.  The following is an example XML ``<mesh>`` block:
 
 .. code-block:: xml
 

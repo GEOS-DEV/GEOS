@@ -1,10 +1,10 @@
 .. _PoroelasticSolver:
 
 ##########################
-Coupled poroelastic solver
+Poromechanics solver
 ##########################
 
-Poroelasticity model
+Introduction
 ===========================================
 
 This section describes the use of the poroelasticity models implemented in GEOSX.
