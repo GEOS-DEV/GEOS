@@ -17,9 +17,9 @@ the GEOSX framework should also read the Developer Guide.
 .. toctree::
    :maxdepth: 1
 
-   elasticity/Tutorial
-
    singlePhaseFlow/Tutorial
+
+   elasticity/Tutorial
 
    compositionalFlow/Tutorial
 
