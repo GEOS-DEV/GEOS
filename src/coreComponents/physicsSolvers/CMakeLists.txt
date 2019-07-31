@@ -1,7 +1,7 @@
-message( "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
+message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 
 #
-# Specify all headers
+# Specify solver headers
 #
 set( physicsSolvers_headers
      PhysicsSolverManager.hpp
@@ -18,10 +18,12 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      src/DummySolver.hpp
+     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
      )
 
 #
-# Specify all sources
+# Specify solver sources
 #
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
@@ -40,20 +42,28 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
-set( dependencyList ${dependencyList} dataRepository systemSolverInterface )
+set( dependencyList common constitutive dataRepository systemSolverInterface linearAlgebraInterface )
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
-  message("adding GEOSX_PTP to physics solver dependencies")
+  message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
   list( APPEND externalComponentDeps GEOSX_PTP )  
+endif()
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
-                 DEPENDS_ON            dataRepository systemSolverInterface linearAlgebraInterface ${externalComponentDeps}
+                 DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
                )
-               
+
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
@@ -62,4 +72,4 @@ endif()
 geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( unitTests )
-message( "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")
+message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

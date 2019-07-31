@@ -84,6 +84,8 @@ NodeManager::~NodeManager()
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   /// flow of function:
   /// <ol>
   /// <li> Extract edgeToNode map from the edge manager
@@ -130,15 +132,17 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
-  array1d<localIndex_array> & toElementRegionList = elementRegionList();
-  array1d<localIndex_array> & toElementSubRegionList = elementSubRegionList();
-  array1d<localIndex_array> & toElementList = elementList();
+  GEOSX_MARK_FUNCTION;
+
+  ArrayOfArrays<localIndex> & toElementRegionList = m_toElements.m_toElementRegion;
+  ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
+  ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
   for( localIndex a=0 ; a<size() ; ++a )
   {
-    toElementRegionList[a].clear();
-    toElementSubRegionList[a].clear();
-    toElementList[a].clear();
+    toElementRegionList.clearArray(a);
+    toElementSubRegionList.clearArray(a);
+    toElementList.clearArray(a);
   }
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
@@ -151,12 +155,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
         arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodes[a];
-          toElementRegionList[nodeIndex].push_back( kReg );
-          toElementSubRegionList[nodeIndex].push_back( kSubReg );
-          toElementList[nodeIndex].push_back( ke );
+          toElementRegionList.appendToArray( nodeIndex, kReg );
+          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
+          toElementList.appendToArray( nodeIndex, ke );
         }
       }
     });
@@ -290,7 +295,7 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
   for( auto const & targetIndex : receivedNodes )
   {
     std::set<std::tuple<localIndex,localIndex,localIndex> > eraseList;
-    for( localIndex k=0 ; k<m_toElements.m_toElementRegion[targetIndex].size() ; ++k )
+    for( localIndex k=0 ; k<m_toElements.m_toElementRegion.sizeOfArray(targetIndex) ; ++k )
     {
       localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
       localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];

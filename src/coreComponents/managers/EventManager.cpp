@@ -41,25 +41,24 @@ EventManager::EventManager( std::string const & name,
   m_time(),
   m_dt(),
   m_cycle(),
-  m_currentSubEvent(),
-  m_currentMaxDt()
+  m_currentSubEvent()
 {
   setInputFlags(InputFlags::REQUIRED);
   
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
-    setApplyDefaultValue(-1.0)->
+    setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time.");
 
   RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
-    setApplyDefaultValue(-1.0)->
+    setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation cycle.");
 
   RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation time.");
+    setDescription("Verbosity level");
 
   RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -77,34 +76,12 @@ EventManager::EventManager( std::string const & name,
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("index of the current subevent.");
 
-  RegisterViewWrapper(viewKeyStruct::currentMaxDtString, &m_currentMaxDt, false )->
-    setRestartFlags(RestartFlags::WRITE_AND_READ)->
-    setDescription("Maximum dt request for event loop.");
-
 }
 
 
 EventManager::~EventManager()
 {}
 
-
-
-
-void EventManager::PostProcessInput()
-{
-  real64 & maxTime = this->getReference<real64>(viewKeys.maxTime);
-  integer & maxCycle = this->getReference<integer>(viewKeys.maxCycle);
-
-  // If maxTime, maxCycle are default, set them to their max values
-  if (maxTime < 0)
-  {
-    maxTime = std::numeric_limits<real64>::max();
-  }
-  if (maxCycle < 0)
-  {
-    maxCycle = std::numeric_limits<integer>::max();
-  }
-}
 
 
 ManagedGroup * EventManager::CreateChild( string const & childKey, string const & childName )
@@ -128,21 +105,8 @@ void EventManager::ExpandObjectCatalogs()
 void EventManager::Run(dataRepository::ManagedGroup * domain)
 {
   GEOSX_MARK_FUNCTION;
-  real64& time = this->getReference<real64>(viewKeys.time);
-  real64& dt = this->getReference<real64>(viewKeys.dt);
-  integer& cycle = this->getReference<integer>(viewKeys.cycle);
-  integer& currentSubEvent = this->getReference<integer>(viewKeys.currentSubEvent);
-  real64& currentMaxDt = this->getReference<real64>(viewKeys.currentMaxDt);
-  real64 const maxTime = this->getReference<real64>(viewKeys.maxTime);
-  integer const maxCycle = this->getReference<integer>(viewKeys.maxCycle);
-  integer const verbosity = this->getReference<integer>(viewKeys.verbosity);
-  integer exitFlag = 0;
 
-  // Setup MPI communication
-  integer const rank = CommunicationTools::MPI_Rank(MPI_COMM_GEOSX );
-  integer const comm_size = CommunicationTools::MPI_Size(MPI_COMM_GEOSX );
-  real64 send_buffer[2];
-  array1d<real64> receive_buffer(2 * comm_size);
+  integer exitFlag = 0;
 
   // Setup event targets, sequence indicators
   array1d<integer> eventCounters(2);
@@ -159,96 +123,78 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   });
 
   // Inform user if it appears this is a mid-loop restart
-  if ((currentSubEvent > 0))
+  if ((m_currentSubEvent > 0))
   {
-    GEOS_LOG_RANK_0("The restart-file was written during step " << currentSubEvent << " of the event loop.  Resuming from that point.");
+    GEOS_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
   }
 
   // Run problem
-  while((time < maxTime) && (cycle < maxCycle) && (exitFlag == 0))
+  // Note: if currentSubEvent > 0, then we are resuming from a restart file
+  while((m_time < m_maxTime) && (m_cycle < m_maxCycle) && (exitFlag == 0))
   {
-    GEOS_LOG_RANK_0("Time: " << time << "s, dt:" << dt << "s, Cycle: " << cycle);
-
-    // Iterage using the managed integer currentSubEvent and real64 currentMaxDt,
-    // which will allow restart runs to pick up where they left off.
-    if (currentSubEvent == 0)
+    // Determine the cycle timestep
+    if (m_currentSubEvent == 0)
     {
-      currentMaxDt = std::numeric_limits<real64>::max();
+      // The max dt request
+      m_dt = m_maxTime - m_time;
+
+      // Determine the dt requests for each event
+      for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
+      {
+        EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
+        m_dt = std::min(subEvent->GetTimestepRequest(m_time), m_dt);
+      }
+      m_currentSubEvent = 0;
+
+#ifdef GEOSX_USE_MPI
+      // Find the min dt across procfesses
+      GEOSX_MARK_BEGIN("EventManager::MPI calls");
+
+      real64 dt_global;
+      MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
+      m_dt = dt_global;
+
+      GEOSX_MARK_END("EventManager::MPI calls");
+#endif
     }
 
-    for ( ; currentSubEvent<this->numSubGroups(); ++currentSubEvent)
+    GEOS_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
+
+    // Execute 
+    for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
     {
-      EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[currentSubEvent] );
+      EventBase * subEvent = static_cast<EventBase *>( this->GetSubGroups()[m_currentSubEvent] );
 
       // Calculate the event and sub-event forecasts
-      // Note: because events can be nested, the mpi reduce for event
-      // forecasts need to happen in EventBase.
-      subEvent->CheckEvents(time, dt, cycle, domain);
+      subEvent->CheckEvents(m_time, m_dt, m_cycle, domain);
       integer eventForecast = subEvent->GetForecast();
+
+      if (m_verbosity > 0)
+      {
+        GEOS_LOG_RANK_0("     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
+      }
 
       // Execute, signal events
       if (eventForecast == 1)
       {
-        subEvent->SignalToPrepareForExecution(time, dt, cycle, domain);
+        subEvent->SignalToPrepareForExecution(m_time, m_dt, m_cycle, domain);
       }
 
       if (eventForecast <= 0)
       {
-        subEvent->Execute(time, dt, cycle, 0, 0, domain);
-      }
-
-      // Estimate the time-step for the next cycle
-      if (eventForecast <= 1)
-      {
-        real64 requestedDt = subEvent->GetTimestepRequest(time + dt);
-        currentMaxDt = std::min(requestedDt, currentMaxDt);
+        subEvent->Execute(m_time, m_dt, m_cycle, 0, 0, domain);
       }
 
       // Check the exit flag
+      // Note: Currently, this is only being used by the HaltEvent
+      //       If it starts being used elsewhere it may need to be synchronized
       exitFlag += subEvent->GetExitFlag();
-    
-      // Debug information
-      if (verbosity > 0)
-      {
-        GEOS_LOG_RANK_0("     Event: " << currentSubEvent << " (" << subEvent->getName() << "), f=" << eventForecast);
-      }
     }
 
-    // Increment the time, cycle
-    time += dt;
-    ++cycle;
-    dt = currentMaxDt;
-    dt = (time + dt > maxTime) ? (maxTime - time) : dt;
-
-    // Reset the subevent counter
-    currentSubEvent = 0;
-
-#ifdef GEOSX_USE_MPI
-//    MPI_Barrier(MPI_COMM_GEOSX);
-    GEOSX_MARK_BEGIN("EventManager::MPI calls");
-
-    send_buffer[0] = dt;
-    send_buffer[1] = static_cast<real64>(exitFlag);
-    MPI_Gather(send_buffer, 2, MPI_DOUBLE, receive_buffer.data(), 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
-
-    if (rank == 0)
-    {
-      for (integer ii=0; ii<comm_size; ii++)
-      {
-        send_buffer[0] = std::min(send_buffer[0], receive_buffer[2*ii]);
-        send_buffer[1] += receive_buffer[2*ii + 1];
-      }
-    }
-
-    MPI_Bcast(send_buffer, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX);
-    dt = send_buffer[0];
-    if (send_buffer[1] > 0.5)
-    {
-      exitFlag = 1;
-    }
-    GEOSX_MARK_END("EventManager::MPI calls");
-
-#endif
+    // Increment time/cycle, reset the subevent counter
+    m_time += m_dt;
+    ++m_cycle;
+    m_currentSubEvent = 0;
   }
 
   // Cleanup
@@ -256,7 +202,7 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
-    subEvent->Cleanup(time, cycle, 0, 0, domain);
+    subEvent->Cleanup(m_time, m_cycle, 0, 0, domain);
   });
 }
 

@@ -87,9 +87,7 @@
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
-                   targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
-                   endTime="-1" />
+                   target="/Outputs/sidreRestart"/>
 
   </Events>
 

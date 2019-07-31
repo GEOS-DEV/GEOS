@@ -22,6 +22,14 @@ set(MPI_Communications_sources
 
 set( dependencyList fileIO common trilinos )
 
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  MPI_Communications
                  SOURCES               ${MPI_Communications_sources}
                  HEADERS               ${MPI_Communications_headers}

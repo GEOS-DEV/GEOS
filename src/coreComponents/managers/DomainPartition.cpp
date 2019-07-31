@@ -115,6 +115,8 @@ void DomainPartition::SetMaps(  )
 
 void DomainPartition::GenerateSets(  )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
   ManagedGroup const * const nodeManager = mesh->getNodeManager();
 
