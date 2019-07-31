@@ -1,11 +1,11 @@
 ###############################################################################
-Spatial Partition
+Parallel Partitioning
 ###############################################################################
 
 Parallel GEOSX simulations involves multiple ``partitions`` and there are ``ghost`` objects in each partition. 
 Users need to understand these concepts to effectively design models and visualize results.
 
-Partition
+Partitions
 ========================
 
 A model, or more strictly, a computational domain, is stored in a distributed fashion among many processors. 
@@ -23,10 +23,12 @@ Partitioning is automatically handled by GEOSX once the user specifies how the d
 
 The following figure show the partitioning of a simple mesh. 
 Real nodes appear as solid red circles in the owning partition and ghost nodes are shown as hollow circles.
-.. figure:: SimplePartitioning GEOSX.svg
+
+.. image:: SimplePartitioning_GEOSX.svg
 
 Specifying partitioning pattern
 =================================
+
 Cartesian partitioning
 -----------------------
 In the command line to run GEOSX, the user can specify the partitioning pattern by adding the following switches:
@@ -43,7 +45,6 @@ If a object does not appear in any other partition as a ghost, its ghost rank is
 If a object is real (owned by the current partition) but exists in other partitions as ghosts, its ghost rank is -1.
 The ghost rank of a ghost object is the rank of the partition that owns the corresponding real object.
 
-x 
 Considerations for visualization
 =================================
 In VisIt, a partition is called a ``domain``. 
