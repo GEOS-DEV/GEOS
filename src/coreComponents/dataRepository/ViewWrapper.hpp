@@ -970,6 +970,7 @@ public:
   setUserCallBack()
   {}
 
+#if HAVE_CHAI
   HAS_MEMBER_FUNCTION( move,
                        void,
                        ,
@@ -988,6 +989,7 @@ public:
   typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
   move( chai::ExecutionSpace, bool )
   {}
+#endif
 
   HAS_ALIAS( value_type )
 
@@ -1164,7 +1166,9 @@ public:
       return;
     }
 
+#if HAVE_CHAI
     move( chai::CPU, false );
+#endif
 
     view = (view != nullptr) ? view : getSidreView();
     storeSizedFromParent( view );

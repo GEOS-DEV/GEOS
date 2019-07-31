@@ -97,7 +97,7 @@ void setupCXXUtils()
 void finalizeCXXUtils()
 {
 #ifdef GEOSX_USE_CHAI
-  //chai::ArrayManager::finalize();
+  chai::ArrayManager::finalize();
 #endif
 
   logger::FinalizeLogger();

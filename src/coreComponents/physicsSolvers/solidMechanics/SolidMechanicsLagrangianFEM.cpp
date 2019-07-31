@@ -474,6 +474,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   ConstitutiveManager * constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  localIndex const numNodes = nodes->size();
 
   arrayView1d<R1Tensor> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
   arrayView1d<real64> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
