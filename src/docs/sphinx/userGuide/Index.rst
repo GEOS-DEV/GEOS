@@ -19,7 +19,9 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/managers/docs/FunctionManager
 
-   /coreComponents/linearAlgebraInterface/docs/LinearSolver.rst
+   /coreComponents/linearAlgebraInterface/docs/LinearSolvers.rst
+
+   /coreComponents/MPI_Communications/docs/SpatialPartition.rst
 
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
