@@ -203,6 +203,19 @@ void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
   UpdateMobility( dataGroup );
 }
 
+void SinglePhaseFlow::UpdateState( DomainPartition * const domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  {
+    UpdateFluidModel( subRegion );
+    UpdateSolidModel( subRegion );
+    UpdateMobility( subRegion );
+  } );
+}
+
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
@@ -614,14 +627,14 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
     AssembleAccumulationTerms<false>( domain, jacobian, residual, time_n, dt );
   }
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::AssembleAccumulationTerms");
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    jacobian->Print(std::cout);
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    residual->Print(std::cout);
-  }
+//  if( verboseLevel() == 2 )
+//  {
+//    GEOS_LOG_RANK_0("After SinglePhaseFlow::AssembleAccumulationTerms");
+//    GEOS_LOG_RANK_0("\nJacobian:\n");
+//    jacobian->Print(std::cout);
+//    GEOS_LOG_RANK_0("\nResidual:\n");
+//    residual->Print(std::cout);
+//  }
 
 
   AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
@@ -629,14 +642,14 @@ void SinglePhaseFlow::AssembleSystem( DomainPartition * const domain,
   jacobian->GlobalAssemble(true);
   residual->GlobalAssemble();
 
-  if( verboseLevel() == 2 )
-  {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::AssembleSystem");
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    jacobian->Print(std::cout);
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    residual->Print(std::cout);
-  }
+//  if( verboseLevel() == 2 )
+//  {
+//    GEOS_LOG_RANK_0("After SinglePhaseFlow::AssembleSystem");
+//    GEOS_LOG_RANK_0("\nJacobian:\n");
+//    jacobian->Print(std::cout);
+//    GEOS_LOG_RANK_0("\nResidual:\n");
+//    residual->Print(std::cout);
+//  }
 }
 
 template< bool ISPORO >
@@ -720,7 +733,9 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView1d<real64 const> const & dVol          = m_deltaVolume[er][esr];
   arrayView2d<real64 const> const & dens          = m_density[er][esr][m_fluidIndex];
   arrayView2d<real64 const> const & dDens_dPres   = m_dDens_dPres[er][esr][m_fluidIndex];
+
   arrayView1d<real64 const> const & aperture      = m_elementAperture[er][esr];
+  arrayView1d<real64 const> const & area      = m_elementArea[er][esr];
 
 
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
@@ -735,6 +750,8 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                                                           dDens_dPres[ei][0],
                                                                           volume[ei],
                                                                           dVol[ei],
+                                                                          aperture[ei],
+                                                                          area[ei],
                                                                           localAccum,
                                                                           localAccumJacobian );
 
@@ -760,7 +777,8 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
   elemManager->forElementSubRegionsComplete<CellElementSubRegion,
-                                            FaceElementSubRegion>( [&] ( localIndex er,
+                                            FaceElementSubRegion>( this->m_targetRegions,
+                                                                   [&] ( localIndex er,
                                                                          localIndex esr,
                                                                          ElementRegion const * const region,
                                                                          auto const * const subRegion )
