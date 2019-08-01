@@ -55,7 +55,7 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly.");
+    setDescription("If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).");
 
   RegisterViewWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -79,7 +79,7 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Event threshold");
+    setDescription("If the optional function is used, the event will execute if the value returned by the function exceeds this threshold.");
 
 }
 
