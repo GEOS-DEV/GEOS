@@ -251,9 +251,9 @@
 		<xsd:attribute name="target" type="string" default="" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
-		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly.-->
+		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).-->
 		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
-		<!--threshold => Event threshold-->
+		<!--threshold => If the optional function is used, the event will execute if the value returned by the function exceeds this threshold.-->
 		<xsd:attribute name="threshold" type="real64" default="0" />
 		<!--timeFrequency => Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.-->
 		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
@@ -278,13 +278,13 @@
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--target => Name of the object to be executed when the event criteria are met.-->
 		<xsd:attribute name="target" type="string" default="" />
-		<!--targetCycle => Target event cycle.-->
+		<!--targetCycle => Targeted cycle to execute the event.-->
 		<xsd:attribute name="targetCycle" type="integer" default="-1" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
-		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified execution time exactly.-->
+		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified execution time exactly: dt_request = min(dt_request, t_target - time)).-->
 		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
-		<!--targetTime => Target event time.-->
+		<!--targetTime => Targeted time to execute the event.-->
 		<xsd:attribute name="targetTime" type="real64" default="-1" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
