@@ -237,6 +237,8 @@ public:
   groupKeyStruct & groupKeys() { return groupKeysSinglePhaseFlow; }
   groupKeyStruct const & groupKeys() const { return groupKeysSinglePhaseFlow; }
 
+  void UpdateState( DomainPartition * const domain ) const;
+
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
@@ -314,6 +316,7 @@ private:
    * @param dataGroup group that contains the fields
    */
   void UpdateState( ManagedGroup * dataGroup ) const;
+
 
   /// views into primary variable fields
 

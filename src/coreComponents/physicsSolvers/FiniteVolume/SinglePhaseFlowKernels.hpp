@@ -201,6 +201,8 @@ struct AccumulationKernel<FaceElementSubRegion>
            real64 const & dDens_dPres,
            real64 const & volume,
            real64 const & dVol,
+           real64 const & aperture,
+           real64 const & area,
            real64 & localAccum,
            real64 & localAccumJacobian )
   {
@@ -210,7 +212,9 @@ struct AccumulationKernel<FaceElementSubRegion>
     localAccum = densNew * volNew - densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew;
+    localAccumJacobian =  dDens_dPres * volNew ;
+
+    std::cout<<"densNew * volNew - densOld * volOld = "<<densNew<<" * "<<volNew<<" - "<<densOld<<" * "<<volume<<std::endl;
 
     // Derivative of residual wrt to the aperture in the cell
 //    dRdAperture = densNew * faceArea;
@@ -503,10 +507,10 @@ struct FluxKernel
     real64 sumOfWeights = 0;
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
-      sumOfWeights += aperture[stencilElementIndices[k]] *
-                      aperture[stencilElementIndices[k]] *
-                      aperture[stencilElementIndices[k]] *
-          stencilWeights[k];
+//      sumOfWeights += aperture[stencilElementIndices[k]] *
+//                      aperture[stencilElementIndices[k]] *
+//                      aperture[stencilElementIndices[k]] * stencilWeights[k];
+      sumOfWeights += 1.0e-12 * stencilWeights[k];
     }
 
     localIndex k[2];
@@ -519,8 +523,10 @@ struct FluxKernel
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
 
-        real64 const weight = ( stencilWeights[k[0]]*aperture[ei[0]]*aperture[ei[0]]*aperture[ei[0]] ) *
-                              ( stencilWeights[k[1]]*aperture[ei[1]]*aperture[ei[1]]*aperture[ei[1]] ) / sumOfWeights;
+//        real64 const weight = ( stencilWeights[k[0]]*aperture[ei[0]]*aperture[ei[0]]*aperture[ei[0]] ) *
+//                              ( stencilWeights[k[1]]*aperture[ei[1]]*aperture[ei[1]]*aperture[ei[1]] ) / sumOfWeights;
+        real64 const weight = ( stencilWeights[k[0]]*1.0e-12 ) *
+                              ( stencilWeights[k[1]]*1.0e-12 ) / sumOfWeights;
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
@@ -528,11 +534,11 @@ struct FluxKernel
         real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
                                          0.5 * dDens_dPres[ei[1]][0] };
 
-        real64 const potDif = weight * ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
+        real64 const wPotDif = weight * ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
                                          densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
-        localIndex const k_up = (potDif >= 0) ? 0 : 1;
+        localIndex const k_up = (wPotDif >= 0) ? 0 : 1;
 
         localIndex ei_up  = stencilElementIndices[k[k_up]];
 
@@ -540,20 +546,20 @@ struct FluxKernel
         real64 const dMobility_dP = dMob_dPres[ei_up];
 
         // compute the final flux and derivatives
-        real64 const fluxVal = mobility * potDif;
+        real64 const fluxVal = mobility * wPotDif;
 
         dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
         dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
-        dFlux_dP[k_up] += dMobility_dP * potDif;
+        dFlux_dP[k_up] += dMobility_dP * wPotDif;
 
         // populate local flux vector and derivatives
         flux[k[0]] += dt * fluxVal;
         flux[k[1]] -= dt * fluxVal;
 
         fluxJacobian[k[0]][k[0]] += dt * dFlux_dP[0];
-        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
         fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
+        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
         fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
 
       }
