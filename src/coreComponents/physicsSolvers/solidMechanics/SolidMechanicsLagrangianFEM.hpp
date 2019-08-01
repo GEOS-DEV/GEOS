@@ -328,6 +328,7 @@ public:
   void ApplyChomboPressure( DomainPartition * const domain,
                             systemSolverInterface::EpetraBlockSystem & blockSystem );
 
+
   void SetTimeIntegrationOption( string const & stringVal )
   {
     if( stringVal == "ExplicitDynamic" )
@@ -365,6 +366,7 @@ public:
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto forceExternal = "externalForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
