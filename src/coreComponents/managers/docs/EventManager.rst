@@ -17,7 +17,7 @@ The goal of the GEOSX event manager is to be flexible with regards to event type
   </Events>
 
 
-Basic Event Execution Rules
+Event Execution Rules
 ---------------------------------------------
 
 The EventManager will repeatedly iterate through a list of candidate events specified via the Events block **in the order they are defined in the xml**.  When certain user-defined criteria are met, they will trigger and perform a task.  The simulation ``cycle`` denotes the number of times the primary event loop has completed, ``time`` denotes the simulation time at the beginning of the loop, and ``dt`` denotes the global timestep during the loop.
