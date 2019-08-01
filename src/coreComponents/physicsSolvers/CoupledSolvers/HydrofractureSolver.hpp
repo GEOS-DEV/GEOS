@@ -71,6 +71,9 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 
+  void ApplyFractureFluidCoupling( DomainPartition * const domain,
+                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+
   real64 SplitOperatorStep( real64 const& time_n,
                             real64 const& dt,
                             integer const cycleNumber,

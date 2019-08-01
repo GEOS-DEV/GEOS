@@ -94,8 +94,7 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&] ( FaceElementSubRegion * const subRegion )
     {
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
-        setApplyDefaultValue( 1.0 )->
-        setPlotLevel(PlotLevel::LEVEL_0);
+        setApplyDefaultValue( 1.0 );
 
       subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
