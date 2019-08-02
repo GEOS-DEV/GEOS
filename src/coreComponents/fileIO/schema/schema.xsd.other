@@ -880,8 +880,6 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!-- => Primary field variable-->
-		<xsd:attribute name="" type="real64_array" />
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Acceleration" type="r1_array" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
@@ -920,6 +918,8 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--parentIndex => Parent index of node.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--primaryField => Primary field variable-->
+		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--trilinosIndex => (no description available)-->
 		<xsd:attribute name="trilinosIndex" type="globalIndex_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
