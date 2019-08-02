@@ -56,7 +56,8 @@ using namespace systemSolverInterface;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
                         ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_fieldName("primaryField")
 {
 //  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
   // To generate the schema, multiple solvers of that use this command are constructed
