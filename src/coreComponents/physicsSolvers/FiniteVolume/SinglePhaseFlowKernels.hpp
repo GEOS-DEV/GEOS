@@ -204,7 +204,8 @@ struct AccumulationKernel<FaceElementSubRegion>
            real64 const & aperture,
            real64 const & area,
            real64 & localAccum,
-           real64 & localAccumJacobian )
+           real64 & localAccumJacobian,
+           real64 & dRdAper )
   {
     real64 const volNew = volume + dVol;
 
@@ -217,7 +218,7 @@ struct AccumulationKernel<FaceElementSubRegion>
     std::cout<<"densNew * volNew - densOld * volOld = "<<densNew<<" * "<<volNew<<" - "<<densOld<<" * "<<volume<<std::endl;
 
     // Derivative of residual wrt to the aperture in the cell
-//    dRdAperture = densNew * faceArea;
+    dRdAper = densNew * area;
   }
 };
 
