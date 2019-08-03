@@ -23,12 +23,10 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
-#include <constitutive/RelPerm/RelativePermeabilityBase.hpp>
-#include <constitutive/CapillaryPressure/CapillaryPressureBase.hpp>
+#include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
+#include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "../../mesh/ElementRegionManager.hpp"
-
-class Epetra_FECrsGraph;
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -108,43 +106,62 @@ public:
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
-
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt ) override;
-
-  virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
-
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
-
-  virtual bool
-  CheckSystemSolution(systemSolverInterface::EpetraBlockSystem const * const blockSystem, real64 const scalingFactor,
-                      DomainPartition * const domain) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  AssembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition * const domain,
+                  DofManager const & dofManager,
+                  ParallelMatrix & matrix,
+                  ParallelVector & rhs ) override;
+
+  virtual void
+  ApplyBoundaryConditions( real64 const time_n,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs ) override;
+
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual bool
+  CheckSystemSolution( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual void ImplicitStepComplete( real64 const & time,
-                                     real64 const & dt,
-                                     DomainPartition * const domain ) override;
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition * const domain ) override;
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
@@ -229,42 +246,51 @@ public:
 
   /**
    * @brief assembles the accumulation terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
+  void AssembleAccumulationTerms( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition const * const domain,
+                                  DofManager const * const dofManager,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /**
    * @brief assembles the flux terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleFluxTerms( DomainPartition const * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
+  void AssembleFluxTerms( real64 const time_n,
+                          real64 const dt,
+                          DomainPartition const * const domain,
+                          DofManager const * const dofManager,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs );
 
   /**
    * @brief assembles the volume balance terms for all cells
-   * @param domain the physical domain object
-   * @param blockSystem the entire block system
    * @param time_n previous time value
    * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
    */
-  void AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                   Epetra_FECrsMatrix * const jacobian,
-                                   Epetra_FEVector * const residual,
-                                   real64 const time_n,
-                                   real64 const dt );
+  void AssembleVolumeBalanceTerms( real64 const time_n,
+                                   real64 const dt,
+                                   DomainPartition const * const domain,
+                                   DofManager const * const dofManager,
+                                   ParallelMatrix * const matrix,
+                                   ParallelVector * const rhs );
 
   /**@}*/
 
@@ -406,18 +432,24 @@ private:
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
    * @param domain the domain containing the mesh and fields
-   * @param blockSystem the linear system object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
    */
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void SetupSystem( DomainPartition * const domain,
+                    DofManager & dofManager,
+                    ParallelMatrix & matrix,
+                    ParallelVector & rhs,
+                    ParallelVector & solution );
 
   /**
    * @brief set the sparsity pattern for the linear system
    * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
+   * @param matrix the system matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           ParallelMatrix * const matrix );
 
   /**
    * @brief sets the dof indices for this solver
@@ -441,23 +473,20 @@ private:
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
-   * @param object the target ObjectManager for the application of the BC.
    * @param time current time
-   * @param blockSystem the entire block system
-   */
-  void ApplyDirichletBC_implicit( DomainPartition * const domain,
-                                  real64 const time, real64 const dt,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
    * @param domain the domain
-   * @param time current time
-   * @param blockSystem the entire block system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
    */
-  void ApplyFaceDirichletBC_implicit( DomainPartition * const domain,
-                                      real64 const time, real64 const dt,
-                                      systemSolverInterface::EpetraBlockSystem * const blockSystem );
+  void ApplyDirichletBC_implicit( real64 const time,
+                                  real64 const dt,
+                                  DofManager const * const dofManager,
+                                  DomainPartition * const domain,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /// the max number of fluid phases
   localIndex m_numPhases;

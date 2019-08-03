@@ -23,8 +23,6 @@
 #ifndef LAI_EPETRAVECTOR_HPP_
 #define LAI_EPETRAVECTOR_HPP_
 
-#include "InterfaceTypes.hpp"
-
 #include <Epetra_FEVector.h>
 #include <Epetra_Map.h>
 #include <Epetra_MpiComm.h>
@@ -351,7 +349,7 @@ public:
   /**
    * @brief Print the vector in Trilinos format to the terminal.
    */
-  void print() const;
+  void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Write the vector to a matlab-compatible file
@@ -363,6 +361,11 @@ public:
    * Map a global row index to local row index
    */
   localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * Map a local row index to global row index
+   */
+  localIndex getGlobalRowID( localIndex const index ) const;
 
   /**
    * Extract a view of the local portion of the array
@@ -388,6 +391,14 @@ private:
    */
   void create( Epetra_Map const &map );
 };
+
+/**
+ * @brief Stream insertion operator for EpetraVector
+ * @param os the output stream
+ * @param vec the vector to be printed
+ * @return reference to the output stream
+ */
+std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
 
 } // end geosx namespace
 

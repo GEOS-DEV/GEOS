@@ -74,12 +74,6 @@ TableFunction::TableFunction( const std::string& name,
   RegisterViewWrapper<string>(keys::tableInterpolation)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method");
-
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value Type");
-
-
 }
 
 TableFunction::~TableFunction()
