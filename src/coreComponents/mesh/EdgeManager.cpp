@@ -331,31 +331,33 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
 
 
 void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                                   array1d<globalIndex_array>& edgesToNodes )
+                                                                   std::vector< std::vector< globalIndex > > & globalEdgeNodes )
 {
-
-  FixedOneToManyRelation const & edgeNodes = this->nodeList();
-  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
-
+  GEOSX_MARK_FUNCTION;
   nodeManager->CheckTypeID( typeid( NodeManager ) );
 
+  localIndex const numEdges = size();
 
-  edgesToNodes.clear();
-  edgesToNodes.resize(size());
-  for( localIndex kf=0 ; kf<size() ; ++kf )
+  arrayView2d< localIndex const > const & edgeNodes = this->nodeList();
+  arrayView1d< integer const > const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  globalEdgeNodes.resize( numEdges );
+
+  #pragma omp parallel for
+  for ( localIndex faceID = 0; faceID < numEdges; ++faceID )
   {
+    std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ faceID ];
 
-    if( isDomainBoundary(kf) != 0 )
+    if( isDomainBoundary( faceID ) )
     {
-      globalIndex_array temp;
+      curEdgeGlobalNodes.resize( 2 );
 
-      for( localIndex a=0 ; a<edgeNodes.size(1) ; ++a )
+      for ( localIndex a = 0; a < 2 ; ++a )
       {
-        const globalIndex gnode = nodeManager->m_localToGlobalMap( edgeNodes[kf][a] );
-        temp.push_back( gnode );
+        curEdgeGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( edgeNodes[ faceID ][ a ] );
       }
-      std::sort( temp.begin(), temp.end() );
-      edgesToNodes[kf] = temp;
+
+      std::sort( curEdgeGlobalNodes.begin(), curEdgeGlobalNodes.end() );
     }
   }
 }

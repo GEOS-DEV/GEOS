@@ -731,33 +731,39 @@ void FaceManager::SortFaceNodes( arrayView1d<R1Tensor const> const & X,
 
 
 void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                                   array1d<globalIndex_array>& faceToNodes )
+                                                                   std::vector< std::vector< globalIndex > > & globalFaceNodes )
 {
-
-  OrderedVariableOneToManyRelation const & faceNodes = this->nodeList();
-  integer_array const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
-
+  GEOSX_MARK_FUNCTION;
   nodeManager->CheckTypeID( typeid( NodeManager ) );
 
+  localIndex const numFaces = size();
 
-  faceToNodes.clear();
-  faceToNodes.resize(size());
-  for( localIndex kf=0 ; kf<size() ; ++kf )
+  arrayView1d< arrayView1d< localIndex const > const > const & faceNodes = this->nodeList().toViewConst();
+  arrayView1d< integer const > const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
+
+  globalFaceNodes.resize( numFaces );
+
+  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const & faceID )
   {
+    std::vector< globalIndex > & curFaceGlobalNodes = globalFaceNodes[ faceID ];
 
-    if( isDomainBoundary(kf) != 0 )
+    if( isDomainBoundary( faceID ) )
     {
-      globalIndex_array temp;
+      localIndex const numNodes = faceNodes[faceID].size();
+      curFaceGlobalNodes.resize( numNodes );
 
-      for( localIndex a=0 ; a<faceNodes[kf].size() ; ++a )
+      for ( localIndex a = 0; a < numNodes ; ++a )
       {
-        const globalIndex gnode = nodeManager->m_localToGlobalMap( faceNodes[kf][a] );
-        temp.push_back( gnode );
+        curFaceGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( faceNodes[ faceID ][ a ] );
       }
-      std::sort( temp.begin(), temp.end() );
-      faceToNodes[kf] = temp;
+
+      std::sort( curFaceGlobalNodes.begin(), curFaceGlobalNodes.end() );
     }
-  }
+    else
+    {
+      curFaceGlobalNodes.resize( 0 );
+    }
+  } );
 }
 
 
