@@ -48,6 +48,17 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
+  void SetupSystem ( DomainPartition * const domain,
+                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
+  void SetSparsityPattern( DomainPartition const * const domain,
+                           Epetra_FECrsGraph * const sparsity );
+
+  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                     localIndex & numLocalRows,
+                                     globalIndex & numGlobalRows,
+                                     localIndex offset );
+
   virtual void ImplicitStepSetup( real64 const& time_n,
                                   real64 const& dt,
                                   DomainPartition * const domain,
@@ -56,6 +67,28 @@ public:
   virtual void ImplicitStepComplete( real64 const& time_n,
                                      real64 const& dt,
                                      DomainPartition * const domain ) override final;
+
+  virtual void AssembleSystem( DomainPartition * const domain,
+                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                               real64 const time,
+                               real64 const dt ) override;
+
+  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                        real64 const time_n,
+                                        real64 const dt ) override;
+
+  virtual real64
+  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                         DomainPartition *const domain) override { return 1; }
+
+  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                            SystemSolverParameters const * const params ) override;
+
+  virtual void
+  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
@@ -73,6 +106,13 @@ public:
 
   void ApplyFractureFluidCoupling( DomainPartition * const domain,
                                    systemSolverInterface::EpetraBlockSystem & blockSystem );
+
+  void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
+                                                           systemSolverInterface::EpetraBlockSystem & blockSystem );
+
 
   real64 SplitOperatorStep( real64 const& time_n,
                             real64 const& dt,

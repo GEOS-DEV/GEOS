@@ -34,7 +34,7 @@
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
+#include "systemSolverInterface/EpetraBlockSystem.hpp"
 #include "../solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
@@ -42,6 +42,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace systemSolverInterface;
 
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
                                       ManagedGroup * const parent ):
@@ -64,6 +65,10 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
+  systemSolverInterface::EpetraBlockSystem * const system = getLinearSystemRepository();
+//  system->SetBlockID( systemSolverInterface::BlockIDs::displacementBlock, "solid");
+//  system->SetBlockID( systemSolverInterface::BlockIDs::fluidPressureBlock, "fluid");
+
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
@@ -84,6 +89,9 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
 
   solidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
   fluidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
+
+  SetupSystem( domain, blockSystem );
+
 }
 
 void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
@@ -107,6 +115,17 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
 
     });
   });
+
+
+  SolverBase & solidSolver =
+    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+
+  SinglePhaseFlow & fluidSolver =
+    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  fluidSolver.ImplicitStepComplete( time_n, dt, domain );
+  solidSolver.ImplicitStepComplete( time_n, dt, domain );
+
 
 }
 
@@ -156,7 +175,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+
+    // currently the only method is implicit time integration
+    dtReturn = this->NonlinearImplicitStep( time_n,
+                                            dt,
+                                            cycleNumber,
+                                            domain,
+                                            getLinearSystemRepository() );
+
+    // final step for completion of timestep. typically secondary variable updates and cleanup.
+    ImplicitStepComplete( time_n, dtReturn, domain );
   }
   return dtReturn;
 }
@@ -206,14 +235,14 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace + 1.0e-4;
 
-        real64 const K = 2.0e9;
-        real64 const dP_dAper = -K / oldAperture;//aperture[kfe];
+//        real64 const K = 2.0e9;
+//        real64 const dP_dAper = -K / oldAperture;//aperture[kfe];
 
-        std::cout<<"kfe, aperture, oldAperture, deltaP = "<<kfe<<", "<<aperture[kfe]<<", "<<oldAperture<<", "<<deltaFluidPressure[kfe]<<std::endl;
-        std::cout<<"P correction option 1:  K * ( 1 + aperture[kfe] / oldAperture ) = "<<dP_dAper * ( aperture[kfe] - oldAperture )<<std::endl;
-        std::cout<<"P correction option 2:  K * (  oldAperture / aperture[kfe] - 1 ) = "<<K * ( oldAperture / aperture[kfe] - 1 )<<std::endl;
+//        std::cout<<"kfe, aperture, oldAperture, deltaP = "<<kfe<<", "<<aperture[kfe]<<", "<<oldAperture<<", "<<deltaFluidPressure[kfe]<<std::endl;
+//        std::cout<<"P correction option 1:  K * ( 1 + aperture[kfe] / oldAperture ) = "<<dP_dAper * ( aperture[kfe] - oldAperture )<<std::endl;
+//        std::cout<<"P correction option 2:  K * (  oldAperture / aperture[kfe] - 1 ) = "<<K * ( oldAperture / aperture[kfe] - 1 )<<std::endl;
 //        deltaFluidPressure[kfe] += dP_dAper * ( aperture[kfe] - oldAperture );
-        std::cout<<"    new deltaP = "<<deltaFluidPressure[kfe]<<std::endl;
+//        std::cout<<"    new deltaP = "<<deltaFluidPressure[kfe]<<std::endl;
 
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
       }
@@ -492,8 +521,6 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
     ++iter;
   }
 
-  fluidSolver.ImplicitStepComplete( time_n, dt, domain );
-  solidSolver.ImplicitStepComplete( time_n, dt, domain );
   this->ImplicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
@@ -512,6 +539,1234 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
   fluidSolver.SolverStep( time_n, dt, cycleNumber, domain );
 
   return dt;
+}
+
+
+void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
+                                                        localIndex & numLocalRows,
+                                                        globalIndex & numGlobalRows,
+                                                        localIndex offset )
+{
+  SolidMechanicsLagrangianFEM & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  offset = 0;
+//  solidSolver.SetNumRowsAndTrilinosIndices( meshLevel, numLocalRows, numGlobalRows, offset );
+
+}
+
+//void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
+//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
+//{
+//  SolidMechanicsLagrangianFEM const & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+//  SinglePhaseFlow const & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+//
+//  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  NodeManager * const nodeManager = mesh->getNodeManager();
+//  ElementRegionManager * const elemManager = mesh->getElemManager();
+//
+//
+//  localIndex constexpr dim = 3;
+//  localIndex numGhostDisplacementRows  = nodeManager->GetNumberOfGhosts();
+//  localIndex numLocalDisplacementRows  = nodeManager->size()-numGhostDisplacementRows;
+//  globalIndex numGlobalDisplacementRows = 0;
+//
+//  solidSolver.SetNumRowsAndTrilinosIndices( nodeManager,
+//                                            numLocalDisplacementRows,
+//                                            numGlobalDisplacementRows,
+//                                            0 );
+//
+//  numLocalDisplacementRows *= dim;
+//  numGlobalDisplacementRows *= dim;
+//
+//
+//  localIndex numGhostFluidRows  = nodeManager->GetNumberOfGhosts();
+//  localIndex numLocalFluidRows  = nodeManager->size()-numGhostFluidRows;
+//  globalIndex numGlobalFluidRows = 0;
+//
+//  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
+//  fluidSolver.applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+//  {
+//    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
+//    numGhostFluidRows += subRegionGhosts;
+//    numLocalFluidRows += subRegion->size() - subRegionGhosts;
+//  } );
+//
+//  fluidSolver.SetNumRowsAndTrilinosIndices( mesh,
+//                                            numLocalFluidRows,
+//                                            numGlobalFluidRows,
+//                                            0 );
+//
+//
+//
+//
+//
+//  // create epetra map
+//  Epetra_Map * const dispRowMap = blockSystem->SetRowMap( BlockIDs::displacementBlock,
+//                                                          std::make_unique<Epetra_Map>( numGlobalDisplacementRows,
+//                                                                                        numLocalDisplacementRows,
+//                                                                                        0,
+//                                                                                        m_linearSolverWrapper.m_epetraComm ) );
+//
+//
+//  Epetra_Map * const flowRowMap = blockSystem->SetRowMap( BlockIDs::fluidPressureBlock,
+//                                                          std::make_unique<Epetra_Map>( numGlobalFluidRows,
+//                                                                                        numLocalFluidRows,
+//                                                                                        0,
+//                                                                                        m_linearSolverWrapper.m_epetraComm ) );
+//
+//
+//  Epetra_FECrsGraph * const sparsity00 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
+//                                                                   BlockIDs::displacementBlock,
+//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
+//  Epetra_FECrsGraph * const sparsity01 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
+//                                                                   BlockIDs::fluidPressureBlock,
+//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
+//  Epetra_FECrsGraph * const sparsity10 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
+//                                                                   BlockIDs::displacementBlock,
+//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
+//  Epetra_FECrsGraph * const sparsity11 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
+//                                                                   BlockIDs::fluidPressureBlock,
+//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
+//
+//  solidSolver.SetSparsityPattern( domain, sparsity00 );
+//  fluidSolver.SetSparsityPattern( domain, sparsity11 );
+//
+//
+//  arrayView1d<globalIndex const> const & dispDOF = nodeManager->getReference<array1d<globalIndex>>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+//
+//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
+//  {
+//    localIndex const numElems = elementSubRegion->size();
+//    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
+//    arrayView1d<globalIndex const> const & flowDOF = elementSubRegion->getReference<array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+//
+//    for( localIndex k=0 ; k<numElems ; ++k )
+//    {
+//      globalIndex const activeFlowDOF = flowDOF[k];
+//      localIndex const numNodesPerElement = elemsToNodes[k].size();
+//      array1d<globalIndex> activeDisplacementDOF(dim * numNodesPerElement);
+//
+//      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+//      {
+//        for( int d=0 ; d<dim ; ++d )
+//        {
+//          activeDisplacementDOF[a * dim + d] = dim * dispDOF[elemsToNodes[k][a]] + d;
+//        }
+//      }
+//      sparsity01->InsertGlobalIndices( static_cast<int>(activeDisplacementDOF.size()),
+//                                       activeDisplacementDOF.data(),
+//                                       1,
+//                                       &activeFlowDOF );
+//
+//      sparsity10->InsertGlobalIndices( 1,
+//                                       &activeFlowDOF,
+//                                       static_cast<int>(activeDisplacementDOF.size()),
+//                                       activeDisplacementDOF.data() );
+//    }
+//  });
+//
+//  sparsity00->GlobalAssemble();
+//  sparsity11->GlobalAssemble();
+//  sparsity01->GlobalAssemble( *flowRowMap, *dispRowMap );
+//  sparsity10->GlobalAssemble( *dispRowMap, *flowRowMap );
+//
+//  blockSystem->SetMatrix( BlockIDs::displacementBlock,
+//                          BlockIDs::displacementBlock,
+//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity00) );
+//
+//  blockSystem->SetMatrix( BlockIDs::displacementBlock,
+//                          BlockIDs::fluidPressureBlock,
+//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity01) );
+//
+//  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
+//                          BlockIDs::displacementBlock,
+//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity10) );
+//
+//  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
+//                          BlockIDs::fluidPressureBlock,
+//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity00) );
+//
+//
+//}
+
+void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
+                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
+{
+  constexpr int dim=3;
+//  SolidMechanicsLagrangianFEM const & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
+//  SinglePhaseFlow const & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  Epetra_Map const * const dispRowMap = blockSystem->GetRowMap(BlockIDs::displacementBlock);
+  Epetra_Map const * const flowRowMap = blockSystem->GetRowMap(BlockIDs::fluidPressureBlock);
+
+  Epetra_FECrsGraph * const sparsity01 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
+                                                                   BlockIDs::fluidPressureBlock,
+                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
+  Epetra_FECrsGraph * const sparsity10 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
+                                                                   BlockIDs::displacementBlock,
+                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
+
+  arrayView1d<globalIndex const> const & dispDOF = nodeManager->getReference<array1d<globalIndex>>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
+  {
+    localIndex const numElems = elementSubRegion->size();
+    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
+    arrayView1d<globalIndex const> const & flowDOF = elementSubRegion->getReference<array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+
+    for( localIndex k=0 ; k<numElems ; ++k )
+    {
+      globalIndex const activeFlowDOF = flowDOF[k];
+      localIndex const numNodesPerElement = elemsToNodes[k].size();
+      array1d<globalIndex> activeDisplacementDOF(dim * numNodesPerElement);
+
+      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+      {
+        for( int d=0 ; d<dim ; ++d )
+        {
+          activeDisplacementDOF[a * dim + d] = dim * dispDOF[elemsToNodes[k][a]] + d;
+        }
+      }
+      sparsity01->InsertGlobalIndices( static_cast<int>(activeDisplacementDOF.size()),
+                                       activeDisplacementDOF.data(),
+                                       1,
+                                       &activeFlowDOF );
+
+      sparsity10->InsertGlobalIndices( 1,
+                                       &activeFlowDOF,
+                                       static_cast<int>(activeDisplacementDOF.size()),
+                                       activeDisplacementDOF.data() );
+    }
+  });
+
+  sparsity01->GlobalAssemble( *flowRowMap, *dispRowMap );
+  sparsity10->GlobalAssemble( *dispRowMap, *flowRowMap );
+
+  blockSystem->SetMatrix( BlockIDs::displacementBlock,
+                          BlockIDs::fluidPressureBlock,
+                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity01) );
+
+  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
+                          BlockIDs::displacementBlock,
+                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity10) );
+
+}
+
+void HydrofractureSolver::AssembleSystem( DomainPartition * const domain,
+                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                          real64 const time,
+                                          real64 const dt )
+{
+  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  solidSolver.AssembleSystem( domain, blockSystem, time, dt );
+
+  fluidSolver.AssembleSystem( domain, blockSystem, time, dt );
+
+  AssembleForceResidualDerivativeWrtPressure( domain, *blockSystem );
+
+  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, *blockSystem );
+}
+
+void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domain,
+                                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
+                                                   real64 const time_n,
+                                                   real64 const dt )
+{
+  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  solidSolver.ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+  fluidSolver.ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+
+
+
+  Epetra_FEVector * const rhs0 = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
+  Epetra_FEVector * const rhs1 = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  Epetra_FECrsMatrix * const matrix00 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+                                                               systemSolverInterface::BlockIDs::displacementBlock );
+
+  Epetra_FECrsMatrix * const matrix01 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  Epetra_FECrsMatrix * const matrix10 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
+                                                               systemSolverInterface::BlockIDs::displacementBlock );
+
+  Epetra_FECrsMatrix * const matrix11 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
+                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"matrix00"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  matrix00->Print(std::cout);
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"matrix01"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  matrix01->Print(std::cout);
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"matrix10"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  matrix10->Print(std::cout);
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"matrix11"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  matrix11->Print(std::cout);
+
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"residual0"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  rhs0->Print(std::cout);
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"residual1"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  rhs1->Print(std::cout);
+
+
+}
+
+
+void
+HydrofractureSolver::
+AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+                                            systemSolverInterface::EpetraBlockSystem & blockSystem )
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+
+  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  fext = {0,0,0};
+
+
+
+  arrayView1d<globalIndex> const &
+  nodeDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+
+
+  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
+  Epetra_FECrsMatrix * const matrix = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+                                                             systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  matrix->Scale(0.0);
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+
+    arrayView1d<globalIndex> const &
+    faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+
+    if( subRegion->hasView("pressure") )
+    {
+
+      arrayView1d<real64> const & aperture = subRegion->getElementAperture();
+
+      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+
+      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+      arrayView1d<real64> const & area = subRegion->getElementArea();
+      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+
+
+      forall_in_range<serialPolicy>( 0,
+                                   subRegion->size(),
+                                   GEOSX_LAMBDA ( localIndex const kfe )
+      {
+
+        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+        Nbar -= faceNormal[elemsToFaces[kfe][1]];
+        Nbar.Normalize();
+
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const kf1 = elemsToFaces[kfe][1];
+        localIndex const numNodesPerFace=facesToNodes[kf0].size();
+        localIndex const * const nodelist0 = facesToNodes[kf0];
+        localIndex const * const nodelist1 = facesToNodes[kf1];
+
+
+        globalIndex rowDOF[24];
+        real64 nodeRHS[24];
+        stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
+        globalIndex colDOF = faceElementDofNumber[kfe];
+
+
+        real64 const Ja = area[kfe] / numNodesPerFace;
+
+        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
+        R1Tensor nodalForce(Nbar);
+        nodalForce *= nodalForceMag;
+
+
+        for( localIndex kf=0 ; kf<2 ; ++kf )
+        {
+          localIndex const faceIndex = elemsToFaces[kfe][kf];
+          localIndex const * const faceToNodes = facesToNodes[faceIndex];
+
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+          {
+            for( int i=0 ; i<3 ; ++i )
+            {
+              rowDOF[3*a+i] = 3*nodeDofNumber[faceToNodes[a]]+i;
+
+              nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
+              fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
+
+              dRdP(3*a+i,0) = Ja * Nbar[i] * pow(-1,kf);
+            }
+          }
+          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodesPerFace*3), rowDOF, nodeRHS );
+
+          matrix->SumIntoGlobalValues( integer_conversion<int>( numNodesPerFace * 3),
+                                       rowDOF,
+                                       1,
+                                       &colDOF,
+                                       dRdP.data() );
+        }
+      });
+    }
+  });
+}
+
+
+void
+HydrofractureSolver::
+AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
+                                                    systemSolverInterface::EpetraBlockSystem & blockSystem )
+{
+  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+
+  string const constitutiveName = constitutiveManager->GetGroup(fluidSolver.fluidIndex())->getName();
+
+  Epetra_FECrsMatrix * const matrix10 = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
+                                                               systemSolverInterface::BlockIDs::displacementBlock );
+
+  matrix10->Scale(0.0);
+
+  elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
+                                                                   [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegion const * const region,
+                                                                         FaceElementSubRegion const * const subRegion )
+  {
+
+
+    dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+    dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
+
+    arrayView1d<integer const>     const & elemGhostRank = subRegion->GhostRank();
+    arrayView1d<globalIndex const> const & dofNumber     = subRegion->getReference<array1d<globalIndex>>(SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+
+    arrayView1d<globalIndex const> const &
+    nodalDofNumber = nodeManager->getReference<array1d<globalIndex>>( viewKeyStruct::
+                                                                      globalDofNumberString);
+
+    arrayView2d<real64 const> const &
+    dens = constitutiveRelation->getReference<array2d<real64>>(SingleFluidBase::viewKeyStruct::densityString);
+
+    arrayView1d<real64 const> const & aperture      = subRegion->getElementAperture();
+    arrayView1d<real64 const> const & area      = subRegion->getElementArea();
+
+    arrayView2d<localIndex const> const & elemsToFaces = subRegion->faceList();
+    array1d<array1d<localIndex > > const & facesToNodes = faceManager->nodeList();
+
+    arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      if (elemGhostRank[ei] < 0)
+      {
+        real64 localAccum, localAccumJacobian;
+        globalIndex const elemDOF = dofNumber[ei];
+
+        localIndex const numNodesPerFace = facesToNodes[elemsToFaces[ei][0]].size();
+
+        real64 const dRdAper = dens[ei][0] * area[ei];
+
+
+        globalIndex nodeDOF[8*3];
+
+        R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
+        Nbar -= faceNormal[elemsToFaces[ei][1]];
+        Nbar.Normalize();
+
+        stackArray1d<real64, 24> dRdU(2*numNodesPerFace*3);
+
+        for( localIndex kf=0 ; kf<2 ; ++kf )
+        {
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+          {
+            for( int i=0 ; i<3 ; ++i )
+            {
+              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*nodalDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] +i;
+              real64 const dAper_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+              dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+            }
+          }
+        }
+        matrix10->SumIntoGlobalValues( 1,
+                                       &elemDOF,
+                                       integer_conversion<int>(2*numNodesPerFace*3),
+                                       nodeDOF,
+                                       dRdU.data() );
+
+      }
+    } );
+  } );
+
+
+}
+void
+HydrofractureSolver::
+ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                     real64 const scalingFactor,
+                     DomainPartition * const domain )
+{
+  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+
+  solidSolver.ApplySystemSolution( blockSystem, 1.0, domain );
+  fluidSolver.ApplySystemSolution( blockSystem, 1.0, domain );
+
+  this->UpdateDeformationForCoupling(domain);
+
+}
+
+}
+#include "EpetraExt_MatrixMatrix.h"
+#include "Thyra_OperatorVectorClientSupport.hpp"
+#include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"
+#include "Thyra_AztecOOLinearOpWithSolve.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
+#include "Thyra_EpetraLinearOp.hpp"
+#include "Thyra_EpetraLinearOpBase.hpp"
+#include "Thyra_LinearOpBase.hpp"
+#include "Thyra_LinearOpWithSolveBase.hpp"
+#include "Thyra_LinearOpWithSolveFactoryHelpers.hpp"
+#include "Thyra_DefaultBlockedLinearOp.hpp"
+#include "Thyra_DefaultIdentityLinearOp.hpp"
+#include "Thyra_DefaultZeroLinearOp.hpp"
+#include "Thyra_DefaultLinearOpSource.hpp"
+#include "Thyra_DefaultPreconditioner.hpp"
+#include "Thyra_EpetraThyraWrappers.hpp"
+#include "Thyra_PreconditionerFactoryHelpers.hpp"
+#include "Thyra_VectorStdOps.hpp"
+#include "Thyra_PreconditionerFactoryHelpers.hpp"
+#include "Thyra_DefaultInverseLinearOp.hpp"
+#include "Thyra_PreconditionerFactoryBase.hpp"
+#include "Thyra_get_Epetra_Operator.hpp"
+#include "Thyra_MLPreconditionerFactory.hpp"
+
+
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_RCP.hpp"
+
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
+namespace geosx
+{
+
+void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
+                  Epetra_FEVector * m_rhs[2],
+                  std::string nametag )
+{
+   int rank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+   double matnorm[2][2];
+   double rhsnorm[2];
+
+   matnorm[0][0] = m_matrix[0][0]->NormInf();
+   matnorm[0][1] = m_matrix[0][1]->NormInf();
+   matnorm[1][0] = m_matrix[1][0]->NormInf();
+   matnorm[1][1] = m_matrix[1][1]->NormInf();
+
+   m_rhs[0]->NormInf(&(rhsnorm[0]));
+   m_rhs[1]->NormInf(&(rhsnorm[1]));
+
+   if( rank==0 )
+   {
+     printf("SolverBase :: Linear system inf-norms (%s)\n",nametag.c_str());
+     printf("           ::   | %.1e %.1e | = | %.1e |\n",matnorm[0][0],matnorm[0][1],rhsnorm[0]);
+     printf("           ::   | %.1e %.1e |   | %.1e |\n",matnorm[1][0],matnorm[1][1],rhsnorm[1]);
+   }
+}
+
+
+void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
+                                       SystemSolverParameters const * const paramsC )
+{
+
+  SystemSolverParameters * const params = const_cast<SystemSolverParameters *>(paramsC);
+
+  using namespace Teuchos;
+  using namespace Thyra;
+
+  Epetra_FECrsMatrix * m_matrix[2][2];
+  Epetra_FEVector * m_rhs[2];
+  Epetra_FEVector * m_solution[2];
+
+  m_rhs[0] = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
+  m_rhs[1] = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  m_solution[0] = blockSystem->GetSolutionVector( systemSolverInterface::BlockIDs::displacementBlock );
+  m_solution[1] = blockSystem->GetSolutionVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  m_matrix[0][0] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+                                                               systemSolverInterface::BlockIDs::displacementBlock );
+
+  m_matrix[0][1] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  m_matrix[1][0] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
+                                                               systemSolverInterface::BlockIDs::displacementBlock );
+
+  m_matrix[1][1] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
+                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+    // SCHEME CHOICES
+    //
+    // there are several flags to control solver behavior.
+    // these should be compared in a scaling study.
+    //
+    // 1. whether to use inner solvers or just the
+    //    sub-block preconditioners directly. false
+    //    is probably better.
+    // 2. whether to use a block diagonal or a full
+    //    block triangular preconditioner.  false is
+    //    probably better.
+    // 3. whether to perform an explicit scaling
+    //    of the linear system before solving.  note
+    //    that the matrix and rhs are modified in place
+    //    by this operation.  true is probably better.
+    // 4. whether to use BiCGstab or GMRES for the
+    //    krylov solver.  GMRES is generally more robust,
+    //    BiCGstab sometimes shows better parallel performance.
+    //    false is probably better.
+
+  const bool use_inner_solver  = params->m_useInnerSolver;
+  const int use_scaling        = params->m_scalingOption;  // no longer just row
+  const bool use_bicgstab      = params->m_useBicgstab;
+  const bool use_diagonal_prec = false;
+
+
+    // DEBUGGING
+    // Write out unscaled linear system to matlab
+
+    // TODO: Josh: I noticed we seem to be storing a lot of
+    // zero-valued entries in our sparsity pattern.  We should
+    // follow up on this to make sure we are not over-allocating
+    // space in our matrices.
+  /*
+  {
+    EpetraExt::RowMatrixToMatlabFile("umatrix00.dat",*epetraSystem.m_matrix[0][0]);
+    EpetraExt::RowMatrixToMatlabFile("umatrix01.dat",*epetraSystem.m_matrix[0][1]);
+    EpetraExt::RowMatrixToMatlabFile("umatrix10.dat",*epetraSystem.m_matrix[1][0]);
+    EpetraExt::RowMatrixToMatlabFile("umatrix11.dat",*epetraSystem.m_matrix[1][1]);
+    EpetraExt::MultiVectorToMatlabFile("urhs0.dat",*epetraSystem.m_rhs[0]);
+    EpetraExt::MultiVectorToMatlabFile("urhs1.dat",*epetraSystem.m_rhs[1]);
+  }
+  */
+
+
+    // ROW & COLUMN SCALING
+    //
+    // Scale the linear system with row and column scaling
+    // matrices R and C.  The resulting linear system is
+    //  (R.A.C).(Cinv.x) = R.b
+    // We use the iterative method of Ruiz (2001) to
+    // repeatedly update R and C until the desired scaling
+    // is found. Note also that C must be saved to later
+    // compute the true solution from the temporary solution
+    //  x = C.x' where x' = Cinv.x
+
+    // The diagonal scaling matrices are stored as four
+    // vectors, one for each combination of row/column and
+    // block 0/block 1.  We store them in a 2x2 array as
+    // [ R0 C0 ;
+    //   R1 C1 ]
+
+    // note that we can extend this methodology to larger
+    // block systems by storing a (n_blocks x 2) array:
+    // [ R0 C0 ;
+    //   R1 C1 ;
+    //   .. ..
+    //   Rn Cn ]
+
+  const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
+  enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
+
+  RCP<Epetra_Vector> scaling   [n_blocks][2];  // complete scaling
+  RCP<Epetra_Vector> scaling_k [n_blocks][2];  // scaling at iteration k
+
+  if(use_scaling == 2)
+  {
+    // first print unscaled norms
+
+//    if(params->m_verbose >= 2)
+//    {
+//      print_norms(epetraSystem,"unscaled");
+//    }
+
+    // allocate storage for our scaling vectors, and initialize
+    // them to identity scalings (R=C=I).
+
+    for(unsigned b=0; b<n_blocks; ++b)
+    {
+      scaling[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
+      scaling[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
+
+      scaling[b][ROW]->PutScalar(1.0);
+      scaling[b][COL]->PutScalar(1.0);
+
+      scaling_k[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
+      scaling_k[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
+    }
+
+    // begin scaling iterations
+
+    for(unsigned k=0; k<30; ++k)
+    {
+    // get row and column max norms for scaling
+
+      for(unsigned a=0; a<n_blocks; ++a)
+      {
+
+        scaling_k[a][ROW]->PutScalar(0.0); // clear
+        scaling_k[a][COL]->PutScalar(0.0); // clear
+
+        Epetra_Vector tmp_row(m_matrix[a][a]->RangeMap());
+        Epetra_Vector tmp_col(m_matrix[a][a]->DomainMap());
+
+        for(unsigned b=0; b<n_blocks; ++b)
+        {
+          m_matrix[a][b]->InvRowMaxs(tmp_row); // 1/row_norms for block
+          m_matrix[b][a]->InvColMaxs(tmp_col); // 1/col_norms for block
+
+          tmp_row.Reciprocal(tmp_row); // row_norms for block
+          tmp_col.Reciprocal(tmp_col); // col_norms for block
+
+          scaling_k[a][ROW]->Update(1.0,tmp_row,1.0);  // add across blocks (A and B) or (C and D)
+          scaling_k[a][COL]->Update(1.0,tmp_col,1.0);  // add across blocks (A and C) or (B and D)
+
+    // note this last step defines a weird norm, i.e. the sum inf_norm(A)+inf_norm(B)
+    // rather than inf_norm([A B]).  the first is just easier to compute using
+    // built in operations.  this should not make much of a difference in terms
+    // of actual performance, as we're just trying to get a reasonable scaling.
+        }
+
+        for(int i=0; i<scaling_k[a][ROW]->MyLength(); ++i)
+           (*scaling_k[a][ROW])[i] = 1./sqrt((*scaling_k[a][ROW])[i]);  // use 1/sqrt(norm) for scaling
+        for(int i=0; i<scaling_k[a][COL]->MyLength(); ++i)
+           (*scaling_k[a][COL])[i] = 1./sqrt((*scaling_k[a][COL])[i]);  // use 1/sqrt(norm) for scaling
+
+        scaling[a][ROW]->Multiply(1.0,*scaling[a][ROW],*scaling_k[a][ROW],0.0); // save total row scaling over all iterations
+        scaling[a][COL]->Multiply(1.0,*scaling[a][COL],*scaling_k[a][COL],0.0); // save total col scaling over all iterations
+      }
+
+    // actually scale matrix A(k) = R(k).A(k-1).C(k)
+    // also scale rhs b(k) = R(k)*b(k-1)
+    // will scale solution x = C*x' after solve
+
+      for(unsigned a=0; a<n_blocks; ++a)
+      {
+        for(unsigned b=0; b<n_blocks; ++b)
+        {
+          m_matrix[a][b]->LeftScale(*scaling_k[a][ROW]);
+          m_matrix[a][b]->RightScale(*scaling_k[b][COL]);
+        }
+        m_rhs[a]->Multiply(1.0,*scaling_k[a][ROW],*m_rhs[a],0.0);
+      }
+
+    // check for convergence in desired row and column norms
+    // and print info in verbose mode > 0
+
+      double convergence = 0.0;
+      double norm_threshold = 0.2;
+
+      for(unsigned a=0; a<n_blocks; ++a)
+      for(unsigned b=0; b<2; ++b)
+      {
+         double tmp[1];
+         scaling_k[a][b]->Reciprocal(*scaling_k[a][b]);
+         scaling_k[a][b]->NormInf(&(tmp[0]));
+         tmp[0] = abs(1-pow(tmp[0],2));
+         convergence = std::max(convergence,tmp[0]);
+      }
+
+      //if( partition.m_rank == 0 && params->m_verbose >= 2 )
+      {
+        if(k==0)
+        {
+          printf("SolverBase :: Re-scaling matrix \n");
+          printf("           ::   %d ... %.1e\n",k,convergence);
+        }
+        else
+          printf("           ::   %d ... %.1e\n",k,convergence);
+      }
+
+      if(convergence < norm_threshold && k > 1) break;
+    }
+
+//    if(params->m_verbose >= 2)
+//    {
+//      print_norms(epetraSystem,"scaled");
+//    }
+  } // end scaling
+  else if( use_scaling==1 )
+  {
+
+    // perform an explicit row scaling of the linear system,
+    // R*A*x = R*b, where R is a diagonal scaling matrix.
+    // we will use inverse row sums for the scaling.
+
+    for(unsigned b=0; b<2; ++b)
+    {
+      Epetra_Vector scale_one(m_matrix[b][b]->RowMap());
+      Epetra_Vector scale_two(m_matrix[b][b]->RowMap());
+
+      Epetra_Vector scale_one_inv(m_matrix[b][b]->RowMap());
+      Epetra_Vector scale_two_inv(m_matrix[b][b]->RowMap());
+
+      m_matrix[b][0]->InvRowSums(scale_one_inv);
+      m_matrix[b][1]->InvRowSums(scale_two_inv);
+      scale_one.Reciprocal(scale_one_inv);
+      scale_two.Reciprocal(scale_two_inv);  // not ideal, could choke if 1/0 or 1/NaN appears
+      scale_one.Update(1.0,scale_two,1.0);
+      scale_one_inv.Reciprocal(scale_one);
+
+      for(unsigned c=0; c<2; ++c)
+      {
+        m_matrix[b][c]->LeftScale(scale_one_inv);
+      }
+
+      Epetra_MultiVector tmp (*m_rhs[b]);
+      m_rhs[b]->Multiply(1.0,scale_one_inv,tmp,0.0);
+    }
+  }
+
+
+    // set initial guess to zero.  this is not strictly
+    // necessary but is good for comparing solver performance.
+
+  m_solution[0]->PutScalar(0.0);
+  m_solution[1]->PutScalar(0.0);
+
+    // The standard AMG aggregation strategy based on
+    // the system matrix A can struggle when using
+    // grids with large element aspect ratios.  To fix
+    // this, we can instead build the AMG hierarchy
+    // using an alternative matrix L built using information
+    // about nodal positions.  Once the aggregates are
+    // determined, A is then used to construct the actual
+    // coarse / fine scale operations. For more details
+    // see: ML USER GUIDE V5, sec. 6.4.12, p. 33
+
+    // Here, we simply extract three arrays of nodal
+    // positions for the locally owned nodes, for later use.
+    // For vector-valued problems (with multiple dofs per node)
+    // ML is going to assume degrees of freedom are ordered as
+    // [u_x_0, u_y_0, u_z_0, u_x_1, u_y_1, u_z_1, ... ]
+    // where dof components are grouped "node-wise."
+
+#define AGGREGATION 0
+#if     AGGREGATION==1
+
+  Array1dT<double> x_coord;
+  Array1dT<double> y_coord; // set to to 0 for 1D problems
+  Array1dT<double> z_coord; // set to to 0 for 2D problems
+
+  if(params->m_useMLPrecond)
+  {
+    const iArray1d & is_ghost = domain.m_feNodeManager.GetFieldData<FieldInfo::ghostRank>();
+    //iArray1d const & trilinos_index = domain.m_feNodeManager.GetFieldData<int>(m_trilinosIndexStr);
+    const Array1dT<R1Tensor> & X = domain.m_feNodeManager.GetFieldData<FieldInfo::referencePosition>();
+    x_coord.resize(domain.m_feNodeManager.m_numNodes);
+    y_coord.resize(domain.m_feNodeManager.m_numNodes);
+    z_coord.resize(domain.m_feNodeManager.m_numNodes);
+    localIndex b=0;
+    for( auto a=0u ; a<domain.m_feNodeManager.m_numNodes ; ++a )
+    {
+      if(is_ghost[a] < 0)
+      {
+        realT const * const X_ref = X[a].Data();
+
+        x_coord[b] = X_ref[0];// + 0.1*((double) rand() / (RAND_MAX));
+        y_coord[b] = X_ref[1];// + 0.1*((double) rand() / (RAND_MAX));
+        z_coord[b] = X_ref[2];// + 0.1*((double) rand() / (RAND_MAX));
+        ++b;
+      }
+    }
+  }
+
+#endif
+
+    // we want to use thyra to wrap epetra operators and vectors
+    // for individual blocks.  this is an ugly conversion, but
+    // it is basically just window dressing.
+    //
+    // note the use of Teuchos::RCP reference counted pointers.
+    // The general syntax is usually one of:
+    //
+    //   RCP<T> Tptr = rcp(new T)
+    //   RCP<T> Tptr = nonMemberConstructor();
+    //   RCP<T> Tptr (t_ptr,false)
+    //
+    // where "false" implies the RCP does not own the object and
+    // should not attempt to delete it when finished.
+
+
+  RCP<const Thyra::LinearOpBase<double> >  matrix_block[2][2];
+  RCP<Thyra::MultiVectorBase<double> >     lhs_block[2];
+  RCP<Thyra::MultiVectorBase<double> >     rhs_block[2];
+
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  for(unsigned i=0; i<2; ++i)
+  for(unsigned j=0; j<2; ++j)
+  {
+    RCP<Epetra_Operator> mmm (&*m_matrix[i][j],false);
+    matrix_block[i][j] = Thyra::epetraLinearOp(mmm);
+  }
+
+
+  for(unsigned i=0; i<2; ++i)
+  {
+    RCP<Epetra_MultiVector> lll (&*m_solution[i],false);
+    RCP<Epetra_MultiVector> rrr (&*m_rhs[i],false);
+
+    lhs_block[i] = Thyra::create_MultiVector(lll,matrix_block[i][i]->domain());
+    rhs_block[i] = Thyra::create_MultiVector(rrr,matrix_block[i][i]->range());
+  }
+
+    // now use thyra to create an operator representing
+    // the full block 2x2 system
+
+  RCP<const Thyra::LinearOpBase<double> > matrix = Thyra::block2x2(matrix_block[0][0],
+                                                                   matrix_block[0][1],
+                                                                   matrix_block[1][0],
+                                                                   matrix_block[1][1]);
+
+    // creating a representation of the blocked
+    // rhs is a little uglier. (todo: check if there is
+    // a cleaner way to do this.)
+
+  RCP<Thyra::ProductMultiVectorBase<double> > rhs;
+  {
+    Teuchos::Array<RCP<Thyra::MultiVectorBase<double> > > mva;
+    Teuchos::Array<RCP<const Thyra::VectorSpaceBase<double> > > mvs;
+
+    for(unsigned i=0; i<2; ++i)
+    {
+      mva.push_back(rhs_block[i]);
+      mvs.push_back(rhs_block[i]->range());
+    }
+
+    RCP<const Thyra::DefaultProductVectorSpace<double> > vs = Thyra::productVectorSpace<double>(mvs);
+
+    rhs = Thyra::defaultProductMultiVector<double>(vs,mva);
+  }
+
+    // do the identical operation for the lhs
+
+  RCP<Thyra::ProductMultiVectorBase<double> > lhs;
+
+  {
+    Teuchos::Array<RCP<Thyra::MultiVectorBase<double> > > mva;
+    Teuchos::Array<RCP<const Thyra::VectorSpaceBase<double> > > mvs;
+
+    for(unsigned i=0; i<2; ++i)
+    {
+      mva.push_back(lhs_block[i]);
+      mvs.push_back(lhs_block[i]->range());
+    }
+
+    RCP<const Thyra::DefaultProductVectorSpace<double> > vs = Thyra::productVectorSpace<double>(mvs);
+
+    lhs = Thyra::defaultProductMultiVector<double>(vs,mva);
+  }
+
+
+    // for the preconditioner, we need two approximate inverses,
+    // one for the (0,0) block and one for the approximate
+    // schur complement.  for now, we will use the (1,1) block
+    // as our schur complement approximation, though we should
+    // explore better approaches later.
+
+    // we store both "sub operators" in a 1x2 array:
+
+  RCP<const Thyra::LinearOpBase<double> > sub_op[2];
+
+    // each implicit "inverse" is based on an inner krylov solver,
+    // with their own sub-preconditioners.  this leads to a very
+    // accurate approximation of the inverse operator, but can be
+    // overly expensive.  the other option is to ditch the inner
+    // krylov solver, and just use the sub-preconditioners directly.
+
+    // the implicit inverse for each diagonal block is built in
+    // three steps
+    //   1.  define solver parameters
+    //   2.  build a solver factory
+    //   3.  build the inner solver operator
+
+
+  for(unsigned i=0; i<2; ++i) // loop over diagonal blocks
+  {
+    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("solver_list"),true);
+
+      list->set("Linear Solver Type","AztecOO");
+      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
+      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Tolerance",1e-1*params->m_krylovTol);
+      if(use_bicgstab)
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","BiCGStab");
+      else
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
+      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);//int(params->m_verbose));
+
+      if(params->m_useMLPrecond && i==0 )
+      {
+        if( params->m_verbose>=2 )
+        {
+          std::cout<< "SolverBase :: Using ML preconditioner for block " << i << i <<std::endl;
+        }
+
+        list->set("Preconditioner Type","ML");
+        list->sublist("Preconditioner Types").sublist("ML").set("Base Method Defaults","SA");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("PDE equations",(i==0?3:1));
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","block Gauss-Seidel");
+        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Gauss-Seidel");
+        //list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: type","Chebyshev");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("ML output", 0);
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("aggregation: type","Uncoupled");
+        list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("smoother: sweeps",3);
+
+#if AGGREGATION==1
+          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("x-coordinates",x_coord.data());
+          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("y-coordinates",y_coord.data());
+          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("z-coordinates",z_coord.data());
+          list->sublist("Preconditioner Types").sublist("ML").sublist("ML Settings").set("null space: type",(i==0?"elasticity from coordinates":"default vectors"));
+#endif
+
+      }
+      else
+      {
+        if( params->m_verbose>=2 )
+        {
+          std::cout<< "SolverBase :: Using ILU preconditioner for block " << i << i <<std::endl;
+        }
+
+        list->set("Preconditioner Type","Ifpack");
+        list->sublist("Preconditioner Types").sublist("Ifpack").set("Prec Type","ILU");
+      }
+
+    Stratimikos::DefaultLinearSolverBuilder builder;
+
+      builder.setParameterList(list);
+
+    if(use_inner_solver)
+    {
+      RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > strategy = createLinearSolveStrategy(builder);
+
+      //if(i==0)
+        sub_op[i] = Thyra::inverse(*strategy,matrix_block[i][i]);
+      //else
+      //{
+      //  RCP<const Thyra::LinearOpBase<double> > BAinvBt = Thyra::multiply(matrix_block[0][1],sub_op[0],matrix_block[1][0]);
+      //  RCP<const Thyra::LinearOpBase<double> > schur = Thyra::add(matrix_block[1][1],Thyra::scale(-1.0,BAinvBt));
+      //  sub_op[i] = Thyra::inverse(*strategy,schur);
+      //}
+    }
+    else
+    {
+      RCP<const Thyra::PreconditionerFactoryBase<double> > strategy = createPreconditioningStrategy(builder);
+      RCP<Thyra::PreconditionerBase<double> > tmp;
+
+      //if(i==0)
+        tmp = prec(*strategy,matrix_block[i][i]);
+      //else
+      //  tmp = prec(*strategy,SchurEstimate);
+
+     sub_op[i] = tmp->getUnspecifiedPrecOp();
+    }
+  }
+
+
+    // create zero operators for off diagonal blocks
+
+  RCP<const Thyra::LinearOpBase<double> > zero_01
+    = rcp(new Thyra::DefaultZeroLinearOp<double>(matrix_block[0][0]->range(),
+                                                 matrix_block[1][1]->domain()));
+
+  RCP<const Thyra::LinearOpBase<double> > zero_10
+    = rcp(new Thyra::DefaultZeroLinearOp<double>(matrix_block[1][1]->range(),
+                                                 matrix_block[0][0]->domain()));
+
+    // now build the block preconditioner
+
+  RCP<const Thyra::LinearOpBase<double> > preconditioner;
+
+  if(use_diagonal_prec)
+  {
+    preconditioner = Thyra::block2x2(sub_op[0],zero_01,zero_10,sub_op[1]);
+  }
+  else
+  {
+    RCP<const Thyra::LinearOpBase<double> > eye_00
+      = Teuchos::rcp(new Thyra::DefaultIdentityLinearOp<double>(matrix_block[0][0]->range()));
+
+    RCP<const Thyra::LinearOpBase<double> > eye_11
+      = Teuchos::rcp(new Thyra::DefaultIdentityLinearOp<double>(matrix_block[1][1]->range()));
+
+    RCP<const Thyra::LinearOpBase<double> > mAinvB1, mB2Ainv;
+
+    mAinvB1 = Thyra::scale(-1.0, Thyra::multiply(sub_op[0],matrix_block[0][1]) );
+    mB2Ainv = Thyra::scale(-1.0, Thyra::multiply(matrix_block[1][0],sub_op[0]) );
+
+    RCP<const Thyra::LinearOpBase<double> > Linv,Dinv,Uinv,Eye;
+
+    //Eye = Thyra::block2x2(eye_00,zero_01,zero_10,eye_11);
+    //Linv = Thyra::block2x2(eye_00,zero_01,mB2Ainv,eye_11);
+    Dinv = Thyra::block2x2(sub_op[0],zero_01,zero_10,sub_op[1]);
+    Uinv = Thyra::block2x2(eye_00,mAinvB1,zero_10,eye_11);
+
+    //preconditioner = Eye;
+    //preconditioner = Dinv;
+    preconditioner = Thyra::multiply(Uinv,Dinv);
+    //preconditioner = Thyra::multiply(Dinv,Linv);
+    //preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
+  }
+
+
+    // define solver strategy for blocked system. this is
+    // similar but slightly different from the sub operator
+    // construction, since now we have a user defined preconditioner
+
+  {
+    RCP<Teuchos::ParameterList> list = rcp(new Teuchos::ParameterList("list"),true);
+
+      list->set("Linear Solver Type","AztecOO");
+      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Max Iterations",params->m_maxIters);
+      list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").set("Tolerance",params->m_krylovTol);
+      if(use_bicgstab)
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","BiCGStab");
+      else
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Aztec Solver","GMRES");
+
+      if( params->m_verbose>=3 )
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",1);
+      else
+        list->sublist("Linear Solver Types").sublist("AztecOO").sublist("Forward Solve").sublist("AztecOO Settings").set("Output Frequency",0);
+
+      list->set("Preconditioner Type","None"); // will use user-defined P
+
+    Stratimikos::DefaultLinearSolverBuilder builder;
+
+      builder.setParameterList(list);
+
+    RCP<const Thyra::LinearOpWithSolveFactoryBase<double> > strategy = createLinearSolveStrategy(builder);
+
+    RCP<Thyra::LinearOpWithSolveBase<double> > solver = strategy->createOp();
+
+    Thyra::initializePreconditionedOp<double>(*strategy,
+                                               matrix,
+                                               Thyra::rightPrec<double>(preconditioner),
+                                               solver.ptr());
+
+
+        // JAW: check "true" residual before solve.
+        //      should remove after debugging because this is potentially slow
+        //      and should just use iterative residual
+
+    RCP<Thyra::VectorBase<double> > Ax = Thyra::createMember(matrix->range());
+    RCP<Thyra::VectorBase<double> > r  = Thyra::createMember(matrix->range());
+    {
+      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
+      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
+      params->m_KrylovResidualInit = Thyra::norm(*r);
+    }
+
+    // !!!! Actual Solve !!!!
+
+    Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
+    params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
+
+        // JAW: check "true" residual after
+        //      should remove after debugging because this is potentially slow
+
+    {
+      Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
+      Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
+      params->m_KrylovResidualFinal = Thyra::norm(*r);
+    }
+
+    // write a solver profile file
+
+    if( params->m_verbose>=3 )
+    {
+      FILE* fp = fopen("solver_profile.txt","a");
+      fprintf(fp,"%d %.9e %.9e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
+      fclose(fp);
+    }
+
+    // apply column scaling C to get true solution x from x' = Cinv*x
+
+    if(use_scaling==2)
+    {
+      for(unsigned b=0; b<n_blocks; ++b)
+        m_solution[b]->Multiply(1.0,*scaling[b][COL],*m_solution[b],0.0);
+    }
+  }
+
+    // put 00 matrix back to unscaled form
+
+  if(use_scaling==2)
+  {
+    scaling[0][ROW]->Reciprocal(*scaling[0][ROW]);
+    scaling[0][COL]->Reciprocal(*scaling[0][COL]);
+
+    m_matrix[0][0]->LeftScale(*scaling[0][ROW]);
+    m_matrix[0][0]->RightScale(*scaling[0][COL]);
+  }
+
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"solution0"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  m_solution[0]->Print(std::cout);
+
+  std::cout<<"***********************************************************"<<std::endl;
+  std::cout<<"solution1"<<std::endl;
+  std::cout<<"***********************************************************"<<std::endl;
+  m_solution[1]->Print(std::cout);
+
 }
 
 
