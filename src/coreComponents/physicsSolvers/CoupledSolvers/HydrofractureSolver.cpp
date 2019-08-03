@@ -50,8 +50,9 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_solidSolverName(),
   m_flowSolverName(),
   m_couplingTypeOptionString("FixedStress"),
-  m_couplingTypeOption()
-
+  m_couplingTypeOption(),
+  m_solidSolver(nullptr),
+  m_flowSolver(nullptr)
 {
   RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -65,10 +66,6 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
-  systemSolverInterface::EpetraBlockSystem * const system = getLinearSystemRepository();
-//  system->SetBlockID( systemSolverInterface::BlockIDs::displacementBlock, "solid");
-//  system->SetBlockID( systemSolverInterface::BlockIDs::fluidPressureBlock, "fluid");
-
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
@@ -81,14 +78,11 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
                                              DomainPartition * const domain,
                                              systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
-  SolverBase & solidSolver =
-    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
+  m_solidSolver = this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>();
+  m_flowSolver = this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>();
 
-  SinglePhaseFlow & fluidSolver =
-    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
-  fluidSolver.ImplicitStepSetup( time_n, dt, domain, blockSystem );
+  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, blockSystem );
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, blockSystem );
 
   SetupSystem( domain, blockSystem );
 
@@ -116,15 +110,8 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
     });
   });
 
-
-  SolverBase & solidSolver =
-    *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-
-  SinglePhaseFlow & fluidSolver =
-    *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  fluidSolver.ImplicitStepComplete( time_n, dt, domain );
-  solidSolver.ImplicitStepComplete( time_n, dt, domain );
+  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
 
 
 }
@@ -412,14 +399,8 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
   real64 dtReturn = dt;
   real64 dtReturnTemporary = dtReturn;
 
-  SolverBase &
-  solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-
-  SinglePhaseFlow &
-  fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  fluidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-  solidSolver.ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
   this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
 
 
@@ -433,32 +414,32 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
     if (iter == 0)
     {
       // reset the states of all slave solvers if any of them has been reset
-      fluidSolver.ResetStateToBeginningOfStep( domain );
-      solidSolver.ResetStateToBeginningOfStep( domain );
+      m_flowSolver->ResetStateToBeginningOfStep( domain );
+      m_solidSolver->ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
     if (this->verboseLevel() >= 1)
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
     }
-//    dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
+//    dtReturnTemporary = m_fluidSolver->NonlinearImplicitStep( time_n,
 //                                                          dtReturn,
 //                                                          cycleNumber,
 //                                                          domain,
 //                                                          getLinearSystemRepository() );
 
     // call assemble to fill the matrix and the rhs
-    fluidSolver.AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
+    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
 
     // apply boundary conditions to system
-    fluidSolver.ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+    m_flowSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
 
     // call the default linear solver on the system
-    fluidSolver.SolveSystem( getLinearSystemRepository(),
+    m_flowSolver->SolveSystem( getLinearSystemRepository(),
                  getSystemSolverParameters() );
 
     // apply the system solution to the fields/variables
-    fluidSolver.ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
 
 
     if (dtReturnTemporary < dtReturn)
@@ -468,7 +449,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
       continue;
     }
 
-//    if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+//    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
 //    {
 //      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 //      break;
@@ -478,30 +459,30 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
     {
       GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
     }
-//    dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
+//    dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n,
 //                                                          dtReturn,
 //                                                          cycleNumber,
 //                                                          domain,
 //                                                          getLinearSystemRepository() );
 
     // call assemble to fill the matrix and the rhs
-    solidSolver.AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
+    m_solidSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
 
 
     ApplyFractureFluidCoupling( domain, *getLinearSystemRepository() );
 
     // apply boundary conditions to system
-    solidSolver.ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+    m_solidSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
 
     // call the default linear solver on the system
-    solidSolver.SolveSystem( getLinearSystemRepository(),
+    m_solidSolver->SolveSystem( getLinearSystemRepository(),
                  getSystemSolverParameters() );
 
     // apply the system solution to the fields/variables
-    solidSolver.ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
 
-    if( fluidSolver.CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
-        solidSolver.CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
+    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
+        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
     {
       GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
@@ -513,10 +494,10 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
-//    if (solidSolver.getSystemSolverParameters()->numNewtonIterations() > 0)
+//    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
     {
       this->UpdateDeformationForCoupling(domain);
-//      fluidSolver.UpdateState(domain);
+//      m_fluidSolver->UpdateState(domain);
     }
     ++iter;
   }
@@ -532,11 +513,8 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
                                           DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.ExplicitStep( time_n, dt, cycleNumber, domain );
-  fluidSolver.SolverStep( time_n, dt, cycleNumber, domain );
+  m_solidSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
+  m_flowSolver->SolverStep( time_n, dt, cycleNumber, domain );
 
   return dt;
 }
@@ -547,155 +525,16 @@ void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLe
                                                         globalIndex & numGlobalRows,
                                                         localIndex offset )
 {
-  SolidMechanicsLagrangianFEM & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   offset = 0;
-//  solidSolver.SetNumRowsAndTrilinosIndices( meshLevel, numLocalRows, numGlobalRows, offset );
+//  m_solidSolver->SetNumRowsAndTrilinosIndices( meshLevel, numLocalRows, numGlobalRows, offset );
 
 }
-
-//void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
-//{
-//  SolidMechanicsLagrangianFEM const & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
-//  SinglePhaseFlow const & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-//
-//  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  NodeManager * const nodeManager = mesh->getNodeManager();
-//  ElementRegionManager * const elemManager = mesh->getElemManager();
-//
-//
-//  localIndex constexpr dim = 3;
-//  localIndex numGhostDisplacementRows  = nodeManager->GetNumberOfGhosts();
-//  localIndex numLocalDisplacementRows  = nodeManager->size()-numGhostDisplacementRows;
-//  globalIndex numGlobalDisplacementRows = 0;
-//
-//  solidSolver.SetNumRowsAndTrilinosIndices( nodeManager,
-//                                            numLocalDisplacementRows,
-//                                            numGlobalDisplacementRows,
-//                                            0 );
-//
-//  numLocalDisplacementRows *= dim;
-//  numGlobalDisplacementRows *= dim;
-//
-//
-//  localIndex numGhostFluidRows  = nodeManager->GetNumberOfGhosts();
-//  localIndex numLocalFluidRows  = nodeManager->size()-numGhostFluidRows;
-//  globalIndex numGlobalFluidRows = 0;
-//
-//  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-//  fluidSolver.applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
-//  {
-//    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
-//    numGhostFluidRows += subRegionGhosts;
-//    numLocalFluidRows += subRegion->size() - subRegionGhosts;
-//  } );
-//
-//  fluidSolver.SetNumRowsAndTrilinosIndices( mesh,
-//                                            numLocalFluidRows,
-//                                            numGlobalFluidRows,
-//                                            0 );
-//
-//
-//
-//
-//
-//  // create epetra map
-//  Epetra_Map * const dispRowMap = blockSystem->SetRowMap( BlockIDs::displacementBlock,
-//                                                          std::make_unique<Epetra_Map>( numGlobalDisplacementRows,
-//                                                                                        numLocalDisplacementRows,
-//                                                                                        0,
-//                                                                                        m_linearSolverWrapper.m_epetraComm ) );
-//
-//
-//  Epetra_Map * const flowRowMap = blockSystem->SetRowMap( BlockIDs::fluidPressureBlock,
-//                                                          std::make_unique<Epetra_Map>( numGlobalFluidRows,
-//                                                                                        numLocalFluidRows,
-//                                                                                        0,
-//                                                                                        m_linearSolverWrapper.m_epetraComm ) );
-//
-//
-//  Epetra_FECrsGraph * const sparsity00 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
-//                                                                   BlockIDs::displacementBlock,
-//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
-//  Epetra_FECrsGraph * const sparsity01 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
-//                                                                   BlockIDs::fluidPressureBlock,
-//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
-//  Epetra_FECrsGraph * const sparsity10 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
-//                                                                   BlockIDs::displacementBlock,
-//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
-//  Epetra_FECrsGraph * const sparsity11 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
-//                                                                   BlockIDs::fluidPressureBlock,
-//                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
-//
-//  solidSolver.SetSparsityPattern( domain, sparsity00 );
-//  fluidSolver.SetSparsityPattern( domain, sparsity11 );
-//
-//
-//  arrayView1d<globalIndex const> const & dispDOF = nodeManager->getReference<array1d<globalIndex>>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
-//
-//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
-//  {
-//    localIndex const numElems = elementSubRegion->size();
-//    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-//    arrayView1d<globalIndex const> const & flowDOF = elementSubRegion->getReference<array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
-//
-//    for( localIndex k=0 ; k<numElems ; ++k )
-//    {
-//      globalIndex const activeFlowDOF = flowDOF[k];
-//      localIndex const numNodesPerElement = elemsToNodes[k].size();
-//      array1d<globalIndex> activeDisplacementDOF(dim * numNodesPerElement);
-//
-//      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-//      {
-//        for( int d=0 ; d<dim ; ++d )
-//        {
-//          activeDisplacementDOF[a * dim + d] = dim * dispDOF[elemsToNodes[k][a]] + d;
-//        }
-//      }
-//      sparsity01->InsertGlobalIndices( static_cast<int>(activeDisplacementDOF.size()),
-//                                       activeDisplacementDOF.data(),
-//                                       1,
-//                                       &activeFlowDOF );
-//
-//      sparsity10->InsertGlobalIndices( 1,
-//                                       &activeFlowDOF,
-//                                       static_cast<int>(activeDisplacementDOF.size()),
-//                                       activeDisplacementDOF.data() );
-//    }
-//  });
-//
-//  sparsity00->GlobalAssemble();
-//  sparsity11->GlobalAssemble();
-//  sparsity01->GlobalAssemble( *flowRowMap, *dispRowMap );
-//  sparsity10->GlobalAssemble( *dispRowMap, *flowRowMap );
-//
-//  blockSystem->SetMatrix( BlockIDs::displacementBlock,
-//                          BlockIDs::displacementBlock,
-//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity00) );
-//
-//  blockSystem->SetMatrix( BlockIDs::displacementBlock,
-//                          BlockIDs::fluidPressureBlock,
-//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity01) );
-//
-//  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
-//                          BlockIDs::displacementBlock,
-//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity10) );
-//
-//  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
-//                          BlockIDs::fluidPressureBlock,
-//                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity00) );
-//
-//
-//}
 
 void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
   constexpr int dim=3;
-//  SolidMechanicsLagrangianFEM const & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>());
-//  SinglePhaseFlow const & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
@@ -762,12 +601,9 @@ void HydrofractureSolver::AssembleSystem( DomainPartition * const domain,
                                           real64 const time,
                                           real64 const dt )
 {
-  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
+  m_solidSolver->AssembleSystem( domain, blockSystem, time, dt );
 
-  solidSolver.AssembleSystem( domain, blockSystem, time, dt );
-
-  fluidSolver.AssembleSystem( domain, blockSystem, time, dt );
+  m_flowSolver->AssembleSystem( domain, blockSystem, time, dt );
 
   AssembleForceResidualDerivativeWrtPressure( domain, *blockSystem );
 
@@ -779,11 +615,8 @@ void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domai
                                                    real64 const time_n,
                                                    real64 const dt )
 {
-  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
-  fluidSolver.ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+  m_solidSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+  m_flowSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
 
 
@@ -802,39 +635,56 @@ void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domai
   Epetra_FECrsMatrix * const matrix11 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
                                                                systemSolverInterface::BlockIDs::fluidPressureBlock );
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"matrix00"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  matrix00->Print(std::cout);
+  std::cout.precision(7);
+  std::cout.setf(std::ios_base::scientific);
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"matrix01"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  matrix01->Print(std::cout);
+  if( this->m_verboseLevel == 2 )
+  {
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"matrix00"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    matrix00->Print(std::cout);
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"matrix10"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  matrix10->Print(std::cout);
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"matrix01"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    matrix01->Print(std::cout);
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"matrix11"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  matrix11->Print(std::cout);
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"matrix10"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    matrix10->Print(std::cout);
+
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"matrix11"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    matrix11->Print(std::cout);
 
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"residual0"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  rhs0->Print(std::cout);
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"residual0"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    rhs0->Print(std::cout);
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"residual1"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  rhs1->Print(std::cout);
-
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"residual1"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    rhs1->Print(std::cout);
+  }
 
 }
+
+real64
+HydrofractureSolver::
+CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
+                       DomainPartition *const domain)
+{
+  real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( blockSystem, domain );
+  real64 const solidResidual = m_solidSolver->CalculateResidualNorm( blockSystem, domain );
+
+  return fluidResidual + solidResidual;
+}
+
 
 
 void
@@ -932,7 +782,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
               nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
               fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
 
-              dRdP(3*a+i,0) = Ja * Nbar[i] * pow(-1,kf);
+              dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
             }
           }
           rhs->SumIntoGlobalValues( integer_conversion<int>(numNodesPerFace*3), rowDOF, nodeRHS );
@@ -954,7 +804,6 @@ HydrofractureSolver::
 AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -962,7 +811,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  string const constitutiveName = constitutiveManager->GetGroup(fluidSolver.fluidIndex())->getName();
+  string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
 
   Epetra_FECrsMatrix * const matrix10 = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
                                                                systemSolverInterface::BlockIDs::displacementBlock );
@@ -1049,11 +898,8 @@ ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const bloc
                      real64 const scalingFactor,
                      DomainPartition * const domain )
 {
-  SolverBase & solidSolver = *(this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolverBase*>());
-  SinglePhaseFlow & fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
-
-  solidSolver.ApplySystemSolution( blockSystem, 1.0, domain );
-  fluidSolver.ApplySystemSolution( blockSystem, 1.0, domain );
+  m_solidSolver->ApplySystemSolution( blockSystem, 1.0, domain );
+  m_flowSolver->ApplySystemSolution( blockSystem, 1.0, domain );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -1756,17 +1602,19 @@ void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
     m_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
+  if( this->m_verboseLevel == 2 )
+  {
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"solution0"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  m_solution[0]->Print(std::cout);
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"solution0"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    m_solution[0]->Print(std::cout);
 
-  std::cout<<"***********************************************************"<<std::endl;
-  std::cout<<"solution1"<<std::endl;
-  std::cout<<"***********************************************************"<<std::endl;
-  m_solution[1]->Print(std::cout);
-
+    std::cout<<"***********************************************************"<<std::endl;
+    std::cout<<"solution1"<<std::endl;
+    std::cout<<"***********************************************************"<<std::endl;
+    m_solution[1]->Print(std::cout);
+  }
 }
 
 

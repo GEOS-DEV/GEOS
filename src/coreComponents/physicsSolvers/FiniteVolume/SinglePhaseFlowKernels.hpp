@@ -215,8 +215,6 @@ struct AccumulationKernel<FaceElementSubRegion>
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew ;
 
-    std::cout<<"densNew * volNew - densOld * volOld = "<<densNew<<" * "<<volNew<<" - "<<densOld<<" * "<<volume<<std::endl;
-
     // Derivative of residual wrt to the aperture in the cell
     dRdAper = densNew * area;
   }

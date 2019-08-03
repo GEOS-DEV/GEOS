@@ -329,6 +329,11 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
     } );
   } );
 
+  mesh->getElemManager()->forElementSubRegions<FaceElementSubRegion>( m_targetRegions, [&] ( FaceElementSubRegion * subRegion )
+  {
+    UpdateMobility( subRegion );
+  } );
+
   // setup dof numbers and linear system
   SetupSystem( domain, blockSystem );
 }
@@ -732,9 +737,9 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
   arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
 
-  arrayView1d<globalIndex const> const &
-  nodalDofNumber = nodeManager->getReference<array1d<globalIndex>>( viewKeyStruct::
-                                                                    globalDofNumberString);
+//  arrayView1d<globalIndex const> const &
+//  nodalDofNumber = nodeManager->getReference<array1d<globalIndex>>( viewKeyStruct::
+//                                                                    globalDofNumberString);
 
   arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
   arrayView1d<real64 const> const & volume        = m_volume[er][esr];

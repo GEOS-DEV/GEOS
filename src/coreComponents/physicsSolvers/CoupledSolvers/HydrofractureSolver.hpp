@@ -29,6 +29,9 @@
 namespace geosx
 {
 
+class FlowSolverBase;
+class SolidMechanicsLagrangianFEM;
+
 class HydrofractureSolver : public SolverBase
 {
 public:
@@ -80,7 +83,7 @@ public:
 
   virtual real64
   CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                         DomainPartition *const domain) override { return 1; }
+                         DomainPartition *const domain) override;
 
   virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
                             SystemSolverParameters const * const params ) override;
@@ -149,6 +152,10 @@ private:
   string m_flowSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
+
+  SolidMechanicsLagrangianFEM * m_solidSolver;
+  FlowSolverBase * m_flowSolver;
+
 
 };
 
