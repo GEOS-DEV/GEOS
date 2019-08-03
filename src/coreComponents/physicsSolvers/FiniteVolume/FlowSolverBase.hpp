@@ -25,8 +25,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
-class Epetra_FECrsGraph;
-
 namespace geosx
 {
 

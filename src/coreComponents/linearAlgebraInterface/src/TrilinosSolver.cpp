@@ -32,6 +32,7 @@
 
 // Include the corresponding header file.
 #include "TrilinosSolver.hpp"
+#include "LinearSolverParameters.hpp"
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -56,26 +57,45 @@ TrilinosSolver::TrilinosSolver( LinearSolverParameters const & parameters )
 // ----------------------------
 // We switch between different solverTypes here
 
-void TrilinosSolver::solve( EpetraMatrix &mat,
-                            EpetraVector &sol,
-                            EpetraVector &rhs )
+void TrilinosSolver::solve( EpetraMatrix & mat,
+                            EpetraVector & sol,
+                            EpetraVector & rhs )
 {
+  if( m_parameters.scaling.useRowScaling )
+  {
+    Epetra_FECrsMatrix * mat_ptr = mat.unwrappedPointer();
+    Epetra_MultiVector * rhs_ptr = rhs.unwrappedPointer();
+
+    Epetra_Vector scaling( mat_ptr->RowMap() );
+    mat_ptr->InvRowSums( scaling );
+    mat_ptr->LeftScale( scaling );
+
+    Epetra_MultiVector tmp( *rhs_ptr );
+    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
+  }
+
   if( m_parameters.solverType == "direct" )
+  {
     solve_direct( mat, sol, rhs );
+  }
   else
+  {
     solve_krylov( mat, sol, rhs );
+  }
 }
 
 // ----------------------------
 // Direct solver
 // ----------------------------
 
-void TrilinosSolver::solve_direct( EpetraMatrix &mat,
-                                   EpetraVector &sol,
-                                   EpetraVector &rhs )
+void TrilinosSolver::solve_direct( EpetraMatrix & mat,
+                                   EpetraVector & sol,
+                                   EpetraVector & rhs )
 {
   // Create Epetra linear problem and instantiate solver.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+  Epetra_LinearProblem problem( mat.unwrappedPointer(),
+                                sol.unwrappedPointer(),
+                                rhs.unwrappedPointer() );
 
   // Instantiate the Amesos solver.
   Amesos_BaseSolver* solver;
@@ -104,12 +124,14 @@ void TrilinosSolver::solve_direct( EpetraMatrix &mat,
 // Iterative solver
 // ----------------------------
 
-void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
-                                   EpetraVector &sol,
-                                   EpetraVector &rhs )
+void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
+                                   EpetraVector & sol,
+                                   EpetraVector & rhs )
 {
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( mat.unwrappedPointer(), sol.unwrappedPointer(), rhs.unwrappedPointer());
+  Epetra_LinearProblem problem( mat.unwrappedPointer(),
+                                sol.unwrappedPointer(),
+                                rhs.unwrappedPointer() );
 
   // Instantiate the AztecOO solver.
   AztecOO solver( problem );
@@ -146,21 +168,21 @@ void TrilinosSolver::solve_krylov( EpetraMatrix &mat,
   else if( m_parameters.preconditionerType == "ilu" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
     solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
     solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-    solver.SetAztecOption( AZ_overlap, 0 );
+    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
     solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0 ? real64( m_parameters.ilu.fill ) : 1.0));
   }
