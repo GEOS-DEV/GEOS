@@ -897,8 +897,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
 void SolidMechanicsLagrangianFEM::SetNumRowsAndTrilinosIndices( ManagedGroup * const nodeManager,
                                                                  localIndex & numLocalRows,
                                                                  globalIndex & numGlobalRows,
-                                                                 localIndex_array& localIndices,
-                                                                 localIndex offset )
+                                                                 localIndex offset ) const
 {
   int n_mpi_processes;
   MPI_Comm_size( MPI_COMM_GEOSX, &n_mpi_processes );
@@ -963,8 +962,7 @@ void SolidMechanicsLagrangianFEM :: SetupSystem ( DomainPartition * const domain
   localIndex n_local_rows  = nodeManager->size()-n_ghost_rows;
   globalIndex n_global_rows = 0;
 
-  localIndex_array displacementIndices;
-  SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, displacementIndices, 0 );
+  SetNumRowsAndTrilinosIndices( nodeManager, n_local_rows, n_global_rows, 0 );
 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back(viewKeyStruct::globalDofNumberString);
@@ -1000,7 +998,7 @@ void SolidMechanicsLagrangianFEM :: SetupSystem ( DomainPartition * const domain
 }
 
 void SolidMechanicsLagrangianFEM::SetSparsityPattern( DomainPartition const * const domain,
-                                                       Epetra_FECrsGraph * const sparsity )
+                                                       Epetra_FECrsGraph * const sparsity ) const
 {
   int dim=3;
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);

@@ -10,9 +10,9 @@
     <Hydrofracture name="hydrofracture" 
                    solidSolverName="lagsolve"
                    fluidSolverName="SinglePhaseFlow"
-                   couplingTypeOption="FixedStress"
-                   verboseLevel="1"
-                   targetRegions="{Region2}"
+                   couplingTypeOption="TightlyCoupled"
+                   verboseLevel="2"
+                   targetRegions="{Region2, Fracture}"
                    >
       <SystemSolverParameters maxIterNewton="2000"
                               newtonTol="1e-8"
@@ -33,7 +33,7 @@
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="2"
+                     verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -58,10 +58,10 @@
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
                   xCoords="{-1, 1}"
-                  yCoords="{0, 3}"
+                  yCoords="{0, 1}"
                   zCoords="{0, 1}"
                   nx="{2}"
-                  ny="{3}"
+                  ny="{1}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -74,16 +74,14 @@
 
   <Events maxTime="20.0">
   
+    <SoloEvent name="initialPlot"
+               target="/Outputs/siloOutput"/>
+
     <SoloEvent name="preFracture"
                target="/Solvers/SurfaceGen"/>
   
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
-                   cycleFrequency="1"
-                   targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+    <SoloEvent name="preFracturePlot"
+               target="/Outputs/siloOutput"/>
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
@@ -91,6 +89,14 @@
                    forceDt="1.0"
                    target="/Solvers/hydrofracture" />
 
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent name="outputs"
+                   cycleFrequency="1"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -135,7 +141,7 @@
                                   defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-10"
+                                  compressibility="5e-11"
                                   referenceViscosity="0.001"
                                   viscosibility="0.0"/>
 
