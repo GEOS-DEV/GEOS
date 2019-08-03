@@ -136,6 +136,8 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            CellElementSubRegion const * const subRegion,
+                           ManagedGroup const * const,
+                           ManagedGroup const * const,
                            Epetra_FECrsMatrix * const jacobian,
                            Epetra_FEVector * const residual,
                            real64 const dt );
@@ -144,6 +146,8 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            FaceElementSubRegion const * const subRegion,
+                           FaceManager const * const faceManager,
+                           NodeManager const * const nodeManager,
                            Epetra_FECrsMatrix * const jacobian,
                            Epetra_FEVector * const residual,
                            real64 const dt );
@@ -239,13 +243,6 @@ public:
 
   void UpdateState( DomainPartition * const domain ) const;
 
-protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
-private:
-
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -253,7 +250,7 @@ private:
    * @param sparsity the sparsity pattern matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           Epetra_FECrsGraph * const sparsity ) const;
 
   /**
    * @brief sets the dof indices for this solver
@@ -269,7 +266,16 @@ private:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex offset );
+                                     localIndex offset ) const;
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
+private:
+
+  void SetupSystem ( DomainPartition * const domain,
+                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
+
 
   /**
    * @brief Setup stored views into domain data for the current step

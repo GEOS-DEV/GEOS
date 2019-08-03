@@ -364,7 +364,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
 void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                     localIndex & numLocalRows,
                                                     globalIndex & numGlobalRows,
-                                                    localIndex offset )
+                                                    localIndex offset ) const
 {
   int numMpiProcesses;
   MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
@@ -495,7 +495,7 @@ void SinglePhaseFlow::SetupSystem ( DomainPartition * const domain,
 }
 
 void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
-                                          Epetra_FECrsGraph * const sparsity )
+                                          Epetra_FECrsGraph * const sparsity ) const
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
@@ -656,6 +656,8 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           CellElementSubRegion const * const subRegion,
+                                          ManagedGroup const * const,
+                                          ManagedGroup const * const,
                                           Epetra_FECrsMatrix * const jacobian,
                                           Epetra_FEVector * const residual,
                                           real64 const dt )
@@ -719,6 +721,8 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           FaceElementSubRegion const * const subRegion,
+                                          FaceManager const * const faceManager,
+                                          NodeManager const * const nodeManager,
                                           Epetra_FECrsMatrix * const jacobian,
                                           Epetra_FEVector * const residual,
                                           real64 const dt )
@@ -727,6 +731,10 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
 
   arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
   arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
+
+  arrayView1d<globalIndex const> const &
+  nodalDofNumber = nodeManager->getReference<array1d<globalIndex>>( viewKeyStruct::
+                                                                    globalDofNumberString);
 
   arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
   arrayView1d<real64 const> const & volume        = m_volume[er][esr];
@@ -737,6 +745,12 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView1d<real64 const> const & aperture      = m_elementAperture[er][esr];
   arrayView1d<real64 const> const & area      = m_elementArea[er][esr];
 
+  arrayView2d<localIndex const> const & elemsToFaces = subRegion->faceList();
+  array1d<array1d<localIndex > > const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+
+  localIndex const numNodesPerFace = subRegion->numNodesPerElement();
 
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
@@ -744,6 +758,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
     {
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
+      real64 dRdAper;
 
       AccumulationKernel<FaceElementSubRegion>::template Compute<ISPORO>( dens[ei][0],
                                                                           densOld[ei],
@@ -753,11 +768,40 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                                                           aperture[ei],
                                                                           area[ei],
                                                                           localAccum,
-                                                                          localAccumJacobian );
+                                                                          localAccumJacobian,
+                                                                          dRdAper );
 
-        // add contribution to global residual and jacobian
+      // add contribution to global residual and jacobian
       residual->SumIntoGlobalValues( 1, &elemDOF, &localAccum );
       jacobian->SumIntoGlobalValues( 1, &elemDOF, 1, &elemDOF, &localAccumJacobian );
+
+
+//      globalIndex nodeDOF[8*3];
+//
+//      R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
+//      Nbar -= faceNormal[elemsToFaces[ei][1]];
+//      Nbar.Normalize();
+//
+//      stackArray1d<real64, 24> dRdU(numNodesPerFace*3);
+//
+//      for( localIndex kf=0 ; kf<2 ; ++kf )
+//      {
+//        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//        {
+//          for( int i=0 ; i<3 ; ++i )
+//          {
+//            nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*nodalDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] +i;
+//            real64 const dAper_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+//            dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+//          }
+//        }
+//      }
+//      jacobian->SumIntoGlobalValues( 1,
+//                                     &elemDOF,
+//                                     integer_conversion<int>(numNodesPerFace*3),
+//                                     nodeDOF,
+//                                     dRdU.data() );
+//
     }
   } );
 }
@@ -775,6 +819,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
 
   elemManager->forElementSubRegionsComplete<CellElementSubRegion,
                                             FaceElementSubRegion>( this->m_targetRegions,
@@ -783,7 +828,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                                                          ElementRegion const * const region,
                                                                          auto const * const subRegion )
   {
-    AccumulationLaunch<ISPORO>( er, esr, subRegion, jacobian, residual, dt );
+    AccumulationLaunch<ISPORO>( er, esr, subRegion, faceManager, mesh->getNodeManager(), jacobian, residual, dt );
   } );
 }
 

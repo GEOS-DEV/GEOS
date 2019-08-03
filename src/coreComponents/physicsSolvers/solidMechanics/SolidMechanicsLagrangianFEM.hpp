@@ -156,7 +156,7 @@ public:
    * @param sparsity Pointer to the the sparsity graph
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
+                           Epetra_FECrsGraph * const sparsity ) const;
 
   /**
    * Function to set the global DOF numbers  for this solver.
@@ -169,8 +169,7 @@ public:
   void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex_array& localIndices,
-                                     localIndex offset );
+                                     localIndex offset ) const;
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -349,7 +348,7 @@ public:
     }
   }
 
-  struct viewKeyStruct
+  struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
     static constexpr auto uhatTildeString = "uhatTilde";
@@ -359,7 +358,6 @@ public:
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto globalDofNumberString = "trilinosIndex";
     static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
