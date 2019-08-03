@@ -53,7 +53,6 @@
 #include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
 
 using namespace geosx;
-using namespace geosx::systemSolverInterface;
 
 namespace
 {

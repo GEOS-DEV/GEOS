@@ -33,7 +33,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 
 FlowSolverBase::FlowSolverBase( std::string const & name,
                                 ManagedGroup * const parent )
@@ -147,7 +146,7 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 
 }
 
-void FlowSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
+void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
