@@ -48,10 +48,14 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override final;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override final;
 
   virtual void ImplicitStepComplete( real64 const& time_n,
                                      real64 const& dt,
@@ -62,7 +66,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition * const domain ) override;
 
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,

@@ -57,7 +57,7 @@ set(managers_sources
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp)
 
-set( dependencyList dataRepository fileIO optionparser RAJA trilinos )
+set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebraInterface )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )

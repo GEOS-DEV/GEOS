@@ -20,7 +20,6 @@
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace pugi
 {
@@ -47,7 +46,6 @@ public:
   struct viewKeyStruct
   {
       constexpr static auto gravityVectorString = "gravityVector";
-      constexpr static auto blockSystemRepositoryString = "blockSystemRepository";
   } viewKeys;
 
   struct groupKeyStruct
@@ -63,9 +61,6 @@ private:
   PhysicsSolverManager() = delete;
 
   R1Tensor m_gravityVector;
-
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem m_blockSystemRepository;
 
 };
 

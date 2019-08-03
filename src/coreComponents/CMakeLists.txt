@@ -14,7 +14,6 @@ set( subdirs
      MPI_Communications
      physicsSolvers
      python
-     systemSolverInterface
      linearAlgebraInterface
      cxx-utilities
      )
