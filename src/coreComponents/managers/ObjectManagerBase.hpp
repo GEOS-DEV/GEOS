@@ -199,8 +199,8 @@ public:
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
-                                                                array1d<globalIndex_array>&  )
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const,
+                                                                std::vector< std::vector< globalIndex > > & )
   {}
 
   void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
