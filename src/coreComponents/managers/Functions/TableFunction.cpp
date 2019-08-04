@@ -122,19 +122,24 @@ void TableFunction::InitializeFunction()
     }
   }
 
+  reInitializeFunction();
+}
+
+void TableFunction::reInitializeFunction()
+{
+
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
+  m_indexIncrement.resize(m_dimensions);
   for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
   {
-    m_indexIncrement.push_back(increment);
+    m_size[ii] = m_coordinates[ii].size();
+    m_indexIncrement[ii] = increment;
     increment *= m_size[ii];
   }
 
   // Error checking
-  if (increment != m_values.size())
-  {
-    throw std::invalid_argument("Table dimensions do not match!");
-  }
+  GEOS_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!");
 
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast<localIndex>(pow(2, m_dimensions));
@@ -146,6 +151,7 @@ void TableFunction::InitializeFunction()
     }
   }
 }
+
 
 real64 TableFunction::Evaluate( real64 const * const input ) const
 {
