@@ -4,52 +4,66 @@
 <Problem>
 
   <Solvers
-    gravityVector="0.0,0.0,-0.0">
+    gravityVector="0.0,0.0,-0.0"
+    >
   
   
-    <Hydrofracture name="hydrofracture" 
-                   solidSolverName="lagsolve"
-                   fluidSolverName="SinglePhaseFlow"
-                   couplingTypeOption="TightlyCoupled"
-                   verboseLevel="2"
-                   targetRegions="{Region2, Fracture}"
-                   >
-      <SystemSolverParameters maxIterNewton="2000"
-                              newtonTol="1e-8"
-                              verbosityFlag="0"/>
+    <Hydrofracture 
+      name="hydrofracture" 
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      couplingTypeOption="TightlyCoupled"
+      verboseLevel="2"
+      targetRegions="{Region2, Fracture}"
+      contactRelation="fractureContact"
+      >
+      <SystemSolverParameters
+        maxIterNewton="2000"
+        newtonTol="1e-8"
+        verbosityFlag="0"
+        />
     </Hydrofracture>
   
-    <SolidMechanicsLagrangianSSLE name="lagsolve" 
-                                  timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
-                                  discretization="FE1"
-                                  targetRegions="{Region2}"
-                                  solidMaterialName="rock"
-                                  >
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
-                              verbosityFlag="0"/>
+    <SolidMechanicsLagrangianSSLE 
+      name="lagsolve" 
+      timeIntegrationOption="QuasiStatic"
+      verboseLevel="0"
+      discretization="FE1"
+      targetRegions="{Region2}"
+      solidMaterialName="rock"
+      >
+      <SystemSolverParameters 
+        krylovTol="1.0e-10"
+        newtonTol="1.0e-6"
+        maxIterNewton="5"
+        verbosityFlag="0"
+        />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="0"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="{Fracture}"
-                     fluidName="water"
-                     solidName="rock">
-      <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
-                              newtonTol="1.0e-5"
-                              maxIterNewton="10"
-                              verbosityFlag="0"/>
+    <SinglePhaseFlow 
+      name="SinglePhaseFlow"
+      verboseLevel="0"
+      gravityFlag="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{Fracture}"
+      fluidName="water"
+      solidName="rock"
+      >
+      <SystemSolverParameters 
+        name="SystemSolverParameters"
+        krylovTol="1.0e-12"
+        newtonTol="1.0e-5"
+        maxIterNewton="10"
+        verbosityFlag="0"
+        />
     </SinglePhaseFlow>
     
-        <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
-                      fractureRegion="Fracture"
-                      targetRegions="{Region2}">
+    <SurfaceGenerator
+      name="SurfaceGen"
+      verboseLevel="0"
+      fractureRegion="Fracture"
+      targetRegions="{Region2}"
+      >
     </SurfaceGenerator>
     
   </Solvers>
@@ -157,6 +171,15 @@
                                 compressibility="1.6155088853e-18"
                                 referencePressure="2.125e6"
                                 />
+                                
+    <Contact name="fractureContact"
+      penaltyStiffness="1.0e10" >
+      <TableFunction 
+        name="aperTable" 
+        coordinates = "{    -1.0,    0.0}"
+        values      = "{  1.0e-6, 1.0e-4}" 
+        />
+    </Contact>
   </Constitutive>
 
   <InitialConditions>
@@ -230,9 +253,6 @@
   </FieldSpecifications>
 
   <Functions>
-        <TableFunction name="aperTable" 
-                       coordinates = "{-1.0, 0.0}"
-                       values      = "{0.001, 0.1}" />
   </Functions>
 
   <Partition>
