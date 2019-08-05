@@ -22,6 +22,8 @@
         newtonTol="1e-5"
         verbosityFlag="0"
         maxLineSearchCuts="10"
+        useMLPrecond="1"
+        scalingOption="2"
         />
     </Hydrofracture>
   
@@ -72,11 +74,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{-1, 1}"
-                  yCoords="{0, 10}"
+                  xCoords="{-10, 10}"
+                  yCoords="{0, 20}"
                   zCoords="{0, 1}"
-                  nx="{2}"
-                  ny="{10}"
+                  nx="{20}"
+                  ny="{20}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -84,7 +86,7 @@
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01, 9.01, 1.01"/>
+         xMax=" 0.01,  20.01, 1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  1.01, 1.01"/>

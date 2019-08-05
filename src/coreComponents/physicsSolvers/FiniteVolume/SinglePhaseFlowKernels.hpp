@@ -277,6 +277,7 @@ struct FluxKernel
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+          ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
           Epetra_FECrsMatrix * const jacobian,
           Epetra_FEVector * const residual );
@@ -496,6 +497,7 @@ struct FluxKernel
                    arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & dMob_dPres,
+                   arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
                    localIndex const fluidIndex,
                    integer const gravityFlag,
@@ -506,10 +508,9 @@ struct FluxKernel
     real64 sumOfWeights = 0;
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
-//      sumOfWeights += aperture[stencilElementIndices[k]] *
-//                      aperture[stencilElementIndices[k]] *
-//                      aperture[stencilElementIndices[k]] * stencilWeights[k];
-      sumOfWeights += 1.0e-12 * stencilWeights[k];
+      sumOfWeights += aperture0[stencilElementIndices[k]] *
+                      aperture0[stencilElementIndices[k]] *
+                      aperture0[stencilElementIndices[k]] * stencilWeights[k];
     }
 
     localIndex k[2];
@@ -522,10 +523,8 @@ struct FluxKernel
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
 
-//        real64 const weight = ( stencilWeights[k[0]]*aperture[ei[0]]*aperture[ei[0]]*aperture[ei[0]] ) *
-//                              ( stencilWeights[k[1]]*aperture[ei[1]]*aperture[ei[1]]*aperture[ei[1]] ) / sumOfWeights;
-        real64 const weight = ( stencilWeights[k[0]]*1.0e-12 ) *
-                              ( stencilWeights[k[1]]*1.0e-12 ) / sumOfWeights;
+        real64 const weight = ( stencilWeights[k[0]]*aperture0[ei[0]]*aperture0[ei[0]]*aperture0[ei[0]] ) *
+                              ( stencilWeights[k[1]]*aperture0[ei[1]]*aperture0[ei[1]]*aperture0[ei[1]] ) / sumOfWeights;
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
