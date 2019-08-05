@@ -162,11 +162,6 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 }
 
-
-
-
-
-
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                         arrayView1d<localIndex const> const & packList,
                                         integer const recursive ) const
@@ -180,9 +175,6 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
 
   return packedSize;
 }
-
-
-
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
@@ -591,7 +583,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      unordered_map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
       if( iterG2L == m_globalToLocalMap.end() )
       {
         // object does not exist on this domain
