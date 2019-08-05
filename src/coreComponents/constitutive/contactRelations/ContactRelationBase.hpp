@@ -51,6 +51,49 @@ public:
     return slope;
   }
 
+  inline void apertureForPermeablityCalculation( real64 const aper0,
+                                                 real64 const aper,
+                                                 integer const integrationOption,
+                                                 real64 & aperTerm,
+                                                 real64 & dAperTerm_dAper )
+  {
+    // forward euler
+    if( integrationOption == 0 )
+    {
+      aperTerm = aper0*aper0*aper0 ;
+      dAperTerm_dAper = 0.0;
+    }
+    // backward euler
+    else if( integrationOption == 1 )
+    {
+      aperTerm = aper*aper*aper;
+      dAperTerm_dAper = 3 * aper*aper;
+    }
+    // trapazoid rule
+    else if ( integrationOption == 2 )
+    {
+      aperTerm = 0.5 * ( aper0*aper0*aper0 + aper*aper*aper );
+      dAperTerm_dAper = 1.5 * aper*aper;
+    }
+    // simpsons rule / exact
+    else if ( integrationOption == 3 )
+    {
+      aperTerm = 0.25 * ( aper0*aper0*aper0 +
+                          aper0*aper0*aper +
+                          aper0*aper*aper +
+                          aper*aper*aper );
+      dAperTerm_dAper = 0.25 * ( aper0*aper0 +
+                                 2*aper0*aper +
+                                 3*aper*aper );
+    }
+    else
+    {
+      GEOS_ERROR("invalid integrationOption");
+    }
+
+    return;
+  }
+
   struct viewKeyStruct: public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto penaltyStiffnessString  = "penaltyStiffness";
