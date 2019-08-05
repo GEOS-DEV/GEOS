@@ -644,8 +644,8 @@ void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domai
   Epetra_FECrsMatrix * const matrix11 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
                                                                systemSolverInterface::BlockIDs::fluidPressureBlock );
 
-  rhs0->Scale(-1.0);
-  rhs1->Scale(-1.0);
+//  rhs0->Scale(-1.0);
+//  rhs1->Scale(-1.0);
 
   std::cout.precision(7);
   std::cout.setf(std::ios_base::scientific);
@@ -911,8 +911,8 @@ ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const bloc
                      real64 const scalingFactor,
                      DomainPartition * const domain )
 {
-  m_solidSolver->ApplySystemSolution( blockSystem, 1.0, domain );
-  m_flowSolver->ApplySystemSolution( blockSystem, 1.0, domain );
+  m_solidSolver->ApplySystemSolution( blockSystem, -1.0, domain );
+  m_flowSolver->ApplySystemSolution( blockSystem, -1.0, domain );
 
   this->UpdateDeformationForCoupling(domain);
 
