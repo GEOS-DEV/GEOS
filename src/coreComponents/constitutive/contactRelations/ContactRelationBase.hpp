@@ -9,11 +9,11 @@
 #define SRC_CORECOMPONENTS_CONSTITUTIVE_CONTACTRELATIONBASE_HPP_
 
 #include "../ConstitutiveBase.hpp"
+#include "managers/Functions/FunctionBase.hpp"
 
 namespace geosx
 {
 
-class FunctionBase;
 
 namespace constitutive
 {
@@ -39,6 +39,17 @@ public:
 
   virtual void InitializePreSubGroups( ManagedGroup * const ) override;
 
+
+  inline real64 stiffness() const { return m_penaltyStiffness; }
+
+  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->Evaluate( & aperture ); }
+  inline real64 dEffectiveAperture_dAperture( real64 const aperture ) const
+  {
+    real64 aperPlus = aperture ;
+    real64 aperMinus = aperture - 1.0e-6;
+    real64 slope = (m_apertureFunction->Evaluate( &aperPlus ) - m_apertureFunction->Evaluate( &aperMinus ) ) / 1.0e-6;
+    return slope;
+  }
 
   struct viewKeyStruct: public ConstitutiveBase::viewKeyStruct
   {
