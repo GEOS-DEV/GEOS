@@ -38,6 +38,8 @@
 
 #include "mesh/MeshBody.hpp"
 
+#include "common/TimingMacros.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -314,6 +316,8 @@ ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, stri
  */
 void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
