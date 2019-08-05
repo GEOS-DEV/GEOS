@@ -49,94 +49,288 @@ EdgeManager::~EdgeManager()
   // TODO Auto-generated destructor stub
 }
 
+/**
+ * @class EdgeBuilder
+ * @brief This class stores the data necessary to construct the various edge maps.
+ */
+struct EdgeBuilder
+{
+
+  /**
+   * @brief Constructor.
+   * @param [in] n1_ the greater of the two node indices that comprise the edge.
+   * @param [in] faceID_ the ID of the face this edge came from.
+   * @param [in] faceLocalEdgeIndex_ the face local index of this edge.
+   */
+  EdgeBuilder( localIndex const n1_,
+               localIndex const faceID_,
+               localIndex const faceLocalEdgeIndex_ ) :
+    n1( uint32_t( n1_ ) ),
+    faceID( uint32_t( faceID_ ) ),
+    faceLocalEdgeIndex( uint32_t( faceLocalEdgeIndex_ ) )
+  {}
+
+  /**
+   * @brief Imposes an ordering on EdgeBuilders. First compares n1 and then the faceID.
+   * @param [in] rhs the EdgeBuilder to compare against.
+   */
+  bool operator<( EdgeBuilder const & rhs ) const
+  {
+    if ( n1 < rhs.n1 ) return true;
+    if ( n1 > rhs.n1 ) return false;
+    return faceID < rhs.faceID;
+  }
+
+  /**
+   * @brief Return true if the two EdgeBuilders share the same greatest node index.
+   * @param [in] rhs the EdgeBuilder to compare against.
+   */
+  bool operator==( EdgeBuilder const & rhs ) const
+  { return n1 == rhs.n1; }
+
+  /**
+   * @brief Return true if the two EdgeBuilders don't share the same greatest node index.
+   * @param [in] rhs the EdgeBuilder to compare against.
+   */
+  bool operator!=( EdgeBuilder const & rhs ) const
+  { return n1 != rhs.n1; }
+
+  uint32_t n1;                  // The larger of the two node indices that comprise the edge.
+  uint32_t faceID;              // The face the edge came from.
+  uint32_t faceLocalEdgeIndex;  // The face local index of the edge.
+};
+
+/**
+ * @brief Populate the edgesByLowestNode map.
+ * @param [in] faceToNodeMap a map that associates an ordered list of nodes with each face.
+ * @param [in/out] edgesByLowestNode of size numNodes, where each sub array has been preallocated to hold
+ *        *enough* space.
+ * For each edge of each face, this function gets the lowest node in the edge n0, creates an EdgeBuilder
+ * associated with the edge and then appends the EdgeBuilder to edgesByLowestNode[ n0 ]. Finally it sorts
+ * the contents of each sub-array of edgesByLowestNode from least to greatest.
+ */
+void createEdgesByLowestNode( arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap,
+                              ArrayOfArraysView< EdgeBuilder > const & edgesByLowestNode )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numNodes = edgesByLowestNode.size();
+  localIndex const numFaces = faceToNodeMap.size();
+  
+  // loop over all the faces.
+  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID ) 
+  {
+    localIndex const numNodesInFace = faceToNodeMap[ faceID ].size();
+
+    // loop over all the nodes in the face. there will be an edge for each node.
+    for( localIndex a=0 ; a< numNodesInFace ; ++a )
+    {
+      // sort the nodes in order of index value.
+      localIndex node0 = faceToNodeMap[ faceID ][ a ];
+      localIndex node1 = faceToNodeMap[ faceID ][ ( a + 1 ) % numNodesInFace ];
+      if( node0 > node1 ) std::swap( node0, node1 );
+
+      // And append the edge to edgesByLowestNode.
+      edgesByLowestNode.atomicAppendToArray( RAJA::atomic::auto_atomic{}, node0, EdgeBuilder( node1, faceID, a ) );
+    }
+  } );
+
+  // Loop over all the nodes and sort the associated edges.
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  {
+    EdgeBuilder * const edges = edgesByLowestNode[ nodeID ];
+    std::sort( edges, edges + edgesByLowestNode.sizeOfArray( nodeID ) );
+  } );
+}
+
+/**
+ * @brief Return the total number of unique edges and fill in the uniqueEdgeOffsets array.
+ * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [out] uniqueEdgeOffsets an array of size numNodes + 1. After this function returns node i contains
+ * edges with IDs ranging from uniqueEdgeOffsets[ i ] to uniqueEdgeOffsets[ i + 1 ] - 1.
+ */
+localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                                        arrayView1d< localIndex > const & uniqueEdgeOffsets )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numNodes = edgesByLowestNode.size();
+  GEOS_ERROR_IF( numNodes != uniqueEdgeOffsets.size() - 1, "Size mismatch!");
+
+  uniqueEdgeOffsets[0] = 0;
+
+  // Loop over all the nodes.
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
+
+    // If there are no edges associated with this node we can skip it.
+    if ( numEdges == 0 ) return;
+
+    localIndex & numUniqueEdges = uniqueEdgeOffsets[ nodeID + 1 ];
+    numUniqueEdges = 0;
+
+    // Otherwise since edgesByLowestNode[ nodeID ] is sorted we can compare subsequent entries
+    // count up the unique entries.
+    localIndex j = 0;
+    for ( ; j < numEdges - 1; ++j )
+    {
+      numUniqueEdges += edgesByLowestNode( nodeID, j ) != edgesByLowestNode( nodeID, j + 1 );
+    }
+
+    numUniqueEdges += j == numEdges - 1;
+  } );
+
+  // At this point uniqueEdgeOffsets[ i ] holds the number of unique edges associated with node i - 1.
+  // Perform an inplace prefix-sum to get the unique edge offset.
+  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueEdgeOffsets.begin(), uniqueEdgeOffsets.end() );
+
+  return uniqueEdgeOffsets.back();
+}
+
+/**
+ * @brief Add an edge to the face to edge map, edge to face map, and edge to node map.
+ * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [in/out] faceToEdgeMap the map from face IDs to edge IDs.
+ * @param [in/out] edgeToFacemap the map from edgeIDs to faceIDs.
+ * @param [in/out] edgeToNodeMap the map from edgeIDs to nodeIDs.
+ * @param [in] edgeID the ID of the edge to add.
+ * @param [in] firstNodeID the ID of the first node of the edge.
+ * @param [in] firstMatch the index of the first EdgeBuilder that describes this edge in edgesByLowestNode[ firstNodeID ].
+ * @param [in] numMatches the number of EdgeBuilders that describe this edge in edgesByLowestNode[ firstNodeID ].
+ */
+void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+              arrayView1d< array1d< localIndex > > const & faceToEdgeMap,
+              arrayView1d< SortedArray< localIndex > > const & edgeToFaceMap,
+              arrayView2d< localIndex > const & edgeToNodeMap,
+              localIndex const edgeID,
+              localIndex const firstNodeID,
+              localIndex const firstMatch,
+              localIndex const numMatches )
+{
+  // Populate the edge to node map.
+  edgeToNodeMap( edgeID, 0 ) = firstNodeID;
+  edgeToNodeMap( edgeID, 1 ) = edgesByLowestNode( firstNodeID, firstMatch ).n1;
+
+  // Loop through all the matches and fill in the face to edge and edge to face maps.
+  for ( localIndex i = 0; i < numMatches; ++i )
+  {
+    localIndex const faceID = edgesByLowestNode( firstNodeID, firstMatch + i ).faceID;
+    localIndex const faceLocalEdgeIndex = edgesByLowestNode( firstNodeID, firstMatch + i ).faceLocalEdgeIndex;
+
+    faceToEdgeMap[ faceID ][ faceLocalEdgeIndex ] = edgeID;
+    edgeToFaceMap[ edgeID ].insert( faceID );
+  }
+}
+
+/**
+ * @brief Populate the face to edge map, edge to face map, and edge to node map.
+ * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [in] uniqueEdgeOffsets an array containing the unique ID of the first edge associated with each node.
+ * @param [in] faceToNodeMap the map from faces to nodes.
+ * @param [in/out] faceToEdgeMap the map from face IDs to edge IDs.
+ * @param [in/out] edgeToFacemap the map from edgeIDs to faceIDs.
+ * @param [in/out] edgeToNodeMap the map from edgeIDs to nodeIDs.
+ */
+void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                   arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                   arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap, 
+                   arrayView1d< array1d< localIndex > > const & faceToEdgeMap,
+                   arrayView1d< SortedArray< localIndex > > const & edgeToFaceMap,
+                   arrayView2d< localIndex > const & edgeToNodeMap )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numNodes = edgesByLowestNode.size();
+  localIndex const numFaces = faceToNodeMap.size();
+  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
+  GEOS_ERROR_IF( numNodes != uniqueEdgeOffsets.size() - 1, "Size mismatch " << numNodes << " != " << uniqueEdgeOffsets.size() - 1 );
+  GEOS_ERROR_IF( numFaces != faceToEdgeMap.size(), "Size mismatch " << numFaces << " != " << faceToEdgeMap.size() );
+  GEOS_ERROR_IF( numUniqueEdges != edgeToFaceMap.size(), "Size mismatch " << numUniqueEdges << " != " << edgeToFaceMap.size() );
+  GEOS_ERROR_IF( numUniqueEdges != edgeToNodeMap.size(0), "Size mismatch " << numUniqueEdges << " != " << edgeToNodeMap.size(0) );
+
+  // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
+  GEOSX_MARK_BEGIN("Reserving space in faceToEdgeMap");
+  for ( localIndex faceID = 0; faceID < numFaces; ++faceID )
+  {
+    faceToEdgeMap[ faceID ].resize( faceToNodeMap[ faceID ].size() );
+  }
+  GEOSX_MARK_END("Reserving space in faceToEdgeMap");
+
+  // Need to be smarter about this. Should precalculate the number of faces associated with each edge
+  // and store it in an array which would be used here.
+  GEOSX_MARK_BEGIN("Reserving space in edgeToFaceMap");
+  for ( localIndex edgeID = 0; edgeID < numUniqueEdges; ++edgeID )
+  {
+    edgeToFaceMap[ edgeID ].reserve( 10 );
+  }
+  GEOSX_MARK_END("Reserving space in edgeToFaceMap");
+
+  // loop over all the nodes.
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
+    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
+    
+    // loop over all the EdgeBuilders associated with the node
+    localIndex j = 0;
+    while (j < numEdges - 1)
+    {
+      // Find the number of EdgeBuilders that describe the same edge
+      localIndex numMatches = 1;
+      while ( edgesByLowestNode( nodeID, j ) == edgesByLowestNode( nodeID, j + numMatches ) )
+      {
+        ++numMatches;
+        if ( j + numMatches == numEdges ) break;
+      }
+
+      // Then add the edge.
+      addEdge( edgesByLowestNode, faceToEdgeMap, edgeToFaceMap, edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
+      ++curEdgeID;
+      j += numMatches;
+    }
+
+    if ( j == numFaces - 1 )
+    {
+      addEdge( edgesByLowestNode, faceToEdgeMap, edgeToFaceMap, edgeToNodeMap, curEdgeID, nodeID, j, 1 );
+    }
+  } );
+}
+
 void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
 {
   GEOSX_MARK_FUNCTION;
-  if (faceManager->size() == 0 || nodeManager->size() == 0)
-    return;
 
-  localIndex numEdges = 0;
+  constexpr int MAX_EDGES_PER_NODE = 10;
+  localIndex const numNodes = nodeManager->size();
+
+  arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+
+  ArrayOfArrays<EdgeBuilder> edgesByLowestNode( numNodes, 2 * MAX_EDGES_PER_NODE );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode );
+  
+  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode, uniqueEdgeOffsets );
+
+
   OrderedVariableOneToManyRelation& faceToEdgeMap = faceManager->edgeList();
   faceToEdgeMap.SetRelatedObject( this );
-  array1d<localIndex_array>& faceToNodeMap = faceManager->nodeList();
 
   m_toNodesRelation.SetRelatedObject( nodeManager );
   m_toFacesRelation.SetRelatedObject( faceManager );
 
-  m_toNodesRelation.resize(8 * nodeManager->size());
-  m_toFacesRelation.resize(8 * nodeManager->size());
-
-  UnorderedVariableOneToManyRelation & nodeToEdgeMap = nodeManager->edgeList();
-  // this will be used to hold a list pairs that store the 2nd node in the edge,
-  // and the edge number.
-  // they are keyed the edges lowest node.
-  array1d<localIndex_array> edgesByLowestNode(nodeManager->size());
-
-  // loop over all the faces
-  for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
-  {
-    const localIndex numNodesInFace = faceToNodeMap[kf].size();
-    const localIndex_array& nodeList = faceToNodeMap[kf];
-
-    localIndex node0, node1, temp;
-
-    // loop over all the nodes in the face. there will be an edge for each
-    // node.
-    for( localIndex a=0 ; a<numNodesInFace ; ++a )
-    {
-      // sort the nodes in order of index value
-      node0 = nodeList[a];
-      node1 = nodeList[ ( a + 1 ) % numNodesInFace ];
-
-      if( node0 > node1 )
-      {
-        temp = node0;
-        node0 = node1;
-        node1 = temp;
-      }
-
-      // check to see if the edge is in the edgesByLowestNode array (i.e. it
-      // is already registered)
-
-      bool duplicate = false;
-      localIndex_array& edgesWithSameFirstNode = edgesByLowestNode[node0];
-      const localIndex numMatches = edgesWithSameFirstNode.size();
-      for( localIndex i = 0; i < numMatches; ++i )
-      {
-        const localIndex existingEdgeIndex = edgesWithSameFirstNode[i];
-        const localIndex existingNode1 = m_toNodesRelation(existingEdgeIndex, 1);
-        if( existingNode1 == node1 )
-        {
-          duplicate = true;
-          faceToEdgeMap(kf).push_back(existingEdgeIndex);
-          m_toFacesRelation(existingEdgeIndex).insert(kf);
-          break;
-        }
-      }
-
-      // if the edge is not duplicate, then we will assign a new pair into the
-      // edgesByLowestNode array
-      if( !duplicate )
-      {
-        edgesByLowestNode[node0].push_back( numEdges );
-        faceToEdgeMap(kf).push_back(numEdges);
-        m_toFacesRelation(numEdges).insert(kf);
-        
-        m_toNodesRelation(numEdges, 0) = node0;
-        m_toNodesRelation(numEdges, 1) = node1;
-
-        nodeToEdgeMap(node0).insert(numEdges);
-        nodeToEdgeMap(node1).insert(numEdges);
-        
-        numEdges += 1;
-      }
-    }
-  }
-
+  GEOSX_MARK_BEGIN("EdgeManager::resize");
   resize(numEdges);
+  GEOSX_MARK_END("EdgeManager::resize");
+
+  populateMaps( edgesByLowestNode,
+                uniqueEdgeOffsets,
+                faceToNodeMap, 
+                faceToEdgeMap,
+                m_toFacesRelation,
+                m_toNodesRelation );
 
   // make sets from nodesets
-
   auto const & nodeSets = nodeManager->sets()->wrappers();
   for ( int i = 0; i < nodeSets.size(); ++i )
   {
@@ -146,6 +340,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
+  GEOSX_MARK_BEGIN("Set construction");
   forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
@@ -153,12 +348,10 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
     const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
-
+  GEOSX_MARK_END("Set construction");
 
   SetDomainBoundaryObjects( faceManager );
-
 }
-
 
 
 /// Calculates the midpoint of the edge
@@ -240,6 +433,8 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
 void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject )
 {
+  GEOSX_MARK_FUNCTION;
+
   // make sure that the reference object is a faceManger object
 //  referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
 
@@ -343,23 +538,22 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   globalEdgeNodes.resize( numEdges );
 
-  #pragma omp parallel for
-  for ( localIndex faceID = 0; faceID < numEdges; ++faceID )
+  forall_in_range< parallelHostPolicy >( 0, numEdges, [&]( localIndex const edgeID ) 
   {
-    std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ faceID ];
+    std::vector< globalIndex > & curEdgeGlobalNodes = globalEdgeNodes[ edgeID ];
 
-    if( isDomainBoundary( faceID ) )
+    if( isDomainBoundary( edgeID ) )
     {
       curEdgeGlobalNodes.resize( 2 );
 
       for ( localIndex a = 0; a < 2 ; ++a )
       {
-        curEdgeGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( edgeNodes[ faceID ][ a ] );
+        curEdgeGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( edgeNodes[ edgeID ][ a ] );
       }
 
       std::sort( curEdgeGlobalNodes.begin(), curEdgeGlobalNodes.end() );
     }
-  }
+  } );
 }
 
 #if 0
