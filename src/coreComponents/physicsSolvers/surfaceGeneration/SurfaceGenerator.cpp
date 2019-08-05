@@ -328,7 +328,7 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
   ArrayOfArraysView<localIndex> const & nodesToElementList = nodeManager.elementList();
 
 
-  std::map<string, string_array > fieldNames;
+  map<string, string_array > fieldNames;
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
 
   MPI_iCommData icomm;
@@ -641,7 +641,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // local map to hold the edgesToRuptureReadyFaces
-  std::map< localIndex, std::set<localIndex> > edgesToRuptureReadyFaces;
+  map< localIndex, std::set<localIndex> > edgesToRuptureReadyFaces;
   for( auto edgeIndex : originalNodeToEdges )
   {
     if( !(edgesToRupturedFaces[edgeIndex].empty()) )
@@ -650,7 +650,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  std::map< localIndex, std::pair<localIndex, localIndex> > nodeLocalFacesToEdges;
+  map< localIndex, std::pair<localIndex, localIndex> > nodeLocalFacesToEdges;
   for( auto kf : originalNodeToFaces )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -770,8 +770,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
     //localIndex lastFace = INT_MAX;
 
     // the seprationPath is used to hold combinations of edge and face
-    std::map<localIndex, int> facesInPath;
-    std::map<localIndex, int> edgesInPath;
+    map<localIndex, int> facesInPath;
+    map<localIndex, int> edgesInPath;
 
     int numFacesInPath = 0;
     edgesInPath[thisEdge] = numFacesInPath;
@@ -834,7 +834,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
         }
 
         // add faces in the path to separationPathFaces
-        for( std::map<localIndex, int>::const_iterator kf=facesInPath.begin() ; kf!=facesInPath.end() ; ++kf )
+        for( map<localIndex, int>::const_iterator kf=facesInPath.begin() ; kf!=facesInPath.end() ; ++kf )
         {
           separationPathFaces.insert( kf->first );
         }
@@ -975,7 +975,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  std::map< localIndex, std::pair<localIndex, localIndex> > localFacesToEdges;
+  map< localIndex, std::pair<localIndex, localIndex> > localFacesToEdges;
   for( auto kf : nodeToFaces )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -1165,7 +1165,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
                                         faceIndex : parentFaceIndices[faceIndex];
 
     // see if we can find the face in the faceLocations array.
-    std::map<localIndex, int>::iterator iterFace = faceLocations.find( faceIndex );
+    map<localIndex, int>::iterator iterFace = faceLocations.find( faceIndex );
     // if we can find the face in the faceLocations array, then we must process the face, otherwise it is not
     // connected to the node, so we do nothing.
     if( iterFace != faceLocations.end() )
@@ -1176,7 +1176,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
       else if( faceLocations[faceIndex] == INT_MIN )
         faceLocations[faceIndex] = location;
 
-      std::map< localIndex, std::pair<localIndex, localIndex> >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
+      map< localIndex, std::pair<localIndex, localIndex> >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
 
       if( iterF2E != localFacesToEdges.end() )
       {
@@ -3489,7 +3489,7 @@ void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
 
 void SurfaceGenerator::
 AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                              std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
+                              map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
 {
   // in serial, we can simply iterate over the entries in newElems and assign new global indices based on
   // the value of the m_maxGlobalIndex + 1 for the ElementRegionManager.
