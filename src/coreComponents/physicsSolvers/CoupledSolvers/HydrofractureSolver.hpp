@@ -138,6 +138,8 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
+
+    constexpr static auto contactRelationNameString = "contactRelationName";
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -156,7 +158,7 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-
+  string m_contactRelationName;
 };
 
 } /* namespace geosx */
