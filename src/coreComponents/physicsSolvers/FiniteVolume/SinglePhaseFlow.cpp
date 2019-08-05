@@ -1298,6 +1298,8 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
     arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
+    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
+    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex a = 0; a < subRegionSize; ++a )
@@ -1305,7 +1307,7 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
       if (elemGhostRank[a] < 0)
       {
         int const lid = rowMap->LID(dofNumber[a]);
-        real64 const val = localResidual[lid] / (refPoro[a] * volume[a]);
+        real64 const val = localResidual[lid] / (refPoro[a] * dens[a] * ( volume[a] + dVol[a]));
         localResidualNorm += val * val;
       }
     }

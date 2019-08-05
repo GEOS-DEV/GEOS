@@ -1339,8 +1339,8 @@ void SolidMechanicsLagrangianFEM::ApplySystemSolution( EpetraBlockSystem const *
 
         if( lid >=0 )
         {
-          incdisp[r][d] -= scalingFactor*local_solution[lid];
-          disp[r][d] -= scalingFactor*local_solution[lid];
+          incdisp[r][d] += scalingFactor*local_solution[lid];
+          disp[r][d] += scalingFactor*local_solution[lid];
           maxpos = std::max( maxpos, fabs(X[r][d]+disp[r][d]) );
           maxdisp = std::max( maxdisp, fabs(disp[r][d]) );
         }
@@ -1371,7 +1371,7 @@ void SolidMechanicsLagrangianFEM::SolveSystem( EpetraBlockSystem * const blockSy
 
   Epetra_FEVector * const
   residual = blockSystem->GetResidualVector( BlockIDs::displacementBlock );
-//  residual->Scale(-1.0);
+  residual->Scale(-1.0);
 
   solution->Scale(0.0);
 
