@@ -62,7 +62,7 @@ RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, L
   RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
-//RAJA wrapper for loops over ranges - local index
+//RAJA wrapper for loops over ranges - global index
 template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
 {
