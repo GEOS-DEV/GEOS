@@ -102,6 +102,10 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldPorosityString )->
         setDefaultValue(1.0);
       subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+        setDefaultValue(0.0);
+
     } );
 
     // TODO restrict this to boundary sets
@@ -329,8 +333,22 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const& time_n,
     } );
   } );
 
-  mesh->getElemManager()->forElementSubRegions<FaceElementSubRegion>( m_targetRegions, [&] ( FaceElementSubRegion * subRegion )
+  mesh->getElemManager()->
+      forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                          [&] ( localIndex const er,
+                                                                localIndex const esr,
+                                                                ElementRegion *,
+                                                                FaceElementSubRegion * subRegion )
   {
+    arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
+    arrayView1d<real64 const> const & aper = m_elementAperture[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      aper0[ei] = aper[ei];
+    } );
+
+
     UpdateMobility( subRegion );
   } );
 
@@ -864,6 +882,7 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture  = m_elementAperture.toViewConst();
 
   integer const gravityFlag = m_gravityFlag;
@@ -887,6 +906,7 @@ void SinglePhaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
                         dDens_dPres,
                         mob,
                         dMob_dPres,
+                        aperture0,
                         aperture,
                         jacobian,
                         residual );
