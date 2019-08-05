@@ -26,6 +26,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/contactRelations/ContactRelationBase.hpp"
 #include "../FiniteVolume/SinglePhaseFlow.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
@@ -65,6 +66,10 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+
+  RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
 }
 
@@ -189,6 +194,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   array1d< array1d<localIndex> > const & facesToNodes = faceManager->nodeList();
 
+  ConstitutiveManager const * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
   elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
   {
     faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
@@ -216,20 +227,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         }
         area[kfe] = faceArea[kfe];
 
-        real64 const oldAperture = aperture[kfe];
-
 
         // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace + 1.0e-4;
-
-//        real64 const K = 2.0e9;
-//        real64 const dP_dAper = -K / oldAperture;//aperture[kfe];
-
-//        std::cout<<"kfe, aperture, oldAperture, deltaP = "<<kfe<<", "<<aperture[kfe]<<", "<<oldAperture<<", "<<deltaFluidPressure[kfe]<<std::endl;
-//        std::cout<<"P correction option 1:  K * ( 1 + aperture[kfe] / oldAperture ) = "<<dP_dAper * ( aperture[kfe] - oldAperture )<<std::endl;
-//        std::cout<<"P correction option 2:  K * (  oldAperture / aperture[kfe] - 1 ) = "<<K * ( oldAperture / aperture[kfe] - 1 )<<std::endl;
-//        deltaFluidPressure[kfe] += dP_dAper * ( aperture[kfe] - oldAperture );
-//        std::cout<<"    new deltaP = "<<deltaFluidPressure[kfe]<<std::endl;
+        aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
+        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
       }
@@ -258,6 +259,11 @@ void HydrofractureSolver::ApplyFractureFluidCoupling( DomainPartition * const do
   fext = {0,0,0};
 
 
+  ConstitutiveManager const * const
+  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
   arrayView1d<globalIndex> const &
   blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
@@ -304,7 +310,9 @@ void HydrofractureSolver::ApplyFractureFluidCoupling( DomainPartition * const do
         }
         area[kfe] = 0.5 * ( faceArea[elemsToFaces[kfe][0]] + faceArea[elemsToFaces[kfe][1]] );
         // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,Nbar) / numNodesPerFace + 1.0e-4;
+        aperture[kfe] = -Dot(temp,Nbar) / numNodesPerFace;
+        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
         std::cout<<"kfe, area, aperture, volume, dVolume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<", "<<deltaVolume[kfe]<<std::endl;
 
@@ -608,6 +616,7 @@ void HydrofractureSolver::AssembleSystem( DomainPartition * const domain,
   AssembleForceResidualDerivativeWrtPressure( domain, *blockSystem );
 
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, *blockSystem );
+
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domain,
@@ -634,6 +643,9 @@ void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domai
 
   Epetra_FECrsMatrix * const matrix11 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
                                                                systemSolverInterface::BlockIDs::fluidPressureBlock );
+
+  rhs0->Scale(-1.0);
+  rhs1->Scale(-1.0);
 
   std::cout.precision(7);
   std::cout.setf(std::ios_base::scientific);
@@ -682,6 +694,8 @@ CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blo
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( blockSystem, domain );
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( blockSystem, domain );
 
+  std::cout<<"residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual<<std::endl;
+
   return fluidResidual + solidResidual;
 }
 
@@ -726,14 +740,9 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
     if( subRegion->hasView("pressure") )
     {
-
-      arrayView1d<real64> const & aperture = subRegion->getElementAperture();
-
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
       arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
 
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
-      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64> const & area = subRegion->getElementArea();
       array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -813,6 +822,9 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
 
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
 
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
   Epetra_FECrsMatrix * const matrix10 = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
                                                                systemSolverInterface::BlockIDs::displacementBlock );
 
@@ -875,7 +887,8 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
             for( int i=0 ; i<3 ; ++i )
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*nodalDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] +i;
-              real64 const dAper_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+              real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+              real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
               dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
             }
           }
