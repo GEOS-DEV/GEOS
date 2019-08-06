@@ -236,24 +236,8 @@ void DomainPartition::SetupCommunications()
 
   CommunicationTools::FindGhosts( meshLevel, allNeighbors );
 
-
-
-
   faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
-  real64_array & faceArea  = faceManager->faceArea();
-  r1_array & faceNormal = faceManager->faceNormal();
-  r1_array & faceCenter = faceManager->faceCenter();
-  r1_array const & X = nodeManager->referencePosition();
-  array1d<array1d<localIndex> > const & nodeList = faceManager->nodeList();
-
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
-  {
-    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(nodeList[kf],
-                                                             X,
-                                                             faceCenter[kf],
-                                                             faceNormal[kf]);
-  }
-
+  faceManager->computeGeometry( nodeManager );
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,
