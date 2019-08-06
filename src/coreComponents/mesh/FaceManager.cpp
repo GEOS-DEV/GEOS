@@ -144,7 +144,7 @@ struct FaceBuilder
 void findSmallestThreeValues( arrayView1d< localIndex const > const & values, localIndex (&minValues)[3] )
 {
   localIndex const n = values.size();
-  GEOS_ASSERT(n >= 3);
+  GEOS_ASSERT_GE( n, 3 );
 
   // Pick out the first three values
   minValues[0] = values[0];
@@ -241,7 +241,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
                                         arrayView1d< localIndex > const & uniqueFaceOffsets )
 {
   localIndex const numNodes = facesByLowestNode.size();
-  GEOS_ERROR_IF( numNodes != uniqueFaceOffsets.size() - 1, "Size mismatch!");
+  GEOS_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
 
   uniqueFaceOffsets[0] = 0;
 
@@ -399,11 +399,11 @@ void populateMaps( ElementRegionManager & elementManager,
 
   localIndex const numNodes = facesByLowestNode.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-  GEOS_ERROR_IF( numNodes != uniqueFaceOffsets.size() - 1, "Size mismatch " << numNodes << " != " << uniqueFaceOffsets.size() - 1 );
-  GEOS_ERROR_IF( numUniqueFaces != elemRegionList.size( 0 ), "Size mismatch " << numUniqueFaces << " != " << elemRegionList.size( 0 ) );
-  GEOS_ERROR_IF( numUniqueFaces != elemSubRegionList.size( 0 ), "Size mismatch " << numUniqueFaces << " != " << elemSubRegionList.size( 0 ) );
-  GEOS_ERROR_IF( numUniqueFaces != elemList.size( 0 ), "Size mismatch " << numUniqueFaces << " != " << elemList.size( 0 ) );
-  GEOS_ERROR_IF( numUniqueFaces != nodeList.size( 0 ), "Size mismatch " << numUniqueFaces << " != " << nodeList.size( 0 ) );
+  GEOS_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
+  GEOS_ERROR_IF_NE( numUniqueFaces, elemRegionList.size( 0 ) );
+  GEOS_ERROR_IF_NE( numUniqueFaces, elemSubRegionList.size( 0 ) );
+  GEOS_ERROR_IF_NE( numUniqueFaces, elemList.size( 0 ) );
+  GEOS_ERROR_IF_NE( numUniqueFaces, nodeList.size( 0 ) );
 
   // Need to be smarter about this. Should precalculate the number of nodes associated with each face
   // and store it in an array which would be used here.
@@ -835,7 +835,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_nodeList,
@@ -847,7 +847,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF( edgeListString != viewKeyStruct::edgeListString, "");
+  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_edgeList,
@@ -859,7 +859,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOS_ERROR_IF( elementListString != viewKeyStruct::elementListString, "");
+  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,

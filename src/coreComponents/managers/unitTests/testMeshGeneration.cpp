@@ -70,12 +70,10 @@ protected:
     m_edgeManager = problemManager->getDomainPartition()->getMeshBody(0)->getMeshLevel(0)->getEdgeManager();
 
     ElementRegionManager * const elemManager = problemManager->getDomainPartition()->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    GEOS_ERROR_IF( elemManager->GetRegions().size() != 1,
-                   "Only one region should exist. " << elemManager->GetRegions().size() );
+    GEOS_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
 
     ElementRegion * const elemRegion = elemManager->GetRegion( 0 );
-    GEOS_ERROR_IF( elemRegion->GetSubRegions().size() != 1,
-                   "Only one subregion should exist." << elemRegion->GetSubRegions().size() );
+    GEOS_ERROR_IF_NE_MSG( elemRegion->GetSubRegions().size(), 1, "Only one subregion should exist." );
 
     m_subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( 0 );
   }
@@ -218,7 +216,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
   arrayView2d< localIndex const > const & nodeMap = m_subRegion->nodeList();
-  GEOS_ERROR_IF( nodeMap.size( 1 ) != 8, "Size should be 8, " << nodeMap.size( 1 ) );
+  GEOS_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;
   for ( localIndex i = 0; i < numElemsInX; ++i )
@@ -302,7 +300,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
   arrayView1d< SortedArray< localIndex > const > const & nodeToFaceMap = m_nodeManager->faceList();
 
-  GEOS_ERROR_IF( elementToFaceMap.size( 1 ) != 6, "Size should be 6, " << elementToFaceMap.size( 1 ) );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   array1d< localIndex > faceNodesFromElem( 4 );
   array1d< localIndex > faceNodesFromFace( 4 );
@@ -357,7 +355,7 @@ TEST_F( MeshGenerationTest, faceElementMaps )
   arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap = m_faceManager->nodeList().toViewConst();
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
 
-  GEOS_ERROR_IF( elementToFaceMap.size( 1 ) != 6, "Size should be 6, " << elementToFaceMap.size( 1 ) );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex const elemIDOffset[6] = { -elem_dJ, -1, -elem_dI, elem_dI, elem_dJ, 1 };
 
@@ -429,7 +427,7 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
   arrayView1d< SortedArray< localIndex > const > const & nodeToEdgeMap = m_nodeManager->edgeList();
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
 
-  GEOS_ERROR_IF( edgeToNodeMap.size( 1 ) != 2, "Size should be 2, " << edgeToNodeMap.size( 2 ) );
+  GEOS_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
 
   localIndex nodeID = 0;
   for ( localIndex i = 0; i < numNodesInX; ++i )
@@ -485,7 +483,7 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
   arrayView1d< SortedArray< localIndex > const > const & edgeToFaceMap = m_edgeManager->faceList();
 
-  GEOS_ERROR_IF( elementToFaceMap.size( 1 ) != 6, "Size should be 6, " << elementToFaceMap.size( 1 ) );
+  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex elemID = 0;
   for ( localIndex i = 0; i < numElemsInX; ++i )
