@@ -56,8 +56,8 @@ class NodeManager : public ObjectManagerBase
 {
 public:
 
-  using EdgeMapType = UnorderedVariableOneToManyRelation;
-  using FaceMapType = UnorderedVariableOneToManyRelation;
+  using EdgeMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
+  using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
   using ElemMapType = OrderedVariableToManyElementRelation;
 
   /**
@@ -111,7 +111,7 @@ public:
 
   void depopulateUpMaps( std::set<localIndex> const & receivedNodes,
                          array2d< localIndex > const & edgesToNodes,
-                         array1d< array1d< localIndex > > const & facesToNodes,
+                         ArrayOfArraysView< localIndex const > const & facesToNodes,
                          ElementRegionManager const & elemRegionManager );
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
@@ -153,18 +153,18 @@ public:
    * @brief const accessor to the node->edge relation
    * @return const reference to relation
    */
-  UnorderedVariableOneToManyRelation const & edgeList() const
+  EdgeMapType const & edgeList() const
   { return m_toEdgesRelation; }
 
   /**
    * @brief accessor to the node->edge relation
    * @return reference to relation
    */
-  UnorderedVariableOneToManyRelation & edgeList()
+  EdgeMapType & edgeList()
   { return m_toEdgesRelation; }
 
-  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
-  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+  FaceMapType       & faceList()       { return m_toFacesRelation; }
+  FaceMapType const & faceList() const { return m_toFacesRelation; }
 
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}

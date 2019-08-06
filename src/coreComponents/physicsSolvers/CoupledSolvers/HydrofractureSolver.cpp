@@ -216,7 +216,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
-  array1d< array1d<localIndex> > const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
   constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -239,14 +239,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       {
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
-        localIndex const numNodesPerFace=facesToNodes[kf0].size();
-        localIndex const * const nodelist0 = facesToNodes[kf0];
-        localIndex const * const nodelist1 = facesToNodes[kf1];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
         R1Tensor temp;
         for( localIndex a=0 ; a<numNodesPerFace ; ++a )
         {
-          temp += u[nodelist0[a]];
-          temp -= u[nodelist1[a]];
+          temp += u[faceToNodeMap(kf0, a)];
+          temp -= u[faceToNodeMap(kf1, a)];
         }
         area[kfe] = faceArea[kfe];
 
@@ -688,7 +686,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
   arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext = {0,0,0};
 
@@ -727,8 +725,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
         Nbar.Normalize();
 
         localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const numNodesPerFace=facesToNodes[kf0].size();
-
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
 
         globalIndex rowDOF[24];
         real64 nodeRHS[24];
@@ -746,16 +743,15 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
         for( localIndex kf=0 ; kf<2 ; ++kf )
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
-          localIndex const * const faceToNodes = facesToNodes[faceIndex];
 
           for( localIndex a=0 ; a<numNodesPerFace ; ++a )
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              rowDOF[3*a+i] = dispDofNumber[faceToNodes[a]] + i;
+              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
 
               nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
-              fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
+              fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
 
               dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
             }
@@ -822,7 +818,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
     arrayView1d<real64 const> const & area      = subRegion->getElementArea();
 
     arrayView2d<localIndex const> const & elemsToFaces = subRegion->faceList();
-    array1d<array1d<localIndex > > const & facesToNodes = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
     arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
 
@@ -833,7 +829,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
       {
         globalIndex const elemDOF = presDofNumber[ei];
 
-        localIndex const numNodesPerFace = facesToNodes[elemsToFaces[ei][0]].size();
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(elemsToFaces[ei][0]);
 
         real64 const dRdAper = dens[ei][0] * area[ei];
 
@@ -852,7 +848,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] + i;
+              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*nodalDofNumber[faceToNodeMap(elemsToFaces[ei][kf],a)] +i;
               real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
               real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
               dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;

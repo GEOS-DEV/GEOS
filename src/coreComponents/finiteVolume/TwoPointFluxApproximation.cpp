@@ -95,7 +95,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   arrayView1d<integer const> const & faceGhostRank =
     faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
@@ -130,7 +130,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
       continue;
@@ -211,7 +211,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  //OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
   elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
                                                                                                viewKeyStruct::
@@ -401,7 +400,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
                                                                                  viewKeyStruct::
                                                                                  ghostRankString);
 
-  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
@@ -430,7 +429,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
     if (faceGhostRank[kf] >= 0)
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {

@@ -89,6 +89,12 @@ public:
 
   virtual void SetElementType( string const & elementType ) override;
 
+  localIndex GetNumFaceNodes( localIndex const elementIndex,
+                              localIndex const localFaceIndex) const;
+
+  localIndex GetFaceNodes( localIndex const elementIndex,
+                           localIndex const localFaceIndex,
+                           localIndex * const nodeIndicies) const;
 
   /**
    * @brief function to return the localIndices of the nodes in a face of the element
@@ -99,8 +105,6 @@ public:
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
-
-  localIndex GetMaxNumFaceNodes() const;
 
   /**
    * @brief function to return element center. this should be depricated.
