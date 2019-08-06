@@ -78,21 +78,28 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array2d<localIndex>& map,
                                                    const std::string& setName )
 {
-  set<localIndex>& newset = m_sets.getReference<set<localIndex>>(setName);
+  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
 
-  localIndex mapSize = map.size(1);
-  for( localIndex ka=0 ; ka<size() ; ++ka )
+  localIndex const numObjects = size();
+  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+
+  if ( setName == "all" )
   {
-    localIndex addToSet = 0;
-    for( localIndex a=0 ; a<mapSize ; ++a )
+    newset.reserve( numObjects );
+
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
-      if( inputSet.count( map[ka][a] ) == 1 )
-      {
-        ++addToSet;
-      }
+      newset.insert( ka );
     }
-    if( addToSet == mapSize )
+
+    return;
+  }
+
+  localIndex const mapSize = map.size( 1 );
+  for( localIndex ka=0 ; ka<numObjects ; ++ka )
+  {
+    if ( std::all_of( &map(ka, 0), &map(ka, 0) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
     {
       newset.insert( ka );
     }
@@ -103,22 +110,27 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array1d<localIndex_array>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup( groupKeyStruct::setsString );
-  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
+  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
 
-  for( localIndex ka=0 ; ka<size() ; ++ka )
+  localIndex const numObjects = size();
+  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+
+  if ( setName == "all" )
   {
-    localIndex addToSet = 0;
-    localIndex mapSize = map[ka].size();
-    for( localIndex a=0 ; a<mapSize ; ++a )
+    newset.reserve( numObjects );
+
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
-      if( inputSet.count( map[ka][a] ) == 1 )
-      {
-        ++addToSet;
-      }
+      newset.insert( ka );
     }
-    if( addToSet == mapSize )
+
+    return;
+  }
+
+  for( localIndex ka=0 ; ka<numObjects ; ++ka )
+  {
+    if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
     {
       newset.insert( ka );
     }
