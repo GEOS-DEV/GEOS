@@ -42,9 +42,9 @@ class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=OrderedVariableOneToManyRelation;
-  using EdgeMapType=OrderedVariableOneToManyRelation;
-  using FaceMapType=FixedOneToManyRelation;
+  using NodeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
+  using EdgeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
+  using FaceMapType = InterObjectRelation<array2d<localIndex>>;
 
   static const string CatalogName()
   { return "FaceElementSubRegion"; }

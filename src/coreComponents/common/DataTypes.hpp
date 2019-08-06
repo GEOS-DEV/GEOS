@@ -44,6 +44,7 @@
 #include "StackArrayWrapper.hpp"
 #include "SortedArray.hpp"
 #include "ArrayOfArrays.hpp"
+#include "ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
@@ -152,6 +153,12 @@ template< typename T >
 using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
 
 template< typename T >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+
+template< typename T >
+using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
+
+template< typename T >
 using array3d = LvArray::Array< T, 3, localIndex >;
 
 template< typename T >
@@ -207,6 +214,19 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
 {};
+
+template< typename K, typename V, typename SORTED >
+inline
+std::ostream& operator<< ( std::ostream& stream, mapBase< K, V, SORTED > const & map )
+{
+  stream << "{\n";
+  for ( auto const & pair : map )
+  {
+    stream << pair.first << " : " << pair.second << "\n";
+  }
+  stream << "}";
+  return stream;
+}
 
 template< typename TKEY, typename TVAL >
 using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
