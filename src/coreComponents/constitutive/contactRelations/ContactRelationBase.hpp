@@ -63,20 +63,8 @@ public:
       aperTerm = aper0*aper0*aper0 ;
       dAperTerm_dAper = 0.0;
     }
-    // backward euler
-    else if( integrationOption == 1 )
-    {
-      aperTerm = aper*aper*aper;
-      dAperTerm_dAper = 3 * aper*aper;
-    }
-    // trapazoid rule
-    else if ( integrationOption == 2 )
-    {
-      aperTerm = 0.5 * ( aper0*aper0*aper0 + aper*aper*aper );
-      dAperTerm_dAper = 1.5 * aper*aper;
-    }
     // simpsons rule / exact
-    else if ( integrationOption == 3 )
+    else if ( integrationOption == 1 )
     {
       aperTerm = 0.25 * ( aper0*aper0*aper0 +
                           aper0*aper0*aper +
