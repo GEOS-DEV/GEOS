@@ -155,7 +155,7 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
   GEOSX_MARK_FUNCTION;
 
   localIndex const numNodes = edgesByLowestNode.size();
-  GEOS_ERROR_IF( numNodes != uniqueEdgeOffsets.size() - 1, "Size mismatch!");
+  GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
 
   uniqueEdgeOffsets[0] = 0;
 
@@ -244,10 +244,10 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   localIndex const numNodes = edgesByLowestNode.size();
   localIndex const numFaces = faceToNodeMap.size();
   localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
-  GEOS_ERROR_IF( numNodes != uniqueEdgeOffsets.size() - 1, "Size mismatch " << numNodes << " != " << uniqueEdgeOffsets.size() - 1 );
-  GEOS_ERROR_IF( numFaces != faceToEdgeMap.size(), "Size mismatch " << numFaces << " != " << faceToEdgeMap.size() );
-  GEOS_ERROR_IF( numUniqueEdges != edgeToFaceMap.size(), "Size mismatch " << numUniqueEdges << " != " << edgeToFaceMap.size() );
-  GEOS_ERROR_IF( numUniqueEdges != edgeToNodeMap.size(0), "Size mismatch " << numUniqueEdges << " != " << edgeToNodeMap.size(0) );
+  GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
+  GEOS_ERROR_IF_NE( numFaces, faceToEdgeMap.size() );
+  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToFaceMap.size() );
+  GEOS_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
 
   // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
   GEOSX_MARK_BEGIN("Reserving space in faceToEdgeMap");
@@ -957,7 +957,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF( nodeListString != viewKeyStruct::nodeListString, "");
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
                                      packList,
@@ -967,7 +967,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF( faceListString != viewKeyStruct::faceListString, "");
+  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
