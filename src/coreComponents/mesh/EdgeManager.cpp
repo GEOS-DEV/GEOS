@@ -130,7 +130,7 @@ struct EdgeBuilder
  * associated with the edge and then appends the EdgeBuilder to edgesByLowestNode[ n0 ]. Finally it sorts
  * the contents of each sub-array of edgesByLowestNode from least to greatest.
  */
-void createEdgesByLowestNode( arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap,
+void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & faceToNodeMap,
                               ArrayOfArraysView< EdgeBuilder > const & edgesByLowestNode )
 {
   GEOSX_MARK_FUNCTION;
@@ -141,14 +141,14 @@ void createEdgesByLowestNode( arrayView1d< arrayView1d< localIndex const > const
   // loop over all the faces.
   forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID ) 
   {
-    localIndex const numNodesInFace = faceToNodeMap[ faceID ].size();
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceID );
 
     // loop over all the nodes in the face. there will be an edge for each node.
     for( localIndex a=0 ; a< numNodesInFace ; ++a )
     {
       // sort the nodes in order of index value.
-      localIndex node0 = faceToNodeMap[ faceID ][ a ];
-      localIndex node1 = faceToNodeMap[ faceID ][ ( a + 1 ) % numNodesInFace ];
+      localIndex node0 = faceToNodeMap( faceID, a );
+      localIndex node1 = faceToNodeMap( faceID, ( a + 1 ) % numNodesInFace );
       if( node0 > node1 ) std::swap( node0, node1 );
 
       // And append the edge to edgesByLowestNode.
@@ -210,6 +210,70 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
 }
 
 /**
+ * @brief Resize the edge to face map.
+ * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [in] uniqueEdgeOffsets an containing the unique edge IDs for each node in edgesByLowestNode.
+ * param [out] edgeToFaceMap the map from edges to faces. This function resizes the array appropriately.
+ */
+void resizeEdgeToFaceMap( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
+                          arrayView1d< localIndex const > const & uniqueEdgeOffsets,
+                          ArrayOfSets< localIndex > & edgeToFaceMap )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numNodes = edgesByLowestNode.size();
+  localIndex const numUniqueEdges = uniqueEdgeOffsets.back();
+  array1d< localIndex > numFacesPerEdge( numUniqueEdges );
+
+  // loop over all the nodes.
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex curEdgeID = uniqueEdgeOffsets[ nodeID ];
+    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeID );
+    
+    // loop over all the EdgeBuilders associated with the node
+    localIndex j = 0;
+    while (j < numEdges - 1)
+    {
+      // Find the number of EdgeBuilders that describe the same edge
+      localIndex numMatches = 1;
+      while ( edgesByLowestNode( nodeID, j ) == edgesByLowestNode( nodeID, j + numMatches ) )
+      {
+        ++numMatches;
+        if ( j + numMatches == numEdges ) break;
+      }
+
+      // The number of matches is the number of faces associated with this edge.
+      numFacesPerEdge( curEdgeID ) = numMatches;
+      ++curEdgeID;
+      j += numMatches;
+    }
+
+    if ( j == numEdges - 1 )
+    {
+      numFacesPerEdge( curEdgeID ) = 1;
+    }
+  } );
+
+  // Calculate the total number of nodes in the edge to face map.
+  RAJA::ReduceSum<parallelHostReduce, localIndex> totalEdgeFaces(0.0);
+  forall_in_range< parallelHostPolicy >( 0, numUniqueEdges, [&]( localIndex const faceID )
+  { 
+    totalEdgeFaces += numFacesPerEdge[ faceID ]; 
+  } );
+
+  // Resize the edge to face map
+  edgeToFaceMap.resize( 0 );
+  edgeToFaceMap.reserve( numUniqueEdges );
+  edgeToFaceMap.reserve( totalEdgeFaces.get() );
+  for ( localIndex faceID = 0; faceID < numUniqueEdges; ++faceID )
+  {
+    edgeToFaceMap.appendSet( numFacesPerEdge[ faceID ] );
+  }
+}
+
+
+/**
  * @brief Add an edge to the face to edge map, edge to face map, and edge to node map.
  * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
  * @param [in/out] faceToEdgeMap the map from face IDs to edge IDs.
@@ -221,14 +285,16 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
  * @param [in] numMatches the number of EdgeBuilders that describe this edge in edgesByLowestNode[ firstNodeID ].
  */
 void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
-              arrayView1d< array1d< localIndex > > const & faceToEdgeMap,
-              arrayView1d< SortedArray< localIndex > > const & edgeToFaceMap,
+              ArrayOfArraysView< localIndex > const & faceToEdgeMap,
+              ArrayOfSetsView< localIndex > const & edgeToFaceMap,
               arrayView2d< localIndex > const & edgeToNodeMap,
               localIndex const edgeID,
               localIndex const firstNodeID,
               localIndex const firstMatch,
               localIndex const numMatches )
 {
+  GEOS_ASSERT_EQ( edgeToFaceMap.capacityOfSet( edgeID ), numMatches );
+
   // Populate the edge to node map.
   edgeToNodeMap( edgeID, 0 ) = firstNodeID;
   edgeToNodeMap( edgeID, 1 ) = edgesByLowestNode( firstNodeID, firstMatch ).n1;
@@ -239,8 +305,8 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
     localIndex const faceID = edgesByLowestNode( firstNodeID, firstMatch + i ).faceID;
     localIndex const faceLocalEdgeIndex = edgesByLowestNode( firstNodeID, firstMatch + i ).faceLocalEdgeIndex;
 
-    faceToEdgeMap[ faceID ][ faceLocalEdgeIndex ] = edgeID;
-    edgeToFaceMap[ edgeID ].insert( faceID );
+    faceToEdgeMap( faceID, faceLocalEdgeIndex ) = edgeID;
+    edgeToFaceMap.insertIntoSet( edgeID, faceID );
   }
 }
 
@@ -255,9 +321,9 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
  */
 void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                    arrayView1d< localIndex const > const & uniqueEdgeOffsets,
-                   arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap, 
-                   arrayView1d< array1d< localIndex > > const & faceToEdgeMap,
-                   arrayView1d< SortedArray< localIndex > > const & edgeToFaceMap,
+                   ArrayOfArraysView< localIndex const > const & faceToNodeMap, 
+                   ArrayOfArrays< localIndex > & faceToEdgeMap,
+                   ArrayOfSets< localIndex > & edgeToFaceMap,
                    arrayView2d< localIndex > const & edgeToNodeMap )
 {
   GEOSX_MARK_FUNCTION;
@@ -272,20 +338,21 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
 
   // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
   GEOSX_MARK_BEGIN("Reserving space in faceToEdgeMap");
+  localIndex totalSize = 0;
   for ( localIndex faceID = 0; faceID < numFaces; ++faceID )
   {
-    faceToEdgeMap[ faceID ].resize( faceToNodeMap[ faceID ].size() );
+    totalSize += faceToNodeMap.sizeOfArray( faceID );
+  }
+
+  faceToEdgeMap.resize( 0 );
+  faceToEdgeMap.reserve( numFaces );
+  faceToEdgeMap.reserveValues( totalSize );
+
+  for ( localIndex faceID = 0; faceID < numFaces; ++faceID )
+  {
+    faceToEdgeMap.appendArray( faceToNodeMap.sizeOfArray( faceID ) );
   }
   GEOSX_MARK_END("Reserving space in faceToEdgeMap");
-
-  // Need to be smarter about this. Should precalculate the number of faces associated with each edge
-  // and store it in an array which would be used here.
-  GEOSX_MARK_BEGIN("Reserving space in edgeToFaceMap");
-  for ( localIndex edgeID = 0; edgeID < numUniqueEdges; ++edgeID )
-  {
-    edgeToFaceMap[ edgeID ].reserve( 10 );
-  }
-  GEOSX_MARK_END("Reserving space in edgeToFaceMap");
 
   // loop over all the nodes.
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -323,7 +390,14 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   GEOSX_MARK_FUNCTION;
 
   localIndex const numNodes = nodeManager->size();
-  arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+  faceManager->edgeList().SetRelatedObject( this );
+  ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager->edgeList();
+
+  m_toNodesRelation.SetRelatedObject( nodeManager );
+  m_toFacesRelation.SetRelatedObject( faceManager );
 
   ArrayOfArrays<EdgeBuilder> edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
   createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode );
@@ -331,15 +405,11 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
   localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode, uniqueEdgeOffsets );
 
-  OrderedVariableOneToManyRelation& faceToEdgeMap = faceManager->edgeList();
-  faceToEdgeMap.SetRelatedObject( this );
+  resizeEdgeToFaceMap( edgesByLowestNode,
+                       uniqueEdgeOffsets,
+                       m_toFacesRelation );
 
-  m_toNodesRelation.SetRelatedObject( nodeManager );
-  m_toFacesRelation.SetRelatedObject( faceManager );
-
-  GEOSX_MARK_BEGIN("EdgeManager::resize");
-  resize(numEdges);
-  GEOSX_MARK_END("EdgeManager::resize");
+  resize( numEdges );
 
   populateMaps( edgesByLowestNode,
                 uniqueEdgeOffsets,
@@ -449,23 +519,24 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 //}
 
 
-void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject )
+void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
 {
   GEOSX_MARK_FUNCTION;
 
-  // make sure that the reference object is a faceManger object
-//  referenceObject->CheckObjectType( ObjectDataStructureBaseT::FaceManager );
+  referenceObject->CheckTypeID( typeid( NodeManager ) );
 
   // cast the referenceObject into a faceManager
-  const FaceManager * faceManager = static_cast<const FaceManager *>( referenceObject);
+  FaceManager const * const faceManager = ManagedGroup::group_cast<const FaceManager *>( referenceObject );
 
-  // get the "isDomainBoundary" field from the faceManager->..This should have
+  // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
-  const array1d<integer>& isFaceOnDomainBoundary = faceManager->getReference< array1d<integer> >( ObjectManagerBase::viewKeyStruct::domainBoundaryIndicatorString );
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager->getReference< array1d<integer> >( ObjectManagerBase::viewKeyStruct::domainBoundaryIndicatorString );
 
-  // get the "isDomainBoudnary" field from for *this, and set it to zero
-  array1d<integer>& isNodeOnDomainBoundary = this->getReference< array1d<integer> >(ObjectManagerBase::viewKeyStruct::domainBoundaryIndicatorString);
-  isNodeOnDomainBoundary = 0;
+  // get the "isDomainBoundary" field from for *this, and set it to zero
+  array1d<integer> & isEdgeOnDomainBoundary = this->getReference< array1d<integer> >(ObjectManagerBase::viewKeyStruct::domainBoundaryIndicatorString);
+  isEdgeOnDomainBoundary = 0;
+
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList();
 
   // loop through all faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -473,12 +544,12 @@ void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * con
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )
     {
-      localIndex_array const & faceToEdges = faceManager->edgeList()(kf);
+      localIndex const numFaceEdges = faceToEdgeMap.sizeOfArray( kf );
 
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-      for( localIndex_array::const_iterator a=faceToEdges.begin() ; a!=faceToEdges.end() ; ++a )
+      for( localIndex a = 0; a < numFaceEdges; ++a )
       {
-        isNodeOnDomainBoundary(*a) = 1;
+        isEdgeOnDomainBoundary( faceToEdgeMap( kf, a ) ) = 1;
       }
     }
   }
@@ -486,13 +557,7 @@ void EdgeManager::SetDomainBoundaryObjects( const ObjectDataStructureBaseT * con
 
 bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) const
 {
-
-  if( m_toNodesRelation(edgeID,0) == nodeID || m_toNodesRelation(edgeID,1) == nodeID )
-  {
-    return true;
-  }
-  else
-    return false;
+  return m_toNodesRelation( edgeID, 0 ) == nodeID || m_toNodesRelation( edgeID, 1 ) == nodeID;
 }
 
 //localIndex EdgeManager::FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex nodeB, const NodeManager * nodeManager)
@@ -518,11 +583,10 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
   array1d<integer> const & isExternalFace = faceManager->isExternal();
   array1d<integer>& isExternal = this->isExternal();
 
-  array1d<localIndex_array> const & facesToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList();
 
   // get the "isExternal" field from for *this, and set it to zero
   isExternal = 0;
-
 
   // loop through all faces
   for( localIndex kf=0 ; kf<faceManager->size() ; ++kf )
@@ -530,13 +594,11 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
     {
-      localIndex_array const & faceToEdges = facesToEdges[kf];
-
       // loop over all nodes connected to face, and set isNodeDomainBoundary
-
-      for( auto a : faceToEdges )
+      localIndex const numEdges = faceToEdges.sizeOfArray( kf );
+      for( localIndex a = 0; a < numEdges; ++a )
       {
-        isExternal[a] = 1;
+        isExternal[ faceToEdges( kf, a ) ] = 1;
       }
     }
   }
@@ -882,20 +944,22 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
 //  }
 //}
 
-void EdgeManager::AddToEdgeToFaceMap( const FaceManager * faceManager,
-                                      const localIndex_array& newFaceIndices )
+void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
+                                      arrayView1d< localIndex const > const & newFaceIndices )
 {
-  OrderedVariableOneToManyRelation const & facesToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList();
+  
   // loop over all faces in list
-  for( localIndex kf=0 ; kf<newFaceIndices.size() ; ++kf )
+  for( localIndex const newFaceIndex : newFaceIndices )
   {
-    localIndex lfi = newFaceIndices(kf);
-    // now iterate over the faceToNodeMap (i.e. all nodes in the faceToNodeMap)
-    for( localIndex_array::const_iterator a=facesToEdges[lfi].begin() ;
-         a != facesToEdges[lfi].end() ; ++a )
+    
+    // now iterate over the faceToEdgeMap (i.e. all nodes in the faceToNodeMap)
+    localIndex const numEdges = faceToEdgeMap.sizeOfArray( newFaceIndex );
+    for ( localIndex a = 0; a < numEdges; ++a )
     {
       // enter the value of the face index into the nodeToFace map
-      m_toFacesRelation[*a].insert(lfi);
+      localIndex const edgeID = faceToEdgeMap( newFaceIndex, a );
+      m_toFacesRelation.insertIntoSet( edgeID, newFaceIndex );
     }
   }
 }
@@ -954,7 +1018,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation.Base(),
+                                         m_toFacesRelation.Base().toArrayOfArraysView(),
                                          m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          m_localToGlobalMap,
@@ -985,6 +1049,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
   GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
                                      packList,
@@ -1002,14 +1067,15 @@ void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
 
-  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation.Base(),
+                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 }
 
 
 void EdgeManager::depopulateUpMaps( std::set<localIndex> const & receivedEdges,
-                                    array1d< array1d< localIndex > > const & facesToEdges )
+                                    ArrayOfArraysView< localIndex const > const & facesToEdges )
 {
   ObjectManagerBase::CleanUpMap( receivedEdges, m_toFacesRelation, facesToEdges );
 }

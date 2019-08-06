@@ -233,6 +233,16 @@ localIndex
 Unpack( char const * & buffer,
         LvArray::ArrayOfArrays< T, INDEX_TYPE > & var );
 
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfSets< T, INDEX_TYPE > const & var );
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfSets< T, INDEX_TYPE > & var );
+
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
 localIndex
@@ -251,7 +261,7 @@ template< bool DO_PACKING >
 localIndex
 Pack( char * & buffer,
       arraySlice1d< localIndex const > const & var,
-      arraySlice1d< globalIndex const > const & unmappedGlobalIndices,
+      globalIndex const * const unmappedGlobalIndices,
       localIndex const length,
       arraySlice1d< globalIndex const > const & localToGlobalMap );
 
