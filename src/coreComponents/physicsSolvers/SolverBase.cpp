@@ -18,6 +18,8 @@
 
 #include "SolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
+
+#include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
@@ -136,6 +138,7 @@ void SolverBase::Execute( real64 const time_n,
                           real64 const eventProgress,
                           ManagedGroup * domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
