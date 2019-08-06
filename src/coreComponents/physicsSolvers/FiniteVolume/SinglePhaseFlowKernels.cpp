@@ -258,8 +258,12 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
     stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
+    // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
+    stackArray2d<real64, maxNumFluxElems*maxStencilSize> dFlux_dAper(numFluxElems, stencilSize);
+
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
+
 
     FluxKernel::ComputeJunction( numFluxElems,
                                  sei[iconn],
@@ -277,7 +281,8 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                  gravityFlag,
                                  dt,
                                  localFlux,
-                                 localFluxJacobian );
+                                 localFluxJacobian,
+                                 dFlux_dAper );
 
     // extract DOF numbers
     eqnRowIndices = -1;
