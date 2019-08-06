@@ -115,6 +115,8 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 //**************************************************************************************************
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   OrderedVariableOneToManyRelation const & faceToNodes = faceManager->nodeList();
   localIndex const numFaces = faceManager->size();
   for( localIndex ke=0 ; ke<numFaces ; ++ke )
