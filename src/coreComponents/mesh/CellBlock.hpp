@@ -100,6 +100,8 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
+  localIndex GetMaxNumFaceNodes() const;
+
   /**
    * @brief function to return element center. this should be depricated.
    * @param k
