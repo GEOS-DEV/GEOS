@@ -700,10 +700,7 @@ int main( int argc, char** argv )
   ::testing::InitGoogleTest( &argc, argv );
 
   // Global call will not work because CXXUtils has already been initialized in problemManager
-  //geosx::basicSetup( argc, argv );
-  setupMPI(argc, argv);
-  setupOpenMP();
-  setupMKL();
+  geosx::basicSetup( argc, argv );
 
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>( global_argc )];
@@ -717,10 +714,7 @@ int main( int argc, char** argv )
   delete[] global_argv;
 
   // Global call will not work because CXXUtils will be destructed by problemManager
-  //geosx::basicCleanup();
-  FieldSpecificationManager::finalize();
-  NewFunctionManager::finalize();
-  finalizeMPI();
+  geosx::basicCleanup();
 
   return result;
 }

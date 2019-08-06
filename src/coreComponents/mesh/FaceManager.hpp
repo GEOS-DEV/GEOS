@@ -60,6 +60,8 @@ public:
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
+  void computeGeometry( NodeManager const * const nodeManager );
+
   localIndex getMaxFaceNodes() const;
 
   void SortAllFaceNodes( NodeManager const * const nodeManager,
