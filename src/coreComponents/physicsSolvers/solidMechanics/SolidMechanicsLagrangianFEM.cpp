@@ -405,9 +405,6 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
                                                 const int cycleNumber,
                                                 DomainPartition * domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * elemManager = mesh->getElemManager();
-
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
@@ -681,7 +678,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
 
   real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -711,12 +708,12 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
       {
         if( faceGhostRank[kf] < 0 )
         {
-          localIndex const numNodes = facesToNodes[kf].size();
+          localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
           nodeDOF.resize( numNodes );
           nodeRHS.resize( numNodes );
           for( localIndex a=0 ; a<numNodes ; ++a )
           {
-            nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+            nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
             nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
           }
           rhs.add( nodeDOF, nodeRHS );
@@ -735,12 +732,12 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
           {
             if( faceGhostRank[kf] < 0 )
             {
-              localIndex const numNodes = facesToNodes[kf].size();
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               nodeDOF.resize( numNodes );
               nodeRHS.resize( numNodes );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+                nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
                 nodeRHS[a] = value * faceArea[kf] / numNodes;
               }
               rhs.add( nodeDOF, nodeRHS );
@@ -757,12 +754,12 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
           {
             if( faceGhostRank[kf] < 0 )
             {
-              localIndex const numNodes = facesToNodes[kf].size();
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
               nodeDOF.resize( numNodes );
               nodeRHS.resize( numNodes );
               for( localIndex a=0 ; a<numNodes ; ++a )
               {
-                nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+                nodeDOF[a] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
                 nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
               }
               rhs.add( nodeDOF, nodeRHS );
@@ -782,7 +779,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
 
   arrayView1d<real64 const> const & faceArea  = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceNormal  = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -796,12 +793,12 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     globalIndex nodeDOF[20];
     real64 nodeRHS[20];
 
-    int const numNodes = integer_conversion<int>(facesToNodes[kf].size());
+    int const numNodes = integer_conversion<int>(faceToNodeMap.sizeOfArray(kf));
     for( int a=0 ; a<numNodes ; ++a )
     {
       for( int component=0 ; component<3 ; ++component )
       {
-        nodeDOF[3*a+component] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+        nodeDOF[3*a+component] = blockLocalDofNumber[faceToNodeMap(kf,a)] + component;
         nodeRHS[3*a+component] = - facePressure[kf] * faceNormal[kf][component] * faceArea[kf] / numNodes;
       }
     }

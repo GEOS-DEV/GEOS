@@ -710,8 +710,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                   //            0                   1             |/____ x
 
                 }
-                // fix local connectivity for single theta (y) partition (radial
-                // meshes only)
+                // fix local connectivity for single theta (y) partition (radial meshes only)
                 if( isRadialWithOneThetaPartition )
                 {
                   if( j == numElemsInDirForRegion[1] - 1 && jblock == m_nElems[1].size() - 1 )
@@ -737,7 +736,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;

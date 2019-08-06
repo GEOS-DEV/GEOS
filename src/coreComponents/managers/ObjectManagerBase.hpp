@@ -184,15 +184,19 @@ public:
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                   const array2d<localIndex>& map,
                                   const std::string& newSetName );
 
   /// builds a new set on this object given another objects set and the map
   // between them
-  void ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                   const array1d<localIndex_array>& map,
                                   const std::string& newSetName );
+
+  void ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
+                                  ArrayOfArraysView< localIndex const > const & map,
+                                  const std::string& setName );
 
   void ConstructGlobalToLocalMap();
 
@@ -243,15 +247,32 @@ public:
   template< typename TYPE_RELATION >
   static void FixUpDownMaps( TYPE_RELATION & relation,
                              map< localIndex, set<globalIndex> > & unmappedIndices,
-                             bool const clearIfUnmapped  );
+                             bool const clearIfUnmapped );
+
+  static void FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+                             unordered_map<globalIndex,localIndex> const & globalToLocal,
+                             map< localIndex, set<globalIndex> > & unmappedIndices,
+                             bool const clearIfUnmapped );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
                           array2d<localIndex> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+                          array2d< localIndex const > const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
                           array1d< array1d<localIndex > > const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+                          array1d< array1d<localIndex> > const & downmap );
+
+  static void CleanUpMap( std::set<localIndex> const & targetIndices,
+                          ArrayOfSetsView< localIndex > const & upmap,
+ArrayOfArraysView< localIndex const > const & downmap );
 
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
@@ -367,13 +388,6 @@ public:
 };
 
 
-//template< typename T >
-//void ObjectManagerBase::FixUpDownMaps()
-//{
-//
-//}
-
-
 template< typename TYPE_RELATION >
 void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d<globalIndex> > & unmappedIndices,
@@ -442,7 +456,39 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
   unmappedIndices.clear();
 }
 
-
+inline
+void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
+                                       unordered_map<globalIndex,localIndex> const & globalToLocal,
+                                       map< localIndex, set<globalIndex> > & unmappedIndices,
+                                       bool const clearIfUnmapped )
+{
+  for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
+       iter != unmappedIndices.end() ;
+       ++iter )
+  {
+    localIndex const li = iter->first;
+    if( clearIfUnmapped )
+    {
+      relation.clearSet( li );
+    }
+    else
+    {
+      set<globalIndex> const & globalIndices = iter->second;
+      for( globalIndex const newGlobalIndex : globalIndices )
+      {
+        // NOTE: This simply ignores if newGlobalIndex is not found. This is OK if this function is
+        // used for an upmap and the object shouldn't exist on this rank. There should be a better
+        // way to check this.
+        auto iterG2L = globalToLocal.find(newGlobalIndex);
+        if( iterG2L != globalToLocal.end() )
+        {
+          relation.insertIntoSet( li, iterG2L->second );
+        }
+      }
+    }
+  }
+  unmappedIndices.clear();
+}
 
 } /* namespace geosx */
 

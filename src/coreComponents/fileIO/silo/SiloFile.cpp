@@ -1579,6 +1579,8 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     FaceManager const * const faceManager = meshLevel->getFaceManager();
     localIndex const numFaces = faceManager->size();
 
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
     EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
     localIndex const numEdges = edgeManager->size();
 
@@ -1836,25 +1838,25 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       std::vector<int> fshapetype(numFaceTypes);
       std::vector<int> fshapesize(numFaceTypes);
 
-      array1d<array1d<localIndex>> faceToNodeMap(numFaceTypes);
+      array1d<array1d<localIndex>> faceToNodeMapCopy(numFaceTypes);
       {
         for (localIndex k = 0; k < numFaces; ++k)
         {
-          faceToNodeMap[0].push_back(faceManager->nodeList()[k].size());
-          for (localIndex a = 0; a < faceManager->nodeList()[k].size(); ++a)
+          faceToNodeMapCopy[0].push_back(faceToNodeMap.sizeOfArray(k));
+          for (localIndex const a : faceToNodeMap.getIterableArray(k))
           {
-            faceToNodeMap[0].push_back(faceManager->nodeList()[k][a]);
+            faceToNodeMapCopy[0].push_back(a);
           }
         }
 
-        faceConnectivity[0] = faceToNodeMap[0].data();
+        faceConnectivity[0] = faceToNodeMapCopy[0].data();
 
         globalFaceNumbers[0] = faceManager->m_localToGlobalMap.data();
         fshapecnt[0] = numFaces;
         fshapetype[0] = dbZoneType;
         fshapesize[0] = 0;
       }
-      int lnodelist = faceToNodeMap[0].size();
+      int lnodelist = faceToNodeMapCopy[0].size();
 
       WritePolygonMeshObject( facemeshName, numNodes, coords,
                               nodeManager->m_localToGlobalMap.data(), numFaceTypes,
@@ -1866,7 +1868,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     else  //The old way
     {
       const int numFaceTypes = 1;
-      int numNodesPerFace = faceManager->nodeList()[0].size(); // TODO assumes all faces have same number of nodes
+      int numNodesPerFace = faceToNodeMap.sizeOfArray(0); // TODO assumes all faces have same number of nodes
       int dbZoneType = DB_ZONETYPE_POLYGON;
       if(numNodesPerFace == 3) {
         dbZoneType = DB_ZONETYPE_TRIANGLE;
@@ -1882,22 +1884,22 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       std::vector<int> fshapetype(numFaceTypes);
       std::vector<int> fshapesize(numFaceTypes);
 
-      array1d<array2d<localIndex>> faceToNodeMap(numFaceTypes);
+      array1d<array2d<localIndex>> faceToNodeMapCopy(numFaceTypes);
 
 
       for(int faceType = 0; faceType < numFaceTypes; ++faceType)
       {
-        faceToNodeMap[faceType].resize( numFaces, numNodesPerFace);
+        faceToNodeMapCopy[faceType].resize( numFaces, numNodesPerFace);
 
         for(localIndex k = 0; k < numFaces; ++k )
         {
           for (int a = 0; a < numNodesPerFace; ++a)
           {
-            faceToNodeMap[faceType][k][a] = faceManager->nodeList()[k][a];
+            faceToNodeMapCopy[faceType][k][a] = faceToNodeMap(k, a);
           }
         }
 
-        faceConnectivity[faceType] = faceToNodeMap[faceType].data();
+        faceConnectivity[faceType] = faceToNodeMapCopy[faceType].data();
 
         globalFaceNumbers[faceType] = faceManager->m_localToGlobalMap.data();
         fshapecnt[faceType] = numFaces;
@@ -1960,7 +1962,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         for (int a = 0; a < numNodesPerEdge; ++a)
         {
-          if ( faceManager->nodeList()[0].size() == 2 && a > 0)
+          if ( faceToNodeMap.sizeOfArray(0) == 2 && a > 0)
           {
             edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][0];
           }

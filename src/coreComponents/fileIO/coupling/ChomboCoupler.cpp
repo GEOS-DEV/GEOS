@@ -47,8 +47,8 @@ void ChomboCoupler::write(double dt)
   FaceManager* faces = m_mesh.getFaceManager();
   NodeManager* nodes = m_mesh.getNodeManager();
 
-  const OrderedVariableOneToManyRelation& face_connectivity = faces->nodeList();
-  const localIndex n_faces = face_connectivity.size();
+  ArrayOfArraysView< localIndex const > const& face_connectivity = faces->nodeList();
+  localIndex const n_faces = face_connectivity.size();
 
   /* Copy the face connectivity into a contiguous array. */
   std::int64_t* connectivity_array = new std::int64_t[4 * n_faces];
@@ -56,7 +56,7 @@ void ChomboCoupler::write(double dt)
   {
     for (localIndex j = 0; j < 4; ++j)
     {
-      connectivity_array[4 * i + j] = face_connectivity[i][j];
+      connectivity_array[4 * i + j] = face_connectivity(i, j);
     }
   }
 

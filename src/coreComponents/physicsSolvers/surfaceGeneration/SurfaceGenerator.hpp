@@ -542,13 +542,13 @@ private:
   localIndex_set m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
-  array1d< set<localIndex> > m_originalNodetoFaces;
+ ArrayOfSets< localIndex > m_originalNodetoFaces;
 
   /// copy of the original node->edge mapping prior to any separation
-  array1d< set<localIndex> > m_originalNodetoEdges;
+  ArrayOfSets< localIndex > m_originalNodetoEdges;
 
   /// copy of the original face->edge mapping prior to any separation
-  array1d< array1d<localIndex> > m_originalFaceToEdges;
+  ArrayOfArrays< localIndex>  m_originalFaceToEdges;
 
   /// collection of faces that have been used for separation of each node
   array1d< set<localIndex> > m_usedFacesForNode;
