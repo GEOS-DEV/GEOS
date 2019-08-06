@@ -542,6 +542,7 @@ void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLe
 void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
                                         systemSolverInterface::EpetraBlockSystem * const blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   constexpr int dim=3;
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -609,6 +610,7 @@ void HydrofractureSolver::AssembleSystem( DomainPartition * const domain,
                                           real64 const time,
                                           real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
   m_solidSolver->AssembleSystem( domain, blockSystem, time, dt );
 
   m_flowSolver->AssembleSystem( domain, blockSystem, time, dt );
@@ -624,6 +626,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domai
                                                    real64 const time_n,
                                                    real64 const dt )
 {
+  GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
   m_flowSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
 
@@ -691,6 +694,7 @@ HydrofractureSolver::
 CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
                        DomainPartition *const domain)
 {
+  GEOSX_MARK_FUNCTION;
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( blockSystem, domain );
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( blockSystem, domain );
 
@@ -706,6 +710,7 @@ HydrofractureSolver::
 AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                             systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   FaceManager const * const faceManager = mesh->getFaceManager();
@@ -813,6 +818,7 @@ HydrofractureSolver::
 AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
                                                     systemSolverInterface::EpetraBlockSystem & blockSystem )
 {
+  GEOSX_MARK_FUNCTION;
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -911,6 +917,7 @@ ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const bloc
                      real64 const scalingFactor,
                      DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplySystemSolution( blockSystem, -1.0, domain );
   m_flowSolver->ApplySystemSolution( blockSystem, -1.0, domain );
 
@@ -977,11 +984,197 @@ void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
      printf("           ::   | %.1e %.1e |   | %.1e |\n",matnorm[1][0],matnorm[1][1],rhsnorm[1]);
    }
 }
+using namespace Teuchos;
+using namespace Thyra;
 
+void scale2x2System( int const use_scaling,
+                     Epetra_FECrsMatrix * m_matrix[2][2],
+                     Epetra_FEVector * m_rhs[2],
+                     RCP<Epetra_Vector> scaling [2][2] )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // ROW & COLUMN SCALING
+  //
+  // Scale the linear system with row and column scaling
+  // matrices R and C.  The resulting linear system is
+  //  (R.A.C).(Cinv.x) = R.b
+  // We use the iterative method of Ruiz (2001) to
+  // repeatedly update R and C until the desired scaling
+  // is found. Note also that C must be saved to later
+  // compute the true solution from the temporary solution
+  //  x = C.x' where x' = Cinv.x
+
+  // The diagonal scaling matrices are stored as four
+  // vectors, one for each combination of row/column and
+  // block 0/block 1.  We store them in a 2x2 array as
+  // [ R0 C0 ;
+  //   R1 C1 ]
+
+  // note that we can extend this methodology to larger
+  // block systems by storing a (n_blocks x 2) array:
+  // [ R0 C0 ;
+  //   R1 C1 ;
+  //   .. ..
+  //   Rn Cn ]
+
+  const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
+  enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
+
+    // complete scaling
+  RCP<Epetra_Vector> scaling_k [n_blocks][2];  // scaling at iteration k
+
+  if(use_scaling == 2)
+  {
+    // first print unscaled norms
+
+    //    if(params->m_verbose >= 2)
+    //    {
+    //      print_norms(epetraSystem,"unscaled");
+    //    }
+
+    // allocate storage for our scaling vectors, and initialize
+    // them to identity scalings (R=C=I).
+
+    for(unsigned b=0; b<n_blocks; ++b)
+    {
+      scaling[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
+      scaling[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
+
+      scaling[b][ROW]->PutScalar(1.0);
+      scaling[b][COL]->PutScalar(1.0);
+
+      scaling_k[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
+      scaling_k[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
+    }
+
+    // begin scaling iterations
+
+    for(unsigned k=0; k<2; ++k)
+    {
+      // get row and column max norms for scaling
+
+      for(unsigned a=0; a<n_blocks; ++a)
+      {
+
+        scaling_k[a][ROW]->PutScalar(0.0); // clear
+        scaling_k[a][COL]->PutScalar(0.0); // clear
+
+        Epetra_Vector tmp_row(m_matrix[a][a]->RangeMap());
+        Epetra_Vector tmp_col(m_matrix[a][a]->DomainMap());
+
+        for(unsigned b=0; b<n_blocks; ++b)
+        {
+          m_matrix[a][b]->InvRowMaxs(tmp_row); // 1/row_norms for block
+          m_matrix[b][a]->InvColMaxs(tmp_col); // 1/col_norms for block
+
+          tmp_row.Reciprocal(tmp_row); // row_norms for block
+          tmp_col.Reciprocal(tmp_col); // col_norms for block
+
+          scaling_k[a][ROW]->Update(1.0,tmp_row,1.0);  // add across blocks (A and B) or (C and D)
+          scaling_k[a][COL]->Update(1.0,tmp_col,1.0);  // add across blocks (A and C) or (B and D)
+
+          // note this last step defines a weird norm, i.e. the sum inf_norm(A)+inf_norm(B)
+          // rather than inf_norm([A B]).  the first is just easier to compute using
+          // built in operations.  this should not make much of a difference in terms
+          // of actual performance, as we're just trying to get a reasonable scaling.
+        }
+
+        for(int i=0; i<scaling_k[a][ROW]->MyLength(); ++i)
+          (*scaling_k[a][ROW])[i] = 1./sqrt((*scaling_k[a][ROW])[i]);  // use 1/sqrt(norm) for scaling
+        for(int i=0; i<scaling_k[a][COL]->MyLength(); ++i)
+          (*scaling_k[a][COL])[i] = 1./sqrt((*scaling_k[a][COL])[i]);  // use 1/sqrt(norm) for scaling
+
+        scaling[a][ROW]->Multiply(1.0,*scaling[a][ROW],*scaling_k[a][ROW],0.0); // save total row scaling over all iterations
+        scaling[a][COL]->Multiply(1.0,*scaling[a][COL],*scaling_k[a][COL],0.0); // save total col scaling over all iterations
+      }
+
+      // actually scale matrix A(k) = R(k).A(k-1).C(k)
+      // also scale rhs b(k) = R(k)*b(k-1)
+      // will scale solution x = C*x' after solve
+
+      for(unsigned a=0; a<n_blocks; ++a)
+      {
+        for(unsigned b=0; b<n_blocks; ++b)
+        {
+          m_matrix[a][b]->LeftScale(*scaling_k[a][ROW]);
+          m_matrix[a][b]->RightScale(*scaling_k[b][COL]);
+        }
+        m_rhs[a]->Multiply(1.0,*scaling_k[a][ROW],*m_rhs[a],0.0);
+      }
+
+      // check for convergence in desired row and column norms
+      // and print info in verbose mode > 0
+
+      double convergence = 0.0;
+      double norm_threshold = 0.2;
+
+      for(unsigned a=0; a<n_blocks; ++a)
+        for(unsigned b=0; b<2; ++b)
+        {
+          double tmp[1];
+          scaling_k[a][b]->Reciprocal(*scaling_k[a][b]);
+          scaling_k[a][b]->NormInf(&(tmp[0]));
+          tmp[0] = abs(1-pow(tmp[0],2));
+          convergence = std::max(convergence,tmp[0]);
+        }
+
+      //if( partition.m_rank == 0 && params->m_verbose >= 2 )
+      {
+        if(k==0)
+        {
+          printf("SolverBase :: Re-scaling matrix \n");
+          printf("           ::   %d ... %.1e\n",k,convergence);
+        }
+        else
+          printf("           ::   %d ... %.1e\n",k,convergence);
+      }
+
+      if(convergence < norm_threshold && k > 1) break;
+    }
+
+    //    if(params->m_verbose >= 2)
+    //    {
+    //      print_norms(epetraSystem,"scaled");
+    //    }
+  } // end scaling
+  else if( use_scaling==1 )
+  {
+
+    // perform an explicit row scaling of the linear system,
+    // R*A*x = R*b, where R is a diagonal scaling matrix.
+    // we will use inverse row sums for the scaling.
+
+    for(unsigned b=0; b<2; ++b)
+    {
+      Epetra_Vector scale_one(m_matrix[b][b]->RowMap());
+      Epetra_Vector scale_two(m_matrix[b][b]->RowMap());
+
+      Epetra_Vector scale_one_inv(m_matrix[b][b]->RowMap());
+      Epetra_Vector scale_two_inv(m_matrix[b][b]->RowMap());
+
+      m_matrix[b][0]->InvRowSums(scale_one_inv);
+      m_matrix[b][1]->InvRowSums(scale_two_inv);
+      scale_one.Reciprocal(scale_one_inv);
+      scale_two.Reciprocal(scale_two_inv);  // not ideal, could choke if 1/0 or 1/NaN appears
+      scale_one.Update(1.0,scale_two,1.0);
+      scale_one_inv.Reciprocal(scale_one);
+
+      for(unsigned c=0; c<2; ++c)
+      {
+        m_matrix[b][c]->LeftScale(scale_one_inv);
+      }
+
+      Epetra_MultiVector tmp (*m_rhs[b]);
+      m_rhs[b]->Multiply(1.0,scale_one_inv,tmp,0.0);
+    }
+  }
+}
 
 void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
                                        SystemSolverParameters const * const paramsC )
 {
+  GEOSX_MARK_FUNCTION;
 
   SystemSolverParameters * const params = const_cast<SystemSolverParameters *>(paramsC);
 
@@ -1053,183 +1246,10 @@ void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
     EpetraExt::MultiVectorToMatlabFile("urhs1.dat",*epetraSystem.m_rhs[1]);
   }
   */
-
-
-    // ROW & COLUMN SCALING
-    //
-    // Scale the linear system with row and column scaling
-    // matrices R and C.  The resulting linear system is
-    //  (R.A.C).(Cinv.x) = R.b
-    // We use the iterative method of Ruiz (2001) to
-    // repeatedly update R and C until the desired scaling
-    // is found. Note also that C must be saved to later
-    // compute the true solution from the temporary solution
-    //  x = C.x' where x' = Cinv.x
-
-    // The diagonal scaling matrices are stored as four
-    // vectors, one for each combination of row/column and
-    // block 0/block 1.  We store them in a 2x2 array as
-    // [ R0 C0 ;
-    //   R1 C1 ]
-
-    // note that we can extend this methodology to larger
-    // block systems by storing a (n_blocks x 2) array:
-    // [ R0 C0 ;
-    //   R1 C1 ;
-    //   .. ..
-    //   Rn Cn ]
-
   const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
   enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
-
   RCP<Epetra_Vector> scaling   [n_blocks][2];  // complete scaling
-  RCP<Epetra_Vector> scaling_k [n_blocks][2];  // scaling at iteration k
-
-  if(use_scaling == 2)
-  {
-    // first print unscaled norms
-
-//    if(params->m_verbose >= 2)
-//    {
-//      print_norms(epetraSystem,"unscaled");
-//    }
-
-    // allocate storage for our scaling vectors, and initialize
-    // them to identity scalings (R=C=I).
-
-    for(unsigned b=0; b<n_blocks; ++b)
-    {
-      scaling[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-
-      scaling[b][ROW]->PutScalar(1.0);
-      scaling[b][COL]->PutScalar(1.0);
-
-      scaling_k[b][ROW] = rcp(new Epetra_Vector(m_matrix[b][b]->RangeMap()));
-      scaling_k[b][COL] = rcp(new Epetra_Vector(m_matrix[b][b]->DomainMap()));
-    }
-
-    // begin scaling iterations
-
-    for(unsigned k=0; k<30; ++k)
-    {
-    // get row and column max norms for scaling
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-
-        scaling_k[a][ROW]->PutScalar(0.0); // clear
-        scaling_k[a][COL]->PutScalar(0.0); // clear
-
-        Epetra_Vector tmp_row(m_matrix[a][a]->RangeMap());
-        Epetra_Vector tmp_col(m_matrix[a][a]->DomainMap());
-
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->InvRowMaxs(tmp_row); // 1/row_norms for block
-          m_matrix[b][a]->InvColMaxs(tmp_col); // 1/col_norms for block
-
-          tmp_row.Reciprocal(tmp_row); // row_norms for block
-          tmp_col.Reciprocal(tmp_col); // col_norms for block
-
-          scaling_k[a][ROW]->Update(1.0,tmp_row,1.0);  // add across blocks (A and B) or (C and D)
-          scaling_k[a][COL]->Update(1.0,tmp_col,1.0);  // add across blocks (A and C) or (B and D)
-
-    // note this last step defines a weird norm, i.e. the sum inf_norm(A)+inf_norm(B)
-    // rather than inf_norm([A B]).  the first is just easier to compute using
-    // built in operations.  this should not make much of a difference in terms
-    // of actual performance, as we're just trying to get a reasonable scaling.
-        }
-
-        for(int i=0; i<scaling_k[a][ROW]->MyLength(); ++i)
-           (*scaling_k[a][ROW])[i] = 1./sqrt((*scaling_k[a][ROW])[i]);  // use 1/sqrt(norm) for scaling
-        for(int i=0; i<scaling_k[a][COL]->MyLength(); ++i)
-           (*scaling_k[a][COL])[i] = 1./sqrt((*scaling_k[a][COL])[i]);  // use 1/sqrt(norm) for scaling
-
-        scaling[a][ROW]->Multiply(1.0,*scaling[a][ROW],*scaling_k[a][ROW],0.0); // save total row scaling over all iterations
-        scaling[a][COL]->Multiply(1.0,*scaling[a][COL],*scaling_k[a][COL],0.0); // save total col scaling over all iterations
-      }
-
-    // actually scale matrix A(k) = R(k).A(k-1).C(k)
-    // also scale rhs b(k) = R(k)*b(k-1)
-    // will scale solution x = C*x' after solve
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      {
-        for(unsigned b=0; b<n_blocks; ++b)
-        {
-          m_matrix[a][b]->LeftScale(*scaling_k[a][ROW]);
-          m_matrix[a][b]->RightScale(*scaling_k[b][COL]);
-        }
-        m_rhs[a]->Multiply(1.0,*scaling_k[a][ROW],*m_rhs[a],0.0);
-      }
-
-    // check for convergence in desired row and column norms
-    // and print info in verbose mode > 0
-
-      double convergence = 0.0;
-      double norm_threshold = 0.2;
-
-      for(unsigned a=0; a<n_blocks; ++a)
-      for(unsigned b=0; b<2; ++b)
-      {
-         double tmp[1];
-         scaling_k[a][b]->Reciprocal(*scaling_k[a][b]);
-         scaling_k[a][b]->NormInf(&(tmp[0]));
-         tmp[0] = abs(1-pow(tmp[0],2));
-         convergence = std::max(convergence,tmp[0]);
-      }
-
-      //if( partition.m_rank == 0 && params->m_verbose >= 2 )
-      {
-        if(k==0)
-        {
-          printf("SolverBase :: Re-scaling matrix \n");
-          printf("           ::   %d ... %.1e\n",k,convergence);
-        }
-        else
-          printf("           ::   %d ... %.1e\n",k,convergence);
-      }
-
-      if(convergence < norm_threshold && k > 1) break;
-    }
-
-//    if(params->m_verbose >= 2)
-//    {
-//      print_norms(epetraSystem,"scaled");
-//    }
-  } // end scaling
-  else if( use_scaling==1 )
-  {
-
-    // perform an explicit row scaling of the linear system,
-    // R*A*x = R*b, where R is a diagonal scaling matrix.
-    // we will use inverse row sums for the scaling.
-
-    for(unsigned b=0; b<2; ++b)
-    {
-      Epetra_Vector scale_one(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two(m_matrix[b][b]->RowMap());
-
-      Epetra_Vector scale_one_inv(m_matrix[b][b]->RowMap());
-      Epetra_Vector scale_two_inv(m_matrix[b][b]->RowMap());
-
-      m_matrix[b][0]->InvRowSums(scale_one_inv);
-      m_matrix[b][1]->InvRowSums(scale_two_inv);
-      scale_one.Reciprocal(scale_one_inv);
-      scale_two.Reciprocal(scale_two_inv);  // not ideal, could choke if 1/0 or 1/NaN appears
-      scale_one.Update(1.0,scale_two,1.0);
-      scale_one_inv.Reciprocal(scale_one);
-
-      for(unsigned c=0; c<2; ++c)
-      {
-        m_matrix[b][c]->LeftScale(scale_one_inv);
-      }
-
-      Epetra_MultiVector tmp (*m_rhs[b]);
-      m_rhs[b]->Multiply(1.0,scale_one_inv,tmp,0.0);
-    }
-  }
+  scale2x2System( use_scaling, m_matrix, m_rhs, scaling );
 
 
     // set initial guess to zero.  this is not strictly
