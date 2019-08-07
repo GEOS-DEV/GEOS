@@ -590,9 +590,6 @@ endif()
       message( INFO ": Hannah was here" )
       set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
   #endif()
-  
-  # PETSc version?
-  # include(${PETSC_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
 
   find_path( Petsc_INCLUDE_DIRS petscvec.h
              PATHS  ${PETSC_DIR}/include
