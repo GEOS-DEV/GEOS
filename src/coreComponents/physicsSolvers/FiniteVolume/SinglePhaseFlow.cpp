@@ -1180,7 +1180,8 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
     arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
+//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
+    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex a = 0; a < subRegionSize; ++a )
@@ -1188,7 +1189,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
       if (elemGhostRank[a] < 0)
       {
         localIndex const lid = rhs.getLocalRowID( dofNumber[a] );
-        real64 const val = localResidual[lid] / (refPoro[a] * dens[a] * ( volume[a] + dVol[a]));
+        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
         localResidualNorm += val * val;
       }
     }
