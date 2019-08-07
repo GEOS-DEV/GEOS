@@ -67,6 +67,18 @@ void setupMPI( int argc, char * argv[] );
  */
 void finalizeMPI();
 
+/**
+ * @brief Setup PETSc.
+ * @param [in] argc the number of command line arguments.
+ * @param [in/out] argv the command line arguments.
+ */
+void setupPetsc( int argc, char * argv[] );
+
+/**
+ * @brief Finalize PETSc.
+ */
+void finalizePetsc();
+
 } // namespace geosx
 
 #endif //_COMMON_INITIALIZATION_HPP_

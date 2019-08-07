@@ -396,6 +396,26 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
   MatRestoreRow( _mat, globalRow, &numEntries, &inds, &vals );
 }
 
+real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
+{
+  GEOS_ERROR_IF( !assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+
+  const PetscScalar *vals = nullptr;
+  const PetscInt *cols = nullptr;
+  PetscInt ncols;
+
+  MatGetRow( _mat, globalRow, &ncols, &cols, &vals );
+  for( int i = 0; i < ncols; i++ ){
+    if( cols[i] == globalRow )
+    {
+      return vals[i]; // hannah (*vals)[i]?
+    }
+  }
+  MatRestoreRow( _mat, globalRow, &ncols, &cols, &vals );
+
+  return 0.0;
+}
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
