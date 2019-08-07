@@ -15,7 +15,13 @@
  * Free Software Foundation) version 2.1 dated February 1999.
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
+
+/**
+ * @file FaceElementSubRegion.cpp
+ */
+
 #include "FaceElementSubRegion.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
@@ -28,32 +34,37 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   ElementSubRegionBase( name, parent )
 {
   RegisterViewWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
-    setDescription("Map to the nodes attached to each FaceCell.");
+    setDescription("Map to the nodes attached to each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
-    setDescription("Map to the edges attached to each FaceCell.");
+    setDescription("Map to the edges attached to each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
-    setDescription("Map to the faces attached to each FaceCell.")->
+    setDescription("Map to the faces attached to each FaceElement.")->
     reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
-    setDescription("The aperture of each FaceCell.");
+    setApplyDefaultValue(1.0e-5)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+    setDescription("The aperture of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
-    setDescription("The area of each FaceCell.");
+    setApplyDefaultValue(-1.0)->
+    setDescription("The area of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
-    setDescription("The center of each FaceCell.");
+    setDescription("The center of each FaceElement.");
 
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
-    setDescription("The volume of each FaceCell.");
+    setApplyDefaultValue(-1.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+    setDescription("The volume of each FaceElement.");
+
+  m_numNodesPerElement = 8;
 }
 
 FaceElementSubRegion::~FaceElementSubRegion()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 
 R1Tensor const & FaceElementSubRegion::calculateElementCenter( localIndex k,
@@ -82,6 +93,26 @@ void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * con
   this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
+
+void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
+                                                                arrayView1d<real64 const> const & faceArea )
+{
+  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
+  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+}
+
+void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                                FaceManager const & faceManager )
+{
+  arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
+
+  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+  {
+    m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
+    m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+  });
+}
+
 
 
 } /* namespace geosx */

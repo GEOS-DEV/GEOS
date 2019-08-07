@@ -22,7 +22,6 @@
 
 #include "SymbolicFunction.hpp"
 #include "common/DataTypes.hpp"
-#include <mathpresso/mathpresso.h>
 
 namespace geosx
 {
@@ -42,9 +41,11 @@ using namespace dataRepository;
 
 SymbolicFunction::SymbolicFunction( const std::string& name,
                                     ManagedGroup * const parent ):
-  FunctionBase( name, parent ),
-  parserContext(),
+  FunctionBase( name, parent )
+#ifdef GEOSX_USE_MATHPRESSO
+  , parserContext(),
   parserExpression()
+#endif
 {
   RegisterViewWrapper<string_array>(keys::variableNames)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -61,6 +62,7 @@ SymbolicFunction::~SymbolicFunction()
 
 void SymbolicFunction::InitializeFunction()
 {
+#ifdef GEOSX_USE_MATHPRESSO
   // Register variables
   string_array & variables = getReference<string_array>(keys::variableNames);
   for ( localIndex ii=0 ; ii<variables.size(); ++ii)
@@ -74,6 +76,9 @@ void SymbolicFunction::InitializeFunction()
   std::string const& expression = getReference<std::string>(keys::expression);
   mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
   GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
+#else
+  GEOS_ERROR("GEOSX was not built with mathpresso!");
+#endif
 }
 
 

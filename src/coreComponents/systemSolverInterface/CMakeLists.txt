@@ -5,7 +5,6 @@
 set(systemSolverInterface_headers
     EpetraBlockSystem.hpp
     LinearSolverWrapper.hpp
-    SystemSolverParameters.hpp
     )
 
 #
@@ -13,14 +12,15 @@ set(systemSolverInterface_headers
 #
 set(systemSolverInterface_sources
     EpetraBlockSystem.cpp
-    SystemSolverParameters.cpp
     LinearSolverWrapper.cpp
    )
+
+set( dependencyList ${dependencyList} fileIO common trilinos )
 
 blt_add_library( NAME                  systemSolverInterface
                  SOURCES               ${systemSolverInterface_sources}
                  HEADERS               ${systemSolverInterface_headers}
-                 DEPENDS_ON            fileIO common trilinos
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( systemSolverInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

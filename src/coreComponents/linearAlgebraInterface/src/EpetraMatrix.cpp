@@ -53,9 +53,9 @@ EpetraMatrix::EpetraMatrix( EpetraMatrix const &src )
   GEOS_ERROR_IF( src.unwrappedPointer() == nullptr, "Input matrix looks empty" );
   //TODO GEOS_ERROR_IF( !src.isClosed(), "Input matrix hasn't been properly closed before copy");
 
-  m_matrix  = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( *src.unwrappedPointer() ) );
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap()));
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap()));
+  m_matrix  = std::make_unique<Epetra_FECrsMatrix>( *src.unwrappedPointer() );
+  m_src_map = std::make_unique<Epetra_Map>( m_matrix->DomainMap() );
+  m_dst_map = std::make_unique<Epetra_Map>( m_matrix->RangeMap() );
 }
 
 // -----------------------------
@@ -66,11 +66,11 @@ EpetraMatrix::EpetraMatrix( EpetraMatrix const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a matrix from an Epetra_FECrsGraph.
 // """""""""""""""""""""""""""""""""""""""""""""""
-void EpetraMatrix::create( Epetra_FECrsGraph const &graph )
+void EpetraMatrix::create( Epetra_FECrsGraph const & graph )
 {
-  m_matrix  = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, graph ) );
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->DomainMap()));
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( m_matrix->RangeMap()));
+  m_matrix  = std::make_unique<Epetra_FECrsMatrix>( Copy, graph );
+  m_src_map = std::make_unique<Epetra_Map>( m_matrix->DomainMap() );
+  m_dst_map = std::make_unique<Epetra_Map>( m_matrix->RangeMap() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -88,9 +88,16 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
                                          localIndex const maxEntriesPerRow,
                                          MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalRows, 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( globalCols, 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
+  m_dst_map = std::make_unique<Epetra_Map>( globalRows,
+                                            0,
+                                            Epetra_MpiComm( comm ) );
+  m_src_map = std::make_unique<Epetra_Map>( globalCols,
+                                            0,
+                                            Epetra_MpiComm( comm ) );
+  m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy,
+                                                   *m_dst_map,
+                                                   integer_conversion<int>( maxEntriesPerRow ),
+                                                   false );
 }
 
 void EpetraMatrix::createWithLocalSize( localIndex const localSize,
@@ -105,9 +112,27 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
-  m_dst_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( -1, integer_conversion<int, localIndex>( localRows ), 0, Epetra_MpiComm( comm ) ));
-  m_src_map = std::unique_ptr<Epetra_Map>( new Epetra_Map( -1, integer_conversion<int, localIndex>( localCols ), 0, Epetra_MpiComm( comm ) ));
-  m_matrix = std::unique_ptr<Epetra_FECrsMatrix>( new Epetra_FECrsMatrix( Copy, *m_dst_map, integer_conversion<int, localIndex>( maxEntriesPerRow ), false ) );
+  m_dst_map = std::make_unique<Epetra_Map>( integer_conversion<globalIndex>( -1 ),
+                                            integer_conversion<int>( localRows ),
+                                            0,
+                                            Epetra_MpiComm( comm ) );
+  m_src_map = std::make_unique<Epetra_Map>( integer_conversion<globalIndex>( -1 ),
+                                            integer_conversion<int>( localCols ),
+                                            0,
+                                            Epetra_MpiComm( comm ) );
+  m_matrix = std::make_unique<Epetra_FECrsMatrix>( Copy,
+                                                   *m_dst_map,
+                                                   integer_conversion<int>( maxEntriesPerRow ),
+                                                   false );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Reinitialize.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Keeps the map and graph but sets all values to user-defined value.
+void EpetraMatrix::set( real64 const value )
+{
+  m_matrix->PutScalar( value );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -132,9 +157,8 @@ void EpetraMatrix::open()
 // Fix the sparsity pattern, make the data contiguous in memory and optimize storage.
 void EpetraMatrix::close()
 {
-
   m_matrix->GlobalAssemble( *m_src_map, *m_dst_map );
-  assembled = true;
+  m_assembled = true;
 }
 
 // -------------------------
@@ -238,6 +262,39 @@ void EpetraMatrix::insert( array1d<globalIndex> const & rowIndices,
                                 values.data(), Epetra_FECrsMatrix::ROW_MAJOR );
 }
 
+void EpetraMatrix::add( globalIndex const * rowIndices,
+                        globalIndex const * colIndices,
+                        real64 const * values,
+                        localIndex const numRows,
+                        localIndex const numCols )
+{
+  m_matrix->SumIntoGlobalValues( integer_conversion<int, localIndex>( numRows ), rowIndices,
+                                 integer_conversion<int, localIndex>( numCols ), colIndices,
+                                 values, Epetra_FECrsMatrix::ROW_MAJOR );
+}
+
+void EpetraMatrix::set( globalIndex const * rowIndices,
+                        globalIndex const * colIndices,
+                        real64 const * values,
+                        localIndex const numRows,
+                        localIndex const numCols )
+{
+  m_matrix->ReplaceGlobalValues( integer_conversion<int, localIndex>( numRows ), rowIndices,
+                                 integer_conversion<int, localIndex>( numCols ), colIndices,
+                                 values, Epetra_FECrsMatrix::ROW_MAJOR );
+}
+
+void EpetraMatrix::insert( globalIndex const * rowIndices,
+                           globalIndex const * colIndices,
+                           real64 const * values,
+                           localIndex const numRows,
+                           localIndex const numCols )
+{
+  m_matrix->InsertGlobalValues( integer_conversion<int, localIndex>( numRows ), rowIndices,
+                                integer_conversion<int, localIndex>( numCols ), colIndices,
+                                values, Epetra_FECrsMatrix::ROW_MAJOR );
+}
+
 // -------------------------
 // Linear Algebra
 // -------------------------
@@ -334,6 +391,9 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
                                array1d<globalIndex> & colIndices,
                                array1d<real64> & values ) const
 {
+  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+  GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
+
   int n_entries = m_matrix->NumGlobalEntries( globalRow );
 
   localIndex length = integer_conversion<localIndex, int>( n_entries );
@@ -345,13 +405,38 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
 
   int localRow = m_matrix->LRID( globalRow );
   int err = m_matrix->ExtractMyRowCopy( localRow, n_entries, n_entries, values.data(), local_indices.data() );
-  GEOS_ERROR_IF( err!=0,
-                 "getRowCopy failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called." );
+  GEOS_ERROR_IF( err != 0,
+                 "getRowCopy failed. This often happens if the requested global row "
+                 "is not local to this processor, or if close() hasn't been called." );
 
   for( localIndex i=0 ; i<length ; ++i )
     colIndices[i] = m_matrix->GCID64( local_indices[i] );
 }
 
+real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
+{
+  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
+  GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
+
+  double * values = nullptr;
+  int * indices = nullptr;
+  int length;
+
+  int err = m_matrix->ExtractMyRowView( m_matrix->LRID( globalRow ), length, values, indices );
+  GEOS_ERROR_IF( err != 0,
+                 "getRowView failed. This often happens if the requested global row "
+                 "is not local to this processor, or if close() hasn't been called." );
+
+  for( int j = 0; j < length; ++j )
+  {
+    if( m_matrix->GCID64( indices[j] ) == globalRow )
+    {
+      return values[j];
+    }
+  }
+
+  return 0.0;
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row
@@ -411,27 +496,27 @@ globalIndex EpetraMatrix::globalCols() const
 // Accessor for the index of the first global row
 globalIndex EpetraMatrix::ilower() const
 {
-  return m_matrix->RowMap().MyGlobalElements64()[0];
+  return m_matrix->RowMap().MinMyGID64();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Get the upper index owned by processor.
+// Get the next index after upper index owned by processor.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the index of the last global row
 globalIndex EpetraMatrix::iupper() const
 {
-  return m_matrix->RowMap().MyGlobalElements64()[0] + m_matrix->RowMap().NumMyElements();
+  return m_matrix->RowMap().MaxMyGID64() + 1;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print to terminal.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Wrapper to print the trilinos output of the matrix
-void EpetraMatrix::print() const
+void EpetraMatrix::print( std::ostream & os ) const
 {
-  if( m_matrix.get() != nullptr )
+  if( m_matrix )
   {
-    std::cout << *m_matrix << std::endl;
+    m_matrix->Print( os );
   }
 }
 
@@ -439,9 +524,23 @@ void EpetraMatrix::print() const
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
-void EpetraMatrix::write( string const & filename ) const
+void EpetraMatrix::write( string const & filename,
+                          bool const mtxFormat ) const
 {
-  EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+  if( mtxFormat )
+  {
+    // Ensure the ".mtx" extension
+    string name( filename );
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    {
+      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
+    }
+    EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *m_matrix );
+  }
+  else
+  {
+    EpetraExt::RowMatrixToMatlabFile( filename.c_str(), *m_matrix );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -477,7 +576,100 @@ real64 EpetraMatrix::normFrobenius() const
 // Boolean indicator. True = matrix assembled and ready to be used.
 bool EpetraMatrix::isAssembled() const
 {
-  return assembled;
+  return m_assembled;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// MatrixMatrixMultiply
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product A*src = dst.
+void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
+                                         EpetraMatrix const &B,
+                                         bool const transB,
+                                         EpetraMatrix &C,
+                                         bool const call_FillComplete ) const
+{
+  int
+  err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
+                                           transA,
+                                           *B.unwrappedPointer(),
+                                           transB,
+                                           *C.unwrappedPointer(),
+                                           call_FillComplete );
+
+  GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
+
+  // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
+  // case the function does not work. After the multiplication is performed, call close().
+  if( !call_FillComplete )
+  {
+    C.close();
+  }
+  else
+  {
+    C.m_assembled = true;
+  }
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex EpetraMatrix::getLocalRowID( globalIndex const index ) const
+{
+  return m_matrix->LRID( index );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
+{
+  return m_matrix->GRID64( integer_conversion<int>( index ) );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// localCols
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of columns on each processor
+// NOTE: direct use of NumMyCols() counts also for overlays. To avoid those, DomainMap() is needed
+localIndex EpetraMatrix::localCols() const
+{
+  return m_matrix->DomainMap().NumMyElements();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// localRows
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of columns on each processor
+localIndex EpetraMatrix::localRows() const
+{
+  return m_matrix->RowMap().NumMyElements();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// printParallelMatrix
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Print the given parallel matrix in Matrix Market format (MTX file)
+void EpetraMatrix::printParallelMatrix( string const & fileName ) const
+{
+  // Ensure the ".mtx" extension
+  string name( fileName );
+  if( fileName.substr( fileName.find_last_of( '.' ) + 1 ) != "mtx" )
+  {
+    name = fileName.substr( 0, fileName.find_last_of( '.' ) ) + ".mtx";
+  }
+
+  int err = EpetraExt::RowMatrixToMatrixMarketFile( name.c_str(), *m_matrix );
+
+  GEOS_WARNING_IF( err, "EpetraMatrix::printParallelMatrix: matrix was not written" );
+}
+
+std::ostream & operator<<( std::ostream & os, EpetraMatrix const & matrix )
+{
+  matrix.print( os );
+  return os;
 }
 
 } // end geosx namespace

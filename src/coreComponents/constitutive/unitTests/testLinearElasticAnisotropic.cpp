@@ -105,7 +105,6 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
-  real64 DdtVoigt[6] = {0.0};
   real64 stressV[6] = {0.0};
   R2Tensor Rot;
   R2SymTensor zero;
@@ -234,7 +233,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.PostProcessInputRecursive();
 
-  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitituveRelation<LinearElasticAnisotropic>("granite");
+  LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation<LinearElasticAnisotropic>("granite");
   dataRepository::ManagedGroup disc( "discretization", nullptr );
   disc.resize(1);
   model->AllocateConstitutiveData( &disc, 1 );

@@ -44,74 +44,28 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem) override final;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override final;
 
-  virtual void ImplicitStepComplete( real64 const& time_n,
-                                     real64 const& dt,
-                                     DomainPartition * const domain) override final;
+  virtual void
+  ImplicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition * const domain ) override final;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual real64 SolverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition * domain ) override;
-
-//  virtual real64 ExplicitStep( real64 const & time_n,
-//                               real64 const & dt,
-//                               integer const cycleNumber,
-//                               DomainPartition * const domain );
-//
-//  virtual real64 NonlinearImplicitStep( real64 const & time_n,
-//                                        real64 const & dt,
-//                                        integer const cycleNumber,
-//                                        DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem );
-//
-//  virtual real64 LinearImplicitStep(real64 const & time_n,
-//                                    real64 const & dt,
-//                                    integer const cycleNumber,
-//                                    DomainPartition * const domain,
-//                                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
-//
-//  virtual void ImplicitStepSetup( real64 const& time_n,
-//                                  real64 const& dt,
-//                                  DomainPartition * const domain,
-//                                  systemSolverInterface::EpetraBlockSystem * const blockSystem);
-//
-//  virtual void AssembleSystem( DomainPartition * const domain,
-//                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                               real64 const time,
-//                               real64 const dt );
-//
-//  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                                        real64 const time,
-//                                        real64 const dt );
-//
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-//                         DomainPartition * const domain );
-//
-//
-//  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                            SystemSolverParameters const * const params );
-//
-//  virtual void
-//  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-//                       real64 const scalingFactor,
-//                       DomainPartition * const domain );
-//
-//  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain );
-//
-//
-//  virtual void ImplicitStepComplete( real64 const & time,
-//                                     real64 const & dt,
-//                                     DomainPartition * const domain );
-
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              int const cycleNumber,
+              DomainPartition * const domain ) override;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
 

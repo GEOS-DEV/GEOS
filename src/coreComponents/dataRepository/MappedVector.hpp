@@ -41,13 +41,13 @@ namespace geosx
  * performance to an index lookup after the first use of a keyIndex.
  */
 template< typename T,
-          typename T_PTR=T*,
+          typename T_PTR=T *,
           typename KEY_TYPE=std::string,
           typename INDEX_TYPE = int >
 class MappedVector
 {
 public:
-  static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr<T> >::value,
+  static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr< T > >::value,
                  "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
 
   /// The type used for the key of the map
@@ -57,19 +57,25 @@ public:
   using mapped_type   = T_PTR;
 
   /// the type of the lookup map
-  using LookupMapType          = std::unordered_map<KEY_TYPE, INDEX_TYPE >;
+  using LookupMapType          = std::unordered_map< KEY_TYPE, INDEX_TYPE >;
 
   /// the type of the values held in the vector
-  using value_type             = typename std::pair< KEY_TYPE const, T_PTR >;
+  using value_type             = typename std::pair< KEY_TYPE, T_PTR >;
+
+  /// the type of the values with const keys held in the vector
+  using const_key_value_type   = typename std::pair< KEY_TYPE const, T * >;
 
   /// a const type of the values held in the vector
   using const_value_type       = typename std::pair< KEY_TYPE const, T const * >;
 
   /// the type of the vector container
-  using valueContainer         = std::vector<value_type>;
+  using valueContainer         = std::vector< value_type >;
 
   /// a const type of the vector container
-  using const_valueContainer   = std::vector<const_value_type>;
+  using constKeyValueContainer = std::vector< const_key_value_type >;
+
+  /// a const type of the vector container
+  using constValueContainer    = std::vector< const_value_type >;
 
   /// the pointer type of the value container
   using pointer                = typename valueContainer::pointer;
@@ -87,19 +93,19 @@ public:
   using size_type              = typename valueContainer::size_type;
 
   /// the iterator type of the value container
-  using iterator               = typename valueContainer::iterator;
+  using iterator               = typename constKeyValueContainer::iterator;
 
   /// the iterator to const type of the value container
-  using const_iterator         = typename const_valueContainer::const_iterator;
+  using const_iterator         = typename constValueContainer::const_iterator;
 
   /// the reverse iterator type of the value container
-  using reverse_iterator       = typename valueContainer::reverse_iterator;
+  using reverse_iterator       = typename constKeyValueContainer::reverse_iterator;
 
   /// the reverse iterator to const type of the value container
-  using const_reverse_iterator = typename const_valueContainer::const_reverse_iterator;
+  using const_reverse_iterator = typename constValueContainer::const_reverse_iterator;
 
-  /// aliwas for the KeyIndex itself
-  using KeyIndex = KeyIndexT<KEY_TYPE const,INDEX_TYPE>;
+  /// alias for the KeyIndex itself
+  using KeyIndex = KeyIndexT< KEY_TYPE const, INDEX_TYPE >;
 
 
   /// deleted default constructor
@@ -140,7 +146,7 @@ public:
   inline T const * operator[]( INDEX_TYPE index ) const
   {
     return ( index>KeyIndex::invalid_index &&
-             index<static_cast<INDEX_TYPE>( m_values.size() ) ) ? const_cast<T const *>(&(*(m_values[index].second))) : nullptr;
+             index<static_cast< INDEX_TYPE >( m_values.size() ) ) ? const_cast< T const * >(&(*(m_values[index].second))) : nullptr;
   }
 
   /**
@@ -149,7 +155,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( INDEX_TYPE index )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](index) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( index ) ); }
 
   /**
    *
@@ -158,7 +164,7 @@ public:
    */
   inline T const * operator[]( KEY_TYPE const & keyName ) const
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(keyName);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( keyName );
     return ( iter!=m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
   }
 
@@ -168,7 +174,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KEY_TYPE const & keyName )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyName) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyName ) ); }
 
   /**
    *
@@ -182,13 +188,13 @@ public:
     if( index==KeyIndex::invalid_index )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
 #ifdef MAPPED_VECTOR_RANGE_CHECKING
-    else if (m_values[index].first!=keyIndex.Key() )
+    else if( m_values[index].first!=keyIndex.Key() )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
 #endif
 
@@ -201,7 +207,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KeyIndex & keyIndex )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
 
 
 
@@ -228,7 +234,7 @@ public:
 //#endif
 //
 //    return this->operator[]( index );
-    return this->operator[]( const_cast<KeyIndex&>(keyIndex) );
+    return this->operator[]( const_cast< KeyIndex & >(keyIndex) );
   }
 
   /**
@@ -237,7 +243,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KeyIndex const & keyIndex )
-  { return const_cast<T*>( const_cast< MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE> const * >(this)->operator[](keyIndex) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
 
 
   ///@}
@@ -253,7 +259,7 @@ public:
    *  element in the in m_objects.
    */
   iterator begin()
-  { return m_values.begin(); }
+  { return m_constKeyValues.begin(); }
 
   /**
    * @return  a read-only iterator that points to the first
@@ -274,7 +280,7 @@ public:
    *  element in the in m_objects.
    */
   iterator end()
-  { return m_values.end(); }
+  { return m_constKeyValues.end(); }
 
   /**
    * @return  a read-only iterator that points to the last
@@ -299,7 +305,7 @@ public:
    */
   inline INDEX_TYPE getIndex( KEY_TYPE const & key ) const
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
     return ( iter!=m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
   }
 
@@ -326,43 +332,36 @@ public:
 
   /**
    * @brief  Remove element at given index
-   * @tparam dummy parameter to allow use of enable_if for multiple definitions
-   * based on type.
    * @param  index  index of element to remove.
    * @return  void
    *
-   *  This function will call delete on the pointer at given index and set it to
-   * nullptr.
+   * Completely remove element at given index and corresponding key lookup.
+   * If pointed-to object is owned, it is deleted.
    */
-  template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< U, T * >::value, void >::type
-  erase( INDEX_TYPE index )
+  void erase( INDEX_TYPE index )
   {
-    if( m_ownsValues[index] )
-    {
-      delete m_values[index].second;
-    }
-    m_values[index].second = nullptr;
-    m_constValues[index].second = nullptr;
-    return;
-  }
+    // delete the pointed-to value, if owned
+    deleteValue( index );
 
-  /**
-   * @brief  Remove element at given index
-   * @tparam dummy parameter to allow use of enable_if for multiple definitions
-   * based on type.
-   * @param  index  index of element to remove.
-   * @return  void
-   *
-   *  This function will the pointer at given index and set it to nullptr.
-   */
-  template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< U, std::unique_ptr<T> >::value, void >::type
-  erase( INDEX_TYPE index )
-  {
-    m_values[index].second = nullptr;
-    m_constValues[index].second = nullptr;
-    return;
+    // delete and shift vector entries
+    m_values.erase( m_values.begin() + index );
+    m_ownsValues.erase( m_ownsValues.begin() + index );
+
+    // rebuild parts of const key vectors after deleted entry
+    m_constKeyValues.resize( index );
+    m_constValues.resize( index );
+    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    {
+      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( index ) );
+      m_constValues.emplace_back( m_values[i].first, rawPtr( index ) );
+    }
+
+    // adjust lookup map indices
+    m_keyLookup.erase( m_values[index].first );
+    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    {
+      m_keyLookup[m_values[i].first] = i;
+    }
   }
 
   /**
@@ -374,12 +373,11 @@ public:
    */
   void erase( KEY_TYPE const & key )
   {
-    typename LookupMapType::const_iterator iter = m_keyLookup.find(key);
+    typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
     if( iter!=m_keyLookup.end() )
     {
-      erase(iter->second);
+      erase( iter->second );
     }
-    return;
   }
 
   /**
@@ -396,7 +394,7 @@ public:
     if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
     {
       index = getIndex( keyIndex.Key() );
-      keyIndex.setIndex(index);
+      keyIndex.setIndex( index );
     }
     erase( index );
   }
@@ -406,13 +404,15 @@ public:
    */
   void clear()
   {
-    for( typename valueContainer::size_type a=0 ; a<m_values.size() ; ++a )
+    for( typename valueContainer::size_type a = 0 ; a < m_values.size() ; ++a )
     {
-      //TODO this needs to be a safe conversion
-      erase(static_cast<INDEX_TYPE>(a));
+      deleteValue( integer_conversion< INDEX_TYPE >( a ) );
     }
-    m_keyLookup.clear();
+    m_constKeyValues.clear();
+    m_constValues.clear();
     m_values.clear();
+    m_ownsValues.clear();
+    m_keyLookup.clear();
   }
 
 
@@ -424,8 +424,7 @@ public:
    */
   inline INDEX_TYPE size() const
   {
-    //TODO this needs to be a safe conversion
-    return static_cast<INDEX_TYPE>(m_values.size());
+    return integer_conversion< INDEX_TYPE >( m_values.size() );
   }
 
   /**
@@ -439,7 +438,7 @@ public:
    * @brief access for value container
    * @return reference to const valueContainer
    */
-  inline const_valueContainer const & values() const
+  inline constValueContainer const & values() const
   { return this->m_constValues; }
 
   /**
@@ -451,27 +450,51 @@ public:
 
 
 private:
+
+  T * rawPtr( INDEX_TYPE index )
+  {
+    return &(*(m_values[index].second));
+  }
+
+  template< typename U = T_PTR >
+  typename std::enable_if< std::is_same< U, T * >::value, void >::type
+  deleteValue( INDEX_TYPE index )
+  {
+    if( m_ownsValues[index] )
+    {
+      delete m_values[index].second;
+    }
+  }
+
+  template< typename U = T_PTR >
+  typename std::enable_if< !std::is_same< U, T * >::value, void >::type
+  deleteValue( INDEX_TYPE index )
+  {}
+
   /// random access container that holds the values
   valueContainer m_values;
 
-  /// clone of random access container that holds pointer to const values
-  const_valueContainer m_constValues;
+  /// clone of random access container that holds const keys
+  constKeyValueContainer m_constKeyValues;
+
+  /// clone of random access container that holds const keys and pointer to const values
+  constValueContainer m_constValues;
 
   /// map lookup to go from key to index into the m_values container
   LookupMapType m_keyLookup;
 
   /// flag to indicate whether or not the values in m_values are owned by the container.
-  std::vector<int> m_ownsValues;
+  std::vector< int > m_ownsValues;
 };
 
 template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
-                                                                 T_PTR source,
-                                                                 bool takeOwnership,
-                                                                 bool overwrite )
+T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & keyName,
+                                                            T_PTR source,
+                                                            bool takeOwnership,
+                                                            bool overwrite )
 {
   INDEX_TYPE index = KeyIndex::invalid_index;
-  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find(keyName);
+  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
 
   // if the key was not found, make DataObject<T> and insert
@@ -480,15 +503,16 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     value_type newEntry = std::make_pair( keyName, std::move( source ) );
     m_values.push_back( std::move( newEntry ) );
     //TODO this needs to be a safe conversion
-    index = static_cast<INDEX_TYPE>(m_values.size()) - 1;
+    index = static_cast< INDEX_TYPE >(m_values.size()) - 1;
     m_ownsValues.resize( index + 1 );
     if( takeOwnership )
     {
       m_ownsValues[index] = true;
     }
 
-    m_keyLookup.insert( std::make_pair(keyName,index) );
-    m_constValues.push_back( std::make_pair( keyName, &(*(m_values[index].second)) ) );
+    m_keyLookup.insert( std::make_pair( keyName, index ) );
+    m_constKeyValues.emplace_back( keyName, rawPtr( index ) );
+    m_constValues.emplace_back( keyName, rawPtr( index ) );
 
   }
   // if key was found
@@ -505,21 +529,23 @@ T * MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>::insert( KEY_TYPE const & keyName,
     if( m_values[index].second==nullptr )
     {
       m_values[index].second = std::move( source );
-      m_constValues[index].second =  &(*(m_values[index].second));
+      m_constKeyValues[index].second = rawPtr( index );
+      m_constValues[index].second = rawPtr( index );
     }
     else
     {
       if( overwrite )
       {
-        erase(index);
+        deleteValue( index );
         m_values[index].second = std::move( source );
-        m_constValues[index].second =  &(*(m_values[index].second));
+        m_constKeyValues[index].second = rawPtr( index );
+        m_constValues[index].second = rawPtr( index );
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
         string const message = "MappedVector::insert(): Tried to insert existing key with a "
-            "different type without overwrite flag\n";
-        GEOS_ERROR(message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
+                               "different type without overwrite flag\n";
+        GEOS_ERROR( message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
       }
       else
       {

@@ -65,21 +65,21 @@ public:
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
 
-  void solve( EpetraMatrix &mat,
-              EpetraVector &sol,
-              EpetraVector &rhs );
+  void solve( EpetraMatrix & mat,
+              EpetraVector & sol,
+              EpetraVector & rhs );
 
 private:
 
   LinearSolverParameters const & m_parameters;
 
-  void solve_direct( EpetraMatrix &mat,
-                     EpetraVector &sol,
-                     EpetraVector &rhs );
+  void solve_direct( EpetraMatrix & mat,
+                     EpetraVector & sol,
+                     EpetraVector & rhs );
 
-  void solve_krylov( EpetraMatrix &mat,
-                     EpetraVector &sol,
-                     EpetraVector &rhs );
+  void solve_krylov( EpetraMatrix & mat,
+                     EpetraVector & sol,
+                     EpetraVector & rhs );
 
 };
 
