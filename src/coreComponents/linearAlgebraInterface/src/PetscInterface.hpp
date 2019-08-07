@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -23,24 +23,24 @@
 #ifndef SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCINTERFACE_HPP_
 #define SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCINTERFACE_HPP_
 
-#include "PetscSparseMatrix.hpp"
-#include "PetscVector.hpp"
 #include "PetscSolver.hpp"
+#include "PetscVector.hpp"
+#include "PetscSparseMatrix.hpp"
+
+namespace geosx
+{
 
 /**
  * \class PetscInterface
  * \brief This class holds aliases based on the Petsc library.
  */
 
-namespace geosx
-{
-
 class PetscInterface
 {
 public:
 
-  // using laiLID = petscTypes::lid; // no longer necessary
-  // using laiGID = petscTypes::gid; // no longer necessary
+  // using lid = petscTypes::lid; // no longer necessary
+  // using gid = petscTypes::gid; // no longer necessary
 
   // Petsc matrix and vector wrappers
   using ParallelMatrix = PetscSparseMatrix;
@@ -55,7 +55,6 @@ public:
   // PetscInterface() = default;
   PetscInterface()
   {
-
     // hannah: need to change this
     int argc;
     char ** args;
