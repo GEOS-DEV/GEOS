@@ -578,7 +578,6 @@ if(UNCRUSTIFY_FOUND)
     
 endif()
 
-<<<<<<< HEAD
 ################################
 # PETSC
 ################################
@@ -625,6 +624,3 @@ message( "Petsc_LIBRARIES = ${Petsc_LIBRARIES}" )
 
 message("Leaving SetupGeosxThirdParty.cmake\n")
 
-=======
-message(STATUS "Leaving SetupGeosxThirdParty.cmake\n")
->>>>>>> develop
