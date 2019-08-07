@@ -73,7 +73,7 @@ void ContactRelationBase::InitializePreSubGroups( ManagedGroup * const )
 
     array1d<real64> & xvals = xvals0[0];
 
-    GEOS_ERROR_IF( xvals.back() != 0.0,
+    GEOS_ERROR_IF( xvals.back() > 0.0 || xvals.back() < 0.0 ,
                    "Invalid aperture limiter table. Last coordinate must be zero!!" );
 
     GEOS_ERROR_IF( xvals.size() < 2,
