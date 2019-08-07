@@ -27,6 +27,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           RAJA 
                           SUPERLU_DIST
                           TIMERS
+                          TOTALVIEW_OUTPUT
                           TRILINOS
                           MKL
                           ${externalComponentsList} )

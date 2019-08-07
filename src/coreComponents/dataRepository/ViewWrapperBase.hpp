@@ -417,7 +417,7 @@ public:
     return m_description;
   }
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
   /**
    * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
    *                represented by a ViewWrapperBase *.
