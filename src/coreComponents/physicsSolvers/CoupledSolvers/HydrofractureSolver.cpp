@@ -685,8 +685,8 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                          m_flowSolver->getSystemRhs() );
 
 
-  std::cout.precision(7);
-  std::cout.setf(std::ios_base::scientific);
+//  std::cout.precision(7);
+//  std::cout.setf(std::ios_base::scientific);
 
   if( this->m_verboseLevel == 2 )
   {
@@ -709,11 +709,11 @@ CalculateResidualNorm( DomainPartition const * const domain,
 {
   GEOSX_MARK_FUNCTION;
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
-                                                                    m_solidSolver->getDofManager(),
-                                                                    m_solidSolver->getSystemRhs() );
+                                                                    m_flowSolver->getDofManager(),
+                                                                    m_flowSolver->getSystemRhs() );
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
-                                                                     m_flowSolver->getDofManager(),
-                                                                     m_flowSolver->getSystemRhs() );
+                                                                     m_solidSolver->getDofManager(),
+                                                                     m_solidSolver->getSystemRhs() );
 
   std::cout<<"residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual<<std::endl;
 
@@ -935,7 +935,7 @@ ApplySystemSolution( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplySystemSolution( dofManager, m_solidSolver->getSystemSolution(), 1.0, domain );
-  m_flowSolver->ApplySystemSolution( dofManager, m_flowSolver->getSystemSolution(), 1.0, domain );
+  m_flowSolver->ApplySystemSolution( dofManager, m_flowSolver->getSystemSolution(), -1.0, domain );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -1066,7 +1066,7 @@ void scale2x2System( int const use_scaling,
 
     // begin scaling iterations
 
-    for(unsigned k=0; k<2; ++k)
+    for(unsigned k=0; k<20; ++k)
     {
       // get row and column max norms for scaling
 
