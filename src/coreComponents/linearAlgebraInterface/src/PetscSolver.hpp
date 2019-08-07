@@ -59,7 +59,7 @@ public:
   virtual ~PetscSolver() = default;
 
   /**
-   * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
+   * @brief Solve system with an iterative solver.
    *
    * Solve Ax=b with A an PetscSparseMatrix, x and b PetscVector.
    */
@@ -75,7 +75,7 @@ private:
   void solve_direct( PetscSparseMatrix &mat,
                      PetscVector &sol,
                      PetscVector &rhs,
-                     MPI_Comm const comm  );
+                     MPI_Comm const comm );
 
   void solve_krylov( PetscSparseMatrix &mat,
                      PetscVector &sol,
