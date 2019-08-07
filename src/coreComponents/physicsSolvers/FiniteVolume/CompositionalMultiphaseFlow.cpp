@@ -23,7 +23,6 @@
 #include "CompositionalMultiphaseFlow.hpp"
 
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -36,11 +35,8 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
-#include "systemSolverInterface/LinearSolverWrapper.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 #include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlowKernels.hpp"
 
@@ -49,7 +45,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 using namespace CompositionalMultiphaseFlowKernels;
 
 CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
@@ -146,16 +141,13 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
       elementSubRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
 
       elementSubRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
-    });
+    } );
   }
 }
 
 void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
   DomainPartition * const domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
@@ -617,16 +609,12 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 dt_return = dt;
+  real64 dt_return;
 
-  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   // currently the only method is implicit time integration
-  dt_return= this->NonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain,
-                                          getLinearSystemRepository() );
+  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -679,9 +667,13 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
 }
 
 void
-CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 const & dt,
+CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition * const domain,
-                                                EpetraBlockSystem * const blockSystem )
+                                                DofManager & dofManager,
+                                                ParallelMatrix & matrix,
+                                                ParallelVector & rhs,
+                                                ParallelVector & solution )
 {
   // bind the stored views to the current domain
   ResetViews( domain );
@@ -693,7 +685,7 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n, real64 co
   BackupFields( domain );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
 void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
@@ -714,9 +706,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
   array1d<localIndex> gather(numMpiProcesses);
 
   // communicate the number of local rows to each process
-  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
-                                                gather.data(),
-                                                1 );
+  CommunicationTools::allGather( numLocalRowsToSend, gather );
 
   GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
 
@@ -757,7 +747,7 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
 }
 
 void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * const domain,
-                                                      Epetra_FECrsGraph * const sparsity )
+                                                      ParallelMatrix * const matrix )
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elementRegionManager = meshLevel->getElemManager();
@@ -768,16 +758,14 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   ElementRegionManager::ElementViewAccessor< arrayView1d<integer> > const & elemGhostRank =
     elementRegionManager->ConstructViewAccessor< array1d<integer>, arrayView1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  NumericalMethodsManager const * numericalMethodManager = domain->
-    getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
-  FiniteVolumeManager const * fvManager = numericalMethodManager->
-    GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
@@ -793,38 +781,47 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
     typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
     typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA( localIndex iconn )
     {
-      localIndex const stencilSize = stencil.stencilSize(iconn);
-      stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
-      stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
+      localIndex const stencilSize = stencil.stencilSize( iconn );
+      localIndex const numFluxElems = stencilSize;
+      stackArray1d<globalIndex, STENCIL_TYPE::NUM_POINT_IN_FLUX * maxNumDof> dofIndexRow( numFluxElems * NDOF );
+      stackArray1d<globalIndex, STENCIL_TYPE::MAX_STENCIL_SIZE * maxNumDof> dofIndexCol( stencilSize * NDOF );
 
-      for (localIndex i = 0; i < numElems; ++i)
+      stackArray2d<real64, STENCIL_TYPE::MAX_STENCIL_SIZE * maxNumDof * STENCIL_TYPE::NUM_POINT_IN_FLUX * maxNumDof>
+        values( numFluxElems * NDOF, stencilSize * NDOF );
+      values = 1.0;
+
+      for( localIndex i = 0; i < numFluxElems; ++i )
       {
-        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+        globalIndex const offset = NDOF * dofNumber[eri( iconn, i )][esri( iconn, i )][ei( iconn, i )];
 
-        for (localIndex idof = 0; idof < NDOF; ++idof)
+        for( localIndex idof = 0; idof < NDOF; ++idof )
         {
-          elementLocalDofIndexRow[i * NDOF + idof] = offset + idof;
+          dofIndexRow[i * NDOF + idof] = offset + idof;
         }
       }
 
-      for (localIndex i = 0; i < stencilSize; ++i)
+      for( localIndex i = 0; i < stencilSize; ++i )
       {
-        globalIndex const offset = NDOF * dofNumber[eri(iconn,i)][esri(iconn,i)][ei(iconn,i)];
+        globalIndex const offset = NDOF * dofNumber[eri( iconn, i )][esri( iconn, i )][ei( iconn, i )];
 
-        for (localIndex idof = 0; idof < NDOF; ++idof)
+        for( localIndex idof = 0; idof < NDOF; ++idof )
         {
-          elementLocalDofIndexCol[i * NDOF + idof] = offset + idof;
+          dofIndexCol[i * NDOF + idof] = offset + idof;
         }
       }
 
-      sparsity->InsertGlobalIndices( integer_conversion<int>(numElems * m_numDofPerCell),
-                                     elementLocalDofIndexRow.data(),
-                                     integer_conversion<int>(stencilSize * m_numDofPerCell),
-                                     elementLocalDofIndexCol.data() );
+      matrix->insert( dofIndexRow.data(),
+                      dofIndexCol.data(),
+                      values.data(),
+                      numFluxElems * NDOF,
+                      stencilSize * NDOF );
     } );
   } );
+
+  stackArray2d<real64, maxNumDof * maxNumDof> values( NDOF, NDOF );
+  values = 1.0;
 
   // loop over all elements and add all locals just in case the above connector loop missed some
   forAllElemsInMesh( meshLevel, [&] ( localIndex const er,
@@ -833,74 +830,28 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   {
     if (elemGhostRank[er][esr][ei] < 0)
     {
-      stackArray1d<globalIndex, maxNumDof> elementLocalDofIndexRow( NDOF );
+      stackArray1d<globalIndex, maxNumDof> dofIndexRow( NDOF );
 
       globalIndex const offset = NDOF * dofNumber[er][esr][ei];
       for (localIndex idof = 0; idof < NDOF; ++idof)
       {
-        elementLocalDofIndexRow[idof] = offset + idof;
+        dofIndexRow[idof] = offset + idof;
       }
 
-      sparsity->InsertGlobalIndices( integer_conversion<int>( NDOF ),
-                                     elementLocalDofIndexRow.data(),
-                                     integer_conversion<int>( NDOF ),
-                                     elementLocalDofIndexRow.data() );
+      matrix->insert( dofIndexRow.data(),
+                      dofIndexRow.data(),
+                      values.data(),
+                      NDOF,
+                      NDOF );
     }
-  });
-
-  // add additional connectivity resulting from boundary stencils
-  fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
-  {
-    ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
-
-    forall_in_range<serialPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
-    {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
-      stackArray1d<globalIndex, numElems   * maxNumDof> elementLocalDofIndexRow( numElems * NDOF );
-      stackArray1d<globalIndex, maxStencil * maxNumDof> elementLocalDofIndexCol( stencilSize * NDOF );
-
-      for (localIndex i = 0; i < numElems; ++i)
-      {
-        PointDescriptor const & point = connections( iconn, i ).index;
-
-        if (point.tag == PointDescriptor::Tag::CELL)
-        {
-          CellDescriptor const & cell = point.cellIndex;
-          globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
-          for (localIndex idof = 0; idof < NDOF; ++idof)
-          {
-            elementLocalDofIndexRow[idof] = offset + idof;
-          }
-        }
-      }
-
-      integer counter = 0;
-      for (localIndex i = 0; i < stencilSize; ++i)
-      {
-        PointDescriptor const & point = connections( iconn, i ).index;
-
-        if (point.tag == PointDescriptor::Tag::CELL)
-        {
-          CellDescriptor const & cell = point.cellIndex;
-          globalIndex const offset = NDOF * dofNumber[cell.region][cell.subRegion][cell.index];
-          for (localIndex idof = 0; idof < NDOF; ++idof)
-          {
-            elementLocalDofIndexCol[counter * NDOF + idof] = offset + idof;
-          }
-          ++counter;
-        }
-      }
-
-      sparsity->InsertGlobalIndices( integer_conversion<int>( NDOF ),
-                                     elementLocalDofIndexRow.data(),
-                                     integer_conversion<int>( counter * NDOF ),
-                                     elementLocalDofIndexCol.data() );
-    });
   });
 }
 
 void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
-                                               EpetraBlockSystem * const blockSystem )
+                                               DofManager & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
@@ -930,77 +881,68 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
                     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
 
-  // construct row map, and set a pointer to the row map
-  Epetra_Map * const rowMap =
-    blockSystem->SetRowMap( BlockIDs::compositionalBlock,
-                            std::make_unique<Epetra_Map>( numGlobalRows * m_numDofPerCell,
-                                                          numLocalRows * m_numDofPerCell,
-                                                          0,
-                                                          m_linearSolverWrapper.m_epetraComm ) );
+  localIndex const NC = m_numDofPerCell;
 
-  // construct sparsity matrix, set a pointer to the sparsity pattern matrix
-  Epetra_FECrsGraph * const sparsity =
-    blockSystem->SetSparsity( BlockIDs::compositionalBlock,
-                              BlockIDs::compositionalBlock,
-                              std::make_unique<Epetra_FECrsGraph>(Copy, *rowMap, 0) );
+  matrix.createWithLocalSize( numLocalRows * NC, numLocalRows * NC, 7 * NC, MPI_COMM_GEOSX );
+  SetSparsityPattern( domain, &matrix );
+  matrix.close();
 
-
-
-  // set the sparsity patter
-  SetSparsityPattern( domain, sparsity );
-
-  // assemble the global sparsity matrix
-  sparsity->GlobalAssemble();
-  sparsity->OptimizeStorage();
-
-  // construct system matrix
-  blockSystem->SetMatrix( BlockIDs::compositionalBlock,
-                          BlockIDs::compositionalBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
-
-  // construct solution vector
-  blockSystem->SetSolutionVector( BlockIDs::compositionalBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-  // construct residual vector
-  blockSystem->SetResidualVector( BlockIDs::compositionalBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
+  rhs.createWithLocalSize( numLocalRows * NC, MPI_COMM_GEOSX );
+  solution.createWithLocalSize( numLocalRows * NC, MPI_COMM_GEOSX );
 }
 
-void CompositionalMultiphaseFlow::AssembleSystem( DomainPartition * const domain,
-                                                  EpetraBlockSystem * const blockSystem,
-                                                  real64 const time_n, real64 const dt )
+void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
+                                                  real64 const dt,
+                                                  DomainPartition * const domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  matrix.zero();
+  rhs.zero();
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
+  matrix.open();
+  rhs.open();
 
-  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
-  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
-  AssembleVolumeBalanceTerms( domain, jacobian, residual, time_n, dt );
+  AssembleAccumulationTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
+  AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
+  AssembleVolumeBalanceTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
 
-  jacobian->GlobalAssemble( true );
-  residual->GlobalAssemble();
+  matrix.close();
+  rhs.close();
+
+  if( verboseLevel() == 2 )
+  {
+    GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+  }
 
   if( verboseLevel() >= 3 )
   {
-    GEOS_LOG_RANK("After CompositionalMultiphaseFlow::AssembleSystem");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
-  }
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
 
+    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::AssembleSystem" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
+  }
 }
 
-void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                             Epetra_FECrsMatrix * const jacobian,
-                                                             Epetra_FEVector * const residual,
-                                                             real64 const time_n,
-                                                             real64 const dt )
+void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n,
+                                                             real64 const dt,
+                                                             DomainPartition const * const domain,
+                                                             DofManager const * const dofManager,
+                                                             ParallelMatrix * const matrix,
+                                                             ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1082,26 +1024,25 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
         // TODO: apply equation/variable change transformation(s)
 
         // add contribution to global residual and dRdP
-        residual->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                       localAccumDOF.data(),
-                                       localAccum.data() );
+        rhs->add( localAccumDOF.data(),
+                  localAccum.data(),
+                  NC );
 
-        jacobian->SumIntoGlobalValues( integer_conversion<int>( NC ),
-                                       localAccumDOF.data(),
-                                       integer_conversion<int>( NDOF ),
-                                       localAccumDOF.data(),
-                                       localAccumJacobian.data(),
-                                       Epetra_FECrsMatrix::ROW_MAJOR );
+        matrix->add( localAccumDOF.data(),
+                     localAccumDOF.data(),
+                     localAccumJacobian.data(),
+                     NC, NDOF );
       }
     });
   });
 }
 
-void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * const domain,
-                                                     Epetra_FECrsMatrix * const jacobian,
-                                                     Epetra_FEVector * const residual,
-                                                     real64 const time_n,
-                                                     real64 const dt )
+void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const time_n,
+                                                     real64 const dt,
+                                                     DomainPartition const * const domain,
+                                                     DofManager const * const dofManager,
+                                                     ParallelMatrix * const matrix,
+                                                     ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1225,26 +1166,26 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( DomainPartition const * con
       // TODO: apply equation/variable change transformation(s)
 
       // Add to global residual/jacobian
-      residual->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
-                                     eqnRowIndices.data(),
-                                     localFlux.data() );
+      rhs->add( eqnRowIndices.data(),
+                localFlux.data(),
+                numElems * NC );
 
-      jacobian->SumIntoGlobalValues( integer_conversion<int>( numElems * NC ),
-                                     eqnRowIndices.data(),
-                                     integer_conversion<int>( stencilSize * NDOF ),
-                                     dofColIndices.data(),
-                                     localFluxJacobian.data(),
-                                     Epetra_FECrsMatrix::ROW_MAJOR );
+      matrix->add( eqnRowIndices.data(),
+                   dofColIndices.data(),
+                   localFluxJacobian.data(),
+                   numElems * NC,
+                   stencilSize * NDOF );
 
     } );
   } );
 }
 
-void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition const * const domain,
-                                                              Epetra_FECrsMatrix * const jacobian,
-                                                              Epetra_FEVector * const residual,
-                                                              real64 const time_n,
-                                                              real64 const dt )
+void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const time_n,
+                                                              real64 const dt,
+                                                              DomainPartition const * const domain,
+                                                              DofManager const * const dofManager,
+                                                              ParallelMatrix * const matrix,
+                                                              ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1307,56 +1248,73 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
       // TODO: apply equation/variable change transformation(s)
 
       // add contribution to global residual and dRdP
-      residual->SumIntoGlobalValues( 1,
-                                     &localVolBalanceEqnIndex,
-                                     &localVolBalance );
+      rhs->add( localVolBalanceEqnIndex,
+                localVolBalance );
 
-      jacobian->SumIntoGlobalValues( 1,
-                                     &localVolBalanceEqnIndex,
-                                     integer_conversion<int>( NDOF ),
-                                     localVolBalanceDOF.data(),
-                                     localVolBalanceJacobian.data(),
-                                     Epetra_FECrsMatrix::ROW_MAJOR );
+      matrix->add( localVolBalanceEqnIndex,
+                   localVolBalanceDOF.data(),
+                   localVolBalanceJacobian.data(),
+                   NDOF );
     } );
   } );
 }
 
-void CompositionalMultiphaseFlow::ApplyBoundaryConditions( DomainPartition * const domain,
-                                                           EpetraBlockSystem * const blockSystem,
-                                                           real64 const time_n, real64 const dt )
+void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
+                                                           real64 const dt,
+                                                           DomainPartition * const domain,
+                                                           DofManager const & dofManager,
+                                                           ParallelMatrix & matrix,
+                                                           ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock,
-                                                                BlockIDs::compositionalBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  matrix.open();
+  rhs.open();
 
   // apply pressure boundary conditions.
-  ApplyDirichletBC_implicit(domain, time_n, dt, blockSystem);
-  ApplyFaceDirichletBC_implicit(domain, time_n, dt, blockSystem);
+  ApplyDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
-  jacobian->GlobalAssemble();
-  residual->GlobalAssemble();
+  matrix.close();
+  rhs.close();
 
-  if (verboseLevel() >= 2)
+  if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK( "After CompositionalMultiphaseFlow::ApplyBoundaryCondition" );
-    GEOS_LOG_RANK( "\nJacobian\n" << *jacobian );
-    GEOS_LOG_RANK( "\nResidual\n" << *residual );
+    GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+
+    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After CompositionalMultiphaseFlow::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
 void
-CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const domain,
-                                                        real64 const time_n, real64 const dt,
-                                                        EpetraBlockSystem * const blockSystem )
+CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
+                                                        real64 const dt,
+                                                        DofManager const * const dofManager,
+                                                        DomainPartition * const domain,
+                                                        ParallelMatrix * const matrix,
+                                                        ParallelVector * const rhs )
 {
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
   unordered_map< string, array1d<bool> > bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
-  fsManager->Apply( time_n + dt,
+  fsManager->Apply( time + dt,
                     domain,
                     "ElementRegions",
                     viewKeyStruct::pressureString,
@@ -1373,13 +1331,13 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     // 1.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
-                                                  time_n + dt,
+                                                  time + dt,
                                                   subRegion,
                                                   viewKeyStruct::bcPressureString );
   });
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
-  fsManager->Apply( time_n + dt,
+  fsManager->Apply( time + dt,
                     domain,
                     "ElementRegions",
                     viewKeyStruct::globalCompFractionString,
@@ -1397,7 +1355,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
 
     // 2.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
-                                                  time_n + dt,
+                                                  time + dt,
                                                   subRegion,
                                                   viewKeyStruct::globalCompFractionString );
   });
@@ -1416,7 +1374,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
-  fsManager->Apply( time_n + dt,
+  fsManager->Apply( time + dt,
                     domain,
                     "ElementRegions",
                     viewKeyStruct::pressureString,
@@ -1428,7 +1386,8 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
   {
     MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
 
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+    arrayView1d<globalIndex const> const & dofNumber =
+      subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
     arrayView1d<real64 const> const & pres      = subRegion->getReference< array1d<real64> >( viewKeyStruct::pressureString );
     arrayView1d<real64 const> const & dPres     = subRegion->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
@@ -1438,8 +1397,6 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
     arrayView2d<real64 const> const & dCompDens = subRegion->getReference< array2d<real64> >( viewKeyStruct::deltaGlobalCompDensityString );
 
     arrayView2d<real64> const & totalDens = fluid->getReference< array2d<real64> >( MultiFluidBase::viewKeyStruct::totalDensityString );
-
-    Epetra_FEVector * const rhs = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
 
     array1d<real64> rhsContribution( targetSet.size() * m_numDofPerCell );
     array1d<globalIndex> dof( targetSet.size() * m_numDofPerCell );
@@ -1454,12 +1411,11 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
       dof[counter] = offset;
 
       // 4.1. Apply pressure to the matrix
-      FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
-                                                  blockSystem,
-                                                  BlockIDs::compositionalBlock,
-                                                  rhsContribution[counter],
-                                                  bcPres[a],
-                                                  pres[a] + dPres[a] );
+      FieldSpecificationEqual::SpecifyFieldValue<LAInterface>( dof[counter],
+                                                               *matrix,
+                                                               rhsContribution[counter],
+                                                               bcPres[a],
+                                                               pres[a] + dPres[a] );
 
       ++counter;
 
@@ -1469,47 +1425,35 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( DomainPartition * const 
         dof[counter] = offset + ic + 1;
         real64 const targetCompDens = totalDens[a][0] * compFrac[a][ic];
 
-        FieldSpecificationEqual::SpecifyFieldValue( dof[counter],
-                                                    blockSystem,
-                                                    BlockIDs::compositionalBlock,
-                                                    rhsContribution[counter],
-                                                    targetCompDens,
-                                                    compDens[a][ic] + dCompDens[a][ic] );
+        FieldSpecificationEqual::SpecifyFieldValue<LAInterface>( dof[counter],
+                                                                 *matrix,
+                                                                 rhsContribution[counter],
+                                                                 targetCompDens,
+                                                                 compDens[a][ic] + dCompDens[a][ic] );
 
         ++counter;
       }
 
       // 4.3. Apply accumulated rhs values
-      FieldSpecificationEqual::ReplaceGlobalValues( rhs,
-                                                    counter,
-                                                    dof.data(),
-                                                    rhsContribution.data() );
+      FieldSpecificationEqual::ReplaceGlobalValues<LAInterface>( *rhs,
+                                                                 counter,
+                                                                 dof.data(),
+                                                                 rhsContribution.data() );
     }
   });
 
 }
 
-void
-CompositionalMultiphaseFlow::ApplyFaceDirichletBC_implicit( DomainPartition * const domain,
-                                                            real64 const time_n, real64 const dt,
-                                                            EpetraBlockSystem * const blockSystem )
-{
-
-}
-
 real64
-CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
-                                                    DomainPartition * const domain )
+CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * const domain,
+                                                    DofManager const & dofManager,
+                                                    ParallelVector const & rhs )
 {
-  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
-
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // get a view into local residual vector
-  int localSizeInt;
-  double* localResidual = nullptr;
-  residual->ExtractView(&localResidual, &localSizeInt);
+  real64 * localResidual;
+  rhs.extractLocalVector( &localResidual );
 
   real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
@@ -1529,7 +1473,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
         globalIndex const offset = m_numDofPerCell * dofNumber[ei];
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
-          int const lid = rowMap->LID(integer_conversion<int>(offset + idof));
+          localIndex const lid = rhs.getLocalRowID( offset + idof );
           real64 const val = localResidual[lid] / (refPoro[ei] * volume[ei]);
           localResidualNorm += val * val;
         }
@@ -1539,46 +1483,40 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( EpetraBlockSystem const * co
 
   // compute global residual norm
   realT globalResidualNorm;
-  MPI_Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+  MPI_Allreduce( &localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
 
-  return sqrt(globalResidualNorm);
+  return sqrt( globalResidualNorm );
 }
 
-void CompositionalMultiphaseFlow::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                               SystemSolverParameters const * const params )
+void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
 {
-  Epetra_FEVector * const
-    solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
+  GEOSX_MARK_FUNCTION;
 
-  Epetra_FEVector * const
-    residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
+  rhs.scale( -1.0 );
+  solution.zero();
 
-  residual->Scale(-1.0);
-  solution->Scale(0.0);
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-                                                params,
-                                                BlockIDs::compositionalBlock );
-
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK("\nSolution:\n" << *solution);
+    GEOS_LOG_RANK_0("After CompositionalMultiphaseFlow::SolveSystem");
+    GEOS_LOG_RANK_0("\nSolution\n" << solution);
   }
 }
 
 bool
-CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * const blockSystem,
-                                                  real64 const scalingFactor,
-                                                  DomainPartition * const domain )
+CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelVector const & solution,
+                                                  real64 const scalingFactor )
 {
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  int dummy;
-  double* local_solution = nullptr;
-  solution->ExtractView(&local_solution,&dummy);
+  real64 * localSolution;
+  solution.extractLocalVector( &localSolution );
 
   bool result = 1;
 
@@ -1602,8 +1540,8 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
       globalIndex const offset = m_numDofPerCell * dofNumber[ei];
       // extract solution and apply to dP
       {
-        int const lid = rowMap->LID(integer_conversion<int>(offset));
-        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * local_solution[lid];
+        localIndex const lid = solution.getLocalRowID( offset );
+        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
         if (newPres < 0.0)
         {
           result = 0;
@@ -1612,8 +1550,8 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
 
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
       {
-        int const lid = rowMap->LID(integer_conversion<int>(offset + ic + 1));
-        real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * local_solution[lid];
+        localIndex const lid = solution.getLocalRowID( offset + ic + 1 );
+        real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[lid];
         if (newDens < 0.0)
         {
           result = 0;
@@ -1626,18 +1564,15 @@ CompositionalMultiphaseFlow::CheckSystemSolution( EpetraBlockSystem const * cons
 }
 
 void
-CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
+                                                  ParallelVector const & solution,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::compositionalBlock );
-
-  int dummy;
-  double * local_solution = nullptr;
-  solution->ExtractView( &local_solution, &dummy );
+  real64 * localSolution = nullptr;
+  solution.extractLocalVector( &localSolution );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegion * const region,
@@ -1651,23 +1586,23 @@ CompositionalMultiphaseFlow::ApplySystemSolution( EpetraBlockSystem const * cons
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      if (elemGhostRank[ei] >= 0)
-        return;
-
-      globalIndex const offset = m_numDofPerCell * dofNumber[ei];
-      // extract solution and apply to dP
+      if (elemGhostRank[ei] < 0)
       {
-        int const lid = rowMap->LID( integer_conversion<int>( offset ) );
-        dPres[ei] += scalingFactor * local_solution[lid];
-      }
+        globalIndex const offset = m_numDofPerCell * dofNumber[ei];
+        // extract solution and apply to dP
+        {
+          localIndex const lid = solution.getLocalRowID( offset );
+          dPres[ei] += scalingFactor * localSolution[lid];
+        }
 
-      for (localIndex ic = 0; ic < m_numComponents; ++ic)
-      {
-        int const lid = rowMap->LID( integer_conversion<int>( offset + ic + 1 ) );
-        dCompDens[ei][ic] += scalingFactor * local_solution[lid];
+        for( localIndex ic = 0; ic < m_numComponents; ++ic )
+        {
+          localIndex const lid = solution.getLocalRowID( offset + ic + 1 );
+          dCompDens[ei][ic] += scalingFactor * localSolution[lid];
+        }
       }
-    });
-  });
+    } );
+  } );
 
   std::map<string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
@@ -1732,7 +1667,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   });
 }
 
-void CompositionalMultiphaseFlow::ResetViews(DomainPartition * const domain)
+void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
 {
   FlowSolverBase::ResetViews( domain );
 

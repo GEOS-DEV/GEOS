@@ -20,19 +20,15 @@
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "systemSolverInterface/LinearSolverWrapper.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
-#include "DofManager.hpp"
-#include "TrilinosInterface.hpp"
+#include "linearAlgebraInterface/src/DofManager.hpp"
+#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
 
 struct stabledt
 {
   double m_maxdt;
 };
-
-namespace ML_Epetra
-{ class MultiLevelPreconditioner; }
 
 namespace geosx
 {
@@ -44,14 +40,11 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-using LAI = TrilinosInterface;
-using ParallelMatrix = typename LAI::ParallelMatrix;
-using ParallelVector = typename LAI::ParallelVector;
-using LinearSolver = typename LAI::LinearSolver;
 
 class LaplaceFEM : public SolverBase
 {
 public:
+
   LaplaceFEM( const std::string& name,
               ManagedGroup * const parent );
 
@@ -61,8 +54,6 @@ public:
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
   /**
    * @defgroup Solver Interface Functions
    *
@@ -70,69 +61,72 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
   virtual real64 ExplicitStep( real64 const & time_n,
-                                 real64 const & dt,
-                                 integer const cycleNumber,
-                                 DomainPartition * const domain ) override;
-
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                              real64 const& dt,
-                              DomainPartition * const domain,
-                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time,
-                               real64 const dt ) override;
-
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time,
-                                        real64 const dt ) override;
-
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
-
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
+                               real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
+
+
+  virtual void
+  AssembleSystem( real64 const time,
+                  real64 const dt,
+                  DomainPartition * const domain,
+                  DofManager const & dofManager,
+                  ParallelMatrix & matrix,
+                  ParallelVector & rhs ) override;
+
+  virtual void
+  ApplyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs ) override;
+
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override {}
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition * const domain ) override
+  {}
 
-  virtual  void ImplicitStepComplete( real64 const & time,
-                                      real64 const & dt,
-                                      DomainPartition * const domain ) override;
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition * const domain ) override;
   /**@}*/
 
-
-  void TimeStepQuasiStatic( real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain );
-
-//  real64 TimeStepImplicit( real64 const & time_n,
-//                           real64 const & dt,
-//                           integer const cycleNumber,
-//                           DomainPartition * const domain );
-
   void SetupSystem( DomainPartition * const domain,
-                    systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  // TODO: can I remove this?
-//  void SetupMLPreconditioner( DomainPartition const & domain,
-//                              ML_Epetra::MultiLevelPreconditioner* MLPrec );
+                    DofManager & dofManager,
+                    ParallelMatrix & matrix,
+                    ParallelVector & rhs,
+                    ParallelVector & solution );
 
   void ApplyDirichletBC_implicit( real64 const time,
+                                  DofManager const & dofManager,
                                   DomainPartition & domain,
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs );
@@ -146,12 +140,8 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    constexpr static auto blockLocalDofNumberString = "blockLocalDofNumber_Laplace";
-
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
-
-    dataRepository::ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
 
   } laplaceFEMViewKeys;
 
@@ -167,19 +157,12 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
+
   string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   LaplaceFEM();
 
-  // Data structure to handle degrees of freedom
-  DofManager dofManager;
-
-  // System matrix, rhs and solution
-  ParallelMatrix m_matrix;
-  ParallelVector m_rhs;
-  ParallelVector m_solution;
-  LinearSolverParameters m_parameters;
 };
 
 } /* namespace geosx */
