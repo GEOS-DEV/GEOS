@@ -55,12 +55,6 @@ public:
 
   static string CatalogName() { return "SimpleGeometricObjectBase"; }
 
-  SimpleGeometricObjectBase() = default;
-  SimpleGeometricObjectBase( SimpleGeometricObjectBase const & ) = default;
-  SimpleGeometricObjectBase( SimpleGeometricObjectBase &&) = default;
-  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase const & ) = default;
-  SimpleGeometricObjectBase& operator=( SimpleGeometricObjectBase&& ) = default;
-
   virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 
   using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, std::string const &, ManagedGroup * const >;

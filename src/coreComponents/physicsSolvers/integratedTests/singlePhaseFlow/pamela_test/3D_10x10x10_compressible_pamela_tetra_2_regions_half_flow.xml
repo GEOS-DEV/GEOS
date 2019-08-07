@@ -12,7 +12,7 @@
                           fluidName="water"
                           solidName="rock"
                           discretization="singlePhaseTPFA"
-                          targetRegions="Bot">
+                          targetRegions="{Bot}">
       <SystemSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -58,19 +58,21 @@
                                  fieldName="pressure"
                                  boundaryFieldName="facePressure"
                                  coefficientName="permeability"
-                                 targetRegions="Bot"/>
+                                 targetRegions="{Bot}"/>
     </FiniteVolume>
 
   </NumericalMethods>
 
 
   <ElementRegions>
-    <ElementRegion name="Top" cellBlocks="0_TETRA" materialList=""/>
-    <ElementRegion name="Bot" cellBlocks="1_TETRA" materialList="water rock"/>
+    <ElementRegion name="Top" cellBlocks="{0_TETRA}" materialList="{}"/>
+    <ElementRegion name="Bot" cellBlocks="{1_TETRA}" materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="1e-9"
@@ -86,7 +88,7 @@
     <FieldSpecification name="BotPermx"
                         component="0"
                         initialCondition="1"
-                        setNames="all"
+                        setNames="{all}"
                         objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
@@ -94,7 +96,7 @@
     <FieldSpecification name="BotPermy"
                         component="1"
                         initialCondition="1"
-                        setNames="all"
+                        setNames="{all}"
                         objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
@@ -102,27 +104,27 @@
     <FieldSpecification name="BotPermz"
                         component="2"
                         initialCondition="1"
-                        setNames="all"
+                        setNames="{all}"
                         objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
                         fieldName="permeability"
                         scale="2.0e-14"/>
 
     <FieldSpecification name="BotReferencePorosity"
                         initialCondition="1"
-                        setNames="all"
+                        setNames="{all}"
                         objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
                         fieldName="referencePorosity"
                         scale="0.05"/>
 
     <FieldSpecification name="BotInitialPressure"
                         initialCondition="1"
-                        setNames="all"
+                        setNames="{all}"
                         objectPath="ElementRegions/elementRegions/Bot/elementSubRegions/1_TETRA"
                         fieldName="pressure"
                         scale="1e5"/>
 
     <FieldSpecification name="MidplanePressure"
-                        setNames="midplane"
+                        setNames="{midplane}"
                         objectPath="faceManager"
                         fieldName="facePressure"
                         scale="2e5"/>

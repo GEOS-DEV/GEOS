@@ -35,10 +35,20 @@ set( finiteElement_sources
      quadrature/QuadratureRuleManager.cpp
    )
 
+set( dependencyList dataRepository codingUtilities )
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
-                 DEPENDS_ON            dataRepository codingUtilities
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

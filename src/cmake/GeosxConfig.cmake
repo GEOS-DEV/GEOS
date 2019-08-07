@@ -21,12 +21,15 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           METIS
                           MPI
                           OPENMP
+                          CUDA
                           PARMETIS
                           PYTHON
                           RAJA 
                           SUPERLU_DIST
                           TIMERS
+                          TOTALVIEW_OUTPUT
                           TRILINOS
+                          MKL
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})

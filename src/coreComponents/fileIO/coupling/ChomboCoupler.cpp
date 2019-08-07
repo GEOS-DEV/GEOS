@@ -77,13 +77,15 @@ void ChomboCoupler::write(double dt)
   /* Build the node FieldMap. */
   r1_array const& reference_pos = nodes->getReference<r1_array>(nodes->viewKeys.referencePosition);
   localIndex const n_nodes = reference_pos.size();
-  R1Tensor const* reference_pos_ptr = reference_pos.data();
+  R1Tensor const * const reference_pos_ptr = reference_pos.data();
 
-  R1Tensor const* displacement_ptr = nodes->getReference<r1_array>(nodes->viewKeys.totalDisplacement).data();            
+  R1Tensor const * const displacement_ptr = nodes->getReference<r1_array>(nodes->viewKeys.totalDisplacement).data();
+  R1Tensor const * const velocity_ptr = nodes->getReference<r1_array>("Velocity").data();
 
   FieldMap_in node_fields;
   node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
   node_fields["displacement"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, displacement_ptr);
+  node_fields["velocity"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, velocity_ptr);
 
   writeBoundaryFile(m_comm, m_outputPath.data(), dt, faceMask,
     m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,

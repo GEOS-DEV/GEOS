@@ -49,13 +49,19 @@ public:
 
   virtual real64 GetTimestepRequest(real64 const time) override;
 
-  struct viewKeysStruct
+  struct viewKeyStruct
   {
-    dataRepository::ViewKey rand_scale = { "rand_scale" };
-  } dummyViewKeys;
+    static constexpr auto randScaleString = "scale";
+    static constexpr auto randSeedString = "seed";
+    dataRepository::ViewKey randScale = { "scale" };
+    dataRepository::ViewKey randSeed = { "seed" };
+    } viewKeysDummySolver;
 
 protected:
   virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override final;
+
+  real64 m_randScale;
+  integer m_randSeed;
 
 };
 

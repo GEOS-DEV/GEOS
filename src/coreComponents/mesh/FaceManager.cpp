@@ -355,38 +355,37 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   array2d<localIndex> const & elemRegionList = elementRegionList();
   array2d<localIndex> const & elemSubRegionList = elementSubRegionList();
   array2d<localIndex> const & elemList = elementList();
-  r1_array const & X = nodeManager->referencePosition();
+  arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
   GEOS_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
+  elemManager->forElementSubRegions<CellElementSubRegion>([X] (CellElementSubRegion const * const subRegion)
+  { subRegion->calculateElementCenters(X); });
+  
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
-    ElementRegion const * const elemRegion     = elemManager->GetRegion( elemRegionList[kf][0] );
+    ElementRegion const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>( elemSubRegionList[kf][0] );
-    R1Tensor const elementCenter = subRegion->calculateElementCenter( elemList[kf][0], *nodeManager );
-    
+    R1Tensor const elementCenter = subRegion->getElementCenter()( elemList[kf][0] );
     const localIndex numFaceNodes = nodeList()[kf].size();
     arrayView1d<localIndex> & faceNodes = nodeList()[kf];
     SortFaceNodes( X, elementCenter, faceNodes, numFaceNodes );
   } );
 }
 
-void FaceManager::SortFaceNodes( arrayView1d<R1Tensor> const & X,
+void FaceManager::SortFaceNodes( arrayView1d<R1Tensor const> const & X,
                                  R1Tensor const & elementCenter,
-                                 arrayView1d<localIndex> & faceNodes,
+                                 arrayView1d<localIndex> const & faceNodes,
                                  localIndex const numFaceNodes )
 {
   localIndex const firstNodeIndex = faceNodes[0];
 
-  // get face center (average vertex location) and store node coordinates
-  R1Tensor const * face_coords[MAX_FACE_NODES];
+  // get face center (average vertex location)
   R1Tensor fc(0);
   for( localIndex n =0 ; n < numFaceNodes ; ++n)
   {
-    localIndex nd = faceNodes[n];
-    face_coords[n] = &(X[nd]);
-    fc += *(face_coords[n]);
+    fc += X[faceNodes[n]];
   }
   fc /= realT(numFaceNodes);
 
@@ -418,8 +417,9 @@ void FaceManager::SortFaceNodes( arrayView1d<R1Tensor> const & X,
     ez -= elementCenter;
 
     /// Approximate in-plane axis
-    ex = *(face_coords[0]);
+    ex = X[faceNodes[0]];
     ex -= fc;
+
     ex /= ex.L2_Norm();
     ey.Cross(ez, ex);
     ey /= ey.L2_Norm();
@@ -429,12 +429,12 @@ void FaceManager::SortFaceNodes( arrayView1d<R1Tensor> const & X,
     /// Sort nodes counterclockwise around face center
     for( localIndex n =0 ; n < numFaceNodes ; ++n)
     {
-      R1Tensor v = *(face_coords[n]);
+      R1Tensor v = X[faceNodes[n]];
       v -= fc;
       thetaOrder[n] = std::pair<realT, localIndex>(atan2(Dot(v,ey),Dot(v,ex)),faceNodes[n]);
     }
 
-    sort(thetaOrder, thetaOrder + numFaceNodes);
+    std::sort(thetaOrder, thetaOrder + numFaceNodes);
 
     // Reorder nodes on face
     for( localIndex n =0 ; n < numFaceNodes ; ++n)
@@ -456,7 +456,7 @@ void FaceManager::SortFaceNodes( arrayView1d<R1Tensor> const & X,
 
     for( localIndex n=0 ; n < numFaceNodes ; ++n)
     {
-      const localIndex index = firstIndexIndex+n < numFaceNodes ? firstIndexIndex+n : firstIndexIndex+n-numFaceNodes;
+      const localIndex index = (firstIndexIndex + n) % numFaceNodes;
       faceNodes[n] = tempFaceNodes[index];
     }
   }
