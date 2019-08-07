@@ -413,6 +413,13 @@ public:
   //! @name Accessors Methods
   //@{
 
+  /**
+   * @brief get diagonal element value on a given row
+   * @param globalRow global row index
+   * @return value of diagonal element on the row
+   */
+  real64 getDiagValue( globalIndex globalRow ) const;
+
    /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
    * Note that the input arrays will be resized internally to fit the number of entries.

@@ -52,17 +52,7 @@ public:
   /**
    * @brief Empty constructor.
    */
-  // PetscInterface() = default;
-  PetscInterface()
-  {
-    // hannah: need to change this
-    int argc;
-    char ** args;
-    char help[] = "PETSc GEOSX interface.\n";
-    PetscOptionsSetValue(nullptr, "-log_view", "");
-    PetscOptionsSetValue(nullptr, "-ksp_monitor", nullptr); 
-    PetscInitialize(&argc,&args,nullptr,help);
-  }
+  PetscInterface() = default;
 
   /**
    * @brief Destructor.
