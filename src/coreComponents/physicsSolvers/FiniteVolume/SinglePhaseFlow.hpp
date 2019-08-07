@@ -153,8 +153,6 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            CellElementSubRegion const * const subRegion,
-                           ManagedGroup const * const,
-                           ManagedGroup const * const,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -162,8 +160,6 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            FaceElementSubRegion const * const subRegion,
-                           FaceManager const * const faceManager,
-                           NodeManager const * const nodeManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 

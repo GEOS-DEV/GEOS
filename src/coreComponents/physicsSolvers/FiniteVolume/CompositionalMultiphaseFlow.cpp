@@ -1435,10 +1435,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
       }
 
       // 4.3. Apply accumulated rhs values
-      FieldSpecificationEqual::ReplaceGlobalValues<LAInterface>( *rhs,
-                                                                 counter,
-                                                                 dof.data(),
-                                                                 rhsContribution.data() );
+      FieldSpecificationEqual::PrescribeRhsValues<LAInterface>( *rhs,
+                                                                counter,
+                                                                dof.data(),
+                                                                rhsContribution.data() );
     }
   });
 
