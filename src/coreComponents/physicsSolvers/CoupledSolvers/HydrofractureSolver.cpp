@@ -27,23 +27,21 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contactRelations/ContactRelationBase.hpp"
-#include "../FiniteVolume/SinglePhaseFlow.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
-#include "../solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
                                       ManagedGroup * const parent ):
