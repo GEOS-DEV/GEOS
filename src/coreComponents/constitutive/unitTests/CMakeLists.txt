@@ -11,9 +11,21 @@ set( gtest_geosx_tests
 
 set( dependencyList geosx_core gtest )
 
+if( ENABLE_MPI )
+    set( dependencyList ${dependencyList} mpi )
+endif()
+
 if( ENABLE_PVTPackage )
     set( gtest_geosx_tests ${gtest_geosx_tests} testMultiFluid.cpp )
     set( dependencyList ${dependencyList} PVTPackage )
+endif()
+
+if( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
 endif()
 
 #
@@ -29,7 +41,8 @@ foreach(test ${gtest_geosx_tests})
             )
 
     blt_add_test( NAME ${test_name}
-            COMMAND ${test_name}
-            )
+                  COMMAND ${test_name}
+                  NUM_MPI_TASKS 1
+                )
 
 endforeach()

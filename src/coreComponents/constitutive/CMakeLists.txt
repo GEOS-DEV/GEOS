@@ -62,6 +62,13 @@ if( ENABLE_PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}

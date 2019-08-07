@@ -26,27 +26,22 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_INTERFACETYPES_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_INTERFACETYPES_HPP_
 
+#include "common/GeosxConfig.hpp"
+
+#include "TrilinosInterface.hpp"
+
+#define CONCAT_( A, B ) A##B
+#define CONCAT( A, B ) CONCAT_( A, B )
+
 namespace geosx
 {
 
-namespace trilinosTypes
-{
-//using gid = long long;  // no longer necessary
-//using lid = int;        // no longer necessary
-}
+using LAInterface = CONCAT( GEOSX_LA_INTERFACE, Interface );
 
-namespace hypreTypes
-{
-using gid = long long;
-using lid = int;
-}
-
-namespace petscTypes
-{
-using gid = long long;
-using lid = int;
-}
-
+// The following aliases are added into geosx namespace for global use
+using ParallelMatrix = LAInterface::ParallelMatrix;
+using ParallelVector = LAInterface::ParallelVector;
+using LinearSolver   = LAInterface::LinearSolver;
 
 }
 

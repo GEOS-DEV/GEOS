@@ -22,7 +22,6 @@
 
 #include "TableFunction.hpp"
 #include "common/DataTypes.hpp"
-//#include "mathpresso.h"
 #include "codingUtilities/IOUtilities.hpp"
 #include <algorithm>
 
@@ -75,12 +74,6 @@ TableFunction::TableFunction( const std::string& name,
   RegisterViewWrapper<string>(keys::tableInterpolation)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method");
-
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value Type");
-
-
 }
 
 TableFunction::~TableFunction()
@@ -146,14 +139,6 @@ void TableFunction::InitializeFunction()
       m_corners[jj][ii] = int(ii / pow(2, jj)) % 2;
     }
   }
-}
-
-void TableFunction::Evaluate( dataRepository::ManagedGroup const * const group,
-                              real64 const time,
-                              set<localIndex> const & set,
-                              real64_array & result ) const
-{
-  FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
 }
 
 real64 TableFunction::Evaluate( real64 const * const input ) const

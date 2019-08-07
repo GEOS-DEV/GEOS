@@ -29,6 +29,14 @@ if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
 endif()
 
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
@@ -38,3 +46,5 @@ blt_add_library( NAME                  fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )
+
+add_subdirectory( unitTests )

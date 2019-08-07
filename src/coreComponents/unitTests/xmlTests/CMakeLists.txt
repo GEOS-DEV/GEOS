@@ -15,14 +15,22 @@ foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
 endforeach()
 
+set( dependencyList geosx_core gtest optionparser )
 
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON geosx_core gtest optionparser  "-lz"
+                        DEPENDS_ON ${dependencyList} "-lz"
                         )
 
     blt_add_test( NAME ${test_name} 

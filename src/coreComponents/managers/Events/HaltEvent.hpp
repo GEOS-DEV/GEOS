@@ -58,12 +58,15 @@ public:
                                    dataRepository::ManagedGroup * domain) override;
 
   /// Timing values
-  real64 m_startTime = 0.0;
-  real64 m_lastTime = 0.0;
-  real64 m_realDt = 1.0;
+  real64 m_externalStartTime;
+  real64 m_externalLastTime;
+  real64 m_externalDt;
+  real64 m_maxRuntime;
 
   struct viewKeyStruct
   {
+    static constexpr auto maxRuntimeString = "maxRuntime";
+    
     dataRepository::ViewKey maxRuntime = { "maxRuntime" };
   } haltEventViewKeys;
 

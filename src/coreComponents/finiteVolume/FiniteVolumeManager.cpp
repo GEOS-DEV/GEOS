@@ -27,6 +27,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -63,6 +64,11 @@ void FiniteVolumeManager::ExpandObjectCatalogs()
 
 
 FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation(std::string const &name) const
+{
+  return this->GetGroup<FluxApproximationBase>(name);
+}
+
+FluxApproximationBase * FiniteVolumeManager::getFluxApproximation(std::string const &name)
 {
   return this->GetGroup<FluxApproximationBase>(name);
 }

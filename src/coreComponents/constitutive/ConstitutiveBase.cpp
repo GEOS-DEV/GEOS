@@ -103,6 +103,15 @@ void ConstitutiveBase::resize( localIndex newsize )
   ManagedGroup::resize( newsize );
 }
 
+void ConstitutiveBase::DeliverClone( string const & name,
+                                     ManagedGroup * const parent,
+                                     std::unique_ptr<ConstitutiveBase> & clone ) const
+{
+  clone->forViewWrappers([&]( ViewWrapperBase & wrapper )
+  {
+    wrapper.CopyWrapperAttributes( *(this->getWrapperBase(wrapper.getName() ) ) );
+  });
+}
 
 
 }

@@ -23,8 +23,6 @@
 #ifndef LAI_EPETRAMATRIX_HPP_
 #define LAI_EPETRAMATRIX_HPP_
 
-#include "InterfaceTypes.hpp"
-
 #include <Epetra_Comm.h>
 #include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
@@ -135,6 +133,13 @@ public:
                              localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm );
 
+  /**
+   * @brief Reinitialize the matrix.
+   *
+   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
+   *
+   */
+  void set( real64 const value );
 
   /**
    * @brief Reinitialize the matrix.
@@ -284,6 +289,8 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   *
+   * @note Row major layout assumed in values
    */
   void add( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
@@ -295,6 +302,8 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   *
+   * @note Row major layout assumed in values
    */
   void set( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
@@ -306,10 +315,63 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   *
+   * @note Row major layout assumed in values
    */
   void insert( array1d<globalIndex> const & rowIndices,
                array1d<globalIndex> const & colIndices,
                array2d<real64> const & values );
+
+  /**
+   * @brief Add dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void add( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols );
+
+  /**
+   * @brief Set dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void set( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols );
+
+  /**
+   * @brief Insert dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void insert( globalIndex const * rowIndices,
+               globalIndex const * colIndices,
+               real64 const * values,
+               localIndex const numRows,
+               localIndex const numCols );
 
   //@}
   //! @name Linear Algebra Methods
@@ -335,10 +397,10 @@ public:
    * \param src Input matrix (B).
    * \param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same 
+   * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
    * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B. 
+   * the nonzero entries produced by the product this*B.
    */
   void multiply( EpetraMatrix const &src,
                  EpetraMatrix &dst ) const;
@@ -433,6 +495,13 @@ public:
                    array1d<real64> & values ) const;
 
   /**
+   * @brief get diagonal element value on a given row
+   * @param globalRow global row index
+   * @return value of diagonal element on the row
+   */
+  real64 getDiagValue( globalIndex globalRow ) const;
+
+  /**
    * @brief Returns a pointer to the underlying matrix.
    */
   Epetra_FECrsMatrix* unwrappedPointer() const;
@@ -448,12 +517,24 @@ public:
   globalIndex globalCols() const;
 
   /**
+ * @brief Return the local number of columns on each processor
+ */
+  localIndex localRows() const;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  localIndex localCols() const;
+
+  /**
    * @brief Returns the index of the first global row owned by that processor.
    */
   globalIndex ilower() const;
 
   /**
-   * @brief Returns the index of the last global row owned by that processor.
+   * @brief Returns the next index after last global row owned by that processor.
+   *
+   * @note The intention is for [ilower; iupper) to be used as a half-open index range
    */
   globalIndex iupper() const;
 
@@ -483,7 +564,7 @@ public:
   /**
    * @brief Print the matrix in Trilinos format to the terminal.
    */
-  void print() const;
+  void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
@@ -492,7 +573,32 @@ public:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
+
+  /**
+   * @brief Performe a matrix matrix product with Parallel Matrix
+   */
+  void MatrixMatrixMultiply( bool const transA,
+                             EpetraMatrix const &B,
+                             bool const transB,
+                             EpetraMatrix &C,
+                             bool const call_FillComplete = true ) const;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  globalIndex getGlobalRowID( localIndex const index ) const;
+
+  /**
+   * @brief Print the given parallel matrix in Matrix Market format (MTX file)
+   */
+  void printParallelMatrix( string const & fileName ) const;
 
   //@}
 
@@ -501,7 +607,7 @@ private:
   /**
    * Boolean value, true if the matrix had been finalized, false if not.
    */
-  bool assembled = false;
+  bool m_assembled = false;
 
   /**
    * Pointer to the underlying Epetra_CrsMatrix.
@@ -518,6 +624,14 @@ private:
    */
   std::unique_ptr<Epetra_Map> m_dst_map = nullptr;
 };
+
+/**
+ * @brief Stream insertion operator for EpetraMatrix
+ * @param os the output stream
+ * @param matrix the matrix to be printed
+ * @return reference to the output stream
+ */
+std::ostream & operator<<( std::ostream & os, EpetraMatrix const & matrix );
 
 } // namespace geosx
 
