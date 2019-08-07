@@ -18,7 +18,6 @@
 
 /**
  * @file FunctionManager.h
- * @author walsh24
  * @date May 24, 2011
  */
 
@@ -29,10 +28,6 @@
 
 #include <map>
 #include "codingUtilities/Functions.hpp"
-
-#ifdef GEOSX_USE_ATK
-#include <slic/slic.hpp>
-#endif
 
 class FunctionManager
 {
@@ -51,12 +46,7 @@ public:
   inline Function& GetFunction( const std::string& functionName ) const
   {
     std::map<std::string,Function* >::const_iterator function = m_functions.find( functionName );
-    if( function == m_functions.end() )
-    {
-#ifdef GEOSX_USE_ATK
-      SLIC_ERROR("Error FunctionManager: Function name `" + functionName + "' not found\n");
-#endif
-    }
+    GEOS_ERROR_IF(function == m_functions.end(), "Error FunctionManager: Function name `" << functionName << "' not found\n")
 
     return *(function->second);
   }

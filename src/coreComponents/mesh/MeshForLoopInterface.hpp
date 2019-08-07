@@ -35,21 +35,21 @@ namespace geosx
 //Here we want to unpack data and 
 //use one of the templated loops above
 //------------
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
 {  
   NodeManager const * const nodeManager = mesh->getNodeManager();  
   forall_in_range<POLICY> (0, nodeManager->size(), body);
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
   FaceManager const * const faceManager = mesh->getFaceManager();
   forall_in_range<POLICY> (0, faceManager->size(), body);
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -67,7 +67,7 @@ void for_elems( MeshLevel const * const mesh, LAMBDA && body)
     }
   }
 }
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
 {
 
@@ -86,14 +86,14 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
   }
 }
 
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
 {
   forall_in_range<POLICY>(0,subRegion->size(), body);
 }
 
   
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
 
@@ -116,62 +116,61 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 }
 
 
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
-{
-  ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+// template<typename NUMBER=real64, class EXEC_POLICY=serialPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+// NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+// {
+//   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
   
-  forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
-  {
-      sum += body(index);
-  });
+//   forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
+//   {
+//       sum += body(index);
+//   });
   
-  return sum.get();
-}
+//   return sum.get();
+// }
 
 
-template<typename NUMBER=real64,class EXEC_POLICY=elemPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
-NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
-{
-  ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-  forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
-   {
-     sum += body(index);
-   });
+// template<typename NUMBER=real64,class EXEC_POLICY=serialPolicy,class REDUCE_POLICY=reducePolicy,typename LAMBDA=void>
+// NUMBER sum_in_set(localIndex const * const indexList, const localIndex len, LAMBDA && body)
+// {
+//   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
+//   forall_in_set(indexList, GEOSX_LAMBDA (localIndex index) mutable -> void
+//    {
+//      sum += body(index);
+//    });
   
-  return sum.get();
+//   return sum.get();
+// }
+
+// template<class EXEC_POLICY=serialPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
+// real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+// {
+//   real64 sum = 0.0;
+
+//   ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+//   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+//   {
+//     ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+//     elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const elementSubRegion )
+//     {
+//       auto ebody = [=](localIndex index) mutable -> real64
+//       {
+//         return lambdaBody(er,esr,index);
+//       };
+
+//       sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, elementSubRegion->size(), ebody);
+//     });
+//   }
+
+//   return sum;
+// }
+
+
 }
 
-template<class EXEC_POLICY=elemPolicy, class REDUCE_POLICY=reducePolicy, typename LAMBDA=void>
-real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
-{
-  real64 sum = 0.0;
 
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-  {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto const * const elementSubRegion )
-    {
-      auto ebody = [=](localIndex index) mutable -> real64
-      {
-        return lambdaBody(er,esr,index);
-      };
-
-      sum += sum_in_range<real64,EXEC_POLICY,REDUCE_POLICY>(0, elementSubRegion->size(), ebody);
-    });
-  }
-
-  return sum;
-}
-
-
-}
-
-
-#define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX )  \
-    for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
+// #define FOR_ELEMS_IN_SUBREGION( SUBREGION, INDEX ) for_elems_in_subRegion( SUBREGION, GEOSX_LAMBDA ( localIndex const INDEX ) mutable -> void
 #endif
 
 
@@ -180,7 +179,7 @@ real64 sumOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 // The following code is commented out as it may serve future purpose
 //
 /*
-template<class POLICY=elemPolicy,typename LAMBDA=void>
+template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
                                constitutive::ConstitutiveManager * const constitutiveManager,
                                FiniteElementSpaceManager const * const feDiscretizationManager,
