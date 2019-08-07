@@ -396,7 +396,7 @@ struct FieldSpecificationAdd
                                           globalIndex * const dof,
                                           real64 * const values )
   {
-    rhs.set( dof, values, num );
+    rhs.add( dof, values, num );
   }
 
 };
