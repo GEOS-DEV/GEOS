@@ -78,24 +78,44 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * con
 
 }
 
-void HydrofractureSolver::ImplicitStepSetup( real64 const& time_n,
-                                             real64 const& dt,
+void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
+                                             real64 const & dt,
                                              DomainPartition * const domain,
-                                             systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                             DofManager & dofManager,
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
   m_solidSolver = this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>();
   m_flowSolver = this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>();
 
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, blockSystem );
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, blockSystem );
+  m_solidSolver->ImplicitStepSetup( time_n,
+                                    dt,
+                                    domain,
+                                    dofManager,
+                                    m_solidSolver->getSystemMatrix(),
+                                    m_solidSolver->getSystemRhs(),
+                                    m_solidSolver->getSystemSolution() );
 
-  SetupSystem( domain, blockSystem );
+  m_flowSolver->ImplicitStepSetup( time_n,
+                                   dt,
+                                   domain,
+                                   dofManager,
+                                   m_flowSolver->getSystemMatrix(),
+                                   m_flowSolver->getSystemRhs(),
+                                   m_flowSolver->getSystemSolution() );
+
+  SetupSystem( domain,
+               dofManager,
+               matrix,
+               rhs,
+               solution );
 
 }
 
 void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
-                                              real64 const& dt,
-                                              DomainPartition * const domain)
+                                                real64 const& dt,
+                                                DomainPartition * const domain)
 {
   MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -156,9 +176,9 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const d
 }
 
 real64 HydrofractureSolver::SolverStep( real64 const & time_n,
-                                      real64 const & dt,
-                                      int const cycleNumber,
-                                      DomainPartition * domain )
+                                        real64 const & dt,
+                                        int const cycleNumber,
+                                        DomainPartition * const domain )
 {
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
@@ -167,14 +187,23 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+    ImplicitStepSetup( time_n,
+                       dt,
+                       domain,
+                       m_dofManager,
+                       m_matrix,
+                       m_rhs,
+                       m_solution );
 
     // currently the only method is implicit time integration
     dtReturn = this->NonlinearImplicitStep( time_n,
                                             dt,
                                             cycleNumber,
                                             domain,
-                                            getLinearSystemRepository() );
+                                            m_dofManager,
+                                            m_matrix,
+                                            m_rhs,
+                                            m_solution );
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
@@ -209,7 +238,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64> const & area = subRegion->getElementArea();
-      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
+      //array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
@@ -241,276 +270,276 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 }
 
 
-void HydrofractureSolver::ApplyFractureFluidCoupling( DomainPartition * const domain,
-                                                      systemSolverInterface::EpetraBlockSystem & blockSystem )
-{
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//void HydrofractureSolver::ApplyFractureFluidCoupling( DomainPartition * const domain,
+//                                                      systemSolverInterface::EpetraBlockSystem & blockSystem )
+//{
+//  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//
+//  FaceManager const * const faceManager = mesh->getFaceManager();
+//  NodeManager * const nodeManager = mesh->getNodeManager();
+//  ElementRegionManager * const elemManager = mesh->getElemManager();
+//
+//  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+//
+//  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+//  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+//  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+//  arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+//  fext = {0,0,0};
+//
+//
+//  ConstitutiveManager const * const
+//  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+//
+//  ContactRelationBase const * const
+//  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+//
+//  arrayView1d<globalIndex> const &
+//  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+//  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
+//  Epetra_FECrsMatrix * const matrix = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
+//                                                              systemSolverInterface::BlockIDs::displacementBlock );
+//
+//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+//  {
+//    if( subRegion->hasView("pressure") )
+//    {
+//
+//      arrayView1d<real64> const & aperture = subRegion->getElementAperture();
+//
+//      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+//      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+//
+//      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+//      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+//      arrayView1d<real64> const & area = subRegion->getElementArea();
+//      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
+//      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+//
+//
+//      forall_in_range<serialPolicy>( 0,
+//                                   subRegion->size(),
+//                                   GEOSX_LAMBDA ( localIndex const kfe )
+//      {
+//
+//        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+//        Nbar -= faceNormal[elemsToFaces[kfe][1]];
+//        Nbar.Normalize();
+//
+//        localIndex const kf0 = elemsToFaces[kfe][0];
+//        localIndex const kf1 = elemsToFaces[kfe][1];
+//        localIndex const numNodesPerFace=facesToNodes[kf0].size();
+//        localIndex const * const nodelist0 = facesToNodes[kf0];
+//        localIndex const * const nodelist1 = facesToNodes[kf1];
+//        R1Tensor temp;
+//        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//        {
+//          temp += u[nodelist0[a]];
+//          temp -= u[nodelist1[a]];
+//        }
+//        area[kfe] = 0.5 * ( faceArea[elemsToFaces[kfe][0]] + faceArea[elemsToFaces[kfe][1]] );
+//        // TODO this needs a proper contact based strategy for aperture
+//        aperture[kfe] = -Dot(temp,Nbar) / numNodesPerFace;
+//        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+//
+//        deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
+//        std::cout<<"kfe, area, aperture, volume, dVolume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<", "<<deltaVolume[kfe]<<std::endl;
+//
+//
+//
+//
+//        globalIndex rowDOF[24];
+//        globalIndex colDOF[24];
+//        real64 nodeRHS[24];
+//        stackArray2d<real64, 12*12> dRdU(numNodesPerFace*3, numNodesPerFace*3);
+//
+//        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * faceArea[elemsToFaces[kfe][0]] / numNodesPerFace;
+//        std::cout<<"fluidPressure[kfe]+deltaFluidPressure[kfe] = "<<fluidPressure[kfe]<<" + "<<deltaFluidPressure[kfe]<<std::endl;
+//        R1Tensor nodalForce(Nbar);
+//        nodalForce *= nodalForceMag;
+//        for( localIndex kf=0 ; kf<2 ; ++kf )
+//        {
+//          localIndex const faceIndex = elemsToFaces[kfe][kf];
+//
+//          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//          {
+//            for( int component=0 ; component<3 ; ++component )
+//            {
+//              rowDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
+//              nodeRHS[3*a+component] = - nodalForce[component] * pow(-1,kf);
+//              fext[facesToNodes[faceIndex][a]][component] += - nodalForce[component] * pow(-1,kf);
+//            }
+//          }
+//
+//          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodesPerFace*3), rowDOF, nodeRHS );
+//        }
+//
+//
+//        real64 dAper_dU[2][4][3];
+//        for( localIndex kf=0 ; kf<2 ; ++kf )
+//        {
+//          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+//          {
+//            for( int component=0 ; component<3 ; ++component )
+//            {
+//              dAper_dU[kf][a][component] = - pow(-1,kf) * Nbar[component] / numNodesPerFace;
+//            }
+//          }
+//        }
+//
+//        real64 const K = 2e9;
+//        real64 const dP_dAper = -K / aperture[kfe];
+//
+//        for( localIndex kfa=0 ; kfa<2 ; ++kfa )
+//        {
+//          localIndex const faceIndexA = elemsToFaces[kfe][kfa];
+//          for( localIndex kfb=0 ; kfb<2 ; ++kfb )
+//          {
+//            localIndex const faceIndexb = elemsToFaces[kfe][kfb];
+//            for( int a=0 ; a<numNodesPerFace ; ++a )
+//            {
+//              for( int i=0 ; i<3 ; ++i )
+//              {
+//                rowDOF[3*a+i] = 3*blockLocalDofNumber[facesToNodes[faceIndexA][a]]+i;
+//                real64 const integrationFactor = - faceArea[elemsToNodes[kfe][0]] / numNodesPerFace * Nbar[i] * pow(-1,kfa);
+//
+//                for( int b=0 ; b<numNodesPerFace ; ++b )
+//                {
+//                  for( int j=0 ; j<3 ; ++j )
+//                  {
+//                    colDOF[3*b+j] = 3*blockLocalDofNumber[facesToNodes[faceIndexb][b]]+j;
+//                    dRdU(3*a+i,3*b+j) = integrationFactor * dP_dAper * dAper_dU[kfb][b][j];
+//                  }
+//                }
+//              }
+//            }
+//            matrix->SumIntoGlobalValues( integer_conversion<int>( numNodesPerFace * 3),
+//                                         rowDOF,
+//                                         integer_conversion<int>( numNodesPerFace * 3),
+//                                         colDOF,
+//                                         dRdU.data() );
+//
+//          }
+//        }
+//
+//
+//      });
+//    }
+//  });
+//}
 
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
-
-  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
-  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
-  arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-  fext = {0,0,0};
-
-
-  ConstitutiveManager const * const
-  constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-  ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
-
-  arrayView1d<globalIndex> const &
-  blockLocalDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
-  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
-  Epetra_FECrsMatrix * const matrix = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                              systemSolverInterface::BlockIDs::displacementBlock );
-
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
-  {
-    if( subRegion->hasView("pressure") )
-    {
-
-      arrayView1d<real64> const & aperture = subRegion->getElementAperture();
-
-      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
-      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
-
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
-      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
-      arrayView1d<real64> const & area = subRegion->getElementArea();
-      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
-
-
-      forall_in_range<serialPolicy>( 0,
-                                   subRegion->size(),
-                                   GEOSX_LAMBDA ( localIndex const kfe )
-      {
-
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
-
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const kf1 = elemsToFaces[kfe][1];
-        localIndex const numNodesPerFace=facesToNodes[kf0].size();
-        localIndex const * const nodelist0 = facesToNodes[kf0];
-        localIndex const * const nodelist1 = facesToNodes[kf1];
-        R1Tensor temp;
-        for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-        {
-          temp += u[nodelist0[a]];
-          temp -= u[nodelist1[a]];
-        }
-        area[kfe] = 0.5 * ( faceArea[elemsToFaces[kfe][0]] + faceArea[elemsToFaces[kfe][1]] );
-        // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -Dot(temp,Nbar) / numNodesPerFace;
-        aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
-
-        deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
-        std::cout<<"kfe, area, aperture, volume, dVolume = "<<kfe<<", "<<area[kfe]<<", "<<aperture[kfe]<<", "<<volume[kfe]<<", "<<deltaVolume[kfe]<<std::endl;
-
-
-
-
-        globalIndex rowDOF[24];
-        globalIndex colDOF[24];
-        real64 nodeRHS[24];
-        stackArray2d<real64, 12*12> dRdU(numNodesPerFace*3, numNodesPerFace*3);
-
-        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * faceArea[elemsToFaces[kfe][0]] / numNodesPerFace;
-        std::cout<<"fluidPressure[kfe]+deltaFluidPressure[kfe] = "<<fluidPressure[kfe]<<" + "<<deltaFluidPressure[kfe]<<std::endl;
-        R1Tensor nodalForce(Nbar);
-        nodalForce *= nodalForceMag;
-        for( localIndex kf=0 ; kf<2 ; ++kf )
-        {
-          localIndex const faceIndex = elemsToFaces[kfe][kf];
-
-          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-          {
-            for( int component=0 ; component<3 ; ++component )
-            {
-              rowDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
-              nodeRHS[3*a+component] = - nodalForce[component] * pow(-1,kf);
-              fext[facesToNodes[faceIndex][a]][component] += - nodalForce[component] * pow(-1,kf);
-            }
-          }
-
-          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodesPerFace*3), rowDOF, nodeRHS );
-        }
-
-
-        real64 dAper_dU[2][4][3];
-        for( localIndex kf=0 ; kf<2 ; ++kf )
-        {
-          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-          {
-            for( int component=0 ; component<3 ; ++component )
-            {
-              dAper_dU[kf][a][component] = - pow(-1,kf) * Nbar[component] / numNodesPerFace;
-            }
-          }
-        }
-
-        real64 const K = 2e9;
-        real64 const dP_dAper = -K / aperture[kfe];
-
-        for( localIndex kfa=0 ; kfa<2 ; ++kfa )
-        {
-          localIndex const faceIndexA = elemsToFaces[kfe][kfa];
-          for( localIndex kfb=0 ; kfb<2 ; ++kfb )
-          {
-            localIndex const faceIndexb = elemsToFaces[kfe][kfb];
-            for( int a=0 ; a<numNodesPerFace ; ++a )
-            {
-              for( int i=0 ; i<3 ; ++i )
-              {
-                rowDOF[3*a+i] = 3*blockLocalDofNumber[facesToNodes[faceIndexA][a]]+i;
-                real64 const integrationFactor = - faceArea[elemsToNodes[kfe][0]] / numNodesPerFace * Nbar[i] * pow(-1,kfa);
-
-                for( int b=0 ; b<numNodesPerFace ; ++b )
-                {
-                  for( int j=0 ; j<3 ; ++j )
-                  {
-                    colDOF[3*b+j] = 3*blockLocalDofNumber[facesToNodes[faceIndexb][b]]+j;
-                    dRdU(3*a+i,3*b+j) = integrationFactor * dP_dAper * dAper_dU[kfb][b][j];
-                  }
-                }
-              }
-            }
-            matrix->SumIntoGlobalValues( integer_conversion<int>( numNodesPerFace * 3),
-                                         rowDOF,
-                                         integer_conversion<int>( numNodesPerFace * 3),
-                                         colDOF,
-                                         dRdU.data() );
-
-          }
-        }
-
-
-      });
-    }
-  });
-}
-
-real64 HydrofractureSolver::SplitOperatorStep( real64 const& time_n,
-                                             real64 const& dt,
-                                             integer const cycleNumber,
-                                             DomainPartition * const domain)
+real64 HydrofractureSolver::SplitOperatorStep( real64 const & time_n,
+                                               real64 const & dt,
+                                               integer const cycleNumber,
+                                               DomainPartition * const domain )
 {
   real64 dtReturn = dt;
-  real64 dtReturnTemporary = dtReturn;
-
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-  this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
-
-
-  SystemSolverParameters const * const solverParams = getSystemSolverParameters();
-
-  this->UpdateDeformationForCoupling(domain);
-
-  int iter = 0;
-  while (iter < solverParams->maxIterNewton() )
-  {
-    if (iter == 0)
-    {
-      // reset the states of all slave solvers if any of them has been reset
-      m_flowSolver->ResetStateToBeginningOfStep( domain );
-      m_solidSolver->ResetStateToBeginningOfStep( domain );
-      ResetStateToBeginningOfStep( domain );
-    }
-    if (this->verboseLevel() >= 1)
-    {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
-    }
-//    dtReturnTemporary = m_fluidSolver->NonlinearImplicitStep( time_n,
-//                                                          dtReturn,
-//                                                          cycleNumber,
-//                                                          domain,
-//                                                          getLinearSystemRepository() );
-
-    // call assemble to fill the matrix and the rhs
-    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
-
-    // apply boundary conditions to system
-    m_flowSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
-
-    // call the default linear solver on the system
-    m_flowSolver->SolveSystem( getLinearSystemRepository(),
-                 getSystemSolverParameters() );
-
-    // apply the system solution to the fields/variables
-    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
-
-
-    if (dtReturnTemporary < dtReturn)
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
-
-//    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+//  real64 dtReturnTemporary = dtReturn;
+//
+//  m_flowSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+//  m_solidSolver->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+//  this->ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+//
+//
+//
+//  fluidSolver.ImplicitStepSetup( time_n, dt, domain,
+//                                 fluidSolver.getDofManager(),
+//                                 fluidSolver.getSystemMatrix(),
+//                                 fluidSolver.getSystemRhs(),
+//                                 fluidSolver.getSystemSolution() );
+//
+//  solidSolver.ImplicitStepSetup( time_n, dt, domain,
+//                                 solidSolver.getDofManager(),
+//                                 solidSolver.getSystemMatrix(),
+//                                 solidSolver.getSystemRhs(),
+//                                 solidSolver.getSystemSolution() );
+//
+//  this->UpdateDeformationForCoupling(domain);
+//
+//  int iter = 0;
+//  while (iter < solverParams->maxIterNewton() )
+//  {
+//    if (iter == 0)
+//    {
+//      // reset the states of all slave solvers if any of them has been reset
+//      m_flowSolver->ResetStateToBeginningOfStep( domain );
+//      m_solidSolver->ResetStateToBeginningOfStep( domain );
+//      ResetStateToBeginningOfStep( domain );
+//    }
+//    if (this->verboseLevel() >= 1)
+//    {
+//      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", FlowSolver: " );
+//    }
+//    // call assemble to fill the matrix and the rhs
+//    m_flowSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
+//
+//    // apply boundary conditions to system
+//    m_flowSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+//
+//    // call the default linear solver on the system
+//    m_flowSolver->SolveSystem( getLinearSystemRepository(),
+//                 getSystemSolverParameters() );
+//
+//    // apply the system solution to the fields/variables
+//    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+//
+//    if (dtReturnTemporary < dtReturn)
+//    {
+//      iter = 0;
+//      dtReturn = dtReturnTemporary;
+//      continue;
+//    }
+//
+////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && this->verboseLevel() >= 1)
+////    {
+////      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+////      break;
+////    }
+//
+//    if (this->verboseLevel() >= 1)
+//    {
+//      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+//    }
+//
+//    // call assemble to fill the matrix and the rhs
+//    m_solidSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
+//
+//
+//    ApplyFractureFluidCoupling( domain, *getLinearSystemRepository() );
+//
+//    // apply boundary conditions to system
+//    m_solidSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
+//
+//    // call the default linear solver on the system
+//    m_solidSolver->SolveSystem( getLinearSystemRepository(),
+//                 getSystemSolverParameters() );
+//
+//    // apply the system solution to the fields/variables
+//    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
+//
+//    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
+//        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
 //    {
 //      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 //      break;
 //    }
-
-    if (this->verboseLevel() >= 1)
-    {
-      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
-    }
-//    dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n,
-//                                                          dtReturn,
-//                                                          cycleNumber,
-//                                                          domain,
-//                                                          getLinearSystemRepository() );
-
-    // call assemble to fill the matrix and the rhs
-    m_solidSolver->AssembleSystem( domain, getLinearSystemRepository(), time_n+dt, dt );
-
-
-    ApplyFractureFluidCoupling( domain, *getLinearSystemRepository() );
-
-    // apply boundary conditions to system
-    m_solidSolver->ApplyBoundaryConditions( domain, getLinearSystemRepository(), time_n, dt );
-
-    // call the default linear solver on the system
-    m_solidSolver->SolveSystem( getLinearSystemRepository(),
-                 getSystemSolverParameters() );
-
-    // apply the system solution to the fields/variables
-    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
-
-    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
-        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
-    {
-      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
-      break;
-    }
-
-    if (dtReturnTemporary < dtReturn)
-    {
-      iter = 0;
-      dtReturn = dtReturnTemporary;
-      continue;
-    }
-//    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
-    {
-      this->UpdateDeformationForCoupling(domain);
-//      m_fluidSolver->UpdateState(domain);
-    }
-    ++iter;
-  }
-
-  this->ImplicitStepComplete( time_n, dt, domain );
+//
+//    if (dtReturnTemporary < dtReturn)
+//    {
+//      iter = 0;
+//      dtReturn = dtReturnTemporary;
+//      continue;
+//    }
+////    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
+//    {
+//      this->UpdateDeformationForCoupling(domain);
+////      m_fluidSolver->UpdateState(domain);
+//    }
+//    ++iter;
+//  }
+//
+//  this->ImplicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
 }
@@ -540,24 +569,26 @@ void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLe
 }
 
 void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                        DofManager & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs,
+                                        ParallelVector & solution)
 {
   GEOSX_MARK_FUNCTION;
   constexpr int dim=3;
 
+  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
+                                  m_flowSolver->getSystemMatrix().localCols(),
+                                  9,
+                                  MPI_COMM_GEOSX);
+  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().localCols(),
+                                  m_solidSolver->getSystemMatrix().localRows(),
+                                  24,
+                                  MPI_COMM_GEOSX);
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
-
-  Epetra_Map const * const dispRowMap = blockSystem->GetRowMap(BlockIDs::displacementBlock);
-  Epetra_Map const * const flowRowMap = blockSystem->GetRowMap(BlockIDs::fluidPressureBlock);
-
-  Epetra_FECrsGraph * const sparsity01 = blockSystem->SetSparsity( BlockIDs::displacementBlock,
-                                                                   BlockIDs::fluidPressureBlock,
-                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*dispRowMap,0) );
-  Epetra_FECrsGraph * const sparsity10 = blockSystem->SetSparsity( BlockIDs::fluidPressureBlock,
-                                                                   BlockIDs::displacementBlock,
-                                                                   std::make_unique<Epetra_FECrsGraph>(Copy,*flowRowMap,0) );
 
   arrayView1d<globalIndex const> const & dispDOF = nodeManager->getReference<array1d<globalIndex>>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
 
@@ -572,6 +603,8 @@ void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
       globalIndex const activeFlowDOF = flowDOF[k];
       localIndex const numNodesPerElement = elemsToNodes[k].size();
       array1d<globalIndex> activeDisplacementDOF(dim * numNodesPerElement);
+      array1d<real64> values( dim*numNodesPerElement );
+      values = 1;
 
       for( localIndex a=0 ; a<numNodesPerElement ; ++a )
       {
@@ -580,123 +613,107 @@ void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
           activeDisplacementDOF[a * dim + d] = dim * dispDOF[elemsToNodes[k][a]] + d;
         }
       }
-      sparsity01->InsertGlobalIndices( static_cast<int>(activeDisplacementDOF.size()),
-                                       activeDisplacementDOF.data(),
-                                       1,
-                                       &activeFlowDOF );
 
-      sparsity10->InsertGlobalIndices( 1,
-                                       &activeFlowDOF,
-                                       static_cast<int>(activeDisplacementDOF.size()),
-                                       activeDisplacementDOF.data() );
+      m_matrix01.insert( activeDisplacementDOF.data(),
+                         &activeFlowDOF,
+                         values.data(),
+                         activeDisplacementDOF.size(),
+                         1 );
+
+      m_matrix10.insert( &activeFlowDOF,
+                         activeDisplacementDOF.data(),
+                         values.data(),
+                         1,
+                         activeDisplacementDOF.size() );
+
     }
   });
 
-  sparsity01->GlobalAssemble( *flowRowMap, *dispRowMap );
-  sparsity10->GlobalAssemble( *dispRowMap, *flowRowMap );
-
-  blockSystem->SetMatrix( BlockIDs::displacementBlock,
-                          BlockIDs::fluidPressureBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity01) );
-
-  blockSystem->SetMatrix( BlockIDs::fluidPressureBlock,
-                          BlockIDs::displacementBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity10) );
+  m_matrix01.close();
+  m_matrix10.close();
 
 }
 
-void HydrofractureSolver::AssembleSystem( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                          real64 const time,
-                                          real64 const dt )
+void HydrofractureSolver::AssembleSystem( real64 const time,
+                                          real64 const dt,
+                                          DomainPartition * const domain,
+                                          DofManager const & dofManager,
+                                          ParallelMatrix & matrix,
+                                          ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->AssembleSystem( domain, blockSystem, time, dt );
+  m_solidSolver->AssembleSystem( time,
+                                 dt,
+                                 domain,
+                                 dofManager,
+                                 m_solidSolver->getSystemMatrix(),
+                                 m_solidSolver->getSystemRhs() );
 
-  m_flowSolver->AssembleSystem( domain, blockSystem, time, dt );
+  m_flowSolver->AssembleSystem( time,
+                                dt,
+                                domain,
+                                dofManager,
+                                m_flowSolver->getSystemMatrix(),
+                                m_flowSolver->getSystemRhs() );
 
-  AssembleForceResidualDerivativeWrtPressure( domain, *blockSystem );
+  AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
 
-  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, *blockSystem );
+  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
 
 }
 
-void HydrofractureSolver::ApplyBoundaryConditions( DomainPartition * const domain,
-                                                   systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                                   real64 const time_n,
-                                                   real64 const dt )
+void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
+                                                   real64 const dt,
+                                                   DomainPartition * const domain,
+                                                   DofManager const & dofManager,
+                                                   ParallelMatrix & matrix,
+                                                   ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
-  m_flowSolver->ApplyBoundaryConditions( domain, blockSystem, time_n, dt );
+  m_solidSolver->ApplyBoundaryConditions( time,
+                                          dt,
+                                          domain,
+                                          dofManager,
+                                          m_solidSolver->getSystemMatrix(),
+                                          m_solidSolver->getSystemRhs() );
 
+  m_flowSolver->ApplyBoundaryConditions( time,
+                                         dt,
+                                         domain,
+                                         dofManager,
+                                         m_flowSolver->getSystemMatrix(),
+                                         m_flowSolver->getSystemRhs() );
 
-
-  Epetra_FEVector * const rhs0 = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
-  Epetra_FEVector * const rhs1 = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
-
-  Epetra_FECrsMatrix * const matrix00 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                               systemSolverInterface::BlockIDs::displacementBlock );
-
-  Epetra_FECrsMatrix * const matrix01 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
-
-  Epetra_FECrsMatrix * const matrix10 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
-                                                               systemSolverInterface::BlockIDs::displacementBlock );
-
-  Epetra_FECrsMatrix * const matrix11 = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
-                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
-
-//  rhs0->Scale(-1.0);
-//  rhs1->Scale(-1.0);
 
   std::cout.precision(7);
   std::cout.setf(std::ios_base::scientific);
 
   if( this->m_verboseLevel == 2 )
   {
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"matrix00"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    matrix00->Print(std::cout);
+    GEOS_LOG_RANK_0("\nmatrix00:\n" << m_solidSolver->getSystemMatrix());
+    GEOS_LOG_RANK_0("\nmatrix01:\n" << m_matrix01 );
+    GEOS_LOG_RANK_0("\nmatrix10:\n" << m_matrix10 ) ;
+    GEOS_LOG_RANK_0("\nmatrix11:\n" << m_flowSolver->getSystemMatrix());
 
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"matrix01"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    matrix01->Print(std::cout);
-
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"matrix10"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    matrix10->Print(std::cout);
-
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"matrix11"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    matrix11->Print(std::cout);
-
-
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"residual0"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    rhs0->Print(std::cout);
-
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"residual1"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
-    rhs1->Print(std::cout);
+    GEOS_LOG_RANK_0("\nresidual0:\n" << m_solidSolver->getSystemRhs() );
+    GEOS_LOG_RANK_0("\nresidual1:\n" << m_flowSolver->getSystemRhs() );
   }
 
 }
 
 real64
 HydrofractureSolver::
-CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                       DomainPartition *const domain)
+CalculateResidualNorm( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & rhs )
 {
   GEOSX_MARK_FUNCTION;
-  real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( blockSystem, domain );
-  real64 const solidResidual = m_solidSolver->CalculateResidualNorm( blockSystem, domain );
+  real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
+                                                                    m_solidSolver->getDofManager(),
+                                                                    m_solidSolver->getSystemRhs() );
+  real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
+                                                                     m_flowSolver->getDofManager(),
+                                                                     m_flowSolver->getSystemRhs() );
 
   std::cout<<"residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual<<std::endl;
 
@@ -708,7 +725,8 @@ CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const *const blo
 void
 HydrofractureSolver::
 AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
-                                            systemSolverInterface::EpetraBlockSystem & blockSystem )
+                                            ParallelMatrix * const matrix01,
+                                            ParallelVector * const rhs0 )
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -731,11 +749,8 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   nodeDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
 
 
-  Epetra_FEVector * const rhs = blockSystem.GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
-  Epetra_FECrsMatrix * const matrix = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                             systemSolverInterface::BlockIDs::fluidPressureBlock );
 
-  matrix->Scale(0.0);
+  matrix01->zero();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
@@ -799,13 +814,16 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
               dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
             }
           }
-          rhs->SumIntoGlobalValues( integer_conversion<int>(numNodesPerFace*3), rowDOF, nodeRHS );
 
-          matrix->SumIntoGlobalValues( integer_conversion<int>( numNodesPerFace * 3),
-                                       rowDOF,
-                                       1,
-                                       &colDOF,
-                                       dRdP.data() );
+          rhs0->add( rowDOF,
+                     nodeRHS,
+                     numNodesPerFace*3 );
+
+          matrix01->add( rowDOF,
+                         &colDOF,
+                         dRdP.data(),
+                         numNodesPerFace * 3,
+                         1 );
         }
       });
     }
@@ -816,7 +834,8 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 void
 HydrofractureSolver::
 AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
-                                                    systemSolverInterface::EpetraBlockSystem & blockSystem )
+                                                    ParallelMatrix * const matrix10,
+                                                    ParallelVector * const rhs0 )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -831,10 +850,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
-  Epetra_FECrsMatrix * const matrix10 = blockSystem.GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
-                                                               systemSolverInterface::BlockIDs::displacementBlock );
-
-  matrix10->Scale(0.0);
+  matrix10->zero();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
@@ -899,11 +915,10 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
             }
           }
         }
-        matrix10->SumIntoGlobalValues( 1,
-                                       &elemDOF,
-                                       integer_conversion<int>(2*numNodesPerFace*3),
-                                       nodeDOF,
-                                       dRdU.data() );
+        matrix10->add( elemDOF,
+                       nodeDOF,
+                       dRdU.data(),
+                       2*numNodesPerFace*3 );
 
       }
     } );
@@ -913,13 +928,14 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
 }
 void
 HydrofractureSolver::
-ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+ApplySystemSolution( DofManager const & dofManager,
+                     ParallelVector const & solution,
                      real64 const scalingFactor,
                      DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ApplySystemSolution( blockSystem, -1.0, domain );
-  m_flowSolver->ApplySystemSolution( blockSystem, -1.0, domain );
+  m_solidSolver->ApplySystemSolution( dofManager, m_solidSolver->getSystemSolution(), 1.0, domain );
+  m_flowSolver->ApplySystemSolution( dofManager, m_flowSolver->getSystemSolution(), 1.0, domain );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -1171,12 +1187,14 @@ void scale2x2System( int const use_scaling,
   }
 }
 
-void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                       SystemSolverParameters const * const paramsC )
+void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
+                                       ParallelMatrix & ,
+                                       ParallelVector & ,
+                                       ParallelVector &  )
 {
   GEOSX_MARK_FUNCTION;
 
-  SystemSolverParameters * const params = const_cast<SystemSolverParameters *>(paramsC);
+  SystemSolverParameters * const params = &m_systemSolverParameters;
 
   using namespace Teuchos;
   using namespace Thyra;
@@ -1185,23 +1203,19 @@ void HydrofractureSolver::SolveSystem( EpetraBlockSystem * const blockSystem,
   Epetra_FEVector * m_rhs[2];
   Epetra_FEVector * m_solution[2];
 
-  m_rhs[0] = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::displacementBlock );
-  m_rhs[1] = blockSystem->GetResidualVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
+  m_rhs[0] = m_solidSolver->getSystemRhs().unwrappedPointer();
+  m_rhs[1] = m_flowSolver->getSystemRhs().unwrappedPointer();
 
-  m_solution[0] = blockSystem->GetSolutionVector( systemSolverInterface::BlockIDs::displacementBlock );
-  m_solution[1] = blockSystem->GetSolutionVector( systemSolverInterface::BlockIDs::fluidPressureBlock );
+  m_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
+  m_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
 
-  m_matrix[0][0] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                               systemSolverInterface::BlockIDs::displacementBlock );
+  m_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
 
-  m_matrix[0][1] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::displacementBlock,
-                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+  m_matrix[0][1] = m_matrix01.unwrappedPointer();
 
-  m_matrix[1][0] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
-                                                               systemSolverInterface::BlockIDs::displacementBlock );
+  m_matrix[1][0] = m_matrix10.unwrappedPointer();
 
-  m_matrix[1][1] = blockSystem->GetMatrix( systemSolverInterface::BlockIDs::fluidPressureBlock,
-                                                               systemSolverInterface::BlockIDs::fluidPressureBlock );
+  m_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
 
     // SCHEME CHOICES
     //

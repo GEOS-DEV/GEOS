@@ -101,8 +101,9 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
-                               Epetra_FECrsMatrix * const matrix,
-                               Epetra_FEVector * const rhs ) const override
+                               DofManager const * const dofManager,
+                               ParallelMatrix * const matrix,
+                               ParallelVector * const rhs ) const override
   {
     using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
@@ -130,6 +131,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        dofManager,
                                                         matrix,
                                                         rhs );
   }

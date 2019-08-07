@@ -22,6 +22,8 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
+
+#include "codingUtilities/StringUtilities.hpp"
 #include "managers/FieldSpecification/FieldSpecificationBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
