@@ -24,7 +24,7 @@
 #ifndef HydrofractureSolver_HPP_
 #define HydrofractureSolver_HPP_
 
-#include "../SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {

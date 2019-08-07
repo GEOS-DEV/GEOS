@@ -594,8 +594,6 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           CellElementSubRegion const * const subRegion,
-                                          ManagedGroup const * const,
-                                          ManagedGroup const * const,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
@@ -658,8 +656,6 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           FaceElementSubRegion const * const subRegion,
-                                          FaceManager const * const faceManager,
-                                          NodeManager const * const nodeManager,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
@@ -709,7 +705,6 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
 
   elemManager->forElementSubRegionsComplete<CellElementSubRegion,
                                             FaceElementSubRegion>( this->m_targetRegions,
@@ -718,7 +713,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                                                          ElementRegion const * const region,
                                                                          auto const * const subRegion )
   {
-    AccumulationLaunch<ISPORO>( er, esr, subRegion, faceManager, mesh->getNodeManager(), matrix, rhs );
+    AccumulationLaunch<ISPORO>( er, esr, subRegion, matrix, rhs );
   } );
 }
 
