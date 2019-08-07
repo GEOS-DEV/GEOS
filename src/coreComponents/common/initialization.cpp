@@ -23,6 +23,8 @@
 #include "stackTrace.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include <petscvec.h>
+
 
 #ifdef GEOSX_USE_MKL
 #include <mkl.h>
@@ -101,6 +103,19 @@ void basicCleanup()
 
   finalizeCXXUtils();
   finalizeMPI();
+}
+
+void setupPetsc( int argc, char * argv[] )
+{
+  char help[] = "Setup PETSc.\n";
+  PetscOptionsSetValue( nullptr, "-log_view", "" );
+  PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
+  PetscInitialize( &argc, &argv, nullptr, help );
+}
+
+void finalizePetsc()
+{
+  PetscFinalize();
 }
 
 } // namespace geosx
