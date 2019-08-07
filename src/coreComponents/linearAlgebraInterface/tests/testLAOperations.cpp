@@ -734,11 +734,7 @@ void testInterfaceSolvers()
     else
       EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
   }
-<<<<<<< HEAD
-
-=======
   EXPECT_DOUBLE_EQ( matrix.getDiagValue( firstRow ), diagValue );
->>>>>>> develop
 }
 
 /**
@@ -1009,7 +1005,6 @@ void testRectangularMatrixOperations()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
-<<<<<<< HEAD
 // TEST(testLAOperations,testEpetraLAOperations)
 // {
   //   MPI_Init( nullptr, nullptr );
@@ -1020,19 +1015,6 @@ void testRectangularMatrixOperations()
   //   testRectangularMatrixOperations<TrilinosInterface>();
   //   MPI_Finalize();
 // }
-=======
-TEST(testLAOperations,testEpetraLAOperations)
-{
-  MPI_Init( nullptr, nullptr );
-  geosx::setupMKL();
-  testInterfaceSolvers<TrilinosInterface>();
-  testGEOSXSolvers<TrilinosInterface>();
-  testGEOSXBlockSolvers<TrilinosInterface>();
-  testMatrixMatrixOperations<TrilinosInterface>();
-  testRectangularMatrixOperations<TrilinosInterface>();
-  MPI_Finalize();
-}
->>>>>>> develop
 
 /*! @function testHypreLAOperations.
  * @brief Runs all tests using the Hypre interface.
@@ -1053,14 +1035,14 @@ TEST(testLAOperations,testPETScLAOperations)
 {
   MPI_Init( nullptr, nullptr );
   PetscInterface();
-  testVectorFunctions<PetscInterface>(); 
-  testMatrixFunctions<PetscInterface>();
-  testSolvers<PetscInterface>();
+  // testVectorFunctions<PetscInterface>(); 
+  // testMatrixFunctions<PetscInterface>();
+  // testSolvers<PetscInterface>();
   testInterfaceSolvers<PetscInterface>();
-  testGEOSXSolvers<PetscInterface>(); 
+  // testGEOSXSolvers<PetscInterface>(); 
   // testGEOSXBlockSolvers<PetscInterface>(); // hannah: won't build
-  testMatrixMatrixOperations<PetscInterface>(); 
-  testRectangularMatrixOperations<PetscInterface>(); 
+  // testMatrixMatrixOperations<PetscInterface>(); 
+  // testRectangularMatrixOperations<PetscInterface>(); 
   MPI_Finalize();
 }
 
