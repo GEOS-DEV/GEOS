@@ -80,6 +80,7 @@ before_script:
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew install openmpi;
+      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
