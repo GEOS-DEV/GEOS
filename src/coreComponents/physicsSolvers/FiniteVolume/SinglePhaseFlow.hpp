@@ -263,8 +263,6 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
-  void UpdateState( DomainPartition * const domain ) const;
-
 private:
 
   void SetupSystem( DomainPartition * const domain,
