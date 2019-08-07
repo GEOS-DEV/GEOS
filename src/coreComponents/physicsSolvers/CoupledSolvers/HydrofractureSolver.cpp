@@ -560,10 +560,10 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                                         localIndex & numLocalRows,
                                                         globalIndex & numGlobalRows,
-                                                        localIndex offset )
+                                                        localIndex  )
 {
 
-  offset = 0;
+//  offset = 0;
 //  m_solidSolver->SetNumRowsAndTrilinosIndices( meshLevel, numLocalRows, numGlobalRows, offset );
 
 }
@@ -1199,23 +1199,23 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
   using namespace Teuchos;
   using namespace Thyra;
 
-  Epetra_FECrsMatrix * m_matrix[2][2];
-  Epetra_FEVector * m_rhs[2];
-  Epetra_FEVector * m_solution[2];
+  Epetra_FECrsMatrix * p_matrix[2][2];
+  Epetra_FEVector * p_rhs[2];
+  Epetra_FEVector * p_solution[2];
 
-  m_rhs[0] = m_solidSolver->getSystemRhs().unwrappedPointer();
-  m_rhs[1] = m_flowSolver->getSystemRhs().unwrappedPointer();
+  p_rhs[0] = m_solidSolver->getSystemRhs().unwrappedPointer();
+  p_rhs[1] = m_flowSolver->getSystemRhs().unwrappedPointer();
 
-  m_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
-  m_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
+  p_solution[0] = m_solidSolver->getSystemSolution().unwrappedPointer();
+  p_solution[1] = m_flowSolver->getSystemSolution().unwrappedPointer();
 
-  m_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
+  p_matrix[0][0] = m_solidSolver->getSystemMatrix().unwrappedPointer();
 
-  m_matrix[0][1] = m_matrix01.unwrappedPointer();
+  p_matrix[0][1] = m_matrix01.unwrappedPointer();
 
-  m_matrix[1][0] = m_matrix10.unwrappedPointer();
+  p_matrix[1][0] = m_matrix10.unwrappedPointer();
 
-  m_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
+  p_matrix[1][1] = m_flowSolver->getSystemMatrix().unwrappedPointer();
 
     // SCHEME CHOICES
     //
@@ -1263,14 +1263,14 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
   const unsigned n_blocks = 2;           // algorithm *should* work for any block size n
   enum {ROW,COL};            // indexing to improve readability (ROW=0,COL=1)
   RCP<Epetra_Vector> scaling   [n_blocks][2];  // complete scaling
-  scale2x2System( use_scaling, m_matrix, m_rhs, scaling );
+  scale2x2System( use_scaling, p_matrix, p_rhs, scaling );
 
 
     // set initial guess to zero.  this is not strictly
     // necessary but is good for comparing solver performance.
 
-  m_solution[0]->PutScalar(0.0);
-  m_solution[1]->PutScalar(0.0);
+  p_solution[0]->PutScalar(0.0);
+  p_solution[1]->PutScalar(0.0);
 
     // The standard AMG aggregation strategy based on
     // the system matrix A can struggle when using
@@ -1346,15 +1346,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
   for(unsigned i=0; i<2; ++i)
   for(unsigned j=0; j<2; ++j)
   {
-    RCP<Epetra_Operator> mmm (&*m_matrix[i][j],false);
+    RCP<Epetra_Operator> mmm (&*p_matrix[i][j],false);
     matrix_block[i][j] = Thyra::epetraLinearOp(mmm);
   }
 
 
   for(unsigned i=0; i<2; ++i)
   {
-    RCP<Epetra_MultiVector> lll (&*m_solution[i],false);
-    RCP<Epetra_MultiVector> rrr (&*m_rhs[i],false);
+    RCP<Epetra_MultiVector> lll (&*p_solution[i],false);
+    RCP<Epetra_MultiVector> rrr (&*p_rhs[i],false);
 
     lhs_block[i] = Thyra::create_MultiVector(lll,matrix_block[i][i]->domain());
     rhs_block[i] = Thyra::create_MultiVector(rrr,matrix_block[i][i]->range());
@@ -1634,7 +1634,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
     if(use_scaling==2)
     {
       for(unsigned b=0; b<n_blocks; ++b)
-        m_solution[b]->Multiply(1.0,*scaling[b][COL],*m_solution[b],0.0);
+        p_solution[b]->Multiply(1.0,*scaling[b][COL],*p_solution[b],0.0);
     }
   }
 
@@ -1645,8 +1645,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
     scaling[0][ROW]->Reciprocal(*scaling[0][ROW]);
     scaling[0][COL]->Reciprocal(*scaling[0][COL]);
 
-    m_matrix[0][0]->LeftScale(*scaling[0][ROW]);
-    m_matrix[0][0]->RightScale(*scaling[0][COL]);
+    p_matrix[0][0]->LeftScale(*scaling[0][ROW]);
+    p_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
   if( this->m_verboseLevel == 2 )
@@ -1655,12 +1655,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
     std::cout<<"***********************************************************"<<std::endl;
     std::cout<<"solution0"<<std::endl;
     std::cout<<"***********************************************************"<<std::endl;
-    m_solution[0]->Print(std::cout);
+    p_solution[0]->Print(std::cout);
 
     std::cout<<"***********************************************************"<<std::endl;
     std::cout<<"solution1"<<std::endl;
     std::cout<<"***********************************************************"<<std::endl;
-    m_solution[1]->Print(std::cout);
+    p_solution[1]->Print(std::cout);
   }
 }
 
