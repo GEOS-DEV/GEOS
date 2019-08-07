@@ -10,7 +10,6 @@ set( linearAlgebraInterface_headers
      InterfaceTypes.hpp
      LinearSolverParameters.hpp
      NativeCG.hpp
-<<<<<<< HEAD
      NativeBICGSTAB.hpp
      TrilinosSolver.hpp
      TrilinosInterface.hpp
@@ -18,9 +17,6 @@ set( linearAlgebraInterface_headers
      PetscSparseMatrix.hpp
      PetscSolver.hpp
      PetscInterface.hpp ) 
-=======
-     NativeBICGSTAB.hpp )
->>>>>>> develop
 
 #
 # Specify all sources
@@ -29,17 +25,6 @@ set( linearAlgebraInterface_sources
      BlasLapackLA.cpp
      BlockVectorView.cpp
      BlockMatrixView.cpp
-<<<<<<< HEAD
-     DofManager.cpp
-     EpetraMatrix.cpp
-     EpetraVector.cpp
-     TrilinosSolver.cpp 
-     PetscVector.cpp
-     PetscSparseMatrix.cpp
-     PetscSolver.cpp )
-
-set( dependencyList common trilinos petsc hypre mpi managers)
-=======
      DofManager.cpp )
 
 set( dependencyList common blas lapack raja hdf5 pugixml mpi )
@@ -73,12 +58,19 @@ endif()
 if( ENABLE_PETSC )
 
   list( APPEND linearAlgebraInterface_headers
+        PetscVector.hpp
+        PetscSparseMatrix.hpp
+        PetscSolver.hpp
         PetscInterface.hpp )
+      
+  list( APPEND linearAlgebraInterface_sources 
+        PetscVector.cpp
+        PetscSparseMatrix.cpp
+        PetscSolver.cpp )
 
   list( APPEND dependencyList petsc )
 
 endif()
->>>>>>> develop
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
