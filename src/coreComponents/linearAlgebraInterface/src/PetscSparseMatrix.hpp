@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -44,7 +44,7 @@ class PetscSparseMatrix
 
 public:
 
-	//! @name Constructor/Destructor Methods
+  //! @name Constructor/Destructor Methods
   //@{
 
   /**
@@ -57,9 +57,9 @@ public:
 	/**
    * @brief Copy constructor.
    *
-   * Create new matrix from matrix <tt>in_matrix</tt>.
+   * Create new matrix from matrix <tt>src</tt>.
    */
-	PetscSparseMatrix(PetscSparseMatrix const &in_matrix);
+	PetscSparseMatrix( PetscSparseMatrix const &src );
 
 	/**
    * @brief Virtual destructor.
@@ -69,9 +69,6 @@ public:
 
   //! @name Create Methods
   //@{
-
-  // Hannah: skip?
-  //void create( Epetra_FECrsGraph const &graph );
 
   /**
    * @brief Create a square matrix from local number of rows.
@@ -125,6 +122,14 @@ public:
                              localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm );
 
+   /**
+   * @brief Reinitialize the matrix.
+   *
+   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
+   *
+   */
+  void set( real64 const value );
+
   /**
    * @brief Reinitialize the matrix.
    *
@@ -141,22 +146,21 @@ public:
 
   /**
    * @brief Assemble and compress the matrix.
-   *
+   * // hannah: blurb here
    */
   void close();
   //@}
 
-   /** @name Add/Set/Insert Methods
+  /** @name Add/Set/Insert Methods
    *
    * The add and set methods assume entries already exist in the sparsity pattern.
    * Insert methods allow for dynamic allocation, but will temporarily use
    * extra memory if one attempts to insert multiple values to the same location.
    *
-   * Hannah: is this thread safe in PETSc?
+   * hannah: is this thread safe in PETSc?
    */
   //@{
 
-   // change single element
    /**
    * @brief Add to one element.
    *
@@ -192,9 +196,7 @@ public:
   void insert( globalIndex const rowIndex,
                globalIndex const colIndex,
                real64 const value );
-   // Hannah: what is the difference between set and insert?
 
-  // change multiple elements with arrays
   /**
    * @brief Add elements to one row using c-style arrays
    *
@@ -234,7 +236,6 @@ public:
                real64 const * values,
                localIndex const size );
 
-  // change multiple elements with array1d
   /**
    * @brief Add elements to one row using array1d
    *
@@ -268,7 +269,6 @@ public:
                array1d<globalIndex> const & colIndices,
                array1d<real64> const & values );
 
-   // Hannah: dense matrix?
    /**
    * @brief Add dense matrix.
    *
@@ -344,7 +344,7 @@ public:
    */
   void residual( PetscVector  const &x,
                  PetscVector  const &b,
-                 PetscVector &res ) const;
+                 PetscVector &r ) const;
 
  /**
    * @brief Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
@@ -362,7 +362,7 @@ public:
             PetscVector  const &x,
             real64 const beta,
             PetscVector  &y,
-            bool useTranspose=false);
+            bool useTranspose=false );
 
   /**
    * @brief Multiply all elements by scalingFactor.
@@ -406,9 +406,8 @@ public:
    * \param factor Scaling factor for diagonal element.
    *
    */
-  void clearRow( globalIndex const row,
+  void clearRow( globalIndex const globalRow,
                  real64 const diagValue=0 );
-
   //@}
 
   //! @name Accessors Methods
@@ -421,24 +420,20 @@ public:
   void getRowCopy( globalIndex globalRow,
                    array1d<globalIndex> & colIndices,
                    array1d<real64> & values ) const;
-   // Hannah: to do
-
-  /**
-   * @brief Returns the row <tt>GlobalRow</tt>. The number of non zeros in the row is <tt>NumEntries</tt>
-   * , the values are sent to <tt>Values</tt> and the column indices in <tt>Indices</tt>.
-   */
-  void getRow( globalIndex GlobalRow,
-               globalIndex &NumEntries,
-               real64* Values,
-               globalIndex* Indices ) const;
 
    /**
    * @brief Returns a pointer to the underlying matrix.
    */
   const Mat* unwrappedPointer() const;
-  Mat* unwrappedPointer2();
 
-  /* Returns vector */
+  /**
+   * @brief Returns a non-const pointer to the underlying matrix.
+   */
+  Mat* unwrappedNonConstPointer();
+
+  /**
+   * @brief Returns a const underlying PETSc matrix.
+   */
   Mat getConstMat() const;
 
   /**
@@ -449,7 +444,7 @@ public:
   /**
    * @brief Returns the matrix MPI communicator.
    */
-  MPI_Comm getComm();
+  MPI_Comm getComm() const;
 
   /**
    * @brief Returns the number of global rows.
@@ -490,7 +485,6 @@ public:
    * @brief Returns true is the matrix has been assembled, false if not.
    */
   bool isAssembled() const;
-
   //@}
 
   //! @name I/O Methods
@@ -507,11 +501,48 @@ public:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  void write( string const & filename ) const;
+  void write( string const & filename,
+              bool const mtxFormat = true ) const;
+
+   /**
+   * @brief Performe a matrix matrix product with Parallel Matrix
+   */
+  void MatrixMatrixMultiply( bool const transA,
+                             PetscSparseMatrix const &B,
+                             bool const transB,
+                             PetscSparseMatrix &C,
+                             bool const call_FillComplete = true ) const;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  localIndex getGlobalRowID( localIndex const index ) const;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  localIndex numMyCols() const;
+
+  /**
+   * @brief Print the given parallel matrix in Matrix Market format (MTX file)
+   */
+  void printParallelMatrix( string const & fileName ) const;
+
+  /**
+    * @brief Stream insertion operator for PetscSparseMatrix
+    * @param os the output stream
+    * @param matrix the matrix to be printed
+    * @return reference to the output stream
+    */
+   // std::ostream & operator<<( std::ostream & os, PetscSparseMatrix const & matrix );
 
   //@}
 
-// Hannah: protected?
 private:
 
    /**

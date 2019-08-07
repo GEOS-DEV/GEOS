@@ -1,6 +1,6 @@
 /*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -24,12 +24,9 @@
 #define LAI_PETSCVECTOR_HPP_
 
 #include "InterfaceTypes.hpp"
-#include <petscvec.h>
-
 #include "common/DataTypes.hpp"
-#include <vector>
-#include <string> // Hannah: need these?
-#include <time.h>
+
+#include <petscvec.h>
 
 namespace geosx
 {
@@ -50,19 +47,20 @@ class PetscVector
    * @brief Empty vector constructor.
    *
    * Create an empty (distributed) vector.
+   * 
    */
   PetscVector();
 
-    /**
+  /**
    * @brief Copy constructor.
    *
    * \param vec Vector to be copied.
    *
    */
-  PetscVector(PetscVector const & vec);
+  PetscVector( PetscVector const & vec );
 
   /* Construct from Petsc vector */
-  PetscVector(Vec vec); // Hannah: do I need this?
+  PetscVector(Vec vec); 
 
   /**
    * @brief Virtual destructor.
@@ -72,6 +70,14 @@ class PetscVector
 
   //! @name Create Methods
   //@{
+
+  /**
+   * @brief Create a vector based on a previous vector.
+   *
+   * \param vector an already formed PetscVector.
+   *
+   */
+  void create( PetscVector const & src );
 
   /**
    * @brief Create a vector based on local number of elements.
@@ -105,8 +111,7 @@ class PetscVector
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
-  // Hannah: to do
+  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD ); // hannah: to do
 
   //@}
   //! @name Open / close
@@ -121,7 +126,7 @@ class PetscVector
   /**
    * @brief Assemble vector
    *
-   * // Hannah: blurb here
+   * // hannah: blurb here
    */
   void close();
 
@@ -224,7 +229,7 @@ class PetscVector
    * @brief Set vector elements to random entries.
    *
    */
-  void rand();
+  void rand( unsigned long seed = 1984 );
 
   //@}
 
@@ -237,7 +242,7 @@ class PetscVector
    * \param scalingFactor Scaling Factor.
    *
    */
-  void scale(real64 const scalingFactor);
+  void scale( real64 const scalingFactor );
 
   /**
    * @brief Dot product with the vector vec.
@@ -246,14 +251,13 @@ class PetscVector
    *
    */
   real64 dot( PetscVector const &vec );
-  // Hannah: fix spacing later
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x PetscVector to add.
+   * \param x PetscVector to copy.
    *
    */
   void copy(PetscVector const &x);
@@ -267,7 +271,8 @@ class PetscVector
    * \param x Vector to add.
    *
    */
-  void axpy(real64 const alpha, PetscVector const &x);
+  void axpy( real64 const alpha,
+             PetscVector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -279,7 +284,9 @@ class PetscVector
    * \param beta Scaling factor for self vector.
    *
    */
-  void axpby(PetscScalar const alpha, PetscVector &x, real64 const beta);
+  void axpby( real64 const alpha, 
+              PetscVector &x, 
+              real64 const beta);
 
   /**
    * @brief 1-norm of the vector.
@@ -315,33 +322,40 @@ class PetscVector
   localIndex localSize() const;
 
    /**
-   * @brief Returns a single element.
+   * @brief Returns a single element. 
    */
   real64 get(globalIndex globalRow) const;
 
   /**
-   * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
+   * @brief Returns array of values at globalIndices of the vector.
    */
   void get( array1d<globalIndex> const & globalIndices,
             array1d<real64> & values ) const;
-  // Hannah: to do
 
   /**
    * @brief Returns a const pointer to the underlying Vec.
    */
   const Vec* unwrappedPointer() const;
-  // Hannah: Vec const * ?
 
   /**
    * @brief Returns a non-const pointer to the underlying Vec.
    */
   Vec* unwrappedPointer();
 
-  /* Returns vector */
+  /**
+   * @brief Returns underlying constant PETSc vector.
+   */
   Vec getConstVec() const;
 
-  /* Returns vector */
+  /**
+   * @brief Returns underying PETSc vector.
+   */
   Vec getVec();
+
+  /**
+   * @brief Returns the matrix MPI communicator.
+   */
+  MPI_Comm getComm() const;
 
   //@}
 
@@ -356,17 +370,27 @@ class PetscVector
   /**
    * @brief Write the vector to a matlab-compatible file
    */
-  void write( string const & filename ) const;
-  // Hannah: to do 
+  void write( string const & filename,
+              bool const mtxFormat = true ) const; // hannah: to do 
+
+  /**
+   * Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const; // hannah: to do 
+
+  /**
+   * Extract a view of the local portion of the array
+   */
+  void extractLocalVector( real64 ** localVector ) const;
 
   //@}
 
  protected:
   
-  // Underlying Petsc Vec type
+  // Underlying Petsc Vec
   Vec _vec;
 };
 
 } // end geosx namespace
 
-#endif /* PETSCVECTOR_HPP_ */
+#endif /* LAI_PETSCVECTOR_HPP_ */
