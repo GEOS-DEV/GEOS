@@ -186,19 +186,6 @@ void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
   UpdateMobility( dataGroup );
 }
 
-void SinglePhaseFlow::UpdateState( DomainPartition * const domain ) const
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
-  {
-    UpdateFluidModel( subRegion );
-    UpdateSolidModel( subRegion );
-    UpdateMobility( subRegion );
-  } );
-}
-
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
