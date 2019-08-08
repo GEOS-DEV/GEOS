@@ -19,6 +19,8 @@
 #include <linearAlgebraInterface/src/LinearSolverParameters.hpp>
 #include "SolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
+
+#include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -185,6 +187,7 @@ void SolverBase::Execute( real64 const time_n,
                           real64 const eventProgress,
                           ManagedGroup * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();

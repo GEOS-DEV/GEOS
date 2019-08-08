@@ -44,7 +44,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     reference().resize(0,2);
 
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
-    setApplyDefaultValue(1.0e-5)->
+    setApplyDefaultValue(1.0e-4)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The aperture of each FaceElement.");
 
