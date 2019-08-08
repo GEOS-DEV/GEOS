@@ -130,6 +130,7 @@ public:
   real64  m_lineSearchCutFactor;
   integer m_allowNonConverged;
   integer m_maxSubSteps;
+  integer m_maxIters = 1000;
 
 
 };
