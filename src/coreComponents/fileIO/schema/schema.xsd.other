@@ -205,7 +205,7 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent.-->
+		<!--currentSubEvent => Index of the current subevent.-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
 		<!--cycle => Current simulation cycle number.-->
 		<xsd:attribute name="cycle" type="integer" />
@@ -220,13 +220,13 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent-->
+		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
+		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
+		<!--lastCycle => Last event occurrence (cycle)-->
 		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
+		<!--lastTime => Last event occurrence (time)-->
 		<xsd:attribute name="lastTime" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="PeriodicEventType">
@@ -235,13 +235,13 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent-->
+		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
+		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
+		<!--lastCycle => Last event occurrence (cycle)-->
 		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
+		<!--lastTime => Last event occurrence (time)-->
 		<xsd:attribute name="lastTime" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SoloEventType">
@@ -250,13 +250,13 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--currentSubEvent => index of the current subevent-->
+		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
-		<!--isTargetExecuting => index of the current subevent-->
+		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
-		<!--lastCycle => last event occurrence (cycle)-->
+		<!--lastCycle => Last event occurrence (cycle)-->
 		<xsd:attribute name="lastCycle" type="integer" />
-		<!--lastTime => last event occurrence (time)-->
+		<!--lastTime => Last event occurrence (time)-->
 		<xsd:attribute name="lastTime" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
