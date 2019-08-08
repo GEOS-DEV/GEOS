@@ -663,7 +663,6 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
     {
       real64 localAccum, localAccumJacobian;
       globalIndex const elemDOF = dofNumber[ei];
-      real64 dRdAper;
 
       AccumulationKernel<FaceElementSubRegion>::template Compute<ISPORO>( dens[ei][0],
                                                                           densOld[ei],
