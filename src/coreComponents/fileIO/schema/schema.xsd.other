@@ -553,6 +553,7 @@
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
@@ -682,6 +683,7 @@
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="ContactType" />
 	<xsd:complexType name="LinearElasticAnisotropicType">
 		<!--DeviatorStress => Stress Deviator-->
 		<xsd:attribute name="DeviatorStress" type="r2Sym_array2d" />
@@ -902,10 +904,14 @@
 		<xsd:attribute name="elemRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalDOFNumber => (no description available)-->
+		<xsd:attribute name="globalDOFNumber" type="globalIndex_array" />
 		<!--globalToLocalMap => (no description available)-->
 		<xsd:attribute name="globalToLocalMap" type="std::map&lt;long long, long, std::less&lt;long long&gt;, std::allocator&lt;std::pair&lt;long long const, long&gt; &gt; &gt;" />
 		<!--isExternal => (no description available)-->
@@ -916,8 +922,6 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-		<!--trilinosIndex => (no description available)-->
-		<xsd:attribute name="trilinosIndex" type="globalIndex_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
