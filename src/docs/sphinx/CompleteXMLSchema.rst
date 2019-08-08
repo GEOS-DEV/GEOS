@@ -1,21 +1,9 @@
-========================
-Data Structure Guide
-========================
+======================
+GEOSX Data Structure
+======================
 
 ********************************
-Introduction
-********************************
-
-A complete list of all GEOSX data structures is included below.  
-This list is auto-generated from the source code itself.
-The list is divided into:
-
-- *Input Schema Definitions*: A complete list of all possible XML elements and associated user options
-- *Data Structure Definitions*: A complete list of all data structures in the object hierarchy
-
-
-********************************
-Input Schema Definitions 
+Input Schema Definitions
 ********************************
 
 
