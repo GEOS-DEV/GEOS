@@ -92,16 +92,16 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
     {
       newset.insert( ka );
     }
-
-    return;
   }
-
-  localIndex const mapSize = map.size( 1 );
-  for( localIndex ka=0 ; ka<numObjects ; ++ka )
+  else
   {
-    if ( std::all_of( &map(ka, 0), &map(ka, 0) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+    localIndex const mapSize = map.size( 1 );
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
-      newset.insert( ka );
+      if ( std::all_of( &map(ka, 0), &map(ka, 0) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      {
+        newset.insert( ka );
+      }
     }
   }
 }
@@ -124,15 +124,15 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
     {
       newset.insert( ka );
     }
-
-    return;
   }
-
-  for( localIndex ka=0 ; ka<numObjects ; ++ka )
+  else
   {
-    if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
-      newset.insert( ka );
+      if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      {
+        newset.insert( ka );
+      }
     }
   }
 }
