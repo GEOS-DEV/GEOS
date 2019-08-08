@@ -884,7 +884,6 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
     {
       if (elemGhostRank[ei] < 0)
       {
-        real64 localAccum, localAccumJacobian;
         globalIndex const elemDOF = dofNumber[ei];
 
         localIndex const numNodesPerFace = facesToNodes[elemsToFaces[ei][0]].size();
