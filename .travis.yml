@@ -79,7 +79,8 @@ before_script:
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi > /dev/null 2>&1;
+      brew install openmpi;
+      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
