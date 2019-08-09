@@ -50,7 +50,7 @@ PetscSparseMatrix::PetscSparseMatrix()
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 PetscSparseMatrix::PetscSparseMatrix( PetscSparseMatrix const &src )
 {
-    MatDuplicate( src._mat, MAT_COPY_VALUES, &_mat );
+  MatDuplicate( src._mat, MAT_COPY_VALUES, &_mat );
 }
 
 // -----------------------------
@@ -64,16 +64,16 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localSize,
                                              localIndex const maxEntriesPerRow,
                                              MPI_Comm const & comm )
 {
-    // call general version
-    createWithLocalSize( localSize, localSize, maxEntriesPerRow, comm );
+  // call general version
+  createWithLocalSize( localSize, localSize, maxEntriesPerRow, comm );
 }
 
 void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalSize,
                                               localIndex const maxEntriesPerRow,
                                               MPI_Comm const & comm )
 {
-    // call general version
-    createWithGlobalSize( globalSize, globalSize, maxEntriesPerRow, comm );
+  // call general version
+  createWithGlobalSize( globalSize, globalSize, maxEntriesPerRow, comm );
 }
 
 void PetscSparseMatrix::createWithLocalSize( localIndex const localRows,
@@ -81,12 +81,12 @@ void PetscSparseMatrix::createWithLocalSize( localIndex const localRows,
                                              localIndex const maxEntriesPerRow,
                                              MPI_Comm const & comm )
 {
-    // set up matrix
-    MatCreate( comm, &_mat );
-    MatSetType( _mat, MATMPIAIJ );
-    MatSetSizes( _mat, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
-    MatMPIAIJSetPreallocation( _mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr );
-    MatSetUp( _mat );
+  // set up matrix
+  MatCreate( comm, &_mat );
+  MatSetType( _mat, MATMPIAIJ );
+  MatSetSizes( _mat, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
+  MatMPIAIJSetPreallocation( _mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr );
+  MatSetUp( _mat );
 }
 
 void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
@@ -94,12 +94,12 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
                                               localIndex const maxEntriesPerRow,
                                               MPI_Comm const & comm )
 {
-    // set up matrix
-    MatCreate( comm, &_mat );
-    MatSetType( _mat, MATMPIAIJ );
-    MatSetSizes( _mat, PETSC_DECIDE, PETSC_DECIDE, globalRows, globalCols );
-    MatMPIAIJSetPreallocation( _mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr );
-    MatSetUp( _mat );
+  // set up matrix
+  MatCreate( comm, &_mat );
+  MatSetType( _mat, MATMPIAIJ );
+  MatSetSizes( _mat, PETSC_DECIDE, PETSC_DECIDE, globalRows, globalCols );
+  MatMPIAIJSetPreallocation( _mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr );
+  MatSetUp( _mat );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -108,44 +108,44 @@ void PetscSparseMatrix::createWithGlobalSize( globalIndex const globalRows,
 // Sets all values to user-defined value.
 void PetscSparseMatrix::set( real64 const value )
 {
-    PetscInt firstrow;
-    PetscInt lastrow;
-    MatGetOwnershipRange( _mat, &firstrow, &lastrow );
+  PetscInt firstrow;
+  PetscInt lastrow;
+  MatGetOwnershipRange( _mat, &firstrow, &lastrow );
 
-    PetscInt numEntries;
-    const PetscInt* inds;
-    const PetscScalar* vals;
+  PetscInt numEntries;
+  const PetscInt* inds;
+  const PetscScalar* vals;
 
-    PetscInt numEntries_;
-    PetscScalar* vals_;
-    PetscInt* inds_;
+  PetscInt numEntries_;
+  PetscScalar* vals_;
+  PetscInt* inds_;
 
-    // loop over rows
-    for( PetscInt row = firstrow; row < lastrow; row++){
+  // loop over rows
+  for( PetscInt row = firstrow; row < lastrow; row++){
 
-        // get entries in row
-        close(); 
-        MatGetRow( _mat, row, &numEntries, &inds, &vals );
-        numEntries_ = numEntries;
-        inds_ = new PetscInt[numEntries_];
-        for ( int i = 0; i < numEntries_; i++ ) {
-            inds_[i] = inds[i];
-        }   
-        MatRestoreRow( _mat, row, &numEntries, &inds, &vals );
-        close(); 
+    // get entries in row
+    close(); 
+    MatGetRow( _mat, row, &numEntries, &inds, &vals );
+    numEntries_ = numEntries;
+    inds_ = new PetscInt[numEntries_];
+    for ( int i = 0; i < numEntries_; i++ ) {
+      inds_[i] = inds[i];
+    }   
+    MatRestoreRow( _mat, row, &numEntries, &inds, &vals );
+    close(); 
 
-        // set entries to value
-        if( numEntries_ > 0 ){
+    // set entries to value
+    if( numEntries_ > 0 ){
 
-            vals_ = new PetscScalar[numEntries_];
-            for ( int i = 0; i < numEntries_; i++ ) {
-                vals_[i] = value;
-            }
+      vals_ = new PetscScalar[numEntries_];
+      for ( int i = 0; i < numEntries_; i++ ) {
+        vals_[i] = value;
+      }
 
-            PetscInt rows[1] = {row};
-            MatSetValues( _mat, 1, rows, numEntries_, inds_, vals_, INSERT_VALUES );
-        }
+      PetscInt rows[1] = {row};
+      MatSetValues( _mat, 1, rows, numEntries_, inds_, vals_, INSERT_VALUES );
     }
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -170,9 +170,9 @@ void PetscSparseMatrix::open()
 // PETSc matrix assembly. Space for preallocated nonzeros that is not filled are compressed out by assembly.
 void PetscSparseMatrix::close()
 {
-    MatAssemblyBegin( _mat, MAT_FINAL_ASSEMBLY );
-    MatAssemblyEnd( _mat, MAT_FINAL_ASSEMBLY );
-    assembled = true;
+  MatAssemblyBegin( _mat, MAT_FINAL_ASSEMBLY );
+  MatAssemblyEnd( _mat, MAT_FINAL_ASSEMBLY );
+  assembled = true;
 }
 
 // -------------------------
@@ -181,24 +181,24 @@ void PetscSparseMatrix::close()
 
 // 1x1
 void PetscSparseMatrix::add( globalIndex const rowIndex,
-                                                        globalIndex const colIndex,
-                                                        real64 const value )
+                             globalIndex const colIndex,
+                             real64 const value )
 {
-    MatSetValue( _mat, rowIndex, colIndex, value, ADD_VALUES );
+  MatSetValue( _mat, rowIndex, colIndex, value, ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
-                                                        globalIndex const colIndex,
-                                                        real64 const value )
+                             globalIndex const colIndex,
+                             real64 const value )
 {
-    MatSetValue( _mat, rowIndex, colIndex, value, INSERT_VALUES );
+  MatSetValue( _mat, rowIndex, colIndex, value, INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
-                                                                globalIndex const colIndex,
-                                                                real64 const value )
+                                globalIndex const colIndex,
+                                real64 const value )
 {
-    MatSetValue( _mat, rowIndex, colIndex, value, INSERT_VALUES );
+  MatSetValue( _mat, rowIndex, colIndex, value, INSERT_VALUES );
 }
 
  // 1xN c-style
@@ -207,8 +207,8 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              real64 const * values,
                              localIndex size )
 {
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, size, colIndices, values, ADD_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, size, colIndices, values, ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
@@ -216,8 +216,8 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              real64 const * values,
                              localIndex size )
 { 
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
@@ -225,8 +225,8 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 real64 const * values,
                                 localIndex size )
 {
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
 }
 
 // 1xN array1d style 
@@ -234,24 +234,24 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              array1d<globalIndex> const &colIndices,
                              array1d<real64> const &values )
 {
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), ADD_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
                              array1d<globalIndex> const &colIndices,
                              array1d<real64> const &values )
 {
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 array1d<globalIndex> const &colIndices,
                                 array1d<real64> const &values )
 {
-    PetscInt rows[1] = {rowIndex};
-    MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  PetscInt rows[1] = {rowIndex};
+  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
 }
 
 // MxN array2d style
@@ -259,21 +259,21 @@ void PetscSparseMatrix::add( array1d<globalIndex> const & rowIndices,
                              array1d<globalIndex> const & colIndices,
                              array2d<real64> const & values )
 {
-    MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), ADD_VALUES );
+  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( array1d<globalIndex> const & rowIndices,
                              array1d<globalIndex> const & colIndices,
                              array2d<real64> const & values )
 {
-    MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
                                 array1d<globalIndex> const & colIndices,
                                 array2d<real64> const & values )
 {
-    MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
 }
 
 // -------------------------
@@ -287,9 +287,9 @@ void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
 //
 // NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscVector const &src,
-                                            PetscVector &dst ) const
+                                  PetscVector &dst ) const
 {
-    MatMult( _mat, src.getConstVec(), dst.getVec() );
+  MatMult( _mat, src.getConstVec(), dst.getVec() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -299,9 +299,9 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 //
 // NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscSparseMatrix const & src, 
-                                                PetscSparseMatrix & dst ) const
+                                  PetscSparseMatrix & dst ) const
 {
-    MatMatMult( _mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
+  MatMatMult( _mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -309,11 +309,11 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute res = b - Ax (residual form).
 void PetscSparseMatrix::residual( PetscVector const &x,
-                                            PetscVector const &b,
-                                            PetscVector &r ) const
+                                  PetscVector const &b,
+                                  PetscVector &r ) const
 {
-    MatMult( _mat, x.getConstVec(), r.getConstVec() );
-    VecAXPY( r.getVec(), -1, b.getConstVec() );
+  MatMult( _mat, x.getConstVec(), r.getConstVec() );
+  VecAXPY( r.getVec(), -1, b.getConstVec() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -321,23 +321,23 @@ void PetscSparseMatrix::residual( PetscVector const &x,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute gemv <tt>y = alpha*A*x + beta*y</tt>.
 void PetscSparseMatrix::gemv( real64 const alpha,
-                                        PetscVector  const &x,
-                                        real64 const beta,
-                                        PetscVector  &y,
-                                        bool useTranspose)
+                              PetscVector  const &x,
+                              real64 const beta,
+                              PetscVector  &y,
+                              bool useTranspose)
 {
-    PetscVector x_( x );
-    PetscVector b_( x );
+  PetscVector x_( x );
+  PetscVector b_( x );
 
-    x_.scale( alpha ); // alpha*x_
-    y.scale( beta ); // beta*y
+  x_.scale( alpha ); // alpha*x_
+  y.scale( beta ); // beta*y
 
-    if ( useTranspose ){
-        MatMultTranspose( _mat, x_.getVec(), b_.getVec() );
-    } else {
-        MatMult( _mat, x_.getVec(), b_.getVec() ); // alpha*A*x_ = b_
-    }
-    VecAXPY( y.getVec(), 1, b_.getVec() ); // alpha*A*x_ + beta*y = y
+  if ( useTranspose ){
+  MatMultTranspose( _mat, x_.getVec(), b_.getVec() );
+  } else {
+  MatMult( _mat, x_.getVec(), b_.getVec() ); // alpha*A*x_ = b_
+  }
+  VecAXPY( y.getVec(), 1, b_.getVec() ); // alpha*A*x_ + beta*y = y
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -346,7 +346,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
 // Multiply all elements by scalingFactor.
 void PetscSparseMatrix::scale( real64 const scalingFactor )
 {
-    MatScale( _mat, scalingFactor );
+  MatScale( _mat, scalingFactor );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -354,18 +354,18 @@ void PetscSparseMatrix::scale( real64 const scalingFactor )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscSparseMatrix::leftScale( PetscVector const &vec )
 {
-    MatDiagonalScale( _mat, vec.getConstVec(), nullptr );
+  MatDiagonalScale( _mat, vec.getConstVec(), nullptr );
 }
 
 void PetscSparseMatrix::rightScale( PetscVector const &vec )
 {
-    MatDiagonalScale( _mat, nullptr, vec.getConstVec() );
+  MatDiagonalScale( _mat, nullptr, vec.getConstVec() );
 }
 
 void PetscSparseMatrix::leftRightScale( PetscVector const &vecLeft,
-                                                PetscVector const &vecRight )
+                                        PetscVector const &vecRight )
 {
-    MatDiagonalScale( _mat, vecLeft.getConstVec(), vecRight.getConstVec() );
+  MatDiagonalScale( _mat, vecLeft.getConstVec(), vecRight.getConstVec() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -387,11 +387,11 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
   colIndices.resize( numEntries );
 
   for ( int i = 0; i < numEntries; i++ ) {
-    colIndices[i] = inds[i];
+  colIndices[i] = inds[i];
   }
 
   for ( int i = 0; i < numEntries; i++ ) {
-    values[i] = vals[i];
+  values[i] = vals[i];
   }
 
   MatRestoreRow( _mat, globalRow, &numEntries, &inds, &vals );
@@ -407,10 +407,10 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 
   MatGetRow( _mat, globalRow, &ncols, &cols, &vals );
   for( int i = 0; i < ncols; i++ ){
-    if( cols[i] == globalRow )
-    {
-      return vals[i];
-    }
+  if( cols[i] == globalRow )
+  {
+    return vals[i];
+  }
   }
   MatRestoreRow( _mat, globalRow, &ncols, &cols, &vals );
 
@@ -425,10 +425,10 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
 void PetscSparseMatrix::clearRow( globalIndex const globalRow,
                                   real64 const diagValue )
  {
-    PetscInt rows[1] = {globalRow};
+  PetscInt rows[1] = {globalRow};
 
-    // zero row and set diagonal to diagValue
-    MatZeroRows( _mat, 1, rows, diagValue, nullptr, nullptr );
+  // zero row and set diagonal to diagValue
+  MatZeroRows( _mat, 1, rows, diagValue, nullptr, nullptr );
  }
 
 // ----------------------------
@@ -442,21 +442,21 @@ void PetscSparseMatrix::clearRow( globalIndex const globalRow,
 // Accessor for the pointer to the matrix
 Mat* PetscSparseMatrix::unwrappedNonConstPointer()
 {
-    return &( _mat );
+  return &( _mat );
 }
 
 // Accessor for the pointer to the matrix
 const Mat* PetscSparseMatrix::unwrappedPointer() const
 {
-    return &( _mat );
+  return &( _mat );
 }
 
 // Accessor for the MPI communicator
 MPI_Comm PetscSparseMatrix::getComm() const
 {
-    MPI_Comm comm;
-    PetscObjectGetComm( reinterpret_cast<PetscObject>( _mat ), &comm );
-    return comm;
+  MPI_Comm comm;
+  PetscObjectGetComm( reinterpret_cast<PetscObject>( _mat ), &comm );
+  return comm;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -465,10 +465,10 @@ MPI_Comm PetscSparseMatrix::getComm() const
 // Accessor for the number of global rows
 globalIndex PetscSparseMatrix::globalRows() const
 {
-    PetscInt num_rows;
-    PetscInt num_cols;
-    MatGetSize( _mat, &num_rows, &num_cols );
-    return num_rows;
+  PetscInt num_rows;
+  PetscInt num_cols;
+  MatGetSize( _mat, &num_rows, &num_cols );
+  return num_rows;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -477,10 +477,10 @@ globalIndex PetscSparseMatrix::globalRows() const
 // Accessor for the number of global columns
 globalIndex PetscSparseMatrix::globalCols() const
 {
-    PetscInt num_rows;
-    PetscInt num_cols;
-    MatGetSize( _mat, &num_rows, &num_cols );
-    return num_cols;
+  PetscInt num_rows;
+  PetscInt num_cols;
+  MatGetSize( _mat, &num_rows, &num_cols );
+  return num_cols;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -489,10 +489,10 @@ globalIndex PetscSparseMatrix::globalCols() const
 // Accessor for the index of the first global row
 globalIndex PetscSparseMatrix::ilower() const
 {
-    PetscInt firstrow;
-    PetscInt lastrow;
-    MatGetOwnershipRange( _mat, &firstrow, &lastrow );
-    return firstrow; 
+  PetscInt firstrow;
+  PetscInt lastrow;
+  MatGetOwnershipRange( _mat, &firstrow, &lastrow );
+  return firstrow; 
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -501,10 +501,10 @@ globalIndex PetscSparseMatrix::ilower() const
 // Accessor for the index of the last global row
 globalIndex PetscSparseMatrix::iupper() const
 {
-    PetscInt firstrow;
-    PetscInt lastrow;
-    MatGetOwnershipRange( _mat, &firstrow, &lastrow );
-    return lastrow; 
+  PetscInt firstrow;
+  PetscInt lastrow;
+  MatGetOwnershipRange( _mat, &firstrow, &lastrow );
+  return lastrow; 
  } 
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -513,7 +513,7 @@ globalIndex PetscSparseMatrix::iupper() const
 // Wrapper to print the petsc output of the matrix
 void PetscSparseMatrix::print() const 
 {
-    MatView( _mat, PETSC_VIEWER_STDOUT_WORLD );
+  MatView( _mat, PETSC_VIEWER_STDOUT_WORLD );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -522,24 +522,24 @@ void PetscSparseMatrix::print() const
 void PetscSparseMatrix::write( string const & filename,
                                bool const mtxFormat ) const
 {
-    PetscViewer viewer;
-    const char * filename_ = filename.c_str();
-    
-    if( mtxFormat ){
+  PetscViewer viewer;
+  const char * filename_ = filename.c_str();
+  
+  if( mtxFormat ){
 
-        // ".mtx" extension
-    string name( filename );
-        if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
-            name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
-        }
-        PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
-        PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-
-    } else {
-        PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
-        PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
+    // ".mtx" extension
+  string name( filename );
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
+      name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
     }
-    MatView( _mat, viewer );
+    PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
+    PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
+
+  } else {
+    PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
+    PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
+  }
+  MatView( _mat, viewer );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -548,9 +548,9 @@ void PetscSparseMatrix::write( string const & filename,
 // Returns the infinity norm of the matrix.
 real64 PetscSparseMatrix::normInf() const
 {
-    real64 normInf;
-    MatNorm( _mat, NORM_INFINITY, &normInf );
-    return normInf;
+  real64 normInf;
+  MatNorm( _mat, NORM_INFINITY, &normInf );
+  return normInf;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -559,9 +559,9 @@ real64 PetscSparseMatrix::normInf() const
 // Returns the one norm of the matrix.
 real64 PetscSparseMatrix::norm1() const
 {
-    real64 norm1;
-    MatNorm( _mat, NORM_1, &norm1 );
-    return norm1;
+  real64 norm1;
+  MatNorm( _mat, NORM_1, &norm1 );
+  return norm1;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -570,9 +570,9 @@ real64 PetscSparseMatrix::norm1() const
 // Returns the Frobenius norm of the matrix.
 real64 PetscSparseMatrix::normFrobenius() const
 {
-    real64 normFrob;
-    MatNorm( _mat, NORM_FROBENIUS, &normFrob );
-    return normFrob;
+  real64 normFrob;
+  MatNorm( _mat, NORM_FROBENIUS, &normFrob );
+  return normFrob;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -581,7 +581,7 @@ real64 PetscSparseMatrix::normFrobenius() const
 // Boolean indicator. True = matrix assembled and ready to be used.
 bool PetscSparseMatrix::isAssembled() const
 {
-    return assembled;
+  return assembled;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -589,21 +589,21 @@ bool PetscSparseMatrix::isAssembled() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*B = C.
 void PetscSparseMatrix::MatrixMatrixMultiply( bool const transA,
-                                         PetscSparseMatrix const &B,
-                                         bool const transB,
-                                         PetscSparseMatrix &C,
-                                         bool const call_FillComplete ) const
+                                              PetscSparseMatrix const &B,
+                                              bool const transB,
+                                              PetscSparseMatrix &C,
+                                              bool const call_FillComplete ) const
 {
-    if( transA && transB ) {
-        MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );
-        MatTranspose( C.getConstMat(), MAT_INPLACE_MATRIX, C.unwrappedNonConstPointer() );
-    } else if (transA ) {
-        MatTransposeMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );  
-    } else if (transB ) {
-        GEOS_ERROR( " MatrixMatrixMultiply: not implemented for B transpose" );
-    } else {
-        MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );   
-    }
+  if( transA && transB ) {
+    MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );
+    MatTranspose( C.getConstMat(), MAT_INPLACE_MATRIX, C.unwrappedNonConstPointer() );
+  } else if (transA ) {
+    MatTransposeMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );  
+  } else if (transB ) {
+    GEOS_ERROR( " MatrixMatrixMultiply: not implemented for B transpose" );
+  } else {
+    MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );   
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -612,12 +612,12 @@ void PetscSparseMatrix::MatrixMatrixMultiply( bool const transA,
 // Map a global row index to local row index
 localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 {
-    PetscInt low, high;
-    MatGetOwnershipRange( _mat, &low, &high);
-    if ( index < low || high <= index ) {
-        GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
-    } 
-    return index - low; 
+  PetscInt low, high;
+  MatGetOwnershipRange( _mat, &low, &high);
+  if ( index < low || high <= index ) {
+    GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
+  } 
+  return index - low; 
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -626,12 +626,12 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 // Map a local row index to global row index
 localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
-    PetscInt low, high;
-    MatGetOwnershipRange( _mat, &low, &high);
-    if ( high - low < index ) {
-        GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );
-    } 
-    return static_cast<localIndex>( index + low );  
+  PetscInt low, high;
+  MatGetOwnershipRange( _mat, &low, &high);
+  if ( high - low < index ) {
+    GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );
+  } 
+  return static_cast<localIndex>( index + low );  
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -643,9 +643,9 @@ localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 // of columns is the global number.
 localIndex PetscSparseMatrix::localCols( ) const
 {
-    PetscInt cols;
-    MatGetSize( _mat, nullptr, &cols );
-    return static_cast<localIndex>( cols ); 
+  PetscInt cols;
+  MatGetSize( _mat, nullptr, &cols );
+  return static_cast<localIndex>( cols ); 
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -665,29 +665,29 @@ localIndex PetscSparseMatrix::localRows() const
 // Print the given parallel matrix in Matrix Market format (MTX file)
 void PetscSparseMatrix::printParallelMatrix( string const & fileName ) const
 {
-    PetscViewer viewer;
+  PetscViewer viewer;
 
-    // ".mtx" extension
-    string name( fileName );
-    if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ){
-        name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
-    }
+  // ".mtx" extension
+  string name( fileName );
+  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ){
+    name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
+  }
 
-    PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
-    PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-    MatView( _mat, viewer );
+  PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
+  PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
+  MatView( _mat, viewer );
 }
 
 // Get PETSc object
 Mat PetscSparseMatrix::getConstMat() const
 {
-    return _mat;
+  return _mat;
 }
 
 /* get PETSc object */
 Mat PetscSparseMatrix::getMat()
 {
-    return _mat;
+  return _mat;
 }
 
 } // end geosx namespace
