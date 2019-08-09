@@ -96,7 +96,7 @@ TEST( SinglePhaseFlowKernels, accumulation )
     real64 accumJacobian;
     real64 poroNew;
 
-    AccumulationKernel::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
+    AccumulationKernel<CellElementSubRegion>::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
                                         poroRef[i], poroOld[i], pvMult[i], dPvMult_dPres[i],
                                         0.0, 0.0, 0.0, 0.0, poroNew, accum, accumJacobian );
 

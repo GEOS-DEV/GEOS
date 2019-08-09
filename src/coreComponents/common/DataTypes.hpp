@@ -196,11 +196,23 @@ using SortedArray = LvArray::SortedArray< T, localIndex >;
 template< typename T >
 using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
-template< typename TKEY, typename TVAL >
-using map = std::map< TKEY, TVAL >;
+template< typename TKEY, typename TVAL, typename SORTED >
+class mapBase
+{};
 
 template< typename TKEY, typename TVAL >
-using unordered_map = std::unordered_map< TKEY, TVAL >;
+class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
+{};
+
+template< typename TKEY, typename TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
+{};
+
+template< typename TKEY, typename TVAL >
+using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;
+
+template< typename TKEY, typename TVAL >
+using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false > >;
 
 using integer_array        = array1d< integer >;
 using integer_const_array  = array1d< integer const >;

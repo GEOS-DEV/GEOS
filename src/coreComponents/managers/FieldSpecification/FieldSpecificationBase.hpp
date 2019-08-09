@@ -253,10 +253,10 @@ struct FieldSpecificationEqual
    * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
    */
   template<typename LAI>
-  static inline void ReplaceGlobalValues( typename LAI::ParallelVector & rhs,
-                                          localIndex const num,
-                                          globalIndex * const dof,
-                                          real64 * const values )
+  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
+                                         localIndex const num,
+                                         globalIndex * const dof,
+                                         real64 * const values )
   {
     rhs.set( dof, values, num );
   }
@@ -391,12 +391,12 @@ struct FieldSpecificationAdd
    * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
    */
   template<typename LAI>
-  static inline void ReplaceGlobalValues( typename LAI::ParallelVector & rhs,
-                                          localIndex const num,
-                                          globalIndex * const dof,
-                                          real64 * const values )
+  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
+                                         localIndex const num,
+                                         globalIndex * const dof,
+                                         real64 * const values )
   {
-    rhs.set( dof, values, num );
+    rhs.add( dof, values, num );
   }
 
 };
@@ -863,7 +863,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                  lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -885,7 +885,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
     else
     {
@@ -903,7 +903,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }
@@ -944,7 +944,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                  lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
   }
   else
   {
@@ -966,7 +966,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
     else
     {
@@ -984,7 +984,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template ReplaceGlobalValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
 }
