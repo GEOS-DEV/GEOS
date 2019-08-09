@@ -3,5 +3,9 @@ pool:
 
 steps:
 - script: echo Hello, World
-  displayName: 'Testing print'
+  displayName: 'Test 1 '
+- script: echo cat
+  displayName: 'Test 2'
+- script: echo dog 
+  displayName: 'Test 3'
 
