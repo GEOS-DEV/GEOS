@@ -6,8 +6,9 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"
-                                  targetRegions="{Region2}"/>
+                                  cflFactor="0.25"
+                                  targetRegions="{Region2}"
+                                  solidMaterialName="al"/>
   </Solvers>
 
   
