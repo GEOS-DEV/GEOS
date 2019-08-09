@@ -76,7 +76,7 @@ PetscVector::PetscVector( Vec vec )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscVector::create( PetscVector const & src )
 {
-  	VecDuplicate( src._vec, &_vec ); 
+  VecDuplicate( src._vec, &_vec ); 
 	VecCopy( src._vec, _vec ); 	
 }
 
@@ -90,25 +90,20 @@ void PetscVector::create( PetscVector const & src )
 // get the same number of elements, except proc 0 which gets any remainder
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.
+// 
+// NOTE: creates a CPU MPI vector
 void PetscVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  VecCreateMPI( comm, localSize, PETSC_DETERMINE, &_vec );
-
-	// hannah
-	//   VecCreate( comm, &_vec );
-	//   VecSetType( _vec, VECMPI );
-	//   VecSetSizes( _vec, localSize, PETSC_DETERMINE);
-
+	VecCreate( comm, &_vec );
+	VecSetType( _vec, VECMPI );
+	VecSetSizes( _vec, localSize, PETSC_DETERMINE);
 }
 
 void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm )
 {
-  VecCreateMPI( comm, PETSC_DECIDE, globalSize, &_vec );
-
-	// hannah
-	//   VecCreate( comm, &_vec );
-	//   VecSetType( _vec, VECMPI );
-	//   VecSetSizes( _vec, PETSC_DECIDE, globalSize);
+	VecCreate( comm, &_vec );
+	VecSetType( _vec, VECMPI );
+	VecSetSizes( _vec, PETSC_DECIDE, globalSize);
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -116,18 +111,16 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
+//
+// NOTE: creates a CPU MPI vector, must assemble vector after use
 void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & comm )
 {
 	PetscInt size = localValues.size(); 
 	PetscScalar *values;
 
-	// create vector with local size
-	VecCreateMPI( comm, size, PETSC_DETERMINE, &_vec );
-
-	// hannah
-	//   VecCreate( comm, &_vec );
-	//   VecSetType( _vec, VECMPI );
-	//   VecSetSizes( _vec, size, PETSC_DETERMINE);
+	VecCreate( comm, &_vec );
+	VecSetType( _vec, VECMPI );
+	VecSetSizes( _vec, size, PETSC_DETERMINE);
 	VecGetArray( _vec, &values );
 
 	// set vector values
@@ -136,7 +129,6 @@ void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & 
 	}
 
 	VecRestoreArray( _vec, &values );
-	close(); // hannah?
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -220,7 +212,6 @@ void PetscVector::open()
 void PetscVector::close()
 {
 	// assemble the vector after setting values
-	// PETSc allows for overlap of computation and communication during assembly
 	VecAssemblyBegin( _vec );
   VecAssemblyEnd( _vec );	
 }
@@ -333,10 +324,11 @@ void PetscVector::write( string const & filename,
 	if( mtxFormat ){
 
 		// ".mtx" extension
-    	string name( filename );
+    string name( filename );
 		if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
 			name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
 		}
+		
 		PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
 		PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
 	} else {
@@ -366,7 +358,7 @@ real64 PetscVector::get( globalIndex globalRow ) const
 void PetscVector::get( array1d<globalIndex> const & globalIndices,
                        array1d<real64> & values ) const
 {
-	GEOS_ERROR( "not yet implemented" ); // hannah: Trilinos
+	GEOS_ERROR( "not yet implemented" );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -430,12 +422,14 @@ localIndex PetscVector::localSize() const
 // getLocalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a global row index to local row index
+//
+// NOTE: error if requesting processor does not own row index
 localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 {
 	PetscInt low, high;
 	VecGetOwnershipRange( _vec, &low, &high );
 	if ( index < low || high <= index ) {
-		GEOS_ERROR( "getLocalRowID: processor does not own global row index" );	// hannah: error here?
+		GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
 	} 
 	return index - low;	
 } 
@@ -444,7 +438,8 @@ localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 // extractLocalVector
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Extract a view of the local portion of the array
-void PetscVector::extractLocalVector( real64 ** localVector ) const // hannah: localVector already allocated
+// User allocates memory for localVector
+void PetscVector::extractLocalVector( real64 ** localVector ) const
 {
 	PetscScalar *avec;
 	localIndex size = localSize();

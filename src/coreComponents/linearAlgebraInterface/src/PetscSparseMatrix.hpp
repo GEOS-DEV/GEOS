@@ -23,8 +23,6 @@
 #ifndef LAI_PETSCSPARSEMATRIX_HPP_
 #define LAI_PETSCSPARSEMATRIX_HPP_
 
-#include "InterfaceTypes.hpp"
-
 #include <petscvec.h>
 #include <petscmat.h>
 
@@ -127,6 +125,7 @@ public:
    *
    * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
    *
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
    */
   void set( real64 const value );
 
@@ -146,7 +145,8 @@ public:
 
   /**
    * @brief Assemble and compress the matrix.
-   * // hannah: blurb here
+   * Preallocated nonzeros that are not used are compressed out by assembly.
+   * The matrix must be assembled before it is used. 
    */
   void close();
   //@}
@@ -157,7 +157,6 @@ public:
    * Insert methods allow for dynamic allocation, but will temporarily use
    * extra memory if one attempts to insert multiple values to the same location.
    *
-   * hannah: is this thread safe in PETSc?
    */
   //@{
 
@@ -168,6 +167,8 @@ public:
    * \param colIndex Global column index.
    * \param value Value to add to prescribed location.
    *
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void add( globalIndex const rowIndex,
             globalIndex const colIndex,
@@ -180,6 +181,8 @@ public:
    * \param colIndex Global column index.
    * \param value Value to set at prescribed location.
    *
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const rowIndex,
             globalIndex const colIndex,
@@ -191,6 +194,8 @@ public:
    * \param rowIndex Global row index.
    * \param colIndex Global column index.
    * \param value Value to insert at prescribed location.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
    *
    */
   void insert( globalIndex const rowIndex,
@@ -204,6 +209,9 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    * \param size Number of elements
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void add( globalIndex const rowIndex,
             globalIndex const * colIndices,
@@ -217,6 +225,9 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    * \param size Number of elements
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const rowIndex,
             globalIndex const * colIndices,
@@ -230,6 +241,9 @@ public:
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
    * \param size Number of elements
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void insert( globalIndex const rowIndex,
                globalIndex const * colIndices,
@@ -242,6 +256,9 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void add( globalIndex const rowIndex,
             array1d<globalIndex> const & colIndices,
@@ -253,6 +270,9 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const rowIndex,
             array1d<globalIndex> const & colIndices,
@@ -264,6 +284,9 @@ public:
    * \param rowIndex Global row index.
    * \param colIndices Global column indices
    * \param values Values to add to prescribed locations.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void insert( globalIndex const rowIndex,
                array1d<globalIndex> const & colIndices,
@@ -275,6 +298,9 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void add( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
@@ -286,6 +312,9 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void set( array1d<globalIndex> const & rowIndices,
             array1d<globalIndex> const & colIndices,
@@ -297,6 +326,9 @@ public:
    * \param rowIndices Global row indices.
    * \param colIndices Global col indices
    * \param values Dense local matrix of values.
+   * 
+   * NOTE: set()/add()/insert() can't be interchanged without assembly.
+   * 
    */
   void insert( array1d<globalIndex> const & rowIndices,
                array1d<globalIndex> const & colIndices,
@@ -503,6 +535,9 @@ public:
 
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
+   * 
+   * \param filename Name of output file
+   * \param mtxFormat True if Matrix Market file format, false for Matlab
    *
    * Within octave / matlab:
    * >> load filename
@@ -530,10 +565,15 @@ public:
    */
   localIndex getGlobalRowID( localIndex const index ) const;
 
+   /**
+    * @brief Return the local number of rows on each processor
+    */
+  localIndex localRows() const; 
+
   /**
    * @brief Return the local number of columns on each processor
    */
-  localIndex numMyCols() const;
+  localIndex localCols() const;
 
   /**
    * @brief Print the given parallel matrix in Matrix Market format (MTX file)
