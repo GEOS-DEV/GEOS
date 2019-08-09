@@ -35,11 +35,9 @@ using namespace dataRepository;
 CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
-  m_toEdgesRelation(),
   m_toFacesRelation()
 {
   registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
-  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
@@ -282,25 +280,21 @@ void CellBlock::SetElementType( string const & elementType)
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,12);
     m_toFacesRelation.resize(0,6);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     m_toNodesRelation.resize(0,4);
-    m_toEdgesRelation.resize(0,6);
     m_toFacesRelation.resize(0,4);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,9);
     m_toFacesRelation.resize(0,5);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     m_toNodesRelation.resize(0,5);
-    m_toEdgesRelation.resize(0,8);
     m_toFacesRelation.resize(0,5);
   }
   else
@@ -334,7 +328,6 @@ void CellBlock::SetElementType( string const & elementType)
 void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
 

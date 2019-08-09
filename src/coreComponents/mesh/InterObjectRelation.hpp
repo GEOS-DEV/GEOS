@@ -64,22 +64,7 @@ private:
   ObjectManagerBase const * m_relatedObject = nullptr;
 };
 
-typedef InterObjectRelation<array1d<localIndex>>                OneToOneRelation;
-typedef InterObjectRelation<array1d<localIndex const>>          OneToOneConstRelation;
-
 typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
-typedef InterObjectRelation<array2d<localIndex const>>          FixedOneToManyConstRelation;
-
-typedef InterObjectRelation<array1d<array1d<localIndex>>>       OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<array1d<localIndex const>>> OrderedVariableOneToManyConstRelation;
-
-using FaceToNodeRelation = InterObjectRelation< ArrayOfArrays< localIndex > >;
-using FaceToEdgeRelation = InterObjectRelation< ArrayOfArrays< localIndex > >;
-using EdgeToFaceRelation = InterObjectRelation< ArrayOfSets< localIndex > >;
-
-typedef InterObjectRelation<array1d<set<localIndex>>>           UnorderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<set<localIndex const>>>     UnorderedVariableOneToManyConstRelation;
-
 }
 
 #endif /* INTEROBJECTRELATION_H_ */

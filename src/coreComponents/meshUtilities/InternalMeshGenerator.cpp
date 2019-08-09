@@ -528,10 +528,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     numNodes *= numNodesInDir[i];
   }
 
-  GEOSX_MARK_BEGIN("nodeMangager->resize()");
   nodeManager->resize( numNodes );
   r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
-  GEOSX_MARK_END("nodeMangager->resize()");
 
   {
     localIndex localNodeIndex = 0;
