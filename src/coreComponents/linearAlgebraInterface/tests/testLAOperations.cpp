@@ -212,7 +212,7 @@ void testVectorFunctions()
   }
   x.close();
 
-  // Testing create with array1d hannah: to do
+  // Testing create with array1d
   array1d<real64> vals3( 3 );
   ParallelVector v;
   vals3[0] = 1;
@@ -232,7 +232,7 @@ void testVectorFunctions()
 
   // Testing add/set single element
   x.set(0, -1);
-  x.close(); // hannah: set/add can't be interchanged
+  x.close(); // set/add can't be interchanged
   x.add(1, 10);
   x.close();
   EXPECT_DOUBLE_EQ( x.get(0), -1 );
@@ -242,10 +242,10 @@ void testVectorFunctions()
   globalIndex inds[2] = {0, 1};
   real64 vals[2] = {-5, -6};
   localIndex nums = 2;
-  y.set(inds, vals, nums); // hannah: don't need to close vectors as often?
-  y.close(); // hannah: probably a good idea to anyway
+  y.set(inds, vals, nums); 
+  y.close(); 
   z.add(inds, vals, nums);
-  z.close(); // hannah: going to modify later
+  z.close(); 
   EXPECT_DOUBLE_EQ( y.get(0), -5 );
   EXPECT_DOUBLE_EQ( y.get(1), -6 );
   EXPECT_DOUBLE_EQ( y.get(2), 4 );
@@ -344,7 +344,7 @@ void testVectorFunctions()
   EXPECT_EQ( x.getLocalRowID( 2 ), 2 );
 
   // Testing extractLocalVector
-  real64 *localVec = new real64[x.localSize()]; // hannah: who allocates memory?
+  real64 *localVec = new real64[x.localSize()];
   x.extractLocalVector(&localVec);
   EXPECT_DOUBLE_EQ( localVec[0], x.get( 0 ) );
   EXPECT_DOUBLE_EQ( localVec[1], x.get( 1 ) );
@@ -471,7 +471,6 @@ void testMatrixFunctions()
   mat7.close();
   mat7.add( rows, cols, vals8 );
   mat7.close();
-  // mat7.print(); // hannah: is this right? Do I need this?
 
   // Testing set and zero
   mat7.set( 2 );
@@ -503,7 +502,6 @@ void testMatrixFunctions()
   mat8.createWithGlobalSize( 2, 2, MPI_COMM_WORLD );
   mat1.MatrixMatrixMultiply( false, mat2, false, mat8, false );
   mat1.MatrixMatrixMultiply( true, mat2, false, mat8, false );
-  // mat1.MatrixMatrixMultiply( false, mat2, true, mat8, false ); // hannah: ask about this
   mat1.MatrixMatrixMultiply( true, mat2, true, mat8, false );
 
   // Testing residual, gemv
@@ -562,29 +560,11 @@ void testMatrixFunctions()
   }
   EXPECT_EQ( mat5.globalRows(), 4 );
   EXPECT_EQ( mat5.globalCols(), 4 ); 
-  EXPECT_EQ( mat5.getLocalRowID( 0 ), 0 ); // hannah: need to test in parallel
+  EXPECT_EQ( mat5.getLocalRowID( 0 ), 0 );
   EXPECT_EQ( mat5.getLocalRowID( 2 ), 2 );
   EXPECT_EQ( mat5.getGlobalRowID( 1 ), 1 );
   EXPECT_EQ( mat5.getGlobalRowID( 3 ), 3 );  
   EXPECT_EQ( mat5.numMyCols(), 4 ); 
-
-}
-
-/**
- * @function testSolvers
- *
- * @brief Test direct and iterative LAI solver configurations. 
- * 
- */
-template<typename LAI>
-void testSolvers()
-{
-  // Define aliases templated on the Linear Algebra Interface (LAI).
-  // using ParallelMatrix = typename LAI::ParallelMatrix;
-  // using ParallelVector = typename LAI::ParallelVector;
-  // using LinearSolver = typename LAI::LinearSolver;
-
-
 
 }
 
@@ -620,11 +600,7 @@ void testInterfaceSolvers()
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
-  // globalIndex n = 100;
-  // globalIndex N = n * n;
-
-  // hannah: smaller matrix
-  globalIndex n = 3;
+  globalIndex n = 100;
   globalIndex N = n * n;
 
   // Compute a 2D Laplace operator
@@ -794,7 +770,7 @@ void testGEOSXSolvers()
   x_comp.zero();
 
   BiCGSTABsolver<LAI> testBiCGSTAB;
-  testBiCGSTAB.solve( matrix, x_comp, b, identity ); // hannah: x and y must be different vectors
+  testBiCGSTAB.solve( matrix, x_comp, b, identity );
 
   norm_true = x_true.norm2();
   norm_comp = x_comp.norm2();
@@ -861,7 +837,7 @@ void testGEOSXBlockSolvers()
   
 
   // BlockMatrixView<LAI> block_matrix( nRows, nCols );
-  BlockMatrixView<LAI> block_precon( nRows, nCols );/* hannah was here: uncomment
+  BlockMatrixView<LAI> block_precon( nRows, nCols );
   BlockVectorView<LAI> block_x_true( nCols );
   BlockVectorView<LAI> block_x_comp( nCols );
   BlockVectorView<LAI> block_rhs( nRows );
@@ -895,8 +871,6 @@ void testGEOSXBlockSolvers()
   block_rhs.set( 0, b_0 );
   block_rhs.set( 1, b_1 );
   block_matrix.multiply( block_x_true, block_rhs );
-
-  */
 
 //TODO: Need to refactor Native block solvers.  Disable this testing section for now.
 #if 0
@@ -969,7 +943,7 @@ void testRectangularMatrixOperations()
   globalIndex nCols = 2 * nRows;
 
   ParallelMatrix A;
-  A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD ); // hannah: maxEntriesPerRow = 1? Changed to 2.
+  A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD );
 
   for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
   {
@@ -1037,10 +1011,9 @@ TEST(testLAOperations,testPETScLAOperations)
   PetscInterface();
   // testVectorFunctions<PetscInterface>(); 
   // testMatrixFunctions<PetscInterface>();
-  // testSolvers<PetscInterface>();
-  testInterfaceSolvers<PetscInterface>();
+  // testInterfaceSolvers<PetscInterface>();
   // testGEOSXSolvers<PetscInterface>(); 
-  // testGEOSXBlockSolvers<PetscInterface>(); // hannah: won't build
+  // testGEOSXBlockSolvers<PetscInterface>(); // doesn't build
   // testMatrixMatrixOperations<PetscInterface>(); 
   // testRectangularMatrixOperations<PetscInterface>(); 
   MPI_Finalize();
