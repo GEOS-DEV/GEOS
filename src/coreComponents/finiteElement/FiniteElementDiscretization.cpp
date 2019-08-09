@@ -34,6 +34,7 @@
 #include "quadrature/QuadratureBase.hpp"
 #include "ElementLibrary/FiniteElement.h"
 #include "codingUtilities/Utilities.hpp"
+#include "common/TimingMacros.hpp"
 
 // TODO make this not dependent on this header...need better key implementation
 
@@ -72,6 +73,7 @@ std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement
 
 void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase * const cellBlock ) const
 {
+  GEOSX_MARK_FUNCTION;
 
   // TODO THis crap needs to get cleaned up and worked out in the data structure
   // much better than this.
@@ -81,9 +83,9 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
 
   std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
 
-  //Ensure data is contiguous
+  // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
   array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
-  dNdX.resize( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
+  dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
   auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
@@ -93,29 +95,31 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 
-void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const &  X,
+void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
                                                                    ElementSubRegionBase * const elementSubRegion ) const
 {
-  arrayView3d<R1Tensor> & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
-  arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+  GEOSX_MARK_FUNCTION;
+
+  arrayView3d<R1Tensor> const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+  arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
 
-  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
-
-  array1d<R1Tensor> X_elemLocal( fe->dofs_per_element() );
-  R1Tensor const * const restrict X_ptr = X;
-
-  for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
+  PRAGMA_OMP( omp parallel )
   {
-    CopyGlobalToLocal<R1Tensor>(elemsToNodes[k], X, X_elemLocal);
-    fe->reinit(X_elemLocal);
+    std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
 
-    for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
+    PRAGMA_OMP( omp for )
+    for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
     {
-      detJ(k, q) = fe->JxW(q);
-      for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
+      fe->reinit(X, elemsToNodes[k]);
+
+      for( localIndex q = 0 ; q < fe->n_quadrature_points() ; ++q )
       {
-        dNdX[k][q][b] =  fe->gradient(b, q);
+        detJ(k, q) = fe->JxW(q);
+        for (localIndex b = 0 ; b < fe->dofs_per_element() ; ++b)
+        {
+          dNdX[k][q][b] = fe->gradient(b, q);
+        }
       }
     }
   }

@@ -17,111 +17,110 @@ The goal of the GEOSX event manager is to be flexible with regards to event type
   </Events>
 
 
+Event Execution Rules
+---------------------------------------------
+
+The EventManager will repeatedly iterate through a list of candidate events specified via the Events block **in the order they are defined in the xml**.  When certain user-defined criteria are met, they will trigger and perform a task.  The simulation ``cycle`` denotes the number of times the primary event loop has completed, ``time`` denotes the simulation time at the beginning of the loop, and ``dt`` denotes the global timestep during the loop.
+
+During each cycle, the EventManager will do the following:
+
+1. Loop through each event and obtain its timestep request by considering:
+
+   a. The maximum dt specified via the target's GetTimestepRequest method
+   b. The time remaining until user-defined points (e.g. application start/stop times)
+   c. Any timestep overrides (e.g. user-defined maximum dt)
+   d. The timestep reuest for any of its children
+
+2. Set the cycle dt to the smallest value requested by any event
+
+3. Loop through each event and:
+
+   a. Calculate the event ``forecast``, which is defined as the expected number of cycles until the event is expected to execute.
+   b. ``if (forecast == 1)`` the event will signal its target to prepare to execute.  This is useful for preparing time-consuming I/O operations.
+   c. ``if (forecast <= 0)`` the event will call the Execute method on its target object
+
+5. Check to see if the EventManager exit criteria have been met
+
+
+After exiting the main event loop, the EventManager will call the ``Cleanup`` method for each of its children (to produce final plots, etc.).  Note: if the code is resuming from a restart file, the EventManager will pick up exactly where it left off in the execution loop.
+
+
 Event Manager Configuration
 ----------------------------
 
 Event
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The Event block includes two attributes (by default, they are set to their max values):
-
-* ``maxTime`` - Sets the maximum time for the global event loop (real64, optional)
-* ``maxCycle`` - Sets the maximum number of cycles for the global event loop (integer, optional)
+The children of the Event block define the events that may execute during a simulation.  These may be of type ``HaltEvent``, ``PeriodicEvent``, or ``SoloEvent``.  The exit criteria for the global event loop are defined by the attributes ``maxTime`` and ``maxCycle`` (which by default are set to their max values).  If the optional verbosity flag is set, the EventManager will report additional information with regards to timestep requests and event forecasts for its children.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/Events.rst
 
 
-EventBase
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Event candidates are indicated by appending children to the Event block.  These children must point to an object of the type ``EventBase``.  The common attributes for all events are:
-
-* ``name`` - A unique identifier for the event (string)
-* ``target`` - A unix-style path to the object that should be executed if the event criteria are met.  The path can be either absolute (i.e.: '/Solvers/solver_a') or relative (i.e.: '../../Solvers/solver_a') (string, optional)
-* ``beginTime`` - This requires that (time >= beginTime) to execute. (real64, optional)
-* ``endTime`` - This requires that (time < endTime) to execute. (real64, optional)
-* ``forceDt`` - This will override the timestep requests from its target (real64, optional)
-* ``allowSuperstep`` - This will override the time-stepping behavior for its targets, and is explained further below (integer, optional)
-* ``allowSubstep`` - This will override the time-stepping behavior for its targets, and is explained further below (integer, optional)
-* ``substepFactor`` - This sets the substepping behavior for the target (integer, optional)
-* ``targetExactStartStop`` - This will cause the event to target the start/stop boundaries exactly (bool, default = 0)
-
-
 PeriodicEvent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The primary type of event used in GEOSX is of type ``PeriodicEvent``.  As its name suggests, it will execute periodically during a simulation.  It can be triggered based upon a cycleFrequency, timeFrequency, a time-function, or a function applied to an object.  The unique attributes for this event are:
+This is the most common type of event used in GEOSX.  As its name suggests, it will execute periodically during a simulation.  It can be triggered based upon a user-defined ``cycleFrequency`` or ``timeFrequency``.
 
-* ``cycleFrequency`` - This will instruct the event to execute every N cycles.  A value of "1" (default) will cause the event to trigger every cycle, a value of "2" will trigger every other cycle, and so on. (integer, optional)
-* ``timeFrequency`` - This will instruct the event to execute every X seconds.  If this parameter is set, it will supersede the cycle-driven behavior. (real64, optional)
-* ``targetExactTimestep`` - If this is set, will allow the event to limit its timestep requests in an attempt to execute on integer multiples of timeFrequency. (bool, optional)
-* ``function`` - If this is set, the event will evaluate a function to test if its target should execute.  Because some functions may be time-consuming to compute, the function is only evaluated after the cycle/time criteria are met.  The function can be a function of time or can be applied to an object. (string, optional) 
-* ``threshold`` - If the optional function control is used, the event will execute if f(inputs) > threshold.  The default value is 0.  (real64, optional)
-* ``object`` - If this value is set, the function will be applied to an object, and the min, mean, or max value of the function will be compared to the threshold. (string, optional)
-* ``set`` - If the target of a function is an object, then this may be used to limit the sets within the object to apply the function to.  Otherwise, it will be applied to the entire object. (string, optional)
-* ``stat`` - If the target of a function is an object, then this will select which property of the output to compare against the threshold. 0=min, 1=mean, 2=max.  (integer, optional)
+If cycleFrequency is specified, the event will attempt to execute every X cycles.  Note: the default behavior for a PeriodicEvent is to execute every cycle.  The event forecast for this case is given by: ``forecast = cycleFrequency - (cycle - lastCycle)`` .
+
+If timeFrequency is specified, the event will attempt to execute every X seconds (this will override any cycle-dependent behavior).  By default, the event will attempt to modify its timestep requests to respect the timeFrequency (this can be turned off by specifying targetExactTimestep="0").  The event forecast for this case is given by: ``if (dt > 0), forecast = (timeFrequency - (time - lastTime)) / dt, otherwise forecast=max``
+
+By default, a PeriodicEvent will execute throughout the entire simulation.  This can be restricted by specifying the beginTime and/or endTime attributes.  Note: if either of these values are set, then the event will modify its timestep requests so that a cycle will occur at these times (this can be turned off by specifying targetExactStartStop="0").
+
+The timestep request event is typically determined via its target.  However, this value can be overriden by setting the ``forceDt`` or ``maxEventDt`` attributes.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
 
 
-HaltEvent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The second event type used in GEOSX is of the type ``HaltEvent``.  This event will track the wall clock, and if it is executed it will set a flag that instructs the manager to exit.  The unique attribute for this object is:
-
-* ``maxRunTime`` - The event will trigger once (wallTime > maxRunTime) (real64)
-
-.. include:: ../../../coreComponents/fileIO/schema/docs/HaltEvent.rst
-
-
 SoloEvent
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The third event type used in GEOSX is of the type ``SoloEvent``.  This event will execute once once the conditions are met (Note: if targetCycle or targetTime are not specified, the event will trigger on the first cycle).  The unique attribute for this object is:
-
-* ``targetCycle`` - The event will trigger once (cycle = targetCycle). (integer)
-* ``targetTime`` - The event will trigger once (time >= targetTime) (real64)
-* ``targetExactTimestep`` - If this is set, will allow the event to limit its timestep requests in an attempt to execute on integer multiples of timeFrequency. (bool, optional)
+This type of event will execute once once the event loop reaches a certain cycle (targetCycle) or time (targetTime).  Similar to the PeriodicEvent type, this event will modify its timestep requests so that a cycle occurs at the exact time requested (this can be turned off by specifying targetExactTimestep="0").  The forecast calculations follow an similar approach to the PeriodicEvent type.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/SoloEvent.rst
 
 
-Basic Event Execution Rules
+HaltEvent
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This event type is designed to track the wall clock.  When the time exceeds the value specified via maxRunTime, the event will trigger and set a flag that instructs the main EventManager loop to cleanly exit at the end of the current cycle.  The event for cast for this event type is given by: ``forecast = (maxRuntime - (currentTime - startTime)) / realDt``
+
+.. include:: ../../../coreComponents/fileIO/schema/docs/HaltEvent.rst
+
+
+
+Other Event Features
 ---------------------------------------------
-
-During a simulation, the event manager will loop through the list of the events **in the order they are defined in the xml**.  The simulation ``cycle`` denotes the number of times this loop has completed, and ``dt`` denotes the timestep.  During each loop, each event will do the following:
-
-1. Calculate a ``forecast``, which is defined as the expected number of cycles until the event is expected to execute.
-2. ``if (forecast == 1)`` the event will signal its target to prepare to execute.  This is useful for preparing time-consuming I/O operations.
-3. ``if (forecast <= 0)`` the event will execute its target
-4. ``if (forecast <= 1)`` the event will obtain a timestep request from its target for the next cycle
-5. Check to see if the main loop execution flag has been set
-
-To initialize the simulation, the value of ``dt`` for the first ``cycle`` is set to 0.  At the end of each loop, the ``dt`` for the next ``cycle`` will be set to the smallest timestep requested by the events.  The event manager loop will continue until it reaches the maximum time, maximum number of cycles, and/or the exit flag is set.  After exiting the main loop, the event manager will call the ``Cleanup`` method for each of its children (to produce final plots, etc.).
-
 
 Event Progress Indicator
----------------------------------------------
-Because the event manager allows the user to specify the order of events, it could introduce ambiguity into the timestamps of output files.  To resolve this, we pass the *progress*, which is defined as the percent completion of the main loop, to the event targets.  Currently, this value is included in the headers of plot files.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Because the event manager allows the user to specify the order of events, it could introduce ambiguity into the timestamps of output files.  To resolve this, we pass two arguments to the target's Execute method:
 
-The event manager will also test to see if a given target is expected to execute **after all** calls to objects of type ``SolverBase``.  If this is the case, then the event will be executed with ``time = time + dt``.  Otherwise, the event will be executed with ``time = time``.  This is useful for automatically aligning the timestamps for output files.
+1. eventCounter (integer) - the application index for the event (or sub-event)
+2. eventProgress (real64) - the percent completion of the event loop, paying attention to events whose targets are associated with physics (from the start of the event, indicated via target->GetTimestepBehavior())
 
+For example, consider the following Events block:
 
+.. code-block:: xml
 
-Event Sub/Super Stepping Behavior
----------------------------------------------
+  <Events maxTime="1.0e-2">
+    <PeriodicEvent name="outputs"
+                   timeFrequency="1e-6"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput">
+    <PeriodicEvent name="solverApplications_a"
+                   forceDt="1.0e-5"
+                   target="/Solvers/lagsolve" />
+    <PeriodicEvent name="solverApplications_b"
+                   target="/Solvers/otherSolver" />
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
+  </Events>
 
-If the ``allowSuperstep`` attribute of an event is set, when its criteria are met, it will execute its target with ``time = lastTime`` and ``dt = dt + time - lastTime`` instead of their typical values.
+In this case, the events solverApplications_a and solverApplications_b point target physics events.  The eventCounter, eventProgress pairs will be: outputs (0, 0.0), solverApplications_a (1, 0.0), solverApplications_b (2, 0.5), and restarts (3, 1.0).  These values are supplied to the target events via their Execute methods for use.  For example, for the name of a silo output file will have the format: "%s_%06d%02d" % (name, cycle, eventCounter), and the time listed in the file will be ``time = time + dt*eventProgress``
 
-If the ``allowSubstep`` attribute of an event is set, when its criteria are met, it will execute its target ``N = substepFactor`` times with ``dt = dt / N`` and an the appropriate timestamp.
-
-
-Event Forecast Calculation
----------------------------------------------
-Again, the ``forecast`` is defined as the expected number of cycles until the event will execute.  If ``(time < beginTime)`` or ``(time >= endTime)``, this value will be equal to its max value.  Otherwise, it is calculated by the specific event types:
-
-* cycle-driven ``PeriodicEvent`` - ``forecast = cycleFrequency - (cycle - lastCycle)``
-* time-driven ``PeriodicEvent`` - if (dt > 0), ``forecast = (timeFrequency - (time - lastTime)) / dt``, otherwise forecast is set to the max value.
-* ``HaltEvent`` - ``forecast = (maxRuntime - (currentTime - startTime)) / realDt``
 
 
 Nested Events
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The event manager allows its child events to be nested.  If this feature is used, then the manager follows the basic execution rules, with the following exception:  When its criteria are met, an event will first execute its (optional) target.  It will then estimate the forecast for its own sub-events, and execute them following the same rules as in the main loop.  For example:
 
 .. code-block:: xml

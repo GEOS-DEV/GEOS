@@ -100,6 +100,8 @@ public:
     static constexpr auto fluidIndexString     = "fluidIndex";
     static constexpr auto solidIndexString     = "solidIndex";
 
+    static constexpr auto aperture0String  = "aperture_n";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
@@ -171,6 +173,7 @@ protected:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
 
 };

@@ -431,6 +431,7 @@ public:
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
+    static constexpr auto globalDofNumberString = "globalDOFNumber";
 
   } viewKeys;
 
