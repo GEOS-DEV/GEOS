@@ -30,8 +30,8 @@
 
 #include "MappedVector.hpp"
 
-#include "fileIO/xmlWrapper.hpp"
-#include "dataRepository/InputFlags.hpp"
+#include "xmlWrapper.hpp"
+#include "InputFlags.hpp"
 #include "Wrapper.hpp"
 
 #ifndef USE_DYNAMIC_CASTING

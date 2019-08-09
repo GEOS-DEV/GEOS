@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"

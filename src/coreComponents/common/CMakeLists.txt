@@ -7,28 +7,16 @@ set(common_headers
     DataTypes.hpp
     GeosxMacros.hpp
     TimingMacros.hpp
-    initialization.hpp )
+   )
 
 #
 # Specify all sources
 #
 set(common_sources
     DataTypes.cpp
-    initialization.cpp)
+   )
 
-set( dependencyList cxx-utilities managers mpi pugixml trilinos )
-
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
-
-if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
-endif()
-
-if( ENABLE_RAJA )
-  set( dependencyList ${dependencyList} RAJA )
-endif()
+set( dependencyList cxx-utilities ${thirdPartyLibs} )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -50,6 +38,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
 #                 SHARED TRUE
                )
                

@@ -16,19 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Copyright (c) 2015, Lawrence Livermore National Security, LLC.
- * Produced at the Lawrence Livermore National Laboratory.
- *
- * All rights reserved.
- *
- * This source code cannot be distributed without permission and
- * further review from Lawrence Livermore National Laboratory.
- */
-
 #include <gtest/gtest.h>
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 const char IGNORE_OUTPUT[] = ".*";
 
@@ -36,60 +26,60 @@ using namespace geosx;
 
 TEST( testXmlWrapper, array3d_errors )
 {
-  string input ;
+  string input;
 
   // This should work
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     xmlWrapper::StringToInputVariable( array, input );
   }
   // This should fail the num('{')==num('}') test
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17}  , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14,{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2},{3,4,5} }, { {6,7,8,{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { 0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = "  { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } ";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
   {
     input = " { { {},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
   {
     input = " { { {0,1,2}}{ } }";
-    LvArray::Array<int,3,localIndex> array;
+    LvArray::Array< int, 3, localIndex > array;
     EXPECT_DEATH_IF_SUPPORTED( xmlWrapper::StringToInputVariable( array, input ), IGNORE_OUTPUT );
   }
 
@@ -98,7 +88,8 @@ TEST( testXmlWrapper, array3d_errors )
 
 TEST( testXmlWrapper, array3d )
 {
-//  string input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} } }";
+//  string input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} }
+// }";
   string input;
   input += "{ ";
   localIndex numI = 4;
@@ -112,7 +103,7 @@ TEST( testXmlWrapper, array3d )
       input += "{ ";
       for( localIndex k=0 ; k<3 ; ++k )
       {
-        input += std::to_string(i*2+j*3+k*4);
+        input += std::to_string( i*2+j*3+k*4 );
         if( k<(numK-1) )
         {
           input += " , ";
@@ -132,18 +123,18 @@ TEST( testXmlWrapper, array3d )
   }
   input += " }";
 
-  LvArray::Array<int,3,localIndex> array;
+  LvArray::Array< int, 3, localIndex > array;
   xmlWrapper::StringToInputVariable( array, input );
 
-  ASSERT_EQ( array.size(0), numI );
-  ASSERT_EQ( array.size(1), numJ );
-  ASSERT_EQ( array.size(2), numK );
+  ASSERT_EQ( array.size( 0 ), numI );
+  ASSERT_EQ( array.size( 1 ), numJ );
+  ASSERT_EQ( array.size( 2 ), numK );
 
-  for( localIndex i=0 ; i<array.size(0) ; ++i )
+  for( localIndex i=0 ; i<array.size( 0 ) ; ++i )
   {
-    for( localIndex j=0 ; j<array.size(1) ; ++j )
+    for( localIndex j=0 ; j<array.size( 1 ) ; ++j )
     {
-      for( localIndex k=0 ; k<array.size(2) ; ++k )
+      for( localIndex k=0 ; k<array.size( 2 ) ; ++k )
       {
         ASSERT_EQ( array[i][j][k], i*2+j*3+k*4 );
       }
@@ -151,7 +142,7 @@ TEST( testXmlWrapper, array3d )
   }
 }
 
-int main( int argc, char* argv[] )
+int main( int argc, char * argv[] )
 {
   logger::InitializeLogger();
 
@@ -167,4 +158,3 @@ int main( int argc, char* argv[] )
 
   return result;
 }
-

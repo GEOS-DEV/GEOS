@@ -36,12 +36,12 @@ set(mesh_sources
     FaceElementSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp
-    MeshLevel.cpp    
+    MeshLevel.cpp
     NodeManager.cpp
     ToElementRelation.cpp
    )
 
-set(dependencyList managers metis)
+set(dependencyList managers wells)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -55,6 +55,7 @@ blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
