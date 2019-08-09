@@ -6,6 +6,9 @@ set( codingUtilities_headers
      StringUtilities.hpp
      IOUtilities.hpp
      UnitTestUtilities.hpp
+     Utilities.hpp
+     GeosxTraits.hpp
+     static_if.hpp
    )
 
 #
@@ -15,21 +18,15 @@ set( codingUtilities_sources
      StringUtilities.cpp
    )
 
-
-
-set( dependencyList common RAJA )
-
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
+set( dependencyList common )
 
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
-#                 SHARED TRUE
+                 OBJECT                TRUE
                )
-               
+
 target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX codingUtilities )

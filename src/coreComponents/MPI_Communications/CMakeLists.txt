@@ -34,6 +34,7 @@ blt_add_library( NAME                  MPI_Communications
                  SOURCES               ${MPI_Communications_sources}
                  HEADERS               ${MPI_Communications_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

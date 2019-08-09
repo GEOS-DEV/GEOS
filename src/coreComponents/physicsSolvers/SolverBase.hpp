@@ -32,8 +32,8 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
 
-#include "InterfaceTypes.hpp" // LAI
-#include "DofManager.hpp"
+#include "linearAlgebraInterface/src/InterfaceTypes.hpp" // LAI
+#include "linearAlgebraInterface/src/DofManager.hpp"
 
 namespace geosx
 {

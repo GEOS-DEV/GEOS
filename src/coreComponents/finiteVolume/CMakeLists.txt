@@ -36,6 +36,7 @@ blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
