@@ -808,8 +808,8 @@ unsigned int EdgeManager::UnpackEdges( const char*& buffer,
 
 
 void EdgeManager::ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                                 const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                                 const std::map<globalIndex,localIndex>& faceGlobalToLocal )
+                                                 const map<globalIndex,localIndex>& nodeGlobalToLocal,
+                                                 const map<globalIndex,localIndex>& faceGlobalToLocal )
 {
 
 

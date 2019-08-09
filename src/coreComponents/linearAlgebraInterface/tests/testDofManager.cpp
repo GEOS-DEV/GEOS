@@ -31,7 +31,7 @@
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "meshUtilities/MeshManager.hpp"

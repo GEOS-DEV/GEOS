@@ -1,22 +1,22 @@
-
+# Specific ordering to build object libraries
 set( subdirs
-     codingUtilities
+     math
+     cxx-utilities
      common
-     constitutive
-     dataRepository
+     linearAlgebraInterface
+     codingUtilities
      fileIO
+     dataRepository
+     managers
+     constitutive
      finiteElement
      finiteVolume
-     math
      mesh
-     managers
      meshUtilities
      MPI_Communications
      physicsSolvers
      wells
      python
-     linearAlgebraInterface
-     cxx-utilities
      )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
@@ -25,8 +25,8 @@ set( geosx_core_defines "" )
 
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-      list( APPEND coreLibs ${lib} )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
+      list( APPEND coreLibs ${lib})
     endif()
 endforeach()
 
@@ -52,12 +52,12 @@ if( GEOSX_USE_ATK )
   set( extraComponentsLinkList ${extraComponentsLinkList} )
 endif()
 
-blt_combine_static_libraries( NAME          geosx_core
-                              SOURCE_LIBS   ${coreLibs}
-                              LIB_TYPE SHARED
-                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                              LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                            )
+
+blt_add_library ( NAME geosx_core
+                  SOURCES dummy.cpp
+                  DEPENDS_ON  ${coreLibs}
+                  SHARED TRUE
+                )
 
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
 

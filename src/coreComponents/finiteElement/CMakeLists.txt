@@ -49,6 +49,7 @@ blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

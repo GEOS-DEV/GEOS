@@ -29,7 +29,7 @@
 #include <cassert>
 
 #include "dataRepository/Group.hpp"
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 /*
  * Pure virtual base class representing a generic quadrature object.
