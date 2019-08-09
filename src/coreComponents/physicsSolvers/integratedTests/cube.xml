@@ -6,20 +6,21 @@
   
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  courant="0.25"/>
+                                  courant="0.25"
+                                  targetRegions="{Region2}"/>
   </Solvers>
 
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="C3D8" 
-                  xCoords="0.00075, 1.00075"
-                  yCoords="-0.5, 0.5"
-                  zCoords="-0.5, 0.5"
-                  nx="4"
-                  ny="4"
-                  nz="4"
-                  cellBlockNames="cb1"/>
+                  elementTypes="{C3D8}" 
+                  xCoords="{0.00075, 1.00075}"
+                  yCoords="{-0.5, 0.5}"
+                  zCoords="{-0.5, 0.5}"
+                  nx="{4}"
+                  ny="{4}"
+                  nz="{4}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
 
@@ -52,7 +53,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="al" materialList="al"/>
+    <ElementRegion name="Region2" cellBlocks="{cb1}" numericalMethod="FE1" materialList="{al}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -63,23 +64,30 @@
   </Constitutive>
 
 
-  <BoundaryConditions>
-    <Dirichlet name="initVel"  
-               initialCondition="1"  
-               setNames="all"
-               objectPath="nodeManager"
-               fieldName="Velocity"
-               dataType="r1Tensor" 
-               component="0"
-               scale="-0.0002"/>
+  <FieldSpecifications>
+    <FieldSpecification name="initVel"  
+                        initialCondition="1"  
+                        setNames="{all}"
+                        objectPath="nodeManager"
+                        fieldName="Velocity"
+                        dataType="r1Tensor" 
+                        component="0"
+                        scale="-0.0002"/>
+  </FieldSpecifications>
 
-  </BoundaryConditions>
   <Partition>
     <SpatialPartition xPar="1" yPar="1" zPar="1"/>
   </Partition>
   
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/>
+    <Silo name="siloOutput"
+          parallelThreads="32"
+          plotFileRoot="plot"
+          slaveDirectory="sub"
+          writeFEMEdges="0"
+          writeFEMFaces="1"
+          writePlot="1"
+          writeRestart="0"/>
   </Outputs>
 
 </Problem>
