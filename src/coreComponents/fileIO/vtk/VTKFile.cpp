@@ -32,8 +32,7 @@ namespace geosx
   using namespace dataRepository;
   VTKFile::VTKFile( string const & name ):
     m_baseName( name ),
-    m_binary( false ),
-    m_compress( false )
+    m_binary( false )
   {
     int mpiRank;
     MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
@@ -280,7 +279,7 @@ namespace geosx
   {
     elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
-      vtuWriter.WriteCellConnectivities( elemSubRegion->nodeList(), false ); //TODO harcoded in ascii for the moment
+      vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), false ); //TODO harcoded in ascii for the moment
     });
   });
   vtuWriter.CloseXMLNode( "DataArray" );

@@ -173,15 +173,15 @@ class VTKFile
         }
 
         template< typename NODEMAPTYPE >
-        void WriteCellConnectivities( NODEMAPTYPE const & connectivities, bool binary )
+        void WriteCellConnectivities( string const& type, NODEMAPTYPE const & connectivities, bool binary )
         {
           if( binary )
           {
-            WriteBinaryConnectivities( connectivities );
+            WriteBinaryConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
           }
           else
           {
-            WriteAsciiConnectivities( connectivities );
+            WriteAsciiConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
           }
         }
 
@@ -198,15 +198,15 @@ class VTKFile
         }
 
 
-        void WriteCellTypes( string type, localIndex nbElements, bool binary )
+        void WriteCellTypes( string const& type, localIndex nbElements, bool binary )
         {
           if( binary )
           {
-            WriteBinaryTypes( m_geosxToVTKCellTypeMap.at(type), nbElements );
+            WriteBinaryTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
           }
           else
           {
-            WriteAsciiTypes( m_geosxToVTKCellTypeMap.at(type), nbElements );
+            WriteAsciiTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
           }
         }
 
@@ -238,13 +238,13 @@ class VTKFile
         void WriteBinaryVertices( r1_array const & vertices )
         {
           std::stringstream stream;
-          std::uint32_t size = vertices.size() *3 *  sizeof( real64 );
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * 3 *  sizeof( real64 );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
           for( auto const & vertex : vertices )
           {
-            stream << stringutilities::EncodeBase64( ( const unsigned char * ) vertex.Data(), 3*sizeof( real64 )) ;
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.Data() ), 3*sizeof( real64 )) ;
           }
-          m_outFile << stream.rdbuf() << '\n';
+          DumpBuffer( stream );
         }
 
         void WriteAsciiVertices( r1_array const & vertices )
@@ -256,12 +256,12 @@ class VTKFile
         }
 
         template< typename NODEMAPTYPE >
-        void WriteBinaryConnectivities( NODEMAPTYPE const & connectivities )
+        void WriteBinaryConnectivities( integer type, NODEMAPTYPE const & connectivities )
         {
           // TODO hardcoded, waiting for the VTK HEX node ordering in GEOSX
           std::stringstream stream;
-          std::uint32_t size = connectivities.size() * sizeof( localIndex );
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          std::uint32_t size = integer_conversion< std::uint32_t > ( connectivities.size() ) * sizeof( localIndex );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
           for( localIndex i = 0; i < connectivities.size() / 8 ; i++ )
           {
             localIndex_array connectivityIndex(8);
@@ -273,13 +273,13 @@ class VTKFile
             connectivityIndex[5] = connectivities[i][5];
             connectivityIndex[6] = connectivities[i][7];
             connectivityIndex[7] = connectivities[i][6];
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )connectivityIndex.data(), sizeof( localIndex ) * 8 );
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityIndex.data() ), sizeof( localIndex ) * 8 );
           }
-          m_outFile << stream.rdbuf() << '\n';
+          DumpBuffer( stream );
         }
 
         template< typename NODEMAPTYPE >
-        void WriteAsciiConnectivities( NODEMAPTYPE const & connectivities )
+        void WriteAsciiConnectivities( integer type, NODEMAPTYPE const & connectivities )
         {
           // TODO hardcoded, waiting for the VTK HEX node ordering in GEOSX
           for( localIndex i = 0; i < connectivities.size() / 8 ; i++ )
@@ -307,9 +307,9 @@ class VTKFile
         void WriteBinaryOffsets( localIndex j, localIndex nb )
         {
           std::stringstream stream;
-          std::uint32_t size = nb * sizeof( localIndex );
-          localIndex multiplier = FindMultiplier( sizeof( integer ) );
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+          std::uint32_t size = integer_conversion< std::uint32_t >( nb )* sizeof( localIndex );
+          integer multiplier = FindMultiplier( sizeof( integer ) );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
           localIndex_array offsetFragment( multiplier );
           for( integer i = 0; i < multiplier; i++)
           {
@@ -317,14 +317,14 @@ class VTKFile
           }
           for( localIndex i = 0 ; i < nb / multiplier ; i++)
           {
-            stream << stringutilities::EncodeBase64( ( const unsigned char * )offsetFragment.data(), sizeof( localIndex ) * multiplier );
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
             for( integer k = 0; k < multiplier; k++)
             {
               offsetFragment[k] += j * multiplier;
             }
           }
-          stream <<stringutilities::EncodeBase64( ( const unsigned char * )offsetFragment.data(), sizeof( localIndex ) * ( nb % multiplier) );
-          m_outFile << stream.rdbuf() << '\n';
+          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( nb % multiplier) );
+          DumpBuffer( stream );
         }
 
         void WriteAsciiTypes( integer type, localIndex nb )
@@ -338,21 +338,21 @@ class VTKFile
         void WriteBinaryTypes( integer type, localIndex nb )
         {
           std::stringstream stream;
-          std::uint32_t size = nb * sizeof( integer );
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
-          localIndex multiplier = FindMultiplier( sizeof( integer ) );
+          std::uint32_t size = integer_conversion< std::uint32_t >( nb ) * sizeof( integer );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
+          integer multiplier = FindMultiplier( sizeof( integer ) );
           integer_array typeArray( multiplier );
           for( integer i = 0; i < multiplier; i++ )
           {
             typeArray[i] = type;
           }
-          string typeString64 = stringutilities::EncodeBase64( ( const unsigned char * )typeArray.data(), sizeof( integer ) * multiplier );
+          string typeString64 = stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * multiplier );
           for( localIndex i = 0 ; i < nb / multiplier ; i++)
           {
             stream << typeString64;
           }
-          stream <<stringutilities::EncodeBase64( ( const unsigned char * )typeArray.data(), sizeof( integer ) * ( nb % multiplier) );
-          m_outFile << stream.rdbuf() << '\n';
+          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * ( nb % multiplier) );
+          DumpBuffer( stream );
         }
 
         template< typename T >
@@ -368,21 +368,26 @@ class VTKFile
         void WriteBinaryData( T const & data )
         {
           std::stringstream stream;
-          std::uint32_t size = data.size() * sizeof( real64 );
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
-          stream << stringutilities::EncodeBase64( ( const unsigned char * )data.data(), sizeof( data[0] ) * data.size() );
-          m_outFile << stream.rdbuf() << '\n';
+          std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( real64 );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
+          DumpBuffer( stream );
         }
 
-        localIndex FindMultiplier( localIndex typeSize )
+        integer FindMultiplier( integer typeSize )
         {
-          localIndex multiplier = 1;
+          integer multiplier = 1;
           while( ( multiplier * typeSize) % 6 )
           {
             multiplier++;
           }
           return multiplier;
         }
+
+      void DumpBuffer( std::stringstream const & stream )
+      {
+        m_outFile << stream.rdbuf() << '\n';
+      }
       private:
         /// vtu output file
         std::ofstream m_outFile;
@@ -436,21 +441,17 @@ class VTKFile
 
     /// Tells wether or not the output is binary
     bool m_binary;
-
-    /// Tells wether or not the data are compressed
-    bool m_compress;
-
 };
 
 template<>
 inline void VTKFile::CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 {
   std::stringstream stream;
-  std::uint32_t size = data.size() * sizeof( real64 ) * 3;
-  stream << stringutilities::EncodeBase64( ( const unsigned char * )&size, sizeof( std::uint32_t ));
+  std::uint32_t size = integer_conversion< std::uint32_t > ( data.size() ) * sizeof( real64 ) * 3;
+  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
   for( auto const & elem : data )
   {
-    stream << stringutilities::EncodeBase64(  ( const unsigned char * )elem.Data(), sizeof( real64 ) * 3 );
+    stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), sizeof( real64 ) * 3 );
   }
   m_outFile << stream.rdbuf() << '\n';
 }
