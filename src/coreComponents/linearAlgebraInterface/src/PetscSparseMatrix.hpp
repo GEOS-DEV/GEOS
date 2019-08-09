@@ -50,19 +50,19 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-	PetscSparseMatrix();
+  PetscSparseMatrix();
 
-	/**
+  /**
    * @brief Copy constructor.
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
-	PetscSparseMatrix( PetscSparseMatrix const &src );
+  PetscSparseMatrix( PetscSparseMatrix const &src );
 
-	/**
+  /**
    * @brief Virtual destructor.
    */
-	virtual ~PetscSparseMatrix() = default;
+  virtual ~PetscSparseMatrix() = default;
   //@}
 
   //! @name Create Methods
@@ -595,12 +595,12 @@ private:
    /**
    * Boolean value, true if the matrix had been finalized, false if not.
    */
-	bool assembled = false;
+  bool assembled = false;
 
   /**
    * Underlying Petsc object.
    */
-	Mat _mat;
+  Mat _mat;
 
 };
 
