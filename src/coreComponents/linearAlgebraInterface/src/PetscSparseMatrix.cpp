@@ -124,7 +124,7 @@ void PetscSparseMatrix::set( real64 const value )
 	for( PetscInt row = firstrow; row < lastrow; row++){
 
 		// get entries in row
-		close(); // hannah: this is not efficient
+		close(); 
 		MatGetRow( _mat, row, &numEntries, &inds, &vals );
 		numEntries_ = numEntries;
 		inds_ = new PetscInt[numEntries_];
@@ -132,7 +132,7 @@ void PetscSparseMatrix::set( real64 const value )
 			inds_[i] = inds[i];
 		}	
   		MatRestoreRow( _mat, row, &numEntries, &inds, &vals );
-		close(); // hannah: when do I need this?
+		close(); 
 
 		// set entries to value
 		if( numEntries_ > 0 ){
@@ -145,7 +145,6 @@ void PetscSparseMatrix::set( real64 const value )
 			PetscInt rows[1] = {row};
 			MatSetValues( _mat, 1, rows, numEntries_, inds_, vals_, INSERT_VALUES );
 		}
-		// hannah: delete allocated vals_
 	}
 }
 
@@ -285,6 +284,8 @@ void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
 // Matrix/vector multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-vector product A*src = dst.
+//
+// NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscVector const &src,
             					            PetscVector &dst ) const
 {
@@ -295,6 +296,8 @@ void PetscSparseMatrix::multiply( PetscVector const &src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product A*src = dst.
+//
+// NOTE: src and dst must be different vectors
 void PetscSparseMatrix::multiply( PetscSparseMatrix const & src, 
     							                PetscSparseMatrix & dst ) const
 {
@@ -378,13 +381,11 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
   const PetscInt* inds;
   PetscInt numEntries;
 
-  // hannah: need to check ownership?
   MatGetRow( _mat, globalRow, &numEntries, &inds, &vals );
 
   values.resize( numEntries );
   colIndices.resize( numEntries );
 
-  // hannah: create array1d from c array?
   for ( int i = 0; i < numEntries; i++ ) {
 	colIndices[i] = inds[i];
   }
@@ -408,7 +409,7 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
   for( int i = 0; i < ncols; i++ ){
     if( cols[i] == globalRow )
     {
-      return vals[i]; // hannah (*vals)[i]?
+      return vals[i];
     }
   }
   MatRestoreRow( _mat, globalRow, &ncols, &cols, &vals );
@@ -466,7 +467,6 @@ globalIndex PetscSparseMatrix::globalRows() const
 {
 	PetscInt num_rows;
 	PetscInt num_cols;
-	// hannah: type conversion
 	MatGetSize( _mat, &num_rows, &num_cols );
 	return num_rows;
 }
@@ -524,12 +524,11 @@ void PetscSparseMatrix::write( string const & filename,
 {
 	PetscViewer viewer;
 	const char * filename_ = filename.c_str();
-
 	
 	if( mtxFormat ){
 
 		// ".mtx" extension
-    	string name( filename );
+    string name( filename );
 		if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
 			name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
 		}
@@ -588,22 +587,20 @@ bool PetscSparseMatrix::isAssembled() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // MatrixMatrixMultiply
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Perform the matrix-matrix product A*src = dst.
+// Perform the matrix-matrix product A*B = C.
 void PetscSparseMatrix::MatrixMatrixMultiply( bool const transA,
                                          PetscSparseMatrix const &B,
                                          bool const transB,
                                          PetscSparseMatrix &C,
                                          bool const call_FillComplete ) const
 {
-	// hannah: fill complete?
 	if( transA && transB ) {
 		MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );
 		MatTranspose( C.getConstMat(), MAT_INPLACE_MATRIX, C.unwrappedNonConstPointer() );
 	} else if (transA ) {
 		MatTransposeMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );	
 	} else if (transB ) {
-		Mat BT; // hannah: better way to do this?
-		MatMatTransposeMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() ); // not for mpiaij matrices
+		GEOS_ERROR( " MatrixMatrixMultiply: not implemented for B transpose" );
 	} else {
 		MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );	
 	}
@@ -618,7 +615,7 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 	PetscInt low, high;
 	MatGetOwnershipRange( _mat, &low, &high);
 	if ( index < low || high <= index ) {
-		GEOS_ERROR( "getLocalRowID: processor does not own global row index" );	// hannah: error here?
+		GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
 	} 
 	return index - low;	
 }
@@ -627,28 +624,39 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 // getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const // hannah: should this return globalIndex?
+localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
 	PetscInt low, high;
 	MatGetOwnershipRange( _mat, &low, &high);
 	if ( high - low < index ) {
-		GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );	// hannah: error here?
+		GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );
 	} 
 	return static_cast<localIndex>( index + low );	
-	// return index + low;	
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// numMyCols
+// localCols
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Return the local number of columns on each processor
-localIndex PetscSparseMatrix::numMyCols( ) const
+//
+// NOTE: PETSc MPI matrices are partitioned row-wise so that the local number
+// of columns is the global number.
+localIndex PetscSparseMatrix::localCols( ) const
 {
-	// total number of columns
-	// hannah: right now PETSc is partitioned row-wise, would be different if block partitioned
 	PetscInt cols;
 	MatGetSize( _mat, nullptr, &cols );
 	return static_cast<localIndex>( cols );	
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// localRows
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Return the local number of rows on each processor
+localIndex PetscSparseMatrix::localRows() const
+{
+  PetscInt low, high;
+  MatGetOwnershipRange( _mat, &low, &high);
+  return high - low;
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

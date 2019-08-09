@@ -163,7 +163,6 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   z.scale( 0. );
   ParallelVector t( rk );
   t.scale( 0. );
-  // hannah: adding line
   ParallelVector t_( rk );
   t.scale( 0. );
 
@@ -212,7 +211,6 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     A.multiply( z, t );
 
     // Compute t = Mt
-    // hannah: adding line
     t_.copy( t );
     M.multiply( t_, t );
 
