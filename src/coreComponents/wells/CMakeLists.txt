@@ -21,10 +21,13 @@ set( wells_sources
      Perforation.cpp
    )
 
+set( dependencyList codingUtilities managers )
+
 blt_add_library( NAME                  wells
                  SOURCES               ${wells_sources}
                  HEADERS               ${wells_headers}
-                 DEPENDS_ON            dataRepository codingUtilities managers
+                 DEPENDS_ON            dataRepository ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( wells PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

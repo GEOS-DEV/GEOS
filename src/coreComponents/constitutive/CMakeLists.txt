@@ -76,6 +76,7 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
