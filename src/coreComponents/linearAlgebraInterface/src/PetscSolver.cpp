@@ -200,8 +200,7 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   // display output
   if ( m_parameters.verbosity > 0 )
   {
-    // PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
-    // PetscOptionsSetValue( nullptr, "-log_view", "true" ); // hannah: not working?
+    PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
   }
 
   // Actually solve

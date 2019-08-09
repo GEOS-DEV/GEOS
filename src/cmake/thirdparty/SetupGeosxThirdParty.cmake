@@ -587,7 +587,6 @@ endif()
   
   #else()
       message( INFO ": setting up PETSC" )
-      message( INFO ": Hannah was here" )
       set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
   #endif()
 
