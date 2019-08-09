@@ -455,6 +455,13 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
 #ifdef USE_GEOSX_PTP
 
     modifiedObjects.clearNewFromModified();
+
+    // 1) Assign new global indices to the new objects
+    CommunicationTools::AssignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    CommunicationTools::AssignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    CommunicationTools::AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
@@ -572,16 +579,16 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            map< std::pair< CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
-  arrayView1d<localIndex> const & parentNodeIndices =
-    nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
+  arrayView1d<localIndex> const &
+  parentNodeIndices = nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
   localIndex const parentNodeIndex = ObjectManagerBase::GetParentRecusive( parentNodeIndices, nodeID );
 
-  arrayView1d<localIndex> const & parentFaceIndices =
-    faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
+  arrayView1d<localIndex> const &
+  parentFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
 
-  arrayView1d<localIndex> const & childFaceIndices =
-    faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.childIndex );
+  arrayView1d<localIndex> const &
+  childFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.childIndex );
 
   std::set<localIndex> const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
 
