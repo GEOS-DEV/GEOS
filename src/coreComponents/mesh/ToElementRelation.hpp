@@ -97,7 +97,6 @@ void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
 
 typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
 typedef ToElementRelation<ArrayOfArrays<localIndex> > OrderedVariableToManyElementRelation;
-typedef ToElementRelation<array1d<set<localIndex>> > UnorderedVariableToManyElementRelation;
 
 void erase( OrderedVariableToManyElementRelation & relation,
             localIndex const firstIndex,

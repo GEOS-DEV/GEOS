@@ -127,7 +127,6 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();
-        array2d<localIndex> const & elemsToEdges = subRegion->edgeList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )

@@ -345,6 +345,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
   {
     faceToNodeMap.appendArray( numNodesPerFace[ faceID ] );
   }
+
 }
 
 /**
@@ -531,9 +532,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
                        uniqueFaceOffsets,
                        nodeList() );
   
-  GEOSX_MARK_BEGIN("FaceManager::resize");
   resize( numFaces );
-  GEOSX_MARK_END("FaceManager::resize");
 
   populateMaps( *elementManager,
                 facesByLowestNode,
@@ -553,7 +552,6 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel and fill them in.
-  GEOSX_MARK_BEGIN("Set construction");
   forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
@@ -561,7 +559,6 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
-  GEOSX_MARK_END("Set construction");
 
   SetDomainBoundaryObjects( nodeManager );
 

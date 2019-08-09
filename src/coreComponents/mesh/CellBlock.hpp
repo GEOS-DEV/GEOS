@@ -42,7 +42,6 @@ class CellBlock : public ElementSubRegionBase
 public:
 
   using NodeMapType=FixedOneToManyRelation;
-  using EdgeMapType=FixedOneToManyRelation;
   using FaceMapType=FixedOneToManyRelation;
 
   /**
@@ -215,16 +214,6 @@ public:
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation[k][a]; }
 
   /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
-
-  /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
-
-  /**
    * @return the element to face map
    */
   FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
@@ -261,9 +250,6 @@ protected:
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
-
-  /// The elements to edges relation
-  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
