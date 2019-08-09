@@ -28,7 +28,7 @@
 #include "mesh/InterObjectRelation.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 #ifdef GEOSX_USE_MPI
 #include <mpi.h>

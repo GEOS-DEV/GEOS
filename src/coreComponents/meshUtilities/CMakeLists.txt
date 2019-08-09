@@ -34,7 +34,7 @@ set(meshUtilities_sources
    )
 
 
-set( dependencyList fileIO common trilinos )
+set( dependencyList common dataRepository fileIO mesh )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
@@ -55,6 +55,7 @@ blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
+                 OBJECT                TRUE
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -7,7 +7,7 @@ set(gtest_geosx_tests
    testStackTrace.cpp
    )
 
-set( dependencyList common cxx-utilities gtest )
+set( dependencyList gtest common )
 
 #
 # Add gtest C++ based tests

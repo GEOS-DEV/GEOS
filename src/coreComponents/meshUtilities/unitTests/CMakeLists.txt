@@ -11,7 +11,7 @@ set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
-set( dependencyList geosx_core gtest )
+set( dependencyList gtest meshUtilities )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -26,7 +26,6 @@ endif()
 #
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
-    message("processing test_name ${test_name}")
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
