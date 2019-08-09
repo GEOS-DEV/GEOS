@@ -3,7 +3,7 @@
 =============== ======= ================================== 
 Name            Type    Description                        
 =============== ======= ================================== 
-currentSubEvent integer index of the current subevent.     
+currentSubEvent integer Index of the current subevent.     
 cycle           integer Current simulation cycle number.   
 dt              real64  Current simulation timestep.       
 time            real64  Current simulation time.           

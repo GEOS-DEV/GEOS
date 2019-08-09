@@ -48,17 +48,17 @@ EventManager::EventManager( std::string const & name,
   RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation time.");
+    setDescription("Maximum simulation time for the global event loop.");
 
   RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum simulation cycle.");
+    setDescription("Maximum simulation cycle for the global event loop.");
 
   RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Verbosity level");
+    setDescription("Verbosity level.");
 
   RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
@@ -74,7 +74,7 @@ EventManager::EventManager( std::string const & name,
 
   RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
-    setDescription("index of the current subevent.");
+    setDescription("Index of the current subevent.");
 
 }
 

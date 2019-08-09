@@ -77,7 +77,7 @@ public:
 
 
 
-  void CalculateShapeFunctionGradients( arrayView1d<R1Tensor> const & X,
+  void CalculateShapeFunctionGradients( arrayView1d<R1Tensor const> const & X,
                                         ElementSubRegionBase * const cellBlock ) const;
 
   localIndex getNumberOfQuadraturePoints() const;

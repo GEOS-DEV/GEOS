@@ -149,6 +149,21 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
 
+  template< bool ISPORO >
+  void AccumulationLaunch( localIndex const er,
+                           localIndex const esr,
+                           CellElementSubRegion const * const subRegion,
+                           ParallelMatrix * const matrix,
+                           ParallelVector * const rhs );
+
+  template< bool ISPORO >
+  void AccumulationLaunch( localIndex const er,
+                           localIndex const esr,
+                           FaceElementSubRegion const * const subRegion,
+                           ParallelMatrix * const matrix,
+                           ParallelVector * const rhs );
+
+
   /**
    * @brief assembles the accumulation terms for all cells
    * @param time_n previous time value
@@ -159,9 +174,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   template< bool ISPORO >
-  void AssembleAccumulationTerms( real64 const time_n,
-                                  real64 const dt,
-                                  DomainPartition const * const domain,
+  void AssembleAccumulationTerms( DomainPartition const * const domain,
                                   DofManager const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs );
@@ -209,6 +222,7 @@ public:
     static constexpr auto porosityString = "porosity";
     static constexpr auto oldPorosityString = "oldPorosity";
 
+
     using ViewKey = dataRepository::ViewKey;
 
     // dof numbering
@@ -249,9 +263,6 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
-protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
-
 private:
 
   void SetupSystem( DomainPartition * const domain,
@@ -266,7 +277,7 @@ private:
    * @param sparsity the sparsity pattern matrix
    */
   void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
+                           ParallelMatrix * const matrix ) const;
 
   /**
    * @brief sets the dof indices for this solver
@@ -281,7 +292,12 @@ private:
   void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
                                      localIndex & numLocalRows,
                                      globalIndex & numGlobalRows,
-                                     localIndex offset );
+                                     localIndex offset ) const;
+
+protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
+private:
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -327,6 +343,7 @@ private:
    * @param dataGroup group that contains the fields
    */
   void UpdateState( ManagedGroup * dataGroup ) const;
+
 
   /// views into primary variable fields
 
