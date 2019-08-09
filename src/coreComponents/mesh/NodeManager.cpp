@@ -102,16 +102,13 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     totalNodeEdges += toEdgesTemp.sizeOfArray( nodeID ); 
   } );
 
-  GEOSX_MARK_BEGIN("Reserving space in m_toEdgesRelation");
   m_toEdgesRelation.resize(0);
   m_toEdgesRelation.reserve( numNodes );
   m_toEdgesRelation.reserve( totalNodeEdges.get() );
-
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) );
   }
-  GEOSX_MARK_END("Reserving space in m_toEdgesRelation");
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -151,16 +148,13 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     totalNodeFaces += toFacesTemp.sizeOfArray( nodeID ); 
   } );
 
-  GEOSX_MARK_BEGIN("Reserving space in m_toFacesRelation");
   m_toFacesRelation.resize(0);
   m_toFacesRelation.reserve( numNodes );
   m_toFacesRelation.reserve( totalNodeFaces.get() );
-
   for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) );
   }
-  GEOSX_MARK_END("Reserving space in m_toFacesRelation");
 
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
   {

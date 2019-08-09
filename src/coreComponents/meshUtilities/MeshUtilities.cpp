@@ -47,7 +47,6 @@ MeshUtilities::~MeshUtilities()
 void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
                                       ObjectManagerBase * const nodeManager )
 {
-  GEOSX_MARK_FUNCTION; 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
   Group * sets = nodeManager->sets();
 

@@ -173,8 +173,6 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
 localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                                         arrayView1d< localIndex > const & uniqueEdgeOffsets )
 {
-  GEOSX_MARK_FUNCTION;
-
   localIndex const numNodes = edgesByLowestNode.size();
   GEOS_ERROR_IF_NE( numNodes, uniqueEdgeOffsets.size() - 1 );
 
@@ -337,7 +335,6 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   GEOS_ERROR_IF_NE( numUniqueEdges, edgeToNodeMap.size( 0 ) );
 
   // The face to edge map has the same shape as the face to node map, so we can resize appropriately.
-  GEOSX_MARK_BEGIN("Reserving space in faceToEdgeMap");
   localIndex totalSize = 0;
   for ( localIndex faceID = 0; faceID < numFaces; ++faceID )
   {
@@ -347,12 +344,10 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   faceToEdgeMap.resize( 0 );
   faceToEdgeMap.reserve( numFaces );
   faceToEdgeMap.reserveValues( totalSize );
-
   for ( localIndex faceID = 0; faceID < numFaces; ++faceID )
   {
     faceToEdgeMap.appendArray( faceToNodeMap.sizeOfArray( faceID ) );
   }
-  GEOSX_MARK_END("Reserving space in faceToEdgeMap");
 
   // loop over all the nodes.
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -428,7 +423,6 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   }
 
   // Then loop over them in parallel.
-  GEOSX_MARK_BEGIN("Set construction");
   forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
@@ -436,7 +430,6 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
     const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
-  GEOSX_MARK_END("Set construction");
 
   SetDomainBoundaryObjects( faceManager );
 }
@@ -521,8 +514,6 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
 void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
 {
-  GEOSX_MARK_FUNCTION;
-
   referenceObject->CheckTypeID( typeid( NodeManager ) );
 
   // cast the referenceObject into a faceManager
