@@ -9,6 +9,7 @@ BrooksCoreyCapillaryPressure          node         :ref:`XML_BrooksCoreyCapillar
 BrooksCoreyRelativePermeability       node         :ref:`XML_BrooksCoreyRelativePermeability`       
 CompositionalMultiphaseFluid          node         :ref:`XML_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSinglePhaseFluid`          
+Contact                               node         :ref:`XML_Contact`                               
 LinearElasticAnisotropic              node         :ref:`XML_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node         :ref:`XML_LinearElasticIsotropic`                
 PoreVolumeCompressibleSolid           node         :ref:`XML_PoreVolumeCompressibleSolid`           

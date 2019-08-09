@@ -125,8 +125,17 @@ struct AssembleAccumulationTermsHelper<false>
   }
 };
 
+
+template< typename REGIONTYPE >
 struct AccumulationKernel
 {
+
+};
+
+template<>
+struct AccumulationKernel<CellElementSubRegion>
+{
+
 
   template<bool COUPLED>
   inline static void
@@ -173,17 +182,22 @@ struct AccumulationKernel
     localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
     //localAccumJacobian = (0 * densNew + dDens_dPres * poroOld) * volNew;
   }
+};
 
+
+template<>
+struct AccumulationKernel<FaceElementSubRegion>
+{
+
+  template<bool COUPLED>
   inline static void
-  ComputeFaceElement( real64 const & densNew,
-                      real64 const & densOld,
-                      real64 const & dDens_dPres,
-                      real64 const & volume,
-                      real64 const & dVol,
-                      real64 const & faceArea,
-                      real64 & localAccum,
-                      real64 & localAccumJacobian,
-                      real64 & dRdAperture )
+  Compute( real64 const & densNew,
+           real64 const & densOld,
+           real64 const & dDens_dPres,
+           real64 const & volume,
+           real64 const & dVol,
+           real64 & localAccum,
+           real64 & localAccumJacobian )
   {
     real64 const volNew = volume + dVol;
 
@@ -191,14 +205,80 @@ struct AccumulationKernel
     localAccum = densNew * volNew - densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew;
-
-    // Derivative of residual wrt to the aperture in the cell
-    dRdAperture = densNew * faceArea;
+    localAccumJacobian =  dDens_dPres * volNew ;
   }
 };
 
+
 /******************************** FluxKernel ********************************/
+
+/**
+ * @struct Structure to contain helper functions for the FluxKernel struct.
+ */
+struct FluxKernelHelper
+{
+
+  /**
+   * @tparam INTEGRATION_OPTION This specifies the choice of integration rule for the aperture term
+   *         in a lubrication permeability.
+   * @param[in] aper0 The beginning of step aperture
+   * @param[in] aper The current approximation to the end of step aperture
+   * @param[out] aperTerm The resulting
+   * @param[out] dAperTerm_dAper
+   *
+   * Typically in lubrication theory, the permeabilty involves a \f$ aperture^3 \f$ term. The
+   * flow residual equation assumes a constant value for all parameters over \f$ dt \f$, which
+   * may introduce significant errors given the highly nonlinear nature of the cubic aperture term.
+   * The template parameter provides options:
+   *  - (0) Forward Euler. This results in no non-linearity since the beginning of step aperture
+   *    does not change.
+   *  - (1) Exact/Simpson's Rule. This is the result of taking
+   *    \f$ \int_{0}^{1} (aperture0 + (aperture-aperture0)x)x^3 dx \f$. This results
+   *    in a cubic non-linearity in the resulting set of equations.
+   *  .
+   *  @note The use of option (1) does not imply that the time integration of the residual
+   *        equation is exact, or applying Simpson's Rule. It only means that the integral of
+   *        the cubic aperture term in the permeablity is exact. All other components of the
+   *        residual equation are assumed constant over the integral, or use a backward
+   *        Euler as the case may be. Also, we omit the use of a backward Euler option as
+   *        it offers no benefit over the exact integration.
+   */
+  template< int INTEGRATION_OPTION >
+  void static apertureForPermeablityCalculation( real64 const aper0,
+                                                 real64 const aper,
+                                                 real64 & aperTerm,
+                                                 real64 & dAperTerm_dAper );
+
+
+};
+
+template<>
+inline void
+FluxKernelHelper::apertureForPermeablityCalculation<0>( real64 const aper0,
+                                                        real64 const ,
+                                                        real64 & aperTerm,
+                                                        real64 & dAperTerm_dAper )
+{
+  aperTerm = aper0*aper0*aper0 ;
+  dAperTerm_dAper = 0.0;
+}
+
+template<>
+inline void
+FluxKernelHelper::apertureForPermeablityCalculation<1>( real64 const aper0,
+                                                        real64 const aper,
+                                                        real64 & aperTerm,
+                                                        real64 & dAperTerm_dAper )
+{
+  aperTerm = 0.25 * ( aper0*aper0*aper0 +
+                      aper0*aper0*aper +
+                      aper0*aper*aper +
+                      aper*aper*aper );
+
+  dAperTerm_dAper = 0.25 * ( aper0*aper0 +
+                             2*aper0*aper +
+                             3*aper*aper );
+}
 
 struct FluxKernel
 {
@@ -254,6 +334,7 @@ struct FluxKernel
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & dMob_dPres,
+          ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
@@ -456,6 +537,8 @@ struct FluxKernel
     }
   }
 
+
+
   /**
      * @brief Compute flux and its derivatives for a given multi-element connector.
      *
@@ -473,20 +556,31 @@ struct FluxKernel
                    arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & dMob_dPres,
+                   arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
                    localIndex const fluidIndex,
                    integer const gravityFlag,
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
-                   arraySlice2d<real64> const & fluxJacobian )
+                   arraySlice2d<real64> const & fluxJacobian,
+                   arraySlice2d<real64> const & dFlux_dAperture )
   {
     real64 sumOfWeights = 0;
+    real64 aperTerm[10];
+    real64 dAperTerm_dAper[10];
+    real64 dSumOfWeights_dAper[10];
+
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
-      sumOfWeights += aperture[stencilElementIndices[k]] *
-                      aperture[stencilElementIndices[k]] *
-                      aperture[stencilElementIndices[k]] *
-          stencilWeights[k];
+      FluxKernelHelper::
+      apertureForPermeablityCalculation<0>( aperture0[stencilElementIndices[k]],
+                                            aperture[stencilElementIndices[k]],
+                                            aperTerm[k],
+                                            dAperTerm_dAper[k] );
+
+      sumOfWeights += aperTerm[k] * stencilWeights[k];
+
+      dSumOfWeights_dAper[k] = stencilWeights[k] * dAperTerm_dAper[k];
     }
 
     localIndex k[2];
@@ -499,8 +593,13 @@ struct FluxKernel
         localIndex const ei[2] = { stencilElementIndices[k[0]],
                                    stencilElementIndices[k[1]] };
 
-        real64 const weight = ( stencilWeights[k[0]]*aperture[ei[0]]*aperture[ei[0]]*aperture[ei[0]] ) *
-                              ( stencilWeights[k[1]]*aperture[ei[1]]*aperture[ei[1]]*aperture[ei[1]] ) / sumOfWeights;
+        real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                              ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+
+        real64 const
+        dWeight_dAper[2] =
+        { weight * dAperTerm_dAper[k[0]] / aperTerm[k[0]] - dSumOfWeights_dAper[k[0]] / sumOfWeights,
+          weight * dAperTerm_dAper[k[1]] / aperTerm[k[1]] - dSumOfWeights_dAper[k[1]] / sumOfWeights };
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
@@ -508,8 +607,8 @@ struct FluxKernel
         real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
                                          0.5 * dDens_dPres[ei[1]][0] };
 
-        real64 const potDif = weight * ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
-                                         densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+        real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
+                                 densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -519,28 +618,37 @@ struct FluxKernel
         real64 const mobility     = mob[ei_up];
         real64 const dMobility_dP = dMob_dPres[ei_up];
 
-        // compute the final flux and derivatives
-        real64 const fluxVal = mobility * potDif;
+        // Compute flux and fill flux rval
+        real64 const fluxVal = mobility * weight * potDif * dt;
+        flux[k[0]] += fluxVal;
+        flux[k[1]] -= fluxVal;
 
-        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
-        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
+        // compute and fill dFlux_dP
+        dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
+        dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) ) * dt;
+        dFlux_dP[k_up] += dMobility_dP * weight * potDif * dt;
 
-        dFlux_dP[k_up] += dMobility_dP * potDif;
+        fluxJacobian[k[0]][k[0]] += dFlux_dP[0];
+        fluxJacobian[k[0]][k[1]] += dFlux_dP[1];
+        fluxJacobian[k[1]][k[0]] -= dFlux_dP[0];
+        fluxJacobian[k[1]][k[1]] -= dFlux_dP[1];
 
-        // populate local flux vector and derivatives
-        flux[k[0]] += dt * fluxVal;
-        flux[k[1]] -= dt * fluxVal;
-
-        fluxJacobian[k[0]][k[0]] += dt * dFlux_dP[0];
-        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
-        fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
-        fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
-
+        real64 const dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
+                                        mobility * dWeight_dAper[1] * potDif * dt };
+        dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
+        dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
+        dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
+        dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
       }
     }
   }
 
 };
+
+
+
+
+
 
 } // namespace SinglePhaseFlowKernels
 

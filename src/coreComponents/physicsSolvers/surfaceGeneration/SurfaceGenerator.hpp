@@ -37,8 +37,8 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
-  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
 };
@@ -119,7 +119,7 @@ public:
    */
   void
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                                std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
+                                map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
