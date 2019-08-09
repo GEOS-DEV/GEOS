@@ -20,6 +20,8 @@
 
 #include <mpi.h>
 
+#include "common/DataTypes.hpp"
+#include "managers/initialization.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/Wrapper.hpp"

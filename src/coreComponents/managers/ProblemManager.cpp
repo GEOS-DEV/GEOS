@@ -923,7 +923,6 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 
 void ProblemManager::ApplyInitialConditions()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
   FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
