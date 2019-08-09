@@ -23,7 +23,6 @@
 #ifndef LAI_PETSCVECTOR_HPP_
 #define LAI_PETSCVECTOR_HPP_
 
-#include "InterfaceTypes.hpp"
 #include "common/DataTypes.hpp"
 
 #include <petscvec.h>
@@ -80,7 +79,7 @@ class PetscVector
   void create( PetscVector const & src );
 
   /**
-   * @brief Create a vector based on local number of elements.
+   * @brief Create a vector based on local number of elements. Creates a CPU MPI vector.
    *
    * Create a vector based on local number of elements.  Global size is
    * the sum across processors.  For specifying a global size and having
@@ -92,7 +91,7 @@ class PetscVector
   void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Create a vector based on global number of elements.
+   * @brief Create a vector based on global number of elements. Creates a CPU MPI vector.
    *
    * Create a vector based on global number of elements. Every processors
    * gets the same number of local elements except proc 0, which gets any
@@ -104,14 +103,14 @@ class PetscVector
   void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Construct parallel vector from a local array.
+   * @brief Construct parallel vector from a local array. Creates a CPU MPI vector.
    *
-   * Create a vector from local data
+   * Create a vector from local data, must assemble vector after use.
    *
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD ); // hannah: to do
+  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   //@}
   //! @name Open / close
@@ -126,7 +125,6 @@ class PetscVector
   /**
    * @brief Assemble vector
    *
-   * // hannah: blurb here
    */
   void close();
 
@@ -142,6 +140,8 @@ class PetscVector
    * \param globalRow global row index
    * \param value Value to add at given row.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const globalRow,
             real64 const value );
@@ -153,6 +153,8 @@ class PetscVector
    *
    * \param globalRow global row.
    * \param value Values to add in given row.
+   * 
+   * NOTE: set() and add() can't be interchanged without assembly.
    *
    */
   void add( globalIndex const globalRow,
@@ -167,6 +169,8 @@ class PetscVector
    * \param values Values to add in given rows.
    * \param size Number of elements
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const * globalIndices,
             real64 const * values,
@@ -181,6 +185,8 @@ class PetscVector
    * \param values Values to add in given rows.
    * \param size Number of elements
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void add( globalIndex const * globalIndices,
             real64 const * values,
@@ -194,6 +200,8 @@ class PetscVector
    * \param globalIndices global row indices.
    * \param values Values to add in given rows.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
@@ -207,6 +215,8 @@ class PetscVector
    * \param globalIndices global rows indices
    * \param values Values to add in given rows.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void add( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
@@ -216,6 +226,8 @@ class PetscVector
    *
    * \param value Values to set vector elements to.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( real64 const value );
 
@@ -323,11 +335,18 @@ class PetscVector
 
    /**
    * @brief Returns a single element. 
+   * 
+   * \param globalRow Global location of element to return
    */
   real64 get(globalIndex globalRow) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector.
+   * 
+   * \param globalIndices Global index array of local portion of the vector
+   * \param values Array of values of local portion of the vector
+   * 
+   * NOTE: not yet implemented
    */
   void get( array1d<globalIndex> const & globalIndices,
             array1d<real64> & values ) const;
@@ -369,17 +388,25 @@ class PetscVector
 
   /**
    * @brief Write the vector to a matlab-compatible file
+   * 
+   * \param filename Name of output file
+   * \param mtxFormat True if Matrix Market file format, false for Matlab
    */
   void write( string const & filename,
-              bool const mtxFormat = true ) const; // hannah: to do 
+              bool const mtxFormat = true ) const;
 
   /**
-   * Map a global row index to local row index
+   * Map a global row index to local row index. 
+   * Error if requesting processor does not own row index. 
+   * 
+   * \param index Global index of row
    */
-  localIndex getLocalRowID( globalIndex const index ) const; // hannah: to do 
+  localIndex getLocalRowID( globalIndex const index ) const;
 
   /**
-   * Extract a view of the local portion of the array
+   * Extract a view of the local portion of the array.
+   * 
+   * \param localVector Pointer to array of local values. Caller allocates memory. 
    */
   void extractLocalVector( real64 ** localVector ) const;
 
