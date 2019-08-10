@@ -29,7 +29,411 @@
 
 namespace geosx
 {
-  using namespace dataRepository;
+using namespace dataRepository;
+class CustomVTUXMLWriter
+{
+  public:
+  CustomVTUXMLWriter() = delete;
+  CustomVTUXMLWriter( string const & fileName ) :
+      m_outFile( fileName, std::ios::binary ),
+      m_spaceCount(0)
+  {
+  }
+
+  /*!
+   * @brief Write the header of the VTU file with the XML version
+   */
+  void WriteHeader()
+  {
+    m_outFile << "<?xml version=\"1.0\"?>\n";
+  }
+
+  /*!
+   * @brief Write an opening XML node
+   * @param[in] nodeName the name of the node
+   * @param[in[ args list of pair {paramaters,value}
+   * @details This function also handle the spacing for good looking file
+   */
+  void OpenXMLNode( string const & nodeName, std::initializer_list< std::pair< string, string > > const & args)
+  {
+    for( int i = 0 ; i < m_spaceCount ; i++)
+    {
+      m_outFile << " ";
+    }
+    m_outFile << "<" << nodeName << " ";
+    for( auto param  : args )
+    {
+      m_outFile << param.first << "=\"" << param.second << "\" ";
+    }
+    m_outFile << ">\n";
+    m_spaceCount +=2;
+  }
+
+  /*!
+   * @brief Write the vertices coordinates
+   * @param[in] vertices table of vertice coordinates
+   * @param[in] binary tells wether or not the data should be written in binary format
+   */
+  void WriteVertices( r1_array const & vertices, bool binary )
+  {
+    if( binary )
+    {
+      WriteBinaryVertices( vertices );
+    }
+    else
+    {
+      WriteAsciiVertices( vertices );
+    }
+  }
+
+  /*!
+   * @brief Write the cell connectivities
+   * @param[in] type the GEOSX type of the cells
+   * @param[in] connectivities the table of connectivities
+   * @param[in] binary tells wether or not the data should be written in binary format
+   */
+  template< typename NODEMAPTYPE >
+  void WriteCellConnectivities( string const& type, NODEMAPTYPE const & connectivities, bool binary )
+  {
+    if( binary )
+    {
+      WriteBinaryConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
+    }
+    else
+    {
+      WriteAsciiConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
+    }
+  }
+
+  /*!
+   * @brief Write the offsets
+   * @details for a full hex mesh : 0, 8, 16, 24....
+   * @param[in] nbNodesPerElement the number of nodes by elements
+   * @param[in] nbElements the number of elements
+   * @param[in] binary tells wether or not the data should be written in binary format
+   */
+  void WriteCellOffsets( localIndex nbNodesPerElement, localIndex nbElements, bool binary )
+  {
+    if( binary )
+    {
+      WriteBinaryOffsets( nbNodesPerElement, nbElements );
+    }
+    else
+    {
+      WriteAsciiOffsets( nbNodesPerElement, nbElements );
+    }
+  }
+
+  /*!
+   * @brief Write the Cell types
+   * @param[in] type the GEOSX type of the cells
+   * @param[in] nbElements the number of elements
+   * @param[in] binary tells wether or not the data should be written in binary format
+   */
+  void WriteCellTypes( string const& type, localIndex nbElements, bool binary )
+  {
+    if( binary )
+    {
+      WriteBinaryTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
+    }
+    else
+    {
+      WriteAsciiTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
+    }
+  }
+
+  template< typename T >
+  /*!
+   * @brief Write contiguous data
+   * @param[in] data table of data
+   * @param[in] binary tells wether or not the data should be written in binary format
+   */
+  void WriteData(T const & data, bool binary)
+  {
+    if( binary )
+    {
+      WriteBinaryData( data );
+    }
+    else
+    {
+      WriteAsciiData( data );
+    }
+  }
+
+  /*!
+   * @brief Method use to write, cells data size
+   * @param[in] nbTotalCells number of elements accross all the elementRegion
+   * @param[in] factor usually the size of the data type to be written, multiplied by the number of data by cells.
+   */
+  void WriteSize( localIndex nbTotalCells, localIndex factor )
+  {
+    std::stringstream stream;
+    std::uint32_t size = integer_conversion< std::uint32_t >( nbTotalCells * factor );
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+    m_outFile << stream.rdbuf();
+  }
+
+  /*!
+   * @brief Close a XML node
+   * @param[in] nodeName name of the node to be closed
+   */
+  void CloseXMLNode( string const & nodeName )
+  {
+    m_spaceCount -=2;
+    for( int i = 0 ; i < m_spaceCount ; i++)
+    {
+      m_outFile << " ";
+    }
+    m_outFile << "</" << nodeName << ">\n";
+  }
+
+  private:
+
+    void WriteBinaryVertices( r1_array const & vertices )
+    {
+      std::stringstream stream;
+      std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * 3 *  sizeof( real64 );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+      for( auto const & vertex : vertices )
+      {
+        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.Data() ), 3*sizeof( real64 )) ;
+      }
+      DumpBuffer( stream );
+    }
+
+    void WriteAsciiVertices( r1_array const & vertices )
+    {
+      for( auto vertex : vertices )
+      {
+        m_outFile << vertex << "\n";
+      }
+    }
+
+    template< typename NODEMAPTYPE >
+      void WriteBinaryConnectivities( integer type, NODEMAPTYPE const & connectivities )
+      {
+        std::stringstream stream;
+        std::uint32_t size = integer_conversion< std::uint32_t > ( connectivities.size() ) * sizeof( localIndex );
+        //stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+        if( type == 12 ) // Special case for the hex, because the ordering need to be changed for each cell...
+        {
+          integer multiplier = FindMultiplier( sizeof( localIndex ) );
+          localIndex cellIndex = 0;
+          localIndex vertexIndex=0;
+          localIndex_array connectivityFragment( multiplier );
+          std::cout << multiplier << std::endl;
+          for( integer i = 0 ; i < connectivities.size() / multiplier ; i++ )
+          {
+            for( integer j = 0 ; j < multiplier; j++ )
+            {
+              if( vertexIndex == 2 )
+              {
+                connectivityFragment[j] = connectivities[cellIndex][3];
+              }
+              else if( vertexIndex == 3 )
+              {
+                connectivityFragment[j] = connectivities[cellIndex][2];
+              }
+              else if( vertexIndex == 6 )
+              {
+                connectivityFragment[j] = connectivities[cellIndex][7];
+              }
+              else if( vertexIndex == 7 )
+              {
+                connectivityFragment[j] = connectivities[cellIndex][6];
+              }
+              else
+              {
+                connectivityFragment[j] = connectivities[cellIndex][vertexIndex];
+              }
+              vertexIndex++;
+              if( vertexIndex == 8)
+              {
+                vertexIndex = 0;
+                cellIndex++;
+              }
+            }
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+          }
+          connectivityFragment.resize( 8 - vertexIndex );
+          for( integer j = 0 ; j < connectivityFragment.size(); j++ )
+          {
+            if( vertexIndex == 2 )
+            {
+              connectivityFragment[j] = connectivities[cellIndex][3];
+            }
+            else if( vertexIndex == 3 )
+            {
+              connectivityFragment[j] = connectivities[cellIndex][2];
+            }
+            else if( vertexIndex == 6 )
+            {
+              connectivityFragment[j] = connectivities[cellIndex][7];
+            }
+            else if( vertexIndex == 7 )
+            {
+              connectivityFragment[j] = connectivities[cellIndex][6];
+            }
+            else
+            {
+              connectivityFragment[j] = connectivities[cellIndex][vertexIndex];
+            }
+            vertexIndex++;
+            if( vertexIndex == 8)
+            {
+              vertexIndex = 0;
+              cellIndex++;
+            }
+          }
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) );
+        }
+        else
+        {
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivities.data() ), sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) );
+        }
+        DumpBuffer( stream );
+      }
+
+    template< typename NODEMAPTYPE >
+    void WriteAsciiConnectivities( integer type, NODEMAPTYPE const & connectivities )
+    {
+      for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
+      {
+        m_outFile << connectivities[i][0] << " ";
+        m_outFile << connectivities[i][1] << " ";
+        m_outFile << connectivities[i][3] << " ";
+        m_outFile << connectivities[i][2] << " ";
+        m_outFile << connectivities[i][4] << " ";
+        m_outFile << connectivities[i][5] << " ";
+        m_outFile << connectivities[i][7] << " ";
+        m_outFile << connectivities[i][6] << " ";
+        m_outFile << "\n";
+      }
+    }
+
+    void WriteAsciiOffsets( localIndex j, localIndex nb )
+    {
+      for( localIndex i = 1 ; i < nb + 1 ; i++)
+      {
+        m_outFile << i*j << "\n";
+      }
+    }
+
+    void WriteBinaryOffsets( localIndex j, localIndex nb )
+    {
+      std::stringstream stream;
+      integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
+      localIndex_array offsetFragment( multiplier );
+      for( integer i = 0; i < multiplier; i++)
+      {
+        offsetFragment[i] = ( i + 1 ) * j;
+      }
+      for( localIndex i = 0 ; i < nb / multiplier ; i++)
+      {
+        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
+        for( integer k = 0; k < multiplier; k++)
+        {
+          offsetFragment[k] += j * multiplier;
+        }
+      }
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( nb % multiplier) );
+      DumpBuffer( stream );
+    }
+
+    void WriteAsciiTypes( integer type, localIndex nb )
+    {
+      for( localIndex i = 0 ; i < nb ; i++)
+      {
+        m_outFile << type << "\n";
+      }
+    }
+
+    void WriteBinaryTypes( integer type, localIndex nb )
+    {
+      std::stringstream stream;
+      integer multiplier = FindMultiplier( sizeof( integer ) );// We do not write all the data at once to avoid creating a big table each time.
+      integer_array typeArray( multiplier );
+      for( integer i = 0; i < multiplier; i++ )
+      {
+        typeArray[i] = type;
+      }
+      string typeString64 = stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * multiplier );
+      for( localIndex i = 0 ; i < nb / multiplier ; i++)
+      {
+        stream << typeString64;
+      }
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * ( nb % multiplier) );
+      DumpBuffer( stream );
+    }
+
+    template< typename T >
+      void WriteAsciiData( T const & data)
+      {
+        for( localIndex i = 0; i < data.size() ; i++ )
+        {
+          m_outFile << data[i] << "\n";
+        }
+      }
+
+    template< typename T >
+    void WriteBinaryData( T const & data )
+    {
+      std::stringstream stream;
+      std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( real64 );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
+      DumpBuffer( stream );
+    }
+
+    /*!
+     * @brief This function is used to compute the minimum number of value of a certain type
+     * that can be continously encoded into a base64 to be properly written into the VTU file.
+     */
+    integer FindMultiplier( integer typeSize )
+    {
+      integer multiplier = 1;
+      while( ( multiplier * typeSize) % 6 )
+      {
+        multiplier++;
+      }
+      return multiplier;
+    }
+
+    void DumpBuffer( std::stringstream const & stream )
+    {
+      m_outFile << stream.rdbuf() << '\n';
+    }
+  private:
+    /// vtu output file
+    std::ofstream m_outFile;
+
+    /// Space counter to have well indented XML file
+    int m_spaceCount;
+
+    /// Map from GEOSX type to VTK cell types
+    const unordered_map< string, int > m_geosxToVTKCellTypeMap =
+    {
+      { "C3D4", 10 },
+      { "C3D5", 14 },
+      { "C3D6", 13 },
+      { "C3D8", 12 },
+      { "", 9 } // QUAD ?
+    };
+};
+
+template<>
+inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
+{
+  std::stringstream stream;
+  std::uint32_t size = integer_conversion< std::uint32_t > ( data.size() ) * sizeof( real64 ) * 3;
+  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
+  for( auto const & elem : data )
+  {
+    stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), sizeof( real64 ) * 3 );
+  }
+  m_outFile << stream.rdbuf() << '\n';
+}
+
   VTKFile::VTKFile( string const & name ):
     m_baseName( name ),
     m_binary( false )
@@ -146,7 +550,7 @@ namespace geosx
       // Declaration of the node PCells
       auto pCellsNode = pUnstructureGridNode.append_child("PCells");
       // .... and its data array defining the connectivities, types, and offsets
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1, "ascii" ); //TODO harcoded for the moment
+      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1, format ); //TODO harcoded for the moment
       CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1, format );
       CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1, format );
 
@@ -273,13 +677,27 @@ namespace geosx
   vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
                                         { "Name", "connectivity" },
                                         { "NumberOfComponents", "1" },
-                                        { "format", "ascii" } } ); //TODO harcoded in ascii for th emoment
+                                        { "format", format } } );
+  if( m_binary )
+  {
+    localIndex totalNumberOfConnectivities = 0;
+    elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
+                                                                              auto const * const elemRegion )
+    {
+      elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
+      {
+        totalNumberOfConnectivities = elemSubRegion->size() * elemSubRegion->numNodesPerElement();
+      });
+    });
+    vtuWriter.WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
+  }
+
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                               auto const * const elemRegion )
   {
     elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
-      vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), false ); //TODO harcoded in ascii for the moment
+      vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), m_binary );
     });
   });
   vtuWriter.CloseXMLNode( "DataArray" );
@@ -289,6 +707,7 @@ namespace geosx
                                         { "Name", "offsets" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
+  vtuWriter.WriteSize( totalNumberOfCells, sizeof( localIndex ) );
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                               auto const * const elemRegion )
   {
@@ -304,6 +723,7 @@ namespace geosx
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
+  vtuWriter.WriteSize( totalNumberOfCells, sizeof( integer ) );
   elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
                                                                               auto const * const elemRegion )
   {
