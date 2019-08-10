@@ -150,7 +150,7 @@ class VTKFile
       {rtTypes::TypeIDs::localIndex_array3d_id, "Int64"},
       {rtTypes::TypeIDs::globalIndex_array_id, "Int64"},
       {rtTypes::TypeIDs::globalIndex_array2d_id, "Int64"},
-      {rtTypes::TypeIDs::globalIndex_array3d_id, "Int64"},
+      {rtTypes::TypeIDs::globalIndex_array3d_id, "Int64"}
     };
     /// Root file ( .pvd )
     pugi::xml_document m_rootFile;
