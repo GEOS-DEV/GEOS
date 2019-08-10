@@ -212,38 +212,19 @@ public:
 
     static constexpr auto deltaVolumeString = "deltaVolume";
 
-    // secondary/backup fields
-    static constexpr auto densityString = "density";
-    static constexpr auto viscosityString = "viscosity";
-
+    // intermediate fields
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
-
     static constexpr auto porosityString = "porosity";
-    static constexpr auto oldPorosityString = "oldPorosity";
 
+    // face fields
+    static constexpr auto faceDensityString = "faceDensity";
+    static constexpr auto faceViscosityString = "faceViscosity";
+    static constexpr auto faceMobilityString = "faceMobility";
 
-    using ViewKey = dataRepository::ViewKey;
-
-    // dof numbering
-    ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-
-    // primary solution field
-    ViewKey pressure = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-    ViewKey facePressure = { facePressureString };
-
-    ViewKey deltaVolume = { deltaVolumeString };
-
-    // these are used to store last converged time step values
-    ViewKey density = { densityString };
-    ViewKey viscosity = { viscosityString };
-
-    ViewKey mobility = { mobilityString };
-    ViewKey dMobility_dPressure = { dMobility_dPressureString };
-
-    ViewKey porosity = { porosityString };
-    ViewKey oldPorosity = { oldPorosityString };
+    //backup fields
+    static constexpr auto porosityOldString = "porosityOld";
+    static constexpr auto densityOldString = "densityOld";
 
   } viewKeysSinglePhaseFlow;
 
