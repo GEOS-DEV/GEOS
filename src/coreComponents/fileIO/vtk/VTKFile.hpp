@@ -130,7 +130,7 @@ class VTKFile
   }
 
   private:
-    const unordered_map< rtTypes::TypeIDs, string > m_geosxToVTKTypeMap =
+    const std::unordered_map< rtTypes::TypeIDs, string > m_geosxToVTKTypeMap =
     {
       {rtTypes::TypeIDs::integer_id, "Int32"},
       {rtTypes::TypeIDs::localIndex_id, "Int64"},
