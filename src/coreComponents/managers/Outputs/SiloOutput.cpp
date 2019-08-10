@@ -51,8 +51,6 @@ SiloOutput::SiloOutput( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  std::cout << "PLOT LVEL " << m_plotLevel << std::endl;
-
 }
 
 SiloOutput::~SiloOutput()
