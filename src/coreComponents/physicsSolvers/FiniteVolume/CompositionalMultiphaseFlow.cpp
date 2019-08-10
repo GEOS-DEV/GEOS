@@ -1464,6 +1464,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
     arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
     arrayView1d<real64 const>      const & refPoro       = m_porosityRef[er][esr];
     arrayView1d<real64 const>      const & volume        = m_volume[er][esr];
+    arrayView2d<real64 const>      const & totalDens     = m_totalDens[er][esr][m_fluidIndex];
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex ei = 0; ei < subRegionSize; ++ei )
@@ -1474,7 +1475,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
           localIndex const lid = rhs.getLocalRowID( offset + idof );
-          real64 const val = localResidual[lid] / (refPoro[ei] * volume[ei]);
+          real64 const val = localResidual[lid] / (totalDens[ei][0] * refPoro[ei] * volume[ei]);
           localResidualNorm += val * val;
         }
       }
