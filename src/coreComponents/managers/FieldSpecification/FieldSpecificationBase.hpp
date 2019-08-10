@@ -847,7 +847,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
-  real64 const setSizeFactor = normalizeBySetSize ? 1.0/targetSet.size() : 1.0;
+  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
 
   if( functionName.empty() )
   {
@@ -928,7 +928,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
-  real64 const setSizeFactor = normalizeBySetSize ? 1.0/targetSet.size() : 1.0;
+  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
 
   if( functionName.empty() )
   {
