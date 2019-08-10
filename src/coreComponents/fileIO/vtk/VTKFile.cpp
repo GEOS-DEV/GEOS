@@ -297,16 +297,27 @@ class CustomVTUXMLWriter
     template< typename NODEMAPTYPE >
     void WriteAsciiConnectivities( integer type, NODEMAPTYPE const & connectivities )
     {
-      for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
+      if( type == 12 ) // Special case for hexahedron because of the internal ordering
       {
-        m_outFile << connectivities[i][0] << " ";
-        m_outFile << connectivities[i][1] << " ";
-        m_outFile << connectivities[i][3] << " ";
-        m_outFile << connectivities[i][2] << " ";
-        m_outFile << connectivities[i][4] << " ";
-        m_outFile << connectivities[i][5] << " ";
-        m_outFile << connectivities[i][7] << " ";
-        m_outFile << connectivities[i][6] << " ";
+        for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
+        {
+          m_outFile << connectivities[i][0] << " ";
+          m_outFile << connectivities[i][1] << " ";
+          m_outFile << connectivities[i][3] << " ";
+          m_outFile << connectivities[i][2] << " ";
+          m_outFile << connectivities[i][4] << " ";
+          m_outFile << connectivities[i][5] << " ";
+          m_outFile << connectivities[i][7] << " ";
+          m_outFile << connectivities[i][6] << " ";
+          m_outFile << "\n";
+        }
+      }
+      else
+      {
+        for( localIndex i = 0; i < connectivities.size()  ; i++ )
+        {
+            m_outFile << connectivities.data()[i] <<" ";
+        }
         m_outFile << "\n";
       }
     }
@@ -556,8 +567,8 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 
       // Find all the cell fields to output
       auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
-      elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                                       auto const * const elemRegion )
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
         elemRegion->forElementSubRegions([&]( auto const * const subRegion )
         {
@@ -612,8 +623,8 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   
   // Declaration of the node Piece and the basic informations of the mesh
   localIndex totalNumberOfCells = 0;
-  elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                              auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
     totalNumberOfCells += elemRegion->GetTotalSize();
   });
@@ -681,10 +692,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   if( m_binary )
   {
     localIndex totalNumberOfConnectivities = 0;
-    elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                              auto const * const elemRegion )
+    elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                  auto const * const elemRegion )
     {
-      elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
+      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
       {
         totalNumberOfConnectivities = elemSubRegion->size() * elemSubRegion->numNodesPerElement();
       });
@@ -692,10 +703,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
     vtuWriter.WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
   }
 
-  elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                              auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
-    elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
+    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
       vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), m_binary );
     });
@@ -708,10 +719,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
   vtuWriter.WriteSize( totalNumberOfCells, sizeof( localIndex ) );
-  elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                              auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
-    elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
+    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
       vtuWriter.WriteCellOffsets( elemSubRegion->numNodesPerElement(), elemSubRegion->size(), m_binary );
     });
@@ -724,10 +735,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
   vtuWriter.WriteSize( totalNumberOfCells, sizeof( integer ) );
-  elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                              auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
-    elemRegion->template forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto const * const elemSubRegion )
+    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
       vtuWriter.WriteCellTypes( elemSubRegion->GetElementTypeString(), elemSubRegion->size(), m_binary );
     });
@@ -738,8 +749,8 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 
   // Definition of the CellDataArray node that will contains all the data held by the elements
   vtuWriter.OpenXMLNode( "CellData", {} );
-  elemManager->forElementRegionsComplete< ElementRegion, FaceElementRegion >( [&]( localIndex const er,
-                                                                                   auto const * const elemRegion )
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
     elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
