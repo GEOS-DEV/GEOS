@@ -16,14 +16,18 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "gtest/gtest.h"
+/**
+ * @file testDofManager.cpp
+ * @brief This test file is part of the ctest suite and tests the DofManager functionalities.
+ */
 
-#include <numeric>
+#include "gtest/gtest.h"
 
 #ifdef __clang__
 #define __null nullptr
 #endif
 
+#include <numeric>
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
@@ -50,10 +54,23 @@ char** global_argv;
 class DofManagerTest : public ::testing::Test
 {
 public:
+  /**
+   * @brief Set the timer function.
+   *
+   * @param [out] time double actual time.
+   */
   void setTimer( double &time )
   {
     time = MPI_Wtime();
   }
+
+  /**
+   * @brief Get elapsed time.
+   *
+   * @param [inout] time double
+   * - on input: actual time from setTimer;
+   * - on output: elapsed time.
+   */
   void getElapsedTime( double &time )
   {
     time = MPI_Wtime() - time;
@@ -61,6 +78,9 @@ public:
 
 protected:
 
+  /**
+   * @brief Provide a very simple xml input, with an internally generated mesh.
+   */
   static void SetUpTestCase()
   {
     problemManager = new ProblemManager("Problem", nullptr);
@@ -119,6 +139,9 @@ protected:
     problemManager->ProblemSetup();
   }
 
+  /**
+   * @brief Destructor.
+   */
   static void TearDownTestCase()
   {
     delete problemManager;
@@ -128,8 +151,18 @@ protected:
   static ProblemManager * problemManager;
 };
 
-ProblemManager * DofManagerTest::problemManager = nullptr;
+ProblemManager * DofManagerTest::problemManager = nullptr; //!< the main problemManager.
 
+/**
+ * @name Ctest tests.
+ * @brief Run testing functions using different DofManager functionalities.
+ */
+
+/**
+ * @function TestFEM_partial.
+ * @brief Define a vectorial nodal field (displacement) connected through elements (FEM) and check the
+ * global number of DoFs. The field is defined on 3 regions out of 4.
+ */
 TEST_F(DofManagerTest, TestFEM_partial)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -155,6 +188,11 @@ TEST_F(DofManagerTest, TestFEM_partial)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
 }
 
+/**
+ * @function TestFEM_all.
+ * @brief Define a vectorial nodal field (displacement) connected through elements (FEM) and check the
+ * global number of DoFs. The field is defined on all regions.
+ */
 TEST_F(DofManagerTest, TestFEM_all)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -174,6 +212,11 @@ TEST_F(DofManagerTest, TestFEM_all)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
 }
 
+/**
+ * @function TestFVM_partial.
+ * @brief Define a scalar element field (pressure) connected through faces (FVM) and check the
+ * global number of DoFs. The field is defined on 3 regions out of 4.
+ */
 TEST_F(DofManagerTest, TestFVM_partial)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -198,6 +241,11 @@ TEST_F(DofManagerTest, TestFVM_partial)
   EXPECT_EQ( pattern.globalCols(), nCells );
 }
 
+/**
+ * @function TestFVM_all.
+ * @brief Define a scalar element field (pressure) connected through faces (FVM) and check the
+ * global number of DoFs. The field is defined on all regions.
+ */
 TEST_F(DofManagerTest, TestFVM_all)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -217,6 +265,11 @@ TEST_F(DofManagerTest, TestFVM_all)
   EXPECT_EQ( pattern.globalCols(), nCells );
 }
 
+/**
+ * @function TestCoupling
+ * @brief Define two fields, one is displacement (FEM) and the other pressure (FVM), and a coupling
+ * among them. Check the sizes of the coupling block pattern.
+ */
 TEST_F(DofManagerTest, TestCoupling)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -260,6 +313,10 @@ TEST_F(DofManagerTest, TestCoupling)
   EXPECT_DOUBLE_EQ( emptyPattern.normFrobenius(), 0. );
 }
 
+/**
+ * @function TestUserDefinedPattern
+ * @brief Create an external pattern and pass it to the DofManager.
+ */
 TEST_F(DofManagerTest, TestUserDefinedPattern)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -287,6 +344,11 @@ TEST_F(DofManagerTest, TestUserDefinedPattern)
   EXPECT_DOUBLE_EQ( pattern.normFrobenius(), userPattern.normFrobenius() );
 }
 
+/**
+ * @function TestFEM_FVM
+ * @brief Define two fields, one is displacement (FEM) and the other pressure (FVM), and check the
+ * size of the global pattern.
+ */
 TEST_F(DofManagerTest, TestFEM_FVM)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -310,6 +372,10 @@ TEST_F(DofManagerTest, TestFEM_FVM)
   EXPECT_EQ( pattern.globalCols(), 3*nNodes+nCells );
 }
 
+/**
+ * @function TestMassMatrix
+ * @brief Define a self-connected field, like a mass matrix.
+ */
 TEST_F(DofManagerTest, TestMassMatrix)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -332,6 +398,10 @@ TEST_F(DofManagerTest, TestMassMatrix)
   EXPECT_DOUBLE_EQ( pattern.normFrobenius(), sqrt(nCells) );
 }
 
+/**
+ * @function TestIndices
+ * @brief Check the getIndices functions for FEM and FVM.
+ */
 TEST_F(DofManagerTest, TestIndices)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -371,6 +441,10 @@ TEST_F(DofManagerTest, TestIndices)
   }
 }
 
+/**
+ * @function TestPermutation
+ * @brief Check the permutation from the field-based ordering to the MPI rank-based one.
+ */
 TEST_F(DofManagerTest, TestPermutation)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -413,7 +487,10 @@ TEST_F(DofManagerTest, TestPermutation)
   EXPECT_DOUBLE_EQ( pattern.normFrobenius(), permutedPattern.normFrobenius() );
 }
 
-// This last test is always true! It collects time
+/**
+ * @function TestWithTimes
+ * @brief This is not a real test (it is always true!). It collects timings.
+ */
 TEST_F(DofManagerTest, TestWithTimes)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -614,15 +691,16 @@ TEST_F(DofManagerTest, TestWithTimes)
   SUCCEED();
 }
 
+/**
+ * @function main
+ * @brief Main function to setup the GEOSX environment, read the xml file and run all cases.
+ */
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
   // Global call will not work because CXXUtils has already been initialized in problemManager
-  //geosx::basicSetup( argc, argv );
-  setupMPI(argc, argv);
-  setupOpenMP();
-  setupMKL();
+  geosx::basicSetup( argc, argv );
 
   global_argc = argc;
   global_argv = new char*[static_cast<unsigned int>( global_argc )];
@@ -636,10 +714,7 @@ int main( int argc, char** argv )
   delete[] global_argv;
 
   // Global call will not work because CXXUtils will be destructed by problemManager
-  //geosx::basicCleanup();
-  FieldSpecificationManager::finalize();
-  NewFunctionManager::finalize();
-  finalizeMPI();
+  geosx::basicCleanup();
 
   return result;
 }

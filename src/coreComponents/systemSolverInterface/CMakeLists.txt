@@ -5,7 +5,6 @@
 set(systemSolverInterface_headers
     EpetraBlockSystem.hpp
     LinearSolverWrapper.hpp
-    SystemSolverParameters.hpp
     )
 
 #
@@ -13,7 +12,6 @@ set(systemSolverInterface_headers
 #
 set(systemSolverInterface_sources
     EpetraBlockSystem.cpp
-    SystemSolverParameters.cpp
     LinearSolverWrapper.cpp
    )
 

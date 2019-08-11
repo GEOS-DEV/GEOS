@@ -84,45 +84,75 @@ NodeManager::~NodeManager()
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
-  /// flow of function:
-  /// <ol>
-  /// <li> Extract edgeToNode map from the edge manager
-  FixedOneToManyRelation const & edgeToNodes = edgeManager->nodeList();
+  GEOSX_MARK_FUNCTION;
 
-  /// <li> Get number of edges
-  localIndex const numEdges = edgeManager->size();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager->nodeList();
+  localIndex const totalNumEdges = edgeToNodeMap.size( 0 );
+  localIndex const totalNumNodes = size();
 
-  /// <li> Loop over all edges
-  /// <ol>
-  for( localIndex ke=0 ; ke<numEdges ; ++ke )
+  constexpr int MAX_EDGES_PER_NODE = 10;
+  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, MAX_EDGES_PER_NODE );
+
+  forall_in_range< parallelHostPolicy >( 0, totalNumEdges, [&]( localIndex const edgeID )
   {
-    localIndex const numNodes = edgeToNodes.size(1);
-    /// <li> Loop over all nodes for each edge
-    for( localIndex a=0 ; a<numNodes ; ++a )
-    {
-      m_toEdgesRelation[edgeToNodes[ke][a]].insert(ke);
-    }
-  }
-  /// </ol>
+    toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
+    toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
+  } );
 
-  /// <li> Set the related object pointer in the edge manager
+  GEOSX_MARK_BEGIN("Reserving space in m_toEdgesRelation");
+  for ( localIndex i = 0; i < totalNumNodes; ++i )
+  {
+    m_toEdgesRelation[ i ].reserve( toEdgesTemp.sizeOfArray( i ) );
+  }
+  GEOSX_MARK_END("Reserving space in m_toEdgesRelation");
+
+  forall_in_range< parallelHostPolicy >( 0, totalNumNodes, [&]( localIndex const nodeID )
+  {
+    localIndex * const edges = toEdgesTemp[ nodeID ];
+    localIndex const numEdges = toEdgesTemp.sizeOfArray( nodeID );
+    std::sort( edges, edges + numEdges );
+    m_toEdgesRelation[ nodeID ].insertSorted( edges, numEdges );
+  } );
+
   m_toEdgesRelation.SetRelatedObject( edgeManager );
-  /// </ol>
 }
 
 //**************************************************************************************************
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
-  OrderedVariableOneToManyRelation const & faceToNodes = faceManager->nodeList();
-  localIndex const numFaces = faceManager->size();
-  for( localIndex ke=0 ; ke<numFaces ; ++ke )
+  GEOSX_MARK_FUNCTION;
+
+  arrayView1d< arrayView1d< localIndex const > const > const & faceToNodes = faceManager->nodeList().toViewConst();
+  localIndex const totalNumFaces = faceToNodes.size();
+  localIndex const totalNumNodes = size();
+
+  constexpr int MAX_FACES_PER_NODE = 20;
+  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, MAX_FACES_PER_NODE );
+
+  forall_in_range< parallelHostPolicy >( 0, totalNumFaces, [&]( localIndex const faceID )
   {
-    localIndex const numNodes = faceToNodes[ke].size();
-    for( localIndex a=0 ; a<numNodes ; ++a )
+    localIndex const numFaceNodes = faceToNodes[ faceID ].size();
+    for ( localIndex a = 0; a < numFaceNodes; ++a )
     {
-      m_toFacesRelation[faceToNodes[ke][a]].insert(ke);
+      toFacesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, faceToNodes[ faceID ][ a ], faceID );
     }
+  } );
+
+  GEOSX_MARK_BEGIN("Reserving space in m_toFacesRelation");
+  for ( localIndex i = 0; i < totalNumNodes; ++i )
+  {
+    m_toFacesRelation[ i ].reserve( toFacesTemp.sizeOfArray( i ) );
   }
+  GEOSX_MARK_END("Reserving space in m_toFacesRelation");
+
+  forall_in_range< parallelHostPolicy >( 0, totalNumNodes, [&]( localIndex const nodeID )
+  {
+    localIndex * const faces = toFacesTemp[ nodeID ];
+    localIndex const numFaces = toFacesTemp.sizeOfArray( nodeID );
+    std::sort( faces, faces + numFaces );
+    m_toFacesRelation[ nodeID ].insertSorted( faces, numFaces );
+  } );
+
   m_toFacesRelation.SetRelatedObject( faceManager );
 }
 
@@ -130,18 +160,24 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
+  GEOSX_MARK_FUNCTION;
+
   ArrayOfArrays<localIndex> & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays<localIndex> & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays<localIndex> & toElementList = m_toElements.m_toElementIndex;
 
-  for( localIndex a=0 ; a<size() ; ++a )
-  {
-    toElementRegionList.clearArray(a);
-    toElementSubRegionList.clearArray(a);
-    toElementList.clearArray(a);
-  }
+  // This sets the capacity of each sub-array to 10. If this is using a bunch of memory
+  // add a compress + shrink method to ArrayOfArrays that we can call afterwards.
+  toElementRegionList.resize(0);
+  toElementRegionList.resize(size(), 10);
 
-  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg  )
+  toElementSubRegionList.resize(0);
+  toElementSubRegionList.resize(size(), 10);
+
+  toElementList.resize(0);
+  toElementList.resize(size(), 10);
+
+  for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
     ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
 
@@ -151,6 +187,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       for( localIndex ke=0 ; ke<subRegion->size() ; ++ke )
       {
         arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
+        
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodes[a];

@@ -38,6 +38,8 @@
 
 #include "mesh/MeshBody.hpp"
 
+#include "common/TimingMacros.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -314,6 +316,8 @@ ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, stri
  */
 void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
@@ -527,8 +531,10 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     numNodes *= numNodesInDir[i];
   }
 
+  GEOSX_MARK_BEGIN("nodeMangager->resize()");
   nodeManager->resize( numNodes );
   r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
+  GEOSX_MARK_END("nodeMangager->resize()");
 
   {
     localIndex localNodeIndex = 0;
@@ -644,6 +650,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
           CellBlock * elemRegion =  elementManager->GetRegion(*iterRegion);
           int const numNodesPerElem = integer_conversion<int>(elemRegion->numNodesPerElement());
+          integer_array nodeIDInBox( numNodesPerElem );
+
           FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
 
           int numElemsInDirForRegion[3] =
@@ -726,8 +734,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 {
                   localIndex& localElemIndex = localElemIndexInRegion[*iterRegion];
                   elemRegion->m_localToGlobalMap[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
-
-                  integer_array nodeIDInBox( numNodesPerElem );
 
                   GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),
                                                numNodesPerElem );

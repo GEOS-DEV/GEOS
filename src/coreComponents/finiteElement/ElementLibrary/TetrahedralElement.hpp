@@ -34,11 +34,11 @@ public:
                       QuadratureBase const & quadrature,
                       const int num_zero_energy_modes );
 
-  virtual ~TetrahedralElement();
+  ~TetrahedralElement() override;
 
   static string CatalogName() { return "C3D4"; }
 
-  void reinit( array1d<R1TensorT<3> > const & mapped_support_points );
+  void reinit( arrayView1d< R1Tensor const > const & X_global, arraySlice1d< localIndex const > const & mapped_support_points ) override;
 
 };
 }

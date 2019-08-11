@@ -17,12 +17,18 @@
 #cmakedefine GEOSX_USE_MATHPRESSO
 #cmakedefine GEOSX_USE_MPI
 #cmakedefine GEOSX_USE_OPENMP
+#cmakedefine GEOSX_USE_CUDA
 #cmakedefine GEOSX_USE_PYTHON
 #cmakedefine USE_GEOSX_PTP
 #cmakedefine GEOSX_USE_PVT_PACKAGE
 #cmakedefine GEOSX_USE_RAJA
 #cmakedefine GEOSX_USE_TIMERS
+#cmakedefine GEOSX_USE_TOTALVIEW_OUTPUT
 #cmakedefine GEOSX_USE_MKL
+#cmakedefine GEOSX_USE_TRILINOS
+#cmakedefine GEOSX_USE_HYPRE
+#cmakedefine GEOSX_USE_PETSC
+#cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
