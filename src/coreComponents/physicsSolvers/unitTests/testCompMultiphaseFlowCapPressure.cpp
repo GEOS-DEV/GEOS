@@ -32,7 +32,6 @@
 
 using namespace geosx;
 using namespace geosx::dataRepository;
-using namespace geosx::systemSolverInterface;
 using namespace geosx::constitutive;
 
 namespace
@@ -59,6 +58,12 @@ template<typename T>
 {
   T const delta = std::abs( v1 - v2 );
   T const value = std::max( std::abs(v1), std::abs(v2) );
+
+  if (delta < 1E-14)
+  {
+    return ::testing::AssertionSuccess();
+  }
+
   if (delta > relTol * value)
   {
     return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
@@ -161,15 +166,15 @@ array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localInd
   return output;
 }
 
-void compareMatrixRow( int rowNumber, double relTol,
-                       int numRowEntries1, int * indices1, double * values1,
-                       int numRowEntries2, int * indices2, double * values2 )
+void compareMatrixRow( globalIndex rowNumber, real64 relTol,
+                       localIndex numRowEntries1, globalIndex * indices1, real64 * values1,
+                       localIndex numRowEntries2, globalIndex * indices2, real64 * values2 )
 {
   SCOPED_TRACE("Row " + std::to_string(rowNumber));
 
   EXPECT_EQ( numRowEntries1, numRowEntries2 );
 
-  for (int j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2)
+  for (localIndex j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2)
   {
     while (j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2])
     {
@@ -191,35 +196,30 @@ void compareMatrixRow( int rowNumber, double relTol,
   }
 }
 
-void compareMatrices( Epetra_FECrsMatrix const * matrix1,
-                      Epetra_FECrsMatrix const * matrix2,
+void compareMatrices( ParallelMatrix const & matrix1,
+                      ParallelMatrix const & matrix2,
                       real64 relTol )
 {
-  int numLocalRows1 = matrix1->NumMyRows();
-  int numLocalRows2 = matrix2->NumMyRows();
+  ASSERT_EQ( matrix1.localRows(), matrix2.localRows() );
 
-  ASSERT_EQ(numLocalRows1, numLocalRows2);
-
-  int nnz1, nnz2;
-  int * indices1 = nullptr;
-  int * indices2 = nullptr;
-  double * row1 = nullptr;
-  double * row2 = nullptr;
+  array1d<globalIndex> indices1, indices2;
+  array1d<real64> values1, values2;
 
   // check the accuracy across local rows
-  for (int i = 0; i < numLocalRows1; ++i)
+  for (globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i)
   {
-    matrix1->ExtractMyRowView( i, nnz1, row1, indices1 );
-    matrix2->ExtractMyRowView( i, nnz2, row2, indices2 );
+    matrix1.getRowCopy( i, indices1, values1 );
+    matrix2.getRowCopy( i, indices2, values2 );
 
-    compareMatrixRow( i, relTol, nnz1, indices1, row1, nnz2, indices2, row2 );
+    compareMatrixRow( i, relTol,
+                      indices1.size(), indices1.data(), values1.data(),
+                      indices2.size(), indices2.data(), values2.data() );
   }
 }
 
 template<typename LAMBDA>
 void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
                             DomainPartition * domain,
-                            EpetraBlockSystem * blockSystem,
                             double perturbParameter,
                             double relTol,
                             LAMBDA && assembleFunction )
@@ -227,30 +227,30 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   localIndex const NC   = solver->numFluidComponents();
   localIndex const NDOF = solver->numDofPerCell();
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::compositionalBlock, BlockIDs::compositionalBlock );
-  Epetra_FEVector    * const residual = blockSystem->GetResidualVector( BlockIDs::compositionalBlock );
-  Epetra_Map const   * const rowMap   = blockSystem->GetRowMap( BlockIDs::compositionalBlock );
+  ParallelMatrix & jacobian = solver->getSystemMatrix();
+  ParallelVector & residual = solver->getSystemRhs();
+  DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  int localSizeInt;
-  double * localResidual = nullptr;
-  residual->ExtractView(&localResidual, &localSizeInt);
+  double* localResidual = nullptr;
+  residual.extractLocalVector( &localResidual );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
-  residual->Scale( 0.0 );
-  assembleFunction( solver, domain, jacobian, residual );
+  residual.zero();
+  assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
 
   // copy the analytical residual
-  auto residualOrig = std::make_unique<Epetra_FEVector>( *residual );
-  double* localResidualOrig = nullptr;
-  residualOrig->ExtractView(&localResidualOrig, &localSizeInt);
+  ParallelVector residualOrig( residual );
+
+  double * localResidualOrig = nullptr;
+  residualOrig.extractLocalVector( &localResidualOrig );
 
   // create the numerical jacobian
-  auto jacobianFD = std::make_unique<Epetra_FECrsMatrix>( Copy, jacobian->Graph() );
-  jacobianFD->Scale( 0.0 );
+  ParallelMatrix jacobianFD( jacobian );
+  jacobianFD.zero();
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                          ElementRegion * const region,
@@ -298,18 +298,18 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           solver->UpdateState( subRegion2 );
         });
 
-        residual->Scale( 0.0 );
-        assembleFunction( solver, domain, jacobian, residual );
+        residual.zero();
+        assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
 
         long long const dofIndex = integer_conversion<long long>(offset);
 
-        for (int lid = 0; lid < localSizeInt; ++lid)
+        for (localIndex lid = 0; lid < residual.localSize(); ++lid)
         {
           real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
           if (std::fabs(dRdP) > 0.0)
           {
-            long long gid = rowMap->GID64(lid);
-            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdP, &dofIndex);
+            globalIndex gid = residual.getGlobalRowID( lid );
+            jacobianFD.set( gid, dofIndex, dRdP );
           }
         }
       }
@@ -326,32 +326,32 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
           solver->UpdateState( subRegion2 );
         });
 
-        residual->Scale( 0.0 );
-        assembleFunction( solver, domain, jacobian, residual );
+        residual.zero();
+        assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
 
         long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
 
-        for (int lid = 0; lid < localSizeInt; ++lid)
+        for (int lid = 0; lid < residual.localSize(); ++lid)
         {
           real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
           if (std::fabs(dRdRho) > 0.0)
           {
-            long long gid = rowMap->GID64(lid);
-            jacobianFD->ReplaceGlobalValues(gid, 1, &dRdRho, &dofIndex);
+            globalIndex gid = residual.getGlobalRowID( lid );
+            jacobianFD.set( gid, dofIndex, dRdRho );
           }
         }
       }
     }
   } );
 
-  jacobianFD->GlobalAssemble(true);
+  jacobianFD.close();
 
   // assemble the analytical jacobian
   solver->ResetStateToBeginningOfStep( domain );
-  jacobian->Scale( 0.0 );
-  assembleFunction( solver, domain, jacobian, residual );
+  jacobian.zero();
+  assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
 
-  compareMatrices( jacobian, jacobianFD.get(), relTol );
+  compareMatrices( jacobian, jacobianFD, relTol );
 
 #if 0
   if (::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure())
@@ -415,18 +415,25 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
   real64 const time = 0.0;
   real64 const dt = 1e4;
 
-  DomainPartition   * domain = problemManager.getDomainPartition();
-  EpetraBlockSystem * system = solver->getLinearSystemRepository();
+  DomainPartition * domain = problemManager.getDomainPartition();
 
-  solver->ImplicitStepSetup( time, dt, domain, system );
+  solver->ImplicitStepSetup( time,
+                             dt,
+                             domain,
+                             solver->getDofManager(),
+                             solver->getSystemMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
 
-  testNumericalJacobian( solver, domain, system, eps, tol,
+  testNumericalJacobian( solver, domain, eps, tol,
                          [&] ( CompositionalMultiphaseFlow * const targetSolver,
                                DomainPartition * const targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
+                               ParallelMatrix * targetJacobian,
+                               ParallelVector * targetResidual,
+                               DofManager const * targetDofManager )
                          {
-                           targetSolver->AssembleFluxTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+                           targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian,
+                                                            targetResidual );
                          });
 }
 

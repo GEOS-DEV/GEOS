@@ -290,10 +290,12 @@ real64 EpetraVector::normInf() const
 // Print
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the std::cout in Trilinos format.
-void EpetraVector::print() const
+void EpetraVector::print( std::ostream & os ) const
 {
-  GEOS_ERROR_IF( m_vector.get() == nullptr, "Vector appears to be empty" );
-  std::cout << *m_vector.get() << std::endl;
+  if( m_vector )
+  {
+    m_vector->Print( os );
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -379,7 +381,16 @@ localIndex EpetraVector::localSize() const
 // Map a global row index to local row index
 localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
 {
-  return m_vector->Map().LID( index );
+  return m_vector->Map().LID( integer_conversion<long long>( index ) );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+localIndex EpetraVector::getGlobalRowID( localIndex const index ) const
+{
+  return m_vector->Map().GID64( integer_conversion<int>( index ) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -390,6 +401,12 @@ void EpetraVector::extractLocalVector( real64 ** localVector ) const
 {
   int dummy;
   m_vector->ExtractView( localVector, &dummy );
+}
+
+std::ostream & operator<<( std::ostream & os, EpetraVector const & vec )
+{
+  vec.print( os );
+  return os;
 }
 
 } // end geosx

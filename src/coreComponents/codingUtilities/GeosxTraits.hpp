@@ -46,7 +46,7 @@ template <class T>
 constexpr bool is_pair = is_instantiation_of_v<std::pair, T>;
 
 template <class T>
-constexpr bool is_map = is_instantiation_of_v<std::map, T> || is_instantiation_of_v<std::unordered_map, T>;
+constexpr bool is_map = is_instantiation_of_v<mapBase, T>;
 
 template <class T>
 constexpr bool is_set = is_instantiation_of_v<LvArray::SortedArray, T>;
@@ -116,14 +116,14 @@ constexpr bool is_packable_set< set<T> >::value;
 template<typename>
 struct is_packable_map : std::false_type {};
 
-template<typename T_KEY, typename T_VAL>
-struct is_packable_map< map<T_KEY,T_VAL> >
+template<typename T_KEY, typename T_VAL, typename SORTED>
+struct is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >
 {
   static constexpr bool value = is_packable<T_KEY>::value &&
                                 is_packable<T_VAL>::value;
 };
-template< typename T_KEY, typename T_VAL>
-constexpr bool is_packable_map< map<T_KEY,T_VAL> >::value;
+template< typename T_KEY, typename T_VAL, typename SORTED>
+constexpr bool is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >::value;
 
 
 template< typename T >

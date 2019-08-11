@@ -142,27 +142,22 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
   // get the relation to the composition object used that will be used to identify the main object. For example,
   // a face can be identified by its nodes.
-  array1d<globalIndex_array> objectToCompositionObject;
+  std::vector< std::vector< globalIndex > > objectToCompositionObject;
   object.ExtractMapFromObjectForAssignGlobalIndexNumbers( &compositionObject, objectToCompositionObject );
 
   // now arrange the data from objectToCompositionObject into a map "indexByFirstCompositionIndex", such that the key
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
-  // the
-  // array being the remaining composition object global indices, and the second being the global index of the object
+  // the array being the remaining composition object global indices, and the second being the global index of the object
   // itself.
   map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
 
-//  for( array1d<globalIndex_array>::const_iterator a = objectToCompositionObject.begin() ;
-//      a != objectToCompositionObject.end() ;
-//      ++a )
-
   localIndex bufferSize = 0;
-  for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
   {
     if( objectToCompositionObject[a].size() > 0 )
     {
       // set nodelist array
-      globalIndex_array const & nodeList = objectToCompositionObject[a];
+      std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
 
       // grab the first global index of the composition objects
       const globalIndex firstCompositionIndex = nodeList[0];
@@ -178,7 +173,6 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
       // push the tempComp onto the map.
       indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move(tempComp) );
-  //    indexByFirstCompositionIndex[firstCompositionIndex].push_back( tempComp );
       bufferSize += 2 + nodeList.size();
     }
   }
@@ -187,14 +181,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   objectToCompositionObjectSendBuffer.reserve( bufferSize );
 
   // put the map into a buffer
-  for( localIndex a = 0 ; a < objectToCompositionObject.size() ; ++a )
+  for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
   {
     if( objectToCompositionObject[a].size() > 0 )
     {
-      globalIndex_array const & nodeList = objectToCompositionObject[a];
+      std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
       objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
       objectToCompositionObjectSendBuffer.push_back( object.m_localToGlobalMap[a] );
-      for( localIndex b = 0 ; b < nodeList.size() ; ++b )
+      for( std::size_t b = 0 ; b < nodeList.size() ; ++b )
       {
         objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
       }
@@ -468,8 +462,6 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
   for( auto const & iter : newElems )
   {
-    localIndex const er = iter.first.first;
-    localIndex const esr = iter.first.second;
     std::set<localIndex> const & indexList = iter.second;
     numberOfNewObjectsHere += indexList.size();
   }

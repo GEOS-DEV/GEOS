@@ -1,10 +1,10 @@
 .. _SinglePhaseFlow:
 
 #####################################
-Single phase flow FV solver
+Single-phase Flow Solver
 #####################################
 
-Overview
+Introduction
 =========================
 
 This is a cell-centered Finite Volume solver for compressible single-phase flow in porous media.
@@ -34,8 +34,8 @@ When the entire pore space is filled by a single phase, we can substitute the Da
 with :math:`\gamma \nabla z= \rho \boldsymbol{g}`.
 
 
-Space discretization with Finite volume method
-==============================================
+Space Discretization
+=======================
 Let :math:`\Omega \subset \mathbb{R}^n, \, n =1,2,3` be an open set defining the computational domain. We consider :math:`\Omega` meshed by element such that :math:`\Omega = \cup_{i}V_i` and integrate the single phase flow equation, described above, over each element :math:`V_i`:
 
 .. math::
@@ -52,7 +52,7 @@ For the flux term, the (static) transmissibility is currently computed with a Tw
 
 The pressure-dependent mobility :math:`\lambda = \frac{\rho}{\mu}` at the interface is approximated using a first-order upwinding on the sign of the potential difference.
 
-Time discretization
+Time Discretization
 =========================
 Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time interval :math:`[t_0,T], \, t_0, T \in \mathbb{R}^+`. We use the backward Euler (fully implicit) method to integrate the single phase flow equation between two grid points :math:`t_n` and :math:`t_{n+1}, \, n< N` to obtain the residual equation:
 
@@ -89,7 +89,7 @@ These fields must be populated via :ref:`FieldSpecification` section and ``perme
 be supplied as the value of ``coefficientName`` attribute of the flux approximation scheme used.
 
 
-Input example
+Example
 =========================
 
 .. code-block:: xml

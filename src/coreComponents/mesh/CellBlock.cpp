@@ -308,9 +308,19 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
 //
   else
   {
-    GEOS_ERROR("Error.  Don't know what kind of element this is and cannot build faces.");
+    GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
   }
+}
 
+localIndex CellBlock::GetMaxNumFaceNodes() const
+{
+  if ( !m_elementTypeString.compare( 0, 4, "C3D8" ) ) return 4;
+  if ( !m_elementTypeString.compare( 0, 4, "C3D6" ) ) return 4;
+  if ( !m_elementTypeString.compare( 0, 4, "C3D4" ) ) return 3;
+  if ( !m_elementTypeString.compare( 0, 4, "C3D5" ) ) return 4;
+  
+  GEOS_ERROR("Error. Don't know what kind of element this is.");
+  return -1;
 }
 
 R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
@@ -398,7 +408,7 @@ void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeMan
 {
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
 
-  forall_in_range<elemPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
   {
     CalculateCellVolumesKernel( k, X );
   });

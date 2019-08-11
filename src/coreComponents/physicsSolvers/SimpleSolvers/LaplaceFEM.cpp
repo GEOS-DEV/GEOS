@@ -52,17 +52,12 @@ namespace keys
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
                         ManagedGroup * const parent ):
-  SolverBase( name, parent )
+  SolverBase( name, parent ),
+  m_fieldName("primaryField")
 {
-//  this->RegisterGroup<SystemSolverParameters>( groupKeys.systemSolverParameters.Key() );
-  // To generate the schema, multiple solvers of that use this command are constructed
-  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
-  // getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
-
   RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("option for default time integration method");
@@ -87,16 +82,13 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
       setApplyDefaultValue(0.0)->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setDescription("Primary field variable");
-
-    nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString )->
-      setApplyDefaultValue(-1)->
-      setPlotLevel(PlotLevel::LEVEL_1)->
-      setDescription("Global DOF numbers for the primary field variable");
   }
 }
 
 void LaplaceFEM::PostProcessInput()
 {
+  SolverBase::PostProcessInput();
+
   string tiOption = this->getReference<string>(laplaceFEMViewKeys.timeIntegrationOption);
 
   if( tiOption == "SteadyState" )
@@ -115,14 +107,16 @@ void LaplaceFEM::PostProcessInput()
   {
     GEOS_ERROR("invalid time integration option");
   }
-}
 
-void LaplaceFEM::InitializePreSubGroups( ManagedGroup * const problemManager )
-{
-  SolverBase::InitializePreSubGroups(problemManager);
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::dummyScalarBlock, this->getName() );
+  // Set basic parameters for solver
+  m_linearSolverParameters.verbosity = 0;
+  m_linearSolverParameters.solverType = "gmres";
+  m_linearSolverParameters.krylov.tolerance = 1e-8;
+  m_linearSolverParameters.krylov.maxIterations = 250;
+  m_linearSolverParameters.krylov.maxRestart = 250;
+  m_linearSolverParameters.preconditionerType = "amg";
+  m_linearSolverParameters.amg.smootherType = "gaussSeidel";
+  m_linearSolverParameters.amg.coarseType = "direct";
 }
 
 real64 LaplaceFEM::SolverStep( real64 const& time_n,
@@ -138,7 +132,7 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, getLinearSystemRepository() );
+    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
   }
   return dtReturn;
 }
@@ -151,13 +145,16 @@ real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
   return dt;
 }
 
-void LaplaceFEM::ImplicitStepSetup( real64 const& time_n,
-                                    real64 const& dt,
+void LaplaceFEM::ImplicitStepSetup( real64 const & time_n,
+                                    real64 const & dt,
                                     DomainPartition * const domain,
-                                    systemSolverInterface::EpetraBlockSystem * const blockSystem )
+                                    DofManager & dofManager,
+                                    ParallelMatrix & matrix,
+                                    ParallelVector & rhs,
+                                    ParallelVector & solution )
 {
   // Computation of the sparsity pattern
-  SetupSystem( domain, blockSystem );
+  SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
 void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
@@ -167,35 +164,30 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 }
 
 void LaplaceFEM::SetupSystem( DomainPartition * const domain,
-                              EpetraBlockSystem * const blockSystem )
+                              DofManager & dofManager,
+                              ParallelMatrix & matrix,
+                              ParallelVector & rhs,
+                              ParallelVector & solution )
 {
-  // Set basic parameters for solver
-  m_parameters.verbosity = 0;
-  m_parameters.solverType = "gmres";
-  m_parameters.krylov.tolerance = 1e-8;
-  m_parameters.krylov.maxIterations = 250;
-  m_parameters.krylov.maxRestart = 250;
-  m_parameters.preconditionerType = "amg";
-  m_parameters.amg.smootherType = "gaussSeidel";
-  m_parameters.amg.coarseType = "direct";
+  m_dofManager.setMesh( domain, 0, 0 );
+  m_dofManager.addField( m_fieldName,
+                         DofManager::Location::Node,
+                         DofManager::Connectivity::Elem );
 
-  dofManager.setMesh( domain, 0, 0 );
-  dofManager.addField( m_fieldName, DofManager::Location::Node, DofManager::Connectivity::Elem );
-
-  ParallelMatrix & sparsity = m_matrix;
-  dofManager.setSparsityPattern( sparsity, m_fieldName, m_fieldName );
-  dofManager.setVector( m_rhs, m_fieldName, m_fieldName );
-  dofManager.setVector( m_solution, m_fieldName, m_fieldName );
+  m_dofManager.setSparsityPattern( matrix, m_fieldName, m_fieldName );
+  m_dofManager.setVector( rhs, m_fieldName, m_fieldName );
+  m_dofManager.setVector( solution, m_fieldName, m_fieldName );
 }
 
-void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
-                                  EpetraBlockSystem * const blockSystem,
-                                  real64 const time_n,
-                                  real64 const dt )
+void LaplaceFEM::AssembleSystem( real64 const time_n,
+                                 real64 const dt,
+                                 DomainPartition * const domain,
+                                 DofManager const & dofManager,
+                                 ParallelMatrix & matrix,
+                                 ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+  //ManagedGroup * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -203,11 +195,14 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
   feDiscretizationManager = numericalMethodManager->
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
+  //globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
-  m_matrix.zero();
-  m_rhs.zero();
+  matrix.zero();
+  rhs.zero();
+
+  matrix.open();
+  rhs.open();
 
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -259,33 +254,48 @@ void LaplaceFEM::AssembleSystem ( DomainPartition * const  domain,
 
             }
           }
-          m_matrix.add( element_index, element_index, element_matrix );
-          m_rhs.add( element_index, element_rhs );
+          matrix.add( element_index, element_index, element_matrix );
+          rhs.add( element_index, element_rhs );
         }
       }
     });
   }
-  m_matrix.close();
-  m_rhs.close();
+  matrix.close();
+  rhs.close();
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    string name = "matrix_" + std::to_string( time_n ) + ".mtx";
-    m_matrix.write( name.c_str() );
-    name = "rhs_" + std::to_string( time_n ) + ".mtx";
-    m_rhs.write( name.c_str() );
+    GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+
+    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
+void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
+                                      ParallelVector const & solution,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  dofManager.copyVectorToField( m_solution, m_fieldName, nodeManager );
+  dofManager.copyVectorToField( solution, m_fieldName, nodeManager );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
@@ -303,42 +313,58 @@ void LaplaceFEM::ApplySystemSolution( EpetraBlockSystem const * const blockSyste
   }
 }
 
-void LaplaceFEM::ApplyBoundaryConditions( DomainPartition * const domain,
-                                          systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                          real64 const time_n,
-                                          real64 const dt )
+void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition * const domain,
+                                          DofManager const & dofManager,
+                                          ParallelMatrix & matrix,
+                                          ParallelVector & rhs )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
-  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
 
-  ApplyDirichletBC_implicit( time_n + dt, *domain, m_matrix, m_rhs );
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    string name = "matrixDir_" + std::to_string( time_n+dt ) + ".mtx";
-    m_matrix.write( name.c_str() );
-    name = "rhsDir_" + std::to_string( time_n+dt ) + ".mtx";
-    m_rhs.write( name.c_str() );
+    GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+  }
+
+  if( verboseLevel() >= 3 )
+  {
+    SystemSolverParameters * const solverParams = getSystemSolverParameters();
+    integer newtonIter = solverParams->numNewtonIterations();
+
+    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    matrix.write( filename_mat, true );
+
+    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    rhs.write( filename_rhs, true );
+
+    GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
-void LaplaceFEM::SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                              SystemSolverParameters const * const params )
+void LaplaceFEM::SolveSystem( DofManager const & dofManager,
+                              ParallelMatrix & matrix,
+                              ParallelVector & rhs,
+                              ParallelVector & solution )
 {
-  // Now create a solver from the parameter list
-  LinearSolver solver( m_parameters );
+  rhs.scale( -1.0 ); // TODO decide if we want this here
+  solution.zero();
 
-  // Solve using the iterative solver and compare norms with true solution
-  solver.solve( m_matrix, m_solution, m_rhs );
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() >= 2 )
+  if( verboseLevel() == 2 )
   {
-    string name = "sol.mtx";
-    m_solution.write( name.c_str() );
+    GEOS_LOG_RANK_0("After LaplaceFEM::SolveSystem");
+    GEOS_LOG_RANK_0("\nSolution\n" << solution);
   }
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
+                                            DofManager const & dofManager,
                                             DomainPartition & domain,
                                             ParallelMatrix & matrix,
                                             ParallelVector & rhs )
@@ -355,14 +381,15 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     ManagedGroup * const targetGroup,
                     string const fieldName )->void
   {
-    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAI>( targetSet,
-                                                                      time,
-                                                                      targetGroup,
-                                                                      m_fieldName,
-                                                                      dofManager.getKey( m_fieldName ),
-                                                                      1,
-                                                                      matrix,
-                                                                      rhs );
+    bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
+                                                                              false,
+                                                                              time,
+                                                                              targetGroup,
+                                                                              m_fieldName,
+                                                                              dofManager.getKey( m_fieldName ),
+                                                                              1,
+                                                                              matrix,
+                                                                              rhs );
   });
 }
 
