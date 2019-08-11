@@ -422,7 +422,7 @@ class CustomVTUXMLWriter
     int m_spaceCount;
 
     /// Map from GEOSX type to VTK cell types
-    const unordered_map< string, int > m_geosxToVTKCellTypeMap =
+    const std::unordered_map< string, int > m_geosxToVTKCellTypeMap =
     {
       { "C3D4", 10 },
       { "C3D5", 14 },
