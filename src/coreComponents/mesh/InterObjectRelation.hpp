@@ -59,7 +59,7 @@ public:
   globalIndex_array const & RelatedObjectLocalToGlobal() const
   { return this->m_relatedObject->m_localToGlobalMap; }
 
-  const std::map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const
+  const unordered_map<globalIndex,localIndex>& RelatedObjectGlobalToLocal() const
   { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:

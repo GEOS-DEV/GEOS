@@ -190,15 +190,11 @@ void ProblemManager::ProblemSetup()
 
   RegisterDataOnMeshRecursive( nullptr );
 
-  GEOSX_MARK_BEGIN("problemManager.Initialize");
   Initialize( this );
-  GEOSX_MARK_END("problemManager.Initialize");
 
   ApplyInitialConditions();
 
-  GEOSX_MARK_BEGIN("problemManager.InitializePostInitialConditions");
   InitializePostInitialConditions( this );
-  GEOSX_MARK_END("problemManager.InitializePostInitialConditions");
 }
 
 
@@ -589,7 +585,6 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::ParseInputFile()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -763,15 +758,13 @@ void ProblemManager::GenerateMesh()
       nodeManager->ConstructGlobalToLocalMap();
 
       elemManager->GenerateMesh( cellBlockManager );
-
-      faceManager->BuildFaces( nodeManager, elemManager );
-
-      edgeManager->BuildEdges(faceManager, nodeManager );
-
-      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+      faceManager->BuildFaces( nodeManager, elemManager );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+
+      edgeManager->BuildEdges( faceManager, nodeManager );
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
 
       domain->GenerateSets();
 

@@ -14,7 +14,6 @@ set( subdirs
      MPI_Communications
      physicsSolvers
      python
-     systemSolverInterface
      linearAlgebraInterface
      cxx-utilities
      )
@@ -36,8 +35,12 @@ set( extraComponentsLinkList "" )
 #  set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
 #endif()
 
-if( ENABLE_OPENMP )
+if ( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
 if( ENABLE_MPI )

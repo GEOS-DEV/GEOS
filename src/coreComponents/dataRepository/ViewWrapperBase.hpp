@@ -56,7 +56,7 @@ class ViewWrapperBase
 public:
 
   /**
-   * @brief default destuctor
+   * @brief default destructor
    */
   virtual ~ViewWrapperBase();
 
@@ -166,6 +166,8 @@ public:
   virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
                                                     ManagedGroup * const parent ) = 0;
 
+  virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
+
   /**
    *
    * @return
@@ -194,7 +196,7 @@ public:
    *
    * @param view
    */
-  virtual void registerToWrite( axom::sidre::View * view=nullptr ) const = 0;
+  virtual void registerToWrite( axom::sidre::View * view=nullptr ) = 0;
 
   /**
    *
@@ -415,7 +417,7 @@ public:
     return m_description;
   }
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
   /**
    * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
    *                represented by a ViewWrapperBase *.
@@ -458,7 +460,7 @@ private:
   std::vector< string > m_registeringObjects;
 
   #ifdef GEOSX_USE_ATK
-  /// a pointer to the corrosponding sidre view
+  /// a pointer to the corresponding sidre view
   axom::sidre::View * m_sidreView;
 #endif
 

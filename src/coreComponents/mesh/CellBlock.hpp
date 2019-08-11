@@ -26,6 +26,7 @@
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
 class StableTimeStep;
@@ -99,6 +100,8 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
+  localIndex GetMaxNumFaceNodes() const;
+
   /**
    * @brief function to return element center. this should be depricated.
    * @param k
@@ -109,6 +112,22 @@ public:
   R1Tensor const & calculateElementCenter( localIndex k,
                                            const NodeManager& nodeManager,
                                            const bool useReferencePos = true) const override;
+
+  void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
+  {
+    arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
+    localIndex const nNodes = numNodesPerElement();
+    forall_in_range<parallelHostPolicy>( 0, size(), GEOSX_LAMBDA( localIndex const k )
+    {
+      elementCenters[k] = 0;
+      for ( localIndex a = 0 ; a < nNodes ; ++a)
+      {
+        const localIndex b = m_toNodesRelation[k][a];
+        elementCenters[k] += X[b];
+      }
+      elementCenters[k] /= nNodes;
+    });
+  }
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;

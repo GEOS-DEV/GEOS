@@ -31,13 +31,15 @@
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/MappedVector.hpp"
-#include "TrilinosInterface.hpp"
+#include "InterfaceTypes.hpp"
 
 namespace geosx
 {
 
 /**
- * Defines a simple GEOSX sparsity pattern.
+ * @struct Dof_SparsityPattern
+ *
+ * @brief Defines a simple GEOSX sparsity pattern.
  * It is intended to be a lightweight way to communicate between the
  * DoFManager and the LAI implementation, without relying on a specific
  * LAI choice.
@@ -52,18 +54,16 @@ struct Dof_SparsityPattern
       nCols( 0 )
   {
   }
-  localIndex nRows; //<! number of rows
-  localIndex nCols; //<! number of columns
-  localIndex_array rowLengths; //<! row lengths, size numLocalRows
-  globalIndex_array colIndices; //<! packed column indices, size numLocalNonZeros
-  localIndex_array nnzEntries; //! packed values (of type localIndex), size numLocalNonZeros
+  localIndex nRows; //!< number of rows
+  localIndex nCols; //!< number of columns
+  localIndex_array rowLengths; //!< row lengths, size numLocalRows
+  globalIndex_array colIndices; //!< packed column indices, size numLocalNonZeros
+  localIndex_array nnzEntries; //!< packed values (of type localIndex), size numLocalNonZeros
 };
 
-using ParallelMatrix = typename TrilinosInterface::ParallelMatrix;
-using ParallelVector = typename TrilinosInterface::ParallelVector;
-
 /**
- * The DoFManager is responsible for allocating global dofs, constructing
+ * @class DofManager
+ * @brief The DoFManager is responsible for allocating global dofs, constructing
  * sparsity patterns, and generally simplifying the interaction between
  * PhysicsSolvers and linear algebra operations.
  */
@@ -72,12 +72,16 @@ class DofManager
 public:
 
   /**
-   * Constructor
+   * @brief Constructor.
+   *
+   * @param [in] verbosity Optional localIndex setting the verbosity level.
+   *                       - 0: nothing (default)
+   *                       - >0: minimal info
    */
   DofManager( localIndex const verbosity = 0 );
 
   /**
-   * Destructor
+   * @brief Destructor.
    */
   ~DofManager()
   {
@@ -85,73 +89,71 @@ public:
   }
 
   /**
-   * Enumeration of geometric objects for support location.  Note that this enum
-   * is nearly identical to Connectivity, but we keep both for code readability
+   * @brief Enumeration of geometric objects for support location. Note that this
+   * enum is nearly identical to Connectivity, but we keep both for code readability
    * in function calls.
    */
   enum class Location
   {
-    Elem, Face, Node, USER_DEFINED
+    Elem, //!< location is element (like pressure in finite volumes)
+    Face, //!< location is face (like flux in mixed finite elements)
+    Node, //!< location is node (like displacements in finite elements)
+    USER_DEFINED //!< user defined location (for input connectivity pattern)
   };
 
   /**
-   * Enumeration of geometric objects for connectivity type.  Note that this enum
-   * is nearly identical to Location, but we keep both for code readability
+   * @brief Enumeration of geometric objects for connectivity type. Note that this
+   * enum is nearly identical to Location, but we keep both for code readability
    * in function calls.
    */
   enum class Connectivity
   {
-    Elem, Face, Node, None, USER_DEFINED
+    Elem, //!< connectivity is element (like in finite elements)
+    Face, //!< connectivity is face (like in finite volumes TPFA)
+    Node, //!< connectivity is node (like in finite volumes MPFA)
+    None, //!< there is no connectivity (self connected field, like a mass matrix)
+    USER_DEFINED //!< user defined connectivity (for input connectivity pattern)
   };
 
   /**
-   * Define the possible status of a location: undefined or belonging to ghost locations
-   * of this MPI process
+   * @brief Define the possible status of a location: undefined or belonging to ghost
+   * locations of this MPI process.
    */
   enum class LocationStatus : globalIndex
   {
-    notAssigned = -1,
-    notMyGhostLocation = -2
+    notAssigned = -1, //!< location is not yet assigned
+    notMyGhostLocation = -2 //!< location is not part of local ghost locations
   };
 
   /**
-   * Assign a mesh
+   * @brief Assign a mesh.
+   *
+   * @param [in] domain DomainPartition the input domain.
+   * @param [in] meshLevelIndex Optional localIndex the mesh level.
+   * @param [in] meshBodyIndex Optional localIndex the body level.
    */
   void setMesh( DomainPartition * const domain,
                 localIndex const meshLevelIndex = 0,
                 localIndex const meshBodyIndex = 0 );
 
   /**
-   * Add fields.
-   * The user can add a field with a support location, connectivity type, string key, number of scalar components,
-   * and a list of element regions over which the field is active.  If the region list is empty, it is assumed
-   * the field exists on all regions.
+   * @brief Just an interface to allow only three parameters.
    *
-   * The connectivity type is used to infer the sparsity pattern that connects degrees of freedom.
-   * If LC denotes a boolean connectivity graph between support locations L and connectors C, the desired sparsity
-   * pattern will be computed as LC*CL.  For example, for a TPFA discretization we have dofs located at cell centers,
-   * and connected through adjacent faces.  In this example, LC is the cell-to-face connectivity, and LC*CL is the
-   * desired TPFA sparsity pattern.  More generally,
-   *
-   * Example 1 = ("displacement",NODE,ELEM,3) for a Q1 finite-element interpolation for elasticity
-   * Example 2 = ("pressure",ELEM,FACE,1) for a scalar TPFA-type approximation
-   * Example 3 = ("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation
-   * Example 4 = ("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connectivitys)
-   *
-   * When the number of components is greater than one, we always assume they are tightly coupled to one another
-   * and form a dense block.  The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
-   * dense sub-blocks.
-   */
-
-  /**
-   * Just an interface to allow only three parameters
+   * @param [in] field string the name of the field.
+   * @param [in] location Location where it is defined.
+   * @param [in] connectivity Connectivity through what it is connected.
    */
   void addField( string const & field,
                  Location const location,
                  Connectivity const connectivity );
 
   /**
-   * Just another interface to allow four parameters (no regions)
+   * @brief Just another interface to allow four parameters (no regions, default is everywhere).
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] location Location where it is defined.
+   * @param [in] connectivity Connectivity through what it is connected.
+   * @param [in] components localIndex number of components (for vector fields).
    */
   void addField( string const & field,
                  Location const location,
@@ -159,7 +161,12 @@ public:
                  localIndex const components );
 
   /**
-   * Just another interface to allow four parameters (no components)
+   * @brief Just another interface to allow four parameters (no components, default is 1).
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] location Location where it is defined.
+   * @param [in] connectivity Connectivity through what it is connected.
+   * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & field,
                  Location const location,
@@ -167,7 +174,30 @@ public:
                  string_array const & regions );
 
   /**
-   * The real function, allowing the creation of self-connected blocks
+   * @brief The user can add a field with a support location, connectivity type, string key, number of scalar
+   * components, and a list of element regions over which the field is active. If the region list is empty,
+   * it is assumed the field exists on all regions.
+   *
+   * The connectivity type is used to infer the sparsity pattern that connects degrees of freedom.
+   * If LC denotes a boolean connectivity graph between support locations L and connectors C, the desired sparsity
+   * pattern will be computed as LC*CL. For example, for a TPFA discretization we have dofs located at cell centers,
+   * and connected through adjacent faces. In this example, LC is the cell-to-face connectivity, and LC*CL is the
+   * desired TPFA sparsity pattern. More generally,
+   *
+   * - Example 1 = ("displacement",NODE,ELEM,3) for a Q1 finite-element interpolation for elasticity
+   * - Example 2 = ("pressure",ELEM,FACE,1) for a scalar TPFA-type approximation
+   * - Example 3 = ("pressure",ELEM,NODE,1) for a scalar MPFA-type approximation
+   * - Example 4 = ("mass",ELEM,NONE,1) for a diagonal-only sparsity pattern (no connectivitys)
+   *
+   * When the number of components is greater than one, we always assume they are tightly coupled to one another
+   * and form a dense block. The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
+   * dense sub-blocks.
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] location Location where it is defined.
+   * @param [in] connectivity Connectivity through what it is connected.
+   * @param [in] components localIndex number of components (for vector fields).
+   * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & field,
                  Location const location,
@@ -175,29 +205,45 @@ public:
                  localIndex const components,
                  string_array const & regions );
 
-  /*
-   * addField: allow the usage of a predefine location-connection pattern (user-defined)
-   * Interface to allow only two parameters
+  /**
+   * @brief Interface to allow only two parameters.
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] connLocInput ParallelMatrix input LC pattern.
    */
   void addField( string const & field,
                  ParallelMatrix const & connLocInput );
 
-  /*
-   * Just another interface to allow three parameters (no connectivity)
+  /**
+   * @brief Just another interface to allow three parameters (no connectivity, default is USER_DEFINED).
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] connLocInput ParallelMatrix input LC pattern.
+   * @param [in] components localIndex number of components (for vector fields).
    */
   void addField( string const & field,
                  ParallelMatrix const & connLocInput,
                  localIndex const components );
 
-  /*
-   * Just another interface to allow three parameters (no components)
+  /**
+   * @brief Just another interface to allow three parameters (no components, default is 1).
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] connLocInput ParallelMatrix input LC pattern.
+   * @param [in] connectivity Connectivity through what it is connected.
    */
   void addField( string const & field,
                  ParallelMatrix const & connLocInput,
                  Connectivity const connectivity );
 
-  /*
-   * The real function
+  /**
+   * @brief addField with an input pattern.
+   * Allow the usage of a predefined location-connection pattern (user-defined).
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] connLocInput ParallelMatrix input LC pattern.
+   * @param [in] components localIndex number of components (for vector fields).
+   * @param [in] connectivity Connectivity through what it is connected.
    */
   void addField( string const & field,
                  ParallelMatrix const & connLocInput,
@@ -205,27 +251,23 @@ public:
                  Connectivity const connectivity );
 
   /**
-   * Add coupling between two fields.
-   * The connectivity argument defines how the two fields couple. If the first field has support location A,
-   * the second field has support location B, and the connecting object is C, the sparsity pattern will be
-   * defined as (AC)(CB).  The final argument indicates if the coupling is symmetric, in the sense that there
-   * is a two-way coupling between the fields.  Without this argument, a nonzero block will be added to the
-   * system matrix for block AB, but block BA will remain zero (one-way coupling).
+   * @brief Just an interface to allow only three parameters.
    *
-   * Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling)
-   * Example 2 = ("node_field_1","node_field_2", NODE, true) couples all dofs sharing a common node (two-way coupling)
-   * Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
-   */
-
-  /**
-   * Just an interface to allow only three parameters
+   * @param [in] rowField string the name of the row field.
+   * @param [in] colField string the name of the col field.
+   * @param [in] connectivity Connectivity through what they are connected.
    */
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity );
 
   /**
-   * Just another interface to allow four parameters (no symmetry)
+   * @brief Just another interface to allow four parameters (no symmetry, default is true).
+   *
+   * @param [in] rowField string the name of the row field.
+   * @param [in] colField string the name of the col field.
+   * @param [in] connectivity Connectivity through what they are connected.
+   * @param [in] regions string_array where this coupling is defined.
    */
   void addCoupling( string const & rowField,
                     string const & colField,
@@ -233,7 +275,12 @@ public:
                     string_array const & regions );
 
   /**
-   * Just another interface to allow four parameters (no regions)
+   * @brief Just another interface to allow four parameters (no regions, default is everywhere).
+   *
+   * @param [in] rowField string the name of the row field.
+   * @param [in] colField string the name of the col field.
+   * @param [in] connectivity Connectivity through what they are connected.
+   * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
   void addCoupling( string const & rowField,
                     string const & colField,
@@ -241,7 +288,22 @@ public:
                     bool const symmetric );
 
   /**
-   * The real function, allowing the creation of coupling blocks
+   * @brief Add coupling between two fields.
+   * The connectivity argument defines how the two fields couple. If the first field has support location A,
+   * the second field has support location B, and the connecting object is C, the sparsity pattern will be
+   * defined as (AC)(CB). The final argument indicates if the coupling is symmetric, in the sense that there
+   * is a two-way coupling between the fields. Without this argument, a nonzero block will be added to the
+   * system matrix for block AB, but block BA will remain zero (one-way coupling).
+   *
+   * - Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling)
+   * - Example 2 = ("node_field_1","node_field_2", NODE, true) couples all dofs sharing a common node (two-way coupling)
+   * - Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
+   *
+   * @param [in] rowField string the name of the row field.
+   * @param [in] colField string the name of the col field.
+   * @param [in] connectivity Connectivity through what they are connected.
+   * @param [in] regions string_array where this coupling is defined.
+   * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
   void addCoupling( string const & rowField,
                     string const & colField,
@@ -250,64 +312,99 @@ public:
                     bool const symmetric );
 
   /**
-   * Get key.
+   * @brief Return the key used to record the field in the DofManager.
+   *
+   * @param [in] field string the name of the field.
    */
   string getKey( string const & field ) const;
 
   /**
-   * Return global number of dofs across all processors. If field argument is empty, return monolithic size.
+   * @brief Return global number of dofs across all processors. If field argument is empty, return
+   * monolithic size.
+   *
+   * @param [in] field Optional string the name of the field.
    */
   globalIndex numGlobalDofs( string const & field = "" ) const;
 
   /**
-   * Return local number of dofs on this processor.  If field argument is empty, return monolithic size.
+   * @brief Return local number of dofs on this processor. If field argument is empty, return
+   * monolithic size.
+   *
+   * @param [in] field Optional string the name of the field.
    */
   localIndex numLocalDofs( string const & field = "" ) const;
 
   /**
-   * Return the sum of local dofs across all previous processors w.r.t. to the calling one for the specified field.
+   * @brief Return the sum of local dofs across all previous processors w.r.t. to the calling one for
+   * the specified field.
+   *
+   * @param [in] field Optional string the name of the field.
    */
   localIndex offsetLocalDofs( string const & field = "" ) const;
 
   /**
-   * Set a sparsity pattern.  Without additional arguments, this function provides the sparsity pattern
-   * for the monolithic matrix.  Sub-patterns can be extracted, however, using row and column field keys.
+   * @brief Set a sparsity pattern. Without additional arguments, this function provides the sparsity
+   * pattern for the monolithic matrix. Sub-patterns can be extracted, however, using row and column
+   * field keys.
+   *
+   * @param [out] locLocDistr ParallelMatrix the location-location sparsity pattern (LC*CL).
+   * @param [in]  rowField Optional string the name of the row field.
+   * @param [in]  colField Optional string the name of the col field.
    */
   void setSparsityPattern( ParallelMatrix & locLocDistr,
                            string const & rowField = "",
                            string const & colField = "" ) const;
 
   /**
-   * Set a sparsity pattern. Low level version
+   * @brief Set a sparsity pattern. Low level version.
+   *
+   * @param [out] locLocDistr ParallelMatrix the location-location sparsity pattern (LC*CL).
+   * @param [in]  rowFieldIndex localIndex row field index (-1 means all fields).
+   * @param [in]  colFieldIndex localIndex col field index (-1 means all fields).
    */
   void setSparsityPattern( ParallelMatrix & locLocDistr,
                            localIndex const rowFieldIndex,
                            localIndex const colFieldIndex ) const;
 
   /**
-   * Allocate a vector.  Without additional arguments, this function provides the a vector consistent
-   * with the sparsity pattern for the monolithic matrix.  Sub-vectors can be extracted, however, using
-   * row and column field keys.
+   * @brief Allocate a vector. Without additional arguments, this function provides the a vector
+   * consistent with the sparsity pattern for the monolithic matrix. Sub-vectors can be extracted,
+   * however, using row and column field keys.
+   *
+   * @param [out] vector ParallelVector the output vector.
+   * @param [in]  rowField Optional string the name of the row field.
+   * @param [in]  colField Optional string the name of the col field.
    */
   void setVector( ParallelVector & vector,
                   string const & rowField = "",
                   string const & colField = "" ) const;
 
   /**
-   * Allocate a vector. Low level version
+   * @brief Allocate a vector. Low level version.
+   *
+   * @param [out] vector ParallelVector the output vector.
+   * @param [in]  rowFieldIndex localIndex row field index (-1 means all fields).
+   * @param [in]  colFieldIndex localIndex col field index (-1 means all fields).
    */
   void setVector( ParallelVector & vector,
                   localIndex const rowFieldIndex,
                   localIndex const colFieldIndex ) const;
 
   /**
-   * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
-   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only
-   * implement appropriate combinations.
+   * @brief Get global indices for dofs connected by the connector type. We have two versions, since cells
+   * need three indices while faces and nodes only need two. This keeps the interface the same, but we will
+   * only implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
-   * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
-   * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
+   * - Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
+   * - Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
+   * - Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
+   *
+   * @param [out] indices globalIndex_array array gathering requested DoF indices.
+   * @param [in]  connectivity Connectivity connectivity used to retrieve DoF indices.
+   * @param [in]  region localIndex region of the location.
+   * @param [in]  subregion localIndex subregion of the location.
+   * @param [in]  index localIndex index of the location.
+   * @param [in]  field Optional string field name for which DoFs are required.
    */
   void getIndices( globalIndex_array & indices,
                    Connectivity const connectivity,
@@ -317,13 +414,18 @@ public:
                    string const & field = "" ) const;
 
   /**
-   * Get global indices for dofs connected by the connector type.  We have two versions, since cells need
-   * three indices while faces and nodes only need two.  This keeps the interface the same, but we will only
-   * implement appropriate combinations.
+   * @brief Get global indices for dofs connected by the connector type. We have two versions, since cells
+   * need three indices while faces and nodes only need two. This keeps the interface the same, but we will
+   * only implement appropriate combinations.
    *
-   * Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
-   * Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
-   * Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
+   * - Example 1 = getIndices(indices,ELEM,er,esr,ei,"pressure") = get pressure indices connected to this cell
+   * - Example 2 = getIndices(indices,FACE,fi,"pressure") = get pressure indices connected to this face
+   * - Example 3 = getIndices(indices,NODE,ni,"pressure") = get pressure indices connected to this node
+   *
+   * @param [out] indices globalIndex_array array gathering requested DoF indices.
+   * @param [in]  connectivity Connectivity connectivity used to retrieve DoF indices.
+   * @param [in]  index localIndex index of the location.
+   * @param [in]  field Optional string field name for which DoFs are required.
    */
   void getIndices( globalIndex_array & indices,
                    Connectivity const connectivity,
@@ -331,48 +433,69 @@ public:
                    string const & field = "" ) const;
 
   /**
-   * Create the permutation that collects together all DoFs of each MPI process
+   * @brief Create the permutation that collects together all DoFs of each MPI process.
+   *
+   * @param [out] permutation ParallelMatrix the permutation matrix.
    */
   void createPermutation( ParallelMatrix & permutation ) const;
 
   /**
-   * Permute the GLOBAL sparsity pattern (location-location). Low level interface
+   * @brief Permute the GLOBAL sparsity pattern (location-location). Low level interface.
+   *
+   * @param [in]  locLocDistr ParallelMatrix the field-based sparsity pattern.
+   * @param [in]  permutation ParallelMatrix the permutation matrix.
+   * @param [out] permutedMatrix ParallelMatrix the permuted sparsity pattern.
    */
   void permuteSparsityPattern( ParallelMatrix const & locLocDistr,
                                ParallelMatrix const & permutation,
                                ParallelMatrix & permutedMatrix ) const;
 
   /**
-   * Copy values from DOFs to nodes
+   * @brief Copy values from DOFs to nodes.
+   *
+   * @param [in]    vector ParallelVector the input vector.
+   * @param [in]    field string the name of the field.
+   * @param [inout] manager dataRepository::ManagedGroup manager where values are stored.
    */
   void copyVectorToField( ParallelVector const & vector,
                           string const & field,
                           dataRepository::ManagedGroup * const manager ) const;
 
   /**
-   * Copy values from nodes to DOFs
+   * @brief Copy values from nodes to DOFs.
+   *
+   * @param [out] vector ParallelVector vector where values are stored.
+   * @param [in]  field string the name of the field.
+   * @param [in]  manager dataRepository::ManagedGroup the input manager.
    */
-  void copyFieldToVector( ParallelVector const & vector,
+  void copyFieldToVector( ParallelVector & vector,
                           string const & field,
-                          dataRepository::ManagedGroup * const manager ) const;
+                          dataRepository::ManagedGroup const * const manager ) const;
 
   /**
-   * Print the global connectivity matrix
+   * @brief Print the global connectivity matrix.
    */
   void printConnectivityMatrix() const;
 
   /**
-   * Print the connectivity-location pattern for a specific field
+   * @brief Print the connectivity-location pattern for a specific field.
+   *
+   * @param [in] field string the name of the field.
+   * @param [in] fileName Optional string the name of the output file (if empty, fileName is
+   *                      formed based on field name).
    */
   void printConnectivityLocationPattern( string const & field, string const & fileName = "" ) const;
 
   /**
-   * Print a CSR pattern on file or on screen
+   * @brief Print a CSR pattern on file or on screen.
+   *
+   * @param [in] pattern Dof_SparsityPattern local sparsity pattern.
+   * @param [in] fileName Optional string the name of the output file (empty means stdout).
    */
   void printSparsityPattern( Dof_SparsityPattern const & pattern, string const & fileName = "" ) const;
 
   /**
-   * Getter for m_doubleSync
+   * @brief Get m_doubleSync.
    */
   inline bool needDoubleSync() const {
     return m_doubleSync;
@@ -409,6 +532,48 @@ private:
    */
   struct FieldDescription
   {
+    FieldDescription()
+    {}
+    
+    ~FieldDescription()
+    {}
+
+    FieldDescription( FieldDescription const & src ) :
+      name( src.name ),
+      regionNames( src.regionNames ),
+      regionPtrs( src.regionPtrs ),
+      location( src.location ),
+      numComponents( src.numComponents ),
+      key( src.key ),
+      docstring( src.docstring ),
+      numLocalNodes( src.numLocalNodes ),
+      numLocalRows( src.numLocalRows ),
+      numLocalConnectivity( src.numLocalConnectivity ),
+      numGlobalRows( src.numGlobalRows ),
+      firstLocalRow( src.firstLocalRow ),
+      fieldOffset( src.fieldOffset ),
+      firstLocalConnectivity( src.firstLocalConnectivity ),
+      connLocPattern( src.connLocPattern )
+    {}
+
+    FieldDescription( FieldDescription && src ) :
+      name( std::move( src.name ) ),
+      regionNames( std::move( src.regionNames ) ),
+      regionPtrs( std::move( src.regionPtrs ) ),
+      location( std::move( src.location ) ),
+      numComponents( std::move( src.numComponents ) ),
+      key( std::move( src.key ) ),
+      docstring( std::move( src.docstring ) ),
+      numLocalNodes( std::move( src.numLocalNodes ) ),
+      numLocalRows( std::move( src.numLocalRows ) ),
+      numLocalConnectivity( std::move( src.numLocalConnectivity ) ),
+      numGlobalRows( std::move( src.numGlobalRows ) ),
+      firstLocalRow( std::move( src.firstLocalRow ) ),
+      fieldOffset( std::move( src.fieldOffset ) ),
+      firstLocalConnectivity( std::move( src.firstLocalConnectivity ) ),
+      connLocPattern( std::move( src.connLocPattern ) )
+    {}
+
     string name; //!< field name
     array1d<string> regionNames; //!< active element regions
     array1d<ElementRegion*> regionPtrs; //!< saved pointers to active regions
@@ -437,9 +602,13 @@ private:
   array2d<Connectivity> m_connectivity;
 
   /**
-   * Definifion for entries of sparse matrices collection
+   * Definition for entries of sparse matrices collection
    */
-  typedef std::pair<ParallelMatrix*, ParallelMatrix*> matrixPair;
+  struct matrixPair
+  {
+    ParallelMatrix* first;
+    ParallelMatrix* second;
+  };
 
   /**
    * Table of sparsity patterns within and between fields
