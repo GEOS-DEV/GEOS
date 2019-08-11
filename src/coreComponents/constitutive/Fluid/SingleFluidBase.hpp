@@ -129,7 +129,7 @@ protected:
    * @tparam LAMBDA type the target function
    * @param lambda the kernel function
    */
-  template< typename POLICY=elemPolicy, typename LAMBDA >
+  template< typename POLICY=serialPolicy, typename LAMBDA >
   void LaunchKernel( LAMBDA && lambda );
 
   /**
@@ -142,7 +142,7 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                           ARGS && ... args );
 
@@ -156,7 +156,7 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchDensityUpdateKernel( arrayView1d<real64 const> const & pressure,
                                  ARGS && ... args );
 
@@ -170,7 +170,7 @@ protected:
    *
    * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchViscosityUpdateKernel( arrayView1d<real64 const> const & pressure,
                                    ARGS && ... args );
 

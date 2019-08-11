@@ -24,6 +24,7 @@
 #define FUNCTIONBASE_HPP_
 
 #include "dataRepository/ManagedGroup.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -70,7 +71,7 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         set<localIndex> const & set,
+                         SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
 
   /**
@@ -104,7 +105,7 @@ protected:
   template< typename LEAF >
   void EvaluateT( dataRepository::ManagedGroup const * const group,
                   real64 const time,
-                  set<localIndex> const & set,
+                  SortedArrayView<localIndex const> const & set,
                   real64_array & result ) const;
 
   virtual void PostProcessInput() override { InitializeFunction(); }
@@ -115,7 +116,7 @@ protected:
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
                               real64 const time,
-                              set<localIndex> const & set,
+                              SortedArrayView<localIndex const> const & set,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];
@@ -153,8 +154,9 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
   }
 
   integer count=0;
-  for( auto const & index : set )
+  forall_in_range<serialPolicy>( 0, set.size(), [&, set]( localIndex const i )
   {
+    localIndex const index = set[ i ];
     double input[4];
     int c = 0;
     for( int a=0 ; a<numVars ; ++a )
@@ -169,7 +171,7 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     // TODO: Check this line to make sure it is correct
     result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
     ++count;
-  }
+  });
 
 }
 } /* namespace geosx */

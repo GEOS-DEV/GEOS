@@ -38,14 +38,14 @@ namespace geosx
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
-  GEOS_LOG_RANK( "MKL max threads: " << mkl_get_max_threads());
+  GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads());
 #endif
 }
 
 void setupOpenMP()
 {
 #ifdef GEOSX_USE_OPENMP
-  GEOS_LOG_RANK( "Max threads: " << omp_get_max_threads());
+  GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads());
 #endif
 }
 
