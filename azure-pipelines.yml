@@ -22,11 +22,11 @@ steps:
     persistCredentials: true
     submodules: false
   - script: |
-      git -c http.https://github.com/GEOSX/cxx-utilities.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/LLNL/blt.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/PVTPackage.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/PAMELA.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/hdf5_interface.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.https://github.com/GEOSX/cxx-utilities.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.https://github.com/LLNL/blt.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.https://github.com/GEOSX/PVTPackage.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.https://github.com/GEOSX/PAMELA.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.https://github.com/GEOSX/hdf5_interface.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
   
   #- script: git -c http.https://github.com/GEOSX/cxx-utilities.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
   #- script: git -c http.https://github.com/LLNL/blt.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
