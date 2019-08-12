@@ -16,7 +16,7 @@ pool:
   vmImage: $(ImageName)
 
 
-# Beginning of steps/scripts
+# Beginning of steps to execute scripts
 steps:
   - checkout: self
     persistCredentials: true
