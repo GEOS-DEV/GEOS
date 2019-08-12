@@ -130,28 +130,6 @@ class VTKFile
   }
 
   private:
-    const std::unordered_map< rtTypes::TypeIDs, string > m_geosxToVTKTypeMap =
-    {
-      {rtTypes::TypeIDs::integer_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_id, "Int64"},
-      {rtTypes::TypeIDs::globalIndex_id, "Int64"},
-      {rtTypes::TypeIDs::real32_id, "Float32"},
-      {rtTypes::TypeIDs::real64_id, "Float64"},
-      {rtTypes::TypeIDs::r1_array_id, "Float64"},
-      {rtTypes::TypeIDs::real64_array_id, "Float64"},
-      {rtTypes::TypeIDs::real64_array2d_id, "Float64"},
-      {rtTypes::TypeIDs::real64_array3d_id, "Float64"},
-      {rtTypes::TypeIDs::real32_array_id, "Float32"},
-      {rtTypes::TypeIDs::real32_array2d_id, "Float32"},
-      {rtTypes::TypeIDs::real32_array3d_id, "Float32"},
-      {rtTypes::TypeIDs::integer_array_id, "Int32"},
-      {rtTypes::TypeIDs::localIndex_array_id, "Int64"},
-      {rtTypes::TypeIDs::localIndex_array2d_id, "Int64"},
-      {rtTypes::TypeIDs::localIndex_array3d_id, "Int64"},
-      {rtTypes::TypeIDs::globalIndex_array_id, "Int64"},
-      {rtTypes::TypeIDs::globalIndex_array2d_id, "Int64"},
-      {rtTypes::TypeIDs::globalIndex_array3d_id, "Int64"}
-    };
     /// Root file ( .pvd )
     pugi::xml_document m_rootFile;
 
