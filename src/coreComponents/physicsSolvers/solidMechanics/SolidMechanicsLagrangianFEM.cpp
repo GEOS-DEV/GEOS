@@ -457,7 +457,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
 real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                                   real64 const& dt,
-                                                  const int cycleNumber,
+                                                  const int GEOSX_UNUSED_ARG( cycleNumber ),
                                                   DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -472,9 +472,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
 
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  localIndex const numNodes = nodes->size();
 
-  arrayView1d<R1Tensor const> const & X = nodes->getReference<array1d<R1Tensor>>(nodes->viewKeys.referencePosition);
   arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
   array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
   arrayView1d<R1Tensor> const & vel = velocityArray;
@@ -693,8 +691,8 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    Group * const targetGroup,
-                    string const fieldName ) -> void
+                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
+                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
   {
     string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
 
@@ -811,7 +809,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
 
 void
 SolidMechanicsLagrangianFEM::
-ImplicitStepSetup( real64 const & time_n,
+ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                    real64 const & dt,
                    DomainPartition * const domain,
                    DofManager & dofManager,
@@ -880,9 +878,9 @@ ImplicitStepSetup( real64 const & time_n,
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
-                                                             real64 const & dt,
-                                                             DomainPartition * const domain)
+void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                                        real64 const & dt,
+                                                        DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
@@ -922,7 +920,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   }
 }
 
-void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const domain,
+void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                                              DofManager & dofManager ) const
 {
   dofManager.addField( keys::TotalDisplacement,
@@ -931,7 +929,7 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const domai
                        3 );
 }
 
-void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
+void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                   real64 const dt,
                                                   DomainPartition * const domain,
                                                   DofManager const & dofManager,
@@ -1061,9 +1059,6 @@ ApplyBoundaryConditions( real64 const time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   FaceManager * const faceManager = mesh->getFaceManager();
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 //  fsManager->ApplyBoundaryCondition( this, &SolidMechanics_LagrangianFEM::ForceBC,
 //                                     nodeManager, keys::Force, time_n + dt, *blockSystem );
@@ -1081,7 +1076,7 @@ ApplyBoundaryConditions( real64 const time_n,
                          string const &,
                          set< localIndex > const & targetSet,
                          Group * const targetGroup,
-                         string const fieldName )
+                         string const GEOSX_UNUSED_ARG( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
                                                                             false,
@@ -1124,8 +1119,8 @@ ApplyBoundaryConditions( real64 const time_n,
 
 real64
 SolidMechanicsLagrangianFEM::
-CalculateResidualNorm( DomainPartition const * const domain,
-                       DofManager const & dofManager,
+CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & rhs )
 {
   real64 * localResidual = nullptr;

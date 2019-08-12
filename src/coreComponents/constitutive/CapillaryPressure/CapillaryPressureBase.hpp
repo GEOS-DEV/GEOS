@@ -73,9 +73,9 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
-                            localIndex const k,
-                            localIndex const q ) {}
+  virtual void PointUpdate( arraySlice1d<real64 const> const & GEOSX_UNUSED_ARG( phaseVolFraction ),
+                            localIndex const GEOSX_UNUSED_ARG( k ),
+                            localIndex const GEOSX_UNUSED_ARG( q ) ) {}
 
   localIndex numFluidPhases() const;
 

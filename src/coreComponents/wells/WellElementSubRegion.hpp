@@ -75,14 +75,14 @@ public:
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
     
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   const NodeManager& nodeManager,
-                                                   const bool useReferencePos = true) const override
+                                                   const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
+                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
   { 
     return m_elementCenter[k]; 
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) override 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override 
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;

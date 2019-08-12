@@ -83,8 +83,8 @@ public:
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
+                        integer const GEOSX_UNUSED_ARG( eventCounter ),
+                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
                         dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
@@ -542,7 +542,7 @@ private:
   localIndex_set m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
- ArrayOfSets< localIndex > m_originalNodetoFaces;
+  ArrayOfSets< localIndex > m_originalNodetoFaces;
 
   /// copy of the original node->edge mapping prior to any separation
   ArrayOfSets< localIndex > m_originalNodetoEdges;

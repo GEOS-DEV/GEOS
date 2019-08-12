@@ -245,7 +245,6 @@ TEST_F( MeshGenerationTest, elemToNodeMap )
 TEST_F( MeshGenerationTest, nodeToElemMap )
 {
   ArrayOfArraysView< localIndex const > const & nodeToElemMap = m_nodeManager->elementList();
-  arrayView2d< localIndex const > const & elemToNodeMap = m_subRegion->nodeList();
 
   localIndex nodeID = 0;
   for ( localIndex i = 0; i < numNodesInX; ++i )

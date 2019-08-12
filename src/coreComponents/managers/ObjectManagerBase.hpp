@@ -92,17 +92,17 @@ public:
 
 
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
   { return 0; }
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ),
+                                     arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( packList ) ) const
   { return 0; }
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       array1d<localIndex> & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps )
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ),
+                                       array1d<localIndex> & GEOSX_UNUSED_ARG( packList ),
+                                       bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
+                                       bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
   { return 0; }
 
 

@@ -243,7 +243,7 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
             {
               rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID(wrapper->get_typeid());
               rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                                  [&]( auto a, auto b ) -> void
+                                                  [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
               {
                 using COMPOSITE_TYPE = decltype(a);
                 Wrapper<COMPOSITE_TYPE>& typedWrapper = Wrapper<COMPOSITE_TYPE>::cast( *wrapper );

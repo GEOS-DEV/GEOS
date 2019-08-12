@@ -354,7 +354,6 @@ public:
       {
         ElementSubRegionBase * const subRegion = elementRegion->GetSubRegion(esr);
 
-        bool validCast =
         Group::applyLambdaToContainer<ElementSubRegionBase, SUBREGIONTYPE,SUBREGIONTYPES...>( subRegion, [&]( auto * const castedSubRegion )
         {
           lambda( er, esr, elementRegion, castedSubRegion );

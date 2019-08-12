@@ -437,7 +437,7 @@ Unpack( char const * & buffer, InterObjectRelation< T > & var )
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 typename std::enable_if< !bufferOps::is_packable< T >::value, localIndex >::type
-Pack( char * & buffer, T const & var )
+Pack( char * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ) )
 {
   GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -446,7 +446,7 @@ Pack( char * & buffer, T const & var )
 //------------------------------------------------------------------------------
 template< typename T >
 typename std::enable_if< !bufferOps::is_packable< T >::value, localIndex >::type
-Unpack( char const * & buffer, T & var )
+Unpack( char const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ) )
 {
   GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -455,7 +455,7 @@ Unpack( char const * & buffer, T & var )
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !bufferOps::is_packable_by_index< T >::value, localIndex >::type
-Pack( char * & buffer, T const & var, T_INDICES const & )
+Pack( char * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
   GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
@@ -464,7 +464,7 @@ Pack( char * & buffer, T const & var, T_INDICES const & )
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
 typename std::enable_if< !bufferOps::is_packable_by_index< T >::value, localIndex >::type
-Unpack( char const * & buffer, T & var, T_INDICES const & )
+Unpack( char const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
   GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
