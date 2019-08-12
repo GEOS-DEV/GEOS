@@ -6,11 +6,54 @@ variables:
 
 strategy:
   matrix:
+    macos:
+      ImageName: 'macos-10.13'
+      CC: clang
+      CXX: clang++
+      FC: gfortran
+      MPICC: mpicc
+      MPICXX: mpicxx
+      MPIFC: mpifort
+      MPIEXEC: /usr/local/bin/mpirun
+      GEOSX_TPL_DIR: /Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Release
+      TEST_TARGET: 'xcode10.2 C++'
     linux_clang6_release:
       ImageName: 'ubuntu-16.04'
       IMG: clang6-LC-toss3
       GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
       CMAKE_BUILD_TYPE: Release
+      TEST_TARGET: 'clang6-LC-toss3 C++'
+    linux_clang7_release:
+      ImageName: 'ubuntu-16.04'
+      IMG: clang7-LC-toss3
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Release
+      TEST_TARGET: 'clang7-LC-toss3 C++'
+    linux_clang7_debug:
+      ImageName: 'ubuntu-16.04'
+      IMG: clang7-LC-toss3
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Debug
+      TEST_TARGET: 'clang7-LC-toss3-debug C++'
+    linux_gcc7_release:
+      ImageName: 'ubuntu-16.04'
+      IMG: gcc7-ubuntu18
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Release
+      TEST_TARGET: 'gcc7-ubuntu18 C++'
+    linux_gcc8_release:
+      ImageName: 'ubuntu-16.04'
+      IMG: gcc8-ubuntu18
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Release
+      TEST_TARGET: 'gcc8-ubuntu18 C++'
+    linux_gcc8_debug:
+      ImageName: 'ubuntu-16.04'
+      IMG: gcc8-ubuntu18
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Debug
+      TEST_TARGET: 'gcc8-ubuntu18-debug C++'
 
 pool:
   vmImage: $(ImageName)
@@ -23,14 +66,14 @@ steps:
     submodules: false
   - script: |
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/cxx-utilities
-      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/cmake/blt
+      git -c submodule update --init --recursive src/cmake/blt
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PVTPackage
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PAMELA
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   
   - script: docker run --rm --user='root' -v $(Build.SourcesDirectory):/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     condition: eq( variables['Agent.OS'], 'Linux')
-    displayName: 'Linux TPLs'
+    displayName: '$(TEST_TARGET) TPLs'
   - script: |
       brew install openmpi;
       ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
@@ -47,15 +90,15 @@ steps:
       cd ../../../..;
       cd ../GEOSX;  
     condition: eq( variables['Agent.OS'], 'Darwin')
-    displayName: 'OSX TPLs'
+    displayName: '$(TEST_TARGET) TPLs'
   - script: | 
       python $(Build.SourcesDirectory)/scripts/config-build.py -hc $(Build.SourcesDirectory)/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
       cd build-darwin-clang-debug;
       make -j2 VERBOSE=1;
       ctest -V;
     condition: eq (variables['Agent.OS'], 'Darwin')
-    displayName: 'OSX Build and Test'
+    displayName: '$(TEST_TARGET) Build and Test'
   - script: | 
       docker run --rm -v $(Build.SourcesDirectory):/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     condition: ne (variables['Agent.OS'], 'Darwin')
-    displayName: 'Linux build and test'
+    displayName: '$(TEST_TARGET) build and test'
