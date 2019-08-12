@@ -27,9 +27,46 @@
 
 #include "dataRepository/ViewWrapper.hpp"
 
+
 namespace geosx
 {
 using namespace dataRepository;
+
+namespace
+{
+/// Map from GEOSX type to VTK cell types
+static std::unordered_map< string, int > geosxToVTKCellTypeMap =
+{
+  { "C3D4", 10 },
+  { "C3D5", 14 },
+  { "C3D6", 13 },
+  { "C3D8", 12 },
+  { "", 9 } // QUAD ?
+};
+
+static std::unordered_map< rtTypes::TypeIDs, string > geosxToVTKTypeMap =
+{
+  {rtTypes::TypeIDs::integer_id, "Int32"},
+  {rtTypes::TypeIDs::localIndex_id, "Int64"},
+  {rtTypes::TypeIDs::globalIndex_id, "Int64"},
+  {rtTypes::TypeIDs::real32_id, "Float32"},
+  {rtTypes::TypeIDs::real64_id, "Float64"},
+  {rtTypes::TypeIDs::r1_array_id, "Float64"},
+  {rtTypes::TypeIDs::real64_array_id, "Float64"},
+  {rtTypes::TypeIDs::real64_array2d_id, "Float64"},
+  {rtTypes::TypeIDs::real64_array3d_id, "Float64"},
+  {rtTypes::TypeIDs::real32_array_id, "Float32"},
+  {rtTypes::TypeIDs::real32_array2d_id, "Float32"},
+  {rtTypes::TypeIDs::real32_array3d_id, "Float32"},
+  {rtTypes::TypeIDs::integer_array_id, "Int32"},
+  {rtTypes::TypeIDs::localIndex_array_id, "Int64"},
+  {rtTypes::TypeIDs::localIndex_array2d_id, "Int64"},
+  {rtTypes::TypeIDs::localIndex_array3d_id, "Int64"},
+  {rtTypes::TypeIDs::globalIndex_array_id, "Int64"},
+  {rtTypes::TypeIDs::globalIndex_array2d_id, "Int64"},
+  {rtTypes::TypeIDs::globalIndex_array3d_id, "Int64"}
+};
+}
 class CustomVTUXMLWriter
 {
   public:
@@ -97,11 +134,11 @@ class CustomVTUXMLWriter
   {
     if( binary )
     {
-      WriteBinaryConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
+      WriteBinaryConnectivities( geosxToVTKCellTypeMap.at( type ), connectivities );
     }
     else
     {
-      WriteAsciiConnectivities( m_geosxToVTKCellTypeMap.at( type ), connectivities );
+      WriteAsciiConnectivities( geosxToVTKCellTypeMap.at( type ), connectivities );
     }
   }
 
@@ -134,11 +171,11 @@ class CustomVTUXMLWriter
   {
     if( binary )
     {
-      WriteBinaryTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
+      WriteBinaryTypes( geosxToVTKCellTypeMap.at( type ), nbElements );
     }
     else
     {
-      WriteAsciiTypes( m_geosxToVTKCellTypeMap.at( type ), nbElements );
+      WriteAsciiTypes( geosxToVTKCellTypeMap.at( type ), nbElements );
     }
   }
 
@@ -420,16 +457,6 @@ class CustomVTUXMLWriter
 
     /// Space counter to have well indented XML file
     int m_spaceCount;
-
-    /// Map from GEOSX type to VTK cell types
-    const std::unordered_map< string, int > m_geosxToVTKCellTypeMap =
-    {
-      { "C3D4", 10 },
-      { "C3D5", 14 },
-      { "C3D6", 13 },
-      { "C3D8", 12 },
-      { "", 9 } // QUAD ?
-    };
 };
 
 template<>
@@ -531,7 +558,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
       // Declaration the node PPoints
       auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
       // .... and the data array containg the positions
-      CreatePDataArray( pPointsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id), "Position", 3, format );
+      CreatePDataArray( pPointsNode, geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id), "Position", 3, format );
       
       // Find all the node fields to output
       auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
@@ -543,7 +570,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
            string const fieldName = wrapper->getName();
            std::type_info const & typeID = wrapper->get_typeid();
            rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-           if( !m_geosxToVTKTypeMap.count(fieldType) )
+           if( !geosxToVTKTypeMap.count(fieldType) )
              continue;
            int dimension = 0;
            if( fieldType == rtTypes::TypeIDs::r1_array_id )
@@ -554,16 +581,16 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
            {
              dimension = 1;
            }
-           CreatePDataArray(pPointDataNode, m_geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
+           CreatePDataArray(pPointDataNode, geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
         }
       }
 
       // Declaration of the node PCells
       auto pCellsNode = pUnstructureGridNode.append_child("PCells");
       // .... and its data array defining the connectivities, types, and offsets
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1, format ); //TODO harcoded for the moment
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1, format );
-      CreatePDataArray( pCellsNode, m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1, format );
+      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "connectivity", 1, format ); //TODO harcoded for the moment
+      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id), "offsets", 1, format );
+      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id), "types", 1, format );
 
       // Find all the cell fields to output
       auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
@@ -582,7 +609,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
               string const fieldName = wrapper->getName();
               std::type_info const & typeID = wrapper->get_typeid();
               rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-              if( !m_geosxToVTKTypeMap.count(fieldType) )
+              if( !geosxToVTKTypeMap.count(fieldType) )
                 continue;
               int dimension = 0;
               if( fieldType == rtTypes::TypeIDs::r1_array_id )
@@ -593,7 +620,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
               {
                 dimension = 1;
               }
-              CreatePDataArray(pCellDataNode, m_geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
+              CreatePDataArray(pCellDataNode, geosxToVTKTypeMap.at(fieldType), fieldName, dimension, format);
             }
           }
        });
@@ -635,7 +662,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   vtuWriter.OpenXMLNode( "Points",{} );
 
   // Definition of the node DataArray that will contain all the node coordinates
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id) },
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( rtTypes::TypeIDs::real64_id) },
                                         { "Name", "Position" },
                                         { "NumberOfComponents", "3" },
                                         { "format", format } } );
@@ -653,7 +680,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
        string const fieldName = wrapper->getName();
        std::type_info const & typeID = wrapper->get_typeid();
        rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-       if( !m_geosxToVTKTypeMap.count(fieldType) )
+       if( !geosxToVTKTypeMap.count(fieldType) )
          continue;
        int dimension = 0;
        if( fieldType == rtTypes::TypeIDs::r1_array_id )
@@ -664,7 +691,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
        {
          dimension = 1;
        }
-       vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( fieldType ) },
+       vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( fieldType ) },
                                              { "Name", fieldName },
                                              { "NumberOfComponents", std::to_string( dimension ) },
                                              { "format", format } } );
@@ -685,7 +712,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   vtuWriter.OpenXMLNode( "Cells", {} );
 
   // Definition of the node DataArray that will contain the connectivities
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
                                         { "Name", "connectivity" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
@@ -714,7 +741,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the offsets
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( rtTypes::TypeIDs::localIndex_id ) },
                                         { "Name", "offsets" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
@@ -730,7 +757,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the cell types
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id ) },
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( rtTypes::TypeIDs::integer_id ) },
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
@@ -763,7 +790,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
           string const fieldName = wrapper->getName();
           std::type_info const & typeID = wrapper->get_typeid();
           rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-          if( !m_geosxToVTKTypeMap.count(fieldType) )
+          if( !geosxToVTKTypeMap.count(fieldType) )
             continue;
           int dimension = 0;
           if( fieldType == rtTypes::TypeIDs::r1_array_id )
@@ -774,7 +801,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
           {
             dimension = 1;
           }
-          vtuWriter.OpenXMLNode( "DataArray", { { "type", m_geosxToVTKTypeMap.at( fieldType ) },
+          vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( fieldType ) },
                                                 { "Name", fieldName },
                                                 { "NumberOfComponents", std::to_string( dimension ) },
                                                 { "format", format } } );
