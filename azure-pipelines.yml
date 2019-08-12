@@ -22,22 +22,12 @@ steps:
     persistCredentials: true
     submodules: false
   - script: |
-      git -c http.https://github.com/GEOSX/cxx-utilities.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/LLNL/blt.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/PVTPackage.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/PAMELA.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-      git -c http.https://github.com/GEOSX/hdf5_interface.git.extraheader="AUTHORIZATION:basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/cxx-utilities
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/cmake/blt
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PVTPackage
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PAMELA
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   
-  #- script: git -c http.https://github.com/GEOSX/cxx-utilities.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-  #- script: git -c http.https://github.com/LLNL/blt.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-  #- script: git -c http.https://github.com/GEOSX/PVTPackage.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-  #- script: git -c http.https://github.com/GEOSX/PAMELA.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-  #- script: git -c http.https://github.com/GEOSX/hdf5_interface.git.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive
-  # script: git submodule update --init --recursive src/coreComponents/cxx-utilities
-  # script: git submodule update --init --recursive src/cmake/blt
-  # script: git submodule update --init --recursive src/externalComponents/PVTPackage
-  # script: git submodule update --init --recursive src/externalComponents/PAMELA
-  # script: git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   - script: docker run --rm --user='root' -v $(Build.SourcesDirectory):/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     condition: eq( variables['Agent.OS'], 'Linux')
     displayName: 'Linux TPLs'
