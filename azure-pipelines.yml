@@ -16,7 +16,7 @@ pool:
   vmImage: $(ImageName)
 
 
-# Beginning of steps/scripting
+# Beginning of steps/scripts
 steps:
   - checkout: self
     submodules: false
