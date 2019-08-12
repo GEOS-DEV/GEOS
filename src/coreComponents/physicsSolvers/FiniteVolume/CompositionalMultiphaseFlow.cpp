@@ -693,9 +693,6 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
                                                                 globalIndex & numGlobalRows,
                                                                 localIndex offset )
 {
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber     = m_dofNumber;
-  ElementRegionManager::ElementViewAccessor< arrayView1d<integer> >     const & elemGhostRank = m_elemGhostRank;
-
   int numMpiProcesses;
   MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
 
@@ -721,26 +718,27 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
       firstLocalRow += gather[p];
   }
 
-  // create trilinos dof indexing, setting initial values to -1 to indicate unset values.
-  for( localIndex er=0 ; er < elemGhostRank.size() ; ++er )
-  {
-    for( localIndex esr=0 ; esr < elemGhostRank[er].size() ; ++esr )
-    {
-      dofNumber[er][esr] = -1;
-    }
-  }
-
   // loop over all elements and set the dof number if the element is not a ghost
   localIndex localCount = 0;
-  forAllElemsInMesh<RAJA::seq_exec>( meshLevel, [&] ( localIndex const er,
-                                                      localIndex const esr,
-                                                      localIndex const ei )
+  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
+                                      ElementRegion * const region,
+                                      ElementSubRegionBase * const subRegion )
   {
-    if( elemGhostRank[er][esr][ei] < 0 )
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<globalIndex> const & dofNumber = m_dofNumber[er][esr];
+
+    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), [&] ( localIndex const a )
     {
-      dofNumber[er][esr][ei] = firstLocalRow + localCount + offset;
-      localCount += 1;
-    }
+      if( elemGhostRank[a] < 0 )
+      {
+        dofNumber[a] = firstLocalRow + localCount + offset;
+        localCount += 1;
+      }
+      else
+      {
+        dofNumber[a] = -1;
+      }
+    } );
   });
 
   GEOS_ERROR_IF( localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
@@ -754,9 +752,6 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber =
     elementRegionManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d<integer> > const & elemGhostRank =
-    elementRegionManager->ConstructViewAccessor< array1d<integer>, arrayView1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
@@ -820,31 +815,36 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
     } );
   } );
 
-  stackArray2d<real64, maxNumDof * maxNumDof> values( NDOF, NDOF );
-  values = 1.0;
-
   // loop over all elements and add all locals just in case the above connector loop missed some
-  forAllElemsInMesh( meshLevel, [&] ( localIndex const er,
-                                      localIndex const esr,
-                                      localIndex const ei )
+  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
+                                      ElementRegion const * const region,
+                                      ElementSubRegionBase const * const subRegion )
   {
-    if (elemGhostRank[er][esr][ei] < 0)
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d<globalIndex const> const & dofNumberSub = m_dofNumber[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const a )
     {
-      stackArray1d<globalIndex, maxNumDof> dofIndexRow( NDOF );
-
-      globalIndex const offset = NDOF * dofNumber[er][esr][ei];
-      for (localIndex idof = 0; idof < NDOF; ++idof)
+      if( elemGhostRank[a] < 0 )
       {
-        dofIndexRow[idof] = offset + idof;
-      }
+        stackArray1d< globalIndex, maxNumDof > dofIndexRow( NDOF );
+        stackArray2d<real64, maxNumDof * maxNumDof> values( NDOF, NDOF );
+        values = 1.0;
 
-      matrix->insert( dofIndexRow.data(),
-                      dofIndexRow.data(),
-                      values.data(),
-                      NDOF,
-                      NDOF );
-    }
-  });
+        globalIndex const offset = NDOF * dofNumberSub[a];
+        for( localIndex idof = 0 ; idof < NDOF ; ++idof )
+        {
+          dofIndexRow[idof] = offset + idof;
+        }
+
+        matrix->insert( dofIndexRow.data(),
+                        dofIndexRow.data(),
+                        values.data(),
+                        NDOF,
+                        NDOF );
+      }
+    } );
+  } );
 }
 
 void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
@@ -855,17 +855,17 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
 {
   // assume that there is only a single MeshLevel for now
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-  ElementRegionManager * const elementRegionManager = mesh->getElemManager();
 
   // for this solver, the dof are on the cell center, and the block of rows corresponds to a cell
   localIndex numLocalRows  = 0;
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  elementRegionManager->forElementSubRegions( [&]( ObjectManagerBase * const subRegion )
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
   {
-    numLocalRows += subRegion->size() - subRegion->GetNumberOfGhosts();
-  });
+    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
+    numLocalRows += subRegion->size() - subRegionGhosts;
+  } );
 
   localIndex_array displacementIndices;
   SetNumRowsAndTrilinosIndices( mesh,
@@ -1311,7 +1311,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
 {
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
-  unordered_map< string, array1d<bool> > bcStatusMap; // map to check consistent application of BC
+  map< string, map< string, array1d<bool> > > bcStatusMap; // map to check consistent application of BC
 
   // 1. apply pressure Dirichlet BCs
   fsManager->Apply( time + dt,
@@ -1319,15 +1319,16 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     "ElementRegions",
                     viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
-                    string const & setName,
-                    set<localIndex> const & targetSet,
-                    ManagedGroup * subRegion,
-                    string const & )
+                         string const & setName,
+                         set<localIndex> const & targetSet,
+                         ManagedGroup * subRegion,
+                         string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
-    GEOS_ERROR_IF( bcStatusMap.count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
-    bcStatusMap[setName].resize( m_numComponents );
-    bcStatusMap[setName] = false;
+    string const & subRegionName = subRegion->getName();
+    GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting pressure boundary conditions on set " << setName );
+    bcStatusMap[subRegionName][setName].resize( m_numComponents );
+    bcStatusMap[subRegionName][setName] = false;
 
     // 1.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
@@ -1342,16 +1343,17 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     "ElementRegions",
                     viewKeyStruct::globalCompFractionString,
                     [&] ( FieldSpecificationBase const * const fs,
-                    string const & setName,
-                    set<localIndex> const & targetSet,
-                    ManagedGroup * subRegion,
-                    string const & )
+                          string const & setName,
+                          set<localIndex> const & targetSet,
+                          ManagedGroup * subRegion,
+                          string const & )
   {
     // 2.0. Check pressure and record composition bc application
+    string const & subRegionName = subRegion->getName();
     localIndex const comp = fs->GetComponent();
-    GEOS_ERROR_IF( bcStatusMap.count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
-    GEOS_ERROR_IF( bcStatusMap[setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
-    bcStatusMap[setName][comp] = true;
+    GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Pressure boundary condition not prescribed on set '" << setName << "'" );
+    GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+    bcStatusMap[subRegionName][setName][comp] = true;
 
     // 2.1. Apply BC to set the field values
     fs->ApplyFieldValue<FieldSpecificationEqual>( targetSet,
@@ -1362,13 +1364,17 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
 
   // 2.3 Check consistency between composition BC applied to sets
   bool bcConsistent = true;
-  for (auto const & bcEntry : bcStatusMap)
+  for (auto const & bcStatusEntryOuter : bcStatusMap)
   {
-    for (localIndex ic = 0; ic < m_numComponents; ++ic)
+    for( auto const & bcStatusEntryInner : bcStatusEntryOuter.second )
     {
-      bcConsistent &= bcEntry.second[ic];
-      GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component "
-                                      << ic << " on set '" << bcEntry.first << "'" );
+      for( localIndex ic = 0 ; ic < m_numComponents ; ++ic )
+      {
+        bcConsistent &= bcStatusEntryInner.second[ic];
+        GEOS_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
+                         << " on region '" << bcStatusEntryOuter.first << "',"
+                         << " set '" << bcStatusEntryInner.first << "'" );
+      }
     }
   }
   GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
@@ -1379,10 +1385,10 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     "ElementRegions",
                     viewKeyStruct::pressureString,
                     [&] ( FieldSpecificationBase const * const bc,
-                    string const & setName,
-                    set<localIndex> const & targetSet,
-                    ManagedGroup * subRegion,
-                    string const & )
+                          string const & setName,
+                          set<localIndex> const & targetSet,
+                          ManagedGroup * subRegion,
+                          string const & )
   {
     MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
 
