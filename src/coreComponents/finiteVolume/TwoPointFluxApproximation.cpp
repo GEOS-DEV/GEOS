@@ -247,8 +247,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   FixedToManyElementRelation const &
   faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
 
-  arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
-
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
   stackArray1d<localIndex, maxElems> stencilCellsRegionIndex;

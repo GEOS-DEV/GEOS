@@ -556,23 +556,25 @@ void PetscSparseMatrix::write( string const & filename,
                                bool const mtxFormat ) const
 {
   PetscViewer viewer;
-  const char * filename_ = filename.c_str();
-  
-  if( mtxFormat ){
+
+  if( mtxFormat )
+  {
 
     // ".mtx" extension
-  string name( filename );
+    string name( filename );
     if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ) 
     {
       name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
     }
     PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-  } else 
+  }
+  else
   {
     PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
   }
+
   MatView( m_mat, viewer );
 }
 
@@ -626,7 +628,7 @@ void PetscSparseMatrix::MatrixMatrixMultiply( bool const transA,
                                               PetscSparseMatrix const &B,
                                               bool const transB,
                                               PetscSparseMatrix &C,
-                                              bool const call_FillComplete ) const
+                                              bool const GEOSX_UNUSED_ARG( call_FillComplete ) ) const
 {
   if( transA && transB ) 
   {

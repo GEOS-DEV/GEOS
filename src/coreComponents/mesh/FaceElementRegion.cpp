@@ -40,7 +40,7 @@ FaceElementRegion::~FaceElementRegion()
 
 localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
-                                                 ArrayOfArraysView< localIndex const >  const & originalFaceToEdges,
+                                                 ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                  string const & subRegionName,
                                                  localIndex const faceIndices[2] )
 {

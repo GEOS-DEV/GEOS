@@ -135,7 +135,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
@@ -208,7 +208,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
                                                    bool const overwriteUpMaps,
-                                                   bool const overwriteDownMaps )
+                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 

@@ -179,7 +179,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::CreateChild( string const & childKey, string const & childName )
+Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 { return nullptr; }
 
 
@@ -798,13 +798,8 @@ void ProblemManager::ApplyNumericalMethods()
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   DomainPartition * domain  = getDomainPartition();
-
-  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-
   Group * const meshBodies = domain->getMeshBodies();
-
 
   map<string,localIndex> regionQuadrature;
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
@@ -857,9 +852,7 @@ void ProblemManager::ApplyNumericalMethods()
     for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
     {
       MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
-      NodeManager * const nodeManager = meshLevel->getNodeManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
-      arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
 
       for( map<string,localIndex>::iterator iter=regionQuadrature.begin() ; iter!=regionQuadrature.end() ; ++iter )
       {
@@ -884,7 +877,7 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( Group * const group )
+void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
@@ -895,14 +888,12 @@ void ProblemManager::InitializePostSubGroups( Group * const group )
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
 
   domain->SetupCommunications();
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
-
 }
 
 void ProblemManager::RunSimulation()

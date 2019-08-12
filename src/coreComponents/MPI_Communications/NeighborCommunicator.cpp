@@ -187,7 +187,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_WaitAll( int const commID,
+void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_ARG( commID ),
                                         MPI_Request& mpiSendRequest,
                                         MPI_Status& mpiSendStatus,
                                         MPI_Request& mpiRecvRequest,
@@ -279,7 +279,7 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
 }
 
-void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
+void NeighborCommunicator::FindAndPackGhosts( bool const GEOSX_UNUSED_ARG( contactActive ),
                                               integer const depth,
                                               MeshLevel * const mesh,
                                               int const commID )

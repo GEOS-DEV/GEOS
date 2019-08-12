@@ -98,6 +98,7 @@ Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expected
 
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
+  GEOSX_DEBUG_VAR( expectedLength );
 
   memcpy( var, buffer, length * sizeof(T) );
   sizeOfUnpackedChars += length * sizeof(T);
@@ -185,6 +186,7 @@ Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expected
 
   GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
                    expectedLength << " != " << length );
+  GEOSX_DEBUG_VAR( expectedLength );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
@@ -553,11 +555,10 @@ Unpack( char const * & buffer, LvArray::Array< T, NDIM, INDEX_TYPE > & var )
   INDEX_TYPE strides[NDIM];
   sizeOfUnpackedChars += Unpack( buffer, strides, NDIM );
 
-  INDEX_TYPE const * const existingStrides = var.strides();
   for( int i=0 ; i<NDIM ; ++i )
   {
-    GEOS_ASSERT_MSG( strides[i] == existingStrides[i], "Strides are inconsistent: " <<
-                     strides[i] << " != " << existingStrides[i] );
+    GEOS_ASSERT_MSG( strides[i] == var.strides()[i], "Strides are inconsistent: " <<
+                     strides[i] << " != " << var.strides()[i] );
   }
 
   sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
@@ -671,7 +672,7 @@ Unpack( char const * & buffer,
   LvArray::ArrayOfArrays< T, INDEX_TYPE > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
 
-  var.stealFrom( std::move( varAsArray ), false );
+  var.stealFrom( std::move( varAsArray ), sortedArrayManipulation::SORTED_UNIQUE );
 
   return sizeOfUnpackedChars;
 }
@@ -851,6 +852,7 @@ Unpack( char const * & buffer,
   sizeOfUnpackedChars += Unpack( buffer, length );
 
   GEOS_ASSERT_EQ( length, expectedLength );
+  GEOSX_DEBUG_VAR( expectedLength );
 
   unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices = unmappedLocalIndexValue;

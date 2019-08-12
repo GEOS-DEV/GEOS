@@ -197,7 +197,6 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
     {
       localIndex const numFacesPerElement = subRegion->numFacesPerElement();
       localIndex const numElements = subRegion->size();
-      array2d<localIndex const> const & elemsToFaces = subRegion->faceList();
 
       // Begin the parallel region so that tempNodeList and lowestNodes are thread private.
       PRAGMA_OMP( omp parallel )
@@ -381,6 +380,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
     // The first element defines the node ordering for the face.
     localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
     GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+    GEOSX_DEBUG_VAR( numFaceNodes );
     
     // Add the face to the element to face map.
     subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
@@ -436,6 +436,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   // Get the nodes associated with the face.
   localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
   GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+  GEOSX_DEBUG_VAR( numFaceNodes );
 
   // Add the face to the element to face map.
   subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
@@ -591,9 +592,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & faceDomainBoundaryIndicator = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   faceDomainBoundaryIndicator = 0;
 
-  array2d<localIndex> const & elemRegionList = this->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
-  array2d<localIndex> const & elemList = this->elementList();
+  arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
 
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf )
   {
@@ -891,7 +890,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const overwriteDownMaps )
+                                          bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 

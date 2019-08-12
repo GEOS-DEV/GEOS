@@ -23,8 +23,6 @@
  * @file StructuredGridUtilities.hpp
  */
 
-#include <cassert>
-
 namespace StructuredGrid
 {
 /*!
@@ -55,7 +53,8 @@ void map_index<1>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx);
+  GEOS_ASSERT_GT(nnx, index);
+  GEOSX_DEBUG_VAR(nnx);
   indices[0] = index;
 }
 
@@ -65,7 +64,7 @@ void map_index<2>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx*nnx);
+  GEOS_ASSERT_GT(nnx*nnx, index);
   indices[0] = index % nnx;
   indices[1] = index / nnx;
 }
@@ -76,7 +75,7 @@ void map_index<3>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx*nnx*nnx);
+  GEOS_ASSERT_GT(nnx*nnx*nnx, index);
   indices[0] = index % nnx;
   indices[1] = (index / nnx) % nnx;
   indices[2] = index / (nnx*nnx);
