@@ -81,11 +81,11 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
                     const_cast<DomainPartition *>( &domain ), // hack, but guaranteed we won't modify it
                     "faceManager",
                     m_boundaryFieldName,
-                    [&] ( FieldSpecificationBase const * bc,
+                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
                           string const & setName,
                           set<localIndex> const & targetSet,
-                          Group const * targetGroup,
-                          string const & targetName)
+                          Group const * GEOSX_UNUSED_ARG( targetGroup ),
+                          string const & GEOSX_UNUSED_ARG( targetName ))
   {
     Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);

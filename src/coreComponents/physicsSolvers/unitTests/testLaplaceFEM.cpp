@@ -16,28 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Copyright (c) 2015, Lawrence Livermore National Security, LLC.
- * Produced at the Lawrence Livermore National Laboratory.
- *
- * All rights reserved.
- *
- * This source code cannot be distributed without permission and
- * further review from Lawrence Livermore National Laboratory.
- */
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wused-but-marked-unused"
-#endif
-
 #include "gtest/gtest.h"
-
-#ifdef __clang__
-#define __null nullptr
-#endif
 
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
@@ -345,7 +324,3 @@ int main(int argc, char** argv)
 
   return result;
 }
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

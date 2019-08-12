@@ -218,10 +218,10 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 // Block CG solver
 // ----------------------------
 template< typename LAI >
-void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
-                           BlockVectorView<LAI> &x,
-                           BlockVectorView<LAI> const &b,
-                           BlockMatrixView<LAI> const &M )
+void CGsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( A ),
+                           BlockVectorView<LAI> & GEOSX_UNUSED_ARG( x ),
+                           BlockVectorView<LAI> const & GEOSX_UNUSED_ARG( b ),
+                           BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( M ) )
 
 {
   GEOS_ERROR( "Not implemented" );

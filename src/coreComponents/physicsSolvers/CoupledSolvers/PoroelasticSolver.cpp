@@ -80,13 +80,13 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
   }
 }
 
-void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
-                                           real64 const & dt,
+void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                           real64 const & GEOSX_UNUSED_ARG( dt ),
                                            DomainPartition * const domain,
-                                           DofManager & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                           ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                           ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                           ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -106,9 +106,9 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
   });
 }
 
-void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
-                                              real64 const& dt,
-                                              DomainPartition * const domain)
+void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_ARG( time_n ),
+                                              real64 const& GEOSX_UNUSED_ARG( dt ),
+                                              DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 

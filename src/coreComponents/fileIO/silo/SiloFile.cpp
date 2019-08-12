@@ -30,13 +30,7 @@
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 
-
 #pragma GCC diagnostic push
-
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wshorten-64-to-32"
-#endif
-
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
 #include "SiloFile.hpp"
@@ -1468,7 +1462,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
           rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
                                           false,
-                                          [&]( auto array, auto Type )->void
+                                          [&]( auto array, auto GEOSX_UNUSED_ARG( Type ) )->void
           {
             typedef decltype(array) arrayType;
             Wrapper<arrayType> const &
@@ -1496,7 +1490,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID(typeID),
                                     false,
-                                    [&]( auto array, auto scalar )->void
+                                    [&]( auto array, auto GEOSX_UNUSED_ARG( scalar ) )->void
     {
       typedef decltype(array) arrayType;
       Wrapper<arrayType> & wrapperT = Wrapper<arrayType>::cast( *wrapper );
@@ -1634,7 +1628,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
     localIndex numElementShapes = 0;
 
-    elementManager->forElementSubRegions( [&]( auto const * const subRegion )
+    elementManager->forElementSubRegions( [&]( auto const * const GEOSX_UNUSED_ARG( subRegion ) )
     {
       ++numElementShapes;
     });
@@ -1649,9 +1643,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     elementToNodeMap.resize( numElementShapes );
 
     int count = 0;
-
-    Group const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegionsGroup);
-
     elementManager->forElementSubRegions( [&]( auto const * const elementSubRegion )
     {
       TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();

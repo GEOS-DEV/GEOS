@@ -79,8 +79,7 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
     dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
-      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
-
+      GEOSX_UNUSED_VAR( iterCellBlocks );
       forall_in_set<POLICY>(setList, listLen, body);
     }
   }

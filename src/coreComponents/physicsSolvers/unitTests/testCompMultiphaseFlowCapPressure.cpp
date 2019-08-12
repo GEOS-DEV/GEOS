@@ -81,8 +81,9 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase * const region,
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                         localIndex const GEOSX_UNUSED_ARG( esr ),
+                                         ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                          ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =

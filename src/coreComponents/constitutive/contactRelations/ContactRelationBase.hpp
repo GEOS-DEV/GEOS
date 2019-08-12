@@ -67,9 +67,9 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override {}
+  virtual void DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
+                             Group * const GEOSX_UNUSED_ARG( parent ),
+                             std::unique_ptr<ConstitutiveBase> & GEOSX_UNUSED_ARG( clone ) ) const override {}
 
   virtual Group * CreateChild( string const & catalogKey,
                                       string const & name ) override;

@@ -198,7 +198,7 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
 
       rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto b ) -> void
+                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
           {
 //        using BASE_TYPE = decltype(b);
             using COMPOSITE_TYPE = decltype(a);
@@ -488,6 +488,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
 
     for( auto const & index : this->m_subGroups )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive );
@@ -541,7 +542,6 @@ void Group::finishWriting() const
     return;
   }
 
-  axom::sidre::View * temp = m_sidreGroup->getView( "__size__" );
   m_sidreGroup->destroyView( "__size__" );
 
   for( auto & pair : m_wrappers )
