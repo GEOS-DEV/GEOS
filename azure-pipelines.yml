@@ -66,7 +66,7 @@ steps:
     submodules: false
   - script: |
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/cxx-utilities
-      git -c submodule update --init --recursive src/cmake/blt
+      git submodule update --init --recursive src/cmake/blt
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PVTPackage
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PAMELA
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
@@ -90,14 +90,14 @@ steps:
       cd ../../../..;
       cd ../GEOSX;  
     condition: eq( variables['Agent.OS'], 'Darwin')
-    displayName: '$(TEST_TARGET) TPLs'
+    displayName: 'xcode10.2 C++ TPLs'
   - script: | 
       python $(Build.SourcesDirectory)/scripts/config-build.py -hc $(Build.SourcesDirectory)/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
       cd build-darwin-clang-debug;
       make -j2 VERBOSE=1;
       ctest -V;
     condition: eq (variables['Agent.OS'], 'Darwin')
-    displayName: '$(TEST_TARGET) Build and Test'
+    displayName: 'xcode10.2 C++ Build and Test'
   - script: | 
       docker run --rm -v $(Build.SourcesDirectory):/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
     condition: ne (variables['Agent.OS'], 'Darwin')
