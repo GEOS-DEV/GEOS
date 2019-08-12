@@ -23,10 +23,6 @@
 
 #include "gtest/gtest.h"
 
-#ifdef __clang__
-#define __null nullptr
-#endif
-
 #include <numeric>
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"

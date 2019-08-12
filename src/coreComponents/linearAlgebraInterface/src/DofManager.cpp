@@ -341,7 +341,7 @@ struct MapHelperImpl< array2d<T> >
   }
 
   static localIndex size1( array2d<T> const & map,
-                           localIndex const i0 )
+                           localIndex const GEOSX_UNUSED_ARG( i0 ) )
   {
     return map.size( 1 );
   }
@@ -417,6 +417,28 @@ struct MapHelperImpl< array1d< set<T> > >
                           localIndex const i1 )
   {
     return map[i0][i1];
+  }
+};
+
+template< typename T >
+struct MapHelperImpl< ArrayOfSets<T> >
+{
+  static localIndex size0( ArrayOfSets<T> const & map )
+  {
+    return map.size();
+  }
+
+  static localIndex size1( ArrayOfSets<T> const & map,
+                           localIndex const i0 )
+  {
+    return map.sizeOfSet( i0 );
+  }
+
+  static T const & value( ArrayOfSets<T> const & map,
+                          localIndex const i0,
+                          localIndex const i1 )
+  {
+    return map( i0, i1 );
   }
 };
 
@@ -540,8 +562,8 @@ struct MeshLoopHelper<LOC, LOC>
     locVisited = 0;
 
     meshLevel->getElemManager()->
-      forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
-                                                                     localIndex const esr,
+      forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                     localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                      ElementRegionBase *,
                                                                      auto * subRegion )
     {
@@ -833,9 +855,9 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
     mesh->getElemManager()->
       template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
-                                                                [&]( localIndex const er,
-                                                                     localIndex const esr,
-                                                                     auto * const region,
+                                                                [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                     localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                                     auto * const GEOSX_UNUSED_ARG( region ),
                                                                      auto * const subRegion )
     {
       subRegion->template registerWrapper<ArrayType>( field.key )->
@@ -876,8 +898,8 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
     mesh->getElemManager()->
       template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
-                                                               [&]( localIndex const er,
-                                                                    localIndex const esr,
+                                                               [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                    localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                     auto * const,
                                                                     auto * const subRegion )
     {
@@ -1456,7 +1478,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
-                                  [&]( auto arrayInstance, auto dataTypeInstance )
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *wrapper );
@@ -1519,7 +1541,7 @@ void DofManager::addVectorToField( ParallelVector const & vector,
 template< typename FIELD_OP, typename POLICY >
 void DofManager::fieldToVector( ObjectManagerBase const * const manager,
                                 string const & srcFieldName,
-                                real64 const scalingFactor,
+                                real64 const GEOSX_UNUSED_ARG( scalingFactor ),
                                 ParallelVector & vector,
                                 string const & dstFieldName,
                                 localIndex const loCompIndex,
@@ -1551,7 +1573,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
-                                  [&]( auto arrayInstance, auto dataTypeInstance )
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *wrapper );

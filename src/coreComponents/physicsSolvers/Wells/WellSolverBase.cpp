@@ -92,12 +92,12 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 }
 
 void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
-                                        real64 const & dt,
+                                        real64 const & GEOSX_UNUSED_ARG( dt ),
                                         DomainPartition * const domain,
-                                        DofManager & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution )
+                                        DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   // bind the stored reservoir views to the current domain
   ResetViews( domain );

@@ -51,7 +51,7 @@ struct StressCalculationKernel
           localIndex const numElems,
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
-          arrayView2d<real64 const> const & detJ,
+          arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( detJ ),
           arrayView1d<R1Tensor const> const & u )
   {
    GEOSX_MARK_FUNCTION;
@@ -152,7 +152,7 @@ struct ExplicitKernel
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView1d<R1Tensor const> const & u,
+          arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
@@ -332,7 +332,7 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
-          DofManager const * const dofManager,
+          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {

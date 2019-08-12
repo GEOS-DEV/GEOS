@@ -68,7 +68,6 @@ TEST(FieldSpecification, Recursive)
   auto meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( "body" );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
-  NodeManager * nodeManager = meshLevel0->getNodeManager();
 
   CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
 
@@ -108,8 +107,6 @@ TEST(FieldSpecification, Recursive)
 
 
   /// Field Definition
-  auto fieldSpecificationManager = FieldSpecificationManager::get();
-
   reg0->GetSubRegion("reg0hex")->registerWrapper< array1d<real64> >( "field0" );
   reg0->GetSubRegion("reg0tet")->registerWrapper< array1d<real64> >( "field0" );
   reg1->GetSubRegion("reg1tet")->registerWrapper< array1d<real64> >( "field0" );
@@ -159,7 +156,7 @@ TEST(FieldSpecification, Recursive)
   auto field2 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field2" );
   auto field3 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field3" );
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                                   ElementRegionBase * const region,
+                                                   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                                    ElementSubRegionBase const * const subRegion )
   {
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )

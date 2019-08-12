@@ -248,10 +248,10 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 // Block BiCGSTAB solver
 // ----------------------------
 template< typename LAI >
-void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
-                                 BlockVectorView<LAI> &x,
-                                 BlockVectorView<LAI> const &b,
-                                 BlockMatrixView<LAI> const &M )
+void BiCGSTABsolver<LAI>::solve( BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( A ),
+                                 BlockVectorView<LAI> & GEOSX_UNUSED_ARG( x ),
+                                 BlockVectorView<LAI> const & GEOSX_UNUSED_ARG( b ),
+                                 BlockMatrixView<LAI> const & GEOSX_UNUSED_ARG( M ) )
 
 {
   GEOS_ERROR( "Not implemented" );

@@ -55,7 +55,7 @@ DummySolver::~DummySolver()
 }
 
 
-void DummySolver::InitializePreSubGroups( Group * const problemManager )
+void DummySolver::InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
 {
   if (m_randSeed > 0)
   {
@@ -65,16 +65,16 @@ void DummySolver::InitializePreSubGroups( Group * const problemManager )
 }
 
 
-real64 DummySolver::SolverStep( real64 const& time_n,
-                                        real64 const& dt,
-                                        const int cycleNumber,
-                                        DomainPartition * domain )
+real64 DummySolver::SolverStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
+                                real64 const& dt,
+                                const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                DomainPartition * GEOSX_UNUSED_ARG( domain ) )
 {
   return dt;
 }
 
 
-real64 DummySolver::GetTimestepRequest(real64 const time)
+real64 DummySolver::GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) )
 {
   real64 dt_request = 1.0 + std::rand() * m_randScale;
   return dt_request;

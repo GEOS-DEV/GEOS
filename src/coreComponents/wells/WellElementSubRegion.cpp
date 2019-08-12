@@ -411,7 +411,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
 void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh,
                                                                InternalWellGenerator const & wellGeometry,
                                                                set<globalIndex>      const & localElems, 
-                                                               set<globalIndex>      const & localNodes,
+                                                               set<globalIndex>      const & GEOSX_UNUSED_ARG( localNodes ),
                                                                globalIndex                   nodeOffsetGlobal,
                                                                globalIndex                   elemOffsetGlobal )
 {
@@ -587,8 +587,8 @@ localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                    localIndex_array & packList,
-                                                   bool const overwriteUpMaps,
-                                                   bool const overwriteDownMaps ) 
+                                                   bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
+                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 { 
   localIndex unPackedSize = 0;
 

@@ -187,7 +187,7 @@ void VtuFile::Load( string const &filename,
     LoadProperties(vtmDoc, properties);
 }
 
-void VtuFile::Save( string const &filename) {
+void VtuFile::Save( string const & GEOSX_UNUSED_ARG( filename ) ) {
     GEOS_ERROR("vtu file save is not implemented yet");
 }
 

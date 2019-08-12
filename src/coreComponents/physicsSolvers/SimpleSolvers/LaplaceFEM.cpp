@@ -137,16 +137,16 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
+real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
                                  real64 const& dt,
-                                 const int cycleNumber,
-                                 DomainPartition * const domain )
+                                 const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
   return dt;
 }
 
-void LaplaceFEM::ImplicitStepSetup( real64 const & time_n,
-                                    real64 const & dt,
+void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                    real64 const & GEOSX_UNUSED_ARG( dt ),
                                     DomainPartition * const domain,
                                     DofManager & dofManager,
                                     ParallelMatrix & matrix,
@@ -157,13 +157,13 @@ void LaplaceFEM::ImplicitStepSetup( real64 const & time_n,
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
-                                       real64 const & dt,
-                                       DomainPartition * const domain)
+void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                       real64 const & GEOSX_UNUSED_ARG( dt ),
+                                       DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 
-void LaplaceFEM::SetupDofs( DomainPartition const * const domain,
+void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                             DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
@@ -172,7 +172,7 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const domain,
 }
 
 void LaplaceFEM::AssembleSystem( real64 const time_n,
-                                 real64 const dt,
+                                 real64 const GEOSX_UNUSED_ARG( dt ),
                                  DomainPartition * const domain,
                                  DofManager const & dofManager,
                                  ParallelMatrix & matrix,
@@ -205,7 +205,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
       array3d<R1Tensor> const &
@@ -372,7 +372,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     string const &,
                     set<localIndex> const & targetSet,
                     Group * const targetGroup,
-                    string const fieldName )->void
+                    string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
                                                                               false,

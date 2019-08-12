@@ -62,7 +62,7 @@ public:
 
   virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( Group const * const cellBlocks )
+  virtual void GenerateMesh( Group const * const GEOSX_UNUSED_ARG( cellBlocks ) )
   {
     GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }

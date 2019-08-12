@@ -364,6 +364,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
 
     for( auto const & index : this->GetSubGroups() )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
@@ -703,6 +704,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
     for( auto const & index : this->GetSubGroups() )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->
@@ -781,7 +783,7 @@ void ObjectManagerBase::SetReceiveLists(  )
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
-                                        int const rank,
+                                        int const GEOSX_UNUSED_ARG( rank ),
                                         localIndex & newIndex )
 {
 
