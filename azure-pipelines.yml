@@ -1,11 +1,60 @@
+variables:
+  OMP_NUM_THREADS=3
+  DO_BUILD=yes
+  DO_TEST=yes
+  CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
+
+strategy:
+  matrix:
+    linux_clang6_release:
+      ImageName: 'ubuntu-16.04'
+      IMG: clang6-LC-toss3
+      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+      CMAKE_BUILD_TYPE: Release
+
 pool:
-  vmImage: 'Ubuntu-16.04'
+  vmImage: $(ImageName)
 
+
+checkout:
+  submodules:false
+
+
+# Beginning of steps/scripting
 steps:
-- script: echo Hello, World
-  displayName: 'Test 1 '
-- script: echo cat
-  displayName: 'Test 2'
-- script: echo dog 
-  displayName: 'Test 3'
-
+  - script: git submodule update --init --recursive src/coreComponents/cxx-utilities
+  - script: git submodule update --init --recursive src/cmake/blt
+  - script: git submodule update --init --recursive src/externalComponents/PVTPackage
+  - script: git submodule update --init --recursive src/externalComponents/PAMELA
+  - script: git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
+  - script: docker run --rm --user='root' -v $(Build.SourcesDirectory):/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
+    condition: eq( variables['Agent.OS'], 'Linux')
+    displayName: 'Linux TPLs'
+  - script: |
+      brew install openmpi;
+      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
+      cd ..;
+      mkdir thirdPartyLibs;
+      cd thirdPartyLibs;
+      wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
+      tar -xf tpl-osx-clang10-20190625.tar.gz;
+      cd install-darwin-clang-release/chai/include/chai;
+      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
+      mv ManagedArray.hpp.1 ManagedArray.hpp;
+      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
+      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      cd ../../../..;
+      cd ../GEOSX;  
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'OSX TPLs'
+  - script: | 
+      python $(Build.SourcesDirectory)/scripts/config-build.py -hc $(Build.SourcesDirectory)/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
+      cd build-darwin-clang-debug;
+      make -j2 VERBOSE=1;
+      ctest -V;
+    condition: eq (variables['Agent.OS'], 'Darwin')
+    displayName: 'OSX Build and Test'
+  - script: | 
+      docker run --rm -v $(Build.SourcesDirectory):/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+    condition: ne (variables['Agent.OS'], 'Darwin')
+    displayName: 'Linux build and test'
