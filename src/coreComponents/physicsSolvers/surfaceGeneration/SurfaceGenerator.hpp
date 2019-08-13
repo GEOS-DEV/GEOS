@@ -168,14 +168,20 @@ public:
     constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
     constexpr static auto solidMaterialNameString = "solidMaterialName";
     constexpr static auto displacementBasedSIFString = "displacementBasedSIF";
+    constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
     constexpr static auto allowVacuumFracString = "allowVacuumFrac";
     constexpr static auto rockToughnessString = "rockToughness";
     constexpr static auto saturationPressureCuttoffString = "saturationPressureCuttoff";
+    constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIF_IString = "SIF_I";
     constexpr static auto SIF_IIString = "SIF_II";
     constexpr static auto SIF_IIIString = "SIF_III";
+    constexpr static auto SIFNodeString = "SIFNode";
 
     constexpr static auto tipNodesString = "tipNodes";
+    constexpr static auto tipEdgesString = "tipEdges";
+    constexpr static auto tipFacesString = "tipFaces";
+    constexpr static auto trailingFacesString = "trailingFaces";
 
     constexpr static auto fractureRegionNameString = "fractureRegion";
 
@@ -235,6 +241,20 @@ private:
                            R1Tensor& vecTip );
 
   /**
+   * @brief
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @return
+   */
+  void CalculateNodeAndFaceSIF ( DomainPartition * domain,
+                           NodeManager & nodeManager,
+                           EdgeManager & edgeManager,
+                           FaceManager & faceManager,
+                           ElementRegionManager & elementManager);
+
+  /**
    * @brief Function to calculate f_disconnect and f_u.
    * @param edgeID
    * @param edgeLength
@@ -283,6 +303,21 @@ private:
                                  R1Tensor& vecTip,
                                  ModifiedObjectLists& modifiedObjects,
                                  const int edgeMode );
+
+  /**
+   * @brief
+   *    * @param nodeManager
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param modifiedObjects
+   */
+  void MarkRuptureFaceFromNode ( const localIndex nodeIndex,
+                                 NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager,
+                                 ElementRegionManager & elementManager,
+                                 ModifiedObjectLists& modifiedObjects);
 
   /**
    *
@@ -516,6 +551,19 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager );
 
+  /**
+   *
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @return
+   */
+  realT MinimumToughnessOnNode( const localIndex nodeID,
+                                const NodeManager & nodeManager,
+                                EdgeManager & edgeManager,
+                                FaceManager & faceManager );
+
 
 private:
   /// choice of failure criterion
@@ -538,6 +586,8 @@ private:
   localIndex m_solidMaterialFullIndex;
 
   int m_displacementBasedSIF;
+
+  int m_nodeBasedSIF;
 
   int m_allowVacuumFrac;
 
@@ -573,6 +623,12 @@ private:
   string m_fractureRegionName;
 
   set< localIndex > m_tipNodes;
+
+  set< localIndex > m_tipEdges;
+
+  set< localIndex > m_tipFaces;
+
+  set< localIndex > m_trailingFaces;
 
 };
 

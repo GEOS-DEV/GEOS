@@ -44,9 +44,9 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual void ImplicitStepComplete( real64 const & time,
-                                 real64 const & dt,
-                                 DomainPartition * const domain ) override;
+  virtual void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                            real64 const scalingFactor,
+                            DomainPartition * const domain  ) override;
 
 
   virtual real64
