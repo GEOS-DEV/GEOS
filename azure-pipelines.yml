@@ -70,7 +70,7 @@ steps:
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PVTPackage
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PAMELA
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-  
+    displayName: 'Updating submodules'
   - script: docker run --rm --user='root' -v $(Build.SourcesDirectory):/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     condition: eq( variables['Agent.OS'], 'Linux')
     displayName: '$(TEST_TARGET) TPLs'
@@ -85,12 +85,14 @@ steps:
     displayName: 'ln link' 
   - script: |
       cd ..;
+      echo pwd
       pwd
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'cd back up' 
   - script: |
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
+      echo pwd
       pwd
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'create and cd into TPL dir' 
@@ -105,6 +107,8 @@ steps:
     displayName: ' cd to chai'
   - script: |
       wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
+      echo ls
+      ls
       mv ManagedArray.hpp.1 ManagedArray.hpp;
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'Get ManagedArray from dropbox'
@@ -114,9 +118,15 @@ steps:
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'Make directories and symbolic link to TPLs' 
   - script: |
+      echo pwd
       pwd
+      echo ls
+      ls
       cd ../../../..;
+      echo pwd
       pwd
+      echo ls
+      ls
       cd ../GEOSX;  
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'Change directories'
