@@ -43,12 +43,12 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
-void SolidMechanicsLagrangianSSLE::ImplicitStepComplete( real64 const & time_n,
-                                                             real64 const & dt,
-                                                             DomainPartition * const domain)
+void SolidMechanicsLagrangianSSLE::ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+                                                        real64 const scalingFactor,
+                                                        DomainPartition * const domain  )
 {
 
-  SolidMechanicsLagrangianFEM::ImplicitStepComplete( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::ApplySystemSolution( blockSystem, scalingFactor, domain );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ManagedGroup * const nodeManager = mesh->getNodeManager();
