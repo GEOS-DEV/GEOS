@@ -15,7 +15,9 @@ strategy:
       MPICXX: mpicxx
       MPIFC: mpifort
       MPIEXEC: /usr/local/bin/mpirun
-      GEOSX_TPL_DIR: /Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+      # TODO Changed to reflect Azure
+      #GEOSX_TPL_DIR: /Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+      GEOSX_TPL_DIR: /Users/vsts/agent/2.155.1/work/1/s/thirdPartyLibs/install-default-release
       CMAKE_BUILD_TYPE: Release
       TEST_TARGET: 'Linux'
     #linux_clang6_release:
@@ -77,16 +79,27 @@ steps:
     # Testing each step
   - script: |
       brew install openmpi;
+      echo pwd
+      pwd
+      echo ls
+      ls
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'brew' 
   - script: |
+      # Potentially a link to nowhere?
       ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
+      echo pwd
+      pwd
+      echo ls
+      ls
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'ln link' 
   - script: |
       cd ..;
       echo pwd
       pwd
+      echo ls
+      ls
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'cd back up' 
   - script: |
@@ -94,6 +107,8 @@ steps:
       cd thirdPartyLibs;
       echo pwd
       pwd
+      echo ls
+      ls
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'create and cd into TPL dir' 
   - script: |
@@ -103,20 +118,40 @@ steps:
     displayName: 'Get file from drop box and tar'
   - script: |
       cd install-darwin-clang-release/chai/include/chai;
-    condition: eq( variables['Agent.OS'], 'Darwin')
-    displayName: ' cd to chai'
-  - script: |
-      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
+      echo pwd
+      pwd
       echo ls
       ls
-      mv ManagedArray.hpp.1 ManagedArray.hpp;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: ' cd to chai installation'
+    # ERROR here
+  - script: |
+      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
+      echo pwd
+      pwd
+      echo ls
+      ls
+      # Doesn't do anything currently... except throw an error
+      # TODO Extraneous file rename?
+      #mv ManagedArray.hpp.1 ManagedArray.hpp;
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'Get ManagedArray from dropbox'
   - script: |
       sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      echo pwd
+      pwd
+      echo ls
+      ls
+      # TODO Line for Travis to change
+      #sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      sudo ln -s /Users/vsts/agent/2.155.1/work/1/s/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      echo pwd
+      pwd
+      echo ls
+      ls
     condition: eq( variables['Agent.OS'], 'Darwin')
     displayName: 'Make directories and symbolic link to TPLs' 
+    # ERROR here
   - script: |
       echo pwd
       pwd
