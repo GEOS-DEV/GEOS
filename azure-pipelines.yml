@@ -17,43 +17,43 @@ strategy:
       MPIEXEC: /usr/local/bin/mpirun
       GEOSX_TPL_DIR: /Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
       CMAKE_BUILD_TYPE: Release
-      TEST_TARGET: 'xcode10.2 C++'
-    linux_clang6_release:
-      ImageName: 'ubuntu-16.04'
-      IMG: clang6-LC-toss3
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Release
-      TEST_TARGET: 'clang6-LC-toss3 C++'
-    linux_clang7_release:
-      ImageName: 'ubuntu-16.04'
-      IMG: clang7-LC-toss3
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Release
-      TEST_TARGET: 'clang7-LC-toss3 C++'
-    linux_clang7_debug:
-      ImageName: 'ubuntu-16.04'
-      IMG: clang7-LC-toss3
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Debug
-      TEST_TARGET: 'clang7-LC-toss3-debug C++'
-    linux_gcc7_release:
-      ImageName: 'ubuntu-16.04'
-      IMG: gcc7-ubuntu18
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Release
-      TEST_TARGET: 'gcc7-ubuntu18 C++'
-    linux_gcc8_release:
-      ImageName: 'ubuntu-16.04'
-      IMG: gcc8-ubuntu18
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Release
-      TEST_TARGET: 'gcc8-ubuntu18 C++'
-    linux_gcc8_debug:
-      ImageName: 'ubuntu-16.04'
-      IMG: gcc8-ubuntu18
-      GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
-      CMAKE_BUILD_TYPE: Debug
-      TEST_TARGET: 'gcc8-ubuntu18-debug C++'
+      TEST_TARGET: 'Linux'
+    #linux_clang6_release:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: clang6-LC-toss3
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Release
+    #  TEST_TARGET: 'clang6-LC-toss3 C++'
+    #linux_clang7_release:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: clang7-LC-toss3
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Release
+    #  TEST_TARGET: 'clang7-LC-toss3 C++'
+    #linux_clang7_debug:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: clang7-LC-toss3
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Debug
+    #  TEST_TARGET: 'clang7-LC-toss3-debug C++'
+    #linux_gcc7_release:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: gcc7-ubuntu18
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Release
+    #  TEST_TARGET: 'gcc7-ubuntu18 C++'
+    #linux_gcc8_release:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: gcc8-ubuntu18
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Release
+    #  TEST_TARGET: 'gcc8-ubuntu18 C++'
+    #linux_gcc8_debug:
+    #  ImageName: 'ubuntu-16.04'
+    #  IMG: gcc8-ubuntu18
+    #  GEOSX_TPL_DIR: /home/geosx/thirdPartyLibs/install-default-release
+    #  CMAKE_BUILD_TYPE: Debug
+    #  TEST_TARGET: 'gcc8-ubuntu18-debug C++'
 
 pool:
   vmImage: $(ImageName)
@@ -66,7 +66,7 @@ steps:
     submodules: false
   - script: |
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/cxx-utilities
-      git submodule update --init --recursive src/cmake/blt
+      git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/cmake/blt
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PVTPackage
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/externalComponents/PAMELA
       git -c http.extraheader="AUTHORIZATION: basic cGF0OjYyODdhNjU0ZmQ3Mzk4ZWQwMjlmYTc0ZmI3NzNhMmVkMTdiMzQ1NDA=" submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
@@ -74,23 +74,54 @@ steps:
   - script: docker run --rm --user='root' -v $(Build.SourcesDirectory):/home/geosx/geosx_repo geosx/compiler:$IMG  chown -R geosx /home/geosx;
     condition: eq( variables['Agent.OS'], 'Linux')
     displayName: '$(TEST_TARGET) TPLs'
+    # Testing each step
   - script: |
       brew install openmpi;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'brew' 
+  - script: |
       ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'ln link' 
+  - script: |
       cd ..;
+      pwd
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'cd back up' 
+  - script: |
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
+      pwd
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'create and cd into TPL dir' 
+  - script: |
       wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
       tar -xf tpl-osx-clang10-20190625.tar.gz;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'Get file from drop box and tar'
+  - script: |
       cd install-darwin-clang-release/chai/include/chai;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: ' cd to chai'
+  - script: |
       wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
       mv ManagedArray.hpp.1 ManagedArray.hpp;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'Get ManagedArray from dropbox'
+  - script: |
       sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+    condition: eq( variables['Agent.OS'], 'Darwin')
+    displayName: 'Make directories and symbolic link to TPLs' 
+  - script: |
+      pwd
       cd ../../../..;
+      pwd
       cd ../GEOSX;  
     condition: eq( variables['Agent.OS'], 'Darwin')
-    displayName: 'xcode10.2 C++ TPLs'
+    displayName: 'Change directories'
+    #condition: eq( variables['Agent.OS'], 'Darwin')
+    #displayName: 'xcode10.2 C++ TPLs'
   - script: | 
       python $(Build.SourcesDirectory)/scripts/config-build.py -hc $(Build.SourcesDirectory)/host-configs/darwin-clang.cmake -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe";
       cd build-darwin-clang-debug;
