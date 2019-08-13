@@ -45,6 +45,7 @@ string const quadrature = "quadrature";
 string const dNdX = "dNdX";
 string const detJ = "detJ";
 string const nodalForceFromElement = "nodalForceFromElement";
+string const parentSpace="parentSpace";
 }
 }
 
@@ -87,6 +88,7 @@ public:
 
   string m_basisName;
   string m_quadratureName;
+  string m_parentSpace;
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;
