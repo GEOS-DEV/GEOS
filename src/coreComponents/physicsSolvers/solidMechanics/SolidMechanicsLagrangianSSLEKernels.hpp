@@ -91,6 +91,7 @@ struct Kernels
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+        devStress[ k ][ q ] = 0.0;
         real64 * const restrict p_stress = devStress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -98,12 +99,12 @@ struct Kernels
           real64 const v1_x_dNdXa1 = u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
           real64 const v2_x_dNdXa2 = u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
 
-          p_stress[ 0 ] = ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
-          p_stress[ 2 ] = ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
-          p_stress[ 5 ] = ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
-          p_stress[ 4 ] = ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
-          p_stress[ 3 ] = ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
-          p_stress[ 1 ] = ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+          p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
+          p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
+          p_stress[ 5 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
+          p_stress[ 4 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          p_stress[ 3 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          p_stress[ 1 ] += ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
 
         real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 2 ] + p_stress[ 5 ] ) / 3.0;
@@ -433,7 +434,6 @@ struct ImplicitKernel
               dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
               dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
               dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
-
 
               if( tiOption == timeIntegrationOption::ImplicitDynamic )
               {

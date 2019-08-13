@@ -50,6 +50,10 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 
   RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+
+  RegisterViewWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag(InputFlags::REQUIRED);
+
+
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -62,9 +66,9 @@ localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
   return m_quadrature->size();
 }
 
-std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement( string const & catalogName ) const
+std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement( string const &  ) const
 {
-  return FiniteElementBase::CatalogInterface::Factory( catalogName,
+  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
                                                        *m_basis,
                                                        *m_quadrature,
                                                        0 );
@@ -79,7 +83,9 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   // registration, or only allow documentation node
   // registration.
 
-  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
+  //TODO: wu40: Temporarily use the parent space (read from xml) to assign element type for finite element calculation (for C3D6 mesh).
+  //Need to do this in a more natural way.
+  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
   //Ensure data is contiguous
   array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
@@ -100,7 +106,7 @@ void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R
   arrayView2d<real64> & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
   FixedOneToManyRelation const & elemsToNodes = elementSubRegion->getWrapper<FixedOneToManyRelation>(std::string("nodeList"))->reference();
 
-  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
+  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
   array1d<R1Tensor> X_elemLocal( fe->dofs_per_element() );
   R1Tensor const * const restrict X_ptr = X;
