@@ -812,8 +812,14 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx::mapBase&lt;long, long, std::integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
+		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
+		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
+		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->

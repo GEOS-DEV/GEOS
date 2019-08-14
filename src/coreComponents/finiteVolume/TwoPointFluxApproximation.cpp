@@ -234,19 +234,18 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
   array1d<localIndex> const &
-  fractureConnectorsToEdges = fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::
-                                                                                    viewKeyStruct::
-                                                                                    fractureConnectorsToEdgesString );
+  fractureConnectorsToEdges = edgeManager->getReference< array1d<localIndex > >( EdgeManager::
+                                                                                 viewKeyStruct::
+                                                                                 fractureConnectorEdgesToEdgesString );
 
-  array1d<array1d<localIndex> > const &
-  fractureConnectorsToFaceElements = fractureRegion->getReference< array1d<array1d<localIndex> > >( FaceElementRegion::
-                                                                                                    viewKeyStruct::
-                                                                                                    fractureConnectorsToFaceElementsString );
+  ArrayOfArrays<localIndex> const &
+  fractureConnectorsToFaceElements =
+    edgeManager->getReference< ArrayOfArrays<localIndex> >( EdgeManager::
+                                                                viewKeyStruct::
+                                                                fractureConnectorsEdgesToFaceElementsIndexString );
 
   FixedToManyElementRelation const &
-  faceElementsToCells = fractureRegion->getReference< FixedToManyElementRelation >( FaceElementRegion::
-                                                                                    viewKeyStruct::
-                                                                                    faceElementsToCellsString );
+  faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
 
   arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
@@ -258,9 +257,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<real64, maxElems> stencilWeights;
 
   // add new connectors/connections between face elements to the fracture stencil
-  for( auto const fci : fractureRegion->m_recalculateConnectors )
+  for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
   {
-    localIndex const numElems = fractureConnectorsToFaceElements[fci].size();
+    localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray(fci);
     // only do this if there are more than one element attached to the connector
     if( numElems > 1 )
     {
