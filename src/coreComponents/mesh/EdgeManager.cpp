@@ -23,6 +23,8 @@
  */
 
 #include "EdgeManager.hpp"
+
+#include "BufferOps.hpp"
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -31,16 +33,44 @@
 
 namespace geosx
 {
+using namespace dataRepository;
 
 EdgeManager::EdgeManager( std::string const & name,
                           ManagedGroup * const parent ):
-  ObjectManagerBase(name,parent)
+  ObjectManagerBase(name,parent),
+  m_edgesToFractureConnectorsEdges(),
+  m_fractureConnectorsEdgesToEdges(),
+  m_fractureConnectorEdgesToFaceElements()
 {
   this->RegisterViewWrapper(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
   this->RegisterViewWrapper(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
 
   m_toNodesRelation.resize( 0, 2 );
   // TODO Auto-generated constructor stub
+
+
+  RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges, 0 )->
+    setDescription( "A map of edge local indices to the fracture connector local indices.")->
+    setSizedFromParent(0);
+
+  RegisterViewWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges, 0 )->
+    setDescription( "A map of fracture connector local indices to edge local indices.")->
+    setSizedFromParent(0);
+
+//  RegisterViewWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsRegionString,
+//                       &m_fractureConnectorEdgesToFaceElements.m_toElementRegion, 0 )->
+//    setDescription( "A map of fracture connector local indices face element local indices")->
+//    setSizedFromParent(0);
+//
+//  RegisterViewWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsSubregionString,
+//                       &m_fractureConnectorEdgesToFaceElements.m_toElementSubRegion, 0 )->
+//    setDescription( "A map of fracture connector local indices face element local indices")->
+//    setSizedFromParent(0);
+
+  RegisterViewWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
+                       &m_fractureConnectorEdgesToFaceElements, 0 )->
+    setDescription( "A map of fracture connector local indices face element local indices")->
+    setSizedFromParent(0);
 
 }
 
@@ -942,6 +972,18 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
+  array1d<globalIndex> recalculatedEdges;
+  recalculatedEdges.reserve( m_recalculateFractureConnectorEdges.size() );
+  for( auto const & edgeIndex : packList )
+  {
+    if( m_recalculateFractureConnectorEdges.count(edgeIndex)>0 )
+    {
+      recalculatedEdges.push_back( m_localToGlobalMap[edgeIndex] );
+    }
+  }
+  packedSize += bufferOps::Pack<DOPACK>( buffer, string("recalculateConnectorsByEdge") );
+  packedSize += bufferOps::Pack<DOPACK>( buffer,
+                                         recalculatedEdges );
 
   return packedSize;
 }
@@ -976,6 +1018,26 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
+  string recalcConnectorByEdgeString;
+  unPackedSize += bufferOps::Unpack( buffer, recalcConnectorByEdgeString );
+  GEOS_ERROR_IF_NE( recalcConnectorByEdgeString, "recalculateConnectorsByEdge" );
+  array1d<globalIndex> recalculatedEdges;
+  unPackedSize += bufferOps::Unpack( buffer,
+                                     recalculatedEdges );
+  for( globalIndex const & newEdge : recalculatedEdges )
+  {
+    localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
+
+    auto edgeIter = m_edgesToFractureConnectorsEdges.find(edgeIndex);
+    if( edgeIter == m_edgesToFractureConnectorsEdges.end() )
+    {
+      m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
+      m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
+    }
+  }
+
+
+
   return unPackedSize;
 }
 
@@ -988,9 +1050,6 @@ void EdgeManager::FixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
-
-//  ObjectManagerBase::FixUpDownMaps( faceList(),
-//                                    m_unmappedGlobalIndicesInFacelist);
 }
 
 

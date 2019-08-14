@@ -25,6 +25,7 @@
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
+#include "ToElementRelation.hpp"
 
 namespace geosx
 {
@@ -67,11 +68,26 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d<real64 const> const & faceArea );
 
+  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d<localIndex const> const & packList ) const override;
+
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       localIndex_array & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
+
+  virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
+
 
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
     static constexpr auto elementApertureString        = "elementAperture";
     static constexpr auto elementAreaString            = "elementArea";
+    static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
+    static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
+    static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
+
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -131,7 +147,16 @@ public:
   arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+  FixedToManyElementRelation m_faceElementsToCells;
+
 private:
+  template<bool DOPACK>
+  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d<localIndex const> const & packList ) const;
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
@@ -147,6 +172,9 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
+
+
+
 };
 
 } /* namespace geosx */
