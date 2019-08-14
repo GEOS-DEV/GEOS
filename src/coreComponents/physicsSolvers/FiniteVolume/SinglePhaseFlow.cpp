@@ -555,9 +555,11 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
-    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem: " );
+    GEOS_LOG_RANK_0( "\nJacobian:\n" );
+    GEOS_LOG(matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    GEOS_LOG(rhs);
   }
 
   if( verboseLevel() >= 3 )
@@ -849,8 +851,10 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
-    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    GEOS_LOG(matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    GEOS_LOG(rhs);
   }
 
   if( verboseLevel() >= 3 )
@@ -1241,8 +1245,8 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
-    GEOS_LOG_RANK_0("\nSolution\n" << solution);
+    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem\nSolution\n");
+    GEOS_LOG(solution);
   }
 }
 

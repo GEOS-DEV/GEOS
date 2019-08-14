@@ -27,6 +27,7 @@
 
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 
 namespace geosx
@@ -129,6 +130,14 @@ public:
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
 
+
+    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
+    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsRegionString = "fractureConnectorsToRegion";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsSubregionString = "fractureConnectorsToSubregion";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+
+
     dataRepository::ViewKey nodesList             = { nodeListString };
     dataRepository::ViewKey faceList              = { faceListString };
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
@@ -159,12 +168,22 @@ public:
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
+  // TODO These should be in their own subset of edges when we add that capability.
+  /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
+  set< localIndex > m_recalculateFractureConnectorEdges;
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  array1d<localIndex> m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
+
+
 private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+
 
 
   template<bool DOPACK>
