@@ -294,7 +294,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         {
           fluxApprox->addToFractureStencil( *domain,
                                             this->m_fractureRegionName );
-          fractureRegion->m_recalculateConnectors.clear();
+          edgeManager->m_recalculateFractureConnectorEdges.clear();
         }
       }
     }
@@ -460,7 +460,7 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
     CommunicationTools::AssignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
     CommunicationTools::AssignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
     CommunicationTools::AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+//    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
@@ -1479,7 +1479,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           localIndex faceIndices[2] = {faceIndex,newFaceIndex};
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].
-          insert( fractureElementRegion->AddToFractureMesh( &faceManager,
+          insert( fractureElementRegion->AddToFractureMesh( &edgeManager,
+                                                            &faceManager,
                                                             this->m_originalFaceToEdges,
                                                             "default",
                                                             faceIndices ) );
