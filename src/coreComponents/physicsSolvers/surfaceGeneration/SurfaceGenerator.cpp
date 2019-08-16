@@ -56,6 +56,38 @@ void ModifiedObjectLists::clearNewFromModified()
   {
     modifiedFaces.erase(a);
   }
+}
+
+void ModifiedObjectLists::insert( ModifiedObjectLists const & modifiedObjects )
+{
+  newNodes.insert( modifiedObjects.newNodes.begin(),
+                   modifiedObjects.newNodes.end() );
+  modifiedNodes.insert( modifiedObjects.modifiedNodes.begin(),
+                        modifiedObjects.modifiedNodes.end() );
+
+  newEdges.insert( modifiedObjects.newEdges.begin(),
+                   modifiedObjects.newEdges.end() );
+  modifiedEdges.insert( modifiedObjects.modifiedEdges.begin(),
+                        modifiedObjects.modifiedEdges.end() );
+
+  newFaces.insert( modifiedObjects.newFaces.begin(),
+                   modifiedObjects.newFaces.end() );
+  modifiedFaces.insert( modifiedObjects.modifiedFaces.begin(),
+                        modifiedObjects.modifiedFaces.end() );
+
+  for( auto & iter : modifiedObjects.newElements )
+  {
+    std::pair<localIndex,localIndex> const & key = iter.first;
+    std::set<localIndex> const & values = iter.second;
+    newElements[key].insert( values.begin(), values.end() );
+  }
+
+  for( auto & iter : modifiedObjects.modifiedElements )
+  {
+    std::pair<localIndex,localIndex> const & key = iter.first;
+    std::set<localIndex> const & values = iter.second;
+    modifiedElements[key].insert( values.begin(), values.end() );
+  }
 
 }
 

@@ -41,6 +41,8 @@ struct ModifiedObjectLists
   map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
+
+  void insert( ModifiedObjectLists const & lists );
 };
 
 
