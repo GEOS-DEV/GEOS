@@ -79,6 +79,8 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  void inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+                                       std::set<localIndex> const & indices );
 
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {

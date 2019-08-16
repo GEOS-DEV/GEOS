@@ -50,10 +50,12 @@ EdgeManager::EdgeManager( std::string const & name,
 
 
   RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges, 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of edge local indices to the fracture connector local indices.")->
     setSizedFromParent(0);
 
   RegisterViewWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges, 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of fracture connector local indices to edge local indices.")->
     setSizedFromParent(0);
 
@@ -69,6 +71,7 @@ EdgeManager::EdgeManager( std::string const & name,
 
   RegisterViewWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
                        &m_fractureConnectorEdgesToFaceElements, 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of fracture connector local indices face element local indices")->
     setSizedFromParent(0);
 
@@ -1024,6 +1027,7 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   array1d<globalIndex> recalculatedEdges;
   unPackedSize += bufferOps::Unpack( buffer,
                                      recalculatedEdges );
+
   for( globalIndex const & newEdge : recalculatedEdges )
   {
     localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
@@ -1033,6 +1037,9 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     {
       m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
       m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
+      m_recalculateFractureConnectorEdges.insert( m_edgesToFractureConnectorsEdges[edgeIndex] );
+
+      m_fractureConnectorEdgesToFaceElements.resize( m_fractureConnectorsEdgesToEdges.size() );
     }
   }
 
