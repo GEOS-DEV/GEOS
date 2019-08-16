@@ -29,6 +29,8 @@
 
 namespace geosx
 {
+using namespace dataRepository;
+
 
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                       dataRepository::ManagedGroup * const parent ):
@@ -63,18 +65,21 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellRegionsString,
                        &(m_faceElementsToCells.m_toElementRegion), 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
                        &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellIndexString,
                        &(m_faceElementsToCells.m_toElementIndex), 0 )->
+    setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   m_faceElementsToCells.resize(0,2);
-
+  m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
 
   m_numNodesPerElement = 8;
 }
@@ -259,6 +264,14 @@ void FaceElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 
 }
 
+void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+                                                           std::set<localIndex> const & indices )
+{
+  for( localIndex const & index : indices )
+  {
+    m_ghostRank[index] = faceManager->m_ghostRank[ m_toFacesRelation[index][0] ];
+  }
+}
 
 
 } /* namespace geosx */

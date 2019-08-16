@@ -113,6 +113,8 @@ public:
                         arraySlice1d<R1Tensor const> const & X,
                         R1Tensor & center ) const;
 
+
+
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
 
