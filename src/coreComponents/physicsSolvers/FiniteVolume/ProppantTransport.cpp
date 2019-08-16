@@ -121,7 +121,7 @@ void ProppantTransport::InitializePreSubGroups(ManagedGroup * const rootGroup)
   
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  ConstitutiveBase const * proppant  = cm->GetConstitituveRelation<ConstitutiveBase>( m_proppantName );
+  ConstitutiveBase const * proppant  = cm->GetConstitutiveRelation<ConstitutiveBase>( m_proppantName );
   GEOS_ERROR_IF( proppant == nullptr, "Proppant model " + m_proppantName + " not found" );
   m_proppantIndex = proppant->getIndexInParent();
   
@@ -1005,11 +1005,11 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
 
 	  }
 
-        edgeDensity += dens[er][esr][m_fluidIndex][ei][0];
+        edgeDensity += weight[i] * dens[er][esr][m_fluidIndex][ei][0];
 	dEdgeDens_dP[i] = weight[i] * dDens_dPres[er][esr][m_fluidIndex][ei][0];
 	dEdgeDens_dC[i] = weight[i] * dDens_dConc[er][esr][m_fluidIndex][ei][0];
 	
-        edgeViscosity += visc[er][esr][m_fluidIndex][ei][0];
+        edgeViscosity += weight[i] * visc[er][esr][m_fluidIndex][ei][0];
 	dEdgeVisc_dP[i] = weight[i] * dVisc_dPres[er][esr][m_fluidIndex][ei][0];
 	dEdgeVisc_dC[i] = weight[i] * dVisc_dConc[er][esr][m_fluidIndex][ei][0];
 
@@ -1333,6 +1333,34 @@ void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
 
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  // call the BoundaryConditionManager::ApplyField function that will check to see
+  // if the boundary condition should be applied to this subregion
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd>( lset,
+                                                               true,
+                                                               time_n + dt,
+                                                               dt,
+                                                               subRegion,
+                                                               dofNumber,
+                                                               2,
+                                                               blockSystem,
+                                                               BlockIDs::proppantTransportBlock,
+                                                               [&] (localIndex const a) -> real64
+    {
+      return 0;
+    });
+
+  });
 
   fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,

@@ -154,6 +154,13 @@ void ParticleFluid::Compute( real64 const & concentration,
 			     real64 & dCollisionFactor_dConc ) const
 {
 
+  settlingFactor = 0.0;
+
+  dSettlingFactor_dConc = 0.0;
+
+  collisionFactor = 0.0;
+
+  dCollisionFactor_dConc = 0.0;
 
   if(concentration >= 0.0 && concentration < m_maxProppantConcentration)
     {
@@ -167,33 +174,21 @@ void ParticleFluid::Compute( real64 const & concentration,
   
       // collisionFactor
       // Collision model (We need to check the other models)
-      
-      real64 lambda = m_collisionAlpha - pow(fabs(concentration - m_slipConcentration), m_collisionBeta);
+      if (m_isCollisionalSlip)
+        {
+          real64 lambda = m_collisionAlpha - pow(fabs(concentration - m_slipConcentration), m_collisionBeta);
 
-      real64 dLambda_dC = -m_collisionBeta * pow(fabs(concentration - m_slipConcentration), m_collisionBeta - 1.0);
+          real64 dLambda_dC = -m_collisionBeta * pow(fabs(concentration - m_slipConcentration), m_collisionBeta - 1.0);
 
-      if(concentration < m_slipConcentration)
-	dLambda_dC = -dLambda_dC;
+          if(concentration < m_slipConcentration)
+            dLambda_dC = -dLambda_dC;
 
-      collisionFactor = (1.0 - lambda * concentration) / (1.0 - concentration);
+          collisionFactor = (1.0 - lambda * concentration) / (1.0 - concentration);
 
-      dCollisionFactor_dConc = (collisionFactor - dLambda_dC * concentration - lambda) / (1.0 - concentration);
-
+          dCollisionFactor_dConc = (collisionFactor - dLambda_dC * concentration - lambda) / (1.0 - concentration);
+        }
 
     }
-  else
-    {
-
-      settlingFactor = 0.0;
-
-      dSettlingFactor_dConc = 0.0;  
-
-      collisionFactor = 0.0;
-
-      dCollisionFactor_dConc = 0.0;
-      
-    }
-
 }
 
 void ParticleFluid::ComputeMob( real64 const & concentration,

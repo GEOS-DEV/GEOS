@@ -4,6 +4,7 @@
 Name                Type    Default Description                                             
 =================== ======= ======= ======================================================= 
 allowNonConverged   integer 0       Allow non-converged solution to be accepted             
+doLineSearch        integer 0       Line search option                                      
 ilut_drop           real64  0       (no description available)                              
 ilut_fill           real64  3       (no description available)                              
 krylovTol           real64  1e-06   Allowable tolerance for krylov solve                    

@@ -407,6 +407,7 @@
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
+			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
@@ -467,6 +468,21 @@
 		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--fluidIndex => (no description available)-->
+		<xsd:attribute name="fluidIndex" type="localIndex" />
+		<!--gravityVector => (no description available)-->
+		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--proppantIndex => (no description available)-->
+		<xsd:attribute name="proppantIndex" type="localIndex" />
+		<!--solidIndex => (no description available)-->
+		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFlowType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -557,9 +573,11 @@
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -708,6 +726,20 @@
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="ParticleFluidType">
+		<!--collisionFactor => (no description available)-->
+		<xsd:attribute name="collisionFactor" type="real64_array" />
+		<!--dCollisionFactor_dConc => (no description available)-->
+		<xsd:attribute name="dCollisionFactor_dConc" type="real64_array" />
+		<!--dSettlingFactor_dConc => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dConc" type="real64_array" />
+		<!--isProppantMobile => (no description available)-->
+		<xsd:attribute name="isProppantMobile" type="LvArray::Array&lt;bool, 1, long, LvArray::ChaiVector&lt;bool&gt; &gt;" />
+		<!--proppantPackPermeability => (no description available)-->
+		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
+		<!--settlingFactor => (no description available)-->
+		<xsd:attribute name="settlingFactor" type="real64_array" />
+	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
@@ -745,6 +777,24 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantSlurryFluidType">
+		<!--FluidDensity => (no description available)-->
+		<xsd:attribute name="FluidDensity" type="real64_array2d" />
+		<!--dDensity_dConc => (no description available)-->
+		<xsd:attribute name="dDensity_dConc" type="real64_array2d" />
+		<!--dDensity_dPres => (no description available)-->
+		<xsd:attribute name="dDensity_dPres" type="real64_array2d" />
+		<!--dFluidDensity_dPres => (no description available)-->
+		<xsd:attribute name="dFluidDensity_dPres" type="real64_array2d" />
+		<!--dVisc_dConc => (no description available)-->
+		<xsd:attribute name="dVisc_dConc" type="real64_array2d" />
+		<!--dVisc_dPres => (no description available)-->
+		<xsd:attribute name="dVisc_dPres" type="real64_array2d" />
+		<!--density => (no description available)-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--viscosity => (no description available)-->
+		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->

@@ -329,6 +329,13 @@ Element: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters.rst
 
 
+.. _XML_ParticleFluid:
+
+Element: ParticleFluid
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid.rst
+
+
 .. _XML_PeriodicEvent:
 
 Element: PeriodicEvent
@@ -369,6 +376,20 @@ Element: Poroelastic
 Element: Problem
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem.rst
+
+
+.. _XML_ProppantSlurryFluid:
+
+Element: ProppantSlurryFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantTransport:
+
+Element: ProppantTransport
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
 .. _XML_QuadratureRules:
@@ -837,6 +858,13 @@ Datastructure: Parameters
 .. include:: ../../coreComponents/fileIO/schema/docs/Parameters_other.rst
 
 
+.. _DATASTRUCTURE_ParticleFluid:
+
+Datastructure: ParticleFluid
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ParticleFluid_other.rst
+
+
 .. _DATASTRUCTURE_PeriodicEvent:
 
 Datastructure: PeriodicEvent
@@ -877,6 +905,20 @@ Datastructure: Poroelastic
 Datastructure: Problem
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Problem_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSlurryFluid:
+
+Datastructure: ProppantSlurryFluid
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantTransport:
+
+Datastructure: ProppantTransport
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
 .. _DATASTRUCTURE_QuadratureRules:

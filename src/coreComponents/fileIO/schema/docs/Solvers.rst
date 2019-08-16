@@ -9,6 +9,7 @@ DummySolver                  node             :ref:`XML_DummySolver`
 Hydrofracture                node             :ref:`XML_Hydrofracture`                
 LaplaceFEM                   node             :ref:`XML_LaplaceFEM`                   
 Poroelastic                  node             :ref:`XML_Poroelastic`                  
+ProppantTransport            node             :ref:`XML_ProppantTransport`            
 SinglePhaseFlow              node             :ref:`XML_SinglePhaseFlow`              
 SolidMechanicsLagrangianSSLE node             :ref:`XML_SolidMechanicsLagrangianSSLE` 
 SolidMechanics_LagrangianFEM node             :ref:`XML_SolidMechanics_LagrangianFEM` 

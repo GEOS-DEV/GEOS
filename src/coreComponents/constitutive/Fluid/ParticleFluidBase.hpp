@@ -73,6 +73,8 @@ public:
     static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
 
     static constexpr auto isProppantMobileString    = "isProppantMobile";
+
+    static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
     
     static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
     
@@ -87,6 +89,7 @@ public:
     ViewKey maxProppantConcentration   = { maxProppantConcentrationString };
 
     ViewKey isProppantMobile   = { isProppantMobileString };
+    ViewKey isCollisionalSlip   = { isCollisionalSlipString };
     ViewKey proppantPackPermeability   = { proppantPackPermeabilityString };        
 
   } viewKeysParticleFluidBase;
@@ -104,6 +107,8 @@ protected:
   array1d<bool> m_isProppantMobile;
   array1d<real64> m_proppantPackPermeability;  
   
+  integer m_isCollisionalSlip;
+
   real64 m_maxProppantConcentration;    
   
 };

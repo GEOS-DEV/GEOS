@@ -11,9 +11,11 @@ CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMult
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
+ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node :ref:`DATASTRUCTURE_PoroLinearElasticAnisotropic`          
 PoroLinearElasticIsotropic            node :ref:`DATASTRUCTURE_PoroLinearElasticIsotropic`            
+ProppantSlurryFluid                   node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                   
 VanGenuchtenBakerRelativePermeability node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ========================================================== 

@@ -47,6 +47,11 @@ ParticleFluidBase::ParticleFluidBase( std::string const & name, ManagedGroup * c
 
   RegisterViewWrapper( viewKeyStruct::isProppantMobileString, &m_isProppantMobile, false );
 
+  RegisterViewWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip, false )->
+      setApplyDefaultValue(0)->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Whether the collisional component of the slip velocity is considered");
+
   RegisterViewWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability, false );  
   
 }
@@ -96,6 +101,8 @@ ParticleFluidBase::DeliverClone( string const & name,
   newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
 
   newConstitutiveRelation->m_isProppantMobile = this->m_isProppantMobile;
+
+  newConstitutiveRelation->m_isCollisionalSlip = this->m_isCollisionalSlip;
 
   newConstitutiveRelation->m_proppantPackPermeability = this->m_proppantPackPermeability;      
   
