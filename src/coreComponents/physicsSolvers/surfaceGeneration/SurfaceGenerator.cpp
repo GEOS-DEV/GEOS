@@ -507,7 +507,9 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     NodeManager & nodeManager,
                                     EdgeManager & edgeManager,
@@ -566,6 +568,9 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
   return didSplit;
 }
 
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            const NodeManager & nodeManager,
                                            const EdgeManager & edgeManager,
@@ -1108,6 +1113,9 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   return true;
 }
 
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::SetLocations( const std::set<localIndex>& separationPathFaces,
                                      ElementRegionManager & elemManager,
                                      const FaceManager& faceManager,
@@ -1141,7 +1149,9 @@ bool SurfaceGenerator::SetLocations( const std::set<localIndex>& separationPathF
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::SetElemLocations( const int location,
                                          const std::pair<CellElementSubRegion*, localIndex >& k,
                                          const std::set<localIndex>& separationPathFaces,
@@ -1253,7 +1263,9 @@ bool SurfaceGenerator::SetElemLocations( const int location,
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         NodeManager & nodeManager,
                                         EdgeManager & edgeManager,
@@ -1837,7 +1849,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   } // for( map<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem = elemLocations.begin()
 }
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
                                             NodeManager const & nodeManager,
                                             EdgeManager const & edgeManager,

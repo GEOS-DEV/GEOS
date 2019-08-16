@@ -76,7 +76,9 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
-  subRegion->m_localToGlobalMap[kfe] = faceManager->m_localToGlobalMap[faceIndices[0]];
+  globalIndex const gi = faceManager->m_localToGlobalMap[faceIndices[0]];
+  subRegion->m_localToGlobalMap[kfe] = gi;
+  subRegion->m_globalToLocalMap[gi] = kfe;
   subRegion->m_ghostRank[kfe] = faceManager->m_ghostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
@@ -127,14 +129,14 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
     localIndex const connectorIndex = edgeManager->m_edgesToFractureConnectorsEdges[edge];
-    localIndex const
-    numCells = edgeManager->m_fractureConnectorEdgesToFaceElements.sizeOfArray(connectorIndex) + 1;
+    localIndex const numCells = edgeManager->m_fractureConnectorEdgesToFaceElements.sizeOfArray(connectorIndex) + 1;
     edgeManager->m_fractureConnectorEdgesToFaceElements.resizeArray( connectorIndex, numCells );
     edgeManager->m_fractureConnectorEdgesToFaceElements[connectorIndex][ numCells-1 ] = kfe;
 
     // And fill the list of connectors that will need stencil modifications
     edgeManager-> m_recalculateFractureConnectorEdges.insert( connectorIndex );
   }
+
 
   subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
 

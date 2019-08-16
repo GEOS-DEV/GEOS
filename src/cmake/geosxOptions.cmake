@@ -41,6 +41,10 @@ option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 
+
+
+option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" ON )
+
 # LAI setup
 
 set( supported_LAI Trilinos Hypre Petsc )
