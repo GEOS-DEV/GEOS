@@ -343,12 +343,19 @@ R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
 
   r1_array const & X = nodeManager.referencePosition();
   m_elementCenter[k] = 0;
-  for ( localIndex a = 0 ; a < numNodesPerElement() ; ++a)
+  localIndex numNodesPerElem = numNodesPerElement();
+
+  if (!m_elementTypeString.compare(0, 4, "C3D6"))
+  {
+    numNodesPerElem -= 2;
+  }
+
+  for ( localIndex a = 0 ; a < numNodesPerElem ; ++a)
   {
     const localIndex b = m_toNodesRelation[k][a];
     m_elementCenter[k] += X[b];
   }
-  m_elementCenter[k] /= numNodesPerElement();
+  m_elementCenter[k] /= numNodesPerElem;
 
   return m_elementCenter[k];
 }
