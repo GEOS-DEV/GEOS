@@ -720,9 +720,9 @@ void CompositionalMultiphaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * cons
 
   // loop over all elements and set the dof number if the element is not a ghost
   localIndex localCount = 0;
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion * const region,
-                                      ElementSubRegionBase * const subRegion )
+  applyToSubRegions( meshLevel, [&] ( localIndex const er, localIndex const esr,
+                                      ElementRegion const * const,
+                                      ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<globalIndex> const & dofNumber = m_dofNumber[er][esr];
@@ -816,8 +816,8 @@ void CompositionalMultiphaseFlow::SetSparsityPattern( DomainPartition const * co
   } );
 
   // loop over all elements and add all locals just in case the above connector loop missed some
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion const * const region,
+  applyToSubRegions( meshLevel, [&] ( localIndex const er, localIndex const esr,
+                                      ElementRegion const * const,
                                       ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -861,7 +861,7 @@ void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
   globalIndex numGlobalRows = 0;
 
   // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase const * const subRegion )
   {
     localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
     numLocalRows += subRegion->size() - subRegionGhosts;
@@ -956,7 +956,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n
   localIndex const NDOF = m_numDofPerCell;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegion const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1199,7 +1199,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const time_
   localIndex const NDOF = m_numDofPerCell;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegion const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1463,7 +1463,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
   real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegion const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1528,7 +1528,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
   bool result = 1;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegion const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1582,7 +1582,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   solution.extractLocalVector( &localSolution );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const region,
+                                 ElementRegion * const,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1629,7 +1629,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const elementRegion,
+                                 ElementRegion * const,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
@@ -1656,7 +1656,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const elementRegion,
+                                 ElementRegion * const,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];
@@ -1665,13 +1665,13 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
     arrayView1d<real64> const & pres     = m_pressure[er][esr];
     arrayView2d<real64> const & compDens = m_globalCompDensity[er][esr];
 
-    forall_in_range<serialPolicy>(0,subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for (localIndex ic = 0; ic < m_numComponents; ++ic)
         compDens[ei][ic] += dCompDens[ei][ic];
-    });
-  });
+    } );
+  } );
 }
 
 void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
