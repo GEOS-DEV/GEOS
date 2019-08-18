@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+<Problem>
 
   <Solvers
     gravityVector="0.0,0.0,-9.81">
   
     <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="2"
+                     verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Fracture}"
@@ -20,7 +20,7 @@
     </SinglePhaseFlow>
     
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="1"
+                      verboseLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Fracture}">
     </SurfaceGenerator>
@@ -31,10 +31,10 @@
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
                   xCoords="{-1, 1}"
-                  yCoords="{0, 10}"
+                  yCoords="{0, 2}"
                   zCoords="{0, 1}"
                   nx="{2}"
-                  ny="{10}"
+                  ny="{2}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -44,40 +44,31 @@
     <Box name="right"     xMin=" 8.99, -0.01, -0.01" xMax="10.01,  1.01, 1.01"/>
     <Box name="bottom"    xMin="-0.01, -0.01, -0.01" xMax="10.01,  1.11, 1.01"/>
     <Box name="top"       xMin="-0.01,  8.99, -0.01" xMax="10.01, 10.01, 1.01"/>
-    <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
+    <Box name="fracture1" xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 10.01, 1.01"/>
+    <Box name="fracture2" xMin="-2.01,  0.99, -0.01" xMax=" 2.01,  1.01, 1.01"/>
     <Box name="source"    xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="10.0">
-   <SoloEvent name="output0"
-              target="/Outputs/siloOutput"/>
+  <Events maxTime="50.0">
 
-   <SoloEvent name="preFracture"
-              target="/Solvers/SurfaceGen"/>
-   
-   <SoloEvent name="output1"
-              target="/Outputs/siloOutput"/>
-                
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent name="solverApplications"
-                   forceDt="1.0"
-                   target="/Solvers/SinglePhaseFlow" />
+    <SoloEvent name="preFracture"
+               target="/Solvers/SurfaceGen"/>
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    cycleFrequency="1"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0"
+                   target="/Solvers/SinglePhaseFlow"/>
+
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
+                   timeFrequency="25.0"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
-                   endTime="-1" />
+                   target="/Outputs/sidreRestart"/>
   </Events>
 
   <NumericalMethods>
@@ -113,34 +104,20 @@
                                  compressibility="1e-9"/>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
 
     <FieldSpecification name="frac"
-               initialCondition="1"
-               setNames="{fracture}"
-               objectPath="faceManager"
-               fieldName="ruptureState"
-               scale="1"/>
-               
-    <FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="1.0e7"
-               setNames="{source}"/>
-    <!-- SourceFlux name="sourceTerm"
-                objectPath="ElementRegions/Fracture"
-                scale="-0.01"
-                setNames="{source}"/-->
+                        initialCondition="1"
+                        setNames="{fracture1, fracture2}"
+                        objectPath="faceManager"
+                        fieldName="ruptureState"
+                        scale="1"/>
 
-    <!-- FieldSpecification name="sink"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               setNames="{top}"/-->
+    <FieldSpecification name="source"
+                        objectPath="ElementRegions/Fracture"
+                        fieldName="pressure"
+                        scale="1.0e7"
+                        setNames="{source}"/>
   </FieldSpecifications>
 
   <Functions>
@@ -151,9 +128,8 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"
-            plotLevel="2"/>
-      <Restart name="sidreRestart"/>
+    <Silo name="siloOutput"/>
+    <Restart name="sidreRestart"/>
   </Outputs>
 
 
