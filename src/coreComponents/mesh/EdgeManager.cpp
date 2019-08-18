@@ -977,12 +977,10 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   array1d<globalIndex> recalculatedEdges;
   recalculatedEdges.reserve( m_recalculateFractureConnectorEdges.size() );
-  for( auto const & edgeIndex : packList )
+  for( localIndex const fce : m_recalculateFractureConnectorEdges )
   {
-    if( m_recalculateFractureConnectorEdges.count(edgeIndex)>0 )
-    {
-      recalculatedEdges.push_back( m_localToGlobalMap[edgeIndex] );
-    }
+    localIndex const edgeIndex = m_fractureConnectorsEdgesToEdges[fce];
+    recalculatedEdges.push_back( m_localToGlobalMap[edgeIndex] );
   }
   packedSize += bufferOps::Pack<DOPACK>( buffer, string("recalculateConnectorsByEdge") );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
@@ -1030,17 +1028,22 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   for( globalIndex const & newEdge : recalculatedEdges )
   {
-    localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
-
-    auto edgeIter = m_edgesToFractureConnectorsEdges.find(edgeIndex);
-    if( edgeIter == m_edgesToFractureConnectorsEdges.end() )
+//    localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
+    auto edgeLocalIter = m_globalToLocalMap.find(newEdge);
+    if( edgeLocalIter!=m_globalToLocalMap.end() )
     {
-      m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
-      m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
-      m_recalculateFractureConnectorEdges.insert( m_edgesToFractureConnectorsEdges[edgeIndex] );
+      localIndex edgeIndex = edgeLocalIter->second;
+      auto edgeIter = m_edgesToFractureConnectorsEdges.find(edgeIndex);
+      if( edgeIter == m_edgesToFractureConnectorsEdges.end() )
+      {
+        m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
+        m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
+        m_recalculateFractureConnectorEdges.insert( m_edgesToFractureConnectorsEdges[edgeIndex] );
 
-      m_fractureConnectorEdgesToFaceElements.resize( m_fractureConnectorsEdgesToEdges.size() );
+        m_fractureConnectorEdgesToFaceElements.resize( m_fractureConnectorsEdgesToEdges.size() );
+      }
     }
+
   }
 
 
