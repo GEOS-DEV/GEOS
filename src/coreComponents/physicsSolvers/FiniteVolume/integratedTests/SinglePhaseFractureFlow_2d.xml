@@ -20,7 +20,7 @@
     </SinglePhaseFlow>
     
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="0"
+                      verboseLevel="1"
                       fractureRegion="Fracture"
                       targetRegions="{Fracture}">
     </SurfaceGenerator>
@@ -49,11 +49,16 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="10.0">
+   <SoloEvent name="output0"
+              target="/Outputs/siloOutput"/>
+
    <SoloEvent name="preFracture"
               target="/Solvers/SurfaceGen"/>
    
-  
+   <SoloEvent name="output1"
+              target="/Outputs/siloOutput"/>
+                
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -146,7 +151,8 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+      <Silo name="siloOutput"
+            plotLevel="2"/>
       <Restart name="sidreRestart"/>
   </Outputs>
 
