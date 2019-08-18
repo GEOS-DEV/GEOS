@@ -50,14 +50,14 @@ Documentation is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/lat
 We recommend newcomers to the code read one or both of the following introductory
 guides:
 
-- [Getting Started Guide](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/getting_started.rst)
+- [Getting Started Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/gettingStarted/Index.html)
 : Basic instructions for downloading, building, and running the code.
 
-- [Developer Guide](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/developer_guidelines.rst)
+- [Developer Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/developerGuide/Index.html)
 : Basic instructions for those interested in contributing code.
 
 Once you are familiar with the basics, you may want to explore our tutorials page:
-- [Tutorials](https://github.com/GEOSX/GEOSX/blob/develop/src/docs/sphinx/tutorials.rst) 
+- [Tutorials](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/tutorials/Index.html) 
 
 We have two categories of tutorials.  User-focused tutorials for those primarily interested
 in running existing models, and developer-focused tutorials for those primarily interested
