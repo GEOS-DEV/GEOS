@@ -256,14 +256,17 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
 
+  arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
+
   // add new connectors/connections between face elements to the fracture stencil
   for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
   {
     localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray(fci);
     // only do this if there are more than one element attached to the connector
-    if( numElems > 1 )
+    localIndex const edgeIndex = fractureConnectorsToEdges[fci];
+
+    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
-      localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
       GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci);
       stencilCellsRegionIndex.resize(numElems);
