@@ -975,16 +975,16 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                          m_localToGlobalMap,
                                          m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
-  array1d<globalIndex> recalculatedEdges;
-  recalculatedEdges.reserve( m_recalculateFractureConnectorEdges.size() );
-  for( localIndex const fce : m_recalculateFractureConnectorEdges )
-  {
-    localIndex const edgeIndex = m_fractureConnectorsEdgesToEdges[fce];
-    recalculatedEdges.push_back( m_localToGlobalMap[edgeIndex] );
-  }
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string("recalculateConnectorsByEdge") );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         recalculatedEdges );
+//  array1d<globalIndex> recalculatedEdges;
+//  recalculatedEdges.reserve( m_recalculateFractureConnectorEdges.size() );
+//  for( localIndex const fce : m_recalculateFractureConnectorEdges )
+//  {
+//    localIndex const edgeIndex = m_fractureConnectorsEdgesToEdges[fce];
+//    recalculatedEdges.push_back( m_localToGlobalMap[edgeIndex] );
+//  }
+//  packedSize += bufferOps::Pack<DOPACK>( buffer, string("recalculateConnectorsByEdge") );
+//  packedSize += bufferOps::Pack<DOPACK>( buffer,
+//                                         recalculatedEdges );
 
   return packedSize;
 }
@@ -1019,32 +1019,32 @@ localIndex EdgeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
-  string recalcConnectorByEdgeString;
-  unPackedSize += bufferOps::Unpack( buffer, recalcConnectorByEdgeString );
-  GEOS_ERROR_IF_NE( recalcConnectorByEdgeString, "recalculateConnectorsByEdge" );
-  array1d<globalIndex> recalculatedEdges;
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     recalculatedEdges );
-
-  for( globalIndex const & newEdge : recalculatedEdges )
-  {
-//    localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
-    auto edgeLocalIter = m_globalToLocalMap.find(newEdge);
-    if( edgeLocalIter!=m_globalToLocalMap.end() )
-    {
-      localIndex edgeIndex = edgeLocalIter->second;
-      auto edgeIter = m_edgesToFractureConnectorsEdges.find(edgeIndex);
-      if( edgeIter == m_edgesToFractureConnectorsEdges.end() )
-      {
-        m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
-        m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
-        m_recalculateFractureConnectorEdges.insert( m_edgesToFractureConnectorsEdges[edgeIndex] );
-
-        m_fractureConnectorEdgesToFaceElements.resize( m_fractureConnectorsEdgesToEdges.size() );
-      }
-    }
-
-  }
+//  string recalcConnectorByEdgeString;
+//  unPackedSize += bufferOps::Unpack( buffer, recalcConnectorByEdgeString );
+//  GEOS_ERROR_IF_NE( recalcConnectorByEdgeString, "recalculateConnectorsByEdge" );
+//  array1d<globalIndex> recalculatedEdges;
+//  unPackedSize += bufferOps::Unpack( buffer,
+//                                     recalculatedEdges );
+//
+//  for( globalIndex const & newEdge : recalculatedEdges )
+//  {
+////    localIndex const edgeIndex = m_globalToLocalMap.at( newEdge );
+//    auto edgeLocalIter = m_globalToLocalMap.find(newEdge);
+//    if( edgeLocalIter!=m_globalToLocalMap.end() )
+//    {
+//      localIndex edgeIndex = edgeLocalIter->second;
+//      auto edgeIter = m_edgesToFractureConnectorsEdges.find(edgeIndex);
+//      if( edgeIter == m_edgesToFractureConnectorsEdges.end() )
+//      {
+//        m_fractureConnectorsEdgesToEdges.push_back( edgeIndex );
+//        m_edgesToFractureConnectorsEdges[edgeIndex] = m_fractureConnectorsEdgesToEdges.size() - 1;
+//        m_recalculateFractureConnectorEdges.insert( m_edgesToFractureConnectorsEdges[edgeIndex] );
+//
+//        m_fractureConnectorEdgesToFaceElements.resize( m_fractureConnectorsEdgesToEdges.size() );
+//      }
+//    }
+//
+//  }
 
 
 
