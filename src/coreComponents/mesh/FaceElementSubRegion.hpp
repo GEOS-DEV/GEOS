@@ -79,6 +79,11 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  /**
+   * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
+   * @param[in] faceManager The face group.
+   * @param[in] indices The list of indices to set value of ghostRank.
+   */
   void inheritGhostRankFromParentFace( FaceManager const * const faceManager,
                                        std::set<localIndex> const & indices );
 
@@ -97,6 +102,11 @@ public:
   virtual string GetElementTypeString() const override { return "C3D8"; }
 
 
+  /**
+   * @name Relation Accessors
+   * @brief Accessor function for the various inter-object relations
+   */
+  ///@{
   NodeMapType const & nodeList() const
   {
     return m_toNodesRelation;
@@ -137,11 +147,12 @@ public:
   {
     return m_toFacesRelation;
   }
+  ///@}
 
   /**
    * @return number of nodes per element
    */
-//  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
+  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
   arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
