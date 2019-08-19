@@ -206,7 +206,9 @@ class CustomVTUXMLWriter
   {
     std::stringstream stream;
     std::uint32_t size = integer_conversion< std::uint32_t >( nbTotalCells * factor );
-    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+    string outputString;
+    outputString.resize(8);
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
     m_outFile << stream.rdbuf();
   }
 
@@ -230,10 +232,13 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * 3 *  sizeof( real64 );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+      string outputString;
+      outputString.resize(8);
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
+      outputString.resize(24);
       for( auto const & vertex : vertices )
       {
-        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.Data() ), 3*sizeof( real64 )) ;
+        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.Data() ), outputString, 3*sizeof( real64 )) ;
       }
       DumpBuffer( stream );
     }
@@ -258,7 +263,8 @@ class CustomVTUXMLWriter
           localIndex cellIndex = 0;
           localIndex vertexIndex=0;
           localIndex_array connectivityFragment( multiplier );
-          std::cout << multiplier << std::endl;
+          string outputString;
+          outputString.resize( multiplier * 8);
           for( integer i = 0 ; i < connectivities.size() / multiplier ; i++ )
           {
             for( integer j = 0 ; j < multiplier; j++ )
@@ -290,9 +296,10 @@ class CustomVTUXMLWriter
                 cellIndex++;
               }
             }
-            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
           }
           connectivityFragment.resize( 8 - vertexIndex );
+          outputString.resize( (8 - vertexIndex ) * 8);
           for( integer j = 0 ; j < connectivityFragment.size(); j++ )
           {
             if( vertexIndex == 2 )
@@ -322,11 +329,13 @@ class CustomVTUXMLWriter
               cellIndex++;
             }
           }
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) );
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) );
         }
         else
         {
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivities.data() ), sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) );
+          string outputString;
+          outputString.resize(connectivities.size());
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivities.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) );
         }
         DumpBuffer( stream );
       }
@@ -372,19 +381,21 @@ class CustomVTUXMLWriter
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
       localIndex_array offsetFragment( multiplier );
+      string outputString;
+      outputString.resize( multiplier * 8);
       for( integer i = 0; i < multiplier; i++)
       {
         offsetFragment[i] = ( i + 1 ) * j;
       }
       for( localIndex i = 0 ; i < nb / multiplier ; i++)
       {
-        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
+        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
         for( integer k = 0; k < multiplier; k++)
         {
           offsetFragment[k] += j * multiplier;
         }
       }
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( nb % multiplier) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( nb % multiplier) );
       DumpBuffer( stream );
     }
 
@@ -401,16 +412,18 @@ class CustomVTUXMLWriter
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( integer ) );// We do not write all the data at once to avoid creating a big table each time.
       integer_array typeArray( multiplier );
+      string outputString;
+      outputString.resize( multiplier * 8);
       for( integer i = 0; i < multiplier; i++ )
       {
         typeArray[i] = type;
       }
-      string typeString64 = stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * multiplier );
+      string typeString64 = stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), outputString, sizeof( integer ) * multiplier );
       for( localIndex i = 0 ; i < nb / multiplier ; i++)
       {
         stream << typeString64;
       }
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), sizeof( integer ) * ( nb % multiplier) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), outputString, sizeof( integer ) * ( nb % multiplier) );
       DumpBuffer( stream );
     }
 
@@ -428,8 +441,11 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( real64 );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
+      string outputString;
+      outputString.resize( 8 );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
+      outputString.resize( 16*data.size() );
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), outputString, sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
       DumpBuffer( stream );
     }
 
@@ -464,10 +480,13 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 {
   std::stringstream stream;
   std::uint32_t size = integer_conversion< std::uint32_t > ( data.size() ) * sizeof( real64 ) * 3;
-  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ));
+  string outputString;
+  outputString.resize( 8 );
+  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
+  outputString.resize( 8 * data.size() * 3 );
   for( auto const & elem : data )
   {
-    stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), sizeof( real64 ) * 3 );
+    stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), outputString, sizeof( real64 ) * 3 );
   }
   m_outFile << stream.rdbuf() << '\n';
 }

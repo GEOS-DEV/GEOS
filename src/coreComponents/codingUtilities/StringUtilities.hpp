@@ -243,12 +243,14 @@ static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                        "abcdefghijklmnopqrstuvwxyz"
                                        "0123456789+/";
 
-inline string EncodeBase64( unsigned char const* bytes,
-                            int len)
+inline string & EncodeBase64( unsigned char const * const bytes,
+                              string & outputString,
+                              int len)
 {
-  string out;
+  char * out = &outputString[0];
   integer val = 0;
   integer valB = -6;
+  integer size = 0;
 
   for( integer i = 0 ; i < len ; i++ )
   {
@@ -256,19 +258,25 @@ inline string EncodeBase64( unsigned char const* bytes,
     valB += 8;
     while ( valB >= 0 )
     {
-      out.push_back( base64Chars[ ( val>>valB ) &0x3F ] ); //0x3f is the Hexadecimal for 63
+      *out = base64Chars[ ( val>>valB ) &0x3F ] ; //0x3f is the Hexadecimal for 63
+      ++out;
+      ++size;
       valB -= 6;
     }
   }
   if( valB > -6 )
   {
-    out.push_back( base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ] );
+    *out = base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ];
+    ++out;
+    ++size;
   }
-  while( out.size() % 4 )
+  while( size % 4 )
   {
-    out.push_back( '=' );
+    *out = '=';
+    ++out;
+    ++size;
   }
-  return out;
+  return outputString;
 }
 
 }

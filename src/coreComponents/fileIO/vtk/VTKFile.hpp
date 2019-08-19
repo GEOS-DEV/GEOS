@@ -28,7 +28,7 @@
 #include "mesh/InterObjectRelation.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
-#include "pugixml.hpp"
+#include "fileIO/xmlWrapper.hpp"
 
 #ifdef GEOSX_USE_MPI
 #include <mpi.h>
@@ -89,14 +89,14 @@ class VTKFile
      * @param[in] p is a parallel data array
      * @return the corresponding xml node
      */
-  pugi::xml_node CreateDataArray( pugi::xml_node & parent,
+  xmlWrapper::xmlNode CreateDataArray( pugi::xml_node & parent,
                                   string const & type,
                                   string const & name,
                                   int const & nbComponents,
                                   string const & format = "ascii",
                                   bool p = false)
   {
-    pugi::xml_node dataArrayNode;
+    xmlWrapper::xmlNode dataArrayNode;
     if( p )
     {
       dataArrayNode = parent.append_child("PDataArray");
@@ -120,18 +120,18 @@ class VTKFile
      * @param[in] nbComponents dimension of the field
      * @return the corresponding xml node
      */
-  pugi::xml_node CreatePDataArray( pugi::xml_node & parent,
-                                   string const & type,
-                                   string const & name,
-                                   int const & nbComponents,
-                                   string const & format = "ascii" )
+  xmlWrapper::xmlNode CreatePDataArray( xmlWrapper::xmlNode & parent,
+                                        string const & type,
+                                        string const & name,
+                                        int const & nbComponents,
+                                        string const & format = "ascii" )
   {
     return CreateDataArray( parent, type, name, nbComponents, format, true);
   }
 
   private:
     /// Root file ( .pvd )
-    pugi::xml_document m_rootFile;
+    xmlWrapper::xmlDocument m_rootFile;
 
     /// Unstructured file gathering all vtu files for a time step ( .pvtu )
     pugi::xml_document m_pvtuFile;
