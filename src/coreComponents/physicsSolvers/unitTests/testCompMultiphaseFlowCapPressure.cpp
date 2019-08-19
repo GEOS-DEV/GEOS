@@ -55,8 +55,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  real64 * localResidual = nullptr;
-  residual.extractLocalVector( &localResidual );
+  real64 const * localResidual = residual.extractLocalVector();
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
@@ -68,8 +67,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // copy the analytical residual
   ParallelVector residualOrig( residual );
 
-  real64 * localResidualOrig = nullptr;
-  residualOrig.extractLocalVector( &localResidualOrig );
+  real64 const * localResidualOrig = residualOrig.extractLocalVector();
 
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );

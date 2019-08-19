@@ -64,7 +64,7 @@ set(managers_sources
     initialization.cpp
    )
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebraInterface )
+set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
