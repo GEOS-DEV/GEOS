@@ -52,7 +52,7 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
-set( dependencyList common constitutive dataRepository linearAlgebraInterface )
+set( dependencyList common constitutive dataRepository linearAlgebra )
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
