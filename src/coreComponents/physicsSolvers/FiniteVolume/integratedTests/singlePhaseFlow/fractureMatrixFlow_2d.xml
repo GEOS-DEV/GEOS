@@ -32,10 +32,10 @@
             name="mesh1"
             elementTypes="{C3D8}"
             xCoords="{-5, 5}"
-            yCoords="{0, 1}"
+            yCoords="{0, 10}"
             zCoords="{0, 1}"
             nx="{10}"
-            ny="{1}"
+            ny="{10}"
             nz="{1}"
             cellBlockNames="{cb1}" />
     </Mesh>
@@ -68,29 +68,29 @@
     </Geometry>
 
 
-    <Events maxTime="10">
-        <SoloEvent
+    <Events maxTime="50000">
+        <!--SoloEvent
             name="output0"
-            target="/Outputs/siloOutput" />
+            target="/Outputs/siloOutput" / -->
 
         <SoloEvent
             name="preFracture"
             target="/Solvers/SurfaceGen" />
 
-        <SoloEvent
+        <!--SoloEvent
             name="output1"
-            target="/Outputs/siloOutput" />
+            target="/Outputs/siloOutput" / -->
 
         <PeriodicEvent
             name="solverApplications"
-            forceDt="1e0"
+            forceDt="1e3"
             target="/Solvers/SinglePhaseFlow" />
 
-        <PeriodicEvent
+        <!--PeriodicEvent
             name="outputs"
             cycleFrequency="1"
             targetExactTimestep="1"
-            target="/Outputs/siloOutput" />
+            target="/Outputs/siloOutput" /-->
 
         <PeriodicEvent
             name="restarts"
@@ -145,7 +145,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="1.0e-17" />
+            scale="5.0e-19" />
 
         <FieldSpecification
             name="permy"
@@ -154,7 +154,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="1.0e-17" />
+            scale="5.0e-19" />
 
         <FieldSpecification
             name="permz"
@@ -163,7 +163,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="permeability"
-            scale="1.0e-17" />
+            scale="5.0e-19" />
 
         <FieldSpecification
             name="referencePorosity"
@@ -171,7 +171,7 @@
             setNames="{all}"
             objectPath="ElementRegions/Region2/cb1"
             fieldName="referencePorosity"
-            scale="0.05" />
+            scale="0.01" />
 
         <FieldSpecification
             name="initialPressure"
@@ -210,7 +210,8 @@
     <Outputs>
         <Silo
             name="siloOutput"
-            plotFileRoot="fractureMatrixFlow" />
+            plotFileRoot="fractureMatrixFlow"
+            plotLevel="1" />
         <Restart name="sidreRestart" />
     </Outputs>
 

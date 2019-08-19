@@ -558,7 +558,6 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
     GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem: " );
     GEOS_LOG_RANK_0( "\nJacobian:\n" );
     matrix.print(std::cout);
-    GEOS_LOG_RANK_0("\nResidual:\n");
     rhs.print(std::cout);
   }
 
@@ -853,7 +852,6 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
     GEOS_LOG_RANK_0("\nJacobian:\n");
     matrix.print(std::cout);
-    GEOS_LOG_RANK_0("\nResidual:\n");
     rhs.print(std::cout);
   }
 
