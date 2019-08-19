@@ -19,7 +19,7 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/managers/docs/FunctionManager
 
-   /coreComponents/linearAlgebraInterface/docs/LinearSolvers.rst
+   /coreComponents/linearAlgebra/docs/LinearSolvers.rst
 
    /coreComponents/MPI_Communications/docs/SpatialPartition.rst
 

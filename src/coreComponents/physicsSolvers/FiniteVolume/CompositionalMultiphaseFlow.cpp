@@ -1281,14 +1281,11 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
                                                     ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  // get a view into local residual vector
-  real64 * localResidual;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
+  real64 localResidualNorm = 0.0;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
-  real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
@@ -1350,13 +1347,10 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
                                                   real64 const scalingFactor )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  real64 * localSolution;
-  solution.extractLocalVector( &localSolution );
+  real64 const * localSolution = solution.extractLocalVector();
+  bool result = true;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
-
-  bool result = true;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
@@ -1411,9 +1405,6 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
                                                   DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
-  real64 * localSolution = nullptr;
-  solution.extractLocalVector( &localSolution );
 
   applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
                                  localIndex const GEOSX_UNUSED_ARG( esr ),
