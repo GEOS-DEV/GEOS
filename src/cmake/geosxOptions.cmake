@@ -41,7 +41,7 @@ option( ENABLE_HYPRE "Enables HYPRE" ON )
 
 
 
-option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" ON )
+option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 
 # LAI setup
 
