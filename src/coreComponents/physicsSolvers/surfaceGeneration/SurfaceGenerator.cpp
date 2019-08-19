@@ -327,6 +327,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
           fluxApprox->addToFractureStencil( *domain,
                                             this->m_fractureRegionName );
           edgeManager->m_recalculateFractureConnectorEdges.clear();
+          fractureRegion->GetSubRegion<FaceElementSubRegion>(0)->m_newFaceElements.clear();
         }
       }
     }
@@ -505,6 +506,17 @@ int SurfaceGenerator::SeparationDriver( MeshLevel * const mesh,
 
 #endif
 
+    elementManager.forElementSubRegionsComplete<FaceElementSubRegion>( [&]( localIndex const er,
+                                                                            localIndex const esr,
+                                                                            ElementRegion const * const,
+                                                                            FaceElementSubRegion * const subRegion )
+    {
+      std::set<localIndex> & newFaceElems = modifiedObjects.newElements[{er,esr}];
+      for( localIndex const newFaceElemIndex : newFaceElems )
+      {
+        subRegion->m_newFaceElements.insert(newFaceElemIndex);
+      }
+    });
 
 
     elementManager.forElementSubRegions<FaceElementSubRegion>( [&]( auto * const subRegion )

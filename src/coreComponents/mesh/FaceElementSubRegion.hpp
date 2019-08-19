@@ -79,6 +79,8 @@ public:
 
   virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+
   /**
    * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
    * @param[in] faceManager The face group.
@@ -165,6 +167,9 @@ public:
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
   FixedToManyElementRelation m_faceElementsToCells;
+
+  set< localIndex > m_newFaceElements;
+
 
 private:
   template<bool DOPACK>

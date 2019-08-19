@@ -45,15 +45,18 @@ FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
 
   this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
                              &(m_toElements.m_toElementRegion),
-                             false )->setApplyDefaultValue(-1);
+                             false )->
+    setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
                              &(m_toElements.m_toElementSubRegion),
-                             false )->setApplyDefaultValue(-1);
+                             false )->
+    setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::elementListString,
                              &(m_toElements.m_toElementIndex),
-                             false )->setApplyDefaultValue(-1);
+                             false )->
+    setApplyDefaultValue(-1);
 
   this->RegisterViewWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
   this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
