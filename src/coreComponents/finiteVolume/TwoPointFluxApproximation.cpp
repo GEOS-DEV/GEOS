@@ -312,58 +312,62 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
     arrayView2d<localIndex const> const & elemRegionList = faceElementsToCells.m_toElementRegion;
     arrayView2d<localIndex const> const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d<localIndex const> const & elemList = faceElementsToCells.m_toElementIndex;
-    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
+    for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+//    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
     {
-      localIndex const numElems = faceElementsToCells.size(1);
-
-      GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
-      stencilCellsRegionIndex.resize(numElems);
-      stencilCellsSubRegionIndex.resize(numElems);
-      stencilCellsIndex.resize(numElems);
-      stencilWeights.resize(numElems);
-
-      R2SymTensor coefTensor;
-      R1Tensor cellToFaceVec;
-      R1Tensor faceConormal;
-
-      // remove cell-to-cell connections from cell stencil and add in new connections
-      if( cellStencil.zero( faceMap[kfe][0] ) )
+      if( fractureSubRegion->GhostRank()[kfe] < 0 )
       {
-        for (localIndex ke = 0; ke < numElems; ++ke)
+        localIndex const numElems = faceElementsToCells.size(1);
+
+        GEOS_ERROR_IF(numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe);
+        stencilCellsRegionIndex.resize(numElems);
+        stencilCellsSubRegionIndex.resize(numElems);
+        stencilCellsIndex.resize(numElems);
+        stencilWeights.resize(numElems);
+
+        R2SymTensor coefTensor;
+        R1Tensor cellToFaceVec;
+        R1Tensor faceConormal;
+
+        // remove cell-to-cell connections from cell stencil and add in new connections
+        if( cellStencil.zero( faceMap[kfe][0] ) )
         {
-          localIndex const faceIndex = faceMap[kfe][ke];
-          localIndex const er  = elemRegionList[kfe][ke];
-          localIndex const esr = elemSubRegionList[kfe][ke];
-          localIndex const ei  = elemList[kfe][ke];
+          for (localIndex ke = 0; ke < numElems; ++ke)
+          {
+            localIndex const faceIndex = faceMap[kfe][ke];
+            localIndex const er  = elemRegionList[kfe][ke];
+            localIndex const esr = elemSubRegionList[kfe][ke];
+            localIndex const ei  = elemList[kfe][ke];
 
-          cellToFaceVec = faceCenter[faceIndex];
-          cellToFaceVec -= elemCenter[er][esr][ei];
+            cellToFaceVec = faceCenter[faceIndex];
+            cellToFaceVec -= elemCenter[er][esr][ei];
 
-          real64 const c2fDistance = cellToFaceVec.Normalize();
+            real64 const c2fDistance = cellToFaceVec.Normalize();
 
-          // assemble full coefficient tensor from principal axis/components
-          makeFullTensor(coefficient[er][esr][ei], coefTensor);
+            // assemble full coefficient tensor from principal axis/components
+            makeFullTensor(coefficient[er][esr][ei], coefTensor);
 
-          faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
-          real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
+            faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
+            real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
-          // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
-          stencilCellsRegionIndex[0] = er;
-          stencilCellsSubRegionIndex[0] = esr;
-          stencilCellsIndex[0] = ei;
-          stencilWeights[0] =  ht ;
+            // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
+            stencilCellsRegionIndex[0] = er;
+            stencilCellsSubRegionIndex[0] = esr;
+            stencilCellsIndex[0] = ei;
+            stencilWeights[0] =  ht ;
 
-          stencilCellsRegionIndex[1] = fractureRegionIndex;
-          stencilCellsSubRegionIndex[1] = 0;
-          stencilCellsIndex[1] = kfe;
-          stencilWeights[1] = -ht ;
+            stencilCellsRegionIndex[1] = fractureRegionIndex;
+            stencilCellsSubRegionIndex[1] = 0;
+            stencilCellsIndex[1] = kfe;
+            stencilWeights[1] = -ht ;
 
-          cellStencil.add( 2,
-                           stencilCellsRegionIndex,
-                           stencilCellsSubRegionIndex,
-                           stencilCellsIndex,
-                           stencilWeights.data(),
-                           faceIndex );
+            cellStencil.add( 2,
+                             stencilCellsRegionIndex,
+                             stencilCellsSubRegionIndex,
+                             stencilCellsIndex,
+                             stencilWeights.data(),
+                             faceIndex );
+          }
         }
       }
     }

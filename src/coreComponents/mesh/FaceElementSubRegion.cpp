@@ -34,7 +34,17 @@ using namespace dataRepository;
 
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                       dataRepository::ManagedGroup * const parent ):
-  ElementSubRegionBase( name, parent )
+  ElementSubRegionBase( name, parent ),
+  m_unmappedGlobalIndicesInToNodes(),
+  m_unmappedGlobalIndicesInToEdges(),
+  m_unmappedGlobalIndicesInToFaces(),
+  m_faceElementsToCells(),
+  m_newFaceElements(),
+  m_toNodesRelation(),
+  m_toEdgesRelation(),
+  m_toFacesRelation(),
+  m_elementAperture(),
+  m_elementArea()
 {
   RegisterViewWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
     setDescription("Map to the nodes attached to each FaceElement.");
@@ -65,16 +75,19 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellRegionsString,
                        &(m_faceElementsToCells.m_toElementRegion), 0 )->
+    setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
                        &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+    setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   RegisterViewWrapper( viewKeyStruct::faceElementsToCellIndexString,
                        &(m_faceElementsToCells.m_toElementIndex), 0 )->
+    setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
@@ -273,5 +286,15 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const * c
   }
 }
 
+void FaceElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
+{
+  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellRegionsString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellSubRegionsString));
+  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellIndexString));
+}
 
 } /* namespace geosx */
