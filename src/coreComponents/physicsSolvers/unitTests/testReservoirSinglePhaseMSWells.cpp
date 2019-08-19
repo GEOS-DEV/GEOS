@@ -60,8 +60,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  double* localResidual = nullptr;
-  residual.extractLocalVector( &localResidual );
+  real64 const * localResidual = residual.extractLocalVector();
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -73,8 +72,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
-  double* localResidualOrig = nullptr;
-  residualOrig.extractLocalVector( &localResidualOrig );
+  real64 const * localResidualOrig = residualOrig.extractLocalVector();
 
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
