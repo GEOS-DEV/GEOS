@@ -105,6 +105,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_Cylinder:
+
+Element: Cylinder
+=================
+.. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -597,6 +604,13 @@ Datastructure: Constitutive
 Datastructure: Contact
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
+
+
+.. _DATASTRUCTURE_Cylinder:
+
+Datastructure: Cylinder
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
