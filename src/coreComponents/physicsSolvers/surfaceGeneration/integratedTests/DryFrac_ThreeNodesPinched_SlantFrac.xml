@@ -22,13 +22,13 @@
   
     <SurfaceGenerator name="SurfaceGen"
                       solidMaterialName="granite"
-                      rockToughness="0.5e100"
+                      rockToughness="1e5"
                       displacementBasedSIF="0"
-                      allowVacuumFrac="1"
                       nodeBasedSIF="1"
+                      allowVacuumFrac="1"
+                      verboseLevel="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
-                      verboseLevel="1"
                       targetRegions="{Region2}">
     </SurfaceGenerator>
   </Solvers>
@@ -37,38 +37,41 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D6}" 
-                  xCoords="{0, 24, 48}"
-                  yCoords="{0, 24, 48}"
-                  zCoords="{-56, -16, 16, 56}"
-                  nx="{12, 6}"
-                  ny="{12, 6}"
-                  nz="{4, 8, 4}"
+                  xCoords="{0, 4}"
+                  yCoords="{-2, 3}"
+                  zCoords="{0, 4}"
+                  nx="{4}"
+                  ny="{5}"
+                  nz="{4}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
-    <Cylinder name="fracPlane" point1="0.0, 0.0, -0.1" point2="0.0, 0.0, 0.1" radius="11"/>
-    <Box name="core" xMin="-0.1, -0.1, -0.1" xMax="100.1, 100.1, 0.1"/>
+    <Box name="fracPlane" strike="-45" xMin="-3.1, -1.1, 0.9" xMax="3.1, -0.9, 3.1"/>
+    <Box name="core" strike="-45" xMin="-40.1, -1.1, -0.1" xMax="40.1, -0.9, 40.1"/>
+
+    <!--Box name="fracPlane" xMin="-3.1, -0.1, 0.9" xMax="2.1, 0.1, 3.1"/-->
+    <!--Box name="core" xMin="-0.1, -0.1, -0.1" xMax="40.1, 0.1, 40.1"/-->
   </Geometry>
 
 
-  <Events maxTime="10.0">
+  <Events maxTime="1.0">
     <PeriodicEvent name="outputs"
-                   timeFrequency="0.1"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="0.1"
+                   forceDt="0.5"
                    target="/Solvers/lagSolve" />
   
     <PeriodicEvent name="outputs"
-                   timeFrequency="0.1"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
     
     <PeriodicEvent name="restarts"
-                   timeFrequency="0.1"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"/>
   </Events>
@@ -91,15 +94,16 @@
 
   <ElementRegions>
     <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
+
     <FaceElementRegion name="Fracture"
                        materialList="{granite}"/>
   </ElementRegions>
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
-                              defaultDensity="2650"
-                              defaultBulkModulus="8.33333e9"
-                              defaultShearModulus="3.84615e9"
+                              defaultDensity="2700"
+                              defaultBulkModulus="2.0e10"
+                              defaultShearModulus="1.2e10"
 
 />
   </Constitutive>
@@ -128,12 +132,12 @@
                scale="0.0" 
                setNames="{xneg}"/>
 
-    <FieldSpecification name="y" 
-               component="1" 
+    <FieldSpecification name="z" 
+               component="2" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="{yneg}"/>
+               setNames="{zneg}"/>
 
     <!--FieldSpecification name="bot1" 
                component="1" 
@@ -163,19 +167,19 @@
                scale="0.0" 
                setNames="ypos_upperhalf"/-->
 
-    <FieldSpecification name="zposConstraint" 
-               component="2" 
+    <FieldSpecification name="yposConstraint" 
+               component="1" 
                objectPath="faceManager"
                fieldName="Traction" 
                scale="1e6" 
-               setNames="{zpos}"/>
+               setNames="{ypos}"/>
                
-    <FieldSpecification name="znegconstraint" 
-               component="2" 
-               objectPath="faceManager"
+    <FieldSpecification name="ynegconstraint" 
+               objectPath="faceManager" 
                fieldName="Traction" 
+               component="1" 
                scale="-1e6" 
-               setNames="{zneg}"/>
+               setNames="{yneg}"/>
                               
     <!--FieldSpecification name="bot" 
                component="1" 
