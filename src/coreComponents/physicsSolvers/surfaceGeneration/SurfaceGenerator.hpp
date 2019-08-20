@@ -125,6 +125,7 @@ public:
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
+  virtual void postRestartInitialization( ManagedGroup * const domain ) override final;
 
 private:
 
