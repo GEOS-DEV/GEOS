@@ -63,8 +63,6 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
-//  subRegion->m_faceElementsToCells.resize( subRegion->size(), 2 );
-
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
