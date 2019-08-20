@@ -604,6 +604,16 @@ void ManagedGroup::finishReading()
 #endif
 }
 
+void ManagedGroup::postRestartInitializationRecursive( ManagedGroup * const domain )
+{
+  forSubGroups([&]( ManagedGroup * const subGroup )
+      {
+        subGroup->postRestartInitializationRecursive( domain );
+      } );
+
+  this->postRestartInitialization( domain );
+}
+
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

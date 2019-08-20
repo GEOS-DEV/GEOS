@@ -1015,6 +1015,9 @@ public:
 
   void finishReading();
 
+  void postRestartInitializationRecursive( ManagedGroup * const domain );
+
+
 protected:
   /**
    * @brief Post processing of the input values.
@@ -1029,6 +1032,7 @@ protected:
 
   virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const group ) {}
 
+  virtual void postRestartInitialization( ManagedGroup * const domain ) {}
 
 private:
   /**
