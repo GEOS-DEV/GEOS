@@ -486,6 +486,12 @@ public:
   {
     m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
   }
+
+  void setPlotFileRoot( string const & fileRoot )
+  {
+    m_plotFileRoot = fileRoot;
+  }
+
 private:
 
   /// pointer to the DBfile that this class is working on
