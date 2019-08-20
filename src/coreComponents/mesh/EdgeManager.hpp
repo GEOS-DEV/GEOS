@@ -135,8 +135,6 @@ public:
 
     static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
     static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
-    static constexpr auto fractureConnectorsEdgesToFaceElementsRegionString = "fractureConnectorsToRegion";
-    static constexpr auto fractureConnectorsEdgesToFaceElementsSubregionString = "fractureConnectorsToSubregion";
     static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
 
 
