@@ -57,8 +57,6 @@ VTKOutput::VTKOutput( std::string const & name,
     setDescription("Output the data in binary format");
 
   m_vtkFile.SetPlotLevel( m_plotLevel );
-  std::cout <<"BINARY "<<  m_writeBinaryData << std::endl;
-  std::cout <<"PLOTLEVEL "<<  m_plotLevel << std::endl;
   m_vtkFile.SetBinaryMode( m_writeBinaryData) ;
 
 }
