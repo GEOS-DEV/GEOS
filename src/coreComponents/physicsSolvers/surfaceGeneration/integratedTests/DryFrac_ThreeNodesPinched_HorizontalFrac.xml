@@ -52,7 +52,7 @@
   </Geometry>
 
 
-  <Events maxTime="10.0">
+  <Events maxTime="1.0">
     <PeriodicEvent name="outputs"
                    timeFrequency="0.5"
                    targetExactTimestep="0"

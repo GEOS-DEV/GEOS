@@ -21,30 +21,34 @@
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      verboseLevel="3"
-                      fractureRegion="Fracture"
-                      targetRegions="{Region2}"
                       solidMaterialName="granite"
                       rockToughness="1e6"
-                      >
+                      displacementBasedSIF="0"
+                      nodeBasedSIF="1"
+                      allowVacuumFrac="1"
+                      verboseLevel="1"
+                      discretization="FE1"
+                      fractureRegion="Fracture"
+                      targetRegions="{Region2}">
     </SurfaceGenerator>
   </Solvers>
 
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
-                  xCoords="{0, 2}"
-                  yCoords="{-1, 1}"
-                  zCoords="{-1, 1}"
-                  nx="{2}"
-                  ny="{2}"
-                  nz="{2}"
+                  elementTypes="{C3D6}" 
+                  xCoords="{0, 40}"
+                  yCoords="{-100, -10, -4, 4, 10, 100}"
+                  zCoords="{0, 2}"
+                  nx="{40}"
+                  ny="{10, 3, 8, 3, 10}"
+                  nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
-    <Box name="fracPlane" xMin="-1.00, -0.1, -1.01" xMax="2.01, 0.01, 1.01"/>
+    <Box name="fracPlane" xMin="-0.1, -0.1, -0.1" xMax="2.1, 0.1, 2.1"/>
+    <Box name="core" xMin="-0.1, -0.1, -0.1" xMax="40.1, 0.1, 2.1"/>
   </Geometry>
 
 
@@ -87,14 +91,18 @@
 
   <ElementRegions>
     <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
-    <FaceElementRegion name="Fracture" materialList="{granite}"/>
+
+    <FaceElementRegion name="Fracture"
+                       materialList="{granite}"/>
   </ElementRegions>
 
   <Constitutive>
       <LinearElasticIsotropic name="granite"
                               defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
+                              defaultBulkModulus="2.0e10"
+                              defaultShearModulus="1.2e10"
+
+/>
   </Constitutive>
 
 
@@ -106,35 +114,83 @@
                objectPath="faceManager"
                fieldName="ruptureState"
                scale="1"/>
-  
+
+    <FieldSpecification name="separableFace"
+               initialCondition="1"
+               setNames="{core}"
+               objectPath="faceManager"
+               fieldName="isFaceSeparable"
+               scale="1"/>
   
     <FieldSpecification name="x" 
                component="0" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="{yneg, ypos}"/>
+               setNames="{xneg}"/>
 
     <FieldSpecification name="z" 
                component="2" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="{yneg, ypos}"/>
-                              
-    <FieldSpecification name="bot" 
+               setNames="{zneg}"/>
+
+    <!--FieldSpecification name="bot1" 
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="-0.1" 
+               setNames="yneg_lowerhalf"/>
+
+    <FieldSpecification name="top1" 
+               component="1" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.1" 
+               setNames="ypos_lowerhalf"/>
+
+    <FieldSpecification name="bot2" 
+               component="1" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.0" 
+               setNames="yneg_upperhalf"/>
+
+    <FieldSpecification name="top2" 
+               component="1" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.0" 
+               setNames="ypos_upperhalf"/-->
+
+    <FieldSpecification name="yposConstraint" 
+               component="1" 
+               objectPath="faceManager"
+               fieldName="Traction" 
+               scale="1e6" 
+               setNames="{ypos}"/>
+               
+    <FieldSpecification name="ynegconstraint" 
+               objectPath="faceManager" 
+               fieldName="Traction" 
+               component="1" 
+               scale="-1e6" 
                setNames="{yneg}"/>
+                              
+    <!--FieldSpecification name="bot" 
+               component="1" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="-0.1" 
+               setNames="yneg"/>
                
     <FieldSpecification name="top" 
                component="1" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.1" 
-               setNames="{ypos}"/>
+               setNames="ypos"/-->
                
   </FieldSpecifications>
 
@@ -153,7 +209,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
     <Restart name="sidreRestart"/>
   </Outputs>
 
