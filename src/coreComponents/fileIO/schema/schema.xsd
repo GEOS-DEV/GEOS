@@ -191,11 +191,11 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--maxCycle => Maximum simulation cycle.-->
+		<!--maxCycle => Maximum simulation cycle for the global event loop.-->
 		<xsd:attribute name="maxCycle" type="integer" default="2147483647" />
-		<!--maxTime => Maximum simulation time.-->
+		<!--maxTime => Maximum simulation time for the global event loop.-->
 		<xsd:attribute name="maxTime" type="real64" default="1.79769e+308" />
-		<!--verbosity => Verbosity level-->
+		<!--verbosity => Verbosity level.-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
 	</xsd:complexType>
 	<xsd:complexType name="HaltEventType">
@@ -204,19 +204,19 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--beginTime => Start time of this event-->
+		<!--beginTime => Start time of this event.-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
-		<!--endTime => End time of this event-->
+		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
-		<!--forceDt => Forced timestep for this event-->
+		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--maxEventDt => Forced timestep for this event-->
+		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
-		<!--maxRuntime => max runtime-->
+		<!--maxRuntime => The maximum allowable runtime for the job.-->
 		<xsd:attribute name="maxRuntime" type="real64" use="required" />
-		<!--target => event target-->
+		<!--target => Name of the object to be executed when the event criteria are met.-->
 		<xsd:attribute name="target" type="string" default="" />
-		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
+		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
@@ -229,33 +229,33 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--beginTime => Start time of this event-->
+		<!--beginTime => Start time of this event.-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
-		<!--cycleFrequency => event frequency (cycle, Default)-->
+		<!--cycleFrequency => Event application frequency (cycle, default)-->
 		<xsd:attribute name="cycleFrequency" type="integer" default="1" />
-		<!--endTime => End time of this event-->
+		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
-		<!--forceDt => Forced timestep for this event-->
+		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--function => Name of the symbolic math function-->
+		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
 		<xsd:attribute name="function" type="string" default="" />
-		<!--maxEventDt => Forced timestep for this event-->
+		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
-		<!--object => Path of the function input object (directory format)-->
+		<!--object => If the optional function requires an object as an input, specify its path here.-->
 		<xsd:attribute name="object" type="string" default="" />
-		<!--set => Setname of the input object (if empty, default to everything)-->
+		<!--set => If the optional function is applied to an object, specify the setname to evaluate (default = everything).-->
 		<xsd:attribute name="set" type="string" default="" />
-		<!--stat => Selection of the min/avg/max for functions that target vectors-->
+		<!--stat => If the optional function is applied to an object, specify the statistic to compare to the eventThreshold.The current options include: min, avg, and max.-->
 		<xsd:attribute name="stat" type="integer" default="0" />
-		<!--target => event target-->
+		<!--target => Name of the object to be executed when the event criteria are met.-->
 		<xsd:attribute name="target" type="string" default="" />
-		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
+		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
-		<!--targetExactTimestep => allows timesteps to be truncated to match time frequency perfectly-->
+		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).-->
 		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
-		<!--threshold => event threshold-->
+		<!--threshold => If the optional function is used, the event will execute if the value returned by the function exceeds this threshold.-->
 		<xsd:attribute name="threshold" type="real64" default="0" />
-		<!--timeFrequency => event frequency (time)-->
+		<!--timeFrequency => Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.-->
 		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
@@ -268,23 +268,23 @@
 			<xsd:element name="PeriodicEvent" type="PeriodicEventType" />
 			<xsd:element name="SoloEvent" type="SoloEventType" />
 		</xsd:choice>
-		<!--beginTime => Start time of this event-->
+		<!--beginTime => Start time of this event.-->
 		<xsd:attribute name="beginTime" type="real64" default="0" />
-		<!--endTime => End time of this event-->
+		<!--endTime => End time of this event.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+100" />
-		<!--forceDt => Forced timestep for this event-->
+		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
-		<!--maxEventDt => Forced timestep for this event-->
+		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
-		<!--target => event target-->
+		<!--target => Name of the object to be executed when the event criteria are met.-->
 		<xsd:attribute name="target" type="string" default="" />
-		<!--targetCycle => Event cycle-->
+		<!--targetCycle => Targeted cycle to execute the event.-->
 		<xsd:attribute name="targetCycle" type="integer" default="-1" />
-		<!--targetExactStartStop => allows timesteps to be truncated to match the start/stop times exactly-->
+		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
-		<!--targetExactTimestep => Allows timesteps to be truncated to match time frequency perfectly-->
+		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified execution time exactly: dt_request = min(dt_request, t_target - time)).-->
 		<xsd:attribute name="targetExactTimestep" type="integer" default="1" />
-		<!--targetTime => Event time-->
+		<!--targetTime => Targeted time to execute the event.-->
 		<xsd:attribute name="targetTime" type="real64" default="-1" />
 		<!--verbosity => Verbosity level-->
 		<xsd:attribute name="verbosity" type="integer" default="0" />
@@ -412,7 +412,7 @@
 		<xsd:attribute name="coordinates" type="real64_array" use="required" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="" />
-		<!--interpolation => Value Type-->
+		<!--interpolation => Interpolation method-->
 		<xsd:attribute name="interpolation" type="string" default="" />
 		<!--values => Table Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" use="required" />
@@ -743,7 +743,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--scale => Scale for modifying requested dt-->
 		<xsd:attribute name="scale" type="real64" default="1e-09" />
@@ -762,9 +762,11 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--couplingTypeOption => Coupling option: (FixedStress, TightlyCoupled)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
@@ -783,7 +785,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
@@ -804,7 +806,7 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--couplingTypeOption => Coupling option: (FixedStress, TightlyCoupled)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
@@ -844,7 +846,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -882,7 +884,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
 		<xsd:attribute name="massDamping" type="real64" default="0" />
@@ -920,7 +922,7 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should bespecified.-->
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
@@ -939,6 +941,7 @@
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
+			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
@@ -1047,6 +1050,12 @@
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModel => Type of viscosity model (linear, quadratic, exponential)-->
 		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ContactType">
+		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
+		<xsd:attribute name="penaltyStiffness" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

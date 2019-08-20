@@ -96,7 +96,7 @@ TEST( SinglePhaseFlowKernels, accumulation )
     real64 accumJacobian;
     real64 poroNew;
 
-    AccumulationKernel::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
+    AccumulationKernel<CellElementSubRegion>::Compute<false>( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
                                         poroRef[i], poroOld[i], pvMult[i], dPvMult_dPres[i],
                                         0.0, 0.0, 0.0, 0.0, poroNew, accum, accumJacobian );
 
@@ -119,7 +119,7 @@ template<typename T, int NDIM>
 using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
 
 template<localIndex stencilSize>
-void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[stencilSize],
+void computeFlux( arraySlice1d<real64 const> const & weight,
                   real64 const * pres,
                   real64 const * dPres,
                   real64 const * gravDepth,
@@ -132,7 +132,7 @@ void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[st
                   real64 & flux,
                   real64 (& dFlux_dP)[stencilSize] )
 {
-  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr numElems = 2;
 
   real64 densMean = 0.0;
   real64 dDensMean_dP[stencilSize] {};
@@ -142,23 +142,23 @@ void computeFlux( FluxApproximationBase::CellStencil::Entry const (& stencil)[st
     dDensMean_dP[i] = 0.5 * dDens_dPres[i];
   }
   real64 potDif = 0.0;
-  real64 dPotDif_dP[stencilSize] {};
+  real64 sumWeightGrav = 0;
   for (localIndex i = 0; i < stencilSize; ++i)
   {
-    potDif += stencil[i].weight * (pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i]);
-    dPotDif_dP[i] = stencil[i].weight * (1 - gravityFlag * dDensMean_dP[i] * gravDepth[i]);
+    potDif += weight[i] * (pres[i] + dPres[i] - gravityFlag * densMean * gravDepth[i]);
+    sumWeightGrav += weight[i] * gravityFlag * gravDepth[i];
   }
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
   flux = dt * potDif * mob[k_up];
   for (localIndex i = 0; i < stencilSize; ++i)
   {
-    dFlux_dP[i] = dt * dPotDif_dP[i] * mob[k_up];
+    dFlux_dP[i] = dt * ( weight[i] - sumWeightGrav * dDensMean_dP[i] ) * mob[k_up];
   }
   dFlux_dP[k_up] += dt * potDif * dMob_dPres[k_up];
 }
 
 template<bool FULL, localIndex stencilSize>
-void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)[stencilSize],
+void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * pres,
                      real64 const * dPres,
                      real64 const * gravDepth,
@@ -169,21 +169,62 @@ void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)
                      real64 const dt,
                      integer const gravityFlag )
 {
-  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
+  localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   localIndex constexpr fluidIndex = 0;
 
-  auto presView        = AccessorHelper<FULL>::template makeElementAccessor<1> ( pres,        stencilSize, stencil );
-  auto dPresView       = AccessorHelper<FULL>::template makeElementAccessor<1> ( dPres,       stencilSize, stencil );
-  auto gravDepthView   = AccessorHelper<FULL>::template makeElementAccessor<1> ( gravDepth,   stencilSize, stencil );
-  auto mobView         = AccessorHelper<FULL>::template makeElementAccessor<1> ( mob,         stencilSize, stencil );
-  auto dMob_dPresView  = AccessorHelper<FULL>::template makeElementAccessor<1> ( dMob_dPres,  stencilSize, stencil );
-  auto densView        = AccessorHelper<FULL>::template makeMaterialAccessor<2>( dens,        stencilSize, stencil, fluidIndex );
-  auto dDens_dPresView = AccessorHelper<FULL>::template makeMaterialAccessor<2>( dDens_dPres, stencilSize, stencil, fluidIndex );
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
+
+  auto presView        = AccessorHelper<FULL>::template makeElementAccessor<1> ( pres,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0] );
+  auto dPresView       = AccessorHelper<FULL>::template makeElementAccessor<1> ( dPres,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0]);
+  auto gravDepthView   = AccessorHelper<FULL>::template makeElementAccessor<1> ( gravDepth,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0]);
+  auto mobView         = AccessorHelper<FULL>::template makeElementAccessor<1> ( mob,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0] );
+  auto dMob_dPresView  = AccessorHelper<FULL>::template makeElementAccessor<1> ( dMob_dPres,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0] );
+  auto densView        = AccessorHelper<FULL>::template makeMaterialAccessor<2>( dens,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0],
+                                                                                 fluidIndex );
+  auto dDens_dPresView = AccessorHelper<FULL>::template makeMaterialAccessor<2>( dDens_dPres,
+                                                                                 stencilSize,
+                                                                                 seri[0],
+                                                                                 sesri[0],
+                                                                                 sei[0],
+                                                                                 fluidIndex );
 
   array1d<real64> flux( numElems );
   array2d<real64> fluxJacobian( numElems, stencilSize );
 
-  FluxKernel::Compute( stencilSize, stencil,
+
+
+  FluxKernel::Compute( stencilSize,
+                       seri[0],
+                       sesri[0],
+                       sei[0],
+                       weights[0],
                        presView.toViewConst(),
                        dPresView.toViewConst(),
                        gravDepthView.toViewConst(),
@@ -201,7 +242,7 @@ void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)
   real64 dFlux_dP_et[stencilSize];
 
   // compute etalon
-  computeFlux( stencil,
+  computeFlux( weights[0],
                pres,
                dPres,
                gravDepth,
@@ -226,11 +267,21 @@ void testFluxKernel( FluxApproximationBase::CellStencil::Entry const (& stencil)
 TEST( SinglePhaseFlowKernels, fluxFull )
 {
   localIndex constexpr stencilSize = 2;
-  FluxApproximationBase::CellStencil::Entry stencil[stencilSize] =
-    {
-      { { 0, 0, 1 },  1e-12 },
-      { { 1, 0, 0 }, -1e-12 }
-    };
+
+
+  CellElementStencilTPFA stencil;
+
+  localIndex elemReg[2] = {0,1};
+  localIndex elemSubReg[2] = {0,0};
+  localIndex elemIndex[2] = {1,0};
+  real64 weight[] = { 1e-12, -1e-12 };
+  stencil.add( stencilSize,
+               elemReg,
+               elemSubReg,
+               elemIndex,
+               weight,
+               0 );
+
 
   int constexpr NTEST = 3;
 
@@ -250,7 +301,7 @@ TEST( SinglePhaseFlowKernels, fluxFull )
   {
     SCOPED_TRACE( "Input # " + std::to_string(i) );
 
-    testFluxKernel<true>( stencil,
+    testFluxKernel<true,2>( stencil,
                           presData[i],
                           dPresData[i],
                           gravDepthData[i],
@@ -267,11 +318,18 @@ TEST( SinglePhaseFlowKernels, fluxFull )
 TEST( SinglePhaseFlowKernels, fluxRegion )
 {
   localIndex constexpr stencilSize = 2;
-  FluxApproximationBase::CellStencil::Entry stencil[stencilSize] =
-    {
-      { { 0, 0, 1 },  1e-12 },
-      { { 0, 0, 0 }, -1e-12 }
-    };
+  CellElementStencilTPFA stencil;
+
+  localIndex elemReg[2] = {0,0};
+  localIndex elemSubReg[2] = {0,0};
+  localIndex elemIndex[2] = {1,0};
+  real64 weight[] = { 1e-12, -1e-12 };
+  stencil.add( stencilSize,
+               elemReg,
+               elemSubReg,
+               elemIndex,
+               weight,
+               0 );
 
   int constexpr NTEST = 3;
 
@@ -291,7 +349,7 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
   {
     SCOPED_TRACE( "Input # " + std::to_string(i) );
 
-    testFluxKernel<false>( stencil,
+    testFluxKernel<false,2>( stencil,
                            presData[i],
                            dPresData[i],
                            gravDepthData[i],
