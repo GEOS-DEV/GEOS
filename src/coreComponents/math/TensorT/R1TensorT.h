@@ -119,6 +119,7 @@ public:
   R1TensorT< T_dim >& operator=( const int& rhs );
 
   /// assignment to all data to a realT
+  GEOSX_HOST_DEVICE
   R1TensorT< T_dim >& operator=( const realT& rhs );
 
   /// assignment to another R1TensorT
@@ -132,10 +133,10 @@ public:
   GEOSX_HOST_DEVICE inline realT& operator()( const int i )       { return this->t_data[i]; }
 
   /// const access to data
-  GEOSX_HOST_DEVICE inline realT  operator[]( const int i ) const { return this->t_data[i]; }
+  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE realT  operator[]( const int i ) const { return this->t_data[i]; }
 
   /// non-const access to data
-  GEOSX_HOST_DEVICE inline realT& operator[]( const int i )       { return this->t_data[i]; }
+  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE realT& operator[]( const int i )       { return this->t_data[i]; }
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor
@@ -279,6 +280,7 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
  * @return reference to *this
  */
 template<int T_dim>
+GEOSX_HOST_DEVICE
 inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
 {
   TensorBaseT< T_dim >::operator=( rhs );

@@ -27,6 +27,7 @@
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 #include "FiniteElementBase.h"
+#include "common/TimingMacros.hpp"
 
 /**
  * Class representing a generic finite element.  Its constructor
@@ -54,11 +55,12 @@ public:
                  QuadratureBase const & quadrature,
                  const int num_zero_energy_modes = 0 );
 
-  virtual ~FiniteElement(){}
+  ~FiniteElement() override
+  {}
 
   static string CatalogName() { return "C3D8"; }
 
-  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points);
+  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) override;
 
 };
 
@@ -109,20 +111,16 @@ FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
  */
 
 template <int dim>
-void FiniteElement<dim> :: reinit(const array1d<R1TensorT<3> > &mapped_support_points)
+void FiniteElement<dim> :: reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points )
 {
-  assert(mapped_support_points.size() == n_dofs);
-
-  R2TensorT<3> jacobian;
-  R2TensorT<3> inv_jacobian;
-
-  for(auto q=0 ; q<n_q_points ; ++q)
+  for(int q=0 ; q<n_q_points ; ++q)
   {
+    R2TensorT<3> jacobian;
+    jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
 
-    jacobian = 0;
-    for(auto a=0 ; a<n_dofs ; ++a)
+    for(int a=1 ; a<n_dofs ; ++a)
     {
-      jacobian.plus_dyadic_ab( mapped_support_points[a], data[q].parent_gradients[a] );
+      jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
     }
 
     if( dim==2 )
@@ -130,11 +128,11 @@ void FiniteElement<dim> :: reinit(const array1d<R1TensorT<3> > &mapped_support_p
       jacobian(2,2) = 1;
     }
 
-    data[q].jacobian_determinant = inv_jacobian.Inverse(jacobian);
+    data[q].jacobian_determinant = jacobian.Inverse();
 
-    for(auto i=0 ; i<n_dofs ; ++i)
+    for(int i=0 ; i<n_dofs ; ++i)
     {
-      data[q].mapped_gradients[i].AijBi( inv_jacobian, data[q].parent_gradients[i] );
+      data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
     }
   }
 }

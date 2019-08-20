@@ -23,7 +23,6 @@
 #ifndef FINITEELEMENTBASE_H_
 #define FINITEELEMENTBASE_H_
 
-#include <assert.h>
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -115,7 +114,7 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( array1d<R1TensorT<3> > const & mapped_support_points) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) = 0;
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,
@@ -146,28 +145,28 @@ public:
   double value(const int shape_index,
                const int q_index) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    GEOS_ASSERT(q_index < n_q_points);
+    GEOS_ASSERT(shape_index < n_dofs);
     return data[q_index].parent_values[shape_index];
   }
 
   std::vector<double> const & values( const int q_index ) const
   {
-    assert(q_index < n_q_points);
+    GEOS_ASSERT(q_index < n_q_points);
     return data[q_index].parent_values;
   }
 
-  R1Tensor gradient( const localIndex shape_index,
+  inline R1Tensor gradient( const localIndex shape_index,
                      const localIndex q_index ) const
   {
-    assert(q_index < n_q_points);
-    assert(shape_index < n_dofs);
+    GEOS_ASSERT(q_index < n_q_points);
+    GEOS_ASSERT(shape_index < n_dofs);
     return data[q_index].mapped_gradients[shape_index];
   }
 
-  double JxW(const localIndex q_index) const
+  inline double JxW(const localIndex q_index) const
   {
-    assert(q_index < n_q_points);
+    GEOS_ASSERT(q_index < n_q_points);
     return data[q_index].jacobian_determinant *
            data[q_index].parent_q_weight;
   }
