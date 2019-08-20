@@ -207,8 +207,6 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
   array2d<localIndex> const & elemSubRegionList  = faceManager->elementSubRegionList();
   array2d<localIndex> const & elemList           = faceManager->elementList();
 
-  constexpr localIndex numElems = 2;
-
   // Counting the total number of cell and number of vertices  
   localIndex nbCellElements = 0;
   this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void

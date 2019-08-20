@@ -92,12 +92,15 @@ public:
   // **************************************************
 
   /// assignment of all data to an integer
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const int& rhs);
 
   /// assignment of all data to a realT
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const realT& rhs);
 
   /// assignment to another R2SymTensorT
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs);
 
   R2SymTensorT& operator+=( const R2SymTensorT<T_dim>& rhs );
@@ -245,6 +248,7 @@ R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs):
 
 // Assigns all components to an integer
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const int& rhs)
 {
@@ -254,6 +258,7 @@ R2SymTensorT< T_dim >::operator=(const int& rhs)
 
 // Assigns all components to a realT
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const realT& rhs)
 {
@@ -263,6 +268,7 @@ R2SymTensorT< T_dim >::operator=(const realT& rhs)
 
 // Assigns all components to another TensorBaseT's (Copy Constructor)
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const R2SymTensorT< T_dim >& rhs)
 {

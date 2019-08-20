@@ -41,8 +41,7 @@ public:
 
 protected:
 
-  virtual void computeCellStencil( DomainPartition const & domain,
-                                   CellStencil & stencil ) override;
+  virtual void computeCellStencil( DomainPartition const & domain ) override;
 
   virtual void addToFractureStencil( DomainPartition const & domain,
                                      string const & faceElementRegionName ) override;

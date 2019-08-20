@@ -35,24 +35,19 @@ using parallelHostPolicy = RAJA::loop_exec;
 
 #endif
 
-#if defined(GEOSX_ENABLE_CUDA) && defined(__CUDACC__)
+#if defined(GEOSX_USE_CUDA)
 
-template< int BLOCK_SIZE = 1024 >
+template< int BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
-
-#elif defined(GEOSX_ENABLE_CUDA) && !defined(__CUDACC__)
-
-template< int >
-using parallelDevicePolicy = void;
 
 #elif defined(GEOSX_USE_OPENMP)
 
-template< int >
+template< int BLOCK_SIZE = 0 >
 using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
 
 #else
 
-template< int >
+template< int BLOCK_SIZE = 0 >
 using parallelDevicePolicy = RAJA::loop_exec;
 
 #endif
@@ -67,7 +62,7 @@ RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, L
   RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
-//RAJA wrapper for loops over ranges - local index
+//RAJA wrapper for loops over ranges - global index
 template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
 {
