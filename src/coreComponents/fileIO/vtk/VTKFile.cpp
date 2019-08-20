@@ -73,7 +73,8 @@ class CustomVTUXMLWriter
   CustomVTUXMLWriter() = delete;
   CustomVTUXMLWriter( string const & fileName ) :
       m_outFile( fileName, std::ios::binary ),
-      m_spaceCount(0)
+      m_spaceCount(0),
+      m_regionCellOffset(0)
   {
   }
 
@@ -372,8 +373,9 @@ class CustomVTUXMLWriter
     {
       for( localIndex i = 1 ; i < nb + 1 ; i++)
       {
-        m_outFile << i*j << "\n";
+        m_outFile << i*j + m_regionCellOffset << "\n";
       }
+      m_regionCellOffset += nb *j;
     }
 
     void WriteBinaryOffsets( localIndex j, localIndex nb )
@@ -385,7 +387,7 @@ class CustomVTUXMLWriter
       outputString.resize( FindBase64StringLength( sizeof( localIndex ) * multiplier ) );
       for( integer i = 0; i < multiplier; i++)
       {
-        offsetFragment[i] = ( i + 1 ) * j;
+        offsetFragment[i] = ( i + 1 ) * j + m_regionCellOffset;
       }
       for( localIndex i = 0 ; i < nb / multiplier ; i++)
       {
@@ -398,6 +400,7 @@ class CustomVTUXMLWriter
       outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( nb % multiplier) ) );
       stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( nb % multiplier) );
       DumpBuffer( stream );
+      m_regionCellOffset += nb *j;
     }
 
     void WriteAsciiTypes( integer type, localIndex nb )
@@ -443,10 +446,8 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( data[0] );
-      string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( std::uint32_t ) ) );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
       integer multiplier = FindMultiplier( sizeof( data[0] ) );// We do not write all the data at once to avoid creating a big table each time.
+      string outputString;
       outputString.resize( FindBase64StringLength( sizeof( data[0] ) * integer_conversion< integer >( data.size() ) ) );
       stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), outputString, sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
       DumpBuffer( stream );
@@ -486,16 +487,16 @@ class CustomVTUXMLWriter
 
     /// Space counter to have well indented XML file
     int m_spaceCount;
+
+    /// Cell offset for having a global offset through all the subregions
+    localIndex m_regionCellOffset;
 };
 
 template<>
 inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 {
   std::stringstream stream;
-  std::uint32_t size = integer_conversion< std::uint32_t > ( data.size() ) * sizeof( real64 ) * 3;
   string outputString;
-  outputString.resize( FindBase64StringLength(sizeof( std::uint32_t ) ) );
-  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
   outputString.resize( sizeof( real64 ) * 3 );
   for( auto const & elem : data )
   {
@@ -504,160 +505,174 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   m_outFile << stream.rdbuf() << '\n';
 }
 
-  VTKFile::VTKFile( string const & name ):
-    m_baseName( name ),
-    m_binary( false )
+VTKFile::VTKFile( string const & name ):
+  m_baseName( name ),
+  m_binary( false )
+{
+  int mpiRank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  if( mpiRank == 0 )
   {
-    int mpiRank;
-    MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-    if( mpiRank == 0 )
-    {
-      // Declaration of XML version
-      auto declarationNode = m_rootFile.append_child(pugi::node_declaration);
-      declarationNode.append_attribute("version") = "1.0";
+    // Declaration of XML version
+    auto declarationNode = m_rootFile.append_child(pugi::node_declaration);
+    declarationNode.append_attribute("version") = "1.0";
 
-      // Declaration of the node VTKFile
-      auto vtkFileNode = m_rootFile.append_child("VTKFile");
-      vtkFileNode.append_attribute("type") = "Collection";
-      vtkFileNode.append_attribute("version") = "0.1";
-      //vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
-      //vtkFileNode.append_attribute("compressor") = "vtkZLibDataCompressor";
+    // Declaration of the node VTKFile
+    auto vtkFileNode = m_rootFile.append_child("VTKFile");
+    vtkFileNode.append_attribute("type") = "Collection";
+    vtkFileNode.append_attribute("version") = "0.1";
+    //vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
+    //vtkFileNode.append_attribute("compressor") = "vtkZLibDataCompressor";
 
-      // Declaration of the node Collection
-      vtkFileNode.append_child("Collection");
-      mode_t mode = 0733;
-      mkdir( name.c_str(), mode );
+    // Declaration of the node Collection
+    vtkFileNode.append_child("Collection");
+    mode_t mode = 0733;
+    mkdir( name.c_str(), mode );
 
-      string pvdFileName = name + ".pvd";
-      m_rootFile.save_file(pvdFileName.c_str());
-    }
-
+    string pvdFileName = name + ".pvd";
+    m_rootFile.save_file(pvdFileName.c_str());
   }
 
-  void VTKFile::Write( double const timeStep,
-                       DomainPartition const & domain )
+}
+
+void VTKFile::Write( double const timeStep,
+                     DomainPartition const & domain )
+{
+  int mpiRank;
+  int mpiSize;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
+  MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
+  ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
+  NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+  string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );
+  string format;
+  if( m_binary )
   {
-    int mpiRank;
-    int mpiSize;
-    MPI_Comm_rank( MPI_COMM_GEOSX, &mpiRank );
-    MPI_Comm_size( MPI_COMM_GEOSX, &mpiSize );
-    ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-    string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );
-    string format;
-    if( m_binary )
+    format = "binary";
+  }  
+  else
+  {
+    format = "ascii";
+  }
+
+  set< std::tuple< string, string, integer > > cellFields; // First : field name, Second : type, Third : field dimension;
+  // Find all cell fields to export
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                           auto const * const elemRegion )
+  {
+    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
     {
-      format = "binary";
-    }  
-    else
-    {
-      format = "ascii";
-    }
-    if( mpiRank == 0 )    
-    {                     
-      /// Add the new entry to the pvd root file
-      auto collectionNode = m_rootFile.child("VTKFile").child("Collection");
-      auto dataSetNode = collectionNode.append_child("DataSet");
-      dataSetNode.append_attribute("timestep") = std::to_string( timeStep ).c_str();
-      dataSetNode.append_attribute("group") = "";
-      dataSetNode.append_attribute("part") = "0";
-      string pvtuFileName = timeStepFolderName + "/root.pvtu";
-      dataSetNode.append_attribute("file") = pvtuFileName.c_str();
-
-      /// Create the pvtu file for this time step
-      // Create a directory for this time step
-      mode_t mode = 0733;
-      mkdir( timeStepFolderName.c_str(), mode );
-      pugi::xml_document pvtuFile;
-
-      // Declaration of XML version
-      auto declarationNode = pvtuFile.append_child(pugi::node_declaration);
-      declarationNode.append_attribute("version") = "1.0";
-
-      // Declaration of the node VTKFile
-      auto vtkFileNode = pvtuFile.append_child("VTKFile");
-      vtkFileNode.append_attribute("type") = "PUnstructuredGrid";
-      vtkFileNode.append_attribute("version") = "0.1";
-      if( m_binary )
-      {
-        vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
-      }
-
-      // Declaration of the node PUnstructuredGrid
-      auto pUnstructureGridNode = vtkFileNode.append_child("PUnstructuredGrid");
-      pUnstructureGridNode.append_attribute("GhostLevel") = "1";
-
-      // Declaration the node PPoints
-      auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
-      // .... and the data array containg the positions
-      CreatePDataArray( pPointsNode, geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ), "Position", 3, format );
-      
-      // Find all the node fields to output
-      auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
-      for( auto const & wrapperIter : nodeManager->wrappers() )
+      for( auto const & wrapperIter : subRegion->wrappers() )
       {
         ViewWrapperBase const * const wrapper = wrapperIter.second;
+
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
-           string const fieldName = wrapper->getName();
-           std::type_info const & typeID = wrapper->get_typeid();
-           if( !geosxToVTKTypeMap.count( typeID ) )
-             continue;
-           int dimension = 0;
-           rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-           if( fieldType == rtTypes::TypeIDs::r1_array_id )
-           {
-             dimension = 3;
-           }
-           else
-           {
-             dimension = 1;
-           }
-           CreatePDataArray(pPointDataNode, geosxToVTKTypeMap.at( typeID ), fieldName, dimension, format);
+          // the field name is the key to the map
+          string const fieldName = wrapper->getName();
+          std::type_info const & typeID = wrapper->get_typeid();
+          rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
+          if( !geosxToVTKTypeMap.count( typeID ) )
+            continue;
+          int dimension = 0;
+          if( fieldType == rtTypes::TypeIDs::r1_array_id )
+          {
+            dimension = 3;
+          }
+          else
+          {
+            dimension = 1;
+          }
+          cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension ) );
         }
       }
-
-      // Declaration of the node PCells
-      auto pCellsNode = pUnstructureGridNode.append_child("PCells");
-      // .... and its data array defining the connectivities, types, and offsets
-      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "connectivity", 1, format ); //TODO harcoded for the moment
-      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "offsets", 1, format );
-      CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( integer ) ) ), "types", 1, format );
-
-      // Find all the cell fields to output
-      auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
-      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->forElementSubRegions([&]( auto const * const subRegion )
-        {
-          for( auto const & wrapperIter : subRegion->wrappers() )
-          {
-            ViewWrapperBase const * const wrapper = wrapperIter.second;
-
-            if( wrapper->getPlotLevel() < m_plotLevel )
-            {
-              // the field name is the key to the map
-              string const fieldName = wrapper->getName();
-              std::type_info const & typeID = wrapper->get_typeid();
-              rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-              if( !geosxToVTKTypeMap.count( typeID ) )
-                continue;
-              int dimension = 0;
-              if( fieldType == rtTypes::TypeIDs::r1_array_id )
-              {
-                dimension = 3;
-              }
-              else
-              {
-                dimension = 1;
-              }
-              CreatePDataArray(pCellDataNode, geosxToVTKTypeMap.at( typeID ), fieldName, dimension, format);
-            }
-          }
-       });
     });
+  });
+
+  set< std::tuple< string, string, integer > > nodeFields; // First : field name, Second : type, Third : field dimension;
+  // Find all node fields to export
+  for( auto const & wrapperIter : nodeManager->wrappers() )
+  {
+    ViewWrapperBase const * const wrapper = wrapperIter.second;
+    if( wrapper->getPlotLevel() < m_plotLevel )
+    {  
+       string const fieldName = wrapper->getName();
+       std::type_info const & typeID = wrapper->get_typeid();
+       if( !geosxToVTKTypeMap.count( typeID ) )
+         continue;
+       int dimension = 0;
+       rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
+       if( fieldType == rtTypes::TypeIDs::r1_array_id )
+       {
+         dimension = 3;
+       }
+       else
+       {
+         dimension = 1;
+       }
+       nodeFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension ) );
+    }
+  }
+  if( mpiRank == 0 )    
+  {                     
+    /// Add the new entry to the pvd root file
+    auto collectionNode = m_rootFile.child("VTKFile").child("Collection");
+    auto dataSetNode = collectionNode.append_child("DataSet");
+    dataSetNode.append_attribute("timestep") = std::to_string( timeStep ).c_str();
+    dataSetNode.append_attribute("group") = "";
+    dataSetNode.append_attribute("part") = "0";
+    string pvtuFileName = timeStepFolderName + "/root.pvtu";
+    dataSetNode.append_attribute("file") = pvtuFileName.c_str();
+
+    /// Create the pvtu file for this time step
+    // Create a directory for this time step
+    mode_t mode = 0733;
+    mkdir( timeStepFolderName.c_str(), mode );
+    pugi::xml_document pvtuFile;
+
+    // Declaration of XML version
+    auto declarationNode = pvtuFile.append_child(pugi::node_declaration);
+    declarationNode.append_attribute("version") = "1.0";
+
+    // Declaration of the node VTKFile
+    auto vtkFileNode = pvtuFile.append_child("VTKFile");
+    vtkFileNode.append_attribute("type") = "PUnstructuredGrid";
+    vtkFileNode.append_attribute("version") = "0.1";
+    if( m_binary )
+    {
+      vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
+    }
+
+    // Declaration of the node PUnstructuredGrid
+    auto pUnstructureGridNode = vtkFileNode.append_child("PUnstructuredGrid");
+    pUnstructureGridNode.append_attribute("GhostLevel") = "1";
+
+    // Declaration the node PPoints
+    auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
+    // .... and the data array containg the positions
+    CreatePDataArray( pPointsNode, geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ), "Position", 3, format );
     
+    // Declare all the point fields
+    auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
+    for( auto & nodeField : nodeFields )
+    {
+      CreatePDataArray(pPointDataNode, std::get<1>(nodeField), std::get<0>(nodeField), std::get<2>(nodeField), format);
+    }
+
+    // Declaration of the node PCells
+    auto pCellsNode = pUnstructureGridNode.append_child("PCells");
+    // .... and its data array defining the connectivities, types, and offsets
+    CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "connectivity", 1, format ); //TODO harcoded for the moment
+    CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "offsets", 1, format );
+    CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( integer ) ) ), "types", 1, format );
+
+    // Find all the cell fields to output
+    auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
+    for( auto & cellField : cellFields )
+    {
+      CreatePDataArray(pCellDataNode, std::get<1>(cellField), std::get<0>(cellField), std::get<2>(cellField), format);
+    }
+
     // Declaration of the "Piece" nodes refering to the vtu files
     for( int i = 0 ;  i < mpiSize ; i++ )
     {
@@ -671,7 +686,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
     m_rootFile.save_file(pvdFileName.c_str());
     pvtuFile.save_file(pvtuFileName.c_str());
   }
-    
+  
   string vtuFileName = timeStepFolderName + "/" + std::to_string(mpiRank) + ".vtu";
   CustomVTUXMLWriter vtuWriter( vtuFileName );
   vtuWriter.WriteHeader();
@@ -679,13 +694,16 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
                                       {"version", "0.1"},
                                       {"byte_order", "LittleEndian"} } );
   vtuWriter.OpenXMLNode( "UnstructuredGrid",{} );
-  
+
   // Declaration of the node Piece and the basic informations of the mesh
   localIndex totalNumberOfCells = 0;
+  localIndex totalNumberOfSubRegion = 0;
+  ElementRegion * titi;
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
+                                                              auto const * const elemRegion )
   {
     totalNumberOfCells += elemRegion->GetTotalSize();
+    totalNumberOfSubRegion += elemRegion->numSubRegions();
   });
   vtuWriter.OpenXMLNode( "Piece", { { "NumberOfPoints", std::to_string(nodeManager->size() ) },
                                     { "NumberOfCells", std::to_string( totalNumberOfCells ) } } );
@@ -704,39 +722,26 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 
   // Point data output
   vtuWriter.OpenXMLNode( "PointData", {} );
-  for( auto const & wrapperIter : nodeManager->wrappers() )
+  for( auto & nodeField : nodeFields )
   {
-    ViewWrapperBase const * const wrapper = wrapperIter.second;
-    if( wrapper->getPlotLevel() < m_plotLevel )
+    ViewWrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
+    vtuWriter.OpenXMLNode( "DataArray", { { "type", std::get<1>( nodeField ) },
+                                          { "Name", std::get<0>( nodeField ) },
+                                          { "NumberOfComponents", std::to_string( std::get<2>( nodeField ) ) },
+                                          { "format", format } } );
+    if( m_binary )
     {
-       string const fieldName = wrapper->getName();
-       std::type_info const & typeID = wrapper->get_typeid();
-       rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-       if( !geosxToVTKTypeMap.count( typeID ) )
-         continue;
-       int dimension = 0;
-       if( fieldType == rtTypes::TypeIDs::r1_array_id )
-       {
-         dimension = 3;
-       }
-       else
-       {
-         dimension = 1;
-       }
-       vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( typeID ) },
-                                             { "Name", fieldName },
-                                             { "NumberOfComponents", std::to_string( dimension ) },
-                                             { "format", format } } );
-       std::type_index typeIndex = std::type_index( typeID );
-       rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-                                       [&]( auto type ) -> void
-       {
-         using cType = decltype(type);
-         const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
-         vtuWriter.WriteData( view.reference(), m_binary );
-       });
-       vtuWriter.CloseXMLNode( "DataArray" );
+      vtuWriter.WriteSize( nodeManager->size() * std::get<2>( nodeField ), sizeof( localIndex ) );
     }
+    std::type_index typeIndex = std::type_index(wrapper->get_typeid() );
+    rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+                                    [&]( auto type ) -> void
+    {
+      using cType = decltype(type);
+      const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
+      vtuWriter.WriteData( view.reference(), m_binary );
+    });
+    vtuWriter.CloseXMLNode( "DataArray" );
   }
   vtuWriter.CloseXMLNode( "PointData" );
 
@@ -814,49 +819,34 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   ElementRegion * toto;
   // Definition of the CellDataArray node that will contains all the data held by the elements
   vtuWriter.OpenXMLNode( "CellData", {} );
-  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
+  for( auto & cellField : cellFields )
   {
-    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
+    vtuWriter.OpenXMLNode( "DataArray", { { "type", std::get<1>( cellField )  },
+                                           { "Name", std::get<0>( cellField )  },
+                                           { "NumberOfComponents", std::to_string( std::get<2>( cellField )  ) },
+                                           { "format", format } } );
+    if( m_binary )
     {
-      for( auto const & wrapperIter : subRegion->wrappers() )
+      vtuWriter.WriteSize( totalNumberOfCells*std::get<2>( cellField ) , sizeof( localIndex ) );
+    }
+    elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                             auto const * const elemRegion )
+    {
+      elemRegion->forElementSubRegions([&]( auto const * const subRegion )
       {
-        ViewWrapperBase const * const wrapper = wrapperIter.second;
-
-        if( wrapper->getPlotLevel() < m_plotLevel )
+        ViewWrapperBase const * const wrapper = subRegion->getWrapperBase( std::get<0>( cellField ) );
+        std::type_index typeIndex = std::type_index(wrapper->get_typeid() );
+        rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+                                        [&]( auto type ) -> void
         {
-          string const fieldName = wrapper->getName();
-          std::cout << fieldName << std::endl;
-          std::type_info const & typeID = wrapper->get_typeid();
-          rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-          if( !geosxToVTKTypeMap.count( typeID ) )
-            continue;
-          int dimension = 0;
-          if( fieldType == rtTypes::TypeIDs::r1_array_id )
-          {
-            dimension = 3;
-          }
-          else
-          {
-            dimension = 1;
-          }
-          vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( typeID ) },
-                                                { "Name", fieldName },
-                                                { "NumberOfComponents", std::to_string( dimension ) },
-                                                { "format", format } } );
-          std::type_index typeIndex = std::type_index( typeID );
-          rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-                                          [&]( auto type ) -> void
-          {
-            using cType = decltype(type);
-            const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
-            vtuWriter.WriteData( view.reference(), m_binary );
-          });
-          vtuWriter.CloseXMLNode( "DataArray" );
-        }
-      }
+          using cType = decltype(type);
+          const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
+          vtuWriter.WriteData( view.reference(), m_binary );
+        });
+      });
     });
-  });
+    vtuWriter.CloseXMLNode( "DataArray" );
+  }
   vtuWriter.CloseXMLNode( "CellData" );
   vtuWriter.CloseXMLNode( "Piece" );
   vtuWriter.CloseXMLNode( "UnstructuredGrid" );
