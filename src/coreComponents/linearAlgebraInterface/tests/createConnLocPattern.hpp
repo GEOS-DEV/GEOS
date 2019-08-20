@@ -23,19 +23,22 @@
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_TESTS_CREATECONNLOCPATTERN_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_TESTS_CREATECONNLOCPATTERN_HPP_
 
-//#include "physicsSolvers/SimpleSolvers/LaplaceFEM.hpp"
 #include "DofManager.hpp"
 
 namespace geosx
 {
 
 /**
- * Definifion for entries of sparse matrix in COO format
+ * @typedef indexPair
+ *
+ * @brief Definifion for entries of sparse matrix in COO format.
  */
 typedef std::pair<localIndex, globalIndex> indexPair;
 
 /**
- * Compare structure used to create CSR matrix from COO format
+ * @struct pairComparison
+ *
+ * @brief Compare structure used to create CSR matrix from COO format.
  */
 struct pairComparison
 {
@@ -51,7 +54,9 @@ struct pairComparison
 };
 
 /**
- * Compare second element of a pair
+ * @struct pairSecondComparison
+ *
+ * @brief Compare second element of a pair.
  */
 struct pairSecondComparison
 {
@@ -62,7 +67,18 @@ struct pairSecondComparison
 };
 
 /**
- * Create face index array
+ * @brief Create face index array.
+ *
+ * @param [in]  domain DomainPartition the input domain.
+ * @param [in]  meshLevel MeshLevel the mesh level.
+ * @param [in]  fieldName string the field name.
+ * @param [in]  regionPtrs array1d<ElementRegion> array of regions where the field is defined.
+ * @param [in]  numComponents localIndex number of components (for vector fields).
+ * @param [out] numLocalNodes localIndex number of local nodes.
+ * @param [out] numLocalRows localIndex number of local rows.
+ * @param [out] numGlobalRows globalIndex number of global rows.
+ * @param [out] firstLocalRow globalIndex first row on this processor (without field offset).
+ * @param [out] firstLocalConnectivity globalIndex first connector on this processor.
  */
 void createIndexArray_FaceVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
@@ -76,7 +92,18 @@ void createIndexArray_FaceVersion( DomainPartition * const domain,
                                    globalIndex & firstLocalConnectivity );
 
 /**
- * Create element index array
+ * @brief Create element index array.
+ *
+ * @param [in]  domain DomainPartition the input domain.
+ * @param [in]  meshLevel MeshLevel the mesh level.
+ * @param [in]  fieldName string the field name.
+ * @param [in]  regionPtrs array1d<ElementRegion> array of regions where the field is defined.
+ * @param [in]  numComponents localIndex number of components (for vector fields).
+ * @param [out] numLocalNodes localIndex number of local nodes.
+ * @param [out] numLocalRows localIndex number of local rows.
+ * @param [out] numGlobalRows globalIndex number of global rows.
+ * @param [out] firstLocalRow globalIndex first row on this processor (without field offset).
+ * @param [out] firstLocalConnectivity globalIndex first connector on this processor.
  */
 void createIndexArray_ElemVersion( DomainPartition * const domain,
                                    MeshLevel * const meshLevel,
@@ -90,7 +117,12 @@ void createIndexArray_ElemVersion( DomainPartition * const domain,
                                    globalIndex & firstLocalConnectivity );
 
 /**
- * Convert a COO matrix in CSR format
+ * @brief Convert a COO matrix in CSR format.
+ *
+ * @param [in]  pairs array1d<indexPair> array of pairs (irow, jcol): COO format.
+ * @param [in]  nRows localIndex number of rows.
+ * @param [in]  nCols localIndex number of columns.
+ * @param [out] pattern Dof_SparsityPattern matrix in CSR format.
  */
 void vectorOfPairsToCSR( array1d<indexPair> const & pairs,
                          localIndex const nRows,
@@ -98,31 +130,37 @@ void vectorOfPairsToCSR( array1d<indexPair> const & pairs,
                          Dof_SparsityPattern & pattern );
 
 /**
- * Case of connectivity = Face and location = Elem
+ * @brief Case of connectivity = Face and location = Elem.
+ *
+ * @param [out] connLocPatt Dof_SparsityPattern the local sparsity pattern.
+ * @param [in]  domain DomainPartition the input domain.
+ * @param [in]  meshLevel MeshLevel the mesh level.
+ * @param [in]  fieldName string the field name.
+ * @param [in]  regionPtrs array1d<ElementRegion> array of regions where the field is defined.
+ * @param [in]  numComponents localIndex number of components (for vector fields).
  */
 void addDiagSparsityPattern( Dof_SparsityPattern & connLocPatt,
-                             DomainPartition * domain,
-                             MeshLevel * meshLevel,
+                             DomainPartition * const domain,
+                             MeshLevel * const meshLevel,
                              const string & fieldName,
                              array1d<ElementRegion*> const & regionPtrs,
                              localIndex const numComponents );
 
 /**
- * Create the connectivity-location pattern for the TPFA finite volume approach
+ * @brief Create the connectivity-location pattern for the TPFA finite volume approach.
+ *
+ * @param [in]  domain DomainPartition the input domain.
+ * @param [in]  meshLevel MeshLevel the mesh level.
+ * @param [in]  fieldName string the field name.
+ * @param [in]  regionPtrs array1d<ElementRegion> array of regions where the field is defined.
+ * @param [in]  numComponents localIndex number of components (for vector fields).
+ * @param [out] connLocPattern ParallelMatrix the output sparsity pattern.
  */
 void createConnLocPattern( DomainPartition * const domain,
                            localIndex const meshBodyIndex,
                            localIndex const meshLevelIndex,
                            localIndex const numComponents,
                            ParallelMatrix & connLocPattern );
-
-///**
-// * Create the location-location pattern for the Laplace equation with FEM
-// */
-//void createLocLocPattern( DomainPartition * const domain,
-//                          localIndex const meshBodyIndex,
-//                          localIndex const meshLevelIndex,
-//                          ParallelMatrix & locLocPattern );
 
 } /* namespace geosx */
 

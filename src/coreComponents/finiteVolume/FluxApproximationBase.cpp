@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file FluxApproximationBase.cpp
  *
  */
@@ -59,11 +59,6 @@ FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *c
     setApplyDefaultValue(1.0e-8)->
     setDescription("Relative tolerance for area calculations.");
 
-  RegisterViewWrapper<CellStencil>(viewKeyStruct::cellStencilString)->
-    setRestartFlags(RestartFlags::NO_WRITE);
-
-  RegisterViewWrapper<CellStencil>(viewKeyStruct::fractureStencilString)->
-    setRestartFlags(RestartFlags::NO_WRITE);
 
 }
 
@@ -78,11 +73,7 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
 {
   GEOSX_MARK_FUNCTION_SCOPED;
 
-  computeCellStencil( domain, getStencil() );
-
-//  computeFractureStencil( domain,
-//                          this->getReference<CellStencil>(viewKeyStruct::fractureStencilString),
-//                          getStencil() );
+  computeCellStencil( domain );
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
 
@@ -102,17 +93,6 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
   });
 }
 
-FluxApproximationBase::CellStencil const &
-FluxApproximationBase::getStencil() const
-{
-  return this->getReference<CellStencil>(viewKeyStruct::cellStencilString);
-}
-
-FluxApproximationBase::CellStencil &
-FluxApproximationBase::getStencil()
-{
-  return this->getReference<CellStencil>(viewKeyStruct::cellStencilString);
-}
 
 FluxApproximationBase::BoundaryStencil const &
 FluxApproximationBase::getBoundaryStencil(string const & setName) const

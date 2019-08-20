@@ -39,6 +39,27 @@ option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 
+
+
+option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
+
+# LAI setup
+
+set( supported_LAI Trilinos Hypre Petsc )
+set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" )
+message( STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
+
+if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
+  message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
+endif()
+
+string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
+if( NOT ENABLE_${upper_LAI} )
+  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
+endif()
+
+# MPI/OMP/CUDA setup
+
 option( ENABLE_MPI "" ON )
 
 option(CUDA_ENABLED "" OFF)

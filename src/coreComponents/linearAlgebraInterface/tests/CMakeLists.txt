@@ -28,6 +28,10 @@ if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
 endif()
 
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
   message("processing test_name ${test_name}")

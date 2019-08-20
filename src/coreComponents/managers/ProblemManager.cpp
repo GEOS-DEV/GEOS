@@ -585,7 +585,6 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::ParseInputFile()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -759,15 +758,13 @@ void ProblemManager::GenerateMesh()
       nodeManager->ConstructGlobalToLocalMap();
 
       elemManager->GenerateMesh( cellBlockManager );
-
-      faceManager->BuildFaces( nodeManager, elemManager );
-
-      edgeManager->BuildEdges(faceManager, nodeManager );
-
-      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+      faceManager->BuildFaces( nodeManager, elemManager );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+
+      edgeManager->BuildEdges( faceManager, nodeManager );
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
 
       domain->GenerateSets();
 
@@ -934,6 +931,7 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
   this->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
+  this->postRestartInitializationRecursive( GetGroup<DomainPartition>(keys::domain) );
 #endif
 }
 

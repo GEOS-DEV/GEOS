@@ -62,7 +62,7 @@ public:
    */
   virtual void Evaluate( dataRepository::ManagedGroup const * const group,
                          real64 const time,
-                         set<localIndex> const & sets,
+                         SortedArrayView<localIndex const> const & set,
                          real64_array & result ) const override final;
 
   /**

@@ -529,7 +529,6 @@ void matrix_matrix_multiply_test()
   array2d<real64> matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
-  int IDIST;
 
   for (INDEX_TYPE M : M_indeces)
   {
@@ -604,7 +603,6 @@ void matrixT_matrix_multiply_test()
   array2d<real64> matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
-  int IDIST;
 
   for (INDEX_TYPE M : M_indeces)
   {
@@ -679,7 +677,6 @@ void matrix_matrixT_multiply_test()
   array2d<real64> matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
-  int IDIST;
 
   for (INDEX_TYPE M : M_indeces)
   {
@@ -754,7 +751,6 @@ void matrixT_matrixT_multiply_test()
   array2d<real64> matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
-  int IDIST;
 
   for (INDEX_TYPE M : M_indeces)
   {
@@ -881,7 +877,6 @@ void vector_copy_test()
 
   array1d<real64> src;
   array1d<real64> dst;
-  int IDIST = 2;
 
   for (INDEX_TYPE N : N_indeces)
   {
@@ -918,7 +913,6 @@ void matrix_copy_test()
 
   array2d<real64> src;
   array2d<real64> dst;
-  int IDIST = 2;
 
   for (INDEX_TYPE M : M_indeces)
   {
@@ -972,7 +966,6 @@ void vector_rand_test()
   EXPECT_TRUE(-1.0 <= *v_min && *v_max <= 1.0);
 
   // --- normal distribution (0,1);
-  // IDIST = 3;
   // TODO: Add normality test
 
 }
@@ -1001,7 +994,6 @@ void matrix_rand_test()
   EXPECT_TRUE(-1.0 <= *A_min && *A_max <= 1.0);
 
   // --- normal distribution (0,1);
-  // IDIST = 3;
   // TODO: Add normality test
 
 }

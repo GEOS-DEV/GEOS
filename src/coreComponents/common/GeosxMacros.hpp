@@ -28,22 +28,32 @@
 
 #define GEOSX_LAMBDA [=]
 
-#if defined(__CUDACC__)
+// This will interpret A as a string
+#define STRINGIZE_NX( A ) #A
 
-#define GEOSX_HOST __host__
-#define GEOSX_DEVICE __device__
-#define GEOSX_HOST_DEVICE __host__ __device__
+// This will macro expand A and then interpret that as a string.
+#define STRINGIZE( A ) STRINGIZE_NX( A )
 
-#define GEOSX_DEVICE_LAMBDA [=] __device__
-
+#if defined(GEOSX_USE_OPENMP)
+  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
 #else
+  #define PRAGMA_OMP( clause )
+#endif
 
-#define GEOSX_HOST
-#define GEOSX_DEVICE
-#define GEOSX_HOST_DEVICE
-
-#define GEOSX_DEVICE_LAMBDA [=]
-
+#if defined(__CUDACC__)
+  #define GEOSX_HOST __host__
+  #define GEOSX_DEVICE __device__
+  #define GEOSX_HOST_DEVICE __host__ __device__
+  #define GEOSX_DEVICE_LAMBDA [=] __device__
+  #define GEOSX_HOST_DEVICE_LAMBDA [=] __host__ __device__
+  #define GEOSX_FORCE_INLINE __forceinline__
+#else
+  #define GEOSX_HOST
+  #define GEOSX_DEVICE
+  #define GEOSX_HOST_DEVICE
+  #define GEOSX_DEVICE_LAMBDA [=]
+  #define GEOSX_HOST_DEVICE_LAMBDA [=]
+  #define GEOSX_FORCE_INLINE inline
 #endif
 
 #endif // COMMON_GEOSXMACROS_HPP_
