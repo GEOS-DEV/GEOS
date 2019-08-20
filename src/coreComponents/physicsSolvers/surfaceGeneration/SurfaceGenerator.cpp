@@ -269,8 +269,55 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
     m_originalFacesToElemSubRegion = faceManager->elementSubRegionList();
     m_originalFacesToElemIndex = faceManager->elementList();
   }
-
 }
+
+
+void SurfaceGenerator::postRestartInitialization( ManagedGroup * const domain0 )
+{
+  DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
+
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
+
+  // repopulate the fracture stencil
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+
+    NodeManager * const nodeManager = meshLevel->getNodeManager();
+    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    FaceElementRegion * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(this->m_fractureRegionName);
+    FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
+
+    for( localIndex fce=0 ; fce<edgeManager->m_fractureConnectorEdgesToFaceElements.size() ; ++fce )
+    {
+      edgeManager->m_recalculateFractureConnectorEdges.insert(fce);
+    }
+
+    for( localIndex fe=0 ; fe<fractureSubRegion->size() ; ++fe )
+    {
+      fractureSubRegion->m_newFaceElements.insert(fe);
+    }
+
+    for( localIndex a=0 ; a<fvManager->numSubGroups() ; ++a )
+    {
+      FluxApproximationBase * const fluxApprox = fvManager->GetGroup<FluxApproximationBase>(a);
+      if( fluxApprox!=nullptr )
+      {
+        fluxApprox->addToFractureStencil( *domain,
+                                          this->m_fractureRegionName );
+        edgeManager->m_recalculateFractureConnectorEdges.clear();
+        fractureSubRegion->m_newFaceElements.clear();
+      }
+    }
+  }
+}
+
 
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      real64 const & dt,
