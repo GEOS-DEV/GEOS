@@ -207,7 +207,7 @@ class CustomVTUXMLWriter
     std::stringstream stream;
     std::uint32_t size = integer_conversion< std::uint32_t >( nbTotalCells * factor );
     string outputString;
-    outputString.resize(8);
+    outputString.resize( FindBase64StringLength( sizeof(std::uint32_t ) ) );
     stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
     m_outFile << stream.rdbuf();
   }
@@ -233,9 +233,9 @@ class CustomVTUXMLWriter
       std::stringstream stream;
       std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * 3 *  sizeof( real64 );
       string outputString;
-      outputString.resize(8);
+      outputString.resize( FindBase64StringLength( sizeof(std::uint32_t ) ) );
       stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ) );
-      outputString.resize(24);
+      outputString.resize(FindBase64StringLength( sizeof( real64 ) * 3 ) );
       for( auto const & vertex : vertices )
       {
         stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.Data() ), outputString, 3*sizeof( real64 )) ;
@@ -264,7 +264,7 @@ class CustomVTUXMLWriter
           localIndex vertexIndex=0;
           localIndex_array connectivityFragment( multiplier );
           string outputString;
-          outputString.resize( multiplier * 8);
+          outputString.resize( FindBase64StringLength( multiplier * sizeof( localIndex) ) );
           for( integer i = 0 ; i < connectivities.size() / multiplier ; i++ )
           {
             for( integer j = 0 ; j < multiplier; j++ )
@@ -299,7 +299,6 @@ class CustomVTUXMLWriter
             stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
           }
           connectivityFragment.resize( 8 - vertexIndex );
-          outputString.resize( (8 - vertexIndex ) * 8);
           for( integer j = 0 ; j < connectivityFragment.size(); j++ )
           {
             if( vertexIndex == 2 )
@@ -329,12 +328,13 @@ class CustomVTUXMLWriter
               cellIndex++;
             }
           }
+          outputString.resize( FindBase64StringLength( sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) ) );
           stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) );
         }
         else
         {
           string outputString;
-          outputString.resize(connectivities.size());
+          outputString.resize( FindBase64StringLength( sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) ) );
           stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivities.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) );
         }
         DumpBuffer( stream );
@@ -382,7 +382,7 @@ class CustomVTUXMLWriter
       integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
       localIndex_array offsetFragment( multiplier );
       string outputString;
-      outputString.resize( multiplier * 8);
+      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * multiplier ) );
       for( integer i = 0; i < multiplier; i++)
       {
         offsetFragment[i] = ( i + 1 ) * j;
@@ -395,6 +395,7 @@ class CustomVTUXMLWriter
           offsetFragment[k] += j * multiplier;
         }
       }
+      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( nb % multiplier) ) );
       stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( nb % multiplier) );
       DumpBuffer( stream );
     }
@@ -413,7 +414,7 @@ class CustomVTUXMLWriter
       integer multiplier = FindMultiplier( sizeof( integer ) );// We do not write all the data at once to avoid creating a big table each time.
       integer_array typeArray( multiplier );
       string outputString;
-      outputString.resize( multiplier * 8);
+      outputString.resize( FindBase64StringLength( sizeof( integer ) * multiplier ) );
       for( integer i = 0; i < multiplier; i++ )
       {
         typeArray[i] = type;
@@ -423,6 +424,7 @@ class CustomVTUXMLWriter
       {
         stream << typeString64;
       }
+      outputString.resize( FindBase64StringLength( sizeof( integer ) * ( nb % multiplier) ) );
       stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), outputString, sizeof( integer ) * ( nb % multiplier) );
       DumpBuffer( stream );
     }
@@ -440,11 +442,12 @@ class CustomVTUXMLWriter
     void WriteBinaryData( T const & data )
     {
       std::stringstream stream;
-      std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( real64 );
+      std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( data[0] );
       string outputString;
-      outputString.resize( 8 );
+      outputString.resize( FindBase64StringLength( sizeof( std::uint32_t ) ) );
       stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
-      outputString.resize( 16*data.size() );
+      integer multiplier = FindMultiplier( sizeof( data[0] ) );// We do not write all the data at once to avoid creating a big table each time.
+      outputString.resize( FindBase64StringLength( sizeof( data[0] ) * integer_conversion< integer >( data.size() ) ) );
       stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), outputString, sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
       DumpBuffer( stream );
     }
@@ -461,6 +464,16 @@ class CustomVTUXMLWriter
         multiplier++;
       }
       return multiplier;
+    }
+
+    integer FindBase64StringLength( integer dataSize )
+    {
+      integer base64StringLength = (dataSize * 8) / 6;
+      while( base64StringLength % 4 )
+      {
+        base64StringLength++;
+      }
+      return base64StringLength;
     }
 
     void DumpBuffer( std::stringstream const & stream )
@@ -481,9 +494,9 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
   std::stringstream stream;
   std::uint32_t size = integer_conversion< std::uint32_t > ( data.size() ) * sizeof( real64 ) * 3;
   string outputString;
-  outputString.resize( 8 );
+  outputString.resize( FindBase64StringLength(sizeof( std::uint32_t ) ) );
   stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), outputString, sizeof( std::uint32_t ));
-  outputString.resize( 8 * data.size() * 3 );
+  outputString.resize( sizeof( real64 ) * 3 );
   for( auto const & elem : data )
   {
     stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), outputString, sizeof( real64 ) * 3 );
@@ -764,7 +777,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
                                         { "Name", "offsets" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  vtuWriter.WriteSize( totalNumberOfCells, sizeof( localIndex ) );
+  if( m_binary )
+  {
+    vtuWriter.WriteSize( totalNumberOfCells, sizeof( localIndex ) );
+  }
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
   {
@@ -780,7 +796,10 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  vtuWriter.WriteSize( totalNumberOfCells, sizeof( integer ) );
+  if( m_binary )
+  {
+    vtuWriter.WriteSize( totalNumberOfCells, sizeof( integer ) );
+  }
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
   {
@@ -792,7 +811,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
 
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Cells" );
-
+  ElementRegion * toto;
   // Definition of the CellDataArray node that will contains all the data held by the elements
   vtuWriter.OpenXMLNode( "CellData", {} );
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
@@ -807,6 +826,7 @@ inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
           string const fieldName = wrapper->getName();
+          std::cout << fieldName << std::endl;
           std::type_info const & typeID = wrapper->get_typeid();
           rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
           if( !geosxToVTKTypeMap.count( typeID ) )
