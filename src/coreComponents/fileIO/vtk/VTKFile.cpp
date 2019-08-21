@@ -128,7 +128,7 @@ class CustomVTUXMLWriter
    */
   void WriteCellConnectivities( ElementRegionManager const * const elemManager, bool binary )
   {
-    if( !binary )
+    if( binary )
     {
       localIndex totalNumberOfConnectivities = 0;
       elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
@@ -182,20 +182,15 @@ class CustomVTUXMLWriter
   }
 
   template< typename T >
-  /*!
-   * @brief Write contiguous data
-   * @param[in] data table of data
-   * @param[in] binary tells wether or not the data should be written in binary format
-   */
-  void WriteData(T const & data, bool binary)
+  void WriteCellData(  ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager, bool binary)
   {
     if( binary )
     {
-      WriteBinaryData( data );
+      WriteCellBinaryData( dataView, elemManager );
     }
     else
     {
-      WriteAsciiData( data );
+      WriteCellAsciiData( dataView, elemManager );
     }
   }
 
@@ -458,30 +453,52 @@ class CustomVTUXMLWriter
     }
 
     template< typename T >
-    void WriteAsciiData( T const & data)
+    void WriteCellAsciiData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
     {
-      for( localIndex i = 0; i < data.size() ; i++ )
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        m_outFile << data[i] << "\n";
-      }
+        elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
+                                                                                     auto const * const elemSubRegion )
+        {
+          for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+          {
+            m_outFile << dataView[er][esr][ei] << "\n";
+          }
+        });
+      });
     }
 
     template< typename T >
-    void WriteBinaryData( T const & data )
+    void WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
     {
       std::stringstream stream;
-      std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( data[0] );
-      WriteSize( data.size(), sizeof( data[0] ) );
-      integer multiplier = FindMultiplier( sizeof( data[0] ) );// We do not write all the data at once to avoid creating a big table each time.
+      std::uint32_t size = integer_conversion < std::uint32_t >( elemManager->getNumberOfElements() * sizeof( dataView[0][0][0] ) );
+      WriteSize( elemManager->getNumberOfElements(), sizeof( dataView[0][0][0] ) );
+      integer multiplier = FindMultiplier( sizeof( dataView[0][0][0] ) );// We do not write all the data at once to avoid creating a big table each time.
       string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( data[0] ) * multiplier ) );
-      for( localIndex i = 0; i < data.size(); i+= multiplier )
+      outputString.resize( FindBase64StringLength( sizeof( dataView[0][0][0] )  * multiplier ) );
+      T dataFragment( multiplier );
+      integer countDataFragment = 0;
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        for( integer j = 0; j < multiplier; j++)
+        elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
+                                                                                     auto const * const elemSubRegion )
         {
-        }
-      }
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), outputString, sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
+          for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+          {
+            dataFragment[countDataFragment++] = dataView[er][esr][ei];
+            if( countDataFragment == multiplier )
+            {
+              stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( dataView[0][0][0] ) * countDataFragment );
+              countDataFragment = 0;
+            }
+          }
+        });
+      });
+      outputString.resize( FindBase64StringLength( sizeof( dataView[0][0][0] ) * ( countDataFragment) ) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( dataView[0][0][0]) * ( countDataFragment ) );
       DumpBuffer( stream );
     }
 
@@ -522,16 +539,25 @@ class CustomVTUXMLWriter
 };
 
 template<>
-inline void CustomVTUXMLWriter::WriteBinaryData( r1_array const & data )
+inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< r1_array > const & dataView, ElementRegionManager const * const elemManager )
 {
   std::stringstream stream;
   string outputString;
-  outputString.resize( sizeof( real64 ) * 3 );
-  for( auto const & elem : data )
+  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3 ) );
+  WriteSize( elemManager->getNumberOfElements() * 3, sizeof( real64 ) );
+  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                auto const * const elemRegion )
   {
-    stream << stringutilities::EncodeBase64(  reinterpret_cast< const unsigned char * >( elem.Data() ), outputString, sizeof( real64 ) * 3 );
-  }
-  m_outFile << stream.rdbuf() << '\n';
+    elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
+                                                                                 auto const * const elemSubRegion )
+    {
+      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+      {
+        stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[er][esr][ei].Data() ), outputString, sizeof( real64 ) * 3 );
+      }
+    });
+  });
+  DumpBuffer( stream );
 }
 
 VTKFile::VTKFile( string const & name ):
@@ -584,7 +610,7 @@ void VTKFile::Write( double const timeStep,
     format = "ascii";
   }
 
-  set< std::tuple< string, string, integer > > cellFields; // First : field name, Second : type, Third : field dimension;
+  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
   // Find all cell fields to export
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                            auto const * const elemRegion )
@@ -612,13 +638,13 @@ void VTKFile::Write( double const timeStep,
           {
             dimension = 1;
           }
-          cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension ) );
+          cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType) );
         }
       }
     });
   });
 
-  set< std::tuple< string, string, integer > > nodeFields; // First : field name, Second : type, Third : field dimension;
+  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
   // Find all node fields to export
   for( auto const & wrapperIter : nodeManager->wrappers() )
   {
@@ -639,7 +665,7 @@ void VTKFile::Write( double const timeStep,
        {
          dimension = 1;
        }
-       nodeFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension ) );
+       nodeFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
     }
   }
   if( mpiRank == 0 )    
@@ -751,6 +777,7 @@ void VTKFile::Write( double const timeStep,
 
   // Point data output
   vtuWriter.OpenXMLNode( "PointData", {} );
+  /*
   for( auto & nodeField : nodeFields )
   {
     ViewWrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
@@ -762,8 +789,7 @@ void VTKFile::Write( double const timeStep,
     {
       vtuWriter.WriteSize( nodeManager->size() * std::get<2>( nodeField ), sizeof( localIndex ) );
     }
-    std::type_index typeIndex = std::type_index(wrapper->get_typeid() );
-    rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
+    rtTypes::ApplyArrayTypeLambda1( std::get<3>( nodeField ),
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
@@ -772,6 +798,7 @@ void VTKFile::Write( double const timeStep,
     });
     vtuWriter.CloseXMLNode( "DataArray" );
   }
+  */
   vtuWriter.CloseXMLNode( "PointData" );
 
   // Definition of the node Cells
@@ -825,7 +852,6 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.CloseXMLNode( "DataArray" );
 
   vtuWriter.CloseXMLNode( "Cells" );
-  ElementRegion * toto;
   // Definition of the CellDataArray node that will contains all the data held by the elements
   vtuWriter.OpenXMLNode( "CellData", {} );
   for( auto & cellField : cellFields )
@@ -834,7 +860,14 @@ void VTKFile::Write( double const timeStep,
                                            { "Name", std::get<0>( cellField )  },
                                            { "NumberOfComponents", std::to_string( std::get<2>( cellField )  ) },
                                            { "format", format } } );
-    //
+    rtTypes::ApplyArrayTypeLambda1( std::get<3>( cellField ),
+                                    [&]( auto type ) -> void
+    {
+      using cType = decltype(type);
+      auto dataView = elemManager->ConstructViewAccessor< cType >(std::get<0>( cellField ));
+      vtuWriter.WriteCellData( dataView, elemManager, m_binary );
+    });
+    /*
     if( m_binary )
     {
       vtuWriter.WriteSize( totalNumberOfCells*std::get<2>( cellField ) , sizeof( localIndex ) );
@@ -856,6 +889,7 @@ void VTKFile::Write( double const timeStep,
         });
       });
     });
+    */
     vtuWriter.CloseXMLNode( "DataArray" );
   }
   vtuWriter.CloseXMLNode( "CellData" );
