@@ -2,6 +2,9 @@
 # Specify all headers
 #
 set( finiteVolume_headers
+     CellElementStencilMPFA.hpp
+     CellElementStencilTPFA.hpp
+     FaceElementStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
@@ -11,12 +14,23 @@ set( finiteVolume_headers
 # Specify all sources
 #
 set( finiteVolume_sources
+     CellElementStencilMPFA.cpp
+     CellElementStencilTPFA.cpp
+     FaceElementStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
      TwoPointFluxApproximation.cpp
    )
 
 set( dependencyList dataRepository codingUtilities managers )
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}

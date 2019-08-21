@@ -303,8 +303,9 @@ struct ImplicitKernel
    * @param massDamping The mass damping coefficient for the Newmark method assuming Rayleigh damping.
    * @param newmarkBeta The value of \beta in the Newmark update.
    * @param newmarkGamma The value of \gamma in the Newmark update.
-   * @param globaldRdU  Pointer to the sparse matrix containing the derivatives of the residual wrt displacement.
-   * @param globalResidual Pointer to the parallel vector containing the global residual.
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix sparse matrix containing the derivatives of the residual wrt displacement
+   * @param rhs parallel vector containing the global residual
    * @return The maximum nodal force contribution from all elements.
    */
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
@@ -331,8 +332,9 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
-          Epetra_FECrsMatrix * const globaldRdU,
-          Epetra_FEVector * const globalResidual )
+          DofManager const * const dofManager,
+          ParallelMatrix * const matrix,
+          ParallelVector * const rhs )
   {
     constexpr int dim = 3;
     Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(NUM_NODES_PER_ELEM));
@@ -527,11 +529,9 @@ struct ImplicitKernel
           R    += R_StiffnessDamping;
         }
 
-        globaldRdU->SumIntoGlobalValues( elementLocalDofIndex,
-                                    dRdU);
-
-        globalResidual->SumIntoGlobalValues( elementLocalDofIndex,
-                                  R);
+        // TODO remove local epetra objects, remove use of unwrappedPointer()
+        matrix->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, dRdU);
+        rhs->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, R);
       }
     }
     return maxForce;

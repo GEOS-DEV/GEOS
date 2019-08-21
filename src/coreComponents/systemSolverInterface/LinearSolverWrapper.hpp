@@ -26,7 +26,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_LINEARSOLVERWRAPPER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_SYSTEMSOLVERINTERFACE_LINEARSOLVERWRAPPER_HPP_
 
-#include "systemSolverInterface/SystemSolverParameters.hpp"
+#include "physicsSolvers/SystemSolverParameters.hpp"
 #include "systemSolverInterface/EpetraBlockSystem.hpp"
 
 namespace geosx

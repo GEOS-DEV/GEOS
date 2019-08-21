@@ -11,52 +11,7 @@ Each type of model has its own XML tag and each model must be assigned a unique 
 Names are used to assign models to regions of the physical domain via a ``materialList`` attribute of the ``<ElementRegion>`` node, see :ref:`XML_ElementRegion`.
 In some cases, physics solvers must also be assigned specific constitutive models to use, see :ref:`Solvers`.
 
-Model hierarchy
-------------------------------------
-
-There are several types of constitutive models that differ in purpose, input and output variables.
-Currently supported constitutive models are:
-
-* Solids
-
-  * Solid mechanics
-
-    * :doc:`/coreComponents/constitutive/docs/LinearElasticIsotropic`
-    * :doc:`/coreComponents/constitutive/docs/LinearElasticAnisotropic`
-
-* Fluids
-
-  * Single phase fluids
-
-    * :doc:`/coreComponents/constitutive/docs/CompressibleSinglePhaseFluid`
-
-  * Multiphase fluids
-
-    * :doc:`/coreComponents/constitutive/docs/BlackOilFluid`
-    * :doc:`/coreComponents/constitutive/docs/CompositionalMultiphaseFluid`
-    * :doc:`/coreComponents/constitutive/docs/CO2-EOS`
-
-* Porous solids
-
-  * Poroelasticity
-
-    * :doc:`/coreComponents/constitutive/docs/PoroLinearElasticIsotropic`
-    * :doc:`/coreComponents/constitutive/docs/PoroLinearElasticAnisotropic`
-
-* Solid-fluid interaction
-
-  * Relative permeability
-
-    * :doc:`/coreComponents/constitutive/docs/BrooksCoreyRelativePermeability`
-    * :doc:`/coreComponents/constitutive/docs/ThreePhaseRelativePermeability`
-
-  * Capillary pressure
-
-    * :doc:`/coreComponents/constitutive/docs/BrooksCoreyCapillaryPressure`
-    * :doc:`/coreComponents/constitutive/docs/VanGenuchtenCapillaryPressure`
-
-Input example
-------------------------------------
+Typical ``<Constitutive>`` and ``<ElementRegions>`` block will then look like:
 
 .. code-block:: xml
 
@@ -78,9 +33,24 @@ Input example
     </Constitutive>
 
     <ElementRegions>
-      <ElementRegion name="Region2"
-                     cellBlocks="cb1"
+      <ElementRegion name="region1"
+                     cellBlocks="cellBlock1"
                      materialList="water shale"/>
     </ElementRegions>
     ...
   </Problem>
+
+There are several types of constitutive models that differ in their input and output variables.
+Currently supported constitutive models are:
+
+.. toctree::
+   :maxdepth: 2
+
+   SolidModels
+
+   FluidModels
+ 
+   RelativePermeabilityModels
+ 
+   CapillaryPressureModels
+

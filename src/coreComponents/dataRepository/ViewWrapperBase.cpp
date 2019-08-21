@@ -86,7 +86,7 @@ void ViewWrapperBase::CopyWrapperAttributes( ViewWrapperBase const & source )
   m_restart_flags = source.m_restart_flags;
 }
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
 int ViewWrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing ViewWrapperBase::setTotalviewDisplay()"<<std::endl;
@@ -111,7 +111,7 @@ int ViewWrapperBase::setTotalviewDisplay() const
 }
 } /* namespace geosx */
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
 /**
  * @brief Global function correlated with ViewWrapperBase to be called by Totalview when displaying
  *        a ViewWrapperBase as a VieWrapper<T>

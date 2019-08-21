@@ -44,7 +44,7 @@ HaltEvent::HaltEvent( const std::string& name,
 
   RegisterViewWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("max runtime");
+    setDescription("The maximum allowable runtime for the job.");
 }
 
 
