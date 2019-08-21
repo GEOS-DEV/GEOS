@@ -61,6 +61,38 @@ void ModifiedObjectLists::clearNewFromModified()
   {
     modifiedFaces.erase(a);
   }
+}
+
+void ModifiedObjectLists::insert( ModifiedObjectLists const & modifiedObjects )
+{
+  newNodes.insert( modifiedObjects.newNodes.begin(),
+                   modifiedObjects.newNodes.end() );
+  modifiedNodes.insert( modifiedObjects.modifiedNodes.begin(),
+                        modifiedObjects.modifiedNodes.end() );
+
+  newEdges.insert( modifiedObjects.newEdges.begin(),
+                   modifiedObjects.newEdges.end() );
+  modifiedEdges.insert( modifiedObjects.modifiedEdges.begin(),
+                        modifiedObjects.modifiedEdges.end() );
+
+  newFaces.insert( modifiedObjects.newFaces.begin(),
+                   modifiedObjects.newFaces.end() );
+  modifiedFaces.insert( modifiedObjects.modifiedFaces.begin(),
+                        modifiedObjects.modifiedFaces.end() );
+
+  for( auto & iter : modifiedObjects.newElements )
+  {
+    std::pair<localIndex,localIndex> const & key = iter.first;
+    std::set<localIndex> const & values = iter.second;
+    newElements[key].insert( values.begin(), values.end() );
+  }
+
+  for( auto & iter : modifiedObjects.modifiedElements )
+  {
+    std::pair<localIndex,localIndex> const & key = iter.first;
+    std::set<localIndex> const & values = iter.second;
+    modifiedElements[key].insert( values.begin(), values.end() );
+  }
 
 }
 
@@ -408,6 +440,54 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
   }
 }
 
+
+void SurfaceGenerator::postRestartInitialization( ManagedGroup * const domain0 )
+{
+  DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
+
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
+
+  // repopulate the fracture stencil
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+
+    NodeManager * const nodeManager = meshLevel->getNodeManager();
+    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    FaceElementRegion * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(this->m_fractureRegionName);
+    FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion<FaceElementSubRegion>(0);
+
+    for( localIndex fce=0 ; fce<edgeManager->m_fractureConnectorEdgesToFaceElements.size() ; ++fce )
+    {
+      edgeManager->m_recalculateFractureConnectorEdges.insert(fce);
+    }
+
+    for( localIndex fe=0 ; fe<fractureSubRegion->size() ; ++fe )
+    {
+      fractureSubRegion->m_newFaceElements.insert(fe);
+    }
+
+    for( localIndex a=0 ; a<fvManager->numSubGroups() ; ++a )
+    {
+      FluxApproximationBase * const fluxApprox = fvManager->GetGroup<FluxApproximationBase>(a);
+      if( fluxApprox!=nullptr )
+      {
+        fluxApprox->addToFractureStencil( *domain,
+                                          this->m_fractureRegionName );
+        edgeManager->m_recalculateFractureConnectorEdges.clear();
+        fractureSubRegion->m_newFaceElements.clear();
+      }
+    }
+  }
+}
+
+
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      real64 const & dt,
                                      const int cycleNumber,
@@ -426,7 +506,6 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
       FaceManager * const faceManager = meshLevel->getFaceManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
       SpatialPartition & partition = domain->getReference<SpatialPartition,PartitionBase>(dataRepository::keys::partitionManager);
-
 
       rval = SeparationDriver( domain,
                                meshLevel,
@@ -462,7 +541,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         {
           fluxApprox->addToFractureStencil( *domain,
                                             this->m_fractureRegionName );
-          fractureRegion->m_recalculateConnectors.clear();
+          edgeManager->m_recalculateFractureConnectorEdges.clear();
+          fractureRegion->GetSubRegion<FaceElementSubRegion>(0)->m_newFaceElements.clear();
         }
       }
     }
@@ -497,7 +577,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   ArrayOfArraysView<localIndex> const & nodesToElementList = nodeManager.elementList();
 
 
-  std::map<string, string_array > fieldNames;
+  map<string, string_array > fieldNames;
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
 
   MPI_iCommData icomm;
@@ -575,6 +655,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     {
       for( localIndex a=0 ; a<nodeManager.size() ; ++a )
       {
+        int didSplit = 0;
         //      const localIndex nodeID = nodeManager.GetParentIndex(a);
         if( //layersFromDomainBoundary[a]>1 &&
           (   //isSeparable[a]
@@ -584,14 +665,26 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
           CheckNodeSplitability( a, nodeManager, faceManager, edgeManager, prefrac ) > 0 )  //&&
         //          nodesToRupturedFaces[a].size()>0 )
         {
-          rval += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
-                               modifiedObjects, prefrac );
+          didSplit += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
+                                   modifiedObjects, prefrac );
+          if( didSplit > 0 )
+          {
+            rval += didSplit;
+            --a;
+          }
         }
       }
     }
 #ifdef USE_GEOSX_PTP
 
     modifiedObjects.clearNewFromModified();
+
+    // 1) Assign new global indices to the new objects
+    CommunicationTools::AssignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    CommunicationTools::AssignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    CommunicationTools::AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+//    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
@@ -603,6 +696,17 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
 #endif
 
+    elementManager.forElementSubRegionsComplete<FaceElementSubRegion>( [&]( localIndex const er,
+                                                                            localIndex const esr,
+                                                                            ElementRegion const * const,
+                                                                            FaceElementSubRegion * const subRegion )
+    {
+      std::set<localIndex> & newFaceElems = modifiedObjects.newElements[{er,esr}];
+      for( localIndex const newFaceElemIndex : newFaceElems )
+      {
+        subRegion->m_newFaceElements.insert(newFaceElemIndex);
+      }
+    });
 
 
     elementManager.forElementSubRegions<FaceElementSubRegion>( [&]( auto * const subRegion )
@@ -645,7 +749,9 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     NodeManager & nodeManager,
                                     EdgeManager & edgeManager,
@@ -704,6 +810,9 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
   return didSplit;
 }
 
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            const NodeManager & nodeManager,
                                            const EdgeManager & edgeManager,
@@ -717,16 +826,16 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            map< std::pair< CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
 
-  arrayView1d<localIndex> const & parentNodeIndices =
-    nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
+  arrayView1d<localIndex> const &
+  parentNodeIndices = nodeManager.getReference<array1d<localIndex>>( nodeManager.viewKeys.parentIndex );
 
   localIndex const parentNodeIndex = ObjectManagerBase::GetParentRecusive( parentNodeIndices, nodeID );
 
-  arrayView1d<localIndex> const & parentFaceIndices =
-    faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
+  arrayView1d<localIndex> const &
+  parentFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.parentIndex );
 
-  arrayView1d<localIndex> const & childFaceIndices =
-    faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.childIndex );
+  arrayView1d<localIndex> const &
+  childFaceIndices = faceManager.getReference<array1d<localIndex>>( faceManager.viewKeys.childIndex );
 
   std::set<localIndex> const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
 
@@ -786,7 +895,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // local map to hold the edgesToRuptureReadyFaces
-  std::map< localIndex, std::set<localIndex> > edgesToRuptureReadyFaces;
+  map< localIndex, std::set<localIndex> > edgesToRuptureReadyFaces;
   for( auto edgeIndex : originalNodeToEdges )
   {
     if( !(edgesToRupturedFaces[edgeIndex].empty()) )
@@ -795,7 +904,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  std::map< localIndex, std::pair<localIndex, localIndex> > nodeLocalFacesToEdges;
+  map< localIndex, std::pair<localIndex, localIndex> > nodeLocalFacesToEdges;
   for( auto kf : originalNodeToFaces )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -915,8 +1024,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
     //localIndex lastFace = INT_MAX;
 
     // the seprationPath is used to hold combinations of edge and face
-    std::map<localIndex, int> facesInPath;
-    std::map<localIndex, int> edgesInPath;
+    map<localIndex, int> facesInPath;
+    map<localIndex, int> edgesInPath;
 
     int numFacesInPath = 0;
     edgesInPath[thisEdge] = numFacesInPath;
@@ -979,7 +1088,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
         }
 
         // add faces in the path to separationPathFaces
-        for( std::map<localIndex, int>::const_iterator kf=facesInPath.begin() ; kf!=facesInPath.end() ; ++kf )
+        for( map<localIndex, int>::const_iterator kf=facesInPath.begin() ; kf!=facesInPath.end() ; ++kf )
         {
           separationPathFaces.insert( kf->first );
         }
@@ -1120,7 +1229,7 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  std::map< localIndex, std::pair<localIndex, localIndex> > localFacesToEdges;
+  map< localIndex, std::pair<localIndex, localIndex> > localFacesToEdges;
   for( auto kf : nodeToFaces )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -1246,6 +1355,9 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   return true;
 }
 
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::SetLocations( const std::set<localIndex>& separationPathFaces,
                                      ElementRegionManager & elemManager,
                                      const FaceManager& faceManager,
@@ -1279,7 +1391,9 @@ bool SurfaceGenerator::SetLocations( const std::set<localIndex>& separationPathF
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 bool SurfaceGenerator::SetElemLocations( const int location,
                                          const std::pair<CellElementSubRegion*, localIndex >& k,
                                          const std::set<localIndex>& separationPathFaces,
@@ -1310,7 +1424,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
                                         faceIndex : parentFaceIndices[faceIndex];
 
     // see if we can find the face in the faceLocations array.
-    std::map<localIndex, int>::iterator iterFace = faceLocations.find( faceIndex );
+    map<localIndex, int>::iterator iterFace = faceLocations.find( faceIndex );
     // if we can find the face in the faceLocations array, then we must process the face, otherwise it is not
     // connected to the node, so we do nothing.
     if( iterFace != faceLocations.end() )
@@ -1321,7 +1435,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
       else if( faceLocations[faceIndex] == INT_MIN )
         faceLocations[faceIndex] = location;
 
-      std::map< localIndex, std::pair<localIndex, localIndex> >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
+      map< localIndex, std::pair<localIndex, localIndex> >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
 
       if( iterF2E != localFacesToEdges.end() )
       {
@@ -1391,7 +1505,9 @@ bool SurfaceGenerator::SetElemLocations( const int location,
 }
 
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         NodeManager & nodeManager,
                                         EdgeManager & edgeManager,
@@ -1672,7 +1788,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           localIndex faceIndices[2] = {faceIndex,newFaceIndex};
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(),0} ].
-          insert( fractureElementRegion->AddToFractureMesh( &faceManager,
+          insert( fractureElementRegion->AddToFractureMesh( &edgeManager,
+                                                            &faceManager,
                                                             this->m_originalFaceToEdges,
                                                             "default",
                                                             faceIndices ) );
@@ -2046,7 +2163,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   } // for( map<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem = elemLocations.begin()
 }
 
-
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
 void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
                                             NodeManager const & nodeManager,
                                             EdgeManager const & edgeManager,
@@ -2382,7 +2501,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
     for( localIndex a=0 ; a<faceManager.size() ; ++a )
     {
 
-      array1d< std::pair<CellElementSubRegion const *, localIndex> > faceToElements;
+      std::vector< std::pair<CellElementSubRegion const *, localIndex> > faceToElements;
       for( localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
       {
         // TODO This only works for a single region
@@ -2397,7 +2516,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
 
       std::cout<<"m_FaceToElementMap["<<a<<"] = ( ";
 
-      for( array1d<std::pair<CellElementSubRegion const *, localIndex > >::const_iterator
+      for( std::vector<std::pair<CellElementSubRegion const *, localIndex > >::const_iterator
            ielem=faceToElements.begin() ;
            ielem!=faceToElements.end() ; ++ielem )
       {
@@ -3686,27 +3805,35 @@ int SurfaceGenerator::CheckOrphanElement ( ElementRegionManager & elementManager
 
   integer_array& ruptureStateString = faceManager.getReference<integer_array>( "ruptureState" );
 
-  localIndex iEle;
   int flagOrphan = 0;
   for (localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
   {
-    CellElementSubRegion * elementSubRegion = elementManager.GetRegion( facesToElementRegions[iFace][k] )->
-                                         GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iFace][k] );
-    iEle = facesToElementIndex[iFace][k];
-
-    unsigned int nRuptureFace = 0;
-    arrayView2d<localIndex> & elementsToFaces = elementSubRegion->faceList();
-    for (localIndex a=0; a < elementsToFaces.size(1); ++a)
+    localIndex const er = facesToElementRegions[iFace][k];
+    localIndex const esr = facesToElementSubRegions[iFace][k];
+    localIndex const ei = facesToElementIndex[iFace][k];
+    if( er != -1 &&  esr != -1 && ei != -1 )
     {
-      localIndex jFace = elementsToFaces[iEle][a];
-      if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] >= 1) && jFace != iFace)
+      CellElementSubRegion *
+      elementSubRegion = elementManager.GetRegion( facesToElementRegions[iFace][k] )->
+                         GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iFace][k] );
+
+
+      unsigned int nRuptureFace = 0;
+      arrayView2d<localIndex> & elementsToFaces = elementSubRegion->faceList();
+      for (localIndex a=0; a < elementsToFaces.size(1); ++a)
       {
-        nRuptureFace +=1;
+        localIndex jFace = elementsToFaces[ei][a];
+        if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] >= 1) && jFace != iFace)
+        {
+          nRuptureFace +=1;
+        }
+      }
+
+      if (nRuptureFace == elementsToFaces.size(1) - 1 )
+      {
+        flagOrphan = 1;
       }
     }
-
-    if (nRuptureFace == elementsToFaces.size(1) - 1 ) flagOrphan = 1;
-
   }
   return flagOrphan;
 
@@ -4545,7 +4672,7 @@ void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
 
 void SurfaceGenerator::
 AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                              std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
+                              map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
 {
   // in serial, we can simply iterate over the entries in newElems and assign new global indices based on
   // the value of the m_maxGlobalIndex + 1 for the ElementRegionManager.

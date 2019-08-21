@@ -58,13 +58,6 @@ double DumbPropertyManager::GetValue(globalIndex const elementIndex) const {
 }
 */
 
-MeshBlock::MeshBlock( string fileName,
-        string blockName ) :
-    m_vtuFileName(fileName),
-    m_blockName(blockName)
-{
-}
-
 bool MeshBlock::IsARegionBlock() const  {
     return m_mesh.NumCells() > 0;
 }
@@ -129,7 +122,7 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
     if( mpiRank == 0) {
         CheckXmlFileConsistency(vtmDoc,fileName);
     }
-    array1d< RankBlock > rankBlocks;
+    std::vector< RankBlock > rankBlocks;
     SetRanksAndBlocks(vtmDoc,rankBlocks);
     // Retrieve the number of partitions
     int const numFiles = integer_conversion<int>(rankBlocks.size());
@@ -167,9 +160,8 @@ void VtmFile::Load( string const &fileName, bool loadMesh, bool loadProperties) 
         }
     }
     if( mpiRank < numFiles ) {
-        for(localIndex p_index = 0; p_index < 
-                m_rankBlocks.size(); ++p_index) {
-            m_rankBlocks[p_index].Load(loadMesh, loadProperties);
+        for ( RankBlock & rankBlock : m_rankBlocks ) {
+            rankBlock.Load(loadMesh, loadProperties);
         }
     }
 }
@@ -260,7 +252,7 @@ void VtmFile::CheckXmlFileConsistency(pugi::xml_document const & vtmDoc,
 
 void VtmFile::SetRanksAndBlocks(
         pugi::xml_document const & vtmDoc,
-                array1d< RankBlock >& rankBlocks) {
+                std::vector< RankBlock >& rankBlocks) {
     auto const & vtkFileNode =vtmDoc.child("VTKFile");
     auto const & vtkMultiBlockDataSetNode =  vtkFileNode.child("vtkMultiBlockDataSet");
     string dirPath;

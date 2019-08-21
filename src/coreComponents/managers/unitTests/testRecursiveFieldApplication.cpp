@@ -50,9 +50,9 @@ void RegisterAndApplyField( DomainPartition * domain,
                                           string const &,
                                           set<localIndex> const & targetSet,
                                           ManagedGroup * const targetGroup,
-                                          string const fieldNamee )
+                                          string const name )
                                     {
-                                      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldNamee );
+                                      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, name );
                                     });
 }
 

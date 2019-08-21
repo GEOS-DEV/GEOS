@@ -1,7 +1,7 @@
 .. _CompositionalMultiphaseFlow:
 
 #######################################
-Compositional multiphase flow FV solver
+Compositional Multiphase Flow Solver
 #######################################
 
 Here, we review the compositional solver in three steps:

@@ -44,11 +44,6 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual void ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-                            real64 const scalingFactor,
-                            DomainPartition * const domain  ) override;
-
-
   virtual real64
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
@@ -106,8 +101,9 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
-                               Epetra_FECrsMatrix * const matrix,
-                               Epetra_FEVector * const rhs ) const override
+                               DofManager const * const dofManager,
+                               ParallelMatrix * const matrix,
+                               ParallelVector * const rhs ) const override
   {
     using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
@@ -135,6 +131,7 @@ public:
                                                         massDamping,
                                                         newmarkBeta,
                                                         newmarkGamma,
+                                                        dofManager,
                                                         matrix,
                                                         rhs );
   }
