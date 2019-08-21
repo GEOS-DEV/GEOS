@@ -125,20 +125,26 @@ class CustomVTUXMLWriter
 
   /*!
    * @brief Write the cell connectivities
-   * @param[in] type the GEOSX type of the cells
-   * @param[in] connectivities the table of connectivities
-   * @param[in] binary tells wether or not the data should be written in binary format
    */
-  template< typename NODEMAPTYPE >
-  void WriteCellConnectivities( string const& type, NODEMAPTYPE const & connectivities, bool binary )
+  void WriteCellConnectivities( ElementRegionManager const * const elemManager, bool binary )
   {
-    if( binary )
+    if( !binary )
     {
-      WriteBinaryConnectivities( geosxToVTKCellTypeMap.at( type ), connectivities );
+      localIndex totalNumberOfConnectivities = 0;
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
+      {
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+        {
+          totalNumberOfConnectivities = elemSubRegion->size() * elemSubRegion->numNodesPerElement();
+        });
+      });
+      WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
+      WriteBinaryConnectivities( elemManager );
     }
     else
     {
-      WriteAsciiConnectivities( geosxToVTKCellTypeMap.at( type ), connectivities );
+      WriteAsciiConnectivities( elemManager );
     }
   }
 
@@ -161,13 +167,10 @@ class CustomVTUXMLWriter
 
   /*!
    * @brief Write the Cell types
-   * @param[in] type the GEOSX type of the cells
-   * @param[in] nbElements the number of elements
-   * @param[in] binary tells wether or not the data should be written in binary format
    */
   void WriteCellTypes( ElementRegionManager const * const elemManager, bool binary )
   {
-    if( !binary )
+    if( binary )
     {
       WriteSize( elemManager->getNumberOfElements(), sizeof( integer ) );
       WriteBinaryTypes( elemManager );
@@ -250,121 +253,112 @@ class CustomVTUXMLWriter
       }
     }
 
-    template< typename NODEMAPTYPE >
-      void WriteBinaryConnectivities( integer type, NODEMAPTYPE const & connectivities )
-      {
-        std::stringstream stream;
-        std::uint32_t size = integer_conversion< std::uint32_t > ( connectivities.size() ) * sizeof( localIndex );
-        //stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
-        if( type == 12 ) // Special case for the hex, because the ordering need to be changed for each cell...
-        {
-          integer multiplier = FindMultiplier( sizeof( localIndex ) );
-          localIndex cellIndex = 0;
-          localIndex vertexIndex=0;
-          localIndex_array connectivityFragment( multiplier );
-          string outputString;
-          outputString.resize( FindBase64StringLength( multiplier * sizeof( localIndex) ) );
-          for( integer i = 0 ; i < connectivities.size() / multiplier ; i++ )
-          {
-            for( integer j = 0 ; j < multiplier; j++ )
-            {
-              if( vertexIndex == 2 )
-              {
-                connectivityFragment[j] = connectivities[cellIndex][3];
-              }
-              else if( vertexIndex == 3 )
-              {
-                connectivityFragment[j] = connectivities[cellIndex][2];
-              }
-              else if( vertexIndex == 6 )
-              {
-                connectivityFragment[j] = connectivities[cellIndex][7];
-              }
-              else if( vertexIndex == 7 )
-              {
-                connectivityFragment[j] = connectivities[cellIndex][6];
-              }
-              else
-              {
-                connectivityFragment[j] = connectivities[cellIndex][vertexIndex];
-              }
-              vertexIndex++;
-              if( vertexIndex == 8)
-              {
-                vertexIndex = 0;
-                cellIndex++;
-              }
-            }
-            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
-          }
-          connectivityFragment.resize( 8 - vertexIndex );
-          for( integer j = 0 ; j < connectivityFragment.size(); j++ )
-          {
-            if( vertexIndex == 2 )
-            {
-              connectivityFragment[j] = connectivities[cellIndex][3];
-            }
-            else if( vertexIndex == 3 )
-            {
-              connectivityFragment[j] = connectivities[cellIndex][2];
-            }
-            else if( vertexIndex == 6 )
-            {
-              connectivityFragment[j] = connectivities[cellIndex][7];
-            }
-            else if( vertexIndex == 7 )
-            {
-              connectivityFragment[j] = connectivities[cellIndex][6];
-            }
-            else
-            {
-              connectivityFragment[j] = connectivities[cellIndex][vertexIndex];
-            }
-            vertexIndex++;
-            if( vertexIndex == 8)
-            {
-              vertexIndex = 0;
-              cellIndex++;
-            }
-          }
-          outputString.resize( FindBase64StringLength( sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) ) );
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivityFragment.size() ) );
-        }
-        else
-        {
-          string outputString;
-          outputString.resize( FindBase64StringLength( sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) ) );
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivities.data() ), outputString, sizeof( localIndex ) * integer_conversion< integer >( connectivities.size() ) );
-        }
-        DumpBuffer( stream );
-      }
-
-    template< typename NODEMAPTYPE >
-    void WriteAsciiConnectivities( integer type, NODEMAPTYPE const & connectivities )
+    void WriteBinaryConnectivities( ElementRegionManager const * const elemManager )
     {
-      if( type == 12 ) // Special case for hexahedron because of the internal ordering
+      std::stringstream stream;
+      integer multiplier = FindMultiplier( sizeof( localIndex ) );
+      string outputString;
+      outputString.resize( FindBase64StringLength( multiplier * sizeof( localIndex) ) );
+      localIndex_array connectivityFragment( multiplier );
+      integer countConnectivityFragment = 0;
+      CellElementSubRegion * toto;
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                               auto const * const elemRegion )
       {
-        for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
         {
-          m_outFile << connectivities[i][0] << " ";
-          m_outFile << connectivities[i][1] << " ";
-          m_outFile << connectivities[i][3] << " ";
-          m_outFile << connectivities[i][2] << " ";
-          m_outFile << connectivities[i][4] << " ";
-          m_outFile << connectivities[i][5] << " ";
-          m_outFile << connectivities[i][7] << " ";
-          m_outFile << connectivities[i][6] << " ";
-          m_outFile << "\n";
-        }
-      }
-      else
+          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
+          auto & connectivities = elemSubRegion->nodeList();
+          if( type == 12 ) // Special case for hexahedron because of the internal ordering
+          {
+            for( localIndex i = 0 ; i < elemSubRegion->size() ; i++ )
+            {
+              for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
+              {
+                if( j == 2 )
+                {
+                  connectivityFragment[countConnectivityFragment++] = connectivities[i][3];
+                }
+                else if( j == 3 )
+                {
+                  connectivityFragment[countConnectivityFragment++] = connectivities[i][2];
+                }
+                else if( j == 6 )
+                {
+                  connectivityFragment[countConnectivityFragment++] = connectivities[i][7];
+                }
+                else if( j == 7 )
+                {
+                  connectivityFragment[countConnectivityFragment++] = connectivities[i][6];
+                }
+                else
+                {
+                  connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
+                }
+                if( countConnectivityFragment == multiplier )
+                {
+                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+                  countConnectivityFragment = 0;
+                }
+              }
+            }
+          }
+          else
+          {
+            for( localIndex i = 0 ; i < elemSubRegion->size() ; i++ )
+            {
+              for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
+              {
+                connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
+                if( countConnectivityFragment == multiplier )
+                {
+                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+                  countConnectivityFragment = 0;
+                }
+              }
+            }
+          }
+        });
+      });
+      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( countConnectivityFragment) ) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), outputString, sizeof( localIndex ) * ( countConnectivityFragment) );
+      DumpBuffer( stream );
+    }
+
+    void WriteAsciiConnectivities( ElementRegionManager const * const elemManager )
+    {
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        for( localIndex i = 0; i < connectivities.size()  ; i++ )
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
         {
-            m_outFile << connectivities.data()[i] <<" ";
-        }
-        m_outFile << "\n";
-      }
+          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
+          auto & connectivities = elemSubRegion->nodeList();
+          if( type == 12 ) // Special case for hexahedron because of the internal ordering
+          {
+            for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
+            {
+              m_outFile << connectivities[i][0] << " ";
+              m_outFile << connectivities[i][1] << " ";
+              m_outFile << connectivities[i][3] << " ";
+              m_outFile << connectivities[i][2] << " ";
+              m_outFile << connectivities[i][4] << " ";
+              m_outFile << connectivities[i][5] << " ";
+              m_outFile << connectivities[i][7] << " ";
+              m_outFile << connectivities[i][6] << " ";
+              m_outFile << "\n";
+            }
+          }
+          else
+          {
+            for( localIndex i = 0; i < connectivities.size()  ; i++ )
+            {
+                m_outFile << connectivities.data()[i] <<" ";
+            }
+            m_outFile << "\n";
+          }
+        });
+      });
     }
 
     void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
@@ -477,9 +471,16 @@ class CustomVTUXMLWriter
     {
       std::stringstream stream;
       std::uint32_t size = integer_conversion < std::uint32_t >( data.size() ) * sizeof( data[0] );
+      WriteSize( data.size(), sizeof( data[0] ) );
       integer multiplier = FindMultiplier( sizeof( data[0] ) );// We do not write all the data at once to avoid creating a big table each time.
       string outputString;
-      outputString.resize( FindBase64StringLength( sizeof( data[0] ) * integer_conversion< integer >( data.size() ) ) );
+      outputString.resize( FindBase64StringLength( sizeof( data[0] ) * multiplier ) );
+      for( localIndex i = 0; i < data.size(); i+= multiplier )
+      {
+        for( integer j = 0; j < multiplier; j++)
+        {
+        }
+      }
       stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( data.data() ), outputString, sizeof( data[0] ) * integer_conversion< integer >( data.size() ) );
       DumpBuffer( stream );
     }
@@ -781,20 +782,10 @@ void VTKFile::Write( double const timeStep,
                                         { "Name", "connectivity" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  if( m_binary )
-  {
-    localIndex totalNumberOfConnectivities = 0;
-    elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                  auto const * const elemRegion )
-    {
-      elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-      {
-        totalNumberOfConnectivities = elemSubRegion->size() * elemSubRegion->numNodesPerElement();
-      });
-    });
-    vtuWriter.WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
-  }
+  
+  vtuWriter.WriteCellConnectivities( elemManager, m_binary );
 
+  /*
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
   {
@@ -803,6 +794,7 @@ void VTKFile::Write( double const timeStep,
       vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), m_binary );
     });
   });
+  */
   vtuWriter.CloseXMLNode( "DataArray" );
 
 
@@ -842,6 +834,7 @@ void VTKFile::Write( double const timeStep,
                                            { "Name", std::get<0>( cellField )  },
                                            { "NumberOfComponents", std::to_string( std::get<2>( cellField )  ) },
                                            { "format", format } } );
+    //
     if( m_binary )
     {
       vtuWriter.WriteSize( totalNumberOfCells*std::get<2>( cellField ) , sizeof( localIndex ) );
@@ -858,6 +851,7 @@ void VTKFile::Write( double const timeStep,
         {
           using cType = decltype(type);
           const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
+          std::cout << typeIndex.name() << std::endl;
           vtuWriter.WriteData( view.reference(), m_binary );
         });
       });
