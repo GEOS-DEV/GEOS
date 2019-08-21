@@ -29,6 +29,8 @@
 namespace geosx
 {
 
+class EdgeManager;
+
 /**
  * @class FaceElementRegion
  *
@@ -61,6 +63,7 @@ public:
   { return FaceElementRegion::CatalogName(); }
 
 
+
   virtual void GenerateMesh( ManagedGroup const * ) override {}
 
   /**
@@ -70,7 +73,8 @@ public:
    * @param faceIndices The local indices of the new faces that define the face element.
    * @return The local index of the new FaceElement entry.
    */
-  localIndex AddToFractureMesh( FaceManager const * const faceManager,
+  localIndex AddToFractureMesh( EdgeManager * const edgeManager,
+                                FaceManager const * const faceManager,
                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
@@ -79,21 +83,10 @@ public:
   struct viewKeyStruct : public ElementRegion::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
-    static constexpr auto edgesTofractureConnectorsString = "edgesToFractureConnectors";
-    static constexpr auto fractureConnectorsToEdgesString = "fractureConnectorsToEdges";
-    static constexpr auto fractureConnectorsToFaceElementsString = "fractureElementConnectors";
-    static constexpr auto faceElementsToCellsString = "fractureCellConnectors";
-    static constexpr auto fractureCellConnectorIndicesString = "fractureCellConnectorIndices";
   };
 
-  set< localIndex > m_recalculateConnectors;
-  set< localIndex > m_newFractureElements;
 
 private:
-  map< localIndex, localIndex > m_edgesToFractureConnectors;
-  array1d<localIndex> m_fractureConnectorsToEdges;
-  array1d< array1d<localIndex> > m_fractureConnectorsToFaceElements;
-  FixedToManyElementRelation m_faceElementsToCells;
 
 };
 

@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ObjectManagerBase.cpp
- *
- *  Created on: Sep 15, 2016
- *      Author: settgast1
+/**
+ * @file ObjectManagerBase.cpp
  */
 
 #include "ObjectManagerBase.hpp"
@@ -78,23 +75,30 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array2d<localIndex>& map,
                                                    const std::string& setName )
 {
-  set<localIndex>& newset = m_sets.getReference<set<localIndex>>(setName);
+  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
 
-  localIndex mapSize = map.size(1);
-  for( localIndex ka=0 ; ka<size() ; ++ka )
+  localIndex const numObjects = size();
+  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+
+  if ( setName == "all" )
   {
-    localIndex addToSet = 0;
-    for( localIndex a=0 ; a<mapSize ; ++a )
-    {
-      if( inputSet.count( map[ka][a] ) == 1 )
-      {
-        ++addToSet;
-      }
-    }
-    if( addToSet == mapSize )
+    newset.reserve( numObjects );
+
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
       newset.insert( ka );
+    }
+  }
+  else
+  {
+    localIndex const mapSize = map.size( 1 );
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    {
+      if ( std::all_of( &map(ka, 0), &map(ka, 0) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      {
+        newset.insert( ka );
+      }
     }
   }
 }
@@ -103,24 +107,29 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
                                                    const array1d<localIndex_array>& map,
                                                    const std::string& setName )
 {
-  ManagedGroup * sets = GetGroup( groupKeyStruct::setsString );
-  set<localIndex>& newset = sets->getReference<set<localIndex>>(setName);
+  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
 
-  for( localIndex ka=0 ; ka<size() ; ++ka )
+  localIndex const numObjects = size();
+  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+
+  if ( setName == "all" )
   {
-    localIndex addToSet = 0;
-    localIndex mapSize = map[ka].size();
-    for( localIndex a=0 ; a<mapSize ; ++a )
-    {
-      if( inputSet.count( map[ka][a] ) == 1 )
-      {
-        ++addToSet;
-      }
-    }
-    if( addToSet == mapSize )
+    newset.reserve( numObjects );
+
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
       newset.insert( ka );
+    }
+  }
+  else
+  {
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    {
+      if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      {
+        newset.insert( ka );
+      }
     }
   }
 }
@@ -162,11 +171,6 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
 }
 
-
-
-
-
-
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                         arrayView1d<localIndex const> const & packList,
                                         integer const recursive ) const
@@ -180,9 +184,6 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
 
   return packedSize;
 }
-
-
-
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
@@ -591,7 +592,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
+      unordered_map<globalIndex,localIndex>::iterator iterG2L = m_globalToLocalMap.find(globalIndices[a]);
       if( iterG2L == m_globalToLocalMap.end() )
       {
         // object does not exist on this domain

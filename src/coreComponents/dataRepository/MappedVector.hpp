@@ -543,9 +543,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
-        string const message = "MappedVector::insert(): Tried to insert existing key with a "
-                               "different type without overwrite flag\n";
-        GEOS_ERROR( message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
+        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
+                    ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
+                    m_values[index].second->get_typeid().name() );
       }
       else
       {
