@@ -27,6 +27,7 @@
 
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 
 namespace geosx
@@ -68,8 +69,9 @@ public:
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
 
-  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+  virtual void
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -111,6 +113,8 @@ public:
                         arraySlice1d<R1Tensor const> const & X,
                         R1Tensor & center ) const;
 
+
+
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
 
@@ -127,6 +131,12 @@ public:
     static constexpr auto elementRegionListString     = "elemRegionList";
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
+
+
+    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
+    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+
 
     dataRepository::ViewKey nodesList             = { nodeListString };
     dataRepository::ViewKey faceList              = { faceListString };
@@ -158,12 +168,22 @@ public:
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
+  // TODO These should be in their own subset of edges when we add that capability.
+  /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
+  set< localIndex > m_recalculateFractureConnectorEdges;
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  array1d<localIndex> m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
+
+
 private:
   FixedOneToManyRelation m_toNodesRelation;
   UnorderedVariableOneToManyRelation m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+
 
 
   template<bool DOPACK>

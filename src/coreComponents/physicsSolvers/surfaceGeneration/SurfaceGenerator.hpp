@@ -37,10 +37,12 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
-  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-  std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
+
+  void insert( ModifiedObjectLists const & lists );
 };
 
 
@@ -91,41 +93,9 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
-                             DomainPartition * domain) override;
-//
-//  virtual void ImplicitStepSetup( real64 const& time_n,
-//                              real64 const& dt,
-//                              DomainPartition * const domain,
-//                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-//
-//
-//  virtual void AssembleSystem( DomainPartition * const domain,
-//                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                               real64 const time,
-//                               real64 const dt ) override;
-//
-//  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                                        real64 const time,
-//                                        real64 const dt ) override;
-//
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
+                             DomainPartition * domain ) override;
 
-//  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                            SystemSolverParameters const * const params ) override;
-
-//  virtual void
-//  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-//                       real64 const scalingFactor,
-//                       DomainPartition * const domain ) override;
-
-//  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
-//
-//  virtual  void ImplicitStepComplete( real64 const & time,
-//                                      real64 const & dt,
-//                                      DomainPartition * const domain ) override;
-/**@}*/
+  /**@}*/
 
 
   int SeparationDriver( DomainPartition * domain,
@@ -194,10 +164,11 @@ public:
    */
   void
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                                std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
+                                map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
+  virtual void postRestartInitialization( ManagedGroup * const domain ) override final;
 
 private:
 

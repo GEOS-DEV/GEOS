@@ -726,13 +726,13 @@ inline double GetOrder( double number, const unsigned int digits = 1 )
 }
 
 
-template< typename T_KEY, typename T_VALUE >
-T_VALUE softMapLookup( map<T_KEY,T_VALUE> const & theMap,
+template< typename T_KEY, typename T_VALUE, typename SORTED >
+T_VALUE softMapLookup( mapBase<T_KEY,T_VALUE, SORTED> const & theMap,
                        T_KEY const & key,
                        T_VALUE const failValue )
 {
   T_VALUE rvalue;
-  typename map<T_KEY,T_VALUE>::const_iterator iter = theMap.find(key);
+  typename mapBase<T_KEY,T_VALUE, SORTED>::const_iterator iter = theMap.find(key);
   if( iter==theMap.end() )
   {
     rvalue = failValue;

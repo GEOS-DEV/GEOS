@@ -77,6 +77,12 @@ public:
   }
   ilu;
 
+  struct
+  {
+    integer overlap = 0;
+  }
+  dd;
+
   /**
    * @brief Constructor.
    */

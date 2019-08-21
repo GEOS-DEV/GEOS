@@ -58,46 +58,46 @@ EventBase::EventBase( const std::string& name,
   
   RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event target");
+    setDescription("Name of the object to be executed when the event criteria are met.");
 
   RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Start time of this event");
+    setDescription("Start time of this event.");
 
   RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
     setApplyDefaultValue(1e100)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("End time of this event");
+    setDescription("End time of this event.");
 
   RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Forced timestep for this event");
+    setDescription("While active, this event will request this timestep value (ignoring any children/targets requests).");
 
   RegisterViewWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Forced timestep for this event");
+    setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
 
   RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows timesteps to be truncated to match the start/stop times exactly");
+    setDescription("If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.");
  
  RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
     setApplyDefaultValue(-1.0e100)->
-    setDescription("last event occurrence (time)");
+    setDescription("Last event occurrence (time)");
 
   RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
     setApplyDefaultValue(-1.0e9)->
-    setDescription("last event occurrence (cycle)");
+    setDescription("Last event occurrence (cycle)");
 
   RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
-    setDescription("index of the current subevent");
+    setDescription("Index of the current subevent");
 
   RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
-    setDescription("index of the current subevent");
+    setDescription("Index of the current subevent");
 
   RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
@@ -217,6 +217,7 @@ void EventBase::Execute(real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
   
+  GEOSX_MARK_BEGIN("EventBase::Execute() 1");
   // If m_targetExecFlag is set, then the code has resumed at a point
   // after the target has executed. 
   if ((m_target != nullptr) && (m_targetExecFlag == 0))
@@ -224,7 +225,10 @@ void EventBase::Execute(real64 const time_n,
     m_targetExecFlag = 1;
     m_target->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
+  GEOSX_MARK_END("EventBase::Execute() 1");
   
+
+  GEOSX_MARK_BEGIN("EventBase::Execute() 2");
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
   // This allows for  restart runs to pick up where they left off.
   for ( ; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent)
@@ -242,6 +246,7 @@ void EventBase::Execute(real64 const time_n,
       subEvent->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
     }
   }
+  GEOSX_MARK_END("EventBase::Execute() 2");
 
   // Update the event status
   m_targetExecFlag = 0;

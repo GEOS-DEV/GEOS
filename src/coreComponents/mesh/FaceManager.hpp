@@ -60,6 +60,8 @@ public:
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
+  void computeGeometry( NodeManager const * const nodeManager );
+
   localIndex getMaxFaceNodes() const;
 
   void SortAllFaceNodes( NodeManager const * const nodeManager,
@@ -94,7 +96,8 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
-                                                   array1d<globalIndex_array>& faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
+
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";

@@ -166,6 +166,8 @@ public:
   virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
                                                     ManagedGroup * const parent ) = 0;
 
+  virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
+
   /**
    *
    * @return
@@ -415,7 +417,7 @@ public:
     return m_description;
   }
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
   /**
    * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
    *                represented by a ViewWrapperBase *.
