@@ -73,8 +73,7 @@ class CustomVTUXMLWriter
   CustomVTUXMLWriter() = delete;
   CustomVTUXMLWriter( string const & fileName ) :
       m_outFile( fileName, std::ios::binary ),
-      m_spaceCount(0),
-      m_regionCellOffset(0)
+      m_spaceCount(0)
   {
   }
 
@@ -146,19 +145,17 @@ class CustomVTUXMLWriter
   /*!
    * @brief Write the offsets
    * @details for a full hex mesh : 0, 8, 16, 24....
-   * @param[in] nbNodesPerElement the number of nodes by elements
-   * @param[in] nbElements the number of elements
-   * @param[in] binary tells wether or not the data should be written in binary format
    */
-  void WriteCellOffsets( localIndex nbNodesPerElement, localIndex nbElements, bool binary )
+  void WriteCellOffsets( ElementRegionManager const * const elemManager, bool binary )
   {
     if( binary )
     {
-      WriteBinaryOffsets( nbNodesPerElement, nbElements );
+      WriteSize( elemManager->getNumberOfElements(), sizeof( localIndex ) );
+      WriteBinaryOffsets( elemManager );
     }
     else
     {
-      WriteAsciiOffsets( nbNodesPerElement, nbElements );
+      WriteAsciiOffsets( elemManager );
     }
   }
 
@@ -168,15 +165,16 @@ class CustomVTUXMLWriter
    * @param[in] nbElements the number of elements
    * @param[in] binary tells wether or not the data should be written in binary format
    */
-  void WriteCellTypes( string const& type, localIndex nbElements, bool binary )
+  void WriteCellTypes( ElementRegionManager const * const elemManager, bool binary )
   {
-    if( binary )
+    if( !binary )
     {
-      WriteBinaryTypes( geosxToVTKCellTypeMap.at( type ), nbElements );
+      WriteSize( elemManager->getNumberOfElements(), sizeof( integer ) );
+      WriteBinaryTypes( elemManager );
     }
     else
     {
-      WriteAsciiTypes( geosxToVTKCellTypeMap.at( type ), nbElements );
+      WriteAsciiTypes( elemManager );
     }
   }
 
@@ -369,77 +367,110 @@ class CustomVTUXMLWriter
       }
     }
 
-    void WriteAsciiOffsets( localIndex j, localIndex nb )
+    void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
     {
-      for( localIndex i = 1 ; i < nb + 1 ; i++)
+      localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        m_outFile << i*j + m_regionCellOffset << "\n";
-      }
-      m_regionCellOffset += nb *j;
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+        {
+          localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
+          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+          {
+            m_outFile << curOffset << "\n";
+            curOffset += offSetForOneCell;
+          }
+        });
+      });
     }
 
-    void WriteBinaryOffsets( localIndex j, localIndex nb )
+    void WriteBinaryOffsets( ElementRegionManager const * const elemManager )
     {
       std::stringstream stream;
       integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
       localIndex_array offsetFragment( multiplier );
       string outputString;
       outputString.resize( FindBase64StringLength( sizeof( localIndex ) * multiplier ) );
-      for( integer i = 0; i < multiplier; i++)
+      integer countOffsetFragmentIndex = 0;
+      localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        offsetFragment[i] = ( i + 1 ) * j + m_regionCellOffset;
-      }
-      for( localIndex i = 0 ; i < nb / multiplier ; i++)
-      {
-        stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
-        for( integer k = 0; k < multiplier; k++)
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
         {
-          offsetFragment[k] += j * multiplier;
-        }
-      }
-      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( nb % multiplier) ) );
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( nb % multiplier) );
+          localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
+          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+          {
+            offsetFragment[countOffsetFragmentIndex++] = curOffset;   
+            curOffset += offSetForOneCell;
+            if( countOffsetFragmentIndex == multiplier )
+            {
+              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * multiplier );
+              countOffsetFragmentIndex = 0;
+            }
+          }
+        });
+      });
+      outputString.resize( FindBase64StringLength( sizeof( localIndex ) * ( countOffsetFragmentIndex) ) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), outputString, sizeof( localIndex ) * ( countOffsetFragmentIndex) );
       DumpBuffer( stream );
-      m_regionCellOffset += nb *j;
     }
 
-    void WriteAsciiTypes( integer type, localIndex nb )
+    void WriteAsciiTypes( ElementRegionManager const * const elemManager )
     {
-      for( localIndex i = 0 ; i < nb ; i++)
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        m_outFile << type << "\n";
-      }
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+        {
+          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
+          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+          {
+            m_outFile <<  type << "\n";
+          }
+        });
+      });
     }
 
-    void WriteBinaryTypes( integer type, localIndex nb )
+    void WriteBinaryTypes( ElementRegionManager const * const elemManager )
     {
       std::stringstream stream;
-      integer multiplier = FindMultiplier( sizeof( integer ) );// We do not write all the data at once to avoid creating a big table each time.
-      integer_array typeArray( multiplier );
+      integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
+      integer_array typeFragment( multiplier );
       string outputString;
       outputString.resize( FindBase64StringLength( sizeof( integer ) * multiplier ) );
-      for( integer i = 0; i < multiplier; i++ )
+      integer countTypeFragmentIndex = 0;
+      elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
+                                                                    auto const * const elemRegion )
       {
-        typeArray[i] = type;
-      }
-      string typeString64 = stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), outputString, sizeof( integer ) * multiplier );
-      for( localIndex i = 0 ; i < nb / multiplier ; i++)
-      {
-        stream << typeString64;
-      }
-      outputString.resize( FindBase64StringLength( sizeof( integer ) * ( nb % multiplier) ) );
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeArray.data() ), outputString, sizeof( integer ) * ( nb % multiplier) );
+        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+        {
+          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
+          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
+          {
+            typeFragment[countTypeFragmentIndex++] = type;   
+            if( countTypeFragmentIndex == multiplier )
+            {
+              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), outputString, sizeof( integer ) * multiplier );
+              countTypeFragmentIndex = 0;
+            }
+          }
+        });
+      });
+      outputString.resize( FindBase64StringLength( sizeof( integer ) * ( countTypeFragmentIndex) ) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), outputString, sizeof( localIndex ) * ( countTypeFragmentIndex) );
       DumpBuffer( stream );
     }
 
     template< typename T >
-      void WriteAsciiData( T const & data)
+    void WriteAsciiData( T const & data)
+    {
+      for( localIndex i = 0; i < data.size() ; i++ )
       {
-        for( localIndex i = 0; i < data.size() ; i++ )
-        {
-          m_outFile << data[i] << "\n";
-        }
+        m_outFile << data[i] << "\n";
       }
+    }
 
     template< typename T >
     void WriteBinaryData( T const & data )
@@ -487,9 +518,6 @@ class CustomVTUXMLWriter
 
     /// Space counter to have well indented XML file
     int m_spaceCount;
-
-    /// Cell offset for having a global offset through all the subregions
-    localIndex m_regionCellOffset;
 };
 
 template<>
@@ -777,23 +805,23 @@ void VTKFile::Write( double const timeStep,
   });
   vtuWriter.CloseXMLNode( "DataArray" );
 
-  // Definition of the node DataArray that will contain the offsets
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
-                                        { "Name", "offsets" },
-                                        { "NumberOfComponents", "1" },
-                                        { "format", format } } );
-  if( m_binary )
-  {
-    vtuWriter.WriteSize( totalNumberOfCells, sizeof( localIndex ) );
-  }
+
+  array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number of cells, Third value : cell Types
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
   {
     elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
     {
-      vtuWriter.WriteCellOffsets( elemSubRegion->numNodesPerElement(), elemSubRegion->size(), m_binary );
+      subRegionsInfo.push_back( std::make_tuple( elemSubRegion->numNodesPerElement(), elemSubRegion->size(), elemSubRegion->GetElementTypeString() ) );
     });
   });
+
+  // Definition of the node DataArray that will contain the offsets
+  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
+                                        { "Name", "offsets" },
+                                        { "NumberOfComponents", "1" },
+                                        { "format", format } } );
+  vtuWriter.WriteCellOffsets( elemManager, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the cell types
@@ -801,20 +829,9 @@ void VTKFile::Write( double const timeStep,
                                         { "Name", "types" },
                                         { "NumberOfComponents", "1" },
                                         { "format", format } } );
-  if( m_binary )
-  {
-    vtuWriter.WriteSize( totalNumberOfCells, sizeof( integer ) );
-  }
-  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
-  {
-    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-    {
-      vtuWriter.WriteCellTypes( elemSubRegion->GetElementTypeString(), elemSubRegion->size(), m_binary );
-    });
-  });
-
+  vtuWriter.WriteCellTypes( elemManager, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
+
   vtuWriter.CloseXMLNode( "Cells" );
   ElementRegion * toto;
   // Definition of the CellDataArray node that will contains all the data held by the elements
