@@ -3805,27 +3805,35 @@ int SurfaceGenerator::CheckOrphanElement ( ElementRegionManager & elementManager
 
   integer_array& ruptureStateString = faceManager.getReference<integer_array>( "ruptureState" );
 
-  localIndex iEle;
   int flagOrphan = 0;
   for (localIndex k=0 ; k<facesToElementRegions.size( 1 ) ; ++k )
   {
-    CellElementSubRegion * elementSubRegion = elementManager.GetRegion( facesToElementRegions[iFace][k] )->
-                                         GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iFace][k] );
-    iEle = facesToElementIndex[iFace][k];
-
-    unsigned int nRuptureFace = 0;
-    arrayView2d<localIndex> & elementsToFaces = elementSubRegion->faceList();
-    for (localIndex a=0; a < elementsToFaces.size(1); ++a)
+    localIndex const er = facesToElementRegions[iFace][k];
+    localIndex const esr = facesToElementSubRegions[iFace][k];
+    localIndex const ei = facesToElementIndex[iFace][k];
+    if( er != -1 &&  esr != -1 && ei != -1 )
     {
-      localIndex jFace = elementsToFaces[iEle][a];
-      if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] >= 1) && jFace != iFace)
+      CellElementSubRegion *
+      elementSubRegion = elementManager.GetRegion( facesToElementRegions[iFace][k] )->
+                         GetSubRegion<CellElementSubRegion>( facesToElementSubRegions[iFace][k] );
+
+
+      unsigned int nRuptureFace = 0;
+      arrayView2d<localIndex> & elementsToFaces = elementSubRegion->faceList();
+      for (localIndex a=0; a < elementsToFaces.size(1); ++a)
       {
-        nRuptureFace +=1;
+        localIndex jFace = elementsToFaces[ei][a];
+        if ( (ruptureStateString[jFace] == 1 || faceManager.m_isExternal[jFace] >= 1) && jFace != iFace)
+        {
+          nRuptureFace +=1;
+        }
+      }
+
+      if (nRuptureFace == elementsToFaces.size(1) - 1 )
+      {
+        flagOrphan = 1;
       }
     }
-
-    if (nRuptureFace == elementsToFaces.size(1) - 1 ) flagOrphan = 1;
-
   }
   return flagOrphan;
 
