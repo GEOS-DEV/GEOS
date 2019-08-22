@@ -68,8 +68,9 @@ public:
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
 
-  void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                        array1d<globalIndex_array>& edgesToNodes ) override final;
+  virtual void
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,

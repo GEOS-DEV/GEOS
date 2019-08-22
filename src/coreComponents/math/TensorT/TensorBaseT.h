@@ -32,6 +32,7 @@
 #include <limits>
 #include "TensorOps.h"
 #include "Logger.hpp"
+#include "common/GeosxMacros.hpp"
 
 /**
  * @brief TensorBaseT is the base class for the tensor library.
@@ -91,39 +92,42 @@ public:
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
-  TensorBaseT< T_length >& operator=( const int& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT& operator=( const int& rhs );
 
   /// assignment to all data to a realT
-  TensorBaseT< T_length >& operator=( const realT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT& operator=( const realT& rhs );
 
   /// assignment to another TensorBaseT
-  TensorBaseT< T_length >& operator=( const TensorBaseT< T_length >& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT& operator=( const TensorBaseT& rhs );
 
   /// add a realT to data
-  TensorBaseT< T_length >& operator+=( const realT& rhs );
+  TensorBaseT& operator+=( const realT& rhs );
 
   /// subtract a realT from data
-  TensorBaseT< T_length >& operator-=( const realT& rhs );
+  TensorBaseT& operator-=( const realT& rhs );
 
   /// multiply each entry in t_data by a realT
-  TensorBaseT< T_length >& operator*=( const realT& rhs );
+  TensorBaseT& operator*=( const realT& rhs );
 
   /// divide each entry in t_data by a realT
-  TensorBaseT< T_length >& operator/=( const realT& rhs );
+  TensorBaseT& operator/=( const realT& rhs );
 
   /// add another tensor
-  TensorBaseT< T_length >& operator+=( const TensorBaseT< T_length >& rhs );
+  TensorBaseT& operator+=( const TensorBaseT& rhs );
 
   /// subtract a tensor
-  TensorBaseT< T_length >& operator-=( const TensorBaseT< T_length >& rhs );
+  TensorBaseT& operator-=( const TensorBaseT& rhs );
 
   /// multiply by a tensor (data component by component)
-  TensorBaseT< T_length >& operator*=( const TensorBaseT< T_length >& rhs );
+  TensorBaseT& operator*=( const TensorBaseT& rhs );
 
   /// divide by a tensor (data component by component)
-  TensorBaseT< T_length >& operator/=( const TensorBaseT< T_length >& rhs );
+  TensorBaseT& operator/=( const TensorBaseT& rhs );
 
-  bool operator<( const TensorBaseT< T_length >& rhs ) const
+  bool operator<( const TensorBaseT& rhs ) const
   {
     bool rval = true;
     for (int i = 0 ; i < T_length ; ++i)
@@ -135,6 +139,7 @@ public:
     }
     return rval;
   }
+
   bool operator<=( const TensorBaseT< T_length >& rhs ) const
   {
     bool rval = true;
@@ -147,6 +152,7 @@ public:
     }
     return rval;
   }
+  
   bool operator>( const TensorBaseT< T_length >& rhs ) const
   {
     bool rval = true;
@@ -172,7 +178,6 @@ public:
     }
     return rval;
   }
-
 
   bool operator==( const TensorBaseT< T_length >& rhs ) const
   {
@@ -252,6 +257,7 @@ public:
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE inline constexpr
   realT* Data( void )
   {
     return t_data;
@@ -262,6 +268,7 @@ public:
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE inline constexpr
   const realT* Data( void ) const
   {
     return t_data;
@@ -453,6 +460,7 @@ TensorBaseT< T_length >::~TensorBaseT( void )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const int& rhs )
 {
@@ -466,6 +474,7 @@ TensorBaseT< T_length >::operator=( const int& rhs )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const realT& rhs )
 {
@@ -480,6 +489,7 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const TensorBaseT< T_length >& rhs )
 {

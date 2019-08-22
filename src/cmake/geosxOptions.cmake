@@ -10,6 +10,8 @@ option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
+option( ENABLE_TOTALVIEW_OUTPUT "" OFF )
+
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
@@ -38,6 +40,23 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+
+# LAI setup
+
+set( supported_LAI Trilinos Hypre Petsc )
+set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" )
+message( STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
+
+if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
+  message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
+endif()
+
+string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
+if( NOT ENABLE_${upper_LAI} )
+  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
+endif()
+
+# MPI/OMP/CUDA setup
 
 option( ENABLE_MPI "" ON )
 
@@ -79,8 +98,8 @@ message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                 GNU "-Wall -Wextra -pedantic-errors -Wignored-qualifiers -Wno-abi  -Wshadow -Wfloat-equal	-Wcast-align	-Wpointer-arith	-Wwrite-strings	-Wcast-qual	-Wswitch-default  -Wno-vla  -Wno-switch-default  -Wno-unused-parameter  -Wno-unused-variable  -Wno-unused-function"
-                                 CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro -Wno-weak-vtables -Wno-undefined-func-template -Wno-global-constructors -Wno-exit-time-destructors -Wno-documentation-unknown-command"
+                                 GNU "-Wall -Wextra -pedantic-errors -Wignored-qualifiers -Wno-abi -Wshadow -Wfloat-equal -Wcast-align -Wpointer-arith -Wwrite-strings -Wcast-qual -Wswitch-default -Wno-vla -Wno-switch-default -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function"
+                                 CLANG "-Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-padded -Wno-missing-prototypes -Wno-covered-switch-default -Wno-double-promotion -Wno-documentation -Wno-switch-enum -Wno-sign-conversion -Wno-unused-parameter -Wno-unused-variable -Wno-reserved-id-macro -Wno-weak-vtables -Wno-undefined-func-template -Wno-global-constructors -Wno-exit-time-destructors -Wno-documentation-unknown-command -Wno-unused-function -Wno-used-but-marked-unused -Wno-unused-template -Wno-unused-macros"
                                )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.0.0")

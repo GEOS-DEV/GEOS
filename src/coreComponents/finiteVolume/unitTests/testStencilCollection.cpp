@@ -16,29 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Copyright (c) 2015, Lawrence Livermore National Security, LLC.
- * Produced at the Lawrence Livermore National Laboratory.
- *
- * All rights reserved.
- *
- * This source code cannot be distributed without permission and
- * further review from Lawrence Livermore National Laboratory.
- */
-
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#endif
 
 #include <gtest/gtest.h>
-
-#ifdef __clang__
-#pragma clang diagnostic push
-#define __null nullptr
-#endif
 
 #include "finiteVolume/FluxStencil.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -113,11 +92,11 @@ TEST(testStencilCollection, noAcessorIterationTPFA)
                          arrayView1d<double> const & dataOut,
                          FluxStencil<Cell, double> const & stencil )
   {
-    csArrayView2d<FluxStencil<Cell, double>::Entry const> const & connections = stencil.getConnections();
+    ArrayOfArraysView<FluxStencil<Cell, double>::Entry const, true> const & connections = stencil.getConnections();
 
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+    forall_in_range<serialPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
     {
-      for (localIndex i = 0; i < connections.size(iconn); ++i)
+      for (localIndex i = 0; i < connections.sizeOfArray(iconn); ++i)
       {
         FluxStencil<Cell, double>::Entry const & entry = connections(iconn, i);
         dataOut[iconn] += entry.weight * dataIn[entry.index.ei];

@@ -142,52 +142,92 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
       {
         targetTypeDefNode = schemaRoot.append_child("xsd:complexType");
         targetTypeDefNode.append_attribute("name") = typeName.c_str();
+      }
 
-        // Add subgroups
-        if (group->numSubGroups() > 0)
+      // Add subgroups
+      if (group->numSubGroups() > 0)
+      {
+        // Children are defined in a choice node
+        xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child("xsd:choice");
+        if( targetChoiceNode.empty() )
         {
-          // Children are defined in a choice node
-          xmlWrapper::xmlNode targetChoiceNode = targetTypeDefNode.child("xsd:choice");
-          if( targetChoiceNode.empty() )
-          {
-            targetChoiceNode = targetTypeDefNode.prepend_child("xsd:choice");
-            targetChoiceNode.append_attribute("minOccurs") = "0";
-            targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
-
-            // Add children of the group
-            group->forSubGroups<ManagedGroup>([&]( ManagedGroup * subGroup ) -> void
-            {
-              SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
-            });
-          }
+          targetChoiceNode = targetTypeDefNode.prepend_child("xsd:choice");
+          targetChoiceNode.append_attribute("minOccurs") = "0";
+          targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
         }
 
-        // Add schema deviations
-        group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
-
-        // Add attributes
-        for ( auto wrapperPair : group->wrappers() )
+        // Get a list of the subgroup names in alphabetic order
+        // Note: this is necessary because the order that objects
+        //       are registered to catalogs may vary by compiler
+        std::vector<string> subGroupNames;
+        for( auto & subGroupPair : group->GetSubGroups())
         {
-          ViewWrapperBase * const wrapper = wrapperPair.second;
-          InputFlags flag = wrapper->getInputFlag();
-          
-          if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
-          {
-            string attributeName = wrapper->getName();
+          subGroupNames.push_back(subGroupPair.first);
+        }
+        std::sort(subGroupNames.begin(), subGroupNames.end());
 
-            // Attribute Description
-            // There isn't an available attribute for this, so include it in a comment
+        // Add children of the group
+        for ( string subName : subGroupNames )
+        {
+          ManagedGroup * const subGroup = group->GetGroup(subName);
+          SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
+        }
+      }
+
+      // Add schema deviations
+      group->SetSchemaDeviations(schemaRoot, targetTypeDefNode, documentationType);
+
+      // Add attributes
+      // Note: wrappers that were added to this group by another group
+      //       may end up in different order.  To avoid this, add them
+      //       into the schema in alphabetic order.
+      std::vector<string> groupWrapperNames;
+      for( auto & wrapperPair : group->wrappers())
+      {
+        groupWrapperNames.push_back(wrapperPair.first);
+      }
+      std::sort(groupWrapperNames.begin(), groupWrapperNames.end());
+
+      for ( string attributeName : groupWrapperNames )
+      {
+        ViewWrapperBase * const wrapper = group->getWrapperBase(attributeName);
+        InputFlags flag = wrapper->getInputFlag();
+        
+        if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
+        {
+          // Ignore duplicate copies of attributes
+          if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", attributeName.c_str()).empty())
+          {
+            // Write any additional documentation that isn't expected by the .xsd format in a comment
+            // Attribute description
             string description = wrapper->getDescription();
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+            string commentString = attributeName + " => ";
+            
             if (!description.empty())
             {
-              commentNode.set_value((attributeName + " = " + description).c_str());
+              commentString += description;
             }
             else
             {
-              commentNode.set_value((attributeName + " = (no description available)").c_str());
+              commentString += "(no description available)";
             }
 
+            // List of objects that registered this field
+            std::vector<string> registrars = wrapper->getRegisteringObjects();
+            if (registrars.size() > 0)
+            {
+              commentString += " => " + registrars[0];
+              for (size_t ii=1; ii<registrars.size(); ++ii)
+              {
+                commentString += ", " + registrars[ii];
+              }
+            }
+
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
+            commentNode.set_value(commentString.c_str());
+
+
+            // Write the valid schema attributes
             // Basic attributes
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
             attributeNode.append_attribute("name") = attributeName.c_str();
@@ -218,14 +258,18 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
             {
               attributeNode.append_attribute("use") = "required";
             }
-          }
+          }  
         }
+      }
 
-        // Elements that are nonunique require the use of the name attribute
-        if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
+      // Elements that are nonunique require the use of the name attribute
+      if (((schemaType == InputFlags::REQUIRED_NONUNIQUE) || (schemaType == InputFlags::OPTIONAL_NONUNIQUE)) && (documentationType == 0))
+      {
+        // Only add this attribute if not present
+        if( targetTypeDefNode.find_child_by_attribute("xsd:attribute", "name", "name").empty())
         {
           xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child(xmlWrapper::xmlTypes::node_comment);
-          commentNode.set_value("name = A name is required for any non-unique nodes");
+          commentNode.set_value("name => A name is required for any non-unique nodes");
         
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child("xsd:attribute");
           attributeNode.append_attribute("name") = "name";
