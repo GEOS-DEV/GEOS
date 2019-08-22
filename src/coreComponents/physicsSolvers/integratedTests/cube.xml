@@ -7,6 +7,7 @@
   <Solvers>
     <SolidMechanics_LagrangianFEM name="lagsolve" 
                                   cflFactor="0.25"
+                                  discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="al"/>
   </Solvers>
@@ -49,19 +50,19 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <finiteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" numericalMethod="FE1" materialList="{al}"/>
+    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{al}"/>
   </ElementRegions>
 
   <Constitutive>
       <LinearElasticIsotropic name="al"
-                              density0="2.703"
-                              BulkModulus0="0.742178928"
-                              ShearModulus0="0.276"/>
+                              defaultDensity="2.703"
+                              defaultBulkModulus="0.742178928"
+                              defaultShearModulus="0.276"/>
   </Constitutive>
 
 
@@ -71,7 +72,6 @@
                         setNames="{all}"
                         objectPath="nodeManager"
                         fieldName="Velocity"
-                        dataType="r1Tensor" 
                         component="0"
                         scale="-0.0002"/>
   </FieldSpecifications>
@@ -84,11 +84,7 @@
     <Silo name="siloOutput"
           parallelThreads="32"
           plotFileRoot="plot"
-          slaveDirectory="sub"
-          writeFEMEdges="0"
-          writeFEMFaces="1"
-          writePlot="1"
-          writeRestart="0"/>
+          writeFEMFaces="1" />
   </Outputs>
 
 </Problem>

@@ -11,7 +11,7 @@ set(CMAKE_Fortran_COMPILER /usr/tce/packages/gcc/gcc-8.1.0/bin/gfortran CACHE PA
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI ON CACHE BOOL "")
 
-set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-gcc-8.1.0 CACHE PATH "")
+set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.2-gcc-8.1.0 CACHE PATH "")
 set(MPI_C_COMPILER       ${MPI_HOME}/bin/mpicc   CACHE PATH "")
 set(MPI_CXX_COMPILER     ${MPI_HOME}/bin/mpicxx  CACHE PATH "")
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
@@ -25,6 +25,7 @@ get_filename_component( INSTALL_DIR_NAME "${CMAKE_INSTALL_PREFIX}" NAME)
 set(GEOSX_TPL_DIR ${ABS_TPL_ROOT_DIR}/${INSTALL_DIR_NAME} CACHE PATH "")
 set(SPHINX_EXECUTABLE "/usr/bin/sphinx-build" CACHE PATH "" FORCE)
 set(DOXYGEN_EXECUTABLE "/usr/bin/doxygen" CACHE PATH "" FORCE )
+set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
 
 set(ENABLE_TESTS OFF CACHE BOOL "")
 set(ENABLE_GTEST_DEATH_TESTS OFF CACHE BOOL "")
