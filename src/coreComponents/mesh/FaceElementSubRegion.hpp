@@ -16,6 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+/**
+ * @file FaceElementSubRegion.hpp
+ */
+
 #ifndef FACECELLSUBREGION_HPP_
 #define FACECELLSUBREGION_HPP_
 
@@ -25,6 +29,14 @@
 namespace geosx
 {
 
+/**
+ * @class FaceElementSubRegion
+ *
+ * The FaceElementSubRegion class contains the functionality to support the concept of Elements that are comprised of
+ * a face, or a pair of faces. This class which derives from ElementSubRegionBase, has specific connectivity maps and
+ * and methods to support the specific geometry of an element comprised of a reduced dimensionality face element (i.e.
+ * face area and aperture = volume)
+ */
 class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
@@ -34,7 +46,7 @@ public:
   using FaceMapType=FixedOneToManyRelation;
 
   static const string CatalogName()
-  { return "FaceCell"; }
+  { return "FaceElementSubRegion"; }
 
   virtual const string getCatalogName() const override
   {
@@ -49,31 +61,17 @@ public:
                                      const NodeManager& nodeManager,
                                      const bool useReferencePos = true) const override;
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) override
-  {
-    ElementSubRegionBase::CalculateCellVolumes<FaceElementSubRegion>( *this,
-                                                       indices,
-                                                       X );
-  }
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & facemanager ) override;
 
-  inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X )
-  {
-    m_elementArea[k] = 1;
-    m_elementCenter[k] = 1;
-    m_elementVolume[k] = 1;
-  }
+  void CalculateElementGeometricQuantities( localIndex const index,
+                                            arrayView1d<real64 const> const & faceArea );
 
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+
+  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    static constexpr auto nodeListString               = "nodeList";
-    static constexpr auto edgeListString               = "edgeList";
-    static constexpr auto faceListString               = "faceList";
     static constexpr auto elementApertureString        = "elementAperture";
     static constexpr auto elementAreaString            = "elementArea";
-    static constexpr auto elementCenterString          = "elementCenter";
-    static constexpr auto elementVolumeString          = "elementVolume";
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -125,10 +123,13 @@ public:
   /**
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
+//  virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
   arrayView1d< real64 > const &       getElementAperture()       { return m_elementAperture; }
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
+
+  arrayView1d< real64 > const &       getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
 private:
 
@@ -145,7 +146,7 @@ private:
   array1d< real64 > m_elementAperture;
 
   /// The member level field for the element center
-  array1d< R1Tensor > m_elementArea;
+  array1d< real64 > m_elementArea;
 };
 
 } /* namespace geosx */

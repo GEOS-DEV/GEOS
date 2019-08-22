@@ -42,7 +42,14 @@ if( ENABLE_PAMELA )
     set( dependencyList ${dependencyList} PAMELA )
 endif()
 
-    
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
@@ -50,5 +57,7 @@ blt_add_library( NAME                  meshUtilities
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+add_subdirectory( unitTests )
 
 geosx_add_code_checks(PREFIX meshUtilities )

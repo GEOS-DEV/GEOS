@@ -37,7 +37,8 @@ struct ModifiedObjectLists
   std::set<localIndex> modifiedNodes;
   std::set<localIndex> modifiedEdges;
   std::set<localIndex> modifiedFaces;
-  std::map< std::string, std::set<localIndex> > modifiedElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
 };
@@ -91,40 +92,8 @@ public:
                              real64 const& dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
-//
-//  virtual void ImplicitStepSetup( real64 const& time_n,
-//                              real64 const& dt,
-//                              DomainPartition * const domain,
-//                              systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-//
-//
-//  virtual void AssembleSystem( DomainPartition * const domain,
-//                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                               real64 const time,
-//                               real64 const dt ) override;
-//
-//  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-//                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                                        real64 const time,
-//                                        real64 const dt ) override;
-//
-//  virtual real64
-//  CalculateResidualNorm( systemSolverInterface::EpetraBlockSystem const * const blockSystem ) override;
 
-//  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-//                            SystemSolverParameters const * const params ) override;
-
-//  virtual void
-//  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
-//                       real64 const scalingFactor,
-//                       DomainPartition * const domain ) override;
-
-//  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
-//
-//  virtual  void ImplicitStepComplete( real64 const & time,
-//                                      real64 const & dt,
-//                                      DomainPartition * const domain ) override;
-/**@}*/
+  /**@}*/
 
 
   int SeparationDriver( MeshLevel * const mesh,
@@ -134,8 +103,23 @@ public:
                         const bool prefrac,
                         const realT time );
 
+  /**
+   * @brief Function to generate new global indices of a simple object (node, edge, face)
+   * @param[in/out] object A reference to the object that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
                                      std::set<localIndex> const & indexList );
+
+
+  /**
+   * @brief Function to generate new global indices for elements
+   * @param[in/out] elementManager A reference to the ElementRegionManager that needs new global indices
+   * @param[in] indexList the list of local indices that need new global indices
+   */
+  void
+  AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
+                                map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
@@ -432,13 +416,14 @@ private:
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto fractureRegionNameString = "fractureRegion";
   }; //SurfaceGenViewKeys;
 
 private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
-  /// set of sepearable faces
+  /// set of separable faces
   localIndex_set m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
@@ -462,6 +447,8 @@ private:
   /// copy of the original face->elemIndex mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemIndex;
 
+  /// name of the element region to place all new fractures
+  string m_fractureRegionName;
 
 };
 

@@ -178,54 +178,6 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   m_deviatorStress[k][q] = temp;
 }
 
-void LinearElasticIsotropic::GetStiffness( localIndex const k, real64 c[6][6] ) const
-{
-  real64 const G = m_shearModulus[k];
-  real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-  c[0][0] = Lame + 2 * G;
-  c[0][1] = Lame;
-  c[0][2] = Lame;
-  c[0][3] = 0.0;
-  c[0][4] = 0.0;
-  c[0][5] = 0.0;
-
-  c[1][0] = Lame;
-  c[1][1] = Lame + 2 * G;
-  c[1][2] = Lame;
-  c[1][3] = 0.0;
-  c[1][4] = 0.0;
-  c[1][5] = 0.0;
-
-  c[2][0] = Lame;
-  c[2][1] = Lame;
-  c[2][2] = Lame + 2 * G;
-  c[2][3] = 0.0;
-  c[2][4] = 0.0;
-  c[2][5] = 0.0;
-
-  c[3][0] = 0.0;
-  c[3][1] = 0.0;
-  c[3][2] = 0.0;
-  c[3][3] = G;
-  c[3][4] = 0.0;
-  c[3][5] = 0.0;
-
-  c[4][0] = 0.0;
-  c[4][1] = 0.0;
-  c[4][2] = 0.0;
-  c[4][3] = 0.0;
-  c[4][4] = G;
-  c[4][5] = 0.0;
-
-  c[5][0] = 0.0;
-  c[5][1] = 0.0;
-  c[5][2] = 0.0;
-  c[5][3] = 0.0;
-  c[5][4] = 0.0;
-  c[5][5] = G;
-}
-
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )
 }
 } /* namespace geosx */

@@ -36,6 +36,7 @@ namespace geosx
 class ObjectManagerBase;
 class NeighborCommunicator;
 class MeshLevel;
+class ElementRegionManager;
 
 class MPI_iCommData;
 
@@ -56,6 +57,9 @@ public:
   static void AssignNewGlobalIndices( ObjectManagerBase & object,
                                       std::set<localIndex> const & indexList );
 
+  static void
+  AssignNewGlobalIndices( ElementRegionManager & elementManager,
+                          std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems );
 
   static void FindGhosts( MeshLevel * const meshLevel,
                           array1d<NeighborCommunicator> & neighbors );
