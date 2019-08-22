@@ -47,6 +47,7 @@ public:
   virtual void ExpandObjectCatalogs() override;
 
   FluxApproximationBase const * getFluxApproximation(string const &name) const;
+  FluxApproximationBase * getFluxApproximation(string const &name);
 
 private:
 

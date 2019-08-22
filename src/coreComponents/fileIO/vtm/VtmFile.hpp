@@ -415,9 +415,13 @@ class VtuFile {
 
 class MeshBlock {
     public:
+
         MeshBlock( string fileName,
-                string blockName);
-        MeshBlock() {}
+                   string blockName) :
+            m_vtuFileName( fileName),
+            m_blockName( blockName)
+        {}
+
         void Load(bool loadMesh, bool loadProperties);
         DumbMesh const & mesh() const;
         bool IsARegionBlock() const;
@@ -438,7 +442,7 @@ class RankBlock {
         localIndex NumMeshBlocks() const;
         MeshBlock const & GetMeshBlock(localIndex const meshBlockIndex) const;
     private:
-        array1d< MeshBlock > m_block;
+        std::vector< MeshBlock > m_block;
 };
 class VtmFile {
     public:
@@ -476,9 +480,9 @@ class VtmFile {
          */
         void SetRanksAndBlocks(
                 pugi::xml_document const & vtmDoc,
-                array1d< RankBlock >& rankBlocks);
+                std::vector< RankBlock >& rankBlocks);
     private:
-        array1d< RankBlock > m_rankBlocks;
+        std::vector< RankBlock > m_rankBlocks;
         string m_fileName {""};
 };
 

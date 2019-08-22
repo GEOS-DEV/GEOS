@@ -24,6 +24,7 @@
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -110,7 +111,7 @@ protected:
    * @param phaseVolumeFraction array containing the phase volume fraction, which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 

@@ -75,7 +75,6 @@ public:
     static constexpr auto dtString = "dt";
     static constexpr auto cycleString = "cycle";
     static constexpr auto currentSubEventString = "currentSubEvent";
-    static constexpr auto currentMaxDtString = "currentMaxDt";
 
     dataRepository::ViewKey time = { "time" };
     dataRepository::ViewKey dt = { "dt" };
@@ -84,15 +83,11 @@ public:
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey verbosity = { "verbosity" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
-    dataRepository::ViewKey currentMaxDt = { "currentMaxDt" };
   } viewKeys;
 
   /// Catalog interface
   using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
   static CatalogInterface::CatalogType& GetCatalog();
-
-protected:
-  virtual void PostProcessInput() override;
 
 private:
 
@@ -104,7 +99,6 @@ private:
   real64 m_dt;
   integer m_cycle;
   integer m_currentSubEvent;
-  real64 m_currentMaxDt;
 };
 
 

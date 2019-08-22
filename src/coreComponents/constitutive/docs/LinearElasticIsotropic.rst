@@ -12,7 +12,7 @@ The relationship between stress and strain is typically represented by `Hooke's 
 which for the case of linear elasticity, may be expressed as:
 
 .. math::
-   \sigma_{ij} + \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
+   \sigma_{ij} = \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
    
 where :math:`\sigma_{ij}` is the :math:`ij` component of the cauchy stress tensor, 
 :math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,

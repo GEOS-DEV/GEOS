@@ -102,9 +102,9 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
                 << (expected) << " expected)"); \
   }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString );
-  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString );
-  COREY_CHECK_INPUT_LENGTH( m_phaseEntryPressure, NP, viewKeyStruct::phaseEntryPressureString );
+  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString )
+  COREY_CHECK_INPUT_LENGTH( m_phaseEntryPressure, NP, viewKeyStruct::phaseEntryPressureString )
 
 #undef COREY_CHECK_INPUT_LENGTH
 

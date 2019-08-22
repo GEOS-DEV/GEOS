@@ -33,6 +33,17 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( std::string const & name, ManagedGroup * const parent )
   : ConstitutiveBase( name, parent )
 {
+
+  RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Default value for density.");
+
+  RegisterViewWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Default value for viscosity.");
+
+  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+
   RegisterViewWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   RegisterViewWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure, false );
 
@@ -45,6 +56,9 @@ SingleFluidBase::~SingleFluidBase() = default;
 void SingleFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
+  this->getWrapper< array2d<real64> >(viewKeyStruct::densityString)->setApplyDefaultValue(m_defaultDensity);
+  this->getWrapper< array2d<real64> >(viewKeyStruct::viscosityString)->setApplyDefaultValue(m_defaultViscosity);
+
 }
 
 void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
@@ -62,6 +76,23 @@ void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
 }
 
 
+void
+SingleFluidBase::DeliverClone( string const & name,
+                               ManagedGroup * const parent,
+                               std::unique_ptr<ConstitutiveBase> & clone ) const
+{
+  GEOS_ERROR_IF( !clone, "clone not allocated" );
+
+  ConstitutiveBase::DeliverClone( name, parent, clone );
+  SingleFluidBase * const newConstitutiveRelation = dynamic_cast<SingleFluidBase *>(clone.get());
+
+  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
+  newConstitutiveRelation->m_defaultViscosity = m_defaultViscosity;
+  newConstitutiveRelation->m_density = m_density;
+  newConstitutiveRelation->m_viscosity = m_viscosity;
+  newConstitutiveRelation->m_dDensity_dPressure = m_dDensity_dPressure;
+  newConstitutiveRelation->m_dViscosity_dPressure = m_dViscosity_dPressure;
+}
 } //namespace constitutive
 
 } //namespace geosx

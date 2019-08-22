@@ -26,6 +26,7 @@
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
 class StableTimeStep;
@@ -99,6 +100,8 @@ public:
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
 
+  localIndex GetMaxNumFaceNodes() const;
+
   /**
    * @brief function to return element center. this should be depricated.
    * @param k
@@ -110,16 +113,27 @@ public:
                                            const NodeManager& nodeManager,
                                            const bool useReferencePos = true) const override;
 
-  virtual void CalculateCellVolumes( array1d<localIndex> const & indices,
-                                     array1d<R1Tensor> const & X ) override
+  void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
   {
-    ElementSubRegionBase::CalculateCellVolumes<CellBlock>( *this,
-                                               indices,
-                                               X );
+    arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
+    localIndex const nNodes = numNodesPerElement();
+    forall_in_range<parallelHostPolicy>( 0, size(), GEOSX_LAMBDA( localIndex const k )
+    {
+      elementCenters[k] = 0;
+      for ( localIndex a = 0 ; a < nNodes ; ++a)
+      {
+        const localIndex b = m_toNodesRelation[k][a];
+        elementCenters[k] += X[b];
+      }
+      elementCenters[k] /= nNodes;
+    });
   }
 
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & facemanager ) override;
+
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          array1d<R1Tensor> const & X )
+                                          array1d<R1Tensor> const & X ) const
   {
     R1Tensor & center = m_elementCenter[k];
     center = 0.0;
@@ -210,6 +224,27 @@ public:
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
+  /**
+   * @brief Add a property on the CellBlock
+   * @param[in] propertyName the name of the property
+   * @return a non-const reference to the property
+   */
+  template<typename T>
+  T & AddProperty( string const & propertyName )
+  {
+    m_externalPropertyNames.push_back( propertyName );
+    return this->RegisterViewWrapper< T >( propertyName )->reference();
+  }
+
+  template< typename LAMBDA >
+  void forExternalProperties( LAMBDA && lambda ) const
+  {
+    for( auto & externalPropertyName : m_externalPropertyNames )
+    {
+      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
+      lambda( vw );
+    }
+  }
 
 protected:
 
@@ -223,7 +258,9 @@ protected:
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
 
-
+private:
+  /// Name of the properties register from an external mesh
+  string_array m_externalPropertyNames;
 
 };
 

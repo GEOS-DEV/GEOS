@@ -46,6 +46,10 @@ public:
                                ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>> & elementAdjacencyList,
                                integer const depth );
 
+
+  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const ) override;
+
+
   struct viewStructKeys
   {
     dataRepository::ViewKey meshLevel                = { "meshLevel" };
