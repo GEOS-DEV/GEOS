@@ -20,22 +20,13 @@
  * @file testLAOperations.cpp
  */
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
-
 #include <gtest/gtest.h>
 
 #include <iostream>
-#include <vector>
 #include <mpi.h>
 
 #include "common/DataTypes.hpp"
+#include "common/initialization.hpp"
 
 #include "TrilinosInterface.hpp"
 //#include "HypreInterface.hpp"
@@ -322,6 +313,7 @@ void testInterfaceSolvers()
   globalIndex firstRow = matrix.ilower();
 
   matrix.clearRow( firstRow, diagValue );
+  matrix.close();
 
   matrix.getRowCopy( firstRow, col_indices, col_values );
   for( localIndex i = 0 ; i < col_indices.size() ; ++i )
@@ -331,6 +323,7 @@ void testInterfaceSolvers()
     else
       EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
   }
+  EXPECT_DOUBLE_EQ( matrix.getDiagValue( firstRow ), diagValue );
 }
 
 /**
@@ -588,15 +581,6 @@ void testRectangularMatrixOperations()
 
 //@}
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#if __clang_major__ >= 5 && !defined(__APPLE__)
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#endif
-
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
@@ -608,6 +592,7 @@ void testRectangularMatrixOperations()
 TEST(testLAOperations,testEpetraLAOperations)
 {
   MPI_Init( nullptr, nullptr );
+  geosx::setupMKL();
   testInterfaceSolvers<TrilinosInterface>();
   testGEOSXSolvers<TrilinosInterface>();
   testGEOSXBlockSolvers<TrilinosInterface>();
@@ -641,7 +626,3 @@ TEST(testLAOperations,testEpetraLAOperations)
 //}
 
 //@}
-
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif

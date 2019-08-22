@@ -199,8 +199,8 @@ public:
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
-                                                                array1d<globalIndex_array>&  )
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const,
+                                                                std::vector< std::vector< globalIndex > > & )
   {}
 
   void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
@@ -349,7 +349,7 @@ public:
   ManagedGroup m_sets;
 
   globalIndex_array  m_localToGlobalMap;
-  map<globalIndex,localIndex>  m_globalToLocalMap;
+  unordered_map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
 
@@ -376,7 +376,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        bool const  )
 {
   bool allValuesMapped = true;
-  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
@@ -409,7 +409,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )

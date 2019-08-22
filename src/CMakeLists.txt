@@ -10,6 +10,10 @@ set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
 set(CMAKE_ENABLE_EXPORTS ON)
 
+include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
+
+
+
 ################################
 # Include blt
 ################################
@@ -78,8 +82,12 @@ else()
 #  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=0)
 endif()
 
-if( ENABLE_OPENMP)
+if( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
+endif()
+
+if( ENABLE_CUDA )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
 blt_add_executable(NAME geosx
@@ -90,6 +98,15 @@ blt_add_executable(NAME geosx
                   )
 
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+
+
+add_custom_target( geosx_update_rst_tables
+                   ALL
+                   COMMAND bash ../scripts/updateRstTables.bash > /dev/null 2>&1
+                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                   DEPENDS geosx
+                 )
 
 if( ${SPHINX_FOUND} )
   blt_add_sphinx_target( geosx_docs )

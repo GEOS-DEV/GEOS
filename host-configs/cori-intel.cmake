@@ -20,10 +20,6 @@
 #export CALI_TIMER_INCLUSIVE_DURATION=1
 ##################################
 
-##################################
-# uses default intel compiler
-##################################
-
 set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE BOOL "" FORCE)
 
 # c compiler used by spack
@@ -34,6 +30,10 @@ set(CMAKE_Fortran_COMPILER "ftn" CACHE PATH "" FORCE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -axMIC-AVX512,AVX" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -axMIC-AVX512,AVX" CACHE STRING "" FORCE)
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -axMIC-AVX512,AVX" CACHE STRING "" FORCE)
+
+# set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=native" CACHE STRING "")
+# set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} CACHE STRING "")
+# set(CMAKE_Fortran_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} CACHE STRING "")
 
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
 

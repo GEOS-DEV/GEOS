@@ -16,75 +16,15 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright (c) 2015, Lawrence Livermore National Security, LLC.
-//  Produced at the Lawrence Livermore National Laboratory
-//
-//  GEOS Computational Framework - Core Package, Version 3.0.0
-//
-//  Written by:
-//  Randolph Settgast (settgast1@llnl.gov)
-//  Stuart Walsh(walsh24@llnl.gov)
-//  Pengcheng Fu (fu4@llnl.gov)
-//  Joshua White (white230@llnl.gov)
-//  Chandrasekhar Annavarapu Srinivas
-//  Eric Herbold
-//  Michael Homel
-//
-//
-//  All rights reserved.
-//
-//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-//  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL LAWRENCE LIVERMORE NATIONAL
-// SECURITY,
-//  LLC, THE U.S. DEPARTMENT OF ENERGY OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-//  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-//  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-// TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
-//  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-//  1. This notice is required to be provided under our contract with the U.S.
-// Department of Energy (DOE). This work was produced at Lawrence Livermore
-//     National Laboratory under Contract No. DE-AC52-07NA27344 with the DOE.
-//  2. Neither the United States Government nor Lawrence Livermore National
-// Security, LLC nor any of their employees, makes any warranty, express or
-//     implied, or assumes any liability or responsibility for the accuracy,
-// completeness, or usefulness of any information, apparatus, product, or
-//     process disclosed, or represents that its use would not infringe
-// privately-owned rights.
-//  3. Also, reference herein to any specific commercial products, process, or
-// services by trade name, trademark, manufacturer or otherwise does not
-//     necessarily constitute or imply its endorsement, recommendation, or
-// favoring by the United States Government or Lawrence Livermore National
-// Security,
-//     LLC. The views and opinions of authors expressed herein do not
-// necessarily state or reflect those of the United States Government or
-// Lawrence
-//     Livermore National Security, LLC, and shall not be used for advertising
-// or product endorsement purposes.
-//
-//  This Software derives from a BSD open source release LLNL-CODE-656616. The
-// BSD  License statment is included in this distribution in src/bsd_notice.txt.
-//
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  * @brief This file contains the definition of the R2SymTensorT.h class
  * @file R2SymTensorT.h
- * @author Randolph Settgast
  */
 
 #ifndef R2_SYM_TENSOR_T_H_
 #define R2_SYM_TENSOR_T_H_
 
 #include "TensorBaseT.h"
-//#include "TensorT.h"
-
 
 // PRAGMAS to suppress somewhat incorrect out of bounds errors in xlc and icc
 #ifdef __INTEL_COMPILER
@@ -92,11 +32,9 @@
 #pragma warning disable 175
 #endif
 
-#ifdef  __IBMC__
+#ifdef __IBMC__
 #pragma report(disable, "1540-2907")
 #endif
-
-
 
 /// Function to determine the size of the a symmetric rank-2 tensor
 template<int N>
@@ -120,7 +58,6 @@ template< int T_dim > class R6minSymTensorT;
 
 /**
  * @brief R2SymTensorT is a symetic rank-2 tensor object type
- * @author Randolph Settgast
  * @tparam T_dim length of tensor index
  *
  * R2symTensorT derives from TensorBaseT, and defines basic operations that can
@@ -137,11 +74,10 @@ public:
   R2SymTensorT(void);
 
   /**
-   * @author Randolph Settgast
+
    * @param[in] data use for initialization of t_data
    */
   explicit R2SymTensorT( const realT data ): TensorBaseT< SymSize< T_dim >::value >(data) {}
-
 
   /// default destructor
   ~R2SymTensorT(void);
@@ -156,19 +92,22 @@ public:
   // **************************************************
 
   /// assignment of all data to an integer
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const int& rhs);
 
   /// assignment of all data to a realT
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const realT& rhs);
 
   /// assignment to another R2SymTensorT
+  GEOSX_HOST_DEVICE
   R2SymTensorT< T_dim >& operator=(const R2SymTensorT< T_dim >& rhs);
 
   R2SymTensorT& operator+=( const R2SymTensorT<T_dim>& rhs );
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
-  const realT& operator()(const int i, const int j) const;
+  realT operator()(const int i, const int j) const;
 
   /// non-const access to data
   realT& operator()(const int i, const int j);
@@ -264,7 +203,6 @@ private:
 };
 
 /**
- * @author Randolph Settgast
  * @param os output stream
  *
  * This function prints the contents of the tensor
@@ -310,6 +248,7 @@ R2SymTensorT< T_dim >::R2SymTensorT(const R2SymTensorT< T_dim >& rhs):
 
 // Assigns all components to an integer
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const int& rhs)
 {
@@ -319,6 +258,7 @@ R2SymTensorT< T_dim >::operator=(const int& rhs)
 
 // Assigns all components to a realT
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const realT& rhs)
 {
@@ -328,6 +268,7 @@ R2SymTensorT< T_dim >::operator=(const realT& rhs)
 
 // Assigns all components to another TensorBaseT's (Copy Constructor)
 template<int T_dim>
+GEOSX_HOST_DEVICE
 R2SymTensorT< T_dim >&
 R2SymTensorT< T_dim >::operator=(const R2SymTensorT< T_dim >& rhs)
 {
@@ -344,7 +285,7 @@ inline R2SymTensorT<T_dim>& R2SymTensorT<T_dim>::operator+=( const R2SymTensorT<
 }
 
 template<int T_dim>
-inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) const
+inline realT R2SymTensorT< T_dim >::operator()(const int i, const int j) const
 {
   int i_sym = i;
   int j_sym = j;
@@ -363,8 +304,9 @@ inline const realT& R2SymTensorT< T_dim >::operator()(const int i, const int j) 
 
   return this->t_data[index];
 }
+
 template<>
-inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
+inline realT R2SymTensorT<2>::operator()(const int i, const int j) const
 {
   static constexpr int map[2][2] = {
     {0,1},
@@ -375,7 +317,7 @@ inline const realT& R2SymTensorT<2>::operator()(const int i, const int j) const
 }
 
 template<>
-inline const realT& R2SymTensorT<3>::operator()(const int i, const int j) const
+inline realT R2SymTensorT<3>::operator()(const int i, const int j) const
 {
   static constexpr int map[3][3] = {
     {0,1,3},
@@ -385,7 +327,6 @@ inline const realT& R2SymTensorT<3>::operator()(const int i, const int j) const
 
   return this->t_data[map[i][j]];
 }
-
 
 template<int T_dim>
 inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
@@ -410,9 +351,7 @@ inline realT& R2SymTensorT< T_dim >::operator()(const int i, const int j)
   return this->t_data[index];
 }
 
-
 /**
- * @author Randolph Settgast
  * @return trace of (*this)
  *
  * This function returns the trace of the tensor that it is called from.
@@ -424,22 +363,19 @@ inline realT R2SymTensorT< T_dim >::Trace(void) const
   int c = 0;
 
   for (int ii = 0 ; ii < T_dim ; c+=(++ii)+1)
+  {
     trace += this->t_data[c];
+  }
+
   return trace;
 }
 
 template<>
 inline realT R2SymTensorT< 3 >::Trace(void) const
-{
-  realT trace = 0;
-  int c = 0;
-
-  return trace = this->t_data[0] + this->t_data[2] + this->t_data[5];
-}
+{ return this->t_data[0] + this->t_data[2] + this->t_data[5]; }
 
 
 /**
- * @author Randolph Settgast
  * @return determinant of (*this)
  *
  * This function returns the determinate of the tensor that it is called from.
@@ -481,7 +417,6 @@ inline realT R2SymTensorT< T_dim >::AijAij(void) const
 }
 
 /**
- * @author Randolph Settgast
  * @return inner product of (*this) with itself
  *
  * This function returns the inner product of the tensor that it is called from
@@ -505,7 +440,6 @@ inline realT R2SymTensorT< T_dim >::Inner(void) const
 }
 
 /**
- * @author Randolph Settgast
  * @param tensor tensor to invert
  * @return determinant of tensor
  */
@@ -572,7 +506,6 @@ realT R2SymTensorT<T_dim>::Inverse( R2SymTensorT<T_dim>& tensor )
 }
 
 /**
- * @author Randolph Settgast
  * @param[out] eigenvals naked array that holds the Eigenvalues
  *
  * This function calculates the eigenvalues of *this.
@@ -666,7 +599,6 @@ inline void R2SymTensorT< T_dim >::EigenVals( realT eigenvals[T_dim],
 
 
 /**
- * @author Randolph Settgast
  * @param[in] lambda naked array that holds the Eigenvalues
  * @param[out] v a naked array of R1TensorT's that hold the eigenvectors
  *
@@ -850,7 +782,6 @@ inline void R2SymTensorT< T_dim >::EigenVecs(const realT lambda[T_dim], R1Tensor
 
 
 /**
- * @author Randolph Settgast
  * @param[in] lambda the eigenvalues
  * @param[out] v R1TensorT that holds the eigenvector
  *
@@ -900,7 +831,6 @@ inline void R2SymTensorT< T_dim >::EigenVector(const realT lambda, R1TensorT< T_
 }
 
 /**
- * @author Randolph Settgast
  *
  * This function takes the square root of *this
  */
@@ -934,7 +864,6 @@ void R2SymTensorT< T_dim >::Sqrt()
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] r exponent
  *
  * This function takes power of *this
@@ -976,7 +905,6 @@ inline realT R2SymTensorT< T_dim >::AijBij(const R2SymTensorT< T_dim >& A, const
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
  *
@@ -1014,7 +942,6 @@ inline void R2SymTensorT< T_dim >::AijBjk(const R2SymTensorT< T_dim >& A, const 
 #include "R4minSymTensorT.h"
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or-
@@ -1048,7 +975,6 @@ inline void R2SymTensorT< T_dim >::AijAkj(const R2TensorT< T_dim >& A)
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or-
@@ -1082,7 +1008,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk(const R2TensorT< T_dim >& A)
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  *
  * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or-
@@ -1135,7 +1060,6 @@ inline void R2SymTensorT< T_dim >::AijAjk(const R2SymTensorT< T_dim >& A)
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$
@@ -1170,7 +1094,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki(const R2TensorT< T_d
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$
@@ -1206,7 +1129,6 @@ inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki(const R2TensorT< T_d
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  *
  * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$
@@ -1242,7 +1164,6 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki(const R2TensorT< T_dim >& 
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] Q rank-2 tensor
  *
@@ -1308,7 +1229,6 @@ inline void R2SymTensorT< T_dim >::QijAjkQlk(const R2SymTensorT< T_dim >& A, con
 
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  *
  * This function performs a dyadic product of a rank-1 tensor with itself
@@ -1346,7 +1266,6 @@ inline void R2SymTensorT< T_dim >::dyadic_aa(const R1TensorT< T_dim >& a)
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @return none
  *
@@ -1361,7 +1280,6 @@ R2SymTensorT< T_dim > DyadicProduct(const R1TensorT< T_dim >& a){
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
  *
