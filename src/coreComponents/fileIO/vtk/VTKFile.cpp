@@ -815,13 +815,11 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "UnstructuredGrid",{} );
 
   // Declaration of the node Piece and the basic informations of the mesh
-  localIndex totalNumberOfCells = 0;
+  localIndex totalNumberOfCells = elemManager->getNumberOfElements();
   localIndex totalNumberOfSubRegion = 0;
-  ElementRegion * titi;
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                               auto const * const elemRegion )
   {
-    totalNumberOfCells += elemRegion->GetTotalSize();
     totalNumberOfSubRegion += elemRegion->numSubRegions();
   });
   vtuWriter.OpenXMLNode( "Piece", { { "NumberOfPoints", std::to_string(nodeManager->size() ) },
