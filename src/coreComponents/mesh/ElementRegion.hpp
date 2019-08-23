@@ -21,7 +21,6 @@
 
 #include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "FaceManager.hpp"
 #include "FaceElementSubRegion.hpp"
 
 namespace geosx
@@ -29,6 +28,7 @@ namespace geosx
 
 class StableTimeStep;
 
+class FaceManager;
 
 /**
  * Class to manage the data stored at the element level.

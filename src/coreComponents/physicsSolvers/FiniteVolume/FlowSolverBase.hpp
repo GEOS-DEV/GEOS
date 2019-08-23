@@ -100,6 +100,10 @@ public:
     static constexpr auto fluidIndexString     = "fluidIndex";
     static constexpr auto solidIndexString     = "solidIndex";
 
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto deltaVolumeString = "deltaVolume";
+
     static constexpr auto aperture0String  = "aperture_n";
 
     using ViewKey = dataRepository::ViewKey;
