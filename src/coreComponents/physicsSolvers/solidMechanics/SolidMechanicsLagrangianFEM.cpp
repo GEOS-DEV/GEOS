@@ -29,6 +29,7 @@
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/contactRelations/ContactRelationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -151,6 +152,10 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "The name of the material that should be used in the constitutive updates");
 
+  RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of contact relation to enforce constraints on fracture boundary.");
+
 
 }
 
@@ -221,6 +226,11 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacement predictors on the nodes.");
+
+    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::contactForceString )->
+      setPlotLevel(PlotLevel::LEVEL_0)->
+      setRegisteringObjects(this->getName())->
+      setDescription( "An array that holds the contact force.");
 
     nodes->RegisterViewWrapper<array1d<globalIndex> >( viewKeyStruct::globalDofNumberString )->setPlotLevel(PlotLevel::LEVEL_1);
   }
@@ -1161,6 +1171,11 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
   }
 
 
+  ApplyContactConstraint( dofManager,
+                          *domain,
+                          &matrix,
+                          &rhs );
+
   matrix.close();
   rhs.close();
 
@@ -1386,6 +1401,125 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
   {
     disp[a] -= incdisp[a];
     incdisp[a] = 0.0;
+  });
+}
+
+
+void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          ParallelMatrix * const matrix,
+                                                          ParallelVector * const rhs )
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+
+  ConstitutiveManager const * const
+  constitutiveManager = domain.GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
+
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
+  real64 const contactStiffness = contactRelation->stiffness();
+
+  arrayView1d<R1Tensor const> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
+  arrayView1d<R1Tensor> const & fc = nodeManager->getReference< array1d<R1Tensor> >( viewKeyStruct::contactForceString );
+  fc = {0,0,0};
+
+  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+
+  arrayView1d<globalIndex> const &
+  nodeDofNumber =  nodeManager->getReference<globalIndex_array>( SolidMechanicsLagrangianFEM::
+                                                                 viewKeyStruct::globalDofNumberString);
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+      arrayView1d<real64> const & area = subRegion->getElementArea();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+
+      forall_in_range<serialPolicy>( 0,
+                                     subRegion->size(),
+                                     GEOSX_LAMBDA ( localIndex const kfe )
+      {
+
+        if( ghostRank[kfe] < 0 )
+        {
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
+
+          localIndex const kf0 = elemsToFaces[kfe][0];
+          localIndex const kf1 = elemsToFaces[kfe][1];
+          localIndex const numNodesPerFace=facesToNodes[kf0].size();
+          localIndex const * const nodelist0 = facesToNodes[kf0];
+          localIndex const * const nodelist1 = facesToNodes[kf1];
+          real64 const Ja = area[kfe] / numNodesPerFace;
+
+
+          globalIndex rowDOF[24] = {0};
+          real64 nodeRHS[24] = {0};
+          stackArray2d<real64, (4*3*2)*(4*3*2)> dRdP(numNodesPerFace*3*2, numNodesPerFace*3*2);
+
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+          {
+            R1Tensor penaltyForce = Nbar;
+            localIndex const node0 = facesToNodes[kf0][a];
+            localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
+            R1Tensor gap = u[node1];
+            gap -= u[node0];
+            real64 const gapNormal = Dot(gap,Nbar);
+
+            if( gapNormal < 0 )
+            {
+              penaltyForce *= -contactStiffness * gapNormal * Ja;
+              for( int i=0 ; i<3 ; ++i )
+              {
+                rowDOF[3*a+i]                     = 3*nodeDofNumber[node0]+i;
+                rowDOF[3*(numNodesPerFace + a)+i] = 3*nodeDofNumber[node1]+i;
+
+
+                fc[node0] -= penaltyForce;
+                fc[node1] += penaltyForce;
+                nodeRHS[3*a+i]                     -= penaltyForce[i];
+                nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
+
+                dRdP(3*a+i,3*a+i)                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                dRdP(3*a+i,3*(numNodesPerFace + a)+i)                     += contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                dRdP(3*(numNodesPerFace + a)+i,3*a+i)                     += contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+                dRdP(3*(numNodesPerFace + a)+i,3*(numNodesPerFace + a)+i) -= contactStiffness * Ja * Nbar[i] * Nbar[i] ;
+              }
+            }
+          }
+
+  //        std::cout<<"kfe = "<<kfe<<std::endl;
+  //        for( localIndex a=0 ; a<numNodesPerFace*2*3 ; ++a )
+  //        {
+  //          printf(" |  " );
+  //
+  //          for( localIndex b=0 ; b<numNodesPerFace*2*3 ; ++b )
+  //          {
+  //            printf(" %6.2g ", dRdP(a,b) );
+  //          }
+  //          printf(" |  %6.2g  | \n", nodeRHS[a] );
+  //        }
+  //        std::cout<<std::endl;
+          rhs->add( rowDOF,
+                    nodeRHS,
+                    numNodesPerFace*3*2 );
+
+          matrix->add( rowDOF,
+                       rowDOF,
+                       dRdP.data(),
+                       numNodesPerFace * 3 *2,
+                       numNodesPerFace * 3 *2 );
+        }
+      });
   });
 }
 

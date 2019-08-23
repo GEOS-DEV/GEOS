@@ -7,18 +7,17 @@
     gravityVector="0.0,0.0,-0.0"
     >
   
-  
     <Hydrofracture 
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="1"
+      verboseLevel="0"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
       <SystemSolverParameters
-        maxIterNewton="2000"
+        maxIterNewton="50"
         newtonTol="1e-5"
         verbosityFlag="0"
         maxLineSearchCuts="10"
@@ -34,6 +33,7 @@
       discretization="FE1"
       targetRegions="{Region2}"
       solidMaterialName="rock"
+      contactRelationName="fractureContact"
       >
       <SystemSolverParameters 
         krylovTol="1.0e-10"
@@ -63,7 +63,7 @@
     
     <SurfaceGenerator
       name="SurfaceGen"
-      verboseLevel="0"
+      verboseLevel="1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
       >
@@ -73,12 +73,12 @@
   
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
-                  xCoords="{-10, 10}"
-                  yCoords="{0, 20}"
+                  elementTypes="{C3D8}"
+                  xCoords="{-50, -20, 20, 50}"
+                  yCoords="{0, 40, 100}"
                   zCoords="{0, 1}"
-                  nx="{20}"
-                  ny="{20}"
+                  nx="{30, 40, 30}"
+                  ny="{40, 60}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -86,14 +86,14 @@
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  20.01, 1.01"/>
+         xMax=" 0.01,  100.01, 1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  1.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="20.0">
+  <Events maxTime="50.0">
   
     <SoloEvent 
       name="initialPlot"
@@ -113,7 +113,21 @@
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent 
-      name="solverApplications"
+      name="solverApplications0"
+      beginTime="0.0"
+      endTime="2.0"
+      forceDt="0.1"
+      target="/Solvers/hydrofracture" />
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="2.0"
+      endTime="10.0"
+      forceDt="0.5"
+      target="/Solvers/hydrofracture" />
+    <PeriodicEvent 
+      name="solverApplications2"
+      beginTime="10.0"
+      endTime="50.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture" />
 
@@ -160,7 +174,6 @@
                    
     <FaceElementRegion name="Fracture"
                        materialList="{water, rock}"/>
-                   
   </ElementRegions>
 
   <Constitutive>
@@ -170,7 +183,7 @@
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
-                                  referenceViscosity="0.001"
+                                  referenceViscosity="0.01"
                                   viscosibility="0.0"/>
 
     <PoroLinearElasticIsotropic name="rock"
@@ -183,7 +196,7 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e10" >
+      penaltyStiffness="1.0e8" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
@@ -253,8 +266,8 @@
     <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="1.0e7"
-               setNames="{source}"/-->
+               scale="0.0"
+               setNames="{all}"/-->
                
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
@@ -270,7 +283,8 @@
   </Partition>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+      <Silo name="siloOutput"
+          plotLevel="3"/>
       <Restart name="sidreRestart"/>
   </Outputs>
 
