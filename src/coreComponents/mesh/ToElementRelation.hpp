@@ -37,6 +37,9 @@ template< typename BASETYPE >
 class ToElementRelation
 {
 public:
+
+  using base_type = BASETYPE;
+
   ToElementRelation();
   ~ToElementRelation();
 
