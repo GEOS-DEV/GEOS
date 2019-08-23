@@ -675,6 +675,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
         }
       }
     }
+
 #ifdef USE_GEOSX_PTP
 
     modifiedObjects.clearNewFromModified();
@@ -3753,16 +3754,31 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
               {
                 nElemEachSide[0] += 1;
                 fNode += temp;
+
+                //wu40: for debug purpose
+                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+                std::cout << "Add to total nodal force: " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
               else
               {
                 nElemEachSide[1] +=1;
                 fNode -= temp;
+
+                //wu40: for debug purpose
+                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+                std::cout << "Minus from total nodal force: " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
             }
             else
             {
               fNode += temp;
+
+              //wu40: for debug purpose
+              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+              std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+              std::cout << "Add to total nodal force: " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
             }
           }
         }
@@ -4141,7 +4157,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
       {
         if( iedge != edgeID )
         {
-          for( auto iface : edgesToFaces[edgeID] )
+          for( auto iface : edgesToFaces[iedge] )
           {
             if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.m_isExternal[iface] < 1 &&
                 ( std::find(facesToNodes[iface].begin(), facesToNodes[iface].end(), edgesToNodes[edgeID][0]) != facesToNodes[iface].end() ||
