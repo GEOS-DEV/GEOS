@@ -889,6 +889,8 @@ void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices )
 {
+  arrayView1d<localIndex const> const &
+  childFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::childIndexString );
 
   for( localIndex const targetIndex : targetIndices )
   {
