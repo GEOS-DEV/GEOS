@@ -36,7 +36,8 @@ SolverBase::SolverBase( std::string const & name,
   m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
-  m_maxStableDt{ 1e99 }
+  m_maxStableDt{ 1e99 },
+  m_dofManager( name )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -460,6 +461,29 @@ void SolverBase::ImplicitStepSetup( real64 const & time_n,
                                     ParallelVector & solution )
 {
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
+}
+
+void SolverBase::SetupDofs( DofManager & dofManager ) const
+{
+  GEOS_ERROR( "SolverBase::SetupDofs called!. Should be overridden." );
+}
+
+void SolverBase::SetupSystem( DomainPartition * const domain,
+                              DofManager & dofManager,
+                              ParallelMatrix & matrix,
+                              ParallelVector & rhs,
+                              ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+
+  dofManager.setMesh( domain, 0, 0 );
+
+  SetupDofs( dofManager );
+  dofManager.close();
+
+  dofManager.setSparsityPattern( matrix );
+  dofManager.setVector( rhs );
+  dofManager.setVector( solution );
 }
 
 void SolverBase::AssembleSystem( real64 const time,
