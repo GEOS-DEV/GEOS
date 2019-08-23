@@ -45,3 +45,6 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/libmkl_gnu_thread.so
                   ${MKL_ROOT}/lib/libmkl_core.so
                   CACHE STRING "")
+
+
+set( ENABLE_TOTALVIEW_OUTPUT ON CACHE BOOL "Enables Totalview custom view" FORCE)
