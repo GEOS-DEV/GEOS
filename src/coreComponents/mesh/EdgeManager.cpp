@@ -324,7 +324,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 {
   GEOSX_MARK_FUNCTION;
 
-  constexpr int MAX_EDGES_PER_NODE = 10;
+  constexpr int MAX_EDGES_PER_NODE = 40;
   localIndex const numNodes = nodeManager->size();
 
   arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap = faceManager->nodeList().toViewConst();

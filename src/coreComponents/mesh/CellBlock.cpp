@@ -106,13 +106,8 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
-    //wu40: I change the face to node index rule for finite element calculation. Need to talk with Antoine regarding the VTK node ordering.
     if (localFaceIndex == 0)
     {
-//      nodeIndicies.resize(3);
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
       nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
@@ -121,10 +116,6 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     }
     else if (localFaceIndex == 1)
     {
-//      nodeIndicies.resize(3);
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][4];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
       nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
@@ -133,35 +124,21 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies.resize(4);
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
-//      nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
-      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies.resize(4);
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
-//      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
+      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
-      nodeIndicies[3] = std::numeric_limits<localIndex>::max();
     }
     else if (localFaceIndex == 4)
     {
       nodeIndicies.resize(4);
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
-//      nodeIndicies[3] = m_toNodesRelation[elementIndex][5];
       nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
