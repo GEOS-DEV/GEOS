@@ -34,12 +34,13 @@ using namespace cxx_utilities;
 SiloOutput::SiloOutput( std::string const & name,
                         ManagedGroup * const parent ):
   OutputBase( name, parent),
-  m_plotFileRoot(),
+  m_plotFileRoot("plot"),
   m_writeFaceMesh(),
   m_plotLevel()
 {
   RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
+    setApplyDefaultValue("plot")->
     setDescription("");
 
   RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
