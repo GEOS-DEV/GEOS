@@ -136,7 +136,7 @@ class CustomVTUXMLWriter
       {
         elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
         {
-          totalNumberOfConnectivities = elemSubRegion->size() * elemSubRegion->numNodesPerElement();
+          totalNumberOfConnectivities += elemSubRegion->size() * elemSubRegion->numNodesPerElement();
         });
       });
       WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
@@ -191,6 +191,19 @@ class CustomVTUXMLWriter
     else
     {
       WriteCellAsciiData( dataView, elemManager );
+    }
+  }
+
+  template< typename T >
+  void WriteNodeData(  ViewWrapper< T > const & dataView, bool binary)
+  {
+    if( binary )
+    {
+      WriteNodeBinaryData( dataView ); 
+    }
+    else
+    {
+      WriteNodeAsciiData( dataView );
     }
   }
 
@@ -502,6 +515,42 @@ class CustomVTUXMLWriter
       DumpBuffer( stream );
     }
 
+    template< typename T >
+    void WriteNodeAsciiData( ViewWrapper< T > const & dataView )
+    {
+      auto & viewRef = dataView.reference();
+      for( localIndex i = 0; i < viewRef.size(); i++ )
+      {
+        m_outFile << viewRef[i] << "\n";
+      }
+    }
+
+    template< typename T >
+    void WriteNodeBinaryData( ViewWrapper< T > const & dataView )
+    {
+      std::stringstream stream;
+      auto & viewRef = dataView.reference();
+      std::uint32_t size = integer_conversion < std::uint32_t >(  viewRef.size() * sizeof( viewRef[0]) );
+      integer multiplier = FindMultiplier( sizeof( viewRef[0] ) );// We do not write all the data at once to avoid creating a big table each time.
+      string outputString;
+      outputString.resize( FindBase64StringLength( sizeof( viewRef[0] )  * multiplier ) );
+      T dataFragment( multiplier );
+      integer countDataFragment = 0;
+      WriteSize( viewRef.size(), sizeof( viewRef[0] ) );
+      for( localIndex i = 0; i < viewRef.size(); i++ )
+      {
+        dataFragment[countDataFragment++] = viewRef[i];
+        if( countDataFragment == multiplier )
+        {
+           stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( viewRef[0] ) * countDataFragment );
+           countDataFragment = 0;
+        }
+      }
+      outputString.resize( FindBase64StringLength( sizeof( viewRef[0] ) * ( countDataFragment) ) );
+      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( viewRef[0]) * ( countDataFragment ) );
+      DumpBuffer( stream );
+    }
+
     /*!
      * @brief This function is used to compute the minimum number of value of a certain type
      * that can be continously encoded into a base64 to be properly written into the VTU file.
@@ -557,6 +606,21 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::Eleme
       }
     });
   });
+  DumpBuffer( stream );
+}
+
+template<>
+inline void CustomVTUXMLWriter::WriteNodeBinaryData( ViewWrapper< r1_array > const & dataView )
+{
+  std::stringstream stream;
+  auto & viewRef = dataView.reference();
+  string outputString;
+  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3 ) );
+  WriteSize( viewRef.size() * 3, sizeof( real64 ) );
+  for( localIndex i = 0; i < viewRef.size(); i++)
+  {
+    stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( viewRef[i].Data() ), outputString, sizeof( real64 ) * 3 );
+  }
   DumpBuffer( stream );
 }
 
@@ -777,7 +841,6 @@ void VTKFile::Write( double const timeStep,
 
   // Point data output
   vtuWriter.OpenXMLNode( "PointData", {} );
-  /*
   for( auto & nodeField : nodeFields )
   {
     ViewWrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
@@ -785,20 +848,15 @@ void VTKFile::Write( double const timeStep,
                                           { "Name", std::get<0>( nodeField ) },
                                           { "NumberOfComponents", std::to_string( std::get<2>( nodeField ) ) },
                                           { "format", format } } );
-    if( m_binary )
-    {
-      vtuWriter.WriteSize( nodeManager->size() * std::get<2>( nodeField ), sizeof( localIndex ) );
-    }
     rtTypes::ApplyArrayTypeLambda1( std::get<3>( nodeField ),
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
       const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
-      vtuWriter.WriteData( view.reference(), m_binary );
+      vtuWriter.WriteNodeData( view, m_binary );
     });
     vtuWriter.CloseXMLNode( "DataArray" );
   }
-  */
   vtuWriter.CloseXMLNode( "PointData" );
 
   // Definition of the node Cells
