@@ -892,6 +892,8 @@ void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set<local
   arrayView1d<localIndex const> const &
   childFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::childIndexString );
 
+  ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange (targetIndices);
+
   for( localIndex const targetIndex : targetIndices )
   {
     localIndex const childIndex = childFaceIndices[targetIndex];
