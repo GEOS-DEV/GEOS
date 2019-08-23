@@ -907,9 +907,6 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices )
 {
   arrayView1d<localIndex const> const &
-  parentFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-  arrayView1d<localIndex const> const &
   childFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::childIndexString );
 
   for( localIndex const targetIndex : targetIndices )
