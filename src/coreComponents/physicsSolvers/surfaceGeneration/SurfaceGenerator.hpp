@@ -41,6 +41,8 @@ struct ModifiedObjectLists
   map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
+
+  void insert( ModifiedObjectLists const & lists );
 };
 
 
@@ -123,6 +125,7 @@ public:
 
 protected:
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
+  virtual void postRestartInitialization( ManagedGroup * const domain ) override final;
 
 private:
 
