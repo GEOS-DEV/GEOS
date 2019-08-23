@@ -499,13 +499,23 @@ class CustomVTUXMLWriter
         elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
                                                                                      auto const * const elemSubRegion )
         {
-          for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
-          {
-            dataFragment[countDataFragment++] = dataView[er][esr][ei];
-            if( countDataFragment == multiplier )
+          if ( dataView[er][esr].size() > 0 )
+            for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
             {
-              stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( dataView[0][0][0] ) * countDataFragment );
-              countDataFragment = 0;
+              dataFragment[countDataFragment++] = dataView[er][esr][ei];
+              if( countDataFragment == multiplier )
+              {
+                stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), outputString, sizeof( dataView[0][0][0] ) * countDataFragment );
+                countDataFragment = 0;
+              }
+            }
+          else
+          {
+            real64_array nanArray(3);
+            nanArray[0] = nanArray[1] = nanArray[2] = std::nan("0");
+            for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+            {
+              stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), outputString, sizeof( real64 ) * 3 );
             }
           }
         });
@@ -592,7 +602,7 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::Eleme
 {
   std::stringstream stream;
   string outputString;
-  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3 ) );
+  outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3) );
   WriteSize( elemManager->getNumberOfElements() * 3, sizeof( real64 ) );
   elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
@@ -600,9 +610,19 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::Eleme
     elemRegion->template forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
                                                                                  auto const * const elemSubRegion )
     {
-      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+      if ( dataView[er][esr].size() > 0 )
+        for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+        {
+          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[er][esr][ei].Data() ), outputString, sizeof( real64 ) * 3 );
+        }
+      else
       {
-        stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[er][esr][ei].Data() ), outputString, sizeof( real64 ) * 3 );
+        real64_array nanArray(3);
+        nanArray[0] = nanArray[1] = nanArray[2] = std::nan("0");
+        for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+        {
+          stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), outputString, sizeof( real64 ) * 3 );
+        }
       }
     });
   });
@@ -923,29 +943,6 @@ void VTKFile::Write( double const timeStep,
       auto dataView = elemManager->ConstructViewAccessor< cType >(std::get<0>( cellField ));
       vtuWriter.WriteCellData( dataView, elemManager, m_binary );
     });
-    /*
-    if( m_binary )
-    {
-      vtuWriter.WriteSize( totalNumberOfCells*std::get<2>( cellField ) , sizeof( localIndex ) );
-    }
-    elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                             auto const * const elemRegion )
-    {
-      elemRegion->forElementSubRegions([&]( auto const * const subRegion )
-      {
-        ViewWrapperBase const * const wrapper = subRegion->getWrapperBase( std::get<0>( cellField ) );
-        std::type_index typeIndex = std::type_index(wrapper->get_typeid() );
-        rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
-                                        [&]( auto type ) -> void
-        {
-          using cType = decltype(type);
-          const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
-          std::cout << typeIndex.name() << std::endl;
-          vtuWriter.WriteData( view.reference(), m_binary );
-        });
-      });
-    });
-    */
     vtuWriter.CloseXMLNode( "DataArray" );
   }
   vtuWriter.CloseXMLNode( "CellData" );
