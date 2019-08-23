@@ -121,6 +121,7 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
 
 void ManagedGroup::DeregisterViewWrapper( string const & name )
 {
+  m_sidreGroup->destroyView( name );
   m_wrappers.erase( name );
 }
 

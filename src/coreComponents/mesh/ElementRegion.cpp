@@ -20,6 +20,7 @@
 
 #include "CellBlockManager.hpp"
 #include "CellElementSubRegion.hpp"
+#include "EdgeManager.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
