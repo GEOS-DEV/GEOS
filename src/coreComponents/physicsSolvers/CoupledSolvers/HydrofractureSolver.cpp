@@ -688,13 +688,41 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( this->m_verboseLevel == 2 )
   {
-    GEOS_LOG_RANK_0("\nmatrix00:\n" << m_solidSolver->getSystemMatrix());
-    GEOS_LOG_RANK_0("\nmatrix01:\n" << m_matrix01 );
-    GEOS_LOG_RANK_0("\nmatrix10:\n" << m_matrix10 ) ;
-    GEOS_LOG_RANK_0("\nmatrix11:\n" << m_flowSolver->getSystemMatrix());
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix00");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_solidSolver->getSystemMatrix().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
 
-    GEOS_LOG_RANK_0("\nresidual0:\n" << m_solidSolver->getSystemRhs() );
-    GEOS_LOG_RANK_0("\nresidual1:\n" << m_flowSolver->getSystemRhs() );
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix01");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_matrix01.print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix10");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_matrix10.print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix11");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_flowSolver->getSystemMatrix().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("residual0");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_solidSolver->getSystemRhs().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("residual1");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_flowSolver->getSystemRhs().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
   }
 
 }
@@ -713,7 +741,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  std::cout<<"residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual<<std::endl;
+  GEOS_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
 
   return fluidResidual + solidResidual;
 }
@@ -733,34 +761,35 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
-
   arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
-  arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  arrayView1d<R1Tensor> const &
+  fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext = {0,0,0};
 
 
 
   arrayView1d<globalIndex> const &
-  nodeDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+  nodeDofNumber =  nodeManager->getReference<globalIndex_array>( SolidMechanicsLagrangianFEM::
+                                                                 viewKeyStruct::globalDofNumberString);
 
 
-
+  matrix01->open();
   matrix01->zero();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
 
     arrayView1d<globalIndex> const &
-    faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+    faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( SinglePhaseFlow::
+                                                                            viewKeyStruct::blockLocalDofNumberString );
 
     if( subRegion->hasView("pressure") )
     {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
       arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
-
+      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
       arrayView1d<real64> const & area = subRegion->getElementArea();
       array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -770,62 +799,67 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                    subRegion->size(),
                                    GEOSX_LAMBDA ( localIndex const kfe )
       {
-
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
-
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const kf1 = elemsToFaces[kfe][1];
-        localIndex const numNodesPerFace=facesToNodes[kf0].size();
-        localIndex const * const nodelist0 = facesToNodes[kf0];
-        localIndex const * const nodelist1 = facesToNodes[kf1];
-
-
-        globalIndex rowDOF[24];
-        real64 nodeRHS[24];
-        stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
-        globalIndex colDOF = faceElementDofNumber[kfe];
-
-
-        real64 const Ja = area[kfe] / numNodesPerFace;
-
-        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
-        R1Tensor nodalForce(Nbar);
-        nodalForce *= nodalForceMag;
-
-
-        for( localIndex kf=0 ; kf<2 ; ++kf )
+        if( ghostRank[kfe] < 0 )
         {
-          localIndex const faceIndex = elemsToFaces[kfe][kf];
-          localIndex const * const faceToNodes = facesToNodes[faceIndex];
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
 
-          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+          localIndex const kf0 = elemsToFaces[kfe][0];
+          localIndex const kf1 = elemsToFaces[kfe][1];
+          localIndex const numNodesPerFace=facesToNodes[kf0].size();
+          localIndex const * const nodelist0 = facesToNodes[kf0];
+          localIndex const * const nodelist1 = facesToNodes[kf1];
+
+
+          globalIndex rowDOF[24];
+          real64 nodeRHS[24];
+          stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
+          globalIndex colDOF = faceElementDofNumber[kfe];
+
+
+          real64 const Ja = area[kfe] / numNodesPerFace;
+
+          real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
+          R1Tensor nodalForce(Nbar);
+          nodalForce *= nodalForceMag;
+
+
+          for( localIndex kf=0 ; kf<2 ; ++kf )
           {
-            for( int i=0 ; i<3 ; ++i )
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+            localIndex const * const faceToNodes = facesToNodes[faceIndex];
+
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
             {
-              rowDOF[3*a+i] = 3*nodeDofNumber[faceToNodes[a]]+i;
+              for( int i=0 ; i<3 ; ++i )
+              {
+                rowDOF[3*a+i] = 3*nodeDofNumber[faceToNodes[a]]+i;
 
-              nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
-              fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
+                nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
+                fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
 
-              dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
+                dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
+              }
             }
+
+            rhs0->add( rowDOF,
+                       nodeRHS,
+                       numNodesPerFace*3 );
+
+            matrix01->add( rowDOF,
+                           &colDOF,
+                           dRdP.data(),
+                           numNodesPerFace * 3,
+                           1 );
           }
-
-          rhs0->add( rowDOF,
-                     nodeRHS,
-                     numNodesPerFace*3 );
-
-          matrix01->add( rowDOF,
-                         &colDOF,
-                         dRdP.data(),
-                         numNodesPerFace * 3,
-                         1 );
         }
       });
     }
   });
+
+  matrix01->close();
+
 }
 
 
@@ -848,6 +882,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
 
+  matrix10->open();
   matrix10->zero();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
@@ -921,7 +956,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
     } );
   } );
 
-
+  matrix10->close();
 }
 void
 HydrofractureSolver::
@@ -1133,15 +1168,15 @@ void scale2x2System( int const use_scaling,
         }
 
       //if( partition.m_rank == 0 && params->m_verbose >= 2 )
-      {
-        if(k==0)
-        {
-          printf("SolverBase :: Re-scaling matrix \n");
-          printf("           ::   %d ... %.1e\n",k,convergence);
-        }
-        else
-          printf("           ::   %d ... %.1e\n",k,convergence);
-      }
+//      {
+//        if(k==0)
+//        {
+//          printf("SolverBase :: Re-scaling matrix \n");
+//          printf("           ::   %d ... %.1e\n",k,convergence);
+//        }
+//        else
+//          printf("           ::   %d ... %.1e\n",k,convergence);
+//      }
 
       if(convergence < norm_threshold && k > 1) break;
     }
@@ -1649,15 +1684,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
   if( this->m_verboseLevel == 2 )
   {
 
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"solution0"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("solution0");
+    GEOS_LOG_RANK_0("***********************************************************");
     p_solution[0]->Print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
 
-    std::cout<<"***********************************************************"<<std::endl;
-    std::cout<<"solution1"<<std::endl;
-    std::cout<<"***********************************************************"<<std::endl;
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("solution1");
+    GEOS_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
   }
 }
 

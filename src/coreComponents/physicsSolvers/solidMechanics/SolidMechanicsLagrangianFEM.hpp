@@ -347,6 +347,11 @@ public:
                             ParallelVector & rhs );
 
 
+  void ApplyContactConstraint( DofManager const & dofManager,
+                               DomainPartition & domain,
+                               ParallelMatrix * const matrix,
+                               ParallelVector * const rhs );
+
   void SetTimeIntegrationOption( string const & stringVal )
   {
     if( stringVal == "ExplicitDynamic" )
@@ -384,6 +389,8 @@ public:
     static constexpr auto solidMaterialNameString = "solidMaterialName";
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
     static constexpr auto forceExternal = "externalForce";
+    static constexpr auto contactRelationNameString = "contactRelationName";
+    static constexpr auto contactForceString = "contactForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
@@ -418,6 +425,8 @@ protected:
   integer m_strainTheory;
   string m_solidMaterialName;
   localIndex m_solidMaterialFullIndex;
+  string m_contactRelationName;
+
 
   array1d< array1d < set<localIndex> > > m_elemsAttachedToSendOrReceiveNodes;
   array1d< array1d < set<localIndex> > > m_elemsNotAttachedToSendOrReceiveNodes;

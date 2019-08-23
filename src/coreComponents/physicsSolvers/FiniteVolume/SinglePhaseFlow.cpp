@@ -791,7 +791,19 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
+    arrayView1d< integer const > const &
+    ghostRank = subRegion->getReference<array1d<integer> >( ObjectManagerBase::viewKeyStruct::ghostRankString);
+
+    set< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert(a);
+      }
+    }
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( localSet,
                                                                             true,
                                                                             time_n + dt,
                                                                             dt,
