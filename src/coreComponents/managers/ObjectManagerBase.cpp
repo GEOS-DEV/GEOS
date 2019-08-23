@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ObjectManagerBase.cpp
- *
- *  Created on: Sep 15, 2016
- *      Author: settgast1
+/**
+ * @file ObjectManagerBase.cpp
  */
 
 #include "ObjectManagerBase.hpp"

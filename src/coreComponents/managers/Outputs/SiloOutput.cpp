@@ -74,13 +74,13 @@ void SiloOutput::Execute(real64 const time_n,
 
   integer numFiles = this->parallelThreads();
 
-  silo.setPlotLevel( getReference<integer>( viewKeysStruct::plotLevel ) );
-
-  silo.Initialize(PMPIO_WRITE , numFiles );
-  silo.WaitForBatonWrite(rank, cycleNumber, eventCounter, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0);
+  silo.setPlotLevel( m_plotLevel );
+  silo.setPlotFileRoot( m_plotFileRoot );
+  silo.Initialize( PMPIO_WRITE , numFiles );
+  silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0 );
   silo.HandOffBaton();
-  silo.ClearEmptiesFromMultiObjects(cycleNumber);
+  silo.ClearEmptiesFromMultiObjects( cycleNumber );
   silo.Finish();
 
 }

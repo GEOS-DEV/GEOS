@@ -22,38 +22,18 @@
 
 #include "FaceElementRegion.hpp"
 
+#include "EdgeManager.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
 
 FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const parent ):
-  ElementRegion( name, parent ),
-  m_edgesToFractureConnectors(),
-  m_fractureConnectorsToEdges(),
-  m_fractureConnectorsToFaceElements(),
-  m_faceElementsToCells()
+  ElementRegion( name, parent )
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
 
-  RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsString, &m_edgesToFractureConnectors, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of edge local indices to the fracture connector local indices.")->
-    setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureConnectorsToEdgesString, &m_fractureConnectorsToEdges, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of fracture connector local indices to edge local indices.")->
-    setSizedFromParent(0);
-
-  RegisterViewWrapper( viewKeyStruct::fractureConnectorsToFaceElementsString, &m_fractureConnectorsToFaceElements, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of fracture connector local indices face element local indices")->
-    setSizedFromParent(0);
-
-  RegisterViewWrapper( viewKeyStruct::faceElementsToCellsString, &m_faceElementsToCells, 0 )->
-    setRestartFlags( RestartFlags::NO_WRITE)->
-    setDescription( "A map of face element local indices to the cell local indices")->
-    setSizedFromParent(0);
 
 
 }
@@ -63,7 +43,8 @@ FaceElementRegion::~FaceElementRegion()
 
 
 
-localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceManager,
+localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager,
+                                                 FaceManager const * const faceManager,
                                                  array1d< array1d<localIndex> > const & originalFaceToEdges,
                                                  string const & subRegionName,
                                                  localIndex const faceIndices[2]  )
@@ -82,8 +63,6 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   subRegion->resize( subRegion->size() + 1 );
   rval = subRegion->size() - 1;
 
-  m_faceElementsToCells.resize( subRegion->size(), 2 );
-
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
@@ -93,10 +72,12 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   localIndex const kfe = subRegion->size() - 1;
 
-  m_newFractureElements.insert(kfe);
-
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
+  globalIndex const gi = faceManager->m_localToGlobalMap[faceIndices[0]];
+  subRegion->m_localToGlobalMap[kfe] = gi;
+  subRegion->m_globalToLocalMap[gi] = kfe;
+  subRegion->m_ghostRank[kfe] = faceManager->m_ghostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
   arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceIndices[0]];
@@ -126,9 +107,9 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   for( localIndex ke=0 ; ke<2 ; ++ke )
   {
-    m_faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][ke];
-    m_faceElementsToCells.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][ke];
-    m_faceElementsToCells.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][ke];
+    subRegion->m_faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][ke];
+    subRegion->m_faceElementsToCells.m_toElementSubRegion[kfe][ke] = faceToElementSubRegion[faceIndices[ke]][ke];
+    subRegion->m_faceElementsToCells.m_toElementIndex[kfe][ke] = faceToElementIndex[faceIndices[ke]][ke];
   }
 
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
@@ -136,23 +117,24 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
   for( auto const & edge : connectedEdges )
   {
     // check to see if the edgesToFractureConnectors already have an entry
-    if( m_edgesToFractureConnectors.count(edge)==0 )
+    if( edgeManager->m_edgesToFractureConnectorsEdges.count(edge)==0 )
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      m_fractureConnectorsToFaceElements.push_back({});
-      m_fractureConnectorsToEdges.push_back(edge);
-      m_edgesToFractureConnectors[edge] = m_fractureConnectorsToEdges.size()-1;
+      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( nullptr, 0 );
+      edgeManager->m_fractureConnectorsEdgesToEdges.push_back(edge);
+      edgeManager->m_edgesToFractureConnectorsEdges[edge] = edgeManager->m_fractureConnectorsEdgesToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
-    localIndex const connectorIndex = m_edgesToFractureConnectors[edge];
-    localIndex const numCells = m_fractureConnectorsToFaceElements[connectorIndex].size() + 1;
-    m_fractureConnectorsToFaceElements[connectorIndex].resize( numCells );
-    m_fractureConnectorsToFaceElements[connectorIndex][ numCells-1 ] = kfe;
+    localIndex const connectorIndex = edgeManager->m_edgesToFractureConnectorsEdges[edge];
+    localIndex const numCells = edgeManager->m_fractureConnectorEdgesToFaceElements.sizeOfArray(connectorIndex) + 1;
+    edgeManager->m_fractureConnectorEdgesToFaceElements.resizeArray( connectorIndex, numCells );
+    edgeManager->m_fractureConnectorEdgesToFaceElements[connectorIndex][ numCells-1 ] = kfe;
 
     // And fill the list of connectors that will need stencil modifications
-    m_recalculateConnectors.insert( connectorIndex );
+    edgeManager-> m_recalculateFractureConnectorEdges.insert( connectorIndex );
   }
+
 
   subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
 
@@ -173,6 +155,7 @@ localIndex FaceElementRegion::AddToFractureMesh( FaceManager const * const faceM
 
   return rval;
 }
+
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceElementRegion, std::string const &, ManagedGroup * const )
