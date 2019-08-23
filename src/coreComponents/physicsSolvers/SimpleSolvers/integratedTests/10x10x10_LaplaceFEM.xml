@@ -88,7 +88,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo name="siloOutput"/>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot"/>
     <Restart name="sidreRestart"/>
   </Outputs>
 
