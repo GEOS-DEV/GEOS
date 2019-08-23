@@ -2970,11 +2970,21 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
               {
                 nElemEachSide[0] += 1;
                 nodeDisconnectForce += temp;
+
+                //wu40: for debug purpose
+                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeIndex << std::endl;
+                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+                std::cout << "Add to total nodal force: " << nodeDisconnectForce[0] << ", " << nodeDisconnectForce[1] << ", " << nodeDisconnectForce[2] << std::endl;
               }
               else
               {
                 nElemEachSide[1] +=1;
                 nodeDisconnectForce -= temp;
+
+                //wu40: for debug purpose
+                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeIndex << std::endl;
+                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+                std::cout << "Minus from total nodal force: " << nodeDisconnectForce[0] << ", " << nodeDisconnectForce[1] << ", " << nodeDisconnectForce[2] << std::endl;
               }
             }
           }
