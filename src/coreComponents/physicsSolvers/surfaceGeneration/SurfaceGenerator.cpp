@@ -685,10 +685,107 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     CommunicationTools::AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
 //    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
+    ModifiedObjectLists receivedObjects;
+
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
     ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
-                                                      modifiedObjects);
+                                                      modifiedObjects,
+                                                      receivedObjects );
+
+
+    arrayView1d<localIndex const> const &
+    parentEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+    arrayView1d<localIndex const> const &
+    childEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
+
+    arrayView1d< set<localIndex> > const & edgesToFaces = edgeManager.faceList();
+
+    OrderedVariableOneToManyRelation const & facesToEdges = faceManager.edgeList();
+
+    for( localIndex const edgeIndex : receivedObjects.newEdges )
+    {
+      localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
+
+      GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
+
+      m_tipEdges.erase(parentEdgeIndex);
+      for( localIndex const faceIndex : edgesToFaces[parentEdgeIndex] )
+      {
+        bool trailingFace = false;
+        if (m_trailingFaces.contains(faceIndex))
+        {
+          for ( localIndex const faceLocalEdgeIndex :facesToEdges[faceIndex] )
+          {
+            if (m_tipEdges.contains(faceLocalEdgeIndex))
+            {
+              trailingFace = true;
+            }
+          }
+
+          if (trailingFace == false)
+          {
+            m_trailingFaces.erase(faceIndex);
+          }
+        }
+      }
+    }
+
+    integer_array& isFaceSeparable = faceManager.getReference<integer_array>( "isFaceSeparable" );
+    arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
+    arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
+
+    arrayView1d<localIndex const> const &
+    parentNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+    arrayView1d<localIndex const> const &
+    childNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
+
+    for( localIndex const faceIndex : receivedObjects.newFaces )
+    {
+      m_trailingFaces.insert(faceIndex);
+      m_tipFaces.erase(faceIndex);
+
+      for( auto edgeIndex : faceManager.edgeList()[faceIndex] )
+      {
+        if( parentEdgeIndices[edgeIndex]==-1 && childEdgeIndices[edgeIndex]==-1 )
+        {
+          m_tipEdges.insert( edgeIndex );
+
+          for ( auto iface: edgeManager.faceList()[edgeIndex])
+          {
+            if( facesToElementIndex.size(1) == 2  &&
+                faceManager.m_isExternal[iface] < 1 &&
+                isFaceSeparable[iface] == 1 &&
+                fabs(Dot(faceNormals[faceIndex], faceNormals[iface])) > cos( m_maxTurnAngle ) )
+            {
+              m_tipFaces.insert(iface);
+            }
+          }
+        }
+        if( edgeManager.m_isExternal[edgeIndex]==0 )
+        {
+          edgeManager.m_isExternal[edgeIndex] = 2;
+        }
+      }
+      for( auto nodeIndex : faceManager.nodeList()[faceIndex] )
+      {
+        if( parentNodeIndices[nodeIndex]==-1 && childNodeIndices[nodeIndex]==-1 )
+
+        {
+          m_tipNodes.insert( nodeIndex );
+        }
+        if( nodeManager.m_isExternal[nodeIndex] )
+        {
+          nodeManager.m_isExternal[nodeIndex] = 2;
+        }
+      }
+    }
+
+
+
+
 #else
     AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
     AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
