@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="0"
+      verboseLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -93,7 +93,7 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="0.1">
   
     <SoloEvent 
       name="initialPlot"
