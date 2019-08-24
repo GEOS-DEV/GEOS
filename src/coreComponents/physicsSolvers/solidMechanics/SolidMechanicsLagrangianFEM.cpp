@@ -1304,8 +1304,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
               penaltyForce *= -contactStiffness * gapNormal * Ja;
               for( int i=0 ; i<3 ; ++i )
               {
-                rowDOF[3*a+i]                     = 3*nodeDofNumber[node0]+i;
-                rowDOF[3*(numNodesPerFace + a)+i] = 3*nodeDofNumber[node1]+i;
+                rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
+                rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
 
 
                 fc[node0] -= penaltyForce;
