@@ -74,11 +74,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-50, -20, 20, 50}"
-                  yCoords="{0, 40, 100}"
+                  xCoords="{ -1, 1}"
+                  yCoords="{0, 2}"
                   zCoords="{0, 1}"
-                  nx="{30, 40, 30}"
-                  ny="{40, 60}"
+                  nx="{2}"
+                  ny="{2}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
