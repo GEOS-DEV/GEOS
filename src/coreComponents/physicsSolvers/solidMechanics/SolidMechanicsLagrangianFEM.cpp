@@ -153,7 +153,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setDescription( "The name of the material that should be used in the constitutive updates");
 
   RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
-    setInputFlag(InputFlags::REQUIRED)->
+    setApplyDefaultValue("NOCONTACT")->
+    setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
 

@@ -569,19 +569,89 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( dofManager );
-  dofManager.close();
-
+//  dofManager.setMesh( domain, 0, 0 );
+//  SetupDofs( dofManager );
+//  dofManager.close();
+//
   // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
 
-  dofManager.setSparsityPattern( m_matrix01,
-                                 keys::TotalDisplacement,
-                                 FlowSolverBase::viewKeyStruct::pressureString );
+//  dofManager.setSparsityPattern( m_matrix01,
+//                                 keys::TotalDisplacement,
+//                                 FlowSolverBase::viewKeyStruct::pressureString );
+//
+//  dofManager.setSparsityPattern( m_matrix10,
+//                                 FlowSolverBase::viewKeyStruct::pressureString,
+//                                 keys::TotalDisplacement );
 
-  dofManager.setSparsityPattern( m_matrix10,
-                                 FlowSolverBase::viewKeyStruct::pressureString,
-                                 keys::TotalDisplacement );
+
+
+
+  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
+                                  m_flowSolver->getSystemMatrix().localCols(),
+                                  9,
+                                  MPI_COMM_GEOSX);
+  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().localCols(),
+                                  m_solidSolver->getSystemMatrix().localRows(),
+                                  24,
+                                  MPI_COMM_GEOSX);
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+
+
+
+  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+
+  arrayView1d<globalIndex> const &
+  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
+  {
+    localIndex const numElems = elementSubRegion->size();
+    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
+    arrayView1d<globalIndex> const &
+    faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
+
+    for( localIndex k=0 ; k<numElems ; ++k )
+    {
+      globalIndex const activeFlowDOF = faceElementDofNumber[k];
+      localIndex const numNodesPerElement = elemsToNodes[k].size();
+      array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
+      array1d<real64> values( 3*numNodesPerElement );
+      values = 1;
+
+      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+      {
+        for( int d=0 ; d<3 ; ++d )
+        {
+          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
+        }
+      }
+
+      m_matrix01.insert( activeDisplacementDOF.data(),
+                         &activeFlowDOF,
+                         values.data(),
+                         activeDisplacementDOF.size(),
+                         1 );
+
+      m_matrix10.insert( &activeFlowDOF,
+                         activeDisplacementDOF.data(),
+                         values.data(),
+                         1,
+                         activeDisplacementDOF.size() );
+
+    }
+  });
+
+  m_matrix01.close();
+  m_matrix10.close();
+
+
+
+
 
 }
 
@@ -951,8 +1021,8 @@ ApplySystemSolution( DofManager const & dofManager,
                      DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ApplySystemSolution( dofManager, m_solidSolver->getSystemSolution(), 1.0, domain );
-  m_flowSolver->ApplySystemSolution( dofManager, m_flowSolver->getSystemSolution(), -1.0, domain );
+  m_solidSolver->ApplySystemSolution( m_solidSolver->getDofManager(), m_solidSolver->getSystemSolution(), 1.0, domain );
+  m_flowSolver->ApplySystemSolution( m_flowSolver->getDofManager(), m_flowSolver->getSystemSolution(), -1.0, domain );
 
   this->UpdateDeformationForCoupling(domain);
 

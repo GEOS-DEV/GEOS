@@ -287,7 +287,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
     // This should fix NaN density in newly created fracture elements
-    UpdateState( subRegion );
+    //UpdateState( subRegion );
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
