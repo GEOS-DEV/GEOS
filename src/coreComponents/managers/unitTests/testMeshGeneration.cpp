@@ -102,7 +102,7 @@ protected:
     "                  cellBlockNames=\"{cb1}\"/>"
     "  </Mesh>"
     "  <ElementRegions>"
-    "    <ElementRegion name=\"region1\" cellBlocks=\"{cb1}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region1\" cellBlocks=\"{cb1}\" materialList=\"{dummy_material}\" />"
     "  </ElementRegions>"
     "</Problem>";
 
