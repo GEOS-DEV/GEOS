@@ -99,16 +99,8 @@ public:
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
 
-  /**
-   * This function is used to expand any objects in the data structure.
-   * Currently, there is only one type of element region
-   */
   virtual void ExpandObjectCatalogs() override;
 
-  /**
-   * This function is used to inform the schema generator of any
-   * deviations between the xml and GEOS data structures.
-   */
   virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
                                    xmlWrapper::xmlNode schemaParent,
                                    integer documentationType) override;
