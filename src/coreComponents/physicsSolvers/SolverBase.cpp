@@ -22,6 +22,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -170,6 +171,47 @@ void SolverBase::SetLinearSolverParameters()
     }
   }
 }
+
+void SolverBase::SetSourceFluxSetSize(real64 const time,
+				      real64 const dt,
+				      DomainPartition * const domain)
+{
+
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  array1d<integer> fluxBCElementNumberLocal;
+
+  fsManager->Apply( time + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
+  {
+
+    integer_array& is_ghost = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);    
+
+    integer aa = 0;
+
+    for( auto a : lset )
+      {
+	if(is_ghost[a] < 0)    
+	  aa++;
+      }
+
+    fluxBCElementNumberLocal.push_back(aa);
+    
+  });
+
+
+  integer fluxBCNum = integer_conversion<int>(fluxBCElementNumberLocal.size());
+
+  m_sourceFluxSetSize.resize(fluxBCNum);
+
+  MPI_Allreduce( fluxBCElementNumberLocal.data(), m_sourceFluxSetSize.data(), fluxBCNum, MPI_INT, MPI_SUM, MPI_COMM_GEOSX );
+
+}
+
 
 real64 SolverBase::SolverStep( real64 const & time_n,
                                real64 const & dt,
