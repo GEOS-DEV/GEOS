@@ -207,7 +207,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     UpdateState( subRegion );
@@ -275,7 +275,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
@@ -299,7 +299,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
       forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
                                                           [&] ( localIndex const er,
                                                                 localIndex const esr,
-                                                                ElementRegion *,
+                                                                ElementRegionBase *,
                                                                 FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
@@ -330,7 +330,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -529,7 +529,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                             FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegion const * const region,
+                                                                         ElementRegionBase const * const region,
                                                                          auto const * const subRegion )
   {
     AccumulationLaunch<ISPORO>( er, esr, subRegion, matrix, rhs );
@@ -989,7 +989,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   real64 localResidualNorm = 0.0;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegionBase const * const region,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1027,7 +1027,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     dofManager.addVectorToField( solution,
@@ -1076,7 +1076,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
