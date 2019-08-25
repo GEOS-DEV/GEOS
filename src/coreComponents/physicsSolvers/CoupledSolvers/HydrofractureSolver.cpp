@@ -27,6 +27,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contactRelations/ContactRelationBase.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -34,7 +35,6 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -802,7 +802,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegion const * const region,
+                                                                         ElementRegionBase const * const region,
                                                                          FaceElementSubRegion const * const subRegion )
   {
 

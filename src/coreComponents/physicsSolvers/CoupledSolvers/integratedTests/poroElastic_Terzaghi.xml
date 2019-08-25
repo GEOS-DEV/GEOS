@@ -112,7 +112,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale, water}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale, water}" />
   </ElementRegions>
 
   <Constitutive>

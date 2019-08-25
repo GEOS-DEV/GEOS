@@ -1295,10 +1295,18 @@
 	</xsd:complexType>
 	<xsd:complexType name="ElementRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="ElementRegion" type="ElementRegionType" />
+			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
+			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="ElementRegionType">
+	<xsd:complexType name="FaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--cellBlocks => (no description available)-->
 		<xsd:attribute name="cellBlocks" type="string_array" default="" />
