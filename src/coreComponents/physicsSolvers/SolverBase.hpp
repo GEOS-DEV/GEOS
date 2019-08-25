@@ -508,7 +508,7 @@ public:
 
   template<bool CONST>
   using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
-                                                     add_const_if_t<ElementRegion, CONST> *,
+                                                     add_const_if_t<ElementRegionBase, CONST> *,
                                                      add_const_if_t<ElementSubRegionBase, CONST> * )>;
 
   template<typename MESH, typename LAMBDA>
