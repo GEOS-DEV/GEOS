@@ -20,16 +20,15 @@
  * @file FaceElementRegion.cpp
  */
 
-#include "FaceElementRegion.hpp"
-
 #include "EdgeManager.hpp"
+#include "FaceElementRegion.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
 FaceElementRegion::FaceElementRegion( string const & name, ManagedGroup * const parent ):
-  ElementRegion( name, parent )
+  ElementRegionBase( name, parent )
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
 
