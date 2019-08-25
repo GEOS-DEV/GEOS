@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "ElementRegion.hpp"
+#include "ElementRegionBase.hpp"
 
 #include "CellBlockManager.hpp"
 #include "CellElementSubRegion.hpp"
@@ -42,7 +42,7 @@ using namespace dataRepository;
 //using namespace constitutive;
 
 
-ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent ):
+ElementRegionBase::ElementRegionBase( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
   m_numericalMethod()  //,
 //    m_toNodesRelation(this->RegisterViewWrapper< array2d<integer>
@@ -67,10 +67,10 @@ ElementRegion::ElementRegion( string const & name, ManagedGroup * const parent )
 }
 
 
-ElementRegion::~ElementRegion()
+ElementRegionBase::~ElementRegionBase()
 {}
 
-void ElementRegion::PostProcessInput()
+void ElementRegionBase::PostProcessInput()
 {
 }
 
@@ -178,7 +178,7 @@ void ElementRegion::PostProcessInput()
 //      });
 //}
 
-void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
+void ElementRegionBase::GenerateMesh( ManagedGroup const * const cellBlocks )
 {
   ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
@@ -191,7 +191,7 @@ void ElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
   }
 }
 
-void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
+void ElementRegionBase::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -313,6 +313,6 @@ void ElementRegion::GenerateAggregates( FaceManager const * const faceManager, N
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegion, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionBase, std::string const &, ManagedGroup * const )
 
 }

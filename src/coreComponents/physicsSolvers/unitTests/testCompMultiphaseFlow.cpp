@@ -167,7 +167,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   string const dofKey = solver->getDofManager().getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =
@@ -288,7 +288,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
@@ -368,7 +368,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
@@ -478,7 +478,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );

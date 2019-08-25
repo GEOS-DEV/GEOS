@@ -23,10 +23,10 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
+#include "../../mesh/ElementRegionManager.hpp"
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
