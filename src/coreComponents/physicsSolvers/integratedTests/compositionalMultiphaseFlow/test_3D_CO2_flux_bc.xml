@@ -76,8 +76,8 @@
 				   phaseNames="{gas, water}"
 				   componentNames="{co2, water}"
                                    componentMolarWeight="{44e-3, 18e-3}"
-				   phasePVTParaFiles="{pvtgas.txt, pvtliquid.txt}"
-				   flashModelParaFile="co2flash.txt"/>
+				   phasePVTParaFiles="{pvtgas2.txt, pvtliquid2.txt}"
+				   flashModelParaFile="co2flash2.txt"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
