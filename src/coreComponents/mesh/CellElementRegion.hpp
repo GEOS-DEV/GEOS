@@ -21,15 +21,14 @@
  *
  */
 
-#ifndef CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
-#define CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
+#ifndef CORECOMPONENTS_MESH_CELLELEMENTREGION_HPP_
+#define CORECOMPONENTS_MESH_CELLELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 
 namespace geosx
 {
 
-class EdgeManager;
 
 /**
  * @class FaceElementRegion
@@ -39,7 +38,7 @@ class EdgeManager;
  *
  *
  */
-class FaceElementRegion : public ElementRegionBase
+class CellElementRegion : public ElementRegionBase
 {
 public:
   /**
@@ -47,42 +46,23 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  FaceElementRegion( string const & name, ManagedGroup * const parent );
+  CellElementRegion( string const & name, ManagedGroup * const parent );
 
-  FaceElementRegion() = delete;
-  virtual ~FaceElementRegion() override;
+  CellElementRegion() = delete;
+  virtual ~CellElementRegion() override;
 
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
   static const string CatalogName()
-  { return "FaceElementRegion"; }
+  { return "CellElementRegion"; }
 
   virtual const string getCatalogName() const override final
-  { return FaceElementRegion::CatalogName(); }
-
-
-
-  virtual void GenerateMesh( ManagedGroup const * ) override {}
-
-  /**
-   * @brief This function generates and adds entries to the face/fracture mesh
-   * @param faceManager A pointer to the FaceManager object.
-   * @param subRegionName The name of the FaceElementSubRegion to insert the new entries.
-   * @param faceIndices The local indices of the new faces that define the face element.
-   * @return The local index of the new FaceElement entry.
-   */
-  localIndex AddToFractureMesh( EdgeManager * const edgeManager,
-                                FaceManager const * const faceManager,
-                                array1d< array1d<localIndex> > const & originalFaceToEdges,
-                                string const & subRegionName,
-                                localIndex const faceIndices[2] );
-
+  { return CellElementRegion::CatalogName(); }
 
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    static constexpr auto fractureSetString = "fractureSet";
   };
 
 
@@ -92,4 +72,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_ */
+#endif /* CORECOMPONENTS_MESH_CELLELEMENTREGION_HPP_ */

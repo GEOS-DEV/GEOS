@@ -620,7 +620,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
   meshLevel->getFaceManager()->FixUpDownMaps(false);
   for( localIndex er=0 ; er<meshLevel->getElemManager()->numRegions() ; ++er )
   {
-    ElementRegion * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
+    ElementRegionBase * const elemRegion = meshLevel->getElemManager()->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       ElementSubRegionBase * const subRegion = elemRegion->GetSubRegion(esr);

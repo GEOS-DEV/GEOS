@@ -377,7 +377,7 @@ void makeSparsityTPFA( DomainPartition * const domain,
   array1d<string> regions = regionsInput;
   if( regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegion const * const region )
+    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
     {
       regions.push_back( region->getName() );
     } );

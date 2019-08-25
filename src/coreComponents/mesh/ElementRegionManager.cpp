@@ -19,7 +19,6 @@
 #include <map>
 #include <vector>
 
-#include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
@@ -70,7 +69,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {
-    ElementRegion * elemRegion = this->GetRegion( regionNames[reg] );
+    ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion->resize(numElements[reg]);
   }
 }
@@ -125,7 +124,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions([&](ElementRegionBase * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
@@ -133,7 +132,7 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions([&](ElementRegionBase * const elemRegion)->void
   {
     elemRegion->GenerateAggregates( faceManager, nodeManager );
   });
@@ -169,7 +168,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -231,7 +230,7 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -273,7 +272,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -314,7 +313,7 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -370,7 +369,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -417,7 +416,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );

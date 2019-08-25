@@ -768,9 +768,9 @@ void ProblemManager::GenerateMesh()
 
       domain->GenerateSets();
 
-      elemManager->forElementRegions( [&](ElementRegion * const region )->void
+      elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
       {
-        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+        ManagedGroup * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
@@ -824,7 +824,7 @@ void ProblemManager::ApplyNumericalMethods()
 
         for( auto const & regionName : targetRegions )
         {
-          ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+          ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
           localIndex const quadratureSize = feDiscretization == nullptr ? 1 : feDiscretization->getNumberOfQuadraturePoints();
           if( quadratureSize > regionQuadrature[regionName] )
           {
@@ -858,7 +858,7 @@ void ProblemManager::ApplyNumericalMethods()
         string const regionName = iter->first;
         localIndex const quadratureSize = iter->second;
 
-        ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+        ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
