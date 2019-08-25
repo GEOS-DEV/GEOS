@@ -42,11 +42,11 @@ public:
    */
   ///@{
 
-  static const string CatalogName()
-  { return "ElementRegion"; }
-
-  virtual const string getCatalogName() const override
-  { return ElementRegionBase::CatalogName(); }
+//  static const string CatalogName()
+//  { return "ElementRegionBase"; }
+//
+//  virtual const string getCatalogName() const override
+//  { return ElementRegionBase::CatalogName(); }
 
 
   ///@}
