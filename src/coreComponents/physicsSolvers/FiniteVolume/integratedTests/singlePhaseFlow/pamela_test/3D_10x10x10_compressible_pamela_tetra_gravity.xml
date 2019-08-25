@@ -65,7 +65,7 @@
 
 
   <ElementRegions>
-    <ElementRegion name="Domain" cellBlocks="{0_TETRA}" materialList="{water, rock}"/>
+    <CellElementRegion name="Domain" cellBlocks="{0_TETRA}" materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>

@@ -25,8 +25,8 @@
 
 #include "NodeManager.hpp"
 #include "EdgeManager.hpp"
-#include "FaceManager.hpp"
 #include "ElementRegionManager.hpp"
+#include "FaceManager.hpp"
 
 namespace geosx
 {
