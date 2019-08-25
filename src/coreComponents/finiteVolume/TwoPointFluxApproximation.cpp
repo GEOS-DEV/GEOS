@@ -21,10 +21,11 @@
  *
  */
 #include "TwoPointFluxApproximation.hpp"
+
+#include "mesh/FaceElementRegion.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "mesh/FaceElementRegion.hpp"
 
 namespace geosx
 {

@@ -24,13 +24,13 @@
 
 #include "HydrofractureSolver.hpp"
 
+#include "../../mesh/FaceElementRegion.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contactRelations/ContactRelationBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
@@ -802,7 +802,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegion const * const region,
+                                                                         ElementRegionBase const * const region,
                                                                          FaceElementSubRegion const * const subRegion )
   {
 

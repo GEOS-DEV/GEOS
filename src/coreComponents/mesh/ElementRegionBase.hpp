@@ -16,8 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifndef ELEMENTREGION_H
-#define ELEMENTREGION_H
+#ifndef ELEMENT_REGION_BASE_H
+#define ELEMENT_REGION_BASE_H
 
 #include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -33,7 +33,7 @@ class FaceManager;
 /**
  * Class to manage the data stored at the element level.
  */
-class ElementRegion : public ObjectManagerBase
+class ElementRegionBase : public ObjectManagerBase
 {
 public:
 
@@ -46,20 +46,20 @@ public:
   { return "ElementRegion"; }
 
   virtual const string getCatalogName() const override
-  { return ElementRegion::CatalogName(); }
+  { return ElementRegionBase::CatalogName(); }
 
 
   ///@}
 
 
-  ElementRegion() = delete;
+  ElementRegionBase() = delete;
 
-  ElementRegion( string const & name, ManagedGroup * const parent );
+  ElementRegionBase( string const & name, ManagedGroup * const parent );
 
 
-  ElementRegion(const ElementRegion& init);
+  ElementRegionBase(const ElementRegionBase& init);
 
-  virtual ~ElementRegion() override;
+  virtual ~ElementRegionBase() override;
 
   virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
 
@@ -190,7 +190,7 @@ protected:
 
 private:
 
-  ElementRegion& operator=(const ElementRegion& rhs);
+  ElementRegionBase& operator=(const ElementRegionBase& rhs);
 
   string_array m_cellBlockNames;
   string_array m_materialList;
@@ -210,4 +210,4 @@ private:
 
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* ELEMENT_REGION_BASE_H_ */
