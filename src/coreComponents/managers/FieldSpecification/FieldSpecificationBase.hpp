@@ -578,6 +578,21 @@ public:
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
+
+  template< typename FIELD_OP, typename LAI, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                  real64 const time,
+                                  real64 const dt,
+                                  real64 const setSizeFactor,
+                                  dataRepository::ManagedGroup * dataGroup,
+                                  arrayView1d<globalIndex const> const & dofMap,
+                                  integer const & dofDim,
+                                  typename LAI::ParallelMatrix & matrix,
+                                  typename LAI::ParallelVector & rhs,
+                                  LAMBDA && lambda ) const;
+
+  
   struct viewKeyStruct
   {
     constexpr static auto setNamesString = "setNames";
@@ -983,6 +998,116 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                    m_scale * dt * result[counter] * setSizeFactor,
                                                    lambda( a ) );
         ++counter;
+      }
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+  }
+}
+
+template< typename FIELD_OP, typename LAI, typename LAMBDA >
+void
+FieldSpecificationBase::
+ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
+                                real64 const time,
+                                real64 const dt,
+                                real64 const setSizeFactor,
+                                dataRepository::ManagedGroup * dataGroup,
+                                arrayView1d<globalIndex const> const & dofMap,
+                                integer const & dofDim,
+                                typename LAI::ParallelMatrix & matrix,
+                                typename LAI::ParallelVector & rhs,
+                                LAMBDA && lambda ) const
+{
+
+  integer const component = GetComponent();
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  globalIndex_array  dof( targetSet.size() );
+  real64_array rhsContribution( targetSet.size() );
+
+  integer_array& is_ghost = dataGroup->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
+
+  if( functionName.empty() )
+  {
+
+    integer counter=0;
+
+    for( auto a : targetSet )
+    {
+
+      dof( counter ) = dofDim*dofMap[a]+component;
+
+      if(is_ghost[a] < 0)
+	{
+      
+	  FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+						     matrix,
+						     rhsContribution( counter ),
+						     m_scale * dt * setSizeFactor,
+						     lambda( a ) );
+	}
+      else
+	{
+	  
+	  rhsContribution( counter ) = 0.0;
+
+	}
+	  
+
+	  ++counter;
+    }
+    FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+
+  }
+  else
+  {
+
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+    if( function->isFunctionOfTime()==2 )
+    {
+      real64 value = m_scale * dt * function->Evaluate( &time ) * setSizeFactor;
+      integer counter=0;
+      for( auto a : targetSet )
+      {
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+
+      if(is_ghost[a] < 0)
+	FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   value,
+                                                   lambda( a ) );
+      else
+	rhsContribution( counter ) = 0.0;
+      
+      ++counter;
+      }
+      FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
+    }
+    else
+    {
+      real64_array result;
+      result.resize( integer_conversion<localIndex>( targetSet.size()));
+      function->Evaluate( dataGroup, time, targetSet, result );
+      integer counter=0;
+      for( auto a : targetSet )
+      {
+        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+
+      if(is_ghost[a] < 0)	
+        FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   m_scale * dt * result[counter] * setSizeFactor,
+                                                   lambda( a ) );
+      else 
+	rhsContribution( counter ) = 0.0;
+      
+      ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
