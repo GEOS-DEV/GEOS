@@ -50,11 +50,6 @@ ElementRegionBase::ElementRegionBase( string const & name, ManagedGroup * const 
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
 
-  RegisterViewWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
-    setInputFlag(InputFlags::OPTIONAL);
-
-  RegisterViewWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
-    setInputFlag(InputFlags::OPTIONAL);
 }
 
 
