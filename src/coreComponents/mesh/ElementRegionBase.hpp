@@ -61,9 +61,15 @@ public:
 
   virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
+  virtual void GenerateMesh( ManagedGroup const * const cellBlocks )
+  {
+    GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
+  }
 
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
+//  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
+//  {
+//    GEOS_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
+//  }
 
   subGroupMap & GetSubRegions()
   {
@@ -186,16 +192,15 @@ public:
   string_array const & getMaterialList() const {return m_materialList;}
 
 protected:
-  virtual void PostProcessInput() override;
+  string_array m_cellBlockNames;
+  real64 m_coarseningRatio;
 
 private:
 
   ElementRegionBase& operator=(const ElementRegionBase& rhs);
 
-  string_array m_cellBlockNames;
   string_array m_materialList;
   string m_numericalMethod;
-  real64 m_coarseningRatio;
 
 };
 

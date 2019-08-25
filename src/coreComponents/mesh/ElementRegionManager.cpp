@@ -124,7 +124,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
 {
-  this->forElementRegions([&](ElementRegionBase * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
@@ -132,7 +132,7 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
-  this->forElementRegions([&](ElementRegionBase * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateAggregates( faceManager, nodeManager );
   });
