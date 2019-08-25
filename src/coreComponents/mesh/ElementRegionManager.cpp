@@ -75,14 +75,6 @@ void ElementRegionManager::resize( integer_array const & numElements,
 }
 
 
-//CellBlock & ZoneManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             integer const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
-
 ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
@@ -94,12 +86,19 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
 
  }
 
-
 void ElementRegionManager::ExpandObjectCatalogs()
 {
-  // Create an empty region for schema generation
-  // Are there going to be more types in the future?
-  CreateChild( "ElementRegion", "ElementRegion" );
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::GetCatalog();
+  for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin() ;
+       iter!=catalog.end() ;
+       ++iter )
+  {
+    string const key = iter->first;
+    if( key.find("ElementRegion") != std::string::npos )
+    {
+      this->CreateChild( key, key );
+    }
+  }
 }
 
 
@@ -115,11 +114,10 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
-  ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  if (region != nullptr)
+  this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
-  }
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+  });
 }
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
