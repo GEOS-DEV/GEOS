@@ -61,16 +61,26 @@ public:
   virtual const string getCatalogName() const override final
   { return CellElementRegion::CatalogName(); }
 
+
+  void AddCellBlockName( string const & cellBlockName )
+  {
+    m_cellBlockNames.push_back( cellBlockName );
+  }
+
   virtual void GenerateMesh( ManagedGroup const * const cellBlocks ) override;
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    static constexpr auto coarseningRatioString = "coarseningRatio";
+    static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
 
 
 private:
+  string_array m_cellBlockNames;
+  real64 m_coarseningRatio;
 
 };
 

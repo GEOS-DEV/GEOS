@@ -33,7 +33,13 @@ using namespace dataRepository;
 
 CellElementRegion::CellElementRegion( string const & name, ManagedGroup * const parent ):
   ElementRegionBase( name, parent )
-{}
+{
+  RegisterViewWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
+    setInputFlag(InputFlags::OPTIONAL);
+
+  RegisterViewWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+    setInputFlag(InputFlags::OPTIONAL);
+}
 
 CellElementRegion::~CellElementRegion()
 {}

@@ -108,11 +108,6 @@ public:
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
-  void AddCellBlockName( string const & cellBlockName )
-  {
-    m_cellBlockNames.push_back( cellBlockName );
-  }
-
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -183,17 +178,13 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-    static constexpr auto coarseningRatioString = "coarseningRatio"; 
     static constexpr auto elementSubRegions = "elementSubRegions";
-    static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
 
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
 protected:
-  string_array m_cellBlockNames;
-  real64 m_coarseningRatio;
 
 private:
 
