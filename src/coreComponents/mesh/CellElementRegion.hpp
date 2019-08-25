@@ -61,6 +61,10 @@ public:
   virtual const string getCatalogName() const override final
   { return CellElementRegion::CatalogName(); }
 
+  virtual void GenerateMesh( ManagedGroup const * const cellBlocks ) override;
+
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
   };

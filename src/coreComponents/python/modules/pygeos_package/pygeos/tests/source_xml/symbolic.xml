@@ -122,7 +122,7 @@
 
 
   <ElementRegions>
-    <ElementRegion elementtype="poly" name="Region">
+    <CellElementRegion elementtype="poly" name="Region">
       <LinearElasticMaterial BulkModulus="5.5556e9" Density="200000" ShearModulus="4.16667e9"/>
     </ElementRegion>
   </ElementRegions>
