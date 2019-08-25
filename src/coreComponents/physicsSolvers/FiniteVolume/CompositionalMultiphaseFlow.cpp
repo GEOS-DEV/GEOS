@@ -609,6 +609,8 @@ real64 CompositionalMultiphaseFlow::SolverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  SolverBase::SetSourceFluxSetSize(time_n, dt, domain);
+  
   real64 dt_return;
 
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
@@ -1274,6 +1276,11 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
   // apply pressure boundary conditions.
   ApplyDirichletBC_implicit( time_n, dt, &dofManager, domain, &matrix, &rhs );
 
+  // apply flux boundary conditions
+
+  ApplySourceFluxBC( time_n, dt, &dofManager, domain, &matrix, &rhs );
+
+  
   matrix.close();
   rhs.close();
 
@@ -1299,8 +1306,58 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
     GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
     GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
+
+
 }
 
+void
+CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
+						real64 const dt,
+						DofManager const * const dofManager,
+						DomainPartition * const domain,
+						ParallelMatrix * const matrix,
+						ParallelVector * const rhs )
+{
+  
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  localIndex counter =0;
+
+  fsManager->Apply( time + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    ManagedGroup * subRegion,
+                    string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+
+    bool normalizeBySetSize = 1;
+
+    real64 const setSizeFactor = normalizeBySetSize && m_sourceFluxSetSize[counter] > 0 ? 1.0/m_sourceFluxSetSize[counter] : 1.0;
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
+									    time + dt,
+									    dt,
+									    setSizeFactor,
+									    subRegion,
+									    dofNumber,
+									    integer_conversion<int>(m_numDofPerCell),
+									    *matrix,
+									    *rhs,
+									    [&] (localIndex const a) -> real64
+									    {
+									      return 0;
+									    });
+
+    counter++;
+    
+  });
+
+}
+
+  
 void
 CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                                                         real64 const dt,
@@ -1560,7 +1617,13 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
     });
   });
 
-  return result;
+  // compute global residual norm
+  integer lresult = result ? 1 : 0;
+  integer gresult;
+  MPI_Allreduce( &lresult, &gresult, 1, MPI_INT, MPI_MIN, MPI_COMM_GEOSX );
+
+  
+  return gresult > 0;
 }
 
 void
