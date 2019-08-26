@@ -72,7 +72,7 @@ protected:
     ElementRegionManager * const elemManager = problemManager->getDomainPartition()->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     GEOS_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
 
-    ElementRegion * const elemRegion = elemManager->GetRegion( 0 );
+    ElementRegionBase * const elemRegion = elemManager->GetRegion( 0 );
     GEOS_ERROR_IF_NE_MSG( elemRegion->GetSubRegions().size(), 1, "Only one subregion should exist." );
 
     m_subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( 0 );
@@ -102,7 +102,7 @@ protected:
     "                  cellBlockNames=\"{cb1}\"/>"
     "  </Mesh>"
     "  <ElementRegions>"
-    "    <ElementRegion name=\"region1\" cellBlocks=\"{cb1}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region1\" cellBlocks=\"{cb1}\" materialList=\"{dummy_material}\" />"
     "  </ElementRegions>"
     "</Problem>";
 

@@ -10,8 +10,6 @@ option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
-option( ENABLE_TOTALVIEW_OUTPUT "" OFF )
-
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
@@ -40,6 +38,10 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+
+
+
+option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 
 # LAI setup
 

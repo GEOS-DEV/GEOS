@@ -486,6 +486,12 @@ public:
   {
     m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
   }
+
+  void setPlotFileRoot( string const & fileRoot )
+  {
+    m_plotFileRoot = fileRoot;
+  }
+
 private:
 
   /// pointer to the DBfile that this class is working on
@@ -977,7 +983,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     localIndex mixlen = 0;
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+      ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
       localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
@@ -1024,7 +1030,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+      ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
       localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
