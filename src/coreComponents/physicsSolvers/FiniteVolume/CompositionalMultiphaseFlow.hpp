@@ -25,8 +25,8 @@
 
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 namespace geosx
 {
@@ -115,6 +115,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -296,6 +298,8 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
+    static constexpr auto dofFieldString = "compositionalVariables";
+
     // inputs
     static constexpr auto temperatureString = "temperature";
     static constexpr auto useMassFlagString = "useMass";
@@ -305,11 +309,6 @@ public:
     static constexpr auto capPressureNameString  = "capPressureName";
     static constexpr auto capPressureIndexString = "capPressureIndex";
 
-    static constexpr auto blockLocalDofNumberString    = "blockLocalDofNumber_CompositionalMultiphaseFlow";
-
-    // primary solution field
-    static constexpr auto pressureString      = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString  = "facePressure";
     static constexpr auto bcPressureString    = "bcPressure";
 
@@ -351,8 +350,6 @@ public:
     ViewKey relPermIndex = { relPermIndexString };
     ViewKey capPressureName  = { capPressureNameString };
     ViewKey capPressureIndex = { capPressureIndexString };
-
-    ViewKey blockLocalDofNumber    = { blockLocalDofNumberString };
 
     // primary solution field
     ViewKey pressure      = { pressureString };
@@ -428,20 +425,6 @@ private:
    * @param domain the domain containing the mesh and fields
    */
   void BackupFields( DomainPartition * const domain );
-
-  /**
-   * @brief Set up the linear system (DOF indices and sparsity patterns)
-   * @param domain the domain containing the mesh and fields
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   */
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
 
   /**
    * @brief set the sparsity pattern for the linear system

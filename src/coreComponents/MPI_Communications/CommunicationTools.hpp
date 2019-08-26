@@ -44,11 +44,16 @@ class MPI_iCommData;
 class CommunicationTools
 {
 public:
+
+  enum class Reduction { Sum, Min, Max };
+
   CommunicationTools();
   ~CommunicationTools();
 
   template< typename T >
   static MPI_Datatype getMpiType();
+
+  static MPI_Op getMpiOp( Reduction const op );
 
   static void AssignGlobalIndices( ObjectManagerBase & object,
                                    ObjectManagerBase const & compositionObject,
@@ -95,6 +100,30 @@ public:
   template<typename T>
   static void allGather( T const myValue, array1d<T> & allValues );
 
+  /**
+   * @brief Compute exclusive prefix sum and full sum
+   * @tparam T type of local (rank) value
+   * @tparam U type of global (sum) value
+   * @param value the local value
+   * @return a pair where first is the prefix sum, second is the full sum
+   */
+  template< typename U, typename T >
+  static std::pair<U, U> PrefixSum( T const & value );
+
+  template<typename T>
+  static void Broadcast( T & value, int srcRank = 0 );
+
+  template< typename T >
+  static T Reduce( T const & value, Reduction const op);
+
+  template<typename T>
+  static T Sum( T const & value );
+
+  template<typename T>
+  static T Min( T const & value );
+
+  template<typename T>
+  static T Max( T const & value );
 };
 
 
@@ -165,6 +194,21 @@ template<> inline MPI_Datatype CommunicationTools::getMpiType<int>()            
 template<> inline MPI_Datatype CommunicationTools::getMpiType<long int>()       { return MPI_LONG; }
 template<> inline MPI_Datatype CommunicationTools::getMpiType<long long int>()  { return MPI_LONG_LONG; }
 
+inline MPI_Op CommunicationTools::getMpiOp( Reduction const op )
+{
+  switch( op )
+  {
+    case Reduction::Sum:
+      return MPI_SUM;
+    case Reduction::Min:
+      return MPI_MIN;
+    case Reduction::Max:
+      return MPI_MAX;
+    default:
+      GEOS_ERROR( "Unsupported reduction op" );
+  }
+}
+
 template<typename T>
 void CommunicationTools::allGather( T const myValue, array1d<T> & allValues )
 {
@@ -180,6 +224,66 @@ void CommunicationTools::allGather( T const myValue, array1d<T> & allValues )
   allValues.resize(1);
   allValues[0] = myValue;
 #endif
+}
+
+template< typename U, typename T >
+std::pair<U, U> CommunicationTools::PrefixSum( T const & value )
+{
+  array1d<T> gather;
+  allGather( value, gather );
+
+  std::pair<U, U> rval( 0, 0 );
+
+  int const mpiSize = MPI_Size( MPI_COMM_GEOSX );
+  int const mpiRank = MPI_Rank( MPI_COMM_GEOSX );
+
+  for( localIndex p = 0 ; p < mpiSize ; ++p )
+  {
+    if( p < mpiRank )
+    {
+      rval.first += static_cast<U>( gather[p] );
+    }
+    rval.second += static_cast<U>( gather[p] );
+  }
+
+  return rval;
+}
+
+template<typename T>
+void CommunicationTools::Broadcast( T & value, int srcRank )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const mpiType = getMpiType<T>();
+  MPI_Bcast( &value, 1, mpiType, srcRank, MPI_COMM_GEOSX );
+#endif
+}
+
+template< typename T >
+T CommunicationTools::Reduce( T const & value, Reduction const op )
+{
+  T result = value;
+#ifdef GEOSX_USE_MPI
+  MPI_Allreduce( &value, &result, 1, getMpiType<T>(), getMpiOp( op ), MPI_COMM_GEOSX );
+#endif
+  return result;
+}
+
+template< typename T >
+T CommunicationTools::Sum( T const & value )
+{
+  return CommunicationTools::Reduce( value, Reduction::Sum );
+}
+
+template< typename T >
+T CommunicationTools::Min( T const & value )
+{
+  return CommunicationTools::Reduce( value, Reduction::Min );
+}
+
+template< typename T >
+T CommunicationTools::Max( T const & value )
+{
+  return CommunicationTools::Reduce( value, Reduction::Max );
 }
 
 } /* namespace geosx */

@@ -786,7 +786,8 @@
 			<xsd:element name="elementRegions" type="elementRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
-			<xsd:element name="ElementRegion" type="ElementRegionType" />
+			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
+			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -812,8 +813,14 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx::mapBase&lt;long, long, std::integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
+		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
+		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
+		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -834,8 +841,6 @@
 		</xsd:choice>
 		<!--childIndex => child index of the face.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--density => (no description available)-->
-		<xsd:attribute name="density" type="real64_array2d" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -850,10 +855,16 @@
 		<xsd:attribute name="faceArea" type="real64_array" />
 		<!--faceCenter => (no description available)-->
 		<xsd:attribute name="faceCenter" type="r1_array" />
+		<!--faceDensity => (no description available)-->
+		<xsd:attribute name="faceDensity" type="real64_array2d" />
+		<!--faceMobility => (no description available)-->
+		<xsd:attribute name="faceMobility" type="real64_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
 		<!--facePressure => (no description available)-->
 		<xsd:attribute name="facePressure" type="real64_array" />
+		<!--faceViscosity => (no description available)-->
+		<xsd:attribute name="faceViscosity" type="real64_array2d" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -864,16 +875,12 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--mobility => (no description available)-->
-		<xsd:attribute name="mobility" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
 		<!--parentIndex => Parent index of the face.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
-		<!--viscosity => (no description available)-->
-		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -910,8 +917,6 @@
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalDOFNumber => (no description available)-->
-		<xsd:attribute name="globalDOFNumber" type="globalIndex_array" />
 		<!--globalToLocalMap => (no description available)-->
 		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
@@ -945,7 +950,7 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellBlocksType" />
-	<xsd:complexType name="ElementRegionType">
+	<xsd:complexType name="FaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -962,5 +967,64 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
-	<xsd:complexType name="elementSubRegionsType" />
+	<xsd:complexType name="elementSubRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="default" type="defaultType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="defaultType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgeList => Map to the edges attached to each FaceElement.-->
+		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
+		<!--elementAperture => The aperture of each FaceElement.-->
+		<xsd:attribute name="elementAperture" type="real64_array" />
+		<!--elementArea => The area of each FaceElement.-->
+		<xsd:attribute name="elementArea" type="real64_array" />
+		<!--elementCenter => The center of each FaceElement.-->
+		<xsd:attribute name="elementCenter" type="r1_array" />
+		<!--elementVolume => The volume of each FaceElement.-->
+		<xsd:attribute name="elementVolume" type="real64_array" />
+		<!--faceList => Map to the faces attached to each FaceElement.-->
+		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt;" />
+		<!--fractureElementsToCellIndices => A map of face element local indices to the cell local indices-->
+		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array2d" />
+		<!--fractureElementsToCellRegions => A map of face element local indices to the cell local indices-->
+		<xsd:attribute name="fractureElementsToCellRegions" type="localIndex_array2d" />
+		<!--fractureElementsToCellSubRegions => A map of face element local indices to the cell local indices-->
+		<xsd:attribute name="fractureElementsToCellSubRegions" type="localIndex_array2d" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--nodeList => Map to the nodes attached to each FaceElement.-->
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstitutiveModelsType" />
+	<xsd:complexType name="CellElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
 </xsd:schema>

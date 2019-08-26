@@ -216,16 +216,16 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const pres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::pressureString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::pressureString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaPressureString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::oldPorosityString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityOldString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
@@ -246,7 +246,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 

@@ -83,7 +83,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{fluid1, rock, relperm, cappressure}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{fluid1, rock, relperm, cappressure}" />
   </ElementRegions>
 
   <Constitutive>

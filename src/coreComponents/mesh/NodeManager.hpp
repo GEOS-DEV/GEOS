@@ -56,6 +56,10 @@ class NodeManager : public ObjectManagerBase
 {
 public:
 
+  using EdgeMapType = UnorderedVariableOneToManyRelation;
+  using FaceMapType = UnorderedVariableOneToManyRelation;
+  using ElemMapType = OrderedVariableToManyElementRelation;
+
   /**
    * @brief main constructor for NodeManager Objects
    * @param name the name of this instantiation of NodeManager in the repository
@@ -210,13 +214,13 @@ private:
   array1d<R1Tensor> m_referencePosition;
 
   /// nodeToEdge relation
-  UnorderedVariableOneToManyRelation m_toEdgesRelation;
+  EdgeMapType m_toEdgesRelation;
 
   /// nodeToFace relation
-  UnorderedVariableOneToManyRelation m_toFacesRelation;
+  FaceMapType m_toFacesRelation;
 
   /// nodeToElement relation
-  OrderedVariableToManyElementRelation m_toElements;
+  ElemMapType m_toElements;
 
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
