@@ -25,8 +25,8 @@
 
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 
 namespace geosx
 {

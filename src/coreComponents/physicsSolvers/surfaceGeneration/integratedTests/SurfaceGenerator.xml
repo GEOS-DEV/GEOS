@@ -95,7 +95,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
     <FaceElementRegion name="Fracture" materialList="{granite}"/>
   </ElementRegions>
 
