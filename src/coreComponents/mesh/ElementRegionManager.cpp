@@ -19,7 +19,6 @@
 #include <map>
 #include <vector>
 
-#include "ElementRegion.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
@@ -70,19 +69,11 @@ void ElementRegionManager::resize( integer_array const & numElements,
 //  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {
-    ElementRegion * elemRegion = this->GetRegion( regionNames[reg] );
+    ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
     elemRegion->resize(numElements[reg]);
   }
 }
 
-
-//CellBlock & ZoneManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             integer const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
 
 ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
@@ -95,12 +86,19 @@ ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, strin
 
  }
 
-
 void ElementRegionManager::ExpandObjectCatalogs()
 {
-  // Create an empty region for schema generation
-  // Are there going to be more types in the future?
-  CreateChild( "ElementRegion", "ElementRegion" );
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::GetCatalog();
+  for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin() ;
+       iter!=catalog.end() ;
+       ++iter )
+  {
+    string const key = iter->first;
+    if( key.find("ElementRegion") != std::string::npos )
+    {
+      this->CreateChild( key, key );
+    }
+  }
 }
 
 
@@ -116,16 +114,15 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
-  ManagedGroup * region = this->GetGroup(keys::elementRegions)->GetGroup("ElementRegion");
-  if (region != nullptr)
+  this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction(region, schemaRoot, targetChoiceNode, documentationType);
-  }
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+  });
 }
 
 void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateMesh( cellBlockManager->GetGroup(keys::cellBlocks) );
   });
@@ -133,7 +130,7 @@ void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockMan
 
 void ElementRegionManager::GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
 {
-  this->forElementRegions([&](ElementRegion * const elemRegion)->void
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
     elemRegion->GenerateAggregates( faceManager, nodeManager );
   });
@@ -169,7 +166,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -231,7 +228,7 @@ int ElementRegionManager::UnpackPrivate( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -273,7 +270,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -314,7 +311,7 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
@@ -370,7 +367,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = GetRegion(kReg);
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->getName() );
 
     packedSize += bufferOps::Pack<DOPACK>( buffer, elemRegion->numSubRegions() );
@@ -417,7 +414,7 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegion * const elemRegion = GetRegion(regionName);
+    ElementRegionBase * const elemRegion = GetRegion(regionName);
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
