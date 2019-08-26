@@ -80,7 +80,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2"
+    <CellElementRegion name="Region2"
                    cellBlocks="{cb1}"
                    materialList="{water, rock}"/>
                    

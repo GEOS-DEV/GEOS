@@ -21,10 +21,11 @@
  */
 
 #include "MeshLevel.hpp"
+
+#include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
 //#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
-#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -115,7 +116,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
     for( typename dataRepository::indexType kReg=0 ; kReg<elemManager->numRegions() ; ++kReg  )
     {
-      ElementRegion const * const elemRegion = elemManager->GetRegion(kReg);
+      ElementRegionBase const * const elemRegion = elemManager->GetRegion(kReg);
 
       for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
       {
@@ -167,7 +168,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elemManager->numRegions() ; ++kReg  )
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(kReg);
 
     for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
     {

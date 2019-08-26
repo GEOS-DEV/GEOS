@@ -56,6 +56,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CellElementRegion:
+
+Element: CellElementRegion
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/CellElementRegion.rst
+
+
 .. _XML_ChomboIO:
 
 Element: ChomboIO
@@ -119,13 +126,6 @@ Element: DummySolver
 .. include:: ../../coreComponents/fileIO/schema/docs/DummySolver.rst
 
 
-.. _XML_ElementRegion:
-
-Element: ElementRegion
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/ElementRegion.rst
-
-
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -138,6 +138,13 @@ Element: ElementRegions
 Element: Events
 ===============
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
+
+
+.. _XML_FaceElementRegion:
+
+Element: FaceElementRegion
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion.rst
 
 
 .. _XML_FieldSpecification:
@@ -550,6 +557,13 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_CellElementRegion:
+
+Datastructure: CellElementRegion
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CellElementRegion_other.rst
+
+
 .. _DATASTRUCTURE_ChomboIO:
 
 Datastructure: ChomboIO
@@ -592,6 +606,13 @@ Datastructure: Constitutive
 .. include:: ../../coreComponents/fileIO/schema/docs/Constitutive_other.rst
 
 
+.. _DATASTRUCTURE_ConstitutiveModels:
+
+Datastructure: ConstitutiveModels
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ConstitutiveModels_other.rst
+
+
 .. _DATASTRUCTURE_Contact:
 
 Datastructure: Contact
@@ -613,13 +634,6 @@ Datastructure: DummySolver
 .. include:: ../../coreComponents/fileIO/schema/docs/DummySolver_other.rst
 
 
-.. _DATASTRUCTURE_ElementRegion:
-
-Datastructure: ElementRegion
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/ElementRegion_other.rst
-
-
 .. _DATASTRUCTURE_ElementRegions:
 
 Datastructure: ElementRegions
@@ -632,6 +646,13 @@ Datastructure: ElementRegions
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_FaceElementRegion:
+
+Datastructure: FaceElementRegion
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:
@@ -1031,6 +1052,13 @@ Datastructure: cellManager
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/commandLine_other.rst
+
+
+.. _DATASTRUCTURE_default:
+
+Datastructure: default
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/default_other.rst
 
 
 .. _DATASTRUCTURE_domain:

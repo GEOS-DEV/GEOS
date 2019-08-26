@@ -278,7 +278,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
@@ -350,7 +350,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
   for( localIndex er=0 ; er<elementRegionManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(er);
     m_elemsAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
     m_elemsNotAttachedToSendOrReceiveNodes[er].resize( elemRegion->numSubRegions() );
 
@@ -543,7 +543,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // Q^{n+1}
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
     elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
@@ -587,7 +587,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
@@ -972,7 +972,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
