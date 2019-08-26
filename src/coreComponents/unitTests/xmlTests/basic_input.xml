@@ -55,7 +55,7 @@
 
   <ElementRegions>
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>

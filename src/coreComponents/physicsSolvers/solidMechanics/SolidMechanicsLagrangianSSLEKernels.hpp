@@ -301,7 +301,7 @@ struct ImplicitKernel
 
           for( int i=0 ; i<dim ; ++i )
           {
-            elementLocalDofIndex[static_cast<int>(a)*dim+i] = dim*globalDofNumber[localNodeIndex]+i;
+            elementLocalDofIndex[static_cast<int>(a)*dim+i] = globalDofNumber[localNodeIndex]+i;
 
             // TODO must add last solution estimate for this to be valid
             element_dof_np1(static_cast<int>(a)*dim+i) = disp[localNodeIndex][i];

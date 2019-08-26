@@ -33,17 +33,42 @@
 #include "common/DataTypes.hpp"
 #include "common/initialization.hpp"
 #include "common/TimingMacros.hpp"
+#include "dataRepository/ManagedGroup.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
-#include "dataRepository/ManagedGroup.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "createConnLocPattern.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
+
+#include "codingUtilities/UnitTestUtilities.hpp"
 
 #include "DofManager.hpp"
 
 using namespace geosx;
+using namespace geosx::testing;
+
+#ifndef GTEST_SKIP
+#define GTEST_SKIP() return
+#endif
+
+#define SKIP_TEST_IF( COND, REASON ) \
+do \
+{ \
+  if( COND ) \
+  { \
+    GEOS_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
+                  "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
+    GTEST_SKIP(); \
+  } \
+} while(0)
+
+#define SKIP_TEST_IN_SERIAL( REASON ) \
+do \
+{ \
+  int const mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX ); \
+  SKIP_TEST_IF( mpiSize == 1, REASON ); \
+} while(0)
 
 namespace
 {
@@ -100,10 +125,10 @@ protected:
     "                  cellBlockNames=\"{block1, block2, block3, block4}\"/>"
     "  </Mesh>"
     "  <ElementRegions>"
-    "    <ElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{dummy_material}\" />"
-    "    <ElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region2\" cellBlocks=\"{block2}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region3\" cellBlocks=\"{block3}\" materialList=\"{dummy_material}\" />"
+    "    <CellElementRegion name=\"region4\" cellBlocks=\"{block4}\" materialList=\"{dummy_material}\" />"
     "  </ElementRegions>"
     "</Problem>";
 
@@ -167,7 +192,7 @@ TEST_F(DofManagerTest, TestFEM_partial)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array displacementRegion;
@@ -177,6 +202,7 @@ TEST_F(DofManagerTest, TestFEM_partial)
 
   dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
                        displacementRegion );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
@@ -186,6 +212,8 @@ TEST_F(DofManagerTest, TestFEM_partial)
 
   EXPECT_EQ( pattern.globalRows(), 3*nNodes );
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -197,10 +225,11 @@ TEST_F(DofManagerTest, TestFEM_all)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
@@ -210,6 +239,8 @@ TEST_F(DofManagerTest, TestFEM_all)
 
   EXPECT_EQ( pattern.globalRows(), 3*nNodes );
   EXPECT_EQ( pattern.globalCols(), 3*nNodes );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -221,7 +252,7 @@ TEST_F(DofManagerTest, TestFVM_partial)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array pressureRegion;
@@ -230,6 +261,7 @@ TEST_F(DofManagerTest, TestFVM_partial)
   pressureRegion.push_back( "region3" );
 
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
@@ -239,6 +271,8 @@ TEST_F(DofManagerTest, TestFVM_partial)
 
   EXPECT_EQ( pattern.globalRows(), nCells );
   EXPECT_EQ( pattern.globalCols(), nCells );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -250,10 +284,11 @@ TEST_F(DofManagerTest, TestFVM_all)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
@@ -263,6 +298,8 @@ TEST_F(DofManagerTest, TestFVM_all)
 
   EXPECT_EQ( pattern.globalRows(), nCells );
   EXPECT_EQ( pattern.globalCols(), nCells );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -272,9 +309,11 @@ TEST_F(DofManagerTest, TestFVM_all)
  */
 TEST_F(DofManagerTest, TestCoupling)
 {
+  SKIP_TEST_IN_SERIAL( "see: https://github.com/trilinos/Trilinos/issues/5663" );
+
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array displacementRegion;
@@ -294,6 +333,7 @@ TEST_F(DofManagerTest, TestCoupling)
                        displacementRegion );
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
   dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, couplingRegion, false );
+  dofManager.close();
 
   ParallelMatrix pattern, emptyPattern;
 
@@ -311,6 +351,201 @@ TEST_F(DofManagerTest, TestCoupling)
   EXPECT_EQ( emptyPattern.globalRows(), nCells );
   EXPECT_EQ( emptyPattern.globalCols(), 3*nNodes );
   EXPECT_DOUBLE_EQ( emptyPattern.normFrobenius(), 0. );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
+}
+
+/**
+ * @brief Create a TPFA-type sparsity pattern by performing a fake assembly
+ * @param domain the domain
+ * @param mesh the mesh to use
+ * @param regions list of region names to include (if empty, all regions are used)
+ * @param numComp number of components per cell
+ * @param sparsity the matrix to be populated
+ */
+void makeSparsityTPFA( DomainPartition * const domain,
+                       MeshLevel * const mesh,
+                       array1d<string> const & regionsInput,
+                       localIndex const numComp,
+                       ParallelMatrix * sparsity,
+                       ParallelMatrix * connLoc )
+{
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  FaceManager * const faceManager = mesh->getFaceManager();
+
+  // make a list of regions
+  array1d<string> regions = regionsInput;
+  if( regions.empty() )
+  {
+    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
+    {
+      regions.push_back( region->getName() );
+    } );
+  }
+
+  // make an index lookup for regions (to filter when looping over faces)
+  set<localIndex> regionIndices;
+  for( string const & region : regions )
+  {
+    regionIndices.insert( elemManager->GetRegion( region )->getIndexInParent() );
+  }
+
+  // count the number of locally owned elements in active regions
+  localIndex numLocalElems = 0;
+  elemManager->forElementSubRegions( regions, [&]( ElementSubRegionBase * const subRegion )
+  {
+    numLocalElems += subRegion->GetNumberOfLocalIndices();
+  } );
+
+  // do a prefix sum to get rank offset
+  globalIndex const firstLocalElem = CommunicationTools::PrefixSum<globalIndex>( numLocalElems ).first;
+
+  // register and populate temporary DoF index arrays
+  localIndex elemIndex = 0;
+  elemManager->forElementSubRegions<CellElementSubRegion>( regions, [&]( CellElementSubRegion * const subRegion )
+  {
+    array1d<integer> const & elemGhostRank = subRegion->GhostRank();
+    array1d<globalIndex> const & dofNumber =
+      subRegion->template RegisterViewWrapper< array1d<globalIndex> >( "dof_index" )->reference();
+
+    for( localIndex ei = 0; ei < subRegion->size(); ++ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        dofNumber[ei] = firstLocalElem + elemIndex++;
+      }
+    }
+  } );
+
+  // do the same for local/global faces
+  localIndex const numLocalFaces = faceManager->GetNumberOfLocalIndices();
+  globalIndex const firstLocalFace = CommunicationTools::PrefixSum<globalIndex>( numLocalFaces ).first;
+
+  // prepare a face indexing array
+  array1d<integer> const & faceGhostRank = faceManager->GhostRank();
+  array1d<globalIndex> & connIndex = faceManager->RegisterViewWrapper< array1d<globalIndex> >( "conn_index" )->reference();
+
+  localIndex faceIndex = 0;
+  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
+  {
+    if( faceGhostRank[kf] < 0 )
+    {
+      connIndex[kf] = firstLocalFace + faceIndex++;
+    }
+  }
+
+  // sync DoF index arrays across ranks
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].push_back( "dof_index" );
+  fieldNames["face"].push_back( "conn_index" );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+  // prepare data for assembly loop
+  FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> > elemDofIndex =
+    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex const> >( "dof_index" );
+
+  array1d<globalIndex> localDofIndex( 2 * numComp );
+  array2d<real64> localValues( 2 * numComp, 2 * numComp );
+  localValues = 1.0;
+
+  // create/resize the matrix
+  if( sparsity != nullptr )
+  {
+    sparsity->createWithLocalSize( numLocalElems * numComp, numLocalElems * numComp, 7 * numComp, MPI_COMM_GEOSX );
+  }
+  if( connLoc != nullptr )
+  {
+    connLoc->createWithLocalSize( numLocalFaces, numLocalElems, 2, MPI_COMM_GEOSX );
+  }
+
+  // Loop over faces and assemble TPFA-style "flux" contributions
+  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
+  {
+    if( faceGhostRank[kf] >= 0 ||
+        faceToElem.m_toElementRegion[kf][0] < 0 ||
+        faceToElem.m_toElementRegion[kf][1] < 0 ||
+        ! regionIndices.contains( faceToElem.m_toElementRegion[kf][0] ) ||
+        ! regionIndices.contains( faceToElem.m_toElementRegion[kf][1] ) )
+    {
+      continue;
+    }
+
+    for( localIndex ke = 0; ke < 2; ++ke )
+    {
+      localIndex const er  = faceToElem.m_toElementRegion[kf][ke];
+      localIndex const esr = faceToElem.m_toElementSubRegion[kf][ke];
+      localIndex const ei  = faceToElem.m_toElementIndex[kf][ke];
+
+      for( localIndex c = 0; c < numComp; ++c )
+      {
+        localDofIndex[ke * numComp + c] = elemDofIndex[er][esr][ei] * numComp + c;
+      }
+
+      if( connLoc != nullptr )
+      {
+        connLoc->insert( connIndex[kf], elemDofIndex[er][esr][ei], ke+1 );
+      }
+    }
+
+    if( sparsity != nullptr )
+    {
+      sparsity->insert( localDofIndex, localDofIndex, localValues );
+    }
+  }
+
+  if( sparsity != nullptr )
+  {
+    sparsity->close();
+  }
+  if( connLoc != nullptr )
+  {
+    connLoc->close();
+  }
+
+  // delete the temporary DoF index field
+  elemManager->forElementSubRegions( regions, [&]( ElementSubRegionBase * const subRegion )
+  {
+    subRegion->DeregisterViewWrapper( "dof_index" );
+  } );
+  faceManager->DeregisterViewWrapper( "conn_index" );
+}
+
+/**
+ * @function TestPatternTPFA
+ * @brief Compare TPFA sparsity pattern produced by DofManager against one
+ *        created with a simple fake assembly loop
+ */
+TEST_F(DofManagerTest, TestPatternTPFA)
+{
+  DomainPartition * const domain = problemManager->getDomainPartition();
+
+  ParallelMatrix pattern, patternExpected;
+
+  array1d<string> regions;
+  regions.push_back( "region1" );
+  regions.push_back( "region3" );
+  regions.push_back( "region4" );
+
+  makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), regions, 3, &patternExpected, nullptr );
+
+  DofManager dofManager( "test" );
+  dofManager.setMesh( domain, 0, 0 );
+  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 3, regions );
+  dofManager.close();
+  dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
+
+  pattern.set( 1. );
+  patternExpected.set( 1. );
+
+  EXPECT_EQ( pattern.globalRows(), patternExpected.globalRows() );
+  EXPECT_EQ( pattern.globalCols(), patternExpected.globalCols() );
+  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), patternExpected.normFrobenius() );
+
+  compareMatrices( pattern, patternExpected, std::numeric_limits<real64>::epsilon() );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -321,27 +556,28 @@ TEST_F(DofManagerTest, TestUserDefinedPattern)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  array1d<string> regions;
+  regions.push_back( "region1" );
+  regions.push_back( "region3" );
+  regions.push_back( "region4" );
+
+  ParallelMatrix pattern, patternExpected, connLocUserInput;
+  makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), regions, 3, &patternExpected, &connLocUserInput );
+
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
-
-  ParallelMatrix connLocInput;
-  // Create a TPFA Finite Volume stencil
-  createConnLocPattern( domain, 0, 0, 1, connLocInput );
-
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
-  dofManager.addField( "user-defined", connLocInput, DofManager::Connectivity::Face );
-
-  ParallelMatrix pattern, userPattern;
-
-  dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
-  dofManager.setSparsityPattern( userPattern, "user-defined", "user-defined" );
+  dofManager.addField( "user-defined", connLocUserInput, 3, DofManager::Connectivity::Face );
+  dofManager.close();
+  dofManager.setSparsityPattern( pattern, "user-defined", "user-defined" );
 
   pattern.set( 1. );
-  userPattern.set( 1. );
+  patternExpected.set( 1. );
 
-  EXPECT_EQ( pattern.globalRows(), userPattern.globalRows() );
-  EXPECT_EQ( pattern.globalCols(), userPattern.globalCols() );
-  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), userPattern.normFrobenius() );
+  EXPECT_EQ( pattern.globalRows(), patternExpected.globalRows() );
+  EXPECT_EQ( pattern.globalCols(), patternExpected.globalCols() );
+  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), patternExpected.normFrobenius() );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -353,11 +589,12 @@ TEST_F(DofManagerTest, TestFEM_FVM)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern );
@@ -370,6 +607,8 @@ TEST_F(DofManagerTest, TestFEM_FVM)
 
   EXPECT_EQ( pattern.globalRows(), 3*nNodes+nCells );
   EXPECT_EQ( pattern.globalCols(), 3*nNodes+nCells );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -380,10 +619,11 @@ TEST_F(DofManagerTest, TestMassMatrix)
 {
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::Elem );
+  dofManager.close();
 
   ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern );
@@ -396,6 +636,8 @@ TEST_F(DofManagerTest, TestMassMatrix)
   EXPECT_EQ( pattern.globalRows(), nCells );
   EXPECT_EQ( pattern.globalCols(), nCells );
   EXPECT_DOUBLE_EQ( pattern.normFrobenius(), sqrt(nCells) );
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
 /**
@@ -404,88 +646,93 @@ TEST_F(DofManagerTest, TestMassMatrix)
  */
 TEST_F(DofManagerTest, TestIndices)
 {
+  int const mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
+  SKIP_TEST_IF( mpiSize > 2, "Test not designed for more than 2 ranks" );
+
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.close();
 
-  constexpr globalIndex indicesDefaultDisp[24] = { 72, 73, 74, 75, 76, 77, 108, 109, 110,
-    111, 112, 113, 78, 79, 80, 81, 82, 83, 114, 115, 116, 117, 118, 119 };
-  constexpr globalIndex indicesDefaultPres[2] = { 1530, 1550 };
+  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+
+  localIndex er = 0, esr = 0, ei = 0;
+  std::vector<globalIndex> indicesDispExpected;
+  std::vector<globalIndex> indicesPresExpected;
+
+  int const mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+  if( mpiRank == 0 )
+  {
+    er = 0; esr = 0; ei = 10;
+
+    globalIndex const indicesDefaultDisp[24] = { 72, 73, 74, 75, 76, 77, 108, 109, 110, 111, 112, 113,
+                                                 78, 79, 80, 81, 82, 83, 114, 115, 116, 117, 118, 119 };
+    globalIndex const indicesDefaultPres[1]  = { mpiSize == 1 ? 1540 : 820 };
+
+    indicesDispExpected.assign( indicesDefaultDisp, indicesDefaultDisp + 24 );
+    indicesPresExpected.assign( indicesDefaultPres, indicesDefaultPres + 1 );
+  }
+  else if( mpiRank == 1 )
+  {
+    er = 2; esr = 0; ei = 10;
+
+    globalIndex const indicesDefaultDisp[24] = { 756, 757, 758, 1006, 1007, 1008, 774, 775, 776, 1024, 1025, 1026,
+                                                 759, 760, 761, 1009, 1010, 1011, 777, 778, 779, 1027, 1028, 1029 };
+    globalIndex const indicesDefaultPres[1]  = { 1700 };
+
+    indicesDispExpected.assign( indicesDefaultDisp, indicesDefaultDisp + 24 );
+    indicesPresExpected.assign( indicesDefaultPres, indicesDefaultPres + 1 );
+  }
+
+  if( mpiRank < 2 )
+
+  std::sort( indicesDispExpected.begin(), indicesDispExpected.end() );
+  std::sort( indicesPresExpected.begin(), indicesPresExpected.end() );
 
   globalIndex_array indicesDisp, indicesPres;
-  dofManager.getIndices( indicesDisp, DofManager::Connectivity::Elem, 0, 0, 10, "displacement" );
-  dofManager.getIndices( indicesPres, DofManager::Connectivity::Face, 3, "pressure" );
 
-  int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
-  if( mpiRank==0 )
+  CellElementSubRegion const * const subregion =
+    mesh->getElemManager()->GetRegion( er )->GetSubRegion<CellElementSubRegion>( esr );
+  CellElementSubRegion::NodeMapType const & elemNodes = subregion->nodeList();
+
+  arrayView1d<globalIndex const> const & dispDofIndex =
+    mesh->getNodeManager()->getReference< array1d<globalIndex> >( dofManager.getKey( "displacement" ) );
+
+  arrayView1d<globalIndex const> const & presDofIndex =
+    subregion->getReference< array1d<globalIndex> >( dofManager.getKey( "pressure" ) );
+
+  for( localIndex a = 0; a < elemNodes.size(1); ++a )
   {
-    for( localIndex i=0; i<std::min(indicesDisp.size(), integer_conversion<localIndex>(24)); ++i )
+    for( localIndex d = 0; d < 3; ++d )
     {
-      EXPECT_EQ( indicesDisp[i], indicesDefaultDisp[i] );
+      indicesDisp.push_back( dispDofIndex[ elemNodes( ei, a ) ] + d );
     }
-    for( localIndex i=0; i<std::min(indicesPres.size(), integer_conversion<localIndex>(2)); ++i )
-    {
-      EXPECT_EQ( indicesPres[i], indicesDefaultPres[i] );
-    }
-    EXPECT_EQ( indicesDisp.size(), 24 );
-    EXPECT_EQ( indicesPres.size(), 2 );
   }
-  else
+  indicesPres.push_back( presDofIndex[ei] );
+
+  std::sort( indicesDisp.begin(), indicesDisp.end() );
+  std::sort( indicesPres.begin(), indicesPres.end() );
+
+  EXPECT_EQ( indicesDisp.size(), indicesDispExpected.size() );
+  for( localIndex i = 0; i < indicesDisp.size(); ++i )
   {
-    // Only rank 0 there will be always present, so it is the only with a real check!
-    EXPECT_EQ( 1, 1 );
+    EXPECT_EQ( indicesDisp[i], indicesDispExpected[i] );
   }
+
+  EXPECT_EQ( indicesPres.size(), indicesPresExpected.size() );
+  for( localIndex i = 0; i < indicesPres.size(); ++i )
+  {
+    EXPECT_EQ( indicesPres[i], indicesPresExpected[i] );
+  }
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 }
 
-/**
- * @function TestPermutation
- * @brief Check the permutation from the field-based ordering to the MPI rank-based one.
- */
-TEST_F(DofManagerTest, TestPermutation)
-{
-  DomainPartition * const domain = problemManager->getDomainPartition();
-
-  DofManager dofManager;
-  dofManager.setMesh( domain, 0, 0 );
-
-  string_array displacementRegion;
-  displacementRegion.push_back( "region1" );
-  displacementRegion.push_back( "region3" );
-  displacementRegion.push_back( "region4" );
-
-  string_array pressureRegion;
-  pressureRegion.push_back( "region1" );
-  pressureRegion.push_back( "region2" );
-  pressureRegion.push_back( "region3" );
-
-  string_array couplingRegion;
-  couplingRegion.push_back( "region3" );
-
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
-                       displacementRegion );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
-  dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, couplingRegion, false );
-
-  ParallelMatrix pattern;
-
-  dofManager.setSparsityPattern( pattern );
-
-  // Create the permutation collecting all unknowns belonging to each process
-  ParallelMatrix permutation;
-  dofManager.createPermutation( permutation );
-
-  ParallelMatrix permutedPattern;
-  // Apply the permutation
-  dofManager.permuteSparsityPattern( pattern, permutation, permutedPattern );
-
-  EXPECT_EQ( pattern.globalRows(), permutedPattern.globalRows() );
-  EXPECT_EQ( pattern.globalCols(), permutedPattern.globalCols() );
-  EXPECT_DOUBLE_EQ( pattern.normFrobenius(), permutedPattern.normFrobenius() );
-}
+#define PRINT_PATTERNS 0
 
 /**
  * @function TestWithTimes
@@ -493,12 +740,12 @@ TEST_F(DofManagerTest, TestPermutation)
  */
 TEST_F(DofManagerTest, TestWithTimes)
 {
+  SKIP_TEST_IN_SERIAL( "see: https://github.com/trilinos/Trilinos/issues/5663" );
+
   DomainPartition * const domain = problemManager->getDomainPartition();
 
-  DofManager dofManager;
+  DofManager dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
-
-  const bool printPattern = false;
 
   string_array displacementRegion;
   displacementRegion.push_back( "region1" );
@@ -520,10 +767,10 @@ TEST_F(DofManagerTest, TestWithTimes)
   string_array testRegion3;
   testRegion3.push_back( "region3" );
 
-  ParallelMatrix connLocInput;
-  createConnLocPattern( domain, 0, 0, 1, connLocInput );
+  ParallelMatrix connLocUserInput;
+  makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), pressureRegion, 3, nullptr, &connLocUserInput );
 
-  double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern, timeGetIndices;
+  double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern;
 
   setTimer( timeAddField );
 
@@ -531,7 +778,7 @@ TEST_F(DofManagerTest, TestWithTimes)
                        displacementRegion );
   dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
   dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::None, 2, testRegion3 );
-  dofManager.addField( "user-defined", connLocInput, DofManager::Connectivity::Face );
+  dofManager.addField( "user-defined", connLocUserInput, 3, DofManager::Connectivity::Face );
 
   getElapsedTime( timeAddField );
   setTimer( timeAddCoupling );
@@ -542,120 +789,84 @@ TEST_F(DofManagerTest, TestWithTimes)
   getElapsedTime( timeAddCoupling );
   setTimer( timeGetSingleSparsityPattern );
 
+  dofManager.close();
+
   ParallelMatrix pattern;
 
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "displacement.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "pressure.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "massmatrix", "massmatrix" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "massmatrix.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "displacement", "pressure" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "coupling1.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "pressure", "displacement" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "coupling1_empty.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "pressure", "massmatrix" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "coupling2.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "massmatrix", "pressure" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "coupling2_transp.mtx" );
-  }
+#endif
 
   dofManager.setSparsityPattern( pattern, "user-defined", "user-defined" );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "user-defined.mtx" );
-  }
+#endif
 
   getElapsedTime( timeGetSingleSparsityPattern );
   setTimer( timeGetGlobalSparsityPattern );
 
   dofManager.setSparsityPattern( pattern );
-  if( printPattern )
-  {
+#if PRINT_PATTERNS
     pattern.write( "global.mtx" );
-  }
-
-  // Create the permutation collecting all unknowns belonging to each process
-  ParallelMatrix permutation;
-  dofManager.createPermutation( permutation );
-
-  ParallelMatrix permutedPattern;
-  // Apply the permutation
-  dofManager.permuteSparsityPattern( pattern, permutation, permutedPattern );
-  if( printPattern )
-  {
-    pattern.write( "permutatedGlobal.mtx" );
-  }
+#endif
 
   getElapsedTime( timeGetGlobalSparsityPattern );
-  setTimer( timeGetIndices );
 
   int mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
 
-  globalIndex_array indices;
-  dofManager.getIndices( indices, DofManager::Connectivity::Elem, 1, 0, 10, "displacement" );
-  if( indices.size() > 0 )
-    std::cout << mpiRank << " - " << "displacement" << " " << indices << std::endl;
-
-  dofManager.getIndices( indices, DofManager::Connectivity::Face, 30, "pressure" );
-  if( indices.size() > 0 )
-    std::cout << mpiRank << " - " << "pressure" << " " << indices << std::endl;
-
-  getElapsedTime( timeGetIndices );
-
-  std::cout << mpiRank << " - numGlobalDofs - " << dofManager.numGlobalDofs() << std::endl;
-  std::cout << mpiRank << " - numGlobalDofs(" "displacement" ") - " << dofManager.numGlobalDofs( "displacement" )
-            << std::endl;
-  std::cout << mpiRank << " - numGlobalDofs(" "pressure" ") - " << dofManager.numGlobalDofs( "pressure" ) << std::endl;
-  std::cout << mpiRank << " - numLocalDofs - " << dofManager.numLocalDofs() << std::endl;
-  std::cout << mpiRank << " - numLocalDofs(" "displacement" ") - " << dofManager.numLocalDofs( "displacement" )
-            << std::endl;
-  std::cout << mpiRank << " - numLocalDofs(" "pressure" ") - " << dofManager.numLocalDofs( "pressure" ) << std::endl;
+  GEOS_LOG_RANK( "numGlobalDofs = " << dofManager.numGlobalDofs() );
+  GEOS_LOG_RANK( "numGlobalDofs(displacement) = " << dofManager.numGlobalDofs( "displacement" ) );
+  GEOS_LOG_RANK( "numGlobalDofs(pressure) = " << dofManager.numGlobalDofs( "pressure" ) );
+  GEOS_LOG_RANK( "numLocalDofs = " << dofManager.numLocalDofs() );
+  GEOS_LOG_RANK( "numLocalDofs(displacement) = " << dofManager.numLocalDofs( "displacement" ) );
+  GEOS_LOG_RANK( "numLocalDofs(pressure) = " << dofManager.numLocalDofs( "pressure" ) );
 
   dofManager.printConnectivityMatrix();
 
   // Sum up all timings
-  int mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
   array1d<double> timesLocal( 5 ), timesSum( 5 );
   timesLocal[0] = timeAddField;
   timesLocal[1] = timeAddCoupling;
   timesLocal[2] = timeGetSingleSparsityPattern;
   timesLocal[3] = timeGetGlobalSparsityPattern;
-  timesLocal[4] = timeGetIndices;
 
-  MPI_Allreduce( timesLocal.data(), timesSum.data(), 5, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
+  MPI_Allreduce( timesLocal.data(), timesSum.data(), 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
 
   timeAddField = timesSum[0];
   timeAddCoupling = timesSum[1];
   timeGetSingleSparsityPattern = timesSum[2];
   timeGetGlobalSparsityPattern = timesSum[3];
-  timeGetIndices = timesSum[4];
 
   if( mpiRank == 0 )
   {
@@ -678,14 +889,12 @@ TEST_F(DofManagerTest, TestWithTimes)
               << " [ms] -- " << std::fixed << std::setprecision( 2 )
               << timeGetGlobalSparsityPattern / totalTime * 100.0
               << "%" << std::endl;
-    std::cout << "getIndices: " << std::fixed << std::setprecision( 0 ) << std::trunc( timeGetIndices * 1e3 )
-              << " [ms] -- "
-              << std::fixed << std::setprecision( 2 ) << timeGetIndices / totalTime * 100.0 << "%"
-              << std::endl;
     std::cout << "TOTAL: " << std::fixed << std::setprecision( 0 ) << std::trunc( totalTime * 1e3 ) << " [ms] -- "
               << std::fixed
               << std::setprecision( 2 ) << 100.0 << "%" << std::endl;
   }
+
+  dofManager.clear(); // remove index arrays from mesh before next test
 
   // Fake check
   SUCCEED();

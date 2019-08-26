@@ -107,6 +107,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -202,48 +204,21 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    // dof numbering
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow" ;
-
-    // primary solution field
-    static constexpr auto pressureString = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString = "facePressure";
 
-    static constexpr auto deltaVolumeString = "deltaVolume";
-
-    // secondary/backup fields
-    static constexpr auto densityString = "density";
-    static constexpr auto viscosityString = "viscosity";
-
+    // intermediate fields
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
-
     static constexpr auto porosityString = "porosity";
-    static constexpr auto oldPorosityString = "oldPorosity";
 
+    // face fields
+    static constexpr auto faceDensityString = "faceDensity";
+    static constexpr auto faceViscosityString = "faceViscosity";
+    static constexpr auto faceMobilityString = "faceMobility";
 
-    using ViewKey = dataRepository::ViewKey;
-
-    // dof numbering
-    ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-
-    // primary solution field
-    ViewKey pressure = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-    ViewKey facePressure = { facePressureString };
-
-    ViewKey deltaVolume = { deltaVolumeString };
-
-    // these are used to store last converged time step values
-    ViewKey density = { densityString };
-    ViewKey viscosity = { viscosityString };
-
-    ViewKey mobility = { mobilityString };
-    ViewKey dMobility_dPressure = { dMobility_dPressureString };
-
-    ViewKey porosity = { porosityString };
-    ViewKey oldPorosity = { oldPorosityString };
+    //backup fields
+    static constexpr auto porosityOldString = "porosityOld";
+    static constexpr auto densityOldString = "densityOld";
 
   } viewKeysSinglePhaseFlow;
 
@@ -263,38 +238,8 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
-private:
-
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix ) const;
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) const;
-
 protected:
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:

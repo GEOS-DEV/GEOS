@@ -18,20 +18,20 @@
 
 #include "gtest/gtest.h"
 
+#include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "common/initialization.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
-#include "managers/EventManager.hpp"
 #include "managers/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+
 #include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
 using namespace geosx::constitutive;
+using namespace geosx::testing;
 
 namespace
 {
@@ -50,41 +50,6 @@ struct TestCompositionalVarContainer
   array_slice<real64,DIM>   dPres; // derivative w.r.t. pressure
   array_slice<real64,DIM+1> dComp; // derivative w.r.t. composition
 };
-
-template<typename T>
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol )
-{
-  T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs(v1), std::abs(v2) );
-  
-  if (delta < 1E-13)
-  {
-    return ::testing::AssertionSuccess();
-  }
-
-  if (delta > relTol * value)
-  {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
-                                         << " relative error: " << delta / value
-                                         << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
-  }
-  return ::testing::AssertionSuccess();
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol )
-{
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol, string const & name )
-{
-  SCOPED_TRACE(name);
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
 
 template<typename T>
 void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, string const & name, string const & var )
@@ -165,57 +130,6 @@ array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localInd
   return output;
 }
 
-void compareMatrixRow( globalIndex rowNumber, real64 relTol,
-                       localIndex numRowEntries1, globalIndex * indices1, real64 * values1,
-                       localIndex numRowEntries2, globalIndex * indices2, real64 * values2 )
-{
-  SCOPED_TRACE("Row " + std::to_string(rowNumber));
-
-  EXPECT_EQ( numRowEntries1, numRowEntries2 );
-
-  for (localIndex j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2)
-  {
-    while (j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2])
-    {
-      while (j1 < numRowEntries1 && indices1[j1] < indices2[j2])
-      {
-        ADD_FAILURE() << "column " << indices1[j1] << ") in matrix 1 does not have a match";
-      }
-      while (j2 < numRowEntries2 && indices2[j2] < indices1[j1])
-      {
-        ADD_FAILURE() << "column " << indices2[j2] << ") in matrix 2 does not have a match";
-      }
-    }
-    if (j1 < numRowEntries1 && j2 < numRowEntries2)
-    {
-      SCOPED_TRACE("Column " + std::to_string(indices1[j1]) );
-
-      checkRelativeError( values1[j1], values2[j1], relTol );
-    }
-  }
-}
-
-void compareMatrices( ParallelMatrix const & matrix1,
-                      ParallelMatrix const & matrix2,
-                      real64 relTol )
-{
-  ASSERT_EQ( matrix1.localRows(), matrix2.localRows() );
-
-  array1d<globalIndex> indices1, indices2;
-  array1d<real64> values1, values2;
-
-  // check the accuracy across local rows
-  for (globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i)
-  {
-    matrix1.getRowCopy( i, indices1, values1 );
-    matrix2.getRowCopy( i, indices2, values2 );
-
-    compareMatrixRow( i, relTol,
-                      indices1.size(), indices1.data(), values1.data(),
-                      indices2.size(), indices2.data(), values2.data() );
-  }
-}
-
 template<typename LAMBDA>
 void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
                             DomainPartition * domain,
@@ -223,15 +137,14 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
                             double relTol,
                             LAMBDA && assembleFunction )
 {
-  localIndex const NC   = solver->numFluidComponents();
-  localIndex const NDOF = solver->numDofPerCell();
+  localIndex const NC = solver->numFluidComponents();
 
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
   DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  double* localResidual = nullptr;
+  real64 * localResidual = nullptr;
   residual.extractLocalVector( &localResidual );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -244,22 +157,24 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   // copy the analytical residual
   ParallelVector residualOrig( residual );
 
-  double * localResidualOrig = nullptr;
+  real64 * localResidualOrig = nullptr;
   residualOrig.extractLocalVector( &localResidualOrig );
 
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
   jacobianFD.zero();
 
+  string const dofKey = solver->getDofManager().getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
+
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =
       subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     arrayView1d<globalIndex> & dofNumber =
-      subRegion-> template getReference<array1d<globalIndex >>( CompositionalMultiphaseFlow::viewKeyStruct::blockLocalDofNumberString );
+      subRegion-> template getReference<array1d<globalIndex >>( dofKey );
 
     arrayView1d<real64> & pres =
       subRegion-> template getReference<array1d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
@@ -278,7 +193,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
       if (elemGhostRank[ei] >= 0)
         continue;
 
-      globalIndex offset = dofNumber[ei] * NDOF;
+      globalIndex const dofIndex = dofNumber[ei];
 
       real64 totalDensity = 0.0;
       for (localIndex ic = 0; ic < NC; ++ic)
@@ -299,8 +214,6 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
         residual.zero();
         assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
-
-        long long const dofIndex = integer_conversion<long long>(offset);
 
         for (localIndex lid = 0; lid < residual.localSize(); ++lid)
         {
@@ -328,15 +241,13 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
         residual.zero();
         assembleFunction( solver, domain, &jacobian, &residual, &dofManager );
 
-        long long const dofIndex = integer_conversion<long long>(offset + jc + 1);
-
-        for (int lid = 0; lid < residual.localSize(); ++lid)
+        for (localIndex lid = 0; lid < residual.localSize(); ++lid)
         {
           real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
           if (std::fabs(dRdRho) > 0.0)
           {
             globalIndex gid = residual.getGlobalRowID( lid );
-            jacobianFD.set( gid, dofIndex, dRdRho );
+            jacobianFD.set( gid, dofIndex + jc + 1, dRdRho );
           }
         }
       }
@@ -377,7 +288,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
@@ -457,7 +368,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
@@ -567,7 +478,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegion * const region,
+                                         ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
     SCOPED_TRACE( region->getName() + "/" + subRegion->getName() );
@@ -758,9 +669,9 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation)
 //                               ParallelMatrix * targetJacobian,
 //                               ParallelVector * targetResidual,
 //                               DofManager const * targetDofManager )
-//                         {
-//                           targetSolver->AssembleAccumulationTerms( targetDomain, targetJacobian, targetResidual, targetDofManager, time, dt );
-//                         });
+//  {
+//    targetSolver->AssembleAccumulationTerms( targetDomain, targetJacobian, targetResidual, targetDofManager, time, dt );
+//  });
 }
 
 TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
@@ -787,10 +698,9 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
                                DofManager const * targetDofManager )
-                         {
-                           targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian,
-                                                            targetResidual );
-                         });
+  {
+    targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+  });
 }
 
 
@@ -819,10 +729,9 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_volumeBalance)
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
                                DofManager const * targetDofManager )
-                         {
-                           targetSolver->AssembleVolumeBalanceTerms( time, dt, targetDomain, targetDofManager,
-                                                                     targetJacobian, targetResidual );
-                         });
+  {
+    targetSolver->AssembleVolumeBalanceTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+  });
 }
 
 int main( int argc, char** argv )
@@ -841,7 +750,7 @@ int main( int argc, char** argv )
   int const result = RUN_ALL_TESTS();
 
   delete[] global_argv;
-  
+
   geosx::basicCleanup();
 
   return result;

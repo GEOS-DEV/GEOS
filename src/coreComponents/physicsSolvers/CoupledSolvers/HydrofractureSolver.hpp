@@ -51,19 +51,13 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
-  void SetupSystem ( DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution );
+  virtual void SetupDofs( DofManager & dofManager ) const override;
 
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
-
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -129,7 +123,7 @@ public:
                                                    ParallelMatrix * const matrix01,
                                                    ParallelVector * const rhs0 );
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                            ParallelMatrix * const matrix10,
                                                            ParallelVector * const rhs0 );
 
