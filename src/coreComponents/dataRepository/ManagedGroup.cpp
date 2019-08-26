@@ -121,6 +121,7 @@ ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
 
 void ManagedGroup::DeregisterViewWrapper( string const & name )
 {
+  m_sidreGroup->destroyView( name );
   m_wrappers.erase( name );
 }
 
@@ -602,6 +603,16 @@ void ManagedGroup::finishReading()
         subGroup->finishReading();
       } );
 #endif
+}
+
+void ManagedGroup::postRestartInitializationRecursive( ManagedGroup * const domain )
+{
+  forSubGroups([&]( ManagedGroup * const subGroup )
+      {
+        subGroup->postRestartInitializationRecursive( domain );
+      } );
+
+  this->postRestartInitialization( domain );
 }
 
 
