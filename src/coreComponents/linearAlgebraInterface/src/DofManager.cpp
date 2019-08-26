@@ -544,7 +544,7 @@ struct MeshLoopHelper<LOC, LOC>
     meshLevel->getElemManager()->
       forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
                                                                      localIndex const esr,
-                                                                     ElementRegion *,
+                                                                     ElementRegionBase *,
                                                                      auto * subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
@@ -665,7 +665,7 @@ struct MeshLoopHelper<DofManager::Location::Elem, CONN_LOC>
     meshLevel->getElemManager()->
       forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
                                                                      localIndex const esr,
-                                                                     ElementRegion *,
+                                                                     ElementRegionBase *,
                                                                      auto * subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
@@ -706,7 +706,7 @@ struct MeshLoopHelper<DofManager::Location::Elem, DofManager::Location::Elem>
     meshLevel->getElemManager()->
       forElementSubRegionsComplete<SUBREGIONTYPES...>( regions, [&]( localIndex const er,
                                                                      localIndex const esr,
-                                                                     ElementRegion *,
+                                                                     ElementRegionBase *,
                                                                      auto * subRegion )
     {
       arrayView1d<integer const> const & elemGhostRank = subRegion->GhostRank();
@@ -1023,7 +1023,7 @@ void DofManager::addField( string const & fieldName,
   // retrieve full list of regions
   if( regions.empty() )
   {
-    elemManager->forElementRegions( [&]( ElementRegion const * const region )
+    elemManager->forElementRegions( [&]( ElementRegionBase const * const region )
     {
       field.regionNames.push_back( region->getName() );
     } );

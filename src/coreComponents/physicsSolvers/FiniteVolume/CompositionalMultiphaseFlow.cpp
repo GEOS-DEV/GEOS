@@ -520,7 +520,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     // 1. Assume global component fractions have been prescribed.
@@ -626,7 +626,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
 
   // backup some fields used in time derivative approximation
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -766,7 +766,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n
   localIndex const NDOF = m_numDofPerCell;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const,
+                                 ElementRegionBase const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1008,7 +1008,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const time_
   localIndex const NDOF = m_numDofPerCell;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const,
+                                 ElementRegionBase const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1273,7 +1273,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
   real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const,
+                                 ElementRegionBase const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1339,7 +1339,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
   bool result = true;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const,
+                                 ElementRegionBase const * const,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer     const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1395,7 +1395,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   solution.extractLocalVector( &localSolution );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const,
+                                 ElementRegionBase * const,
                                  ElementSubRegionBase * const subRegion )
   {
     dofManager.addVectorToField( solution,
@@ -1431,7 +1431,7 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const,
+                                 ElementRegionBase * const,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres     = m_deltaPressure[er][esr];
@@ -1458,7 +1458,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion * const,
+                                 ElementRegionBase * const,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];
