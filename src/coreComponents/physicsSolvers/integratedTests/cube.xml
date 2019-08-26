@@ -35,6 +35,7 @@
 
     <PeriodicEvent name="outputs"
                    timeFrequency="0.05"
+                   targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
   </Events>
 
@@ -88,3 +89,4 @@
   </Outputs>
 
 </Problem>
+

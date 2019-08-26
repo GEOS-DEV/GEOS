@@ -25,6 +25,7 @@
 #include "TribolCoupling.hpp"
 #include "dataRepository/KeyNames.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/EventManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/MeshBody.hpp"
 
@@ -34,6 +35,10 @@
 #include <algorithm>
 #include "tribol/interface/tribol.hpp"
 #include "axom/mint/mesh/CellTypes.hpp"
+
+#ifdef USE_ATK
+#include "axom/slic/interface/slic.hpp"
+#endif
 
 static void GEOSXSlideWorldErrorHandler(const char* msg, int etype, int)
 {
@@ -67,9 +72,9 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   const int nodesPerFace = 4 ;
   const int nodesPerElem = 8 ;
 
-  const real64& currentTime = eventManager->getReference<real64>("time");
-  real64& dt = eventManager->getReference<real64>("dt");
-  integer& cycle = eventManager->getReference<integer>("cycle");
+  const real64& currentTime = eventManager->getReference<real64>(EventManager::viewKeyStruct::timeString);
+  real64& dt = eventManager->getReference<real64>(EventManager::viewKeyStruct::dtString);
+  integer& cycle = eventManager->getReference<integer>(EventManager::viewKeyStruct::cycleString);
 
   // Currently we need the previous dt, but we assume fixed dt for now.
   // We probably want to pass in prevDt in the update anyway.
@@ -261,6 +266,12 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    const real64 *ys = slideWorldNodesSlave->fieldReal("y") ;
    const real64 *zs = slideWorldNodesSlave->fieldReal("z") ;
 
+#ifdef USE_ATK
+   // Disable slic info logging in tribol
+   auto oldLevel = axom::slic::getLoggingMsgLevel() ;
+   axom::slic::setLoggingMsgLevel(axom::slic::message::Warning) ;
+#endif
+
    // initialize the contact library
    tribol::initialize(meshDim, MPI_COMM_WORLD);
 
@@ -347,6 +358,11 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    }
 
    tribol::finalize();
+
+#ifdef USE_ATK
+   // Reenable slic logging level
+   axom::slic::setLoggingMsgLevel(oldLevel) ;
+#endif
 
    delete[] meshId1 ;
    delete[] meshId2 ;
