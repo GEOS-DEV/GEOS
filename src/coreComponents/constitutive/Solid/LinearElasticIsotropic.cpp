@@ -35,8 +35,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
-  m_defaultPoissonRatio(),
-  m_defaultYoungsModulus(),
   m_bulkModulus(),
   m_shearModulus(),
   m_postProcessed(false)
@@ -51,15 +49,15 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::defaultPoissonRatioString, &m_defaultPoissonRatio, 0 )->
+  RegisterViewWrapper<real64>( viewKeyStruct::defaultYoungsModulusString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Poisson ratio Parameter");
+    setDescription("Elastic Young's Modulus.");
 
-  RegisterViewWrapper( viewKeyStruct::defaultYoungsModulusString, &m_defaultYoungsModulus, 0 )->
+  RegisterViewWrapper<real64>( viewKeyStruct::defaultPoissonRatioString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Elastic Young's Modulus Parameter");
+    setDescription("Poisson's ratio");
 
   RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
@@ -94,8 +92,6 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_density = m_density;
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
-  newConstitutiveRelation->m_defaultPoissonRatio = m_defaultPoissonRatio;
-  newConstitutiveRelation->m_defaultYoungsModulus = m_defaultYoungsModulus;
 
   newConstitutiveRelation->m_meanStress = m_meanStress;
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
@@ -120,8 +116,8 @@ void LinearElasticIsotropic::PostProcessInput()
 
   if( !m_postProcessed )
   {
-    real64 & nu = m_defaultPoissonRatio;
-    real64 & E  = m_defaultYoungsModulus;
+    real64 & nu = getReference<real64> (viewKeyStruct::defaultPoissonRatioString);
+    real64 & E  = getReference<real64> (viewKeyStruct::defaultYoungsModulusString);;
     real64 & K  = m_defaultBulkModulus;
     real64 & G  = m_defaultShearModulus;
 
