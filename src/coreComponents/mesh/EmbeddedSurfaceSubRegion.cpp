@@ -117,14 +117,15 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex const k,
                                                                 arrayView1d<real64 const> const & faceArea )
 {
-
-  // Matteo: needs to be fille in
+  // Matteo: needs to be filled in with the proper computation.
+  m_elementArea[k] = faceArea[k];
+  m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & faceManager )
 {
-  // Matteo: needs to be fille in
+  // Matteo: I think this is only called at the beginning.
 }
 
 

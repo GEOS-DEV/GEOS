@@ -22,6 +22,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      src/DummySolver.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
@@ -49,6 +50,7 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      src/DummySolver.cpp
      )
 

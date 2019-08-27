@@ -69,28 +69,28 @@
 
 
     <Events maxTime="50000">
-        <!--SoloEvent
+        <SoloEvent
             name="output0"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <SoloEvent
             name="preFracture"
             target="/Solvers/SurfaceGen" />
 
-        <!--SoloEvent
+        <SoloEvent
             name="output1"
-            target="/Outputs/siloOutput" / -->
+            target="/Outputs/siloOutput" />
 
         <PeriodicEvent
             name="solverApplications"
             forceDt="1e3"
             target="/Solvers/SinglePhaseFlow" />
 
-        <!--PeriodicEvent
+        <PeriodicEvent
             name="outputs"
             cycleFrequency="1"
             targetExactTimestep="1"
-            target="/Outputs/siloOutput" /-->
+            target="/Outputs/siloOutput" />
 
         <PeriodicEvent
             name="restarts"
