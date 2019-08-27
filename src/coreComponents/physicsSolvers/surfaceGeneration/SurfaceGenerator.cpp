@@ -520,17 +520,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                              prefrac);
 
     }
-    else
-    {
-//      UpdateRuptureStates( nodeManager,
-//                           edgeManager,
-//                           faceManager,
-//                           elementManager,
-//                           nodesToRupturedFaces,
-//                           edgesToRupturedFaces,
-//                           prefrac );
-
-    }
   }
 
 
@@ -556,8 +545,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   //  array1d<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 
   const arrayView1d<integer>& isNodeGhost = nodeManager.GhostRank();
-//  const integer_array& isSeparable = nodeManager.getReference<integer_array>("isSeparable");
-//  const integer_array& layersFromDomainBoundary = nodeManager.getReference<integer_array>("LayersFromDomainBoundary");
   arrayView1d<integer>& ruptureState = faceManager.getReference<integer_array>( "ruptureState" );
   const arrayView1d<integer>& isFaceGhost = faceManager.GhostRank();
 
@@ -570,14 +557,9 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       for( localIndex a=0 ; a<nodeManager.size() ; ++a )
       {
         int didSplit = 0;
-        //      const localIndex nodeID = nodeManager.GetParentIndex(a);
-        if( //layersFromDomainBoundary[a]>1 &&
-          (   //isSeparable[a]
-            true || prefrac)&&
+        if((true || prefrac)&&
           isNodeGhost[a]<0 &&
-          nodesToElementList.sizeOfArray(a)>1 &&
-          CheckNodeSplitability( a, nodeManager, faceManager, edgeManager, prefrac ) > 0 )  //&&
-        //          nodesToRupturedFaces[a].size()>0 )
+          nodesToElementList.sizeOfArray(a)>1 )
         {
           didSplit += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
                                    modifiedObjects, prefrac );
@@ -688,9 +670,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
           {
             if( facesToElementIndex.size(1) == 2  &&
                 faceManager.m_isExternal[iface] < 1 &&
-                isFaceSeparable[iface] == 1
-//                && fabs(Dot(faceNormals[parentFaceIndex], faceNormals[iface])) > cos( m_maxTurnAngle )
-                )
+                isFaceSeparable[iface] == 1 )
             {
               m_tipFaces.insert(iface);
             }
@@ -767,8 +747,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
         }
       }
     });
-//    CalculateKinkAngles(faceManager, edgeManager, nodeManager, modifiedObjects, false);
-//    MarkBirthTime(faceManager, modifiedObjects, time);
   }
 
 
@@ -795,7 +773,6 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
   bool didSplit = false;
   bool fracturePlaneFlag = true;
 
-//  while( fracturePlaneFlag )
   {
     std::set<localIndex> facialRupturePath;
     map<localIndex, int> edgeLocations;
@@ -875,11 +852,6 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
   set<localIndex> const & nodeToFaces = nodeManager.faceList()[nodeID];
 
   arrayView1d< array1d < localIndex > > const & facesToEdges = faceManager.edgeList();
-
-
-//  array1d< ReferenceWrapper<localIndex_array> > nodeToElements
-//  const std::set< std::pair<CellBlockSubRegion*,localIndex> >&
-//  nodesToElements = nodeManager.m_toElementsRelation[nodeID] ;
 
   arraySlice1d<localIndex const> const & nodeToElementRegion = nodeManager.elementRegionList()[nodeID];
   arraySlice1d<localIndex const> const & nodeToElementSubRegion = nodeManager.elementSubRegionList()[nodeID];
@@ -1563,9 +1535,6 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   arrayView2d<localIndex> & edgesToNodes = edgeManager.nodeList();
   arrayView1d<set<localIndex> > & edgesToFaces = edgeManager.faceList();
-//  arrayView1d<set<localIndex>> & edgesToElementRegions = edgeManager.elementRegionList();
-//  arrayView1d<set<localIndex>> & edgesToElementSubRegions = edgeManager.elementSubRegionList();
-//  arrayView1d<set<localIndex>> & edgesToElementIndex = edgeManager.elementList();
 
   OrderedVariableOneToManyRelation & facesToNodes = faceManager.nodeList();
   OrderedVariableOneToManyRelation & facesToEdges = faceManager.edgeList();
@@ -2658,79 +2627,16 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
 {
   arrayView1d<integer> const & isEdgeGhost = edgeManager.GhostRank();
   real64_array& SIFNode = nodeManager.getReference<real64_array>( "SIFNode" );
-//  const integer_array& layersEdgeFromBoundary = edgeManager.getReference<integer_array>("LayersFromDomainBoundary");
-//  localIndex_array& primaryCandidateFace = faceManager.getReference<localIndex_array>("primaryCandidateFace");
-//  primaryCandidateFace = std::numeric_limits<localIndex>::max();
 
   int rank;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-  //"Heal" faces that were marked but not split.
-//  if (m_failCriterion >0)
-//  {
-//    integer_array& ruptureState = faceManager.getReference<int>("ruptureState");
-//    for (localIndex iFace = 0; iFace < faceManager.DataLengths(); ++iFace)
-//    {
-//      if (faceManager.m_isExternal[iFace] == 0)
-//      {
-//        ruptureState[iFace] = 0;
-//      }
-//    }
-//  }
-// The healing has been done in the separation driver.  Also the if criterion here should be failCriterion==1
-
 
 
   // We use the color map scheme because we can mark a face to be rupture ready from a partition where the face is a
   // ghost.
 
-
   if (!m_nodeBasedSIF)
   {
-    // Process interior edges
-//    {
-//      ModifiedObjectLists modifiedObjects;
-//
-//      for( localIndex iEdge = 0 ; iEdge != edgeManager.size() ; ++iEdge )
-//      {
-//        if( isEdgeGhost[iEdge] < 0 ) //&& layersEdgeFromBoundary[iEdge]>1 )
-//        {
-//          int edgeMode = CheckEdgeSplitability( iEdge,
-//                                                nodeManager,
-//                                                faceManager,
-//                                                edgeManager,
-//                                                prefrac );
-//          if( edgeMode == 0 || edgeMode == 1 ) // We need to calculate SIF
-//          {
-//            R1Tensor vecTipNorm, vecTip;
-//            localIndex trailFaceID = 0;
-//            realT SIF = CalculateEdgeSIF( domain, iEdge, trailFaceID,
-//                                          nodeManager,
-//                                          edgeManager,
-//                                          faceManager,
-//                                          elementManager,
-//                                          vecTipNorm,
-//                                          vecTip );
-//
-//            if( SIF > MinimumToughnessOnEdge( iEdge, nodeManager, edgeManager, faceManager ) * 0.5 )
-//            {
-//              MarkRuptureFaceFromEdge( iEdge, trailFaceID,
-//                                       nodeManager,
-//                                       edgeManager,
-//                                       faceManager,
-//                                       elementManager,
-//                                       vecTipNorm,
-//                                       vecTip,
-//                                       modifiedObjects,
-//                                       edgeMode );
-//            }
-//          }
-//        }
-//      }
-//    }
-
-
-    // Process near boundary edges
     {
 //      for( int color=0 ; color<partition.NumColor() ; ++color )
       {
@@ -2740,7 +2646,7 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
           for( localIndex iEdge = 0 ; iEdge != edgeManager.size() ; ++iEdge )
           {
 
-            if( isEdgeGhost[iEdge] < 0 ) //&& layersEdgeFromBoundary[iEdge]<=1 )
+            if( isEdgeGhost[iEdge] < 0 )
             {
               int edgeMode = CheckEdgeSplitability( iEdge,
                                                     nodeManager,
@@ -4394,32 +4300,6 @@ realT SurfaceGenerator::MinimumToughnessOnNode( const localIndex nodeID,
   }
 
   return val;
-}
-
-int SurfaceGenerator::CheckNodeSplitability( const localIndex nodeID,
-                                             NodeManager & nodeManager,
-                                             FaceManager & faceManager,
-                                             EdgeManager & edgeManager,
-                                             const bool prefrac )
-{
-  return (1);
-  //
-  //  if (prefrac)
-  //  {
-  //    return (1);
-  //  }
-  //  else if (m_failCriterion == 0)
-  //  {
-  //    return (1);
-  //  }
-  //  else if (nodeManager.m_isExternal[nodeID] == 1)
-  //  {
-  //    return (1);
-  //  }
-  //  else
-  //  {
-  //    return (0);
-  //  }
 }
 
 void SurfaceGenerator::AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
