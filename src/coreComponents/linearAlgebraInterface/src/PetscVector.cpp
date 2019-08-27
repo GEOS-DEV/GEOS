@@ -124,7 +124,8 @@ void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & 
   VecGetArray( _vec, &values );
 
   // set vector values
-  for (int i = 0; i < size; i++){
+  for (int i = 0; i < size; i++)
+  {
     values[i] = localValues[i];
   }
 
@@ -321,18 +322,18 @@ void PetscVector::write( string const & filename,
                          bool const mtxFormat ) const
 {
   PetscViewer viewer;
-  if( mtxFormat ){
-
+  if( mtxFormat )
+  {
     // ".mtx" extension
     string name( filename );
-    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" )
+    {
       name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
     }
-    
     PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-  } else {
-
+  } else 
+  {
     PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
   }
@@ -428,7 +429,8 @@ localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 {
   PetscInt low, high;
   VecGetOwnershipRange( _vec, &low, &high );
-  if ( index < low || high <= index ) {
+  if ( index < low || high <= index ) 
+  {
     GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
   } 
   return index - low; 
@@ -448,7 +450,8 @@ void PetscVector::extractLocalVector( real64 ** localVector ) const
   VecGetArray( _vec, &avec );
 
   // copy
-  for( int i = 0; i < size; i++ ){
+  for( int i = 0; i < size; i++ )
+  {
     ( *localVector )[i] = avec[i];
   }
 
