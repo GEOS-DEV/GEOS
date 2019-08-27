@@ -77,6 +77,22 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
   });
 }
 
+inline void velocityUpdateNoZeroAcc( arrayView1d<R1Tensor> const & acceleration,
+                                     arrayView1d<R1Tensor> const & velocity,
+                                     real64 const dt )
+{
+  GEOSX_MARK_FUNCTION;
+
+  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
+                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  {
+    for (int j = 0; j < 3; ++j)
+    {
+      velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
+    } 
+  });
+}
+
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<real64 const> const & mass, 
                             arrayView1d<R1Tensor> const & velocity,

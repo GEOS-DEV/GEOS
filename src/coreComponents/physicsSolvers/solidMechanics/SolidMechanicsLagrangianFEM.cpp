@@ -494,7 +494,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
 #if HAVE_TRIBOLCOUPLING
   // rewind for leapfrog
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, -dt/2 );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdateNoZeroAcc( acc, vel, -dt/2 );
 #endif
 
 

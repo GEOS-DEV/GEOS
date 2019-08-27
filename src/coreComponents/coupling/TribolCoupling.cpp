@@ -288,58 +288,6 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    // register nodal response (i.e. contact forces)
    tribol::registerNodalResponse(slaveMesh, fxs, fys, fzs);
 
-   // register faces in contact
-   int maxNumPairs = numSlaveFaces*(numSlaveFaces-1) ;
-   int *meshId1 = new int [maxNumPairs] ;
-   int *meshId2 = new int [maxNumPairs] ;
-   int *pairType = new int [maxNumPairs] ;
-   int *pairIndex1 = new int [maxNumPairs] ;
-   int *pairIndex2 = new int [maxNumPairs] ;
-
-   int numPairs = 0 ;
-
-   for (int i = 0 ; i < numSlaveFaces ; ++i) {
-      // Ensure only faces with all nodes defined are included.
-      // We need this because the faces and nodes are decomposed separately.
-      bool validFace = true ;
-      const int * faceNodesSlave = (*facesToNodesSlave)[i] ;
-      for (int k = 0 ; k < nodesPerFace ; ++k) {
-         if (faceNodesSlave[k] == -1) {
-            validFace = false ;
-            break ;
-         }
-      }
-
-      if (validFace) {
-         int startIdx = i + 1 ;
-         int endIdx = numSlaveFaces ;
-         int jMesh = slaveMesh ;
-         const vista::FixedSizeRelation *facesToNodes = facesToNodesSlave ;
-
-         for (int j = startIdx ; j < endIdx; ++j) {
-            bool validFace2 = true ;
-            const int * faceNodes2 = (*facesToNodes)[j] ;
-            for (int k = 0 ; k < nodesPerFace ; ++k) {
-               if (faceNodes2[k] == -1) {
-                  validFace2 = false ;
-                  break ;
-               }
-            }
-
-            if (validFace2) {
-               meshId1[numPairs] = slaveMesh ;
-               meshId2[numPairs] = jMesh ;
-               pairType[numPairs] = cellType ;
-               pairIndex1[numPairs] = i ;
-               pairIndex2[numPairs] = j ;
-               ++numPairs ;
-            }
-         }
-      }
-   }
-
-   //tribol::setInterfacePairs(numPairs, meshId1, pairType, pairIndex1, meshId2, pairType, pairIndex2) ;
-
    // register the coupling scheme
    tribol::registerCouplingScheme(0, slaveMesh, slaveMesh,
                                   tribol::SURFACE_TO_SURFACE,
@@ -364,12 +312,6 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    axom::slic::setLoggingMsgLevel(oldLevel) ;
 #endif
 
-   delete[] meshId1 ;
-   delete[] meshId2 ;
-   delete[] pairType ;
-   delete[] pairIndex1 ;
-   delete[] pairIndex2 ;
-
    SlideWorldAdapter::TransferFromWorld() ;
 
    SlideWorldAdapter::Cleanup() ;
@@ -380,7 +322,7 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
 void TribolCoupling::CopyPositionsToTribolSourceData(NodeManager const * const nodeManager)
 {
   const array1d< R1Tensor > & X = nodeManager->referencePosition();
-  const array1d< R1Tensor > & u = nodeManager->getReference< array1d< R1Tensor > >("TotalDisplacement");
+  const array1d< R1Tensor > & u = nodeManager->getReference< array1d< R1Tensor > >( dataRepository::keys::TotalDisplacement);
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
   real64 *x = s_srcNodes->fieldReal("x") ;
@@ -399,7 +341,7 @@ void TribolCoupling::CopyPositionsToTribolSourceData(NodeManager const * const n
 
 void TribolCoupling::CopyVelocitiesToTribolSourceData(NodeManager const * const nodeManager)
 {
-  const array1d< R1Tensor > & v = nodeManager->getReference< array1d< R1Tensor > >("Velocity");
+  const array1d< R1Tensor > & v = nodeManager->getReference< array1d< R1Tensor > >( dataRepository::keys::Velocity );
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
   real64 *xd = s_srcNodes->fieldReal("xd") ;
@@ -417,7 +359,7 @@ void TribolCoupling::CopyVelocitiesToTribolSourceData(NodeManager const * const 
 
 void TribolCoupling::CopyAccelerationsToTribolSourceData(NodeManager const * const nodeManager)
 {
-  const array1d< R1Tensor > & a = nodeManager->getReference< array1d< R1Tensor > >("Acceleration");
+  const array1d< R1Tensor > & a = nodeManager->getReference< array1d< R1Tensor > >( dataRepository::keys::Acceleration );
   const int numSlideNodes = s_slideWorldSourceNodes->length() ;
   const int *slideMap = s_slideWorldSourceNodes->map() ;
   real64 *xdd = s_srcNodes->fieldReal("local:xdd") ;
