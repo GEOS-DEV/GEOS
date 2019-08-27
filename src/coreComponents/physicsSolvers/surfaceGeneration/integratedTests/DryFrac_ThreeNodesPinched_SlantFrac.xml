@@ -23,9 +23,7 @@
     <SurfaceGenerator name="SurfaceGen"
                       solidMaterialName="granite"
                       rockToughness="1e5"
-                      displacementBasedSIF="0"
                       nodeBasedSIF="1"
-                      allowVacuumFrac="1"
                       verboseLevel="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
@@ -49,9 +47,6 @@
   <Geometry>
     <Box name="fracPlane" strike="-45" xMin="-3.1, -1.1, 0.9" xMax="3.1, -0.9, 3.1"/>
     <Box name="core" strike="-45" xMin="-40.1, -1.1, -0.1" xMax="40.1, -0.9, 40.1"/>
-
-    <!--Box name="fracPlane" xMin="-3.1, -0.1, 0.9" xMax="2.1, 0.1, 3.1"/-->
-    <!--Box name="core" xMin="-0.1, -0.1, -0.1" xMax="40.1, 0.1, 40.1"/-->
   </Geometry>
 
 
@@ -130,70 +125,28 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="{xneg}"/>
+               setNames="{xneg, xpos}"/>
 
     <FieldSpecification name="z" 
                component="2" 
                objectPath="nodeManager"
                fieldName="TotalDisplacement" 
                scale="0.0" 
-               setNames="{zneg}"/>
-
-    <!--FieldSpecification name="bot1" 
-               component="1" 
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement" 
-               scale="-0.1" 
-               setNames="yneg_lowerhalf"/>
-
-    <FieldSpecification name="top1" 
-               component="1" 
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement" 
-               scale="0.1" 
-               setNames="ypos_lowerhalf"/>
-
-    <FieldSpecification name="bot2" 
-               component="1" 
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement" 
-               scale="0.0" 
-               setNames="yneg_upperhalf"/>
-
-    <FieldSpecification name="top2" 
-               component="1" 
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement" 
-               scale="0.0" 
-               setNames="ypos_upperhalf"/-->
+               setNames="{zneg, zpos}"/>
 
     <FieldSpecification name="yposConstraint" 
                component="1" 
-               objectPath="faceManager"
-               fieldName="Traction" 
-               scale="1e6" 
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement" 
+               scale="0.001" 
                setNames="{ypos}"/>
                
     <FieldSpecification name="ynegconstraint" 
-               objectPath="faceManager" 
-               fieldName="Traction" 
-               component="1" 
-               scale="-1e6" 
-               setNames="{yneg}"/>
-                              
-    <!--FieldSpecification name="bot" 
-               component="1" 
-               objectPath="nodeManager"
+               objectPath="nodeManager" 
                fieldName="TotalDisplacement" 
-               scale="-0.1" 
-               setNames="yneg"/>
-               
-    <FieldSpecification name="top" 
                component="1" 
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement" 
-               scale="0.1" 
-               setNames="ypos"/-->
+               scale="0" 
+               setNames="{yneg}"/>                             
                
   </FieldSpecifications>
 
@@ -215,9 +168,5 @@
     <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
     <Restart name="sidreRestart"/>
   </Outputs>
-
-
-
-  <!-- <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" rockToughness="1e6" separableSet="all"/> -->
 
 </Problem>
