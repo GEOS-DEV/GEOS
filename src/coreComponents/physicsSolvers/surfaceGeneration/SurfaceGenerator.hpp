@@ -317,20 +317,6 @@ private:
                              EdgeManager & edgeManager,
                              const bool prefrac );
 
-  /**
-   *
-   * @param nodeID
-   * @param nodeManager
-   * @param faceManager
-   * @param edgeManager
-   * @param prefrac
-   * @return
-   */
-  int CheckNodeSplitability( const localIndex nodeID,
-                             NodeManager & nodeManager,
-                             FaceManager & faceManager,
-                             EdgeManager & edgeManager,
-                             const bool prefrac );
 
 //  void UpdatePathCheckingArrays();
 
