@@ -35,37 +35,54 @@ using namespace dataRepository;
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                       dataRepository::ManagedGroup * const parent ):
   ElementSubRegionBase( name, parent ),
-  m_unmappedGlobalIndicesInToNodes(),
-  m_unmappedGlobalIndicesInToEdges(),
-  m_unmappedGlobalIndicesInToFaces(),
-  m_embeddedSurfaceToCell(),
+  m_faceElementsToCells(),
   m_newFaceElements(),
+  m_toNodesRelation(),
   m_elementAperture(),
   m_elementArea()
 {
+  RegisterViewWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
+    setDescription("Map to the nodes attached to each EmbeddedSurface.");
+
   RegisterViewWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setApplyDefaultValue(1.0e-5)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
-    setDescription("The aperture of each FaceElement.");
+    setDescription("The aperture of each EmbeddedSurface.");
 
   RegisterViewWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(-1.0)->
-    setDescription("The area of each FaceElement.");
+    setDescription("The area of each EmbeddedSurface.");
 
   RegisterViewWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
-    setDescription("The center of each FaceElement.");
+    setDescription("The center of each EmbeddedSurface.");
 
   RegisterViewWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
     setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
-    setDescription("The volume of each FaceElement.");
+    setDescription("The volume of each EmbeddedSurface.");
 
+  RegisterViewWrapper( viewKeyStruct::faceElementsToCellRegionsString,
+                       &(m_faceElementsToCells.m_toElementRegion), 0 )->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription( "A map of face element local indices to the cell local indices");
 
+  RegisterViewWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
+                       &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription( "A map of face element local indices to the cell local indices");
 
-  // m_faceElementsToCells.resize(0,2);
-  // m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
+  RegisterViewWrapper( viewKeyStruct::faceElementsToCellIndexString,
+                       &(m_faceElementsToCells.m_toElementIndex), 0 )->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription( "A map of face element local indices to the cell local indices");
 
-  m_numNodesPerElement = 4; //
+  m_faceElementsToCells.resize(0,2);
+  m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
+
+  m_numNodesPerElement = 8;
 }
 
 EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
@@ -92,31 +109,22 @@ R1Tensor const & EmbeddedSurfaceSubRegion::calculateElementCenter( localIndex k,
 
 }
 
-
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
-  this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex const k,
                                                                 arrayView1d<real64 const> const & faceArea )
 {
-  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+
+  // Matteo: needs to be fille in
 }
 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & faceManager )
 {
-  arrayView1d<real64 const> const & faceArea = faceManager.faceArea();
-
-  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
-  {
-    m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-    m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
-  });
+  // Matteo: needs to be fille in
 }
 
 
@@ -136,8 +144,9 @@ template<bool DOPACK>
 localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d<localIndex const> const & packList ) const
 {
+  // Matteo: I am not sure about this
   localIndex packedSize = 0;
-
+  /*
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
@@ -169,7 +178,7 @@ localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsPrivate( buffer_unit_type * &
                                          this->m_faceElementsToCells,
                                          packList,
                                          m_faceElementsToCells.getElementRegionManager() );
-
+  */
   return packedSize;
 }
 
@@ -181,7 +190,7 @@ localIndex EmbeddedSurfaceSubRegion::UnpackUpDownMaps( buffer_unit_type const * 
                                                    bool const overwriteDownMaps )
 {
   localIndex unPackedSize = 0;
-
+  /*
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
   GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
@@ -227,12 +236,13 @@ localIndex EmbeddedSurfaceSubRegion::UnpackUpDownMaps( buffer_unit_type const * 
                                      overwriteUpMaps );
 
 
-
+  */
   return unPackedSize;
 }
 
 void EmbeddedSurfaceSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
 {
+  /*
   ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
@@ -244,16 +254,18 @@ void EmbeddedSurfaceSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
-
+  */
 }
 
 void EmbeddedSurfaceSubRegion::inheritGhostRankFromParentFace( FaceManager const * const faceManager,
                                                            std::set<localIndex> const & indices )
 {
+  /*
   for( localIndex const & index : indices )
   {
     m_ghostRank[index] = faceManager->m_ghostRank[ m_toFacesRelation[index][0] ];
   }
+  */
 }
 
 void EmbeddedSurfaceSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
