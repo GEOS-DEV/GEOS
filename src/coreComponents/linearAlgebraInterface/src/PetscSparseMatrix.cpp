@@ -128,17 +128,19 @@ void PetscSparseMatrix::set( real64 const value )
     MatGetRow( _mat, row, &numEntries, &inds, &vals );
     numEntries_ = numEntries;
     inds_ = new PetscInt[numEntries_];
-    for ( int i = 0; i < numEntries_; i++ ) {
+    for ( int i = 0; i < numEntries_; i++ ) 
+    {
       inds_[i] = inds[i];
     }   
     MatRestoreRow( _mat, row, &numEntries, &inds, &vals );
     close(); 
 
     // set entries to value
-    if( numEntries_ > 0 ){
+    if( numEntries_ > 0 ) {
 
       vals_ = new PetscScalar[numEntries_];
-      for ( int i = 0; i < numEntries_; i++ ) {
+      for ( int i = 0; i < numEntries_; i++ ) 
+      {
         vals_[i] = value;
       }
 
@@ -332,7 +334,7 @@ void PetscSparseMatrix::gemv( real64 const alpha,
   x_.scale( alpha ); // alpha*x_
   y.scale( beta ); // beta*y
 
-  if ( useTranspose ){
+  if ( useTranspose ) {
   MatMultTranspose( _mat, x_.getVec(), b_.getVec() );
   } else {
   MatMult( _mat, x_.getVec(), b_.getVec() ); // alpha*A*x_ = b_
@@ -386,11 +388,13 @@ void PetscSparseMatrix::getRowCopy( globalIndex globalRow,
   values.resize( numEntries );
   colIndices.resize( numEntries );
 
-  for ( int i = 0; i < numEntries; i++ ) {
+  for ( int i = 0; i < numEntries; i++ ) 
+  {
   colIndices[i] = inds[i];
   }
 
-  for ( int i = 0; i < numEntries; i++ ) {
+  for ( int i = 0; i < numEntries; i++ ) 
+  {
   values[i] = vals[i];
   }
 
@@ -406,11 +410,11 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
   PetscInt ncols;
 
   MatGetRow( _mat, globalRow, &ncols, &cols, &vals );
-  for( int i = 0; i < ncols; i++ ){
-  if( cols[i] == globalRow )
+  for( int i = 0; i < ncols; i++ )
   {
-    return vals[i];
-  }
+    if( cols[i] == globalRow ) {
+      return vals[i];
+    }
   }
   MatRestoreRow( _mat, globalRow, &ncols, &cols, &vals );
 
@@ -529,12 +533,11 @@ void PetscSparseMatrix::write( string const & filename,
 
     // ".mtx" extension
   string name( filename );
-    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ){
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ) {
       name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
     }
     PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-
   } else {
     PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
@@ -669,7 +672,7 @@ void PetscSparseMatrix::printParallelMatrix( string const & fileName ) const
 
   // ".mtx" extension
   string name( fileName );
-  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ){
+  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ) {
     name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
   }
 
