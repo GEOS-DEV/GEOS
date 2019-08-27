@@ -123,6 +123,8 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxFacesPerNode() const { return 100; }
+
   array1d<real64> &       faceArea()       { return m_faceArea; }
   array1d<real64> const & faceArea() const { return m_faceArea; }
 
