@@ -334,9 +334,11 @@ void PetscSparseMatrix::gemv( real64 const alpha,
   x_.scale( alpha ); // alpha*x_
   y.scale( beta ); // beta*y
 
-  if ( useTranspose ) {
+  if ( useTranspose ) 
+  {
   MatMultTranspose( _mat, x_.getVec(), b_.getVec() );
-  } else {
+  } else 
+  {
   MatMult( _mat, x_.getVec(), b_.getVec() ); // alpha*A*x_ = b_
   }
   VecAXPY( y.getVec(), 1, b_.getVec() ); // alpha*A*x_ + beta*y = y
@@ -412,7 +414,8 @@ real64 PetscSparseMatrix::getDiagValue( globalIndex globalRow ) const
   MatGetRow( _mat, globalRow, &ncols, &cols, &vals );
   for( int i = 0; i < ncols; i++ )
   {
-    if( cols[i] == globalRow ) {
+    if( cols[i] == globalRow ) 
+    {
       return vals[i];
     }
   }
@@ -533,12 +536,14 @@ void PetscSparseMatrix::write( string const & filename,
 
     // ".mtx" extension
   string name( filename );
-    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ) {
+    if( filename.substr( filename.find_last_of( "." ) + 1 ) != "mtx" ) 
+    {
       name = filename.substr( 0, filename.find_last_of( "." ) ) + ".mtx";
     }
     PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-  } else {
+  } else 
+  {
     PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
   }
@@ -597,14 +602,18 @@ void PetscSparseMatrix::MatrixMatrixMultiply( bool const transA,
                                               PetscSparseMatrix &C,
                                               bool const call_FillComplete ) const
 {
-  if( transA && transB ) {
+  if( transA && transB ) 
+  {
     MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );
     MatTranspose( C.getConstMat(), MAT_INPLACE_MATRIX, C.unwrappedNonConstPointer() );
-  } else if (transA ) {
+  } else if (transA ) 
+  {
     MatTransposeMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );  
-  } else if (transB ) {
+  } else if (transB ) 
+  {
     GEOS_ERROR( " MatrixMatrixMultiply: not implemented for B transpose" );
-  } else {
+  } else 
+  {
     MatMatMult( _mat, B.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, C.unwrappedNonConstPointer() );   
   }
 }
@@ -617,7 +626,8 @@ localIndex PetscSparseMatrix::getLocalRowID( globalIndex const index ) const
 {
   PetscInt low, high;
   MatGetOwnershipRange( _mat, &low, &high);
-  if ( index < low || high <= index ) {
+  if ( index < low || high <= index ) 
+  {
     GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
   } 
   return index - low; 
@@ -631,7 +641,8 @@ localIndex PetscSparseMatrix::getGlobalRowID( localIndex const index ) const
 {
   PetscInt low, high;
   MatGetOwnershipRange( _mat, &low, &high);
-  if ( high - low < index ) {
+  if ( high - low < index ) 
+  {
     GEOS_ERROR( "getGloballRowID: processor does not own this many rows" );
   } 
   return static_cast<localIndex>( index + low );  
@@ -672,7 +683,8 @@ void PetscSparseMatrix::printParallelMatrix( string const & fileName ) const
 
   // ".mtx" extension
   string name( fileName );
-  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ) {
+  if( fileName.substr( fileName.find_last_of( "." ) + 1 ) != "mtx" ) 
+  {
     name = fileName.substr( 0, fileName.find_last_of( "." ) ) + ".mtx";
   }
 
