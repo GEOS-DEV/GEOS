@@ -164,7 +164,6 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   ParallelVector t( rk );
   t.scale( 0. );
   ParallelVector t_( rk );
-  t.scale( 0. );
 
   // Declare scalar for convergence check
   real64 convCheck;
