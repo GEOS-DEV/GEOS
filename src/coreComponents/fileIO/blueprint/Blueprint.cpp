@@ -19,9 +19,10 @@
 #include "common/GeosxConfig.hpp"
 
 #include "Blueprint.hpp"
+
 #include "common/DataTypes.hpp"
-#include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 #ifdef GEOSX_USE_ATK
 #include "axom/sidre/core/sidre.hpp"
@@ -182,7 +183,7 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
     GEOS_ERROR( "Blueprint IO currently only works in problems with one cell block." );
   }
 
-  const ElementRegion* elem_region = m_elem_reg_manager.GetRegion(0);
+  const ElementRegionBase* elem_region = m_elem_reg_manager.GetRegion(0);
   const CellElementSubRegion* cell_block = elem_region->GetSubRegion<CellElementSubRegion>(0);
   const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
   const localIndex n_cells = connectivity.size(0);

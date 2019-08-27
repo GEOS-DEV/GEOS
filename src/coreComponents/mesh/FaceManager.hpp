@@ -37,6 +37,10 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
+  using NodeMapType = OrderedVariableOneToManyRelation;
+  using EdgeMapType = OrderedVariableOneToManyRelation;
+  using ElemMapType = FixedToManyElementRelation;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -59,6 +63,8 @@ public:
 
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
+
+  void computeGeometry( NodeManager const * const nodeManager );
 
   localIndex getMaxFaceNodes() const;
 
@@ -94,7 +100,8 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
-                                                   array1d<globalIndex_array>& faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
+
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto nodeListString              = "nodeList";
@@ -141,7 +148,8 @@ public:
   array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
-
+  ElemMapType       & toElementRelation()       { return m_toElements; }
+  ElemMapType const & toElementRelation() const { return m_toElements; }
 
 private:
 
@@ -150,9 +158,9 @@ private:
                                     arrayView1d<localIndex const> const & packList ) const;
 
 
-  OrderedVariableOneToManyRelation m_nodeList;
-  OrderedVariableOneToManyRelation m_edgeList;
-  FixedToManyElementRelation m_toElements;
+  NodeMapType m_nodeList;
+  EdgeMapType m_edgeList;
+  ElemMapType m_toElements;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;

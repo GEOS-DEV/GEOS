@@ -30,6 +30,14 @@ if( ENABLE_RAJA )
   set( dependencyList ${dependencyList} RAJA )
 endif()
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )

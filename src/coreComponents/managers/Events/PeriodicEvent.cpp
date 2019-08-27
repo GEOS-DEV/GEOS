@@ -45,39 +45,41 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   RegisterViewWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event frequency (time)");
+    setDescription("Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.");
 
   RegisterViewWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event frequency (cycle, Default)");
+    setDescription("Event application frequency (cycle, default)");
 
   RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("allows timesteps to be truncated to match time frequency perfectly");
+    setDescription("If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).");
 
   RegisterViewWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Name of the symbolic math function");
+    setDescription("Name of an optional function to evaluate when the time/cycle criteria are met."
+                   "If the result is greater than the specified eventThreshold, the function will continue to execute.");
 
   RegisterViewWrapper(viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Path of the function input object (directory format)");
+    setDescription("If the optional function requires an object as an input, specify its path here.");
 
   RegisterViewWrapper(viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Setname of the input object (if empty, default to everything)");
+    setDescription("If the optional function is applied to an object, specify the setname to evaluate (default = everything).");
 
   RegisterViewWrapper(viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Selection of the min/avg/max for functions that target vectors");
+    setDescription("If the optional function is applied to an object, specify the statistic to compare to the eventThreshold."
+                   "The current options include: min, avg, and max.");
 
   RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("event threshold");
+    setDescription("If the optional function is used, the event will execute if the value returned by the function exceeds this threshold.");
 
 }
 

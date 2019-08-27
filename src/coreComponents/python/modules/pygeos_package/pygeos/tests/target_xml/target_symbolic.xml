@@ -13,7 +13,7 @@
   <Mesh elementType="C3D6" xcoords="2000.0 2250.0 2404.1 3595.9 3750.0 4000.0" ycoords="-1000.0 -750.0 -500 500 750.0 1000.0" zcoords="-1000.0 -750.0 -500 500 750.0 1000.0" nx="1 2 20 2 1 " ny="1 2 20 2 1" nz="1 2 20 2 1" regionNames="Region" trianglePattern="0"/>
   <!--                        -->
   <ElementRegions>
-    <ElementRegion elementtype="poly" name="Region">
+    <CellElementRegion elementtype="poly" name="Region">
       <LinearElasticMaterial BulkModulus="5.5556e9" Density="200000" ShearModulus="4.16667e9"/>
     </ElementRegion>
   </ElementRegions>

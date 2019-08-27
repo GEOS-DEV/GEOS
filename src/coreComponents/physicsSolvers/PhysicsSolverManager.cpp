@@ -36,16 +36,13 @@ using namespace cxx_utilities;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             ManagedGroup * const parent ):
   ManagedGroup( name, parent),
-  m_gravityVector( R1Tensor(0.0) ),
-  m_blockSystemRepository()
+  m_gravityVector( R1Tensor(0.0) )
 {
   setInputFlags(InputFlags::REQUIRED);
 
   this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,0})->
     setInputFlag(InputFlags::OPTIONAL);
-
-  this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 )->setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()

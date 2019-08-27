@@ -817,7 +817,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
   int elemCount = 0;
   for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
   {
-    ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
     for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
     {
       CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
@@ -945,7 +945,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   int dims = 0;
   int mixlen=0;
 
-  elementManager->forElementRegions<ElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
+  elementManager->forElementRegions<CellElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
@@ -966,7 +966,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   int elemCount = 0;
   int mixCount = 0;
-  elementManager->forElementRegions<ElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
+  elementManager->forElementRegions<CellElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     if (numMatInRegion > 0)
@@ -1585,7 +1585,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
   array1d< array1d< std::map< string, ViewWrapperBase const * > > > viewPointers(elementManager->numRegions());
 
-  elementManager->forElementRegionsComplete<ElementRegion,FaceElementRegion>( [&]( localIndex const er,
+  elementManager->forElementRegionsComplete<CellElementRegion,FaceElementRegion>( [&]( localIndex const er,
                                                                                    auto const * const elemRegion )
   {
     viewPointers[er].resize( elemRegion->numSubRegions() );
@@ -1644,7 +1644,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elementManager->forElementRegionsComplete<ElementRegion,FaceElementRegion>( [&]( localIndex const er,
+      elementManager->forElementRegionsComplete<CellElementRegion,FaceElementRegion>( [&]( localIndex const er,
                                                                                        auto const * const elemRegion )
       {
         elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,

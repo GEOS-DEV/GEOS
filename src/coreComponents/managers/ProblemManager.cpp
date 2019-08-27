@@ -585,7 +585,6 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::ParseInputFile()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
 
   ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
@@ -759,21 +758,19 @@ void ProblemManager::GenerateMesh()
       nodeManager->ConstructGlobalToLocalMap();
 
       elemManager->GenerateMesh( cellBlockManager );
-
-      faceManager->BuildFaces( nodeManager, elemManager );
-
-      edgeManager->BuildEdges(faceManager, nodeManager );
-
-      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
-      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
       nodeManager->SetElementMaps( meshLevel->getElemManager() );
 
+      faceManager->BuildFaces( nodeManager, elemManager );
+      nodeManager->SetFaceMaps( meshLevel->getFaceManager() );
+
+      edgeManager->BuildEdges( faceManager, nodeManager );
+      nodeManager->SetEdgeMaps( meshLevel->getEdgeManager() );
 
       domain->GenerateSets();
 
-      elemManager->forElementRegions( [&](ElementRegion * const region )->void
+      elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
       {
-        ManagedGroup * subRegions = region->GetGroup(ElementRegion::viewKeyStruct::elementSubRegions);
+        ManagedGroup * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
@@ -827,7 +824,7 @@ void ProblemManager::ApplyNumericalMethods()
 
         for( auto const & regionName : targetRegions )
         {
-          ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+          ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
           localIndex const quadratureSize = feDiscretization == nullptr ? 1 : feDiscretization->getNumberOfQuadraturePoints();
           if( quadratureSize > regionQuadrature[regionName] )
           {
@@ -861,7 +858,7 @@ void ProblemManager::ApplyNumericalMethods()
         string const regionName = iter->first;
         localIndex const quadratureSize = iter->second;
 
-        ElementRegion * const elemRegion = elemManager->GetRegion( regionName );
+        ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
@@ -934,6 +931,7 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
   this->prepareToRead();
   SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
   this->finishReading();
+  this->postRestartInitializationRecursive( GetGroup<DomainPartition>(keys::domain) );
 #endif
 }
 

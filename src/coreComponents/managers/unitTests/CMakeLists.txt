@@ -4,9 +4,18 @@
 
 set( gtest_geosx_tests
      testRecursiveFieldApplication.cpp
+     testMeshGeneration.cpp
    )
 
 set( dependencyList geosx_core gtest )
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 #
 # Add gtest C++ based tests

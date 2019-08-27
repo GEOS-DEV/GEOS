@@ -6,6 +6,7 @@ message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     SystemSolverParameters.hpp
      CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
@@ -28,6 +29,7 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     SystemSolverParameters.cpp
      CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
@@ -42,7 +44,7 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
-set( dependencyList common constitutive dataRepository systemSolverInterface linearAlgebraInterface )
+set( dependencyList common constitutive dataRepository linearAlgebraInterface )
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )

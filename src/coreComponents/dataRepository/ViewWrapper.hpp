@@ -68,6 +68,8 @@ class ViewWrapper : public ViewWrapperBase
 {
 
 public:
+
+  using TYPE = T;
   /**
    * @param name name of the object
    * @param parent parent group which owns the ViewWrapper
@@ -322,8 +324,11 @@ public:
 
     static_if( bufferOps::is_packable_by_index< T >::value )
     {
-      packedSize += bufferOps::Pack< true >( buffer, this->getName() );
-      packedSize += bufferOps::Pack< true >( buffer, *m_data, packList );
+      if( sizedFromParent()==1 )
+      {
+        packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+        packedSize += bufferOps::Pack< true >( buffer, *m_data, packList );
+      }
     }
     end_static_if
     return packedSize;
@@ -357,8 +362,11 @@ public:
 
     static_if( bufferOps::is_packable_by_index< T >::value )
     {
-      packedSize += bufferOps::Pack< false >( buffer, this->getName() );
-      packedSize += bufferOps::Pack< false >( buffer, *m_data, packList );
+      if( sizedFromParent()==1 )
+      {
+        packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+        packedSize += bufferOps::Pack< false >( buffer, *m_data, packList );
+      }
     }
     end_static_if
 
@@ -384,10 +392,13 @@ public:
     localIndex unpackedSize = 0;
     static_if( bufferOps::is_packable_by_index< T >::value )
     {
-      string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
-      unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
+      if( sizedFromParent()==1 )
+      {
+        string name;
+        unpackedSize += bufferOps::Unpack( buffer, name );
+        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
+        unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
+      }
     }
     end_static_if
 
@@ -954,8 +965,7 @@ public:
                        void,
                        ,
                        std::string const &,
-                       ""
-                       )
+                       "" )
 
   template< class U = T >
   typename std::enable_if< has_memberfunction_setUserCallBack< U >::value, void >::type
@@ -971,25 +981,32 @@ public:
   {}
 
 #if HAVE_CHAI
-  HAS_MEMBER_FUNCTION( move,
-                       void,
-                       ,
-                       VA_LIST( chai::ExecutionSpace, bool ),
-                       VA_LIST( chai::CPU, true )
-                       )
 
-  template< class U = T >
-  typename std::enable_if< has_memberfunction_move< U >::value, void >::type
-  move( chai::ExecutionSpace space, bool touch )
+
+  struct move_wrapper
   {
-    m_data->move( space, touch );
-  }
+    HAS_MEMBER_FUNCTION( move,
+                         void,
+                         ,
+                         VA_LIST( chai::ExecutionSpace, bool ),
+                         VA_LIST( chai::CPU, true ) )
 
-  template< class U = T >
-  typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
-  move( chai::ExecutionSpace, bool )
-  {}
+    template< class U = T >
+    static typename std::enable_if< has_memberfunction_move< U >::value, void >::type
+    move( U & data, chai::ExecutionSpace space, bool touch )
+    {
+      data.move( space, touch );
+    }
+
+    template< class U = T >
+    static typename std::enable_if< !has_memberfunction_move< U >::value, void >::type
+    move( U &, chai::ExecutionSpace, bool )
+    {}
+  };
 #endif
+
+  virtual void move( chai::ExecutionSpace space, bool touch ) override
+  { return move_wrapper::move( *m_data, space, touch ); }
 
   HAS_ALIAS( value_type )
 
@@ -1465,7 +1482,7 @@ public:
 
   ///@}
 
-#ifndef NDEBUG
+#if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override final
   {
     return cxx_utilities::demangle( typeid( ViewWrapper< T > ).name() );
