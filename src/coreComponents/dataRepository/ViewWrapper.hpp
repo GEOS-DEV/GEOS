@@ -1003,10 +1003,10 @@ public:
     move( U &, chai::ExecutionSpace, bool )
     {}
   };
-#endif
 
   virtual void move( chai::ExecutionSpace space, bool touch ) override
   { return move_wrapper::move( *m_data, space, touch ); }
+#endif
 
   HAS_ALIAS( value_type )
 

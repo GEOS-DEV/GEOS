@@ -593,8 +593,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
+#if HAVE_CHAI
   // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
+#endif
   CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
 
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -637,8 +639,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
+#if HAVE_CHAI
   // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
+#endif
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
 
   return dt;
