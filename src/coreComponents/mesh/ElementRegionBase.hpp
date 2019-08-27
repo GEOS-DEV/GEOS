@@ -23,6 +23,7 @@
 #include "FaceElementSubRegion.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx
 {
@@ -113,13 +114,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -140,13 +141,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
