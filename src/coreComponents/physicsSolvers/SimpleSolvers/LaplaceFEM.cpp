@@ -163,20 +163,11 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 {
 }
 
-void LaplaceFEM::SetupSystem( DomainPartition * const domain,
-                              DofManager & dofManager,
-                              ParallelMatrix & matrix,
-                              ParallelVector & rhs,
-                              ParallelVector & solution )
+void LaplaceFEM::SetupDofs( DofManager & dofManager ) const
 {
-  m_dofManager.setMesh( domain, 0, 0 );
-  m_dofManager.addField( m_fieldName,
-                         DofManager::Location::Node,
-                         DofManager::Connectivity::Elem );
-
-  m_dofManager.setSparsityPattern( matrix, m_fieldName, m_fieldName );
-  m_dofManager.setVector( rhs, m_fieldName, m_fieldName );
-  m_dofManager.setVector( solution, m_fieldName, m_fieldName );
+  dofManager.addField( m_fieldName,
+                       DofManager::Location::Node,
+                       DofManager::Connectivity::Elem );
 }
 
 void LaplaceFEM::AssembleSystem( real64 const time_n,
@@ -187,7 +178,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  //ManagedGroup * const nodeManager = mesh->getNodeManager();
+  ManagedGroup * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -195,7 +186,8 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   feDiscretizationManager = numericalMethodManager->
     GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
 
-  //globalIndex_array const & indexArray = nodeManager->getReference<globalIndex_array>( dofManager.getKey( m_fieldName ) );
+  array1d<globalIndex> const & dofIndex =
+    nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
   matrix.zero();
@@ -207,7 +199,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   // begin region loop
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
-    ElementRegion * const elementRegion = elemManager->GetRegion(er);
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
 
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
@@ -222,28 +214,30 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
       arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
-      const int numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
+      localIndex const numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
 
-      globalIndex_array element_index( numNodesPerElement );
+      arrayView2d<localIndex const> const & elemNodes = elementSubRegion->nodeList();
+
+      globalIndex_array elemDofIndex( numNodesPerElement );
       real64_array element_rhs( numNodesPerElement );
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
       integer_array const & elemGhostRank = elementSubRegion->m_ghostRank;
-      const int n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       // begin element loop, skipping ghost elements
       for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
       {
         if(elemGhostRank[k] < 0)
         {
-          dofManager.getIndices( element_index, DofManager::Connectivity::Elem, er, esr, k, m_fieldName );
-
           element_rhs = 0.0;
           element_matrix = 0.0;
           for( localIndex q=0 ; q<n_q_points ; ++q)
           {
             for( localIndex a=0 ; a<numNodesPerElement ; ++a)
             {
+              elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
+
               real64 diffusion = 1.0;
               for( localIndex b=0 ; b<numNodesPerElement ; ++b)
               {
@@ -254,8 +248,8 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
             }
           }
-          matrix.add( element_index, element_index, element_matrix );
-          rhs.add( element_index, element_rhs );
+          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+          rhs.add( elemDofIndex, element_rhs );
         }
       }
     });
@@ -266,8 +260,10 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
-    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
   }
 
   if( verboseLevel() >= 3 )
@@ -292,10 +288,10 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  dofManager.copyVectorToField( solution, m_fieldName, nodeManager );
+  dofManager.copyVectorToField( solution, m_fieldName, scalingFactor, nodeManager, m_fieldName );
 
   // Syncronize ghost nodes
   std::map<string, string_array> fieldNames;
@@ -304,13 +300,6 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   CommunicationTools::
   SynchronizeFields( fieldNames, mesh,
                      domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
-  if( dofManager.needDoubleSync() )
-  {
-    CommunicationTools::
-    SynchronizeFields( fieldNames, mesh,
-                       domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-  }
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
@@ -325,8 +314,10 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
   if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
-    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
   }
 
   if( verboseLevel() >= 3 )
@@ -359,7 +350,8 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
   if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK_0("After LaplaceFEM::SolveSystem");
-    GEOS_LOG_RANK_0("\nSolution\n" << solution);
+    GEOS_LOG_RANK_0("\nSolution\n");
+    std::cout << solution;
   }
 }
 

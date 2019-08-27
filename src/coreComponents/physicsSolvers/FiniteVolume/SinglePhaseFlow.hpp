@@ -107,6 +107,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -202,15 +204,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    // dof numbering
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow" ;
-
-    // primary solution field
-    static constexpr auto pressureString = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString = "facePressure";
-
-    static constexpr auto deltaVolumeString = "deltaVolume";
 
     // intermediate fields
     static constexpr auto mobilityString = "mobility";
@@ -244,38 +238,8 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
-private:
-
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix ) const;
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) const;
-
 protected:
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
 
 private:

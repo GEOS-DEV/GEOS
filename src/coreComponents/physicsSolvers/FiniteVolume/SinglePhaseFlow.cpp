@@ -74,7 +74,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
     });
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
@@ -89,8 +88,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
         setDefaultValue(1.0);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
-
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
         setDefaultValue(0.0);
 
@@ -210,7 +207,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     UpdateState( subRegion );
@@ -275,10 +272,10 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
 {
   ResetViews( domain );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
@@ -302,7 +299,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
       forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
                                                           [&] ( localIndex const er,
                                                                 localIndex const esr,
-                                                                ElementRegion *,
+                                                                ElementRegionBase *,
                                                                 FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
@@ -319,6 +316,9 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
 
   // setup dof numbers and linear system
   SetupSystem( domain, dofManager, matrix, rhs, solution );
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  m_dofNumber = mesh->getElemManager()->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
 }
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
@@ -327,10 +327,10 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -347,181 +347,12 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   } );
 }
 
-
-
-void SinglePhaseFlow::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                    localIndex & numLocalRows,
-                                                    globalIndex & numGlobalRows,
-                                                    localIndex offset ) const
+void SinglePhaseFlow::SetupDofs( DofManager & dofManager ) const
 {
-  int numMpiProcesses;
-  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
-
-  int thisMpiProcess = 0;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
-
-  localIndex numLocalRowsToSend = numLocalRows;
-  array1d<localIndex> gather( numMpiProcesses );
-
-  // communicate the number of local rows to each process
-  CommunicationTools::allGather( numLocalRowsToSend, gather );
-
-  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
-
-  // find the first local row on this partition, and find the number of total global rows.
-  localIndex firstLocalRow = 0;
-  numGlobalRows = 0;
-
-  for( integer p=0 ; p<numMpiProcesses ; ++p )
-  {
-    numGlobalRows += gather[p];
-    if( p < thisMpiProcess )
-    {
-      firstLocalRow += gather[p];
-    }
-  }
-
-  // loop over all elements and set the dof number if the element is not a ghost
-  localIndex localCount = 0;
-
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion * const region,
-                                      ElementSubRegionBase * const subRegion )
-  {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex> const & dofNumber = m_dofNumber[er][esr];
-
-    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), [&] ( localIndex const a )
-    {
-      if( elemGhostRank[a] < 0 )
-      {
-        dofNumber[a] = firstLocalRow + localCount + offset;
-        localCount += 1;
-      }
-      else
-      {
-        dofNumber[a] = -1;
-      }
-    } );
-  } );
-
-  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
-}
-
-void SinglePhaseFlow::SetupSystem( DomainPartition * const domain,
-                                   DofManager & dofManager,
-                                   ParallelMatrix & matrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution )
-{
-  // assume that there is only a single MeshLevel for now
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  // for this solver, the dof are on the cell center, and the row corrosponds to an element
-  localIndex numGhostRows  = 0;
-  localIndex numLocalRows  = 0;
-  globalIndex numGlobalRows = 0;
-
-  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
-  {
-    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
-    numGhostRows += subRegionGhosts;
-    numLocalRows += subRegion->size() - subRegionGhosts;
-  } );
-
-  SetNumRowsAndTrilinosIndices( mesh,
-                                numLocalRows,
-                                numGlobalRows,
-                                0 );
-
-  std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::blockLocalDofNumberString );
-
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  matrix.createWithLocalSize( numLocalRows, numLocalRows, 7, MPI_COMM_GEOSX );
-  SetSparsityPattern( domain, &matrix );
-  matrix.close();
-
-  rhs.createWithLocalSize( numLocalRows, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalRows, MPI_COMM_GEOSX );
-}
-
-void SinglePhaseFlow::SetSparsityPattern( DomainPartition const * const domain,
-                                          ParallelMatrix * const matrix ) const
-{
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber = m_dofNumber;
-
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
-
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
-
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
-
-  //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  fluxApprox->forCellStencils( [&]( auto const & stencil )
-  {
-    typedef TYPEOFREF( stencil ) STENCIL_TYPE;
-    typename STENCIL_TYPE::IndexContainerViewConstType const & eri = stencil.getElementRegionIndices();
-    typename STENCIL_TYPE::IndexContainerViewConstType const & esri = stencil.getElementSubRegionIndices();
-    typename STENCIL_TYPE::IndexContainerViewConstType const & ei = stencil.getElementIndices();
-
-    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA( localIndex iconn )
-    {
-      localIndex const stencilSize = stencil.stencilSize( iconn );
-      localIndex const numFluxElems = stencilSize;
-      stackArray1d<globalIndex, STENCIL_TYPE::NUM_POINT_IN_FLUX> dofIndexRow( numFluxElems );
-      stackArray1d<globalIndex, STENCIL_TYPE::MAX_STENCIL_SIZE> dofIndexCol( stencilSize );
-
-      stackArray2d<real64, STENCIL_TYPE::MAX_STENCIL_SIZE * STENCIL_TYPE::NUM_POINT_IN_FLUX>
-      values( numFluxElems, stencilSize );
-
-      values = 1.0;
-
-      for( localIndex i = 0; i < numFluxElems; ++i )
-      {
-        dofIndexRow[i] = dofNumber[eri( iconn, i )][esri( iconn, i )][ei( iconn, i )];
-      }
-
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-        dofIndexCol[i] = dofNumber[eri( iconn, i )][esri( iconn, i )][ei( iconn, i )];
-      }
-
-      matrix->insert( dofIndexRow.data(),
-                      dofIndexCol.data(),
-                      values.data(),
-                      numFluxElems,
-                      stencilSize );
-    } );
-  } );
-
-
-  // add isolated elements not captured in the flux stencil
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion const * const region,
-                                      ElementSubRegionBase const * const subRegion )
-  {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumberSub = m_dofNumber[er][esr];
-
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const a )
-    {
-      if (elemGhostRank[a] < 0)
-      {
-        globalIndex const dofIndex = dofNumberSub[a];
-        matrix->insert( dofIndex, dofIndex, 1.0 );
-      }
-    } );
-  } );
+  dofManager.addField( viewKeyStruct::pressureString,
+                       DofManager::Location::Elem,
+                       DofManager::Connectivity::Face,
+                       m_targetRegions );
 }
 
 void SinglePhaseFlow::AssembleSystem( real64 const time_n,
@@ -555,10 +386,11 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem: " );
-    GEOS_LOG_RANK_0( "\nJacobian:\n" );
-    matrix.print(std::cout);
-    rhs.print(std::cout);
+    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
   }
 
   if( verboseLevel() >= 3 )
@@ -688,7 +520,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -697,7 +529,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                             FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegion const * const region,
+                                                                         ElementRegionBase const * const region,
                                                                          auto const * const subRegion )
   {
     AccumulationLaunch<ISPORO>( er, esr, subRegion, matrix, rhs );
@@ -778,6 +610,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   rhs.open();
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
@@ -789,7 +622,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                          string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
-    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
     fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
                                                                             true,
@@ -816,7 +649,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                          string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
-    dofNumber = subRegion->getReference< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
     //for now assume all the non-flux boundary conditions are Dirichlet type BC.
 
@@ -851,8 +684,9 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   {
     GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
     GEOS_LOG_RANK_0("\nJacobian:\n");
-    matrix.print(std::cout);
-    rhs.print(std::cout);
+    std::cout << matrix;
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    std::cout << rhs;
   }
 
   if( verboseLevel() >= 3 )
@@ -880,7 +714,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                                                      ParallelVector * const rhs )
 {
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
 
@@ -1155,7 +989,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   real64 localResidualNorm = 0.0;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegionBase const * const region,
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -1192,27 +1026,15 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  real64 * localSolution = nullptr;
-  solution.extractLocalVector( &localSolution );
-
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
-    arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-
-    arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
-
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if( elemGhostRank[ei] < 0 )
-      {
-        // extract solution and apply to dP
-        localIndex const lid = solution.getLocalRowID( dofNumber[ei] );
-        dPres[ei] += scalingFactor * localSolution[lid];
-      }
-    } );
+    dofManager.addVectorToField( solution,
+                                 viewKeyStruct::pressureString,
+                                 scalingFactor,
+                                 subRegion,
+                                 viewKeyStruct::deltaPressureString );
   } );
 
   std::map<string, string_array> fieldNames;
@@ -1243,8 +1065,9 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem\nSolution\n");
-    GEOS_LOG(solution);
+    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
+    GEOS_LOG_RANK_0("\nSolution:\n");
+    std::cout << solution;
   }
 }
 
@@ -1253,7 +1076,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
@@ -1275,8 +1098,6 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-  m_dofNumber =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
   m_pressure =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::pressureString );
   m_deltaPressure =
