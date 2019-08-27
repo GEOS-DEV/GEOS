@@ -171,7 +171,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 
 }
 
-//wu40: TODO: I add a new member m_solidMaterialName here so that I can get the solid material index in function CalculateEdgeSIF. This will require a new input from xml file. Check with Randy.
+
 SurfaceGenerator::SurfaceGenerator( const std::string& name,
                                     ManagedGroup * const parent ):
   SolverBase( name, parent ),
