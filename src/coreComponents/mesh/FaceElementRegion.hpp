@@ -24,7 +24,7 @@
 #ifndef CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
 #define CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
 
-#include "ElementRegion.hpp"
+#include "ElementRegionBase.hpp"
 
 namespace geosx
 {
@@ -39,7 +39,7 @@ class EdgeManager;
  *
  *
  */
-class FaceElementRegion : public ElementRegion
+class FaceElementRegion : public ElementRegionBase
 {
 public:
   /**
@@ -80,7 +80,7 @@ public:
                                 localIndex const faceIndices[2] );
 
 
-  struct viewKeyStruct : public ElementRegion::viewKeyStruct
+  struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
   };
