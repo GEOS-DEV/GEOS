@@ -2942,7 +2942,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                 GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeIndex][k] );
             localIndex iEle = nodesToElementIndex[nodeIndex][k];
 
-            ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
+            ElementRegionBase * const
+            elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
             string const elementRegionName = elementRegion->getName();
             localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
             localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
@@ -3705,7 +3706,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
           GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
       localIndex iEle = nodesToElementIndex[nodeID][k];
 
-      ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
+      ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
       string const elementRegionName = elementRegion->getName();
       localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
       localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
