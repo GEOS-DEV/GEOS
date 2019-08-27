@@ -28,10 +28,10 @@
 //#include "Utilities/Utilities.h"
 //#include <fstream>
 //#include "ElementRegionT.hpp"
-#include "ElementRegionManager.hpp"
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -179,7 +179,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
 
   for( typename dataRepository::indexType kReg=0 ; kReg<elementRegionManager->numRegions() ; ++kReg )
   {
-    ElementRegion const * const elemRegion = elementRegionManager->GetRegion(kReg);
+    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(kReg);
 
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>( [&]( localIndex const kSubReg,
                                                                       CellElementSubRegion const * const subRegion )

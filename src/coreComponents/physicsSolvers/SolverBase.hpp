@@ -254,6 +254,31 @@ public:
                      ParallelVector & solution );
 
   /**
+   * @brief Populate degree-of-freedom manager with fields relevant to this solver
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  virtual void
+  SetupDofs( DofManager & dofManager ) const;
+
+  /**
+   * @brief Set up the linear system (DOF indices and sparsity patterns)
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
+   *
+   * @note While the function is virtual, the base class implementation should be
+   *       sufficient for most single-physics solvers.
+   */
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution );
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
@@ -272,12 +297,13 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void AssembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs );
+  virtual void
+  AssembleSystem( real64 const time,
+                  real64 const dt,
+                  DomainPartition * const domain,
+                  DofManager const & dofManager,
+                  ParallelMatrix & matrix,
+                  ParallelVector & rhs );
 
   /**
    * @brief apply boundary condition to system
@@ -291,12 +317,13 @@ public:
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
    */
-  virtual void ApplyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs );
+  virtual void
+  ApplyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs );
 
   /**
    * @brief calculate the norm of the global system residual
@@ -431,7 +458,6 @@ public:
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
-    static constexpr auto globalDofNumberString = "globalDOFNumber";
 
   } viewKeys;
 
@@ -482,7 +508,7 @@ public:
 
   template<bool CONST>
   using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
-                                                     add_const_if_t<ElementRegion, CONST> *,
+                                                     add_const_if_t<ElementRegionBase, CONST> *,
                                                      add_const_if_t<ElementSubRegionBase, CONST> * )>;
 
   template<typename MESH, typename LAMBDA>
