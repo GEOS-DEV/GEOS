@@ -16,12 +16,11 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifndef ELEMENTREGION_H
-#define ELEMENTREGION_H
+#ifndef ELEMENT_REGION_BASE_H
+#define ELEMENT_REGION_BASE_H
 
 #include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "FaceManager.hpp"
 #include "FaceElementSubRegion.hpp"
 
 namespace geosx
@@ -29,11 +28,12 @@ namespace geosx
 
 class StableTimeStep;
 
+class FaceManager;
 
 /**
  * Class to manage the data stored at the element level.
  */
-class ElementRegion : public ObjectManagerBase
+class ElementRegionBase : public ObjectManagerBase
 {
 public:
 
@@ -42,28 +42,34 @@ public:
    */
   ///@{
 
-  static const string CatalogName()
-  { return "ElementRegion"; }
-
-  virtual const string getCatalogName() const override
-  { return ElementRegion::CatalogName(); }
+//  static const string CatalogName()
+//  { return "ElementRegionBase"; }
+//
+//  virtual const string getCatalogName() const override
+//  { return ElementRegionBase::CatalogName(); }
 
 
   ///@}
 
 
-  ElementRegion() = delete;
+  ElementRegionBase() = delete;
 
-  ElementRegion( string const & name, ManagedGroup * const parent );
+  ElementRegionBase( string const & name, ManagedGroup * const parent );
 
 
-  ElementRegion(const ElementRegion& init);
+  ElementRegionBase(const ElementRegionBase& init);
 
-  virtual ~ElementRegion() override;
+  virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( ManagedGroup const * const cellBlocks );
+  virtual void GenerateMesh( ManagedGroup const * const cellBlocks )
+  {
+    GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
+  }
 
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager ); 
+//  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
+//  {
+//    GEOS_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
+//  }
 
   subGroupMap & GetSubRegions()
   {
@@ -100,11 +106,6 @@ public:
   localIndex numSubRegions() const
   {
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
-  }
-
-  void AddCellBlockName( string const & cellBlockName )
-  {
-    m_cellBlockNames.push_back( cellBlockName );
   }
 
 
@@ -177,25 +178,20 @@ public:
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto materialListString = "materialList";
-    static constexpr auto coarseningRatioString = "coarseningRatio"; 
     static constexpr auto elementSubRegions = "elementSubRegions";
-    static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
 
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
 protected:
-  virtual void PostProcessInput() override;
 
 private:
 
-  ElementRegion& operator=(const ElementRegion& rhs);
+  ElementRegionBase& operator=(const ElementRegionBase& rhs);
 
-  string_array m_cellBlockNames;
   string_array m_materialList;
   string m_numericalMethod;
-  real64 m_coarseningRatio;
 
 };
 
@@ -210,4 +206,4 @@ private:
 
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* ELEMENT_REGION_BASE_H_ */

@@ -1,9 +1,10 @@
 
 
-============= ==== ======= ======================== 
-Name          Type Default Description              
-============= ==== ======= ======================== 
-ElementRegion node         :ref:`XML_ElementRegion` 
-============= ==== ======= ======================== 
+================= ==== ======= ============================ 
+Name              Type Default Description                  
+================= ==== ======= ============================ 
+CellElementRegion node         :ref:`XML_CellElementRegion` 
+FaceElementRegion node         :ref:`XML_FaceElementRegion` 
+================= ==== ======= ============================ 
 
 

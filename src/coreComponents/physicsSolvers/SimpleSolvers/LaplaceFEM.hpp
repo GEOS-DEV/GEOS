@@ -80,6 +80,8 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -118,12 +120,6 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
   /**@}*/
-
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DofManager const & dofManager,

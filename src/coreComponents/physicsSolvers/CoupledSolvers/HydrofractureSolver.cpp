@@ -27,13 +27,14 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contactRelations/ContactRelationBase.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/FiniteVolume/SinglePhaseFlow.hpp"
+#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -84,21 +85,17 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & rhs,
                                              ParallelVector & solution )
 {
-  m_solidSolver = this->getParent()->GetGroup(m_solidSolverName)->group_cast<SolidMechanicsLagrangianFEM*>();
-  m_flowSolver = this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>();
+  m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>(m_solidSolverName);
+  m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>(m_flowSolverName);
 
-  m_solidSolver->ImplicitStepSetup( time_n,
-                                    dt,
-                                    domain,
-                                    dofManager,
+  m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
+                                    m_solidSolver->getDofManager(),
                                     m_solidSolver->getSystemMatrix(),
                                     m_solidSolver->getSystemRhs(),
                                     m_solidSolver->getSystemSolution() );
 
-  m_flowSolver->ImplicitStepSetup( time_n,
-                                   dt,
-                                   domain,
-                                   dofManager,
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
+                                   m_flowSolver->getDofManager(),
                                    m_flowSolver->getSystemMatrix(),
                                    m_flowSolver->getSystemRhs(),
                                    m_flowSolver->getSystemSolution() );
@@ -123,7 +120,7 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
     faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
     {
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
-      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
       {
@@ -231,10 +228,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   {
     faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
     {
-      arrayView1d<real64> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
-      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
       arrayView1d<real64> const & area = subRegion->getElementArea();
       //array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -309,7 +305,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
 //
 //      arrayView1d<real64> const & volume = subRegion->getElementVolume();
-//      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+//      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 //      arrayView1d<real64> const & area = subRegion->getElementArea();
 //      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
 //      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
@@ -363,7 +359,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //          {
 //            for( int component=0 ; component<3 ; ++component )
 //            {
-//              rowDOF[3*a+component] = 3*blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
+//              rowDOF[3*a+component] = blockLocalDofNumber[facesToNodes[faceIndex][a]]+component;
 //              nodeRHS[3*a+component] = - nodalForce[component] * pow(-1,kf);
 //              fext[facesToNodes[faceIndex][a]][component] += - nodalForce[component] * pow(-1,kf);
 //            }
@@ -398,14 +394,14 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //            {
 //              for( int i=0 ; i<3 ; ++i )
 //              {
-//                rowDOF[3*a+i] = 3*blockLocalDofNumber[facesToNodes[faceIndexA][a]]+i;
+//                rowDOF[3*a+i] = blockLocalDofNumber[facesToNodes[faceIndexA][a]]+i;
 //                real64 const integrationFactor = - faceArea[elemsToNodes[kfe][0]] / numNodesPerFace * Nbar[i] * pow(-1,kfa);
 //
 //                for( int b=0 ; b<numNodesPerFace ; ++b )
 //                {
 //                  for( int j=0 ; j<3 ; ++j )
 //                  {
-//                    colDOF[3*b+j] = 3*blockLocalDofNumber[facesToNodes[faceIndexb][b]]+j;
+//                    colDOF[3*b+j] = blockLocalDofNumber[facesToNodes[faceIndexb][b]]+j;
 //                    dRdU(3*a+i,3*b+j) = integrationFactor * dP_dAper * dAper_dU[kfb][b][j];
 //                  }
 //                }
@@ -555,80 +551,37 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 }
 
 
-void HydrofractureSolver::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                        localIndex & numLocalRows,
-                                                        globalIndex & numGlobalRows,
-                                                        localIndex  )
+void HydrofractureSolver::SetupDofs( DofManager & dofManager ) const
 {
+  m_solidSolver->SetupDofs( dofManager );
+  m_flowSolver->SetupDofs( dofManager );
 
-//  offset = 0;
-//  m_solidSolver->SetNumRowsAndTrilinosIndices( meshLevel, numLocalRows, numGlobalRows, offset );
-
+  dofManager.addCoupling( keys::TotalDisplacement,
+                          FlowSolverBase::viewKeyStruct::pressureString,
+                          DofManager::Connectivity::Elem );
 }
 
-void HydrofractureSolver::SetupSystem ( DomainPartition * const domain,
-                                        DofManager & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution)
+void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
+                                       DofManager & dofManager,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-  constexpr int dim=3;
 
-  m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().localRows(),
-                                  m_flowSolver->getSystemMatrix().localCols(),
-                                  9,
-                                  MPI_COMM_GEOSX);
-  m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().localCols(),
-                                  m_solidSolver->getSystemMatrix().localRows(),
-                                  24,
-                                  MPI_COMM_GEOSX);
+  dofManager.setMesh( domain, 0, 0 );
+  SetupDofs( dofManager );
+  dofManager.close();
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
 
-  arrayView1d<globalIndex const> const & dispDOF = nodeManager->getReference<array1d<globalIndex>>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+  dofManager.setSparsityPattern( m_matrix01,
+                                 keys::TotalDisplacement,
+                                 FlowSolverBase::viewKeyStruct::pressureString );
 
-  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const elementSubRegion )
-  {
-    localIndex const numElems = elementSubRegion->size();
-    array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
-    arrayView1d<globalIndex const> const & flowDOF = elementSubRegion->getReference<array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
-
-    for( localIndex k=0 ; k<numElems ; ++k )
-    {
-      globalIndex const activeFlowDOF = flowDOF[k];
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d<globalIndex> activeDisplacementDOF(dim * numNodesPerElement);
-      array1d<real64> values( dim*numNodesPerElement );
-      values = 1;
-
-      for( localIndex a=0 ; a<numNodesPerElement ; ++a )
-      {
-        for( int d=0 ; d<dim ; ++d )
-        {
-          activeDisplacementDOF[a * dim + d] = dim * dispDOF[elemsToNodes[k][a]] + d;
-        }
-      }
-
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         &activeFlowDOF,
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         1 );
-
-      m_matrix10.insert( &activeFlowDOF,
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         1,
-                         activeDisplacementDOF.size() );
-
-    }
-  });
-
-  m_matrix01.close();
-  m_matrix10.close();
+  dofManager.setSparsityPattern( m_matrix10,
+                                 FlowSolverBase::viewKeyStruct::pressureString,
+                                 keys::TotalDisplacement );
 
 }
 
@@ -643,14 +596,14 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
-                                 dofManager,
+                                 m_solidSolver->getDofManager(),
                                  m_solidSolver->getSystemMatrix(),
                                  m_solidSolver->getSystemRhs() );
 
   m_flowSolver->AssembleSystem( time,
                                 dt,
                                 domain,
-                                dofManager,
+                                m_flowSolver->getDofManager(),
                                 m_flowSolver->getSystemMatrix(),
                                 m_flowSolver->getSystemRhs() );
 
@@ -671,14 +624,14 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   m_solidSolver->ApplyBoundaryConditions( time,
                                           dt,
                                           domain,
-                                          dofManager,
+                                          m_solidSolver->getDofManager(),
                                           m_solidSolver->getSystemMatrix(),
                                           m_solidSolver->getSystemRhs() );
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
                                          domain,
-                                         dofManager,
+                                         m_flowSolver->getDofManager(),
                                          m_flowSolver->getSystemMatrix(),
                                          m_flowSolver->getSystemRhs() );
 
@@ -733,18 +686,16 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
-
-  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
   arrayView1d<R1Tensor> const & fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext = {0,0,0};
 
-
+  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
   arrayView1d<globalIndex> const &
-  nodeDofNumber =  nodeManager->getReference<globalIndex_array>(SolidMechanicsLagrangianFEM::viewKeyStruct::globalDofNumberString);
+  dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
 
 
 
@@ -754,7 +705,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   {
 
     arrayView1d<globalIndex> const &
-    faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
+    faceElementDofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
 
     if( subRegion->hasView("pressure") )
     {
@@ -762,7 +713,6 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
       arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
 
       arrayView1d<real64> const & area = subRegion->getElementArea();
-      array1d< array1d<localIndex> > const & elemsToNodes = subRegion->nodeList();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
 
@@ -776,10 +726,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
         Nbar.Normalize();
 
         localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const kf1 = elemsToFaces[kfe][1];
         localIndex const numNodesPerFace=facesToNodes[kf0].size();
-        localIndex const * const nodelist0 = facesToNodes[kf0];
-        localIndex const * const nodelist1 = facesToNodes[kf1];
 
 
         globalIndex rowDOF[24];
@@ -804,7 +751,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              rowDOF[3*a+i] = 3*nodeDofNumber[faceToNodes[a]]+i;
+              rowDOF[3*a+i] = dispDofNumber[faceToNodes[a]] + i;
 
               nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
               fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
@@ -831,7 +778,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
 void
 HydrofractureSolver::
-AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
+AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                     ParallelMatrix * const matrix10,
                                                     ParallelVector * const rhs0 )
 {
@@ -841,19 +788,21 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
   string const constitutiveName = constitutiveManager->GetGroup(m_flowSolver->fluidIndex())->getName();
+  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
   ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+  contactRelation = constitutiveManager->GetGroup<ContactRelationBase>( m_contactRelationName );
 
   matrix10->zero();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegion const * const region,
+                                                                         ElementRegionBase const * const region,
                                                                          FaceElementSubRegion const * const subRegion )
   {
 
@@ -862,16 +811,13 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
     dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
 
     arrayView1d<integer const>     const & elemGhostRank = subRegion->GhostRank();
-    arrayView1d<globalIndex const> const & dofNumber     = subRegion->getReference<array1d<globalIndex>>(SinglePhaseFlow::viewKeyStruct::blockLocalDofNumberString );
-
-    arrayView1d<globalIndex const> const &
-    nodalDofNumber = nodeManager->getReference<array1d<globalIndex>>( viewKeyStruct::
-                                                                      globalDofNumberString);
+    arrayView1d<globalIndex const> const & presDofNumber = subRegion->getReference<array1d<globalIndex>>( presDofKey );
+    arrayView1d<globalIndex const> const & dispDofNumber = nodeManager->getReference<array1d<globalIndex>>( dispDofKey );
 
     arrayView2d<real64 const> const &
     dens = constitutiveRelation->getReference<array2d<real64>>(SingleFluidBase::viewKeyStruct::densityString);
 
-    arrayView1d<real64 const> const & aperture      = subRegion->getElementAperture();
+    arrayView1d<real64 const> const & aperture  = subRegion->getElementAperture();
     arrayView1d<real64 const> const & area      = subRegion->getElementArea();
 
     arrayView2d<localIndex const> const & elemsToFaces = subRegion->faceList();
@@ -884,7 +830,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
     {
       if (elemGhostRank[ei] < 0)
       {
-        globalIndex const elemDOF = dofNumber[ei];
+        globalIndex const elemDOF = presDofNumber[ei];
 
         localIndex const numNodesPerFace = facesToNodes[elemsToFaces[ei][0]].size();
 
@@ -905,7 +851,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const doma
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*nodalDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] +i;
+              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] + i;
               real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
               real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
               dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;

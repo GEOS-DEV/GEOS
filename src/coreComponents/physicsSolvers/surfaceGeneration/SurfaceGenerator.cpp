@@ -21,10 +21,6 @@
  */
 
 #include "SurfaceGenerator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -32,7 +28,11 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
+#include "MPI_Communications/SpatialPartition.hpp"
+#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+
 
 #ifdef USE_GEOSX_PTP
 #include "GEOSX_PTP/ParallelTopologyChange.hpp"
@@ -727,7 +727,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
     elementManager.forElementSubRegionsComplete<FaceElementSubRegion>( [&]( localIndex const er,
                                                                             localIndex const esr,
-                                                                            ElementRegion const * const,
+                                                                            ElementRegionBase const * const,
                                                                             FaceElementSubRegion * const subRegion )
     {
       std::set<localIndex> & newFaceElems = modifiedObjects.newElements[{er,esr}];
@@ -1852,7 +1852,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       const std::pair<CellElementSubRegion*, localIndex >& elem = iter_elem->first;
 
       CellElementSubRegion& elemSubRegion = *(elem.first);
-      ElementRegion * const elemRegion = elemSubRegion.getParent()->getParent()->group_cast<ElementRegion*>();
+      ElementRegionBase * const elemRegion = elemSubRegion.getParent()->getParent()->group_cast<ElementRegionBase*>();
       string const elemRegionName = elemRegion->getName();
 
       localIndex const regionIndex = elementManager.GetRegions().getIndex( elemRegionName );
@@ -2378,7 +2378,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
     array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToNodes( nodeManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
-      ElementRegion const & elemRegion = *(elementManager.GetRegion( er ));
+      ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
         CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
@@ -2482,7 +2482,7 @@ void SurfaceGenerator::MapConsistencyCheck( const localIndex nodeID,
     array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
-      ElementRegion const & elemRegion = *(elementManager.GetRegion( er ));
+      ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
       for( localIndex esr=0 ; esr<elemRegion.numSubRegions() ; ++esr )
       {
         CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
@@ -2942,7 +2942,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                 GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeIndex][k] );
             localIndex iEle = nodesToElementIndex[nodeIndex][k];
 
-            ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
+            ElementRegionBase * const
+            elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
             string const elementRegionName = elementRegion->getName();
             localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
             localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
@@ -3705,7 +3706,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
           GetSubRegion<CellElementSubRegion>( nodesToElementSubRegion[nodeID][k] );
       localIndex iEle = nodesToElementIndex[nodeID][k];
 
-      ElementRegion * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegion*>();
+      ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
       string const elementRegionName = elementRegion->getName();
       localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
       localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
