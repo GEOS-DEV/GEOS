@@ -109,6 +109,9 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
+  SetupDofs( DofManager & dofManager ) const override;
+
+  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -148,37 +151,6 @@ public:
 
   /**@}*/
 
-  /**
-   * Function to setup/allocate the linear system blocks
-   * @param domain The DomainPartition object.
-   * @param blockSystem the block system object to that holds the blocks that will be constructed
-   */
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
-
-  /**
-   * Function to set the sparsity pattern
-   * @param domain The DomainPartition object
-   * @param sparsity Pointer to the the sparsity graph
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
-
-  /**
-   * Function to set the global DOF numbers  for this solver.
-   * @param domain The DomainPartition object
-   * @param numLocalRows The number of local rows on this process
-   * @param numGlobalRows The number of global rows in the system
-   * @param localIndices The local indices associated with a local row??
-   * @param offset The offset for the row/globalDOF
-   */
-  void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) const;
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -392,7 +364,6 @@ public:
     dataRepository::ViewKey massDamping = { massDampingString };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
     dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
-    dataRepository::ViewKey globalDofNumber = { globalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
 

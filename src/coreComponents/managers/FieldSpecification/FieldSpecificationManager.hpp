@@ -220,7 +220,7 @@ public:
               targetGroup = elemRegionSubGroup;
             }
 
-            dataRepository::ManagedGroup * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
+            dataRepository::ManagedGroup * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
             if( elemSubRegionSubGroup!=nullptr )
             {
               targetGroup = elemSubRegionSubGroup;
@@ -236,7 +236,7 @@ public:
 //            }
 
             if( targetPath[pathLevel] == dataRepository::keys::elementRegions ||
-                targetPath[pathLevel] == ElementRegion::viewKeyStruct::elementSubRegions )
+                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
             {
               continue;
             }
@@ -269,7 +269,7 @@ private:
                                LAMBDA && lambda
                              ) const
   {
-    if( ( target->getParent()->getName() == ElementRegion::viewKeyStruct::elementSubRegions
+    if( ( target->getParent()->getName() == ElementRegionBase::viewKeyStruct::elementSubRegions
         || target->getName() == "nodeManager"
         || target->getName() == "FaceManager"
         || target->getName() == "edgeManager" ) // TODO these 3 strings are harcoded because for the moment, there are inconsistencies with the name of the Managers...

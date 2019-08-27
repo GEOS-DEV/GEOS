@@ -42,7 +42,7 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( integer const newLevel )
+MeshLevel * MeshBody::CreateMeshLevel( localIndex const newLevel )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }
