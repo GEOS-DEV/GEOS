@@ -76,16 +76,14 @@ public:
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
-    static constexpr auto poissonRatioString =  "PoissonRatio" ;
-    static constexpr auto youngsModulusString =  "YoungsModulus" ;
   };
 
 
-  real64   bulkModulus0()  const { return m_defaultBulkModulus; }
-  real64 & bulkModulus0()        { return m_defaultBulkModulus; }
+//  real64   bulkModulus0()  const { return m_defaultBulkModulus; }
+  real64 & setDefaultBulkModulus()        { return m_defaultBulkModulus; }
 
-  real64 defaultShearModulus() const { return m_defaultShearModulus; }
-  real64 & defaultShearModulus()     { return m_defaultShearModulus; }
+//  real64 defaultShearModulus() const { return m_defaultShearModulus; }
+  real64 & setDefaultShearModulus()     { return m_defaultShearModulus; }
 
   arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
   arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
@@ -149,8 +147,6 @@ private:
 
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
-  real64 m_defaultPoissonRatio;
-  real64 m_defaultYoungsModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
   bool m_postProcessed = false;

@@ -44,7 +44,6 @@ string const basis = "basis";
 string const quadrature = "quadrature";
 string const dNdX = "dNdX";
 string const detJ = "detJ";
-string const nodalForceFromElement = "nodalForceFromElement";
 string const parentSpace="parentSpace";
 }
 }

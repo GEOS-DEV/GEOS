@@ -507,22 +507,12 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--faceToEdgeCoplaneTol => (no description available)-->
-		<xsd:attribute name="faceToEdgeCoplaneTol" type="real64" />
-		<!--faceToEdgeProjectionTol => (no description available)-->
-		<xsd:attribute name="faceToEdgeProjectionTol" type="real64" />
-		<!--faceToFaceCoplaneTol => (no description available)-->
-		<xsd:attribute name="faceToFaceCoplaneTol" type="real64" />
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
 		<!--gravityVector => (no description available)-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" />
-		<!--markExtendedLayer => (no description available)-->
-		<xsd:attribute name="markExtendedLayer" type="integer" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--maxTurnAngle => (no description available)-->
-		<xsd:attribute name="maxTurnAngle" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
 		<xsd:attribute name="tipEdges" type="LvArray::SortedArray&lt;long, long&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
@@ -896,10 +886,6 @@
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--faceViscosity => (no description available)-->
 		<xsd:attribute name="faceViscosity" type="real64_array2d" />
-		<!--flowFacePressure => Fluid pressure on faces-->
-		<xsd:attribute name="flowFacePressure" type="real64_array" />
-		<!--flowFaceType => Flow type of faces. 0=non-fracture face. 1=fracture face-->
-		<xsd:attribute name="flowFaceType" type="integer_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -920,8 +906,6 @@
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
 		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
-		<!--stressNOnFace => A flag to mark if the face is separable-->
-		<xsd:attribute name="stressNOnFace" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

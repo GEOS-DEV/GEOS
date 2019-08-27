@@ -116,32 +116,18 @@ public:
 
 
   int Test ( int test);
-
-  //wu40: Since the field nodalForceFromElement is used in another solver (SolidMechanicsLagrangianFEM), I have to make the viewKeyStruct public here.
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto flowFacePressureString = "flowFacePressure";
-    constexpr static auto flowFaceTypeString = "flowFaceType";
     constexpr static auto ruptureStateString = "ruptureState";
     constexpr static auto SIFonFaceString = "SIFonFace";
     constexpr static auto K_ICString = "K_IC";
     constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
     constexpr static auto isFaceSeparableString = "isFaceSeparable";
-    constexpr static auto stressNOnFaceString = "stressNOnFace";
     constexpr static auto failCriterionString = "failCriterion";
-    constexpr static auto maxTurnAngleString = "maxTurnAngle";
-    constexpr static auto faceToEdgeProjectionTolString = "faceToEdgeProjectionTol";
-    constexpr static auto faceToFaceCoplaneTolString = "faceToFaceCoplaneTol";
-    constexpr static auto faceToEdgeCoplaneTolString = "faceToEdgeCoplaneTol";
-    constexpr static auto markExtendedLayerString = "markExtendedLayer";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
-    constexpr static auto nodalForceFromElementString = "nodalForceFromElement";
     constexpr static auto solidMaterialNameString = "solidMaterialName";
-    constexpr static auto displacementBasedSIFString = "displacementBasedSIF";
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
-    constexpr static auto allowVacuumFracString = "allowVacuumFrac";
     constexpr static auto rockToughnessString = "rockToughness";
-    constexpr static auto saturationPressureCuttoffString = "saturationPressureCuttoff";
     constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIF_IString = "SIF_I";
     constexpr static auto SIF_IIString = "SIF_II";
@@ -540,31 +526,14 @@ private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
-  //Maximum angle that the fracture can change from its previous propagation direction.
-  realT m_maxTurnAngle;
-
-  int m_markExtendedLayer;
-
-  realT m_faceToEdgeProjectionTol;
-
-  realT m_faceToFaceCoplaneTol;
-
-  realT m_faceToEdgeCoplaneTol;
-
   // solid solver name
   string m_solidMaterialName;
 
   localIndex m_solidMaterialFullIndex;
 
-  int m_displacementBasedSIF;
-
   int m_nodeBasedSIF;
 
-  int m_allowVacuumFrac;
-
   realT m_rockToughness;
-
-  realT m_saturationPressureCuttoff;
 
   /// set of separable faces
   localIndex_set m_separableFaceSet;
