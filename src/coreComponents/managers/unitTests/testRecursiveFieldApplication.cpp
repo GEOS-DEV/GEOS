@@ -97,10 +97,10 @@ TEST(FieldSpecification, Recursive)
   cellToVertexreg1Tet.resize( nbTetReg1, 4);
 
   ElementRegionManager * elemManager = meshLevel0->getElemManager();
-  ElementRegion* reg0 = elemManager->CreateChild("ElementRegion","reg0")->group_cast<ElementRegion*>();
+  CellElementRegion* reg0 = elemManager->CreateChild("CellElementRegion","reg0")->group_cast<CellElementRegion*>();
   reg0->AddCellBlockName(reg0Hex->getName());
   reg0->AddCellBlockName(reg0Tet->getName());
-  ElementRegion* reg1 = elemManager->CreateChild("ElementRegion","reg1")->group_cast<ElementRegion*>();
+  CellElementRegion* reg1 = elemManager->CreateChild("CellElementRegion","reg1")->group_cast<CellElementRegion*>();
   reg1->AddCellBlockName(reg1Hex->getName());
   reg1->AddCellBlockName(reg1Tet->getName());
   reg0->GenerateMesh(cellBlockManager->GetGroup(keys::cellBlocks) );
@@ -159,7 +159,7 @@ TEST(FieldSpecification, Recursive)
   auto field2 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field2" );
   auto field3 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field3" );
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                                   ElementRegion * const region,
+                                                   ElementRegionBase * const region,
                                                    ElementSubRegionBase const * const subRegion )
   {
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )

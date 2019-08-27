@@ -55,10 +55,10 @@
   </Events>
 
   <ElementRegions>
-    <ElementRegion name="Channel"
+    <CellElementRegion name="Channel"
                    cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
                    materialList="{water, rock}"/>
-    <ElementRegion name="Barrier"
+    <CellElementRegion name="Barrier"
                    cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
                    materialList="{}"/>
   </ElementRegions>

@@ -27,379 +27,14 @@
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/ManagedGroup.hpp"
+#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp" // LAI
-#include "linearAlgebraInterface/src/DofManager.hpp"
 
 namespace geosx
 {
 class Function;
-
-/**
- * @struct FieldSpecificationEqual
- * this struct a collection of static functions which adhere to an assumed interface for overwriting
- * a value for a field.
- */
-struct FieldSpecificationEqual
-{
-  /**
-   * @brief Pointwise application of a value to a field
-   * @tparam T The type of the array1d field variable specified in @p field.
-   * @param[in] field The array1d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index] = value.
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    field[index] = static_cast<T>(value);
-  }
-
-  /**
-   * @brief Pointwise application of value to a field variable.
-   * @tparam T The type of the array1d field variable specified in @p field.
-   * @param[in] field The array1d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
-   *                      this will not be used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] = value.
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    field[index].Data()[component] = value;
-  }
-
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The index along second dimension of 2d array.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] = value.
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    if( component >= 0 )
-    {
-      field[index][component] = static_cast<T>(value);
-    }
-    else
-    {
-      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-      {
-        field[index][a] = static_cast<T>(value);
-      }
-    }
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
-   *                      this will not be used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] = value for all values of field[index].
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    if( component >= 0)
-    {
-      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-      {
-        field[index][a].Data()[component] = value;
-      }
-    }
-    else
-    {
-      for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-      {
-        field[index][a] = value;
-      }
-    }
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index] = value for all values of field[index].
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-    {
-      for( localIndex b=0; b<field.size( 2 ) ; ++b )
-      {
-        field[index][a][b] = static_cast<T>(value);
-      }
-    }
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
-   *                      this will not be used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] = value for all values of field[index].
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView3d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-    {
-      for( localIndex b=0; b<field.size( 2 ) ; ++b )
-      {
-        field[index][a][b][component] = value;
-      }
-    }
-  }
-
-  /**
-   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
-   *        equations.
-   * @param[in] dof The degree of freedom that is to be set.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   * @param[out] rhs The rhs contribution resulting from the application of the BC.
-   * @param[in] bcValue The target value of the Boundary Condition
-   * @param[in] fieldValue The current value of the variable to be set.
-   *
-   * This function clears the matrix row for the specified \p dof, sets the diagonal to some
-   * appropriately scaled value, and sets \p rhs to the negative product of the scaled value
-   * of the diagonal and the difference between \p bcValue and \p fieldValue.
-   *
-   * @note This function assumes the user is doing a Newton-type nonlinear solve and will
-   * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
-   * update for the field. For a linear problem, this may lead to unexpected results.
-   */
-  template<typename LAI>
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
-                                        real64 & rhs,
-                                        real64 const & bcValue,
-                                        real64 const fieldValue )
-  {
-    if( matrix.getLocalRowID( dof ) >= 0 )
-    {
-      real64 const diag = matrix.getDiagValue( dof );
-      matrix.clearRow( dof, diag );
-      rhs = -diag * ( bcValue - fieldValue );
-    }
-    else
-    {
-      rhs = 0.0;
-    }
-  }
-
-  /**
-   * @brief Function to add some values of a vector.
-   * @param rhs A ParallelVector object.
-   * @param num The number of values in \p rhs to replace
-   * @param dof A pointer to the global DOF to be replaced
-   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
-   */
-  template<typename LAI>
-  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
-                                         localIndex const num,
-                                         globalIndex * const dof,
-                                         real64 * const values )
-  {
-    rhs.set( dof, values, num );
-  }
-};
-
-/**
- * @struct FieldSpecificationAdd
- * this struct a collection of static functions which adhere to an assumed interface for adding
- * a value for a field.
- */
-struct FieldSpecificationAdd
-{
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array1d field variable specified in @p field.
-   * @param[in] field The array1d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index] += value.
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    field[index] += static_cast<T>(value);
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array1d field variable specified in @p field.
-   * @param[in] field The array1d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
-   *                      this will not be used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] += value.
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView1d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    field[index][component] += value;
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component not used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index] += value for all values of field[index].
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-    {
-      field[index][a] += static_cast<T>(value);
-    }
-  }
-
-  /**
-   * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
-   * @param[in] index The index in field to apply @p value to.
-   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
-   *                      this will not be used.
-   * @param[in] value The value to apply to @p field.
-   *
-   * This function performs field[index][component] += value for all values of field[index].
-   */
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
-  SpecifyFieldValue( arrayView2d<T> const & field,
-                     localIndex const index,
-                     int const component,
-                     real64 const value )
-  {
-    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
-    {
-      field[index][a] += value;
-    }
-  }
-
-  /**
-   * @brief Function to apply a value to a vector field for a single dof.
-   * @param[in] dof The degree of freedom that is to be modified.
-   * @param[in] matrix A ParalleMatrix object: the system matrix.
-   * @param[out] rhs The rhs contribution to be modified
-   * @param[in] bcValue The value to add to rhs
-   * @param[in] fieldValue unused.
-   *
-   */
-  template<typename LAI>
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
-                                        real64 & rhs,
-                                        real64 const & bcValue,
-                                        real64 const fieldValue )
-  {
-    if( true )//node_is_ghost[*nd] < 0 )
-    {
-      rhs += bcValue;
-    }
-  }
-
-  /**
-   * @brief Function to add some values of a vector.
-   * @param rhs A ParallelVector object.
-   * @param num The number of values in \p rhs to replace
-   * @param dof A pointer to the global DOF to be replaced
-   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
-   */
-  template<typename LAI>
-  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
-                                         localIndex const num,
-                                         globalIndex * const dof,
-                                         real64 * const values )
-  {
-    rhs.add( dof, values, num );
-  }
-
-};
 
 
 /**
@@ -857,7 +492,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     integer counter=0;
     for( auto a : targetSet )
     {
-      dof( counter ) = dofDim*dofMap[a]+component;
+      dof( counter ) = dofMap[a]+component;
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
@@ -879,7 +514,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
@@ -897,7 +532,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
@@ -940,7 +575,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
     integer counter=0;
     for( auto a : targetSet )
     {
-      dof( counter ) = dofDim*dofMap[a]+component;
+      dof( counter ) = dofMap[a]+component;
       FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                  matrix,
                                                  rhsContribution( counter ),
@@ -962,7 +597,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),
@@ -980,7 +615,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = dofDim*integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
         FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
                                                    matrix,
                                                    rhsContribution( counter ),

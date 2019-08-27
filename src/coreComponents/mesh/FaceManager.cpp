@@ -21,10 +21,10 @@
  */
 
 #include "FaceManager.hpp"
-#include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
+#include "ElementRegionManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -190,7 +190,7 @@ localIndex createFacesByLowestNode( ElementRegionManager const & elementManager,
   // loop over all the regions
   for( typename dataRepository::indexType er = 0; er < elementManager.numRegions(); ++er )
   {
-    ElementRegion const & elemRegion = *elementManager.GetRegion(er);
+    ElementRegionBase const & elemRegion = *elementManager.GetRegion(er);
 
     // loop over all the subregions
     elemRegion.forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
@@ -635,7 +635,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
-    ElementRegion const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>( elemSubRegionList[kf][0] );
     R1Tensor const elementCenter = subRegion->getElementCenter()( elemList[kf][0] );
     const localIndex numFaceNodes = nodeList()[kf].size();

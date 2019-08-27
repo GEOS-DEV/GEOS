@@ -53,7 +53,7 @@ class EdgeManager;
 class FaceManager;
 class ExternalFaceManager;
 class ElementRegionManager;
-class ElementRegion;
+class ElementRegionBase;
 
 /**
  * @class SurfaceGenerator
