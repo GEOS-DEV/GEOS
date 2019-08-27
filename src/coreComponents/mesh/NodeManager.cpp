@@ -90,8 +90,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   localIndex const totalNumEdges = edgeToNodeMap.size( 0 );
   localIndex const totalNumNodes = size();
 
-  constexpr int MAX_EDGES_PER_NODE = 10;
-  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, MAX_EDGES_PER_NODE );
+  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, edgeManager->maxEdgesPerNode() );
 
   forall_in_range< parallelHostPolicy >( 0, totalNumEdges, [&]( localIndex const edgeID )
   {
@@ -126,8 +125,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   localIndex const totalNumFaces = faceToNodes.size();
   localIndex const totalNumNodes = size();
 
-  constexpr int MAX_FACES_PER_NODE = 20;
-  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, MAX_FACES_PER_NODE );
+  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, faceManager->maxFacesPerNode() );
 
   forall_in_range< parallelHostPolicy >( 0, totalNumFaces, [&]( localIndex const faceID )
   {
