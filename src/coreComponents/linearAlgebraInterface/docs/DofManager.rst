@@ -19,7 +19,7 @@ cell (i.e. element), while a displacement DoF for structural equations will be
 on a node.
 The counterparts of locations are connectors, that are the geometrical entities
 that link together different DoFs are create the sparsity pattern.
-Connectors can be elements, faces, node or none.
+Connectors can be elements, faces, edges, nodes or none.
 Using the same example as before, connectors will be faces and cells,
 respectively.
 The case of a mass matrix, where every element is linked only to itself, is an
@@ -33,10 +33,37 @@ used.
 CSR matrices contain information about the sparsity pattern only, thus binary
 matrices are used.
 
+DoFs located on a mesh object are owned by the same rank that owns the object
+in parallel mesh partitioning.
+DoFs are assigned global indices as follows:
+
+1. Contiguous across MPI ranks
+2. Within each rank, sequentially across present fields
+3. Within each field, sequentially across owned locations
+4. Within each location, according to DoF component number
+
+DoF Manager allocates a separate "Dof Index" array for each field on the mesh.
+It is an array of global indices, where each value represents the first DoF
+index for that field and location (or equivalently, the row and column offset
+of that location's equations and variables for the field in the global matrix).
+For example, if index array a field with 3 components contains the value N,
+global DoF numbers for that location will be N, N+1, N+2.
+DoF on ghosted locations have the same indices as on the owning rank.
+The array is stored under a generated key, which can be queried from the DoF
+manager, and is typically used in system assembly.
+
+This last assumption (sequential numbering of components) cannot be lifted
+as it will necessarily increase memory footprint and bandwidth.
+Likewise, the first principle (rank-wise ordering) is unlikely to change
+as it is a requirement of many linear solver packages to have contiguously
+numbered matrix rows on each rank.
+However, other numbering schemes (e.g. matrix bandwidth reducing permutations)
+may be implemented in future for points 2 and 3.
+
 Methods
 ========================
 
-The main functionalities of ``DoF Manager`` are:
+The main methods of ``DoF Manager`` are:
 
 * ``setMesh``: sets which portion of the mesh the DoF manager instance is
   referring to.
@@ -82,28 +109,28 @@ The main functionalities of ``DoF Manager`` are:
                    string_array const & regions,
                    bool const symmetric);
 
-* ``createPermutation``: creates the permutation matrix mapping the field-based
-  numbering (the default) to the MPI rank-based numbering.
-  Every rank numbers all its unknowns before to move to the next process.
+* ``close``: finish populating field and coupling information and apply DoF
+  numbering
 
  .. code-block:: c
 
-  void createPermutation( ParallelMatrix & permutation ) const;
+  void close();
 
-* ``permuteSparsityPattern``: permute the global sparsity pattern (once it is
-  formed) according to a permutation matrix.
-
- .. code-block:: c
-
-  void permuteSparsityPattern( ParallelMatrix const & locLocDistr,
-                               ParallelMatrix const & permutation,
-                               ParallelMatrix & permutedMatrix ) const;
-
-* ``cleanUp``: releases internal memory.
+* ``clear``: removes all fields, releases memory and re-opens the DofManager
 
  .. code-block:: c
 
-  void cleanUp() const;
+  void clear();
+
+* ``getSparsityPattern``: gets the sparsity ``pattern`` for the given
+  ``rowField`` and ``colField``.
+  Default case is the complete sparsity pattern, for all DoFs.
+
+ .. code-block:: c
+
+  void getSparsityPattern( SparsityPattern & pattern,
+                           string const & rowField = "",
+                           string const & colField = "") const;
 
 Minor methods are:
 
@@ -124,37 +151,6 @@ Minor methods are:
  .. code-block:: c
 
   localIndex numLocalDofs( string const & field = "" ) const;
-
-* ``getSparsityPattern``: gets the sparsity ``pattern`` for the given
-  ``rowField`` and ``colField``.
-  Default case is the complete sparsity pattern, for all DoFs.
-
- .. code-block:: c
-
-  void getSparsityPattern( SparsityPattern & pattern,
-                           string const & rowField = "",
-                           string const & colField = "") const;
-
-* ``getIndices``: gets global ``indices`` for DoFs with a given local ``index``
-  and linked by a specific ``connectivity``.
-  When ``field`` is not set, all DoFs assigned to the local ``index`` are
-  considered.
-  In case of DoF located on elements, there is the need to set ``region`` and
-  ``subregion``.
-
- .. code-block:: c
-
-  void getIndices( globalIndex_array & indices,
-                   Connectivity const connectivity,
-                   localIndex const region,
-                   localIndex const subregion,
-                   localIndex const index,
-                   string const & field = "") const;
-
-  void getIndices( globalIndex_array & indices,
-                   Connectivity const connectivity,
-                   localIndex const index,
-                   string const & field = "") const;
 
 * ``printConnectivityLocationPattern``: prints the connectivity-location
   pattern for ``field``.

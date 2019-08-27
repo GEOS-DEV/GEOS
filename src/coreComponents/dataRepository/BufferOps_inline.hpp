@@ -624,7 +624,7 @@ Pack( char * & buffer,
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
-    T const * const data = &(var[indices[a]][0]);
+    T const * const data = var[indices[a]];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, data, var.sizeOfArray( indices[a] ) );
   }
   return sizeOfPackedChars;

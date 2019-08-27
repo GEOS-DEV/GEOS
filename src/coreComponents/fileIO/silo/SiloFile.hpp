@@ -983,7 +983,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     localIndex mixlen = 0;
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+      ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
       localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
@@ -1030,7 +1030,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+      ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
       localIndex const numMatInRegion = integer_conversion<localIndex>(elemRegion->getMaterialList().size());
 
       array1d<localIndex> matIndices(numMatInRegion);
