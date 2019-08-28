@@ -206,6 +206,8 @@ struct MeshHelper
 {
 };
 
+HAS_ALIAS( NodeMapType )
+
 template<>
 struct MeshHelper<DofManager::Location::Node>
 {
@@ -218,14 +220,14 @@ struct MeshHelper<DofManager::Location::Node>
   template< typename MANAGER >
   using MapType = typename MANAGER::NodeMapType;
 
-  HAS_ALIAS( NodeMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
     return has_alias_NodeMapType<MANAGER>::value;
   }
 };
+
+HAS_ALIAS( EdgeMapType )
 
 template<>
 struct MeshHelper<DofManager::Location::Edge>
@@ -239,14 +241,14 @@ struct MeshHelper<DofManager::Location::Edge>
   template< typename MANAGER >
   using MapType = typename MANAGER::EdgeMapType;
 
-  HAS_ALIAS( EdgeMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
     return has_alias_EdgeMapType<MANAGER>::value;
   }
 };
+
+HAS_ALIAS( FaceMapType )
 
 template<>
 struct MeshHelper<DofManager::Location::Face>
@@ -260,8 +262,6 @@ struct MeshHelper<DofManager::Location::Face>
   template< typename MANAGER >
   using MapType = typename MANAGER::FaceMapType;
 
-  HAS_ALIAS( FaceMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
@@ -269,19 +269,17 @@ struct MeshHelper<DofManager::Location::Face>
   }
 };
 
+HAS_ALIAS( ElemMapType )
+
 template<>
 struct MeshHelper<DofManager::Location::Elem>
 {
   using ManagerType = ElementSubRegionBase;
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::elemManagerString;
-  static constexpr auto mapViewKey = FaceManager::viewKeyStruct::elementListString; // TODO which key
   static constexpr auto syncObjName = "elems";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::ElemMapType;
-
-  HAS_ALIAS( ElemMapType )
 
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
@@ -1454,7 +1452,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
     ViewWrapper<ArrayType> & view = ViewWrapper<ArrayType>::cast( *vw );
     typename ViewWrapper<ArrayType>::ViewType const & field = view.referenceAsView();
 
-    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
       if( ghostRank[i] < 0 )
       {
@@ -1549,7 +1547,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
     ViewWrapper<ArrayType> const & view = ViewWrapper<ArrayType>::cast( *vw );
     typename ViewWrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
 
-    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
       if( ghostRank[i] < 0 )
       {
