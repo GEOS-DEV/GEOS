@@ -643,6 +643,7 @@
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
+			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType">
@@ -688,6 +689,22 @@
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--writeFEMFaces => (no description available)-->
+		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VTKType">
+		<!--parallelThreads => Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--plotFileRoot => (no description available)-->
+		<xsd:attribute name="plotFileRoot" type="string" default="" />
+		<!--plotLevel => (no description available)-->
+		<xsd:attribute name="plotLevel" type="integer" default="1" />
+		<!--slaveDirectory => slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--writeBinaryData => Output the data in binary format-->
+		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
