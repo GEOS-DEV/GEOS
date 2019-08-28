@@ -39,8 +39,9 @@
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/RestartFlags.hpp"
-
 #include "mesh/MeshBody.hpp"
+#include "wells/InternalWellGenerator.hpp"
+#include "wells/WellElementRegion.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -51,6 +52,8 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+class CellElementSubRegion;
+class FaceElementSubRegion;
 
 struct Arg : public option::Arg
 {
@@ -632,7 +635,6 @@ void ProblemManager::ParseInputFile()
   string path = inputFileName.substr( 0, pos + 1 );
   xmlDocument.append_child(xmlWrapper::filePathString).append_attribute(xmlWrapper::filePathString) = path.c_str();
   xmlProblemNode = xmlDocument.child(this->getName().c_str());
-
   ProcessInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
@@ -645,11 +647,11 @@ void ProblemManager::ParseInputFile()
     // Open mesh levels
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     meshManager->GenerateMeshLevels(domain);
-
     ElementRegionManager * elementManager = domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
     topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
+
   }
 }
 
@@ -781,9 +783,13 @@ void ProblemManager::GenerateMesh()
       });
 
       elemManager->GenerateAggregates( faceManager, nodeManager );
+
+      elemManager->GenerateWells( meshManager, meshLevel );
+
     }
   }
 }
+
 
 void ProblemManager::ApplyNumericalMethods()
 {
@@ -804,6 +810,7 @@ void ProblemManager::ApplyNumericalMethods()
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup<SolverBase>(solverIndex);
+
     string const numericalMethodName = solver->getDiscretization();
     string_array const & targetRegions = solver->getTargetRegions();
 
@@ -830,7 +837,8 @@ void ProblemManager::ApplyNumericalMethods()
           {
             regionQuadrature[regionName] = quadratureSize;
           }
-          elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
+          elemRegion->forElementSubRegions<CellElementSubRegion,
+                                           FaceElementSubRegion>([&]( auto * const subRegion )->void
           {
             if( feDiscretization != nullptr )
             {
@@ -862,7 +870,6 @@ void ProblemManager::ApplyNumericalMethods()
         if( elemRegion != nullptr )
         {
           string_array const & materialList = elemRegion->getMaterialList();
-
           elemRegion->forElementSubRegions([&]( auto * const subRegion )->void
           {
             for( auto & materialName : materialList )

@@ -81,7 +81,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time,

@@ -69,7 +69,8 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const
     ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
 
-    elemManager->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    elemManager->forElementSubRegions<CellElementSubRegion,
+                                      FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
       {
         elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");

@@ -34,6 +34,8 @@
 #include "pmpio.h"
 
 #include "mesh/ElementRegionManager.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/InterObjectRelation.hpp"
 
 
@@ -45,6 +47,7 @@ namespace geosx
 
 class DomainPartition;
 class MeshLevel;
+
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -1041,7 +1044,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
 
       elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                              CellElementSubRegion const * const subRegion )
+                                                                       CellElementSubRegion const * const subRegion )
       {
 
         if( numMatInRegion == 1 )

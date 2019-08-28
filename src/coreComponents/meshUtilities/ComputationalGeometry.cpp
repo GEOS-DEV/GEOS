@@ -268,6 +268,38 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
   return area;
 }
 
+template<typename T>
+int sgn( T val )
+{
+  return (T(0) < val) - (val < T(0));
+}
+
+bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinates,
+                              array1d<array1d<localIndex>> const & faceNodeIndicies,
+                              R1Tensor const & point,
+                              real64 const areaTolerance )
+{
+  localIndex const numFaces = faceNodeIndicies.size(0);
+  R1Tensor faceCenter, faceNormal;
+  int sign = 0;
+
+  for (localIndex kf = 0; kf < numFaces; ++kf)
+  {
+    Centroid_3DPolygon( faceNodeIndicies[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
+    faceCenter -= point;
+    int const s = sgn( Dot( faceNormal, faceCenter ) );
+
+    // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
+    if (sign * s < 0)
+    {
+      return false;
+    }
+    sign = s;
+  }
+
+  return true;
+}
+
 real64 HexVolume( R1Tensor const * const X )
 {
   R1Tensor X7_X1( X[7] );
