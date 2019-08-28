@@ -463,7 +463,8 @@ void SolverBase::ImplicitStepSetup( real64 const & time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
-void SolverBase::SetupDofs( DofManager & dofManager ) const
+void SolverBase::SetupDofs( DomainPartition const * const domain,
+                            DofManager & dofManager ) const
 {
   GEOS_ERROR( "SolverBase::SetupDofs called!. Should be overridden." );
 }
@@ -478,7 +479,7 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
 
   dofManager.setMesh( domain, 0, 0 );
 
-  SetupDofs( dofManager );
+  SetupDofs( domain, dofManager );
   dofManager.close();
 
   dofManager.setSparsityPattern( matrix );

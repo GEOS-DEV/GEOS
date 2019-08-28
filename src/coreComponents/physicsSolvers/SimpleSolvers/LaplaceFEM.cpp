@@ -163,7 +163,8 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
 {
 }
 
-void LaplaceFEM::SetupDofs( DofManager & dofManager ) const
+void LaplaceFEM::SetupDofs( DomainPartition const * const domain,
+                            DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
                        DofManager::Location::Node,

@@ -551,10 +551,11 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 }
 
 
-void HydrofractureSolver::SetupDofs( DofManager & dofManager ) const
+void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
+                                     DofManager & dofManager ) const
 {
-  m_solidSolver->SetupDofs( dofManager );
-  m_flowSolver->SetupDofs( dofManager );
+  m_solidSolver->SetupDofs( domain, dofManager );
+  m_flowSolver->SetupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
@@ -570,7 +571,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   GEOSX_MARK_FUNCTION;
 
   dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( dofManager );
+  SetupDofs( domain, dofManager );
   dofManager.close();
 
   // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation

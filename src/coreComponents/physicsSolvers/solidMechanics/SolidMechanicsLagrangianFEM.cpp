@@ -902,7 +902,8 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
   }
 }
 
-void SolidMechanicsLagrangianFEM::SetupDofs( DofManager & dofManager ) const
+void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const domain,
+                                             DofManager & dofManager ) const
 {
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
