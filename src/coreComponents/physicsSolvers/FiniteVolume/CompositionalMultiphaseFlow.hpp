@@ -116,7 +116,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -427,29 +428,6 @@ private:
   void BackupFields( DomainPartition * const domain );
 
   /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param matrix the system matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
-
-  /**
    * @brief Setup stored views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
@@ -500,8 +478,6 @@ private:
 
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>      m_deltaPressure;

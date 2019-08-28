@@ -74,7 +74,12 @@ void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
   this->forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     string meshName = meshGen->getName();
-    domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0);
+ 
+    // THIS IS A HACK
+    if (meshName.find("well") == std::string::npos) 
+    {
+      domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0);
+    }
   });
 }
 

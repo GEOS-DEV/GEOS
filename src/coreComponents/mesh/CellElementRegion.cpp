@@ -78,10 +78,10 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
-    {
-      nbCellElements += elementSubRegion->size();
-    });
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  {
+    nbCellElements += elementSubRegion->size();
+  });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
@@ -132,7 +132,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< real64 > normalizeVolumes( nbCellElements );
 
   // First, compute the volume of each aggregates
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
@@ -144,7 +144,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
 
   // Second, compute the normalized volume of each fine elements
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
@@ -157,7 +157,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
 
   // Third, normalize the centers
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)

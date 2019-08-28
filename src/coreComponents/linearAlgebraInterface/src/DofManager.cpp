@@ -1197,9 +1197,10 @@ void DofManager::addField( string const & fieldName,
 }
 
 // Create the sparsity pattern (location-location). High level interface
-void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPattern( ParallelMatrix & matrix,
                                      string const & rowFieldName,
-                                     string const & colFieldName ) const
+                                     string const & colFieldName,
+                                     bool const closePattern ) const
 {
   localIndex rowFieldIndex, colFieldIndex;
 
@@ -1235,20 +1236,21 @@ void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
   }
 
   // Call the low level routine
-  setSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
+  setSparsityPattern( matrix, rowFieldIndex, colFieldIndex, closePattern );
 }
 
 
-void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
                                              localIndex const rowFieldIndex,
-                                             localIndex const colFieldIndex ) const
+                                             localIndex const colFieldIndex,
+                                             bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex >= 0 );
   GEOS_ASSERT( colFieldIndex >= 0 );
 
-  locLocDistr.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
-                                   m_fields[colFieldIndex].numLocalRows,
-                                   1, MPI_COMM_GEOSX );
+  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
+                               m_fields[colFieldIndex].numLocalRows,
+                               1, MPI_COMM_GEOSX );
 
   if( colFieldIndex == rowFieldIndex )
   {
@@ -1258,7 +1260,8 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
     connLocPattDistr->MatrixMatrixMultiply( true,
                                             *connLocPattDistr,
                                             false,
-                                            locLocDistr );
+                                            pattern,
+                                            closePattern );
   }
   else
   {
@@ -1279,11 +1282,14 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
         CL2 = m_sparsityPattern( colFieldIndex, rowFieldIndex ).first.get();
       }
 
-      CL1->MatrixMatrixMultiply( true, *CL2, false, locLocDistr );
+      CL1->MatrixMatrixMultiply( true, *CL2, false, pattern, closePattern );
     }
     else
     {
-      locLocDistr.close(); // empty matrix, but still needs to be closed
+      if( closePattern )
+      {
+        pattern.close(); // empty matrix, but still needs to be closed
+      }
     }
   }
 }
@@ -1291,7 +1297,8 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
 // Create the sparsity pattern (location-location). Low level interface
 void DofManager::setSparsityPattern( ParallelMatrix & matrix,
                                      localIndex const rowFieldIndex,
-                                     localIndex const colFieldIndex ) const
+                                     localIndex const colFieldIndex,
+                                     bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex < m_fields.size() );
   GEOS_ASSERT( colFieldIndex < m_fields.size() );
@@ -1301,16 +1308,19 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
 
   if( rowFieldIndex >= 0 ) // both nonnegative => single row/col field
   {
-    setSparsityPatternOneBlock( matrix, rowFieldIndex, colFieldIndex );
+    setSparsityPatternOneBlock( matrix, rowFieldIndex, colFieldIndex, closePattern );
   }
   else if( m_fields.empty() ) // both negative, no fields present
   {
     matrix.createWithLocalSize( 0, 0, 0, MPI_COMM_GEOSX );
-    matrix.close();
+    if( closePattern )
+    {
+      matrix.close();
+    }
   }
   else if( m_fields.size() == 1 ) // both negative, single field present
   {
-    setSparsityPatternOneBlock( matrix, 0, 0 );
+    setSparsityPatternOneBlock( matrix, 0, 0, closePattern );
   }
   else // both negative, multiple fields
   {
@@ -1368,7 +1378,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
     colPerm.close();
 
     // Permute the columns to adjust for rank-based ordering
-    sparsity.MatrixMatrixMultiply( false, colPerm, false, matrix );
+    sparsity.MatrixMatrixMultiply( false, colPerm, false, matrix, closePattern );
   }
 }
 
