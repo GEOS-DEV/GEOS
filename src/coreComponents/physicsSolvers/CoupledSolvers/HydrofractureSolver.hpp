@@ -51,7 +51,8 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DofManager & dofManager ) const override;
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,

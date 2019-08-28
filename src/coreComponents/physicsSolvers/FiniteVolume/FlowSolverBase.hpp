@@ -75,15 +75,17 @@ public:
   virtual ~FlowSolverBase() override;
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
-
+  
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
+
+  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
   localIndex solidIndex() const { return m_solidIndex; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -143,7 +145,6 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
 
-
   /**
    * @brief Setup stored views into domain data for the current step
    */
@@ -167,9 +168,13 @@ protected:
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
+  /// flag to determine whether or not coupled with wells
+  integer m_coupledWellsFlag;
+  
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
