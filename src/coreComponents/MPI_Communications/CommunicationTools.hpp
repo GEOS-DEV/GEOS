@@ -206,6 +206,7 @@ inline MPI_Op CommunicationTools::getMpiOp( Reduction const op )
       return MPI_MAX;
     default:
       GEOS_ERROR( "Unsupported reduction op" );
+      return MPI_SUM;
   }
 }
 
