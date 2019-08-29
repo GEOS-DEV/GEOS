@@ -27,6 +27,8 @@
 //#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 
+#include "wells/WellElementSubRegion.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -118,9 +120,10 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
     {
       ElementRegionBase const * const elemRegion = elemManager->GetRegion(kReg);
 
-      for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+      elemRegion->forElementSubRegionsIndex<CellElementSubRegion,
+                                            WellElementSubRegion>([&]( localIndex const kSubReg, 
+                                                                       auto const * const subRegion )
       {
-        CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(kSubReg);
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();
@@ -145,7 +148,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
           }
 
         }
-      }
+      });
     }
     nodeAdjacencyList.clear();
     nodeAdjacencyList.resize( integer_conversion<localIndex>(nodeAdjacencySet.size()));
