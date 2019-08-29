@@ -9,12 +9,16 @@ set( physicsSolvers_headers
      SystemSolverParameters.hpp
      CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
+     CoupledSolvers/ReservoirSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/SinglePhaseFlowKernels.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
      FiniteVolume/CompositionalMultiphaseFlowKernels.hpp
+     Wells/WellSolverBase.hpp
+     Wells/SinglePhaseWell.hpp
+     Wells/CompositionalMultiphaseWell.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      surfaceGeneration/SurfaceGenerator.hpp
@@ -32,12 +36,16 @@ set( physicsSolvers_sources
      SystemSolverParameters.cpp
      CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
+     CoupledSolvers/ReservoirSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/SinglePhaseFlowKernels.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp
      FiniteVolume/CompositionalMultiphaseFlowKernels.cpp
+     Wells/WellSolverBase.cpp
+     Wells/SinglePhaseWell.cpp
+     Wells/CompositionalMultiphaseWell.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp

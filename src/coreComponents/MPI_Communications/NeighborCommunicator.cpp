@@ -29,7 +29,6 @@
 #include "mesh/MeshLevel.hpp"
 #include <sys/time.h>
 
-
 namespace geosx
 {
 
@@ -252,12 +251,11 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
   elemManager->forElementSubRegions( [&]( ManagedGroup * const elementSubRegion ) -> void
-    {
-      neighborGroups[numNeighborGroups++] = elementSubRegion->
-                                            GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
-                                            RegisterGroup( std::to_string( this->m_neighborRank ));
-    } );
-
+  {
+    neighborGroups[numNeighborGroups++] = elementSubRegion->
+                                          GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
+                                          RegisterGroup( std::to_string( this->m_neighborRank ));
+  } );
 
   for( localIndex a=0 ; a<numNeighborGroups ; ++a )
   {
@@ -489,7 +487,8 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
     ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
-    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
+    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
+                                                ElementSubRegionBase const * const subRegion )
     {
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
                                            elementGhostToReceive[er][esr],
@@ -655,7 +654,8 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
     for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
     {
       ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
-      elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto const * const subRegion )
+      elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
+                                                  auto const * const subRegion )
       {
         bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0 );
       });
@@ -809,7 +809,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
     {
       ElementRegionBase * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
-                                          auto * const subRegion )
+                                                 auto * const subRegion )
       {
         unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0 );
       });

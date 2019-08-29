@@ -353,13 +353,15 @@ public:
    * pattern for the monolithic matrix. Sub-patterns can be extracted, however, using row and column
    * field keys.
    *
-   * @param [out] locLocDistr ParallelMatrix the location-location sparsity pattern (LC*CL).
+   * @param [out] matrix ParallelMatrix the location-location sparsity pattern (LC*CL).
    * @param [in]  rowFieldName Optional string the name of the row field.
    * @param [in]  colFieldName Optional string the name of the col field.
+   * @param [in]  closePattern Whether to close the matrix upon pattern assembly
    */
-  void setSparsityPattern( ParallelMatrix & locLocDistr,
+  void setSparsityPattern( ParallelMatrix & matrix,
                            string const & rowFieldName = "",
-                           string const & colFieldName = "" ) const;
+                           string const & colFieldName = "",
+                           bool const closePattern = true ) const;
 
   /**
    * @brief Set a sparsity pattern. Low level version.
@@ -367,10 +369,12 @@ public:
    * @param [out] matrix ParallelMatrix the location-location sparsity pattern (LC*CL).
    * @param [in]  rowFieldIndex localIndex row field index (-1 means all fields).
    * @param [in]  colFieldIndex localIndex col field index (-1 means all fields).
+   * @param [in]  closePattern Whether to close the matrix upon pattern assembly
    */
   void setSparsityPattern( ParallelMatrix & matrix,
                            localIndex const rowFieldIndex,
-                           localIndex const colFieldIndex ) const;
+                           localIndex const colFieldIndex,
+                           bool const closePattern = true ) const;
 
   /**
    * @brief Allocate a vector. Without additional arguments, this function provides the a vector
@@ -543,15 +547,16 @@ private:
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
-   * @param locLocDistr the sparsity to be filled
+   * @param pattern the sparsity to be filled
    * @param rowFieldIndex index of row field (must be non-negative)
    * @param colFieldIndex index of col field (must be non-negative)
    *
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
-  void setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
+  void setSparsityPatternOneBlock( ParallelMatrix & pattern,
                                    localIndex const rowFieldIndex,
-                                   localIndex const colFieldIndex ) const;
+                                   localIndex const colFieldIndex,
+                                   bool const closePattern = true ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField

@@ -607,7 +607,7 @@ void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
                                          EpetraMatrix const &B,
                                          bool const transB,
                                          EpetraMatrix &C,
-                                         bool const call_FillComplete ) const
+                                         bool const closeResult ) const
 {
   int
   err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
@@ -615,17 +615,13 @@ void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
                                            *B.unwrappedPointer(),
                                            transB,
                                            *C.unwrappedPointer(),
-                                           call_FillComplete );
+                                           closeResult );
 
   GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
 
   // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
   // case the function does not work. After the multiplication is performed, call close().
-  if( !call_FillComplete )
-  {
-    C.close();
-  }
-  else
+  if( closeResult )
   {
     C.m_assembled = true;
   }

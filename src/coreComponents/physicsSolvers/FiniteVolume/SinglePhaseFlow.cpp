@@ -315,10 +315,10 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
   } );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
-
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  m_dofNumber = mesh->getElemManager()->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  if( !m_coupledWellsFlag )
+  {
+    SetupSystem( domain, dofManager, matrix, rhs, solution );
+  }
 }
 
 void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
@@ -347,7 +347,8 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   } );
 }
 
-void SinglePhaseFlow::SetupDofs( DofManager & dofManager ) const
+void SinglePhaseFlow::SetupDofs( DomainPartition const * const domain,
+                                 DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
@@ -381,8 +382,13 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 
   AssembleFluxTerms( time_n, dt, domain, &dofManager, &matrix, &rhs );
 
-  matrix.close();
-  rhs.close();
+  if (!m_coupledWellsFlag)
+  {
+    // these functions will be called by the ReservoirSolver
+    // when coupled wells are present
+    matrix.close();
+    rhs.close();
+  }
 
   if( verboseLevel() == 2 )
   {
@@ -414,11 +420,14 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           CellElementSubRegion const * const subRegion,
+                                          DofManager const * const dofManager,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+  arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
   arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-  arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
 
   arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
   arrayView1d<real64>       const & poro          = m_porosity[er][esr];
@@ -476,13 +485,14 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           FaceElementSubRegion const * const subRegion,
+                                          DofManager const * const dofManager,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
-
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+  arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
   arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-  arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
 
   arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
   arrayView1d<real64 const> const & volume        = m_volume[er][esr];
@@ -532,7 +542,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                                                          ElementRegionBase const * const region,
                                                                          auto const * const subRegion )
   {
-    AccumulationLaunch<ISPORO>( er, esr, subRegion, matrix, rhs );
+    AccumulationLaunch<ISPORO>( er, esr, subRegion, dofManager, matrix, rhs );
   } );
 }
 
@@ -546,6 +556,9 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const * const elemManager=  mesh->getElemManager();
+
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -554,7 +567,12 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const time_n,
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber = m_dofNumber.toViewConst();
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
+    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+
+  FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
@@ -738,7 +756,12 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
     regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
   }
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > const & dofNumber = m_dofNumber;
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
+    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+
+  FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & pres        = m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d<real64> >  const & dPres       = m_deltaPressure;
@@ -985,15 +1008,17 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   real64 * localResidual = nullptr;
   rhs.extractLocalVector( &localResidual );
 
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;
-
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const region,
                                  ElementSubRegionBase const * const subRegion )
   {
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
     arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];

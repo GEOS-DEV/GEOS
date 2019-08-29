@@ -108,7 +108,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -155,6 +156,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            CellElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -162,6 +164,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            FaceElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -200,6 +203,18 @@ public:
 
 
   /**@}*/
+
+  /**
+   * @brief Function to update all constitutive state and dependent variables
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateState( ManagedGroup * dataGroup ) const;
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateFluidModel( ManagedGroup * const dataGroup ) const;
 
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -269,12 +284,6 @@ private:
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  void UpdateFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
   void UpdateSolidModel( ManagedGroup * const dataGroup ) const;
 
   /**
@@ -283,16 +292,9 @@ private:
    */
   void UpdateMobility( ManagedGroup * const dataGroup ) const;
 
-  /**
-   * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateState( ManagedGroup * dataGroup ) const;
 
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
