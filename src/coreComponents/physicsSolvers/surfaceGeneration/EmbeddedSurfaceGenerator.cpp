@@ -57,7 +57,9 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBody )
 {
   // Matteo: to be filled in
-  std::cout << "Register data on mesh";
+  std::cout << "1. Register data on mesh \n";
+
+
 }
 
 
@@ -66,7 +68,7 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const& time_n,
                              integer const cycleNumber,
                              DomainPartition * domain )
 {
-  std::cout << "SolverStep";
+  std::cout << "SolverStep \n";
   real64 test = 0;
   return test;
 }

@@ -89,9 +89,9 @@ public:
     {
       static constexpr auto elementApertureString        = "elementAperture";
       static constexpr auto elementAreaString            = "elementArea";
-      static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
-      static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
-      static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
+      // static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
+      // static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
+      // static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
 
     };
 
@@ -143,14 +143,13 @@ public:
     arrayView1d< localIndex > const &       getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
     arrayView1d< localIndex const > const & getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
 
-    FixedToManyElementRelation m_faceElementsToCells;
-
-    set< localIndex > m_newFaceElements;
-
   private:
     template<bool DOPACK>
     localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                       arrayView1d<localIndex const> const & packList ) const;
+
+    /// normal vector to the embedded surface element
+    array1d < R1Tensor > m_normalVector;
 
     /// The elements to nodes relation
     NodeMapType  m_toNodesRelation;
