@@ -66,6 +66,23 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            R1Tensor & center,
                            R1Tensor & normal );
 
+/**
+ * @brief Check if a point is inside a convex polyhedron (3D polygon)
+ * @param[in] nodeCoordinates a global array of nodal coordinates
+ * @param[in] faceNodeIndicies ordered lists of node indices for each face of the polyhedron
+ * @param[in] point coordinates of the query point
+ * @param[in] areaTolerance same as in Centroid_3DPolygon
+ * @return whether the point is inside
+ *
+ * @note Face nodes must all be ordered the same way (i.e. CW or CCW),
+ * resulting in all face normals pointing either outside or inside the polyhendron
+ *
+ * @note For faces with n>3 nodes that are non-planar, average normal is used
+ */
+bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinates,
+                              array1d<array1d<localIndex>> const & faceNodeIndicies,
+                              R1Tensor const & point,
+                              real64 const areaTolerance = 0.0 );
 
 real64 HexVolume( R1Tensor const * const points );
 
