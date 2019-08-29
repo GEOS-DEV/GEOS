@@ -35,8 +35,7 @@ using namespace dataRepository;
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                       dataRepository::ManagedGroup * const parent ):
   ElementSubRegionBase( name, parent ),
-  m_faceElementsToCells(),
-  m_newFaceElements(),
+  m_normalVector(),
   m_toNodesRelation(),
   m_elementAperture(),
   m_elementArea()
@@ -61,28 +60,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The volume of each EmbeddedSurface.");
 
-  RegisterViewWrapper( viewKeyStruct::faceElementsToCellRegionsString,
-                       &(m_faceElementsToCells.m_toElementRegion), 0 )->
-    setApplyDefaultValue(-1)->
-    setPlotLevel(PlotLevel::NOPLOT)->
-    setDescription( "A map of face element local indices to the cell local indices");
-
-  RegisterViewWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
-                       &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
-    setApplyDefaultValue(-1)->
-    setPlotLevel(PlotLevel::NOPLOT)->
-    setDescription( "A map of face element local indices to the cell local indices");
-
-  RegisterViewWrapper( viewKeyStruct::faceElementsToCellIndexString,
-                       &(m_faceElementsToCells.m_toElementIndex), 0 )->
-    setApplyDefaultValue(-1)->
-    setPlotLevel(PlotLevel::NOPLOT)->
-    setDescription( "A map of face element local indices to the cell local indices");
-
-  m_faceElementsToCells.resize(0,2);
-  m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
-
-  m_numNodesPerElement = 8;
+  m_numNodesPerElement = 4; // Let s assume it's a plane for now
 }
 
 EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
@@ -118,14 +96,22 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex c
                                                                 arrayView1d<real64 const> const & faceArea )
 {
   // Matteo: needs to be filled in with the proper computation.
-  m_elementArea[k] = faceArea[k];
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & faceManager )
 {
-  // Matteo: I think this is only called at the beginning.
+  // Compute surface area of embedded fracture surface
+
+
+  // loop over the elements
+  forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
+    {
+      m_elementArea[k] = 1;
+      m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
+    });
+
 }
 
 
@@ -275,9 +261,9 @@ void EmbeddedSurfaceSubRegion::ViewPackingExclusionList( set<localIndex> & exclu
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
   exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellRegionsString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellSubRegionsString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellIndexString));
+  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellRegionsString));
+  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellSubRegionsString));
+  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellIndexString));
 }
 
 } /* namespace geosx */
