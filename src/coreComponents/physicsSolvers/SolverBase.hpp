@@ -258,7 +258,8 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DofManager & dofManager ) const;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const;
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
