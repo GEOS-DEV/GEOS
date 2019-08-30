@@ -56,7 +56,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{al}"/>
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{al}"/>
   </ElementRegions>
 
   <Constitutive>
