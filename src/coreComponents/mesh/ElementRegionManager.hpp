@@ -42,7 +42,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const elementRegions = "elementRegions";
+string const elementRegionsGroup = "elementRegionsGroup";
 }
 }
 
@@ -124,40 +124,40 @@ public:
 
   subGroupMap const & GetRegions() const
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups();
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups();
   }
   subGroupMap & GetRegions()
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups();
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups();
   }
 
   template< typename T=ElementRegionBase >
   T const * GetRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<T>(regionName);
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(regionName);
   }
 
   template< typename T=ElementRegionBase >
   T * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<T>(regionName);
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(regionName);
   }
 
   template< typename T=ElementRegionBase >
   T const * GetRegion( localIndex const & index ) const
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<T>(index);
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(index);
   }
 
   template< typename T=ElementRegionBase >
   T * GetRegion( localIndex const & index )
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetGroup<T>(index);
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(index);
   }
 
   localIndex numRegions() const
   {
-    return this->GetGroup(dataRepository::keys::elementRegions)->GetSubGroups().size();
+    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups().size();
   }
 
   localIndex numCellBlocks() const;
@@ -166,28 +166,28 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda )
   {
-    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
-    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
     elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
     elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
@@ -266,7 +266,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
@@ -278,7 +278,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup const * elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
