@@ -314,6 +314,26 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
   }
 }
 
+void SurfaceGenerator::InitializePostSubGroups( ManagedGroup * const problemManager )
+{
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
+  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+
+    //TODO: roughness to KIC should be made a material constitutive relationship.
+    array1d<R1Tensor> & KIC = faceManager->getReference<r1_array>( "K_IC" );
+
+    for (localIndex kf=0 ; kf<faceManager->size() ; ++kf)
+    {
+      KIC[kf][0] = m_rockToughness;
+      KIC[kf][1] = m_rockToughness;
+      KIC[kf][2] = m_rockToughness;
+    }
+  }
+}
+
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
@@ -347,17 +367,6 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
     m_originalFacesToElemRegion = faceManager->elementRegionList();
     m_originalFacesToElemSubRegion = faceManager->elementSubRegionList();
     m_originalFacesToElemIndex = faceManager->elementList();
-
-    //wu40: set face KIC. TODO: need to improve according to GEOS. May also need to use a new function for this.
-    array1d<R1Tensor> & KIC = faceManager->getReference<r1_array>( "K_IC" );
-
-    for (localIndex kf=0 ; kf<faceManager->size() ; ++kf)
-    {
-      KIC[kf][0] = m_rockToughness;
-      KIC[kf][1] = m_rockToughness;
-      KIC[kf][2] = m_rockToughness;
-    }
-
   }
 }
 
@@ -590,112 +599,10 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                                       modifiedObjects,
                                                       receivedObjects );
 
-
-    arrayView1d<localIndex const> const &
-    parentNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-    for( localIndex const nodeIndex : receivedObjects.newNodes )
-    {
-      localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
-
-      GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
-
-      m_tipNodes.erase(parentNodeIndex);
-    }
-
-
-    arrayView1d<localIndex const> const &
-    parentEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-    arrayView1d<localIndex const> const &
-    childEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
-
-    arrayView1d< set<localIndex> > const & edgesToFaces = edgeManager.faceList();
-
-    OrderedVariableOneToManyRelation const & facesToEdges = faceManager.edgeList();
-
-    for( localIndex const edgeIndex : receivedObjects.newEdges )
-    {
-      localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
-
-      GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
-
-      m_tipEdges.erase(parentEdgeIndex);
-      for( localIndex const faceIndex : edgesToFaces[parentEdgeIndex] )
-      {
-        bool trailingFace = false;
-        if (m_trailingFaces.contains(faceIndex))
-        {
-          for ( localIndex const faceLocalEdgeIndex :facesToEdges[faceIndex] )
-          {
-            if (m_tipEdges.contains(faceLocalEdgeIndex))
-            {
-              trailingFace = true;
-            }
-          }
-
-          if (trailingFace == false)
-          {
-            m_trailingFaces.erase(faceIndex);
-          }
-        }
-      }
-    }
-
-    integer_array& isFaceSeparable = faceManager.getReference<integer_array>( "isFaceSeparable" );
-    arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
-    arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
-
-    arrayView1d<localIndex const> const &
-    childNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
-
-    arrayView1d<localIndex> const &
-    parentFaceIndices = faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
-
-    for( localIndex const faceIndex : receivedObjects.newFaces )
-    {
-      localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-      GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
-
-      m_trailingFaces.insert(parentFaceIndex);
-      m_tipFaces.erase(parentFaceIndex);
-
-      for( auto edgeIndex : faceManager.edgeList()[parentFaceIndex] )
-      {
-        if( parentEdgeIndices[edgeIndex]==-1 && childEdgeIndices[edgeIndex]==-1 )
-        {
-          m_tipEdges.insert( edgeIndex );
-
-          for ( auto iface: edgeManager.faceList()[edgeIndex])
-          {
-            if( facesToElementIndex.size(1) == 2  &&
-                faceManager.m_isExternal[iface] < 1 &&
-                isFaceSeparable[iface] == 1 )
-            {
-              m_tipFaces.insert(iface);
-            }
-          }
-        }
-        if( edgeManager.m_isExternal[edgeIndex]==0 )
-        {
-          edgeManager.m_isExternal[edgeIndex] = 2;
-        }
-      }
-      for( auto nodeIndex : faceManager.nodeList()[parentFaceIndex] )
-      {
-        if( parentNodeIndices[nodeIndex]==-1 && childNodeIndices[nodeIndex]==-1)
-
-        {
-          m_tipNodes.insert( nodeIndex );
-        }
-        if( nodeManager.m_isExternal[nodeIndex] )
-        {
-          nodeManager.m_isExternal[nodeIndex] = 2;
-        }
-      }
-    }
-
-
+    SynchronizeTipSets( faceManager,
+                        edgeManager,
+                        nodeManager,
+                        receivedObjects);
 
 
 #else
@@ -755,6 +662,115 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   return rval;
 }
 
+void SurfaceGenerator::SynchronizeTipSets (FaceManager & faceManager,
+                                           EdgeManager & edgeManager,
+                                           NodeManager & nodeManager,
+                                           ModifiedObjectLists& receivedObjects)
+{
+  arrayView1d<localIndex const> const &
+  parentNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+  for( localIndex const nodeIndex : receivedObjects.newNodes )
+  {
+    localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
+
+    GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
+
+    m_tipNodes.erase(parentNodeIndex);
+  }
+
+
+  arrayView1d<localIndex const> const &
+  parentEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+  arrayView1d<localIndex const> const &
+  childEdgeIndices = edgeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
+
+  arrayView1d< set<localIndex> > const & edgesToFaces = edgeManager.faceList();
+
+  OrderedVariableOneToManyRelation const & facesToEdges = faceManager.edgeList();
+
+  for( localIndex const edgeIndex : receivedObjects.newEdges )
+  {
+    localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
+
+    GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
+
+    m_tipEdges.erase(parentEdgeIndex);
+    for( localIndex const faceIndex : edgesToFaces[parentEdgeIndex] )
+    {
+      bool trailingFace = false;
+      if (m_trailingFaces.contains(faceIndex))
+      {
+        for ( localIndex const faceLocalEdgeIndex :facesToEdges[faceIndex] )
+        {
+          if (m_tipEdges.contains(faceLocalEdgeIndex))
+          {
+            trailingFace = true;
+          }
+        }
+
+        if (trailingFace == false)
+        {
+          m_trailingFaces.erase(faceIndex);
+        }
+      }
+    }
+  }
+
+  integer_array& isFaceSeparable = faceManager.getReference<integer_array>( "isFaceSeparable" );
+  arrayView1d<R1Tensor> const & faceNormals = faceManager.faceNormal();
+  arrayView2d<localIndex> & facesToElementIndex = faceManager.elementList();
+
+  arrayView1d<localIndex const> const &
+  childNodeIndices = nodeManager.getReference<localIndex_array>( ObjectManagerBase::viewKeyStruct::childIndexString );
+
+  arrayView1d<localIndex> const &
+  parentFaceIndices = faceManager.getReference<localIndex_array>( faceManager.viewKeys.parentIndex );
+
+  for( localIndex const faceIndex : receivedObjects.newFaces )
+  {
+    localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
+    GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
+
+    m_trailingFaces.insert(parentFaceIndex);
+    m_tipFaces.erase(parentFaceIndex);
+
+    for( auto edgeIndex : faceManager.edgeList()[parentFaceIndex] )
+    {
+      if( parentEdgeIndices[edgeIndex]==-1 && childEdgeIndices[edgeIndex]==-1 )
+      {
+        m_tipEdges.insert( edgeIndex );
+
+        for ( auto iface: edgeManager.faceList()[edgeIndex])
+        {
+          if( facesToElementIndex.size(1) == 2  &&
+              faceManager.m_isExternal[iface] < 1 &&
+              isFaceSeparable[iface] == 1 )
+          {
+            m_tipFaces.insert(iface);
+          }
+        }
+      }
+      if( edgeManager.m_isExternal[edgeIndex]==0 )
+      {
+        edgeManager.m_isExternal[edgeIndex] = 2;
+      }
+    }
+    for( auto nodeIndex : faceManager.nodeList()[parentFaceIndex] )
+    {
+      if( parentNodeIndices[nodeIndex]==-1 && childNodeIndices[nodeIndex]==-1)
+
+      {
+        m_tipNodes.insert( nodeIndex );
+      }
+      if( nodeManager.m_isExternal[nodeIndex] )
+      {
+        nodeManager.m_isExternal[nodeIndex] = 2;
+      }
+    }
+  }
+}
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -3605,6 +3621,12 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   for (localIndex i=0; i < nodeIndices.size() ; ++i)
   {
     localIndex nodeID = nodeIndices(i);
+    localIndex_array temp11;
+    for (int ii = 0; ii < nodesToElementIndex.sizeOfArray(nodeID); ii++)
+    {
+      temp11.push_back(nodesToElementIndex[nodeID][ii]);
+    }
+
     for( localIndex k=0 ; k<nodesToElementRegion.sizeOfArray(nodeID) ; ++k )
     {
       R1Tensor xEle;

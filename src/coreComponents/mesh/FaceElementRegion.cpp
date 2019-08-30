@@ -81,8 +81,10 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   // Add the nodes that compose the new FaceElement to the nodeList
   arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceIndices[0]];
   arrayView1d<localIndex const> const & faceToNodesMap1 = facesToNodesMap[faceIndices[1]];
-//  nodeMap[kfe].resize( faceToNodesMap0.size() * 2 );
+
+ //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
   nodeMap[kfe].resize( 8 );
+
   for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
   {
     localIndex const aa = a < 2 ? a : faceToNodesMap0.size() - a + 1;
