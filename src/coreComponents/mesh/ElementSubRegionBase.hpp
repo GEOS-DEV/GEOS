@@ -123,8 +123,6 @@ public:
 
   virtual string GetElementTypeString() const { return m_elementTypeString; }
 
-//  FiniteElementBase::ElementType GetElementType() const { return m_elementType; }
-
   virtual void SetElementType( string const & elementType );
 
 private:
