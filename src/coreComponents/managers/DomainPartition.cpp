@@ -84,35 +84,6 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::SetMaps(  )
-{
-  // ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
-  // ElementRegionManager * elementRegionManager =
-  // this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
-
-  // {
-  //  integer_array & elementRegionMap =
-  // nodeManager->getReference(keys::elementRegionMap);
-  //  integer_array & elementSubRegionMap =
-  // nodeManager->getReference(keys::elementSubRegionMap);
-  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
-
-  //  ManagedGroup * elementRegions =
-  // this->GetGroup(dataRepository::keys::elementRegions);
-
-  //  integer elementRegionIndex = 0;
-  //  elementRegionManager->forElementRegions( [&](ElementRegion&
-  // elementRegion)-> void
-  //  {
-  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
-  //    {
-
-  //    });
-  //    ++elementRegionIndex;
-  //  });
-  // }
-}
-
 void DomainPartition::GenerateSets(  )
 {
   GEOSX_MARK_FUNCTION;

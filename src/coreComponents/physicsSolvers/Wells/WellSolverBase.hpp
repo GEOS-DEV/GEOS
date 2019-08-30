@@ -88,7 +88,7 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
-  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
