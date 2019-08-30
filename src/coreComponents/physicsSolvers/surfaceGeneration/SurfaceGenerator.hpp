@@ -115,34 +115,6 @@ public:
                                      std::set<localIndex> const & indexList );
 
 
-  int Test ( int test);
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto ruptureStateString = "ruptureState";
-    constexpr static auto SIFonFaceString = "SIFonFace";
-    constexpr static auto K_ICString = "K_IC";
-    constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
-    constexpr static auto isFaceSeparableString = "isFaceSeparable";
-    constexpr static auto failCriterionString = "failCriterion";
-    constexpr static auto degreeFromCrackString = "degreeFromCrack";
-    constexpr static auto solidMaterialNameString = "solidMaterialName";
-    constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
-    constexpr static auto rockToughnessString = "rockToughness";
-    constexpr static auto fExternalString = "fExternal";
-    constexpr static auto SIF_IString = "SIF_I";
-    constexpr static auto SIF_IIString = "SIF_II";
-    constexpr static auto SIF_IIIString = "SIF_III";
-    constexpr static auto SIFNodeString = "SIFNode";
-
-    constexpr static auto tipNodesString = "tipNodes";
-    constexpr static auto tipEdgesString = "tipEdges";
-    constexpr static auto tipFacesString = "tipFaces";
-    constexpr static auto trailingFacesString = "trailingFaces";
-
-    constexpr static auto fractureRegionNameString = "fractureRegion";
-
-  }; //SurfaceGenViewKeys;
-
   /**
    * @brief Function to generate new global indices for elements
    * @param[in/out] elementManager A reference to the ElementRegionManager that needs new global indices
@@ -153,6 +125,7 @@ public:
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
+  virtual void InitializePostSubGroups( ManagedGroup * const problemManager ) override final;
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
   virtual void postRestartInitialization( ManagedGroup * const domain ) override final;
 
@@ -483,6 +456,16 @@ private:
 
   /**
    *
+   * @param ModifiedObjectLists
+   */
+  void SynchronizeTipSets ( FaceManager & faceManager,
+                           EdgeManager & edgeManager,
+                           NodeManager & nodeManager,
+                           ModifiedObjectLists& receivedObjects);
+
+
+  /**
+   *
    * @param edgeID
    * @param nodeManager
    * @param edgeManager
@@ -506,6 +489,39 @@ private:
                                 const NodeManager & nodeManager,
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager );
+
+
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto SIFonFaceString = "SIFonFace";
+    constexpr static auto K_ICString = "K_IC";
+    constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
+    constexpr static auto isFaceSeparableString = "isFaceSeparable";
+    constexpr static auto failCriterionString = "failCriterion";
+    constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto fExternalString = "fExternal";
+    constexpr static auto SIFNodeString = "SIFNode";
+    constexpr static auto tipNodesString = "tipNodes";
+    constexpr static auto tipEdgesString = "tipEdges";
+    constexpr static auto tipFacesString = "tipFaces";
+    constexpr static auto trailingFacesString = "trailingFaces";
+    constexpr static auto fractureRegionNameString = "fractureRegion";
+
+    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
+    constexpr static auto rockToughnessString = "rockToughness";
+
+    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
+    constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
+    constexpr static auto SIF_IString = "SIF_I";
+    constexpr static auto SIF_IIString = "SIF_II";
+    constexpr static auto SIF_IIIString = "SIF_III";
+
+  }; //SurfaceGenViewKeys;
 
 
 private:
