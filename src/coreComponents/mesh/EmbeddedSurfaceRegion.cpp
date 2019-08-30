@@ -29,7 +29,7 @@ namespace geosx
 using namespace dataRepository;
 
 EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, ManagedGroup * const parent ):
-  ElementRegion( name, parent )
+  ElementRegionBase( name, parent )
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<EmbeddedSurfaceSubRegion>("default");
 }
