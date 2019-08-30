@@ -16,11 +16,12 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * Cylinder.cpp
- *
- *  Created on: Aug 4, 2017
- *      Author: settgast
+/**
+ * @file Cylinder.cpp
+ * @brief Generate a cylindrical geometry.
+ * @param Center point of one (upper or lower) face of the cylinder
+ * @param Center point of the other face of the cylinder
+ * @param Radius of the cylinder
  */
 
 #include "Cylinder.hpp"

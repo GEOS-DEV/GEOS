@@ -58,15 +58,15 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
-  cm.setDefaultBulkModulus() = K;
-  cm.setDefaultShearModulus() = G;
+  cm.setDefaultBulkModulus(K);
+  cm.setDefaultShearModulus(G);
 
   dataRepository::ManagedGroup disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 
-  cm.bulkModulus() = cm.setDefaultBulkModulus();
-  cm.shearModulus() = cm.setDefaultShearModulus();
+//  cm.bulkModulus() = cm.setDefaultBulkModulus();
+//  cm.shearModulus() = cm.setDefaultShearModulus();
 
   arrayView2d<real64>      const & meanStress = cm.meanStress();
   arrayView2d<R2SymTensor> const & deviatorStress = cm.deviatorStress();
