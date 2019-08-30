@@ -109,7 +109,7 @@
     </NumericalMethods>
 
     <ElementRegions>
-        <ElementRegion
+        <CellElementRegion
             name="Region2"
             cellBlocks="{cb1}"
             materialList="{water, rock}" />
