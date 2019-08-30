@@ -65,7 +65,7 @@ public:
     static constexpr auto faceManagerString = "faceManager";
 
     // This key is defined in problem manager:
-    static constexpr auto elemManagerString = "ElementRegionManager";
+    static constexpr auto elemManagerString = "ElementRegions";
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
