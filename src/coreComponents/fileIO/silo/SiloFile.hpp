@@ -676,43 +676,43 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array1d<real64>> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<array1d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array2d<real64>> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<array2d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array3d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array3d<real64>> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<array3d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(r1_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<r1_array> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<integer_array> const & >( *wrapper );
         this->WriteDataField<integer>( meshname.c_str(), fieldName,
                                        viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<localIndex_array> const & >( *wrapper );
         this->WriteDataField<localIndex>( meshname.c_str(), fieldName,
                                           viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
+        auto const & viewWrapperT = dynamic_cast< dataRepository::Wrapper<globalIndex_array> const & >( *wrapper );
         this->WriteDataField<globalIndex>( meshname.c_str(), fieldName,
                                            viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }

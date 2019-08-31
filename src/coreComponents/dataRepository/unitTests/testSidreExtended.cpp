@@ -20,9 +20,10 @@
 
 
 #include <mpi.h>
+
+#include "../Wrapper.hpp"
 #include "Logger.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
 
@@ -33,10 +34,10 @@ namespace dataRepository
 
 #ifdef GEOSX_USE_ATK
 template< typename T >
-ViewWrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string & name,
+Wrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string & name,
                                                int sfp, const array1d< T > & data )
 {
-  ViewWrapper< array1d< T > > * view = parent->RegisterViewWrapper< array1d< T > >( name );
+  Wrapper< array1d< T > > * view = parent->RegisterViewWrapper< array1d< T > >( name );
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
@@ -62,7 +63,7 @@ ViewWrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const stri
 
 
 template< typename T >
-void checkArrayView( const ViewWrapper< array1d< T > > * view, int sfp, const array1d< T > & data )
+void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1d< T > & data )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size());
@@ -74,10 +75,10 @@ void checkArrayView( const ViewWrapper< array1d< T > > * view, int sfp, const ar
 }
 
 template< typename T >
-ViewWrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string & name,
+Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string & name,
                                                  int sfp, const array2d< T > & data )
 {
-  ViewWrapper< array2d< T > > * view = parent->RegisterViewWrapper< array2d< T > >( name );
+  Wrapper< array2d< T > > * view = parent->RegisterViewWrapper< array2d< T > >( name );
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
@@ -111,7 +112,7 @@ ViewWrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const st
 
 
 template< typename T >
-void checkArray2dView( const ViewWrapper< array2d< T > > * view, int sfp, const array2d< T > & data )
+void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const array2d< T > & data )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size());
@@ -131,10 +132,10 @@ void checkArray2dView( const ViewWrapper< array2d< T > > * view, int sfp, const 
 
 
 template< typename T >
-ViewWrapper< set< T > > * createSetView( ManagedGroup * parent, const string & name,
+Wrapper< set< T > > * createSetView( ManagedGroup * parent, const string & name,
                                          localIndex sfp, const set< T > & data )
 {
-  ViewWrapper< set< T > > * view = parent->RegisterViewWrapper< set< T > >( name );
+  Wrapper< set< T > > * view = parent->RegisterViewWrapper< set< T > >( name );
   view->setSizedFromParent( int(sfp));
 
   /* Insert the data */
@@ -153,7 +154,7 @@ ViewWrapper< set< T > > * createSetView( ManagedGroup * parent, const string & n
 
 
 template< typename T >
-void checkSetView( const ViewWrapper< set< T > > * view, localIndex sfp, const set< T > & data )
+void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< T > & data )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size());
@@ -165,10 +166,10 @@ void checkSetView( const ViewWrapper< set< T > > * view, localIndex sfp, const s
 }
 
 
-ViewWrapper< string > * createStringView( ManagedGroup * parent, const string & name,
+Wrapper< string > * createStringView( ManagedGroup * parent, const string & name,
                                           int sfp, const string & str )
 {
-  ViewWrapper< string > * view = parent->RegisterViewWrapper< string >( name );
+  Wrapper< string > * view = parent->RegisterViewWrapper< string >( name );
   view->setSizedFromParent( sfp );
 
   localIndex expected_size = static_cast< localIndex >(str.size()) * sizeof(char);
@@ -187,17 +188,17 @@ ViewWrapper< string > * createStringView( ManagedGroup * parent, const string & 
 }
 
 
-void checkStringView( const ViewWrapper< string > * view, const int sfp, const string & str )
+void checkStringView( const Wrapper< string > * view, const int sfp, const string & str )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->reference(), str );
 }
 
 
-ViewWrapper< string_array > * createStringArrayView( ManagedGroup * parent, const string & name,
+Wrapper< string_array > * createStringArrayView( ManagedGroup * parent, const string & name,
                                                      int sfp, const string_array & arr )
 {
-  ViewWrapper< string_array > * view = parent->RegisterViewWrapper< string_array >( name );
+  Wrapper< string_array > * view = parent->RegisterViewWrapper< string_array >( name );
   view->setSizedFromParent( sfp );
 
   unsigned long expected_size = arr.size() * sizeof(string);
@@ -217,7 +218,7 @@ ViewWrapper< string_array > * createStringArrayView( ManagedGroup * parent, cons
 }
 
 
-void checkStringArrayView( const ViewWrapper< string_array > * view, const int sfp, const string_array & arr )
+void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, const string_array & arr )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), arr.size());
@@ -230,9 +231,9 @@ void checkStringArrayView( const ViewWrapper< string_array > * view, const int s
 
 
 template< typename T >
-ViewWrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
+Wrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
                                      int sfp, const T & value ) {
-  ViewWrapper< T > * view = parent->RegisterViewWrapper< T >( name );
+  Wrapper< T > * view = parent->RegisterViewWrapper< T >( name );
   view->setSizedFromParent( sfp );
 
   /* Set the data */
@@ -250,7 +251,7 @@ ViewWrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
 
 
 template< typename T >
-void checkScalarView( const ViewWrapper< T > * view, int sfp, const T value ) {
+void checkScalarView( const Wrapper< T > * view, int sfp, const T value ) {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->reference(), value );
 }
@@ -459,27 +460,27 @@ TEST( testSidreExtended, testSidreExtended )
   root = new ManagedGroup( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper< globalIndex_array > * view_globalIndex_new = root->RegisterViewWrapper< globalIndex_array >( view_globalIndex_name );
-  ViewWrapper< string > * view_hope_new = root->RegisterViewWrapper< string >( view_hope_name );
-  ViewWrapper< string_array > * view_restart_new = root->RegisterViewWrapper< string_array >( view_restart_name );
+  Wrapper< globalIndex_array > * view_globalIndex_new = root->RegisterViewWrapper< globalIndex_array >( view_globalIndex_name );
+  Wrapper< string > * view_hope_new = root->RegisterViewWrapper< string >( view_hope_name );
+  Wrapper< string_array > * view_restart_new = root->RegisterViewWrapper< string_array >( view_restart_name );
 
   ManagedGroup * strings_group_new = root->RegisterGroup( "strings" );
-  ViewWrapper< string > * view_hello_new = strings_group_new->RegisterViewWrapper< string >( view_hello_name );
-  ViewWrapper< string > * view_goodbye_new = strings_group_new->RegisterViewWrapper< string >( view_goodbye_name );
+  Wrapper< string > * view_hello_new = strings_group_new->RegisterViewWrapper< string >( view_hello_name );
+  Wrapper< string > * view_goodbye_new = strings_group_new->RegisterViewWrapper< string >( view_goodbye_name );
 
   ManagedGroup * real64_group_new = root->RegisterGroup( "real64" );
-  ViewWrapper< real64_array > * view_real641_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real641_name );
-  ViewWrapper< real64_array > * view_real642_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real642_name );
+  Wrapper< real64_array > * view_real641_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real641_name );
+  Wrapper< real64_array > * view_real642_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real642_name );
 
   ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup( "mixed" );
-  ViewWrapper< localIndex_array > * view_localIndex_new = mixed_group_new->RegisterViewWrapper< localIndex_array >( view_localIndex_name );
-  ViewWrapper< real32_array > * view_real32_new = mixed_group_new->RegisterViewWrapper< real32_array >( view_real32_name );
-  ViewWrapper< string > * view_what_new = mixed_group_new->RegisterViewWrapper< string >( view_what_name );
-  ViewWrapper< real64 > * view_pi_new = mixed_group_new->RegisterViewWrapper< real64 >( view_pi_name );
-  ViewWrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->RegisterViewWrapper< set< localIndex > >( view_setlocalIndex_name );
-  ViewWrapper< set< string > > * view_setString_new = mixed_group_new->RegisterViewWrapper< set< string > >( view_setString_name );
-  ViewWrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->RegisterViewWrapper< array2d< real64 > >( view_real642d_name );
-  ViewWrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->RegisterViewWrapper< array2d< R1Tensor > >( view_r1t2d_name );
+  Wrapper< localIndex_array > * view_localIndex_new = mixed_group_new->RegisterViewWrapper< localIndex_array >( view_localIndex_name );
+  Wrapper< real32_array > * view_real32_new = mixed_group_new->RegisterViewWrapper< real32_array >( view_real32_name );
+  Wrapper< string > * view_what_new = mixed_group_new->RegisterViewWrapper< string >( view_what_name );
+  Wrapper< real64 > * view_pi_new = mixed_group_new->RegisterViewWrapper< real64 >( view_pi_name );
+  Wrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->RegisterViewWrapper< set< localIndex > >( view_setlocalIndex_name );
+  Wrapper< set< string > > * view_setString_new = mixed_group_new->RegisterViewWrapper< set< string > >( view_setString_name );
+  Wrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->RegisterViewWrapper< array2d< real64 > >( view_real642d_name );
+  Wrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->RegisterViewWrapper< array2d< R1Tensor > >( view_r1t2d_name );
 
 
   /* Load the data */

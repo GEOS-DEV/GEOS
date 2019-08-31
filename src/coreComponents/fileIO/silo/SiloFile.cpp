@@ -1114,7 +1114,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   }
 
-  std::set<std::pair<string, ViewWrapperBase const *>> fieldNames;
+  std::set<std::pair<string, WrapperBase const *>> fieldNames;
   for( localIndex matI=0 ; matI<nmat ; ++matI )
   {
     ConstitutiveBase const * const
@@ -1187,7 +1187,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       {
         if (constitutiveModel->hasView(fieldName.first))
         {
-          ViewWrapperBase const * wrapper = fieldName.second;
+          WrapperBase const * wrapper = fieldName.second;
           if (wrapper->get_typeid() == typeid(array2d<real64>))
           {
             WriteMaterialVarDefinition( subDirectory, matDir, matIndex, fieldName.first );
@@ -1195,7 +1195,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           if (wrapper->get_typeid() == typeid(array3d<real64>))
           {
             array3d<real64> const & data =
-              dynamic_cast<dataRepository::ViewWrapper<array3d<real64>> const &>(*wrapper).reference();
+              dynamic_cast<dataRepository::Wrapper<array3d<real64>> const &>(*wrapper).reference();
 
             for (localIndex i = 0; i < data.size(2); ++i)
             {
@@ -1206,7 +1206,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           if (wrapper->get_typeid() == typeid(array4d<real64>))
           {
             array4d<real64> const & data =
-              dynamic_cast<dataRepository::ViewWrapper<array4d<real64>> const &>(*wrapper).reference();
+              dynamic_cast<dataRepository::Wrapper<array4d<real64>> const &>(*wrapper).reference();
 
             for (localIndex i = 0; i < data.size(2); ++i)
             {
@@ -1588,7 +1588,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
   localIndex numElems = 0;
   dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
-  array1d< array1d< std::map< string, ViewWrapperBase const * > > > viewPointers(elementManager->numRegions());
+  array1d< array1d< std::map< string, WrapperBase const * > > > viewPointers(elementManager->numRegions());
 
   elementManager->forElementRegionsComplete( [&]( localIndex const er,
                                                   ElementRegionBase const * const elemRegion )
@@ -1601,7 +1601,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
       for( auto const & wrapperIter : subRegion->wrappers() )
       {
-        ViewWrapperBase const * const wrapper = wrapperIter.second;
+        WrapperBase const * const wrapper = wrapperIter.second;
 
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
@@ -1617,11 +1617,11 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
                                           [&]( auto array, auto Type )->void
           {
             typedef decltype(array) arrayType;
-            ViewWrapper<arrayType> const &
-            sourceWrapper = ViewWrapper<arrayType>::cast( *wrapper );
+            Wrapper<arrayType> const &
+            sourceWrapper = Wrapper<arrayType>::cast( *wrapper );
             arrayType const & sourceArray = sourceWrapper.reference();
 
-            ViewWrapper<arrayType> * const
+            Wrapper<arrayType> * const
             newWrapper = fakeGroup.RegisterViewWrapper<arrayType>( fieldName );
             newWrapper->setPlotLevel(0);
             arrayType & newarray = newWrapper->reference();
@@ -1636,7 +1636,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
-    ViewWrapperBase * const wrapper = wrapperIter.second;
+    WrapperBase * const wrapper = wrapperIter.second;
     string const fieldName = wrapper->getName();
     std::type_info const & typeID = wrapper->get_typeid();
 
@@ -1645,7 +1645,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
                                     [&]( auto array, auto scalar )->void
     {
       typedef decltype(array) arrayType;
-      ViewWrapper<arrayType> & wrapperT = ViewWrapper<arrayType>::cast( *wrapper );
+      Wrapper<arrayType> & wrapperT = Wrapper<arrayType>::cast( *wrapper );
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
@@ -1658,8 +1658,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
           // check if the field actually exists / plotted on the current subregion
           if (viewPointers[er][esr].count(fieldName) > 0)
           {
-            ViewWrapper<arrayType> const & sourceWrapper =
-              ViewWrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
+            Wrapper<arrayType> const & sourceWrapper =
+              Wrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
             arrayType const & sourceArray = sourceWrapper.reference();
 
             targetArray.copy(counter, sourceArray);

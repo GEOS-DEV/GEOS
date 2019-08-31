@@ -80,7 +80,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = wrapper.first;
-        std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+        std::unique_ptr<WrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
         parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
       }
     }
@@ -91,7 +91,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      std::unique_ptr<ViewWrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
+      std::unique_ptr<WrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
       parent->RegisterViewWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
     }
   }
@@ -107,7 +107,7 @@ void ConstitutiveBase::DeliverClone( string const & name,
                                      ManagedGroup * const parent,
                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  clone->forViewWrappers([&]( ViewWrapperBase & wrapper )
+  clone->forViewWrappers([&]( WrapperBase & wrapper )
   {
     wrapper.CopyWrapperAttributes( *(this->getWrapperBase(wrapper.getName() ) ) );
   });

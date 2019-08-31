@@ -59,7 +59,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::ViewWrapperBase * vw )->void
+  source->forExternalProperties([&]( const dataRepository::WrapperBase * vw )->void
   {
     std::type_index typeIndex = std::type_index( vw->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
@@ -67,7 +67,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
                                     [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
-      const dataRepository::ViewWrapper<fieldType> & field = dataRepository::ViewWrapper< fieldType >::cast( *vw );
+      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *vw );
       const fieldType & fieldref = field.reference();
       this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
     });

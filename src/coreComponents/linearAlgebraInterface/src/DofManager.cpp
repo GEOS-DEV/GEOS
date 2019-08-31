@@ -1450,7 +1450,7 @@ void DofManager::vectorToField( ParallelVector const & vector,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  ViewWrapperBase * const vw = manager->getWrapperBase( dstFieldName );
+  WrapperBase * const vw = manager->getWrapperBase( dstFieldName );
   GEOS_ASSERT( vw != nullptr );
   std::type_index typeIndex = std::type_index( vw->get_typeid() );
 
@@ -1459,8 +1459,8 @@ void DofManager::vectorToField( ParallelVector const & vector,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    ViewWrapper<ArrayType> & view = ViewWrapper<ArrayType>::cast( *vw );
-    typename ViewWrapper<ArrayType>::ViewType const & field = view.referenceAsView();
+    Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *vw );
+    typename Wrapper<ArrayType>::ViewType const & field = view.referenceAsView();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
@@ -1545,7 +1545,7 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  ViewWrapperBase const * const vw = manager->getWrapperBase( srcFieldName );
+  WrapperBase const * const vw = manager->getWrapperBase( srcFieldName );
   GEOS_ASSERT( vw != nullptr );
   std::type_index typeIndex = std::type_index( vw->get_typeid() );
 
@@ -1554,8 +1554,8 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    ViewWrapper<ArrayType> const & view = ViewWrapper<ArrayType>::cast( *vw );
-    typename ViewWrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
+    Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *vw );
+    typename Wrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
