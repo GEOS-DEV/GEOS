@@ -67,7 +67,7 @@ ManagedGroup * WellSolverBase::CreateChild( string const & childKey, string cons
   }
   else
   {
-    GEOS_ERROR(childKey<<" is an invalid key to SolverBase child group.");
+    SolverBase::CreateChild( childKey, childName );
   }
   return rval;
 }
