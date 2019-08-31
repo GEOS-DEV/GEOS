@@ -38,34 +38,34 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Manage
   m_bulkModulus(),
   m_shearModulus()
 {
-  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Bulk Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
 
-  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
+  registerWrapper<real64>( viewKeyStruct::youngsModulus0String )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Young's Modulus.");
 
-  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
+  registerWrapper<real64>( viewKeyStruct::poissonRatioString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Poisson's ratio");
 
 
 
-  RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Bulk Modulus Field");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
 

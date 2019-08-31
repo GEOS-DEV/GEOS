@@ -89,7 +89,7 @@ void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
 #if defined(USE_TOTALVIEW_OUTPUT)
 int WrapperBase::setTotalviewDisplay() const
 {
-  //std::cout<<"exectuing ViewWrapperBase::setTotalviewDisplay()"<<std::endl;
+  //std::cout<<"exectuing WrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
   TV_ttf_add_row( "m_name", totalview::typeName< string >().c_str(), &m_name );
   TV_ttf_add_row( "m_parent", totalview::typeName< ManagedGroup >().c_str(), m_parent );
@@ -113,8 +113,8 @@ int WrapperBase::setTotalviewDisplay() const
 
 #if defined(USE_TOTALVIEW_OUTPUT)
 /**
- * @brief Global function correlated with ViewWrapperBase to be called by Totalview when displaying
- *        a ViewWrapperBase as a VieWrapper<T>
+ * @brief Global function correlated with WrapperBase to be called by Totalview when displaying
+ *        a WrapperBase as a VieWrapper<T>
  * @param wrapper A pointer to the wrapper that will be displayed.
  * @return 0
  */
@@ -122,7 +122,7 @@ int TV_ttf_display_type( const geosx::dataRepository::WrapperBase * wrapper )
 {
   if( wrapper!=nullptr )
   {
-    //std::cout<<"displaying ViewWrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
+    //std::cout<<"displaying WrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
 // keep this and try to make it work later on.
 //    rval = TV_ttf_add_row( "casted_this", wrapper->totalviewTypeName().c_str(), wrapper );
     wrapper->setTotalviewDisplay();

@@ -38,21 +38,21 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
   RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
 
-  RegisterViewWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
+  registerWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
     setApplyDefaultValue(-1)->
     setDescription("Array that contains a map from localIndex to globalIndex.");
 
-  RegisterViewWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
+  registerWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
-  RegisterViewWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
+  registerWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
 
-  RegisterViewWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+  registerWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
       setApplyDefaultValue(-2)->
       setPlotLevel(PlotLevel::LEVEL_0);
 
-  RegisterViewWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
 
-  m_sets.RegisterViewWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
+  m_sets.registerWrapper<set<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -68,7 +68,7 @@ ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog(
 
 void ObjectManagerBase::CreateSet( const std::string& newSetName )
 {
-  m_sets.RegisterViewWrapper<set<localIndex>>(newSetName);
+  m_sets.registerWrapper<set<localIndex>>(newSetName);
 }
 
 void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,

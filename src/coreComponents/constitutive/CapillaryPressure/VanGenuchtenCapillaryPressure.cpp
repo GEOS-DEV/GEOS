@@ -38,22 +38,22 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
                                                             ManagedGroup * const parent )
   : CapillaryPressureBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::phaseCapPressureExponentInvString,   &m_phaseCapPressureExponentInv,   false )->
+  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString,   &m_phaseCapPressureExponentInv,   false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Inverse of capillary power law exponent for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::phaseCapPressureMultiplierString,   &m_phaseCapPressureMultiplier,   false )->
+  registerWrapper( viewKeyStruct::phaseCapPressureMultiplierString,   &m_phaseCapPressureMultiplier,   false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Entry pressure value for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::capPressureEpsilonString,   &m_capPressureEpsilon,   false )->
+  registerWrapper( viewKeyStruct::capPressureEpsilonString,   &m_capPressureEpsilon,   false )->
     setApplyDefaultValue(1e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1");

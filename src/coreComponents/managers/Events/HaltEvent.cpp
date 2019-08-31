@@ -42,7 +42,7 @@ HaltEvent::HaltEvent( const std::string& name,
   m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
   m_externalLastTime = m_externalStartTime;  
 
-  RegisterViewWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
+  registerWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("The maximum allowable runtime for the job.");
 }

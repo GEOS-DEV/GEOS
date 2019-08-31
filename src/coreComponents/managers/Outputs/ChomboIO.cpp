@@ -42,25 +42,25 @@ ChomboIO::ChomboIO(std::string const & name, ManagedGroup * const parent):
   m_waitForInput(),
   m_useChomboPressures()
 {
-  RegisterViewWrapper(viewKeyStruct::outputPathString, &m_outputPath, false)->
+  registerWrapper(viewKeyStruct::outputPathString, &m_outputPath, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Path at which the geosx to chombo file will be written.");
 
-  RegisterViewWrapper(viewKeyStruct::beginCycleString, &m_beginCycle, false)->
+  registerWrapper(viewKeyStruct::beginCycleString, &m_beginCycle, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Cycle at which the coupling will commence.");
 
-  RegisterViewWrapper(viewKeyStruct::inputPathString, &m_inputPath, false)->
+  registerWrapper(viewKeyStruct::inputPathString, &m_inputPath, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue("/INVALID_INPUT_PATH")->
     setDescription("Path at which the chombo to geosx file will be written.");  
 
-  RegisterViewWrapper(viewKeyStruct::waitForInputString, &m_waitForInput, false)->
+  registerWrapper(viewKeyStruct::waitForInputString, &m_waitForInput, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDefaultValue(0)->
     setDescription("True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.");
 
-  RegisterViewWrapper(viewKeyStruct::useChomboPressuresString, &m_useChomboPressures, false)->
+  registerWrapper(viewKeyStruct::useChomboPressuresString, &m_useChomboPressures, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(0)->
     setDescription("True iff geosx should use the pressures chombo writes out.");

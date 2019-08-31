@@ -36,12 +36,12 @@ DummySolver::DummySolver( const std::string& name,
   m_randScale(0.0),
   m_randSeed(0)
 {
-  RegisterViewWrapper(viewKeyStruct::randScaleString, &m_randScale, false )->
+  registerWrapper(viewKeyStruct::randScaleString, &m_randScale, false )->
     setApplyDefaultValue(1e-9)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale for modifying requested dt");
 
-  RegisterViewWrapper(viewKeyStruct::randSeedString, &m_randSeed, false )->
+  registerWrapper(viewKeyStruct::randSeedString, &m_randSeed, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale for modifying requested dt");

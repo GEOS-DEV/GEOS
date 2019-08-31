@@ -35,17 +35,17 @@ SoloEvent::SoloEvent( const std::string& name,
   m_targetCycle(-1),
   m_targetExactTimestep(0)
 {
-  RegisterViewWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
+  registerWrapper(viewKeyStruct::targetTimeString, &m_targetTime, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Targeted time to execute the event.");
 
-  RegisterViewWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
+  registerWrapper(viewKeyStruct::targetCycleString, &m_targetCycle, false )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Targeted cycle to execute the event.");
 
-  RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+  registerWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If this option is set, the event will reduce its timestep requests to match the specified execution time exactly: dt_request = min(dt_request, t_target - time)).");

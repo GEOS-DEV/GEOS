@@ -22,19 +22,19 @@ SolidBase::SolidBase( string const & name,
   m_deviatorStress{}
 {
 
-  RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Default Material Density");
 
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
+  registerWrapper( viewKeyStruct::densityString, &m_density, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Material Density");
 
-  RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
+  registerWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Stress Deviator");
 
-  RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
+  registerWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Mean stress");

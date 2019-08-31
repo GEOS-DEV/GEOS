@@ -260,19 +260,19 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
   for( localIndex a=0 ; a<numNeighborGroups ; ++a )
   {
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToSendString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToSendString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString )->
     setSizedFromParent( 0 );
 
   }

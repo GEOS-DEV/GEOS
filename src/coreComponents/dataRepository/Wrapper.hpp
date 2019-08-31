@@ -17,7 +17,7 @@
  */
 
 /**
- * @file ViewWrapper.hpp
+ * @file Wrapper.hpp
  * @authors settgast
  */
 
@@ -60,7 +60,7 @@ namespace dataRepository
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
- * @tparam T is any object that is to be wrapped by ViewWrapper
+ * @tparam T is any object that is to be wrapped by Wrapper
  */
 template< typename T >
 class Wrapper : public WrapperBase
@@ -71,7 +71,7 @@ public:
   using TYPE = T;
   /**
    * @param name name of the object
-   * @param parent parent group which owns the ViewWrapper
+   * @param parent parent group which owns the Wrapper
    */
   explicit Wrapper( std::string const & name,
                         ManagedGroup * const parent ):
@@ -90,8 +90,8 @@ public:
 
   /**
    * @param name name of the object
-   * @param parent parent group that owns the ViewWrapper
-   * @param object object that is being wrapped by the ViewWrapper
+   * @param parent parent group that owns the Wrapper
+   * @param object object that is being wrapped by the Wrapper
    */
   explicit Wrapper( std::string const & name,
                         ManagedGroup * const parent,
@@ -111,8 +111,8 @@ public:
 
   /**
    * @param name name of the object
-   * @param parent parent group that owns the ViewWrapper
-   * @param object object that is being wrapped by the ViewWrapper
+   * @param parent parent group that owns the Wrapper
+   * @param object object that is being wrapped by the Wrapper
    * @param takeOwnership to indicate whether or not to take ownership of \p object
    */
   explicit Wrapper( std::string const & name,
@@ -190,13 +190,13 @@ public:
 
 
   /**
-   * Factory Method to make a new ViewWrapper<T>, allocating a new T. Only is
+   * Factory Method to make a new Wrapper<T>, allocating a new T. Only is
    * going to work if T has a default constructor.
    * Perhaps this is worthless in the general case.
    * @param name name of the object
-   * @param parent group that owns the ViewWrapper
-   * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated
-   * ViewWrapper.
+   * @param parent group that owns the Wrapper
+   * @return A std::unique_ptr<WrapperBase> that holds the newly allocated
+   * Wrapper.
    */
   template< typename TNEW >
   static std::unique_ptr< WrapperBase > Factory( std::string const & name,
@@ -232,9 +232,9 @@ public:
 
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted ViewWrapper<T>
+   * @return casted Wrapper<T>
    */
   static Wrapper< T > * cast( WrapperBase * const base )
   {
@@ -246,9 +246,9 @@ public:
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted reference to const ViewWrapper<T>
+   * @return casted reference to const Wrapper<T>
    */
   static Wrapper< T > const * cast( WrapperBase const * const base )
   {
@@ -260,9 +260,9 @@ public:
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted ViewWrapper<T>
+   * @return casted Wrapper<T>
    */
   static Wrapper< T > & cast( WrapperBase & base )
   {
@@ -274,9 +274,9 @@ public:
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted reference to const ViewWrapper<T>
+   * @return casted reference to const Wrapper<T>
    */
   static Wrapper< T > const & cast( WrapperBase const & base )
   {
@@ -382,7 +382,7 @@ public:
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
-    GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
+    GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
@@ -395,7 +395,7 @@ public:
       {
         string name;
         unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
+        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
         unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
       }
     }
@@ -865,7 +865,7 @@ public:
 
   /**
    * @brief setter for default value
-   * @return pointer to ViewWrapper<T>
+   * @return pointer to Wrapper<T>
    */
   template< typename U=T >
   typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
@@ -877,7 +877,7 @@ public:
 
   /**
    * @brief set and apply for default value
-   * @return pointer to ViewWrapper<T>
+   * @return pointer to Wrapper<T>
    */
   template< typename U=T >
   typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
@@ -1404,7 +1404,7 @@ public:
 
 
   /** @name overridden setters
-   *  Group of setters that override non-virtual functions in ViewWrapperBase
+   *  Group of setters that override non-virtual functions in WrapperBase
    */
   ///@{
 
@@ -1485,7 +1485,7 @@ public:
 
   virtual int setTotalviewDisplay() const override final
   {
-    //std::cout<<"executing ViewWrapper::setTotalviewDisplay()"<<std::endl;
+    //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
     TV_ttf_add_row( "m_data", totalview::typeName< T >().c_str(), m_data );
@@ -1514,16 +1514,16 @@ private:
 } /* namespace geosx */
 
 //template< typename T >
-//int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<T> const * wrapper)
+//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
 //{
 //  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
 //  return TV_ttf_format_raw;
 //}
 //
-//template int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<int> const * wrapper );
+//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
 //
 //template< typename T >
-//void geosx::dataRepository::ViewWrapper<T>::tvTemplateInstantiation()
+//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
 //{
 //  TV_ttf_display_type<T>(this);
 //}

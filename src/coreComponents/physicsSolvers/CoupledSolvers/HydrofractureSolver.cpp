@@ -54,19 +54,19 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_solidSolver(nullptr),
   m_flowSolver(nullptr)
 {
-  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+  registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+  registerWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+  registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
-  RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+  registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 

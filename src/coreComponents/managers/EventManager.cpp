@@ -45,34 +45,34 @@ EventManager::EventManager( std::string const & name,
 {
   setInputFlags(InputFlags::REQUIRED);
   
-  RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
+  registerWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+  registerWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation cycle for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Verbosity level.");
 
-  RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
+  registerWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation time.");
 
-  RegisterViewWrapper(viewKeyStruct::dtString, &m_dt, false )->
+  registerWrapper(viewKeyStruct::dtString, &m_dt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation timestep.");
 
-  RegisterViewWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
+  registerWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation cycle number.");
 
-  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Index of the current subevent.");
 

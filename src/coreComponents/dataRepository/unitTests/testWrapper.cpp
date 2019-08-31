@@ -24,7 +24,7 @@ using namespace geosx;
 using namespace dataRepository;
 
 
-TEST( testViewWrapper, testSetters )
+TEST( testWrapper, testSetters )
 {
   ManagedGroup group( "group", nullptr );
   Wrapper< int > wrapper( "wrapper", &group );

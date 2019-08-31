@@ -41,8 +41,8 @@ DomainPartition::DomainPartition( std::string const & name,
                                   ManagedGroup * const parent ):
   ManagedGroup( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -98,9 +98,9 @@ void DomainPartition::GenerateSets(  )
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & viewWrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets->wrappers() )
   {
-    string name = viewWrapper.second->getName();
+    string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = false;
     Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
@@ -125,7 +125,7 @@ void DomainPartition::GenerateSets(  )
     {
       arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         localIndex const * const elemToNodes = subRegion->nodeList(k);

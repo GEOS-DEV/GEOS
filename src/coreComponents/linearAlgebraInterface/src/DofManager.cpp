@@ -786,7 +786,7 @@ struct IndexArrayHelper
     GEOS_ASSERT( field.location == LOC );
 
     ObjectManagerBase * baseManager = getObjectManager<LOC>( mesh );
-    baseManager->RegisterViewWrapper<ArrayType>( field.key )->
+    baseManager->registerWrapper<ArrayType>( field.key )->
       setApplyDefaultValue( -1 )->
       setPlotLevel( PlotLevel::LEVEL_1 )->
       setRestartFlags( RestartFlags::NO_WRITE )->
@@ -813,7 +813,7 @@ struct IndexArrayHelper
   static void
   remove( Mesh * const mesh, DofManager::FieldDescription const & field )
   {
-    getObjectManager<LOC>( mesh )->DeregisterViewWrapper( field.key );
+    getObjectManager<LOC>( mesh )->deregisterWrapper( field.key );
   }
 };
 
@@ -838,7 +838,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
                                                                      auto * const region,
                                                                      auto * const subRegion )
     {
-      subRegion->template RegisterViewWrapper<ArrayType>( field.key )->
+      subRegion->template registerWrapper<ArrayType>( field.key )->
         setApplyDefaultValue( -1 )->
         setPlotLevel( PlotLevel::LEVEL_1 )->
         setRestartFlags( RestartFlags::NO_WRITE )->
@@ -881,7 +881,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
                                                                     auto * const,
                                                                     auto * const subRegion )
     {
-      subRegion->DeregisterViewWrapper( field.key );
+      subRegion->deregisterWrapper( field.key );
     } );
   }
 };
@@ -1450,16 +1450,16 @@ void DofManager::vectorToField( ParallelVector const & vector,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  WrapperBase * const vw = manager->getWrapperBase( dstFieldName );
-  GEOS_ASSERT( vw != nullptr );
-  std::type_index typeIndex = std::type_index( vw->get_typeid() );
+  WrapperBase * const wrapper = manager->getWrapperBase( dstFieldName );
+  GEOS_ASSERT( wrapper != nullptr );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *vw );
+    Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *wrapper );
     typename Wrapper<ArrayType>::ViewType const & field = view.referenceAsView();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
@@ -1545,16 +1545,16 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  WrapperBase const * const vw = manager->getWrapperBase( srcFieldName );
-  GEOS_ASSERT( vw != nullptr );
-  std::type_index typeIndex = std::type_index( vw->get_typeid() );
+  WrapperBase const * const wrapper = manager->getWrapperBase( srcFieldName );
+  GEOS_ASSERT( wrapper != nullptr );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *vw );
+    Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *wrapper );
     typename Wrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )

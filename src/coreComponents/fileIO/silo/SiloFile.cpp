@@ -1564,7 +1564,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
     DBSetDir(m_dbFilePtr, shortsubdir.c_str());
   }
 
-  WriteViewWrappersToSilo<real64>( meshname,
+  WriteWrappersToSilo<real64>( meshname,
                                    group->wrappers(),
                                    centering,
                                    cycleNum,
@@ -1622,7 +1622,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
             arrayType const & sourceArray = sourceWrapper.reference();
 
             Wrapper<arrayType> * const
-            newWrapper = fakeGroup.RegisterViewWrapper<arrayType>( fieldName );
+            newWrapper = fakeGroup.registerWrapper<arrayType>( fieldName );
             newWrapper->setPlotLevel(0);
             arrayType & newarray = newWrapper->reference();
             newarray.resize( arrayType::ndim, sourceArray.dims() );
