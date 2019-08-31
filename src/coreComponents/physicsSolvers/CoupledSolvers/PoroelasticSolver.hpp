@@ -44,7 +44,7 @@ public:
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition * const domain,
-                     DofManager & dofManager,
+                     DofManager<LAInterface> & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;

@@ -20,7 +20,6 @@
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geosx
 {
@@ -30,43 +29,47 @@ class MeshLevel;
 class ObjectManagerBase;
 
 /**
- * @class DofManager
- * @brief The DoFManager is responsible for allocating global dofs, constructing
- * sparsity patterns, and generally simplifying the interaction between
- * PhysicsSolvers and linear algebra operations.
- */
-class DofManager
-{
-public:
-
-  /**
    * @brief Enumeration of geometric objects for support location. Note that this
    * enum is nearly identical to Connectivity, but we keep both for code readability
    * in function calls.
    */
-  enum class Location
-  {
-    Elem, //!< location is element (like pressure in finite volumes)
-    Face, //!< location is face (like flux in mixed finite elements)
-    Edge, //!< location is edge (like flux between fracture elements)
-    Node, //!< location is node (like displacements in finite elements)
-    USER_DEFINED //!< user defined location (for input connectivity pattern)
-  };
+enum class DofLocation
+{
+  Elem, //!< location is element (like pressure in finite volumes)
+  Face, //!< location is face (like flux in mixed finite elements)
+  Edge, //!< location is edge (like flux between fracture elements)
+  Node, //!< location is node (like displacements in finite elements)
+  USER_DEFINED //!< user defined location (for input connectivity pattern)
+};
 
-  /**
-   * @brief Enumeration of geometric objects for connectivity type. Note that this
-   * enum is nearly identical to Location, but we keep both for code readability
-   * in function calls.
-   */
-  enum class Connectivity
-  {
-    Elem, //!< connectivity is element (like in finite elements)
-    Face, //!< connectivity is face (like in finite volumes TPFA)
-    Edge, //!< connectivity is edge (like fracture element connectors)
-    Node, //!< connectivity is node (like in finite volumes MPFA)
-    None, //!< there is no connectivity (self connected field, like a mass matrix)
-    USER_DEFINED //!< user defined connectivity (for input connectivity pattern)
-  };
+/**
+ * @brief Enumeration of geometric objects for connectivity type. Note that this
+ * enum is nearly identical to Location, but we keep both for code readability
+ * in function calls.
+ */
+enum class DofConnectivity
+{
+  Elem, //!< connectivity is element (like in finite elements)
+  Face, //!< connectivity is face (like in finite volumes TPFA)
+  Edge, //!< connectivity is edge (like fracture element connectors)
+  Node, //!< connectivity is node (like in finite volumes MPFA)
+  None, //!< there is no connectivity (self connected field, like a mass matrix)
+  USER_DEFINED //!< user defined connectivity (for input connectivity pattern)
+};
+
+/**
+ * @brief The DoFManager is responsible for allocating global dofs, constructing
+ * sparsity patterns, and generally simplifying the interaction between
+ * PhysicsSolvers and linear algebra operations.
+ * @tparam LAI linear algebra interface providing matrix and vector implementations
+ */
+template< typename LAI >
+class DofManager
+{
+public:
+
+  using ParallelVector = typename LAI::ParallelVector;
+  using ParallelMatrix = typename LAI::ParallelMatrix;
 
   /**
    * Field description
@@ -79,7 +82,7 @@ public:
 
     string name; //!< field name
     array1d<string> regionNames; //!< active element regions
-    Location location; //!< support location
+    DofLocation location; //!< support location
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
     string docstring; //!< documentation string
@@ -129,8 +132,8 @@ public:
    * @param [in] connectivity Connectivity through what it is connected.
    */
   void addField( string const & fieldName,
-                 Location const location,
-                 Connectivity const connectivity );
+                 DofLocation const location,
+                 DofConnectivity const connectivity );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -141,8 +144,8 @@ public:
    * @param [in] components localIndex number of components (for vector fields).
    */
   void addField( string const & fieldName,
-                 Location const location,
-                 Connectivity const connectivity,
+                 DofLocation const location,
+                 DofConnectivity const connectivity,
                  localIndex const components );
 
   /**
@@ -154,8 +157,8 @@ public:
    * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & fieldName,
-                 Location const location,
-                 Connectivity const connectivity,
+                 DofLocation const location,
+                 DofConnectivity const connectivity,
                  string_array const & regions );
 
   /**
@@ -185,8 +188,8 @@ public:
    * @param [in] regions string_array where this field is defined.
    */
   void addField( string const & fieldName,
-                 Location const location,
-                 Connectivity const connectivity,
+                 DofLocation const location,
+                 DofConnectivity const connectivity,
                  localIndex const components,
                  string_array const & regions );
 
@@ -219,7 +222,7 @@ public:
    */
   void addField( string const & fieldName,
                  ParallelMatrix const & connLocInput,
-                 Connectivity const connectivity );
+                 DofConnectivity const connectivity );
 
   /**
    * @brief addField with an input pattern.
@@ -233,7 +236,7 @@ public:
   void addField( string const & fieldName,
                  ParallelMatrix const & connLocInput,
                  localIndex const components,
-                 Connectivity const connectivity );
+                 DofConnectivity const connectivity );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -244,7 +247,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity );
+                    DofConnectivity const connectivity );
 
   /**
    * @brief Just another interface to allow four parameters (no symmetry, default is true).
@@ -256,7 +259,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    DofConnectivity const connectivity,
                     string_array const & regions );
 
   /**
@@ -269,7 +272,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    DofConnectivity const connectivity,
                     bool const symmetric );
 
   /**
@@ -309,7 +312,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    DofConnectivity const connectivity,
                     string_array const & regions,
                     bool const symmetric );
 
@@ -522,22 +525,10 @@ private:
   localIndex getFieldIndex( string const & key ) const;
 
   /**
-   * @brief Create index array for the field
-   */
-  template< typename ... SUBREGIONTYPES >
-  void createIndexArray( FieldDescription & field );
-
-  /**
-   * @brief Remove an index array for the field
-   */
-  template< typename ... SUBREGIONTYPES >
-  void removeIndexArray( FieldDescription const & field );
-
-  /**
    * @brief Create a connector-location sparsity pattern for a field
    */
   void makeConnLocPattern( FieldDescription const & fieldDesc,
-                           Connectivity const connectivity,
+                           DofConnectivity const connectivity,
                            array1d <string> const & regions,
                            ParallelMatrix & connLocPattern );
 
@@ -635,7 +626,7 @@ private:
   /**
    * Table of connectivities within and between fields
    */
-  array2d<Connectivity> m_connectivity;
+  array2d<DofConnectivity> m_connectivity;
 
   /**
    * Definition for entries of sparse matrices collection

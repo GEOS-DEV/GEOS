@@ -30,6 +30,8 @@
 #include "meshUtilities/MeshManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/DofManager.hpp"
 
 #include <numeric>
 
@@ -58,12 +60,7 @@ do \
   SKIP_TEST_IF( mpiSize == 1, REASON ); \
 } while(0)
 
-namespace
-{
-int global_argc;
-char** global_argv;
-}
-
+template<typename LAI>
 class DofManagerTest : public ::testing::Test
 {
 public:
@@ -89,7 +86,7 @@ public:
     time = MpiWrapper::Wtime() - time;
   }
 
-protected:
+//protected:
 
   /**
    * @brief Provide a very simple xml input, with an internally generated mesh.
@@ -163,7 +160,10 @@ protected:
   static ProblemManager * problemManager;
 };
 
-ProblemManager * DofManagerTest::problemManager = nullptr; //!< the main problemManager.
+template<typename LAI>
+ProblemManager * DofManagerTest<LAI>::problemManager = nullptr; //!< the main problemManager.
+
+TYPED_TEST_CASE_P( DofManagerTest );
 
 /**
  * @name Ctest tests.
@@ -175,11 +175,11 @@ ProblemManager * DofManagerTest::problemManager = nullptr; //!< the main problem
  * @brief Define a vectorial nodal field (displacement) connected through elements (FEM) and check the
  * global number of DoFs. The field is defined on 3 regions out of 4.
  */
-TEST_F(DofManagerTest, TestFEM_partial)
+TYPED_TEST_P( DofManagerTest, TestFEM_partial )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array displacementRegion;
@@ -187,11 +187,10 @@ TEST_F(DofManagerTest, TestFEM_partial)
   displacementRegion.push_back( "region3" );
   displacementRegion.push_back( "region4" );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
-                       displacementRegion );
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3, displacementRegion );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
 
   // Total number of nodes, sum of regions 1 and 3+4
@@ -208,17 +207,17 @@ TEST_F(DofManagerTest, TestFEM_partial)
  * @brief Define a vectorial nodal field (displacement) connected through elements (FEM) and check the
  * global number of DoFs. The field is defined on all regions.
  */
-TEST_F(DofManagerTest, TestFEM_all)
+TYPED_TEST_P( DofManagerTest, TestFEM_all )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3 );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
 
   // Total number of nodes, sum of all regions
@@ -235,11 +234,11 @@ TEST_F(DofManagerTest, TestFEM_all)
  * @brief Define a scalar element field (pressure) connected through faces (FVM) and check the
  * global number of DoFs. The field is defined on 3 regions out of 4.
  */
-TEST_F(DofManagerTest, TestFVM_partial)
+TYPED_TEST_P( DofManagerTest, TestFVM_partial )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array pressureRegion;
@@ -247,10 +246,10 @@ TEST_F(DofManagerTest, TestFVM_partial)
   pressureRegion.push_back( "region2" );
   pressureRegion.push_back( "region3" );
 
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face, pressureRegion );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
 
   // Total number of cells
@@ -267,17 +266,17 @@ TEST_F(DofManagerTest, TestFVM_partial)
  * @brief Define a scalar element field (pressure) connected through faces (FVM) and check the
  * global number of DoFs. The field is defined on all regions.
  */
-TEST_F(DofManagerTest, TestFVM_all)
+TYPED_TEST_P( DofManagerTest, TestFVM_all )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
 
   // Total number of cells
@@ -294,13 +293,13 @@ TEST_F(DofManagerTest, TestFVM_all)
  * @brief Define two fields, one is displacement (FEM) and the other pressure (FVM), and a coupling
  * among them. Check the sizes of the coupling block pattern.
  */
-TEST_F(DofManagerTest, TestCoupling)
+TYPED_TEST_P( DofManagerTest, TestCoupling )
 {
   SKIP_TEST_IN_SERIAL( "see: https://github.com/trilinos/Trilinos/issues/5663" );
 
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array displacementRegion;
@@ -316,13 +315,13 @@ TEST_F(DofManagerTest, TestCoupling)
   string_array couplingRegion;
   couplingRegion.push_back( "region3" );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3,
                        displacementRegion );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
-  dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, couplingRegion, false );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face, pressureRegion );
+  dofManager.addCoupling( "displacement", "pressure", DofConnectivity::Elem, couplingRegion, false );
   dofManager.close();
 
-  ParallelMatrix pattern, emptyPattern;
+  typename TypeParam::ParallelMatrix pattern, emptyPattern;
 
   dofManager.setSparsityPattern( pattern, "displacement", "pressure" );
   dofManager.setSparsityPattern( emptyPattern, "pressure", "displacement" );
@@ -350,12 +349,13 @@ TEST_F(DofManagerTest, TestCoupling)
  * @param numComp number of components per cell
  * @param sparsity the matrix to be populated
  */
+template<typename Matrix>
 void makeSparsityTPFA( DomainPartition * const domain,
                        MeshLevel * const mesh,
                        array1d<string> const & regionsInput,
                        localIndex const numComp,
-                       ParallelMatrix * sparsity,
-                       ParallelMatrix * connLoc )
+                       Matrix * sparsity,
+                       Matrix * connLoc )
 {
   ElementRegionManager * const elemManager = mesh->getElemManager();
   FaceManager * const faceManager = mesh->getFaceManager();
@@ -504,22 +504,27 @@ void makeSparsityTPFA( DomainPartition * const domain,
  * @brief Compare TPFA sparsity pattern produced by DofManager against one
  *        created with a simple fake assembly loop
  */
-TEST_F(DofManagerTest, TestPatternTPFA)
+TYPED_TEST_P( DofManagerTest, TestPatternTPFA )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  ParallelMatrix pattern, patternExpected;
+  typename TypeParam::ParallelMatrix pattern, patternExpected;
 
   array1d<string> regions;
   regions.push_back( "region1" );
   regions.push_back( "region3" );
   regions.push_back( "region4" );
 
-  makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), regions, 3, &patternExpected, nullptr );
+  makeSparsityTPFA< typename TypeParam::ParallelMatrix >( domain,
+                                                          domain->getMeshBody(0)->getMeshLevel(0),
+                                                          regions,
+                                                          3,
+                                                          &patternExpected,
+                                                          nullptr );
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, 3, regions );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face, 3, regions );
   dofManager.close();
   dofManager.setSparsityPattern( pattern, "pressure", "pressure" );
 
@@ -539,21 +544,21 @@ TEST_F(DofManagerTest, TestPatternTPFA)
  * @function TestUserDefinedPattern
  * @brief Create an external pattern and pass it to the DofManager.
  */
-TEST_F(DofManagerTest, TestUserDefinedPattern)
+TYPED_TEST_P( DofManagerTest, TestUserDefinedPattern )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
   array1d<string> regions;
   regions.push_back( "region1" );
   regions.push_back( "region3" );
   regions.push_back( "region4" );
 
-  ParallelMatrix pattern, patternExpected, connLocUserInput;
+  typename TypeParam::ParallelMatrix pattern, patternExpected, connLocUserInput;
   makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), regions, 3, &patternExpected, &connLocUserInput );
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
-  dofManager.addField( "user-defined", connLocUserInput, 3, DofManager::Connectivity::Face );
+  dofManager.addField( "user-defined", connLocUserInput, 3, DofConnectivity::Face );
   dofManager.close();
   dofManager.setSparsityPattern( pattern, "user-defined", "user-defined" );
 
@@ -572,18 +577,18 @@ TEST_F(DofManagerTest, TestUserDefinedPattern)
  * @brief Define two fields, one is displacement (FEM) and the other pressure (FVM), and check the
  * size of the global pattern.
  */
-TEST_F(DofManagerTest, TestFEM_FVM)
+TYPED_TEST_P( DofManagerTest, TestFEM_FVM )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3 );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern );
 
   // Total number of nodes
@@ -602,17 +607,17 @@ TEST_F(DofManagerTest, TestFEM_FVM)
  * @function TestMassMatrix
  * @brief Define a self-connected field, like a mass matrix.
  */
-TEST_F(DofManagerTest, TestMassMatrix)
+TYPED_TEST_P( DofManagerTest, TestMassMatrix )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::Elem );
+  dofManager.addField( "massmatrix", DofLocation::Elem, DofConnectivity::Elem );
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
   dofManager.setSparsityPattern( pattern );
 
   // Total number of cells
@@ -631,18 +636,18 @@ TEST_F(DofManagerTest, TestMassMatrix)
  * @function TestIndices
  * @brief Check the getIndices functions for FEM and FVM.
  */
-TEST_F(DofManagerTest, TestIndices)
+TYPED_TEST_P( DofManagerTest, TestIndices )
 {
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   SKIP_TEST_IF( mpiSize > 2, "Test not designed for more than 2 ranks" );
 
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3 );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face );
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3 );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face );
   dofManager.close();
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
@@ -725,13 +730,13 @@ TEST_F(DofManagerTest, TestIndices)
  * @function TestWithTimes
  * @brief This is not a real test (it is always true!). It collects timings.
  */
-TEST_F(DofManagerTest, TestWithTimes)
+TYPED_TEST_P( DofManagerTest, TestWithTimes )
 {
   SKIP_TEST_IN_SERIAL( "see: https://github.com/trilinos/Trilinos/issues/5663" );
 
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = this->problemManager->getDomainPartition();
 
-  DofManager dofManager( "test" );
+  DofManager<TypeParam> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array displacementRegion;
@@ -754,31 +759,37 @@ TEST_F(DofManagerTest, TestWithTimes)
   string_array testRegion3;
   testRegion3.push_back( "region3" );
 
-  ParallelMatrix connLocUserInput;
-  makeSparsityTPFA( domain, domain->getMeshBody(0)->getMeshLevel(0), pressureRegion, 3, nullptr, &connLocUserInput );
+  typename TypeParam::ParallelMatrix connLocUserInput;
+
+  makeSparsityTPFA< typename TypeParam::ParallelMatrix >( domain,
+                                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                          pressureRegion,
+                                                          3,
+                                                          nullptr,
+                                                          &connLocUserInput );
 
   double timeAddField, timeAddCoupling, timeGetSingleSparsityPattern, timeGetGlobalSparsityPattern;
 
-  setTimer( timeAddField );
+  this->setTimer( timeAddField );
 
-  dofManager.addField( "displacement", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
+  dofManager.addField( "displacement", DofLocation::Node, DofConnectivity::Elem, 3,
                        displacementRegion );
-  dofManager.addField( "pressure", DofManager::Location::Elem, DofManager::Connectivity::Face, pressureRegion );
-  dofManager.addField( "massmatrix", DofManager::Location::Elem, DofManager::Connectivity::None, 2, testRegion3 );
-  dofManager.addField( "user-defined", connLocUserInput, 3, DofManager::Connectivity::Face );
+  dofManager.addField( "pressure", DofLocation::Elem, DofConnectivity::Face, pressureRegion );
+  dofManager.addField( "massmatrix", DofLocation::Elem, DofConnectivity::None, 2, testRegion3 );
+  dofManager.addField( "user-defined", connLocUserInput, 3, DofConnectivity::Face );
 
-  getElapsedTime( timeAddField );
-  setTimer( timeAddCoupling );
+  this->getElapsedTime( timeAddField );
+  this->setTimer( timeAddCoupling );
 
-  dofManager.addCoupling( "displacement", "pressure", DofManager::Connectivity::Elem, testRegion3, false );
-  dofManager.addCoupling( "massmatrix", "pressure", DofManager::Connectivity::Elem );
+  dofManager.addCoupling( "displacement", "pressure", DofConnectivity::Elem, testRegion3, false );
+  dofManager.addCoupling( "massmatrix", "pressure", DofConnectivity::Elem );
 
-  getElapsedTime( timeAddCoupling );
-  setTimer( timeGetSingleSparsityPattern );
+  this->getElapsedTime( timeAddCoupling );
+  this->setTimer( timeGetSingleSparsityPattern );
 
   dofManager.close();
 
-  ParallelMatrix pattern;
+  typename TypeParam::ParallelMatrix pattern;
 
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
 #if PRINT_PATTERNS
@@ -820,15 +831,15 @@ TEST_F(DofManagerTest, TestWithTimes)
     pattern.write( "user-defined.mtx" );
 #endif
 
-  getElapsedTime( timeGetSingleSparsityPattern );
-  setTimer( timeGetGlobalSparsityPattern );
+  this->getElapsedTime( timeGetSingleSparsityPattern );
+  this->setTimer( timeGetGlobalSparsityPattern );
 
   dofManager.setSparsityPattern( pattern );
 #if PRINT_PATTERNS
     pattern.write( "global.mtx" );
 #endif
 
-  getElapsedTime( timeGetGlobalSparsityPattern );
+  this->getElapsedTime( timeGetGlobalSparsityPattern );
 
   int mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
@@ -887,6 +898,32 @@ TEST_F(DofManagerTest, TestWithTimes)
   SUCCEED();
 }
 
+REGISTER_TYPED_TEST_CASE_P( DofManagerTest,
+                            TestFEM_partial,
+                            TestFEM_all,
+                            TestFVM_partial,
+                            TestFVM_all,
+                            TestCoupling,
+                            TestPatternTPFA,
+                            TestUserDefinedPattern,
+                            TestFEM_FVM,
+                            TestMassMatrix,
+                            TestIndices,
+                            TestWithTimes );
+
+#ifdef GEOSX_USE_TRILINOS
+  INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerTest, TrilinosInterface );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+  // Does not work. Remove this comment when fixed.
+  //INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerTest, PetscInterface );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+  //INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerTest, HypreInterface );
+#endif
+
 /**
  * @function main
  * @brief Main function to setup the GEOSX environment, read the xml file and run all cases.
@@ -894,23 +931,8 @@ TEST_F(DofManagerTest, TestWithTimes)
 int main( int argc, char** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-
-  // Global call will not work because CXXUtils has already been initialized in problemManager
   geosx::basicSetup( argc, argv );
-
-  global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>( global_argc )];
-  for( int i = 0 ; i < argc ; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
-
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
-
-  // Global call will not work because CXXUtils will be destructed by problemManager
   geosx::basicCleanup();
-
   return result;
 }

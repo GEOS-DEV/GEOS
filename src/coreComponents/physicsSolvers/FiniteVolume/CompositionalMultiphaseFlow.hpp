@@ -106,20 +106,20 @@ public:
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition * const domain,
-                     DofManager & dofManager,
+                     DofManager<LAInterface> & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
   virtual void
   SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
+             DofManager<LAInterface> & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition * const domain,
-                  DofManager const & dofManager,
+                  DofManager<LAInterface> const & dofManager,
                   ParallelMatrix & matrix,
                   ParallelVector & rhs ) override;
 
@@ -127,29 +127,29 @@ public:
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition * const domain,
-                           DofManager const & dofManager,
+                           DofManager<LAInterface> const & dofManager,
                            ParallelMatrix & matrix,
                            ParallelVector & rhs ) override;
 
   virtual real64
   CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
+                         DofManager<LAInterface> const & dofManager,
                          ParallelVector const & rhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  SolveSystem( DofManager<LAInterface> const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
-                       DofManager const & dofManager,
+                       DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
@@ -255,7 +255,7 @@ public:
   void AssembleAccumulationTerms( real64 const time_n,
                                   real64 const dt,
                                   DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
+                                  DofManager<LAInterface> const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs );
 
@@ -271,7 +271,7 @@ public:
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
                           DomainPartition const * const domain,
-                          DofManager const * const dofManager,
+                          DofManager<LAInterface> const * const dofManager,
                           ParallelMatrix * const matrix,
                           ParallelVector * const rhs );
 
@@ -287,7 +287,7 @@ public:
   void AssembleVolumeBalanceTerms( real64 const time_n,
                                    real64 const dt,
                                    DomainPartition const * const domain,
-                                   DofManager const * const dofManager,
+                                   DofManager<LAInterface> const * const dofManager,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs );
 
@@ -440,7 +440,7 @@ private:
    */
   void ApplyDirichletBC_implicit( real64 const time,
                                   real64 const dt,
-                                  DofManager const * const dofManager,
+                                  DofManager<LAInterface> const * const dofManager,
                                   DomainPartition * const domain,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs );

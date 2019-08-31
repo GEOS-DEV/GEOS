@@ -52,7 +52,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
-  DofManager const & dofManager = solver->getDofManager();
+  DofManager<LAInterface> const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
   real64 const * localResidual = residual.extractLocalVector();
@@ -252,7 +252,7 @@ TEST_F(CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux)
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
-                               DofManager const * targetDofManager )
+                               DofManager<LAInterface> const * targetDofManager )
   {
     targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });

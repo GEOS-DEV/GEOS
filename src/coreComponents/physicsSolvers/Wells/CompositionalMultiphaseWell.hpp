@@ -107,17 +107,17 @@ public:
 
   virtual real64
   CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
+                         DofManager<LAInterface> const & dofManager,
                          ParallelVector const & rhs ) override;
     
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
-                       DofManager const & dofManager,
+                       DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
@@ -132,7 +132,7 @@ public:
 
   virtual void
   SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
+             DofManager<LAInterface> & dofManager ) const override;
 
   /**@}*/
 
@@ -172,7 +172,7 @@ public:
   virtual void AssembleFluxTerms( real64 const time_n,
                                   real64 const dt,
                                   DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
+                                  DofManager<LAInterface> const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs ) override;
 
@@ -188,7 +188,7 @@ public:
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
                                          DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
+                                         DofManager<LAInterface> const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) override;
 
@@ -204,7 +204,7 @@ public:
   virtual void AssembleVolumeBalanceTerms( real64 const time_n,
                                            real64 const dt,
                                            DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
+                                           DofManager<LAInterface> const * const dofManager,
                                            ParallelMatrix * const matrix,
                                            ParallelVector * const rhs ) override;
 
@@ -216,7 +216,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void FormPressureRelations( DomainPartition const * const domain,
-                                      DofManager const * const dofManager,
+                                      DofManager<LAInterface> const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) override;
 
@@ -228,7 +228,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void FormControlEquation( DomainPartition const * const domain,
-                                    DofManager const * const dofManager,
+                                    DofManager<LAInterface> const * const dofManager,
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) override;
   

@@ -29,7 +29,8 @@ namespace geosx
 
 using namespace dataRepository;
 
-DofManager::DofManager( string name, localIndex const verbosity )
+template< typename LAI >
+DofManager< LAI >::DofManager( string name, localIndex const verbosity )
   : m_name( std::move( name ) ),
     m_verbosity( verbosity ),
     m_domain( nullptr ),
@@ -39,39 +40,23 @@ DofManager::DofManager( string name, localIndex const verbosity )
   initializeDataStructure();
 }
 
-void DofManager::initializeDataStructure()
+template< typename LAI >
+void DofManager< LAI >::initializeDataStructure()
 {
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
   m_connectivity.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
-  m_connectivity = Connectivity::None;
+  m_connectivity = DofConnectivity::None;
 
   // we pre-allocate an oversized array to store sparsity pattern type
   // instead of resizing it dynamically as fields are added.
   m_sparsityPattern.resize( MAX_NUM_FIELDS, MAX_NUM_FIELDS );
 }
 
-void DofManager::clear()
-{
-  // deallocate index arrays from the mesh
-  for( FieldDescription const & field : m_fields )
-  {
-    removeIndexArray( field );
-  }
-
-  // delete internal data
-  m_fields.clear();
-  m_connectivity.clear();
-  m_sparsityPattern.clear();
-
-  initializeDataStructure();
-
-  m_closed = false;
-}
-
-void DofManager::setMesh( DomainPartition * const domain,
-                          localIndex const meshLevelIndex,
-                          localIndex const meshBodyIndex )
+template< typename LAI >
+void DofManager< LAI >::setMesh( DomainPartition * const domain,
+                                 localIndex const meshLevelIndex,
+                                 localIndex const meshBodyIndex )
 {
   // TODO: this should be m_domain != domain
   if( m_domain != nullptr )
@@ -83,8 +68,8 @@ void DofManager::setMesh( DomainPartition * const domain,
   m_mesh = m_domain->getMeshBody( meshBodyIndex )->getMeshLevel( meshLevelIndex );
 }
 
-// .... DOF MANAGER :: FIELD INDEX
-localIndex DofManager::getFieldIndex( string const & key ) const
+template< typename LAI >
+localIndex DofManager< LAI >::getFieldIndex( string const & key ) const
 {
   for( localIndex i = 0; i < m_fields.size(); ++i )
   {
@@ -97,7 +82,8 @@ localIndex DofManager::getFieldIndex( string const & key ) const
   return -1;
 }
 
-bool DofManager::keyInUse( string const & key ) const
+template< typename LAI >
+bool DofManager< LAI >::keyInUse( string const & key ) const
 {
   for( localIndex i = 0; i < m_fields.size(); ++i )
   {
@@ -109,7 +95,8 @@ bool DofManager::keyInUse( string const & key ) const
   return false;
 }
 
-string DofManager::getKey( string const & fieldName ) const
+template< typename LAI >
+string DofManager< LAI >::getKey( string const & fieldName ) const
 {
   // check if the field name is already added
   GEOS_ERROR_IF( !keyInUse( fieldName ), "getKey: requested field name must be already existing." );
@@ -120,7 +107,8 @@ string DofManager::getKey( string const & fieldName ) const
   return m_fields[fieldIndex].key;
 }
 
-globalIndex DofManager::numGlobalDofs( string const & fieldName ) const
+template< typename LAI >
+globalIndex DofManager< LAI >::numGlobalDofs( string const & fieldName ) const
 {
   if( fieldName.length() > 0 )
   {
@@ -143,7 +131,8 @@ globalIndex DofManager::numGlobalDofs( string const & fieldName ) const
   }
 }
 
-localIndex DofManager::numLocalDofs( string const & fieldName ) const
+template< typename LAI >
+localIndex DofManager< LAI >::numLocalDofs( string const & fieldName ) const
 {
   if( fieldName.length() > 0 )
   {
@@ -166,7 +155,8 @@ localIndex DofManager::numLocalDofs( string const & fieldName ) const
   }
 }
 
-localIndex DofManager::offsetLocalDofs( string const & fieldName ) const
+template< typename LAI >
+localIndex DofManager< LAI >::offsetLocalDofs( string const & fieldName ) const
 {
   if( fieldName.length() > 0 )
   {
@@ -198,7 +188,7 @@ namespace
  * @brief A struct to abstract away some details of mesh access
  * @tparam LOC type of mesh location
  */
-template< DofManager::Location LOC >
+template< DofLocation LOC >
 struct MeshHelper
 {
 };
@@ -206,7 +196,7 @@ struct MeshHelper
 HAS_ALIAS( NodeMapType )
 
 template<>
-struct MeshHelper<DofManager::Location::Node>
+struct MeshHelper< DofLocation::Node >
 {
   using ManagerType = NodeManager;
 
@@ -227,7 +217,7 @@ struct MeshHelper<DofManager::Location::Node>
 HAS_ALIAS( EdgeMapType )
 
 template<>
-struct MeshHelper<DofManager::Location::Edge>
+struct MeshHelper< DofLocation::Edge >
 {
   using ManagerType = EdgeManager;
 
@@ -248,7 +238,7 @@ struct MeshHelper<DofManager::Location::Edge>
 HAS_ALIAS( FaceMapType )
 
 template<>
-struct MeshHelper<DofManager::Location::Face>
+struct MeshHelper< DofLocation::Face >
 {
   using ManagerType = FaceManager;
 
@@ -269,7 +259,7 @@ struct MeshHelper<DofManager::Location::Face>
 HAS_ALIAS( ElemMapType )
 
 template<>
-struct MeshHelper<DofManager::Location::Elem>
+struct MeshHelper< DofLocation::Elem >
 {
   using ManagerType = ElementSubRegionBase;
 
@@ -285,13 +275,13 @@ struct MeshHelper<DofManager::Location::Elem>
   }
 };
 
-template< DofManager::Location LOC, typename MANAGER, bool >
+template< DofLocation LOC, typename MANAGER, bool >
 struct MapTypeHelper
 {
   using type = FixedOneToManyRelation; // dummy type
 };
 
-template< DofManager::Location LOC, typename MANAGER >
+template< DofLocation LOC, typename MANAGER >
 struct MapTypeHelper<LOC, MANAGER, true>
 {
   using type = typename MeshHelper<LOC>::template MapType<MANAGER>;
@@ -299,7 +289,7 @@ struct MapTypeHelper<LOC, MANAGER, true>
 
 // return dummy type if target manager type does not declare a type alias to map to LOC objects
 // this allows all switchyards to compile, but one shouldn't attempt to access a non-existent map
-template< DofManager::Location LOC, typename MANAGER >
+template< DofLocation LOC, typename MANAGER >
 using MapType = typename MapTypeHelper< LOC, MANAGER, MeshHelper<LOC>::template hasMapTypeAlias<MANAGER>() >::type;
 
 // some helper crust to extract underlying type from InterObjectRelation and the likes
@@ -479,22 +469,22 @@ using MapHelper = MapHelperImpl< BaseType<MAP> >;
  * @param lambda functor to be called
  */
 template< typename LAMBDA >
-bool LocationSwitch( DofManager::Location const loc,
+bool LocationSwitch( DofLocation const loc,
                      LAMBDA lambda )
 {
   switch( loc )
   {
-    case DofManager::Location::Node:
-      lambda( std::integral_constant<DofManager::Location, DofManager::Location::Node>() );
+    case DofLocation::Node:
+      lambda( std::integral_constant<DofLocation, DofLocation::Node>() );
       return true;
-    case DofManager::Location::Edge:
-      lambda( std::integral_constant<DofManager::Location, DofManager::Location::Edge>() );
+    case DofLocation::Edge:
+      lambda( std::integral_constant<DofLocation, DofLocation::Edge>() );
       return true;
-    case DofManager::Location::Face:
-      lambda( std::integral_constant<DofManager::Location, DofManager::Location::Face>() );
+    case DofLocation::Face:
+      lambda( std::integral_constant<DofLocation, DofLocation::Face>() );
       return true;
-    case DofManager::Location::Elem:
-      lambda( std::integral_constant<DofManager::Location, DofManager::Location::Elem>() );
+    case DofLocation::Elem:
+      lambda( std::integral_constant<DofLocation, DofLocation::Elem>() );
       return true;
     default:
       return false;
@@ -502,8 +492,8 @@ bool LocationSwitch( DofManager::Location const loc,
 }
 
 template< typename LAMBDA >
-bool LocationSwitch( DofManager::Location const loc1,
-                     DofManager::Location const loc2,
+bool LocationSwitch( DofLocation const loc1,
+                     DofLocation const loc2,
                      LAMBDA lambda )
 {
   bool ret2;
@@ -519,7 +509,7 @@ bool LocationSwitch( DofManager::Location const loc1,
   return ret1 && ret2;
 }
 
-template< DofManager::Location LOC >
+template< DofLocation LOC >
 typename MeshHelper<LOC>::ManagerType const * getObjectManager( MeshLevel const * const meshLevel )
 {
   using ObjectManager = typename MeshHelper<LOC>::ManagerType;
@@ -529,17 +519,17 @@ typename MeshHelper<LOC>::ManagerType const * getObjectManager( MeshLevel const 
   return manager;
 }
 
-template< DofManager::Location LOC >
+template< DofLocation LOC >
 typename MeshHelper<LOC>::ManagerType * getObjectManager( MeshLevel * const meshLevel )
 {
   using ObjectManager = typename MeshHelper<LOC>::ManagerType;
   return const_cast<ObjectManager *>( getObjectManager<LOC>( const_cast<MeshLevel const *>( meshLevel ) ) );
 }
 
-template< DofManager::Location LOC, DofManager::Location CONN_LOC >
+template< DofLocation LOC, DofLocation CONN_LOC >
 struct MeshLoopHelper;
 
-template< DofManager::Location LOC >
+template< DofLocation LOC >
 struct MeshLoopHelper<LOC, LOC>
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -591,7 +581,7 @@ struct MeshLoopHelper<LOC, LOC>
   }
 };
 
-template< DofManager::Location LOC, DofManager::Location CONN_LOC >
+template< DofLocation LOC, DofLocation CONN_LOC >
 struct MeshLoopHelper
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -626,8 +616,8 @@ struct MeshLoopHelper
   }
 };
 
-template< DofManager::Location LOC >
-struct MeshLoopHelper<LOC, DofManager::Location::Elem>
+template< DofLocation LOC >
+struct MeshLoopHelper<LOC, DofLocation::Elem>
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
@@ -636,7 +626,7 @@ struct MeshLoopHelper<LOC, DofManager::Location::Elem>
   {
     // derive some useful type aliases
     using ObjectManagerLoc = typename MeshHelper<LOC>::ManagerType;
-    using LocToConnMapType = BaseType< MapType< DofManager::Location::Elem, ObjectManagerLoc> >;
+    using LocToConnMapType = BaseType< MapType< DofLocation::Elem, ObjectManagerLoc> >;
 
     // get access to location ghost rank (we don't want to visit ghosted locations
     ObjectManagerLoc const * const objectManager = getObjectManager<LOC>( meshLevel );
@@ -671,8 +661,8 @@ struct MeshLoopHelper<LOC, DofManager::Location::Elem>
   }
 };
 
-template< DofManager::Location CONN_LOC >
-struct MeshLoopHelper<DofManager::Location::Elem, CONN_LOC>
+template< DofLocation CONN_LOC >
+struct MeshLoopHelper<DofLocation::Elem, CONN_LOC>
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
@@ -713,7 +703,7 @@ struct MeshLoopHelper<DofManager::Location::Elem, CONN_LOC>
 };
 
 template<>
-struct MeshLoopHelper<DofManager::Location::Elem, DofManager::Location::Elem>
+struct MeshLoopHelper<DofLocation::Elem, DofLocation::Elem>
 {
   template< typename ... SUBREGIONTYPES, typename LAMBDA >
   static void visit( MeshLevel * const meshLevel,
@@ -762,7 +752,7 @@ struct MeshLoopHelper<DofManager::Location::Elem, DofManager::Location::Elem>
  *       connected locations - these may include ghosts, it is up to the user to filter as needed.
  *       Similarly, while primary loop is limited to @p regions, adjacent locations may not belong.
  */
-template< DofManager::Location LOC, DofManager::Location CONN_LOC, typename ... SUBREGIONTYPES, typename LAMBDA >
+template< DofLocation LOC, DofLocation CONN_LOC, typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel * const mesh,
                       array1d<string> const & regions,
                       LAMBDA && lambda )
@@ -775,7 +765,7 @@ void forMeshLocation( MeshLevel * const mesh,
 /**
  * @brief A shortcut for previous function with CONN_LOC == LOC
  */
-template< DofManager::Location LOC, typename ... SUBREGIONTYPES, typename LAMBDA >
+template< DofLocation LOC, typename ... SUBREGIONTYPES, typename LAMBDA >
 void forMeshLocation( MeshLevel * const mesh,
                       array1d<string> const & regions,
                       LAMBDA && lambda )
@@ -790,7 +780,7 @@ void forMeshLocation( MeshLevel * const mesh,
  *        on elements vs other mesh objects: (de)registration, value access, etc.
  * @tparam LOC target location
  */
-template< typename INDEX, DofManager::Location LOC >
+template< typename INDEX, DofLocation LOC >
 struct IndexArrayHelper
 {
   using ArrayType = array1d< std::remove_const_t<INDEX> >;
@@ -800,22 +790,23 @@ struct IndexArrayHelper
 
   template< typename ... SUBREGIONTYPES >
   static void
-  create( Mesh * const mesh, DofManager::FieldDescription & field )
+  create( Mesh * const mesh,
+          string const & key,
+          string const & description,
+          string_array const & GEOSX_UNUSED_ARG( regions ) )
   {
-    GEOS_ASSERT( field.location == LOC );
-
     ObjectManagerBase * baseManager = getObjectManager<LOC>( mesh );
-    baseManager->registerWrapper<ArrayType>( field.key )->
+    baseManager->registerWrapper<ArrayType>( key )->
       setApplyDefaultValue( -1 )->
       setPlotLevel( PlotLevel::LEVEL_1 )->
       setRestartFlags( RestartFlags::NO_WRITE )->
-      setDescription( field.docstring );
+      setDescription( description );
   }
 
-  static Accessor get( Mesh * const mesh, DofManager::FieldDescription const & field )
+  static Accessor get( Mesh * const mesh, string const & key )
   {
     auto * baseManager = getObjectManager<LOC>( mesh );
-    return baseManager->template getReference<ArrayType>( field.key );
+    return baseManager->template getReference<ArrayType>( key );
   }
 
   static inline INDEX value( Accessor & indexArray, localIndex const i )
@@ -830,14 +821,16 @@ struct IndexArrayHelper
 
   template< typename ... SUBREGIONTYPES >
   static void
-  remove( Mesh * const mesh, DofManager::FieldDescription const & field )
+  remove( Mesh * const mesh,
+          string const & key,
+          string_array const & GEOSX_UNUSED_ARG( regions ) )
   {
-    getObjectManager<LOC>( mesh )->deregisterWrapper( field.key );
+    getObjectManager<LOC>( mesh )->deregisterWrapper( key );
   }
 };
 
 template< typename INDEX >
-struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
+struct IndexArrayHelper< INDEX, DofLocation::Elem >
 {
   using ArrayType = array1d< std::remove_const_t<INDEX> >;
   using ViewType = arrayView1d<INDEX>;
@@ -846,29 +839,29 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
   template< typename ... SUBREGIONTYPES >
   static void
-  create( Mesh * const mesh, DofManager::FieldDescription & field )
+  create( Mesh * const mesh,
+          string const & key,
+          string const & description,
+          string_array const & regions )
   {
-    GEOS_ASSERT( field.location == DofManager::Location::Elem );
-
     mesh->getElemManager()->
-      template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
+      template forElementSubRegionsComplete<SUBREGIONTYPES...>( regions,
                                                                 [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                      localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                      auto * const GEOSX_UNUSED_ARG( region ),
                                                                      auto * const subRegion )
     {
-      subRegion->template registerWrapper<ArrayType>( field.key )->
+      subRegion->template registerWrapper<ArrayType>( key )->
         setApplyDefaultValue( -1 )->
         setPlotLevel( PlotLevel::LEVEL_1 )->
         setRestartFlags( RestartFlags::NO_WRITE )->
-        setDescription( field.docstring );
+        setDescription( description );
     } );
   }
 
-  static Accessor get( Mesh * const mesh,
-                       DofManager::FieldDescription const & field )
+  static Accessor get( Mesh * const mesh, string const & key )
   {
-    return mesh->getElemManager()->template ConstructViewAccessor< ArrayType, ViewType >( field.key );
+    return mesh->getElemManager()->template ConstructViewAccessor< ArrayType, ViewType >( key );
   }
 
   static inline INDEX value( Accessor & indexArray,
@@ -889,32 +882,32 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
 
   template< typename ... SUBREGIONTYPES >
   static void
-  remove( Mesh * const mesh, DofManager::FieldDescription const & field )
+  remove( Mesh * const mesh,
+          string const & key,
+          string_array const & regions )
   {
-    GEOS_ASSERT( field.location == DofManager::Location::Elem );
-
     mesh->getElemManager()->
-      template forElementSubRegionsComplete<SUBREGIONTYPES...>( field.regionNames,
-                                                               [&]( localIndex const GEOSX_UNUSED_ARG( er ),
-                                                                    localIndex const GEOSX_UNUSED_ARG( esr ),
-                                                                    auto * const,
-                                                                    auto * const subRegion )
+      template forElementSubRegionsComplete<SUBREGIONTYPES...>( regions,
+                                                                [&]( localIndex const GEOSX_UNUSED_ARG( er ),
+                                                                     localIndex const GEOSX_UNUSED_ARG( esr ),
+                                                                     auto * const,
+                                                                     auto * const subRegion )
     {
-      subRegion->deregisterWrapper( field.key );
+      subRegion->deregisterWrapper( key );
     } );
   }
 };
 
-template< DofManager::Location LOC, typename ... SUBREGIONTYPES >
-void createIndexArrayImpl( DomainPartition * const domain,
-                           MeshLevel * const mesh,
-                           DofManager::FieldDescription & field )
+template< typename LAI, DofLocation LOC, typename ... SUBREGIONTYPES >
+void createIndexArray( DomainPartition * const domain,
+                       MeshLevel * const mesh,
+                       typename DofManager< LAI >::FieldDescription & field )
 {
   using helper = IndexArrayHelper<globalIndex, LOC>;
 
   // 0. register index arrays
-  helper::template create<SUBREGIONTYPES ...>( mesh, field );
-  typename helper::Accessor & indexArray = helper::get( mesh, field );
+  helper::template create<SUBREGIONTYPES ...>( mesh, field.key, field.docstring, field.regionNames );
+  typename helper::Accessor & indexArray = helper::get( mesh, field.key );
 
   // step 1. loop over all active regions, determine number of local mesh objects
   field.numLocalNodes = 0;
@@ -949,64 +942,73 @@ void createIndexArrayImpl( DomainPartition * const domain,
                      domain->getReference<array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
+template< DofLocation LOC, typename ... SUBREGIONTYPES >
+void removeIndexArray( MeshLevel * const mesh,
+                       string const & key,
+                       string_array const & regions )
+{
+  IndexArrayHelper<globalIndex, LOC>::template remove<SUBREGIONTYPES...>( mesh, key, regions );
+}
+
 } // namespace
 
 /* ================================================================================== */
 
-template< typename ... SUBREGIONTYPES >
-void DofManager::createIndexArray( FieldDescription & field )
+template< typename LAI >
+void DofManager< LAI >::clear()
 {
-  bool const success =
-  LocationSwitch( field.location, [&]( auto const loc )
+  // deallocate index arrays from the mesh
+  for( FieldDescription const & field : m_fields )
   {
-    Location constexpr LOC = decltype(loc)::value;
-    createIndexArrayImpl<LOC, SUBREGIONTYPES...>( m_domain, m_mesh, field );
-  } );
-  GEOS_ERROR_IF( !success, "createIndexArray: invalid location type" );
+    LocationSwitch( field.location, [&]( auto const loc )
+    {
+      DofLocation constexpr LOC = decltype(loc)::value;
+      removeIndexArray< LOC >( m_mesh, field.key, field.regionNames );
+    } );
+  }
+
+  // delete internal data
+  m_fields.clear();
+  m_connectivity.clear();
+  m_sparsityPattern.clear();
+
+  initializeDataStructure();
+
+  m_closed = false;
 }
 
-template< typename ... SUBREGIONTYPES >
-void DofManager::removeIndexArray( FieldDescription const & field )
-{
-  LocationSwitch( field.location, [&]( auto const loc )
-  {
-    Location constexpr LOC = decltype(loc)::value;
-    IndexArrayHelper<globalIndex, LOC>::template remove<SUBREGIONTYPES...>( m_mesh, field );
-  } );
-}
-
-// Just an interface to allow only three parameters
-void DofManager::addField( string const & fieldName,
-                           Location const location,
-                           Connectivity const connectivity )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  DofLocation const location,
+                                  DofConnectivity const connectivity )
 {
   addField( fieldName, location, connectivity, 1, array1d<string>() );
 }
 
-// Just another interface to allow four parameters (no regions)
-void DofManager::addField( string const & fieldName,
-                           Location const location,
-                           Connectivity const connectivity,
-                           localIndex const components )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  DofLocation const location,
+                                  DofConnectivity const connectivity,
+                                  localIndex const components )
 {
   addField( fieldName, location, connectivity, components, array1d<string>() );
 }
 
-// Just another interface to allow four parameters (no components)
-void DofManager::addField( string const & fieldName,
-                           Location const location,
-                           Connectivity const connectivity,
-                           string_array const & regions )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  DofLocation const location,
+                                  DofConnectivity const connectivity,
+                                  string_array const & regions )
 {
   addField( fieldName, location, connectivity, 1, regions );
 }
 
-// The real function, allowing the creation of self-connected blocks
-void DofManager::addField( string const & fieldName,
-                           Location const location,
-                           Connectivity const connectivity,
-                           localIndex const components,
-                           string_array const & regions )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  DofLocation const location,
+                                  DofConnectivity const connectivity,
+                                  localIndex const components,
+                                  string_array const & regions )
 {
   GEOS_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
   GEOS_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
@@ -1064,7 +1066,11 @@ void DofManager::addField( string const & fieldName,
   }
 
   // based on location, allocate an index array for this field
-  createIndexArray( field );
+  LocationSwitch( field.location, [&]( auto const loc )
+  {
+    DofLocation constexpr LOC = decltype(loc)::value;
+    createIndexArray< LAI, LOC >( m_domain, m_mesh, field );
+  } );
 
   // determine field's global offset
   if( fieldIndex > 0 )
@@ -1094,32 +1100,31 @@ void DofManager::addField( string const & fieldName,
   }
 }
 
-// addField: allow the usage of a predefine location-connection pattern (user-defined)
-// Interface to allow only two parameters
-void DofManager::addField( string const & fieldName,
-                           ParallelMatrix const & connLocInput )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  ParallelMatrix const & connLocInput )
 {
   DofManager::addField( fieldName,
                         connLocInput,
                         1,
-                        Connectivity::USER_DEFINED );
+                        DofConnectivity::USER_DEFINED );
 }
 
-// Just another interface to allow three parameters (no connectivity)
-void DofManager::addField( string const & fieldName,
-                           ParallelMatrix const & connLocInput,
-                           localIndex const components )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  ParallelMatrix const & connLocInput,
+                                  localIndex const components )
 {
   DofManager::addField( fieldName,
                         connLocInput,
                         components,
-                        Connectivity::USER_DEFINED );
+                        DofConnectivity::USER_DEFINED );
 }
 
-// Just another interface to allow three parameters (no components)
-void DofManager::addField( string const & fieldName,
-                           ParallelMatrix const & connLocInput,
-                           Connectivity const connectivity )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  ParallelMatrix const & connLocInput,
+                                  DofConnectivity const connectivity )
 {
   DofManager::addField( fieldName,
                         connLocInput,
@@ -1127,11 +1132,11 @@ void DofManager::addField( string const & fieldName,
                         connectivity );
 }
 
-// The real function
-void DofManager::addField( string const & fieldName,
-                           ParallelMatrix const & connLocInput,
-                           localIndex const components,
-                           Connectivity const connectivity )
+template< typename LAI >
+void DofManager< LAI >::addField( string const & fieldName,
+                                  ParallelMatrix const & connLocInput,
+                                  localIndex const components,
+                                  DofConnectivity const connectivity )
 {
   GEOS_ERROR_IF( m_closed, "addField: cannot add fields after DofManager has been closed." );
   GEOS_ERROR_IF( keyInUse( fieldName ), "addField: requested field name matches an existing field in the DofManager." );
@@ -1143,7 +1148,7 @@ void DofManager::addField( string const & fieldName,
   FieldDescription & field = m_fields.back();
 
   field.name = fieldName;
-  field.location = Location::USER_DEFINED;
+  field.location = DofLocation::USER_DEFINED;
   field.numComponents = components;
   field.key = m_name + '_' + fieldName + "_dofIndex";
   field.docstring = fieldName + " DoF indices";
@@ -1215,11 +1220,11 @@ void DofManager::addField( string const & fieldName,
   }
 }
 
-// Create the sparsity pattern (location-location). High level interface
-void DofManager::setSparsityPattern( ParallelMatrix & matrix,
-                                     string const & rowFieldName,
-                                     string const & colFieldName,
-                                     bool const closePattern ) const
+template< typename LAI >
+void DofManager< LAI >::setSparsityPattern( ParallelMatrix & matrix,
+                                            string const & rowFieldName,
+                                            string const & colFieldName,
+                                            bool const closePattern ) const
 {
   localIndex rowFieldIndex, colFieldIndex;
 
@@ -1258,11 +1263,11 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
   setSparsityPattern( matrix, rowFieldIndex, colFieldIndex, closePattern );
 }
 
-
-void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
-                                             localIndex const rowFieldIndex,
-                                             localIndex const colFieldIndex,
-                                             bool const closePattern ) const
+template< typename LAI >
+void DofManager< LAI >::setSparsityPatternOneBlock( ParallelMatrix & pattern,
+                                                    localIndex const rowFieldIndex,
+                                                    localIndex const colFieldIndex,
+                                                    bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex >= 0 );
   GEOS_ASSERT( colFieldIndex >= 0 );
@@ -1281,7 +1286,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
   else
   {
     // ExtraDiagonal (coupling) block
-    if( m_connectivity[rowFieldIndex][colFieldIndex] != Connectivity::None )
+    if( m_connectivity[rowFieldIndex][colFieldIndex] != DofConnectivity::None )
     {
       ParallelMatrix const * CL1;
       ParallelMatrix const * CL2;
@@ -1309,11 +1314,11 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
   }
 }
 
-// Create the sparsity pattern (location-location). Low level interface
-void DofManager::setSparsityPattern( ParallelMatrix & matrix,
-                                     localIndex const rowFieldIndex,
-                                     localIndex const colFieldIndex,
-                                     bool const closePattern ) const
+template< typename LAI >
+void DofManager< LAI >::setSparsityPattern( ParallelMatrix & matrix,
+                                            localIndex const rowFieldIndex,
+                                            localIndex const colFieldIndex,
+                                            bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex < m_fields.size() );
   GEOS_ASSERT( colFieldIndex < m_fields.size() );
@@ -1397,9 +1402,9 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
   }
 }
 
-// Allocate a vector (location-location). High level interface
-void DofManager::setVector( ParallelVector & vector,
-                            string const & fieldName ) const
+template< typename LAI >
+void DofManager< LAI >::setVector( ParallelVector & vector,
+                                   string const & fieldName ) const
 {
   localIndex fieldIndex;
 
@@ -1417,9 +1422,9 @@ void DofManager::setVector( ParallelVector & vector,
   setVector( vector, fieldIndex );
 }
 
-// Allocate a vector (location-location). Low level interface
-void DofManager::setVector( ParallelVector & vector,
-                            localIndex const fieldIndex ) const
+template< typename LAI >
+void DofManager< LAI >::setVector( ParallelVector & vector,
+                                   localIndex const fieldIndex ) const
 {
   if( fieldIndex >= 0 )
   {
@@ -1436,14 +1441,15 @@ void DofManager::setVector( ParallelVector & vector,
   vector.close();
 }
 
+template< typename LAI >
 template< typename FIELD_OP, typename POLICY >
-void DofManager::vectorToField( ParallelVector const & vector,
-                                string const & srcFieldName,
-                                real64 const scalingFactor,
-                                ObjectManagerBase * const manager,
-                                string const & dstFieldName,
-                                localIndex const loCompIndex,
-                                localIndex const hiCompIndex ) const
+void DofManager< LAI >::vectorToField( ParallelVector const & vector,
+                                       string const & srcFieldName,
+                                       real64 const scalingFactor,
+                                       ObjectManagerBase * const manager,
+                                       string const & dstFieldName,
+                                       localIndex const loCompIndex,
+                                       localIndex const hiCompIndex ) const
 {
   GEOS_ERROR_IF( !keyInUse( srcFieldName ), "copyVectorToField: requested field does not exist: " << srcFieldName );
 
@@ -1460,8 +1466,6 @@ void DofManager::vectorToField( ParallelVector const & vector,
   arrayView1d<globalIndex const> const & indexArray = manager->getReference< array1d<globalIndex> >( fieldDesc.key );
   arrayView1d<integer const> const & ghostRank = manager->GhostRank();
 
-  globalIndex const rankOffset = offsetLocalDofs();
-
   real64 const * localVector = vector.extractLocalVector();
 
   WrapperBase * const wrapper = manager->getWrapperBase( dstFieldName );
@@ -1475,6 +1479,8 @@ void DofManager::vectorToField( ParallelVector const & vector,
     using ArrayType = decltype(arrayInstance);
     Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *wrapper );
     typename Wrapper<ArrayType>::ViewType const & field = view.referenceAsView();
+
+    globalIndex const rankOffset = this->offsetLocalDofs();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
@@ -1494,14 +1500,14 @@ void DofManager::vectorToField( ParallelVector const & vector,
   } );
 }
 
-// Copy values from DOFs to nodes
-void DofManager::copyVectorToField( ParallelVector const & vector,
-                                    string const & srcFieldName,
-                                    real64 const scalingFactor,
-                                    ObjectManagerBase * const manager,
-                                    string const & dstFieldName,
-                                    localIndex const loCompIndex,
-                                    localIndex const hiCompIndex ) const
+template< typename LAI >
+void DofManager< LAI >::copyVectorToField( ParallelVector const & vector,
+                                           string const & srcFieldName,
+                                           real64 const scalingFactor,
+                                           ObjectManagerBase * const manager,
+                                           string const & dstFieldName,
+                                           localIndex const loCompIndex,
+                                           localIndex const hiCompIndex ) const
 {
   vectorToField< FieldSpecificationEqual, parallelHostPolicy >( vector,
                                                                 srcFieldName,
@@ -1512,14 +1518,14 @@ void DofManager::copyVectorToField( ParallelVector const & vector,
                                                                 hiCompIndex );
 }
 
-// Copy values from DOFs to nodes
-void DofManager::addVectorToField( ParallelVector const & vector,
-                                   string const & srcFieldName,
-                                   real64 const scalingFactor,
-                                   ObjectManagerBase * const manager,
-                                   string const & dstFieldName,
-                                   localIndex const loCompIndex,
-                                   localIndex const hiCompIndex ) const
+template< typename LAI >
+void DofManager< LAI >::addVectorToField( ParallelVector const & vector,
+                                          string const & srcFieldName,
+                                          real64 const scalingFactor,
+                                          ObjectManagerBase * const manager,
+                                          string const & dstFieldName,
+                                          localIndex const loCompIndex,
+                                          localIndex const hiCompIndex ) const
 {
   vectorToField< FieldSpecificationAdd, parallelHostPolicy >( vector,
                                                               srcFieldName,
@@ -1530,14 +1536,15 @@ void DofManager::addVectorToField( ParallelVector const & vector,
                                                               hiCompIndex );
 }
 
+template< typename LAI >
 template< typename FIELD_OP, typename POLICY >
-void DofManager::fieldToVector( ObjectManagerBase const * const manager,
-                                string const & srcFieldName,
-                                real64 const GEOSX_UNUSED_ARG( scalingFactor ),
-                                ParallelVector & vector,
-                                string const & dstFieldName,
-                                localIndex const loCompIndex,
-                                localIndex const hiCompIndex ) const
+void DofManager< LAI >::fieldToVector( ObjectManagerBase const * const manager,
+                                       string const & srcFieldName,
+                                       real64 const GEOSX_UNUSED_ARG( scalingFactor ),
+                                       ParallelVector & vector,
+                                       string const & dstFieldName,
+                                       localIndex const loCompIndex,
+                                       localIndex const hiCompIndex ) const
 {
   GEOS_ERROR_IF( !keyInUse( dstFieldName ), "copyVectorToField: requested field does not exist: " << dstFieldName );
 
@@ -1554,8 +1561,6 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   arrayView1d<globalIndex const> const & indexArray = manager->getReference< array1d<globalIndex> >( fieldDesc.key );
   arrayView1d<integer const> const & ghostRank = manager->GhostRank();
 
-  globalIndex const rankOffset = offsetLocalDofs();
-
   real64 * localVector = vector.extractLocalVector();
 
   WrapperBase const * const wrapper = manager->getWrapperBase( srcFieldName );
@@ -1569,6 +1574,8 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
     using ArrayType = decltype(arrayInstance);
     Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *wrapper );
     typename Wrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
+
+    globalIndex const rankOffset = this->offsetLocalDofs();
 
     forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
@@ -1588,14 +1595,14 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   } );
 }
 
-// Copy values from nodes to DOFs
-void DofManager::copyFieldToVector( ObjectManagerBase const * const manager,
-                                    string const & srcFieldName,
-                                    real64 const scalingFactor,
-                                    ParallelVector & vector,
-                                    string const & dstFieldName,
-                                    localIndex const loCompIndex,
-                                    localIndex const hiCompIndex ) const
+template< typename LAI >
+void DofManager< LAI >::copyFieldToVector( ObjectManagerBase const * const manager,
+                                           string const & srcFieldName,
+                                           real64 const scalingFactor,
+                                           ParallelVector & vector,
+                                           string const & dstFieldName,
+                                           localIndex const loCompIndex,
+                                           localIndex const hiCompIndex ) const
 {
   fieldToVector< FieldSpecificationEqual, parallelHostPolicy >( manager,
                                                                 srcFieldName,
@@ -1606,14 +1613,14 @@ void DofManager::copyFieldToVector( ObjectManagerBase const * const manager,
                                                                 hiCompIndex );
 }
 
-// Copy values from nodes to DOFs
-void DofManager::addFieldToVector( ObjectManagerBase const * const manager,
-                                   string const & srcFieldName,
-                                   real64 const scalingFactor,
-                                   ParallelVector & vector,
-                                   string const & dstFieldName,
-                                   localIndex const loCompIndex,
-                                   localIndex const hiCompIndex ) const
+template< typename LAI >
+void DofManager< LAI >::addFieldToVector( ObjectManagerBase const * const manager,
+                                          string const & srcFieldName,
+                                          real64 const scalingFactor,
+                                          ParallelVector & vector,
+                                          string const & dstFieldName,
+                                          localIndex const loCompIndex,
+                                          localIndex const hiCompIndex ) const
 {
   fieldToVector< FieldSpecificationAdd, parallelHostPolicy >( manager,
                                                               srcFieldName,
@@ -1624,38 +1631,38 @@ void DofManager::addFieldToVector( ObjectManagerBase const * const manager,
                                                               hiCompIndex );
 }
 
-// Just an interface to allow only three parameters
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
-                              Connectivity const connectivity )
+template< typename LAI >
+void DofManager< LAI >::addCoupling( string const & rowFieldName,
+                                     string const & colFieldName,
+                                     DofConnectivity const connectivity )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, string_array(), true );
 }
 
-// Just another interface to allow four parameters (no symmetry)
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
-                              Connectivity const connectivity,
-                              string_array const & regions = string_array() )
+template< typename LAI >
+void DofManager< LAI >::addCoupling( string const & rowFieldName,
+                                     string const & colFieldName,
+                                     DofConnectivity const connectivity,
+                                     string_array const & regions )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, regions, true );
 }
 
-// Just another interface to allow four parameters (no regions)
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
-                              Connectivity const connectivity,
-                              bool const symmetric )
+template< typename LAI >
+void DofManager< LAI >::addCoupling( string const & rowFieldName,
+                                     string const & colFieldName,
+                                     DofConnectivity const connectivity,
+                                     bool const symmetric )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, string_array(), symmetric );
 }
 
-// The real function, allowing the creation of coupling blocks
-void DofManager::addCoupling( string const & rowFieldName,
-                              string const & colFieldName,
-                              Connectivity const connectivity,
-                              string_array const & regions,
-                              bool const symmetric )
+template< typename LAI >
+void DofManager< LAI >::addCoupling( string const & rowFieldName,
+                                     string const & colFieldName,
+                                     DofConnectivity const connectivity,
+                                     string_array const & regions,
+                                     bool const symmetric )
 {
   GEOS_ERROR_IF( m_closed, "addCoupling: cannot add coupling after DofManager has been closed." );
   GEOS_ERROR_IF( !keyInUse( rowFieldName ), "addCoupling: field does not exist: " << rowFieldName );
@@ -1666,7 +1673,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   localIndex const colFieldIndex = getFieldIndex( colFieldName );
 
   // Check if already defined
-  if( m_connectivity[rowFieldIndex][colFieldIndex] != Connectivity::None )
+  if( m_connectivity[rowFieldIndex][colFieldIndex] != DofConnectivity::None )
   {
     GEOS_ERROR( "addCoupling: coupling already defined with another connectivity" );
     return;
@@ -1713,7 +1720,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
 
   // Compute the CL matrices for row and col fields
-  if( connectivity != Connectivity::None )
+  if( connectivity != DofConnectivity::None )
   {
     std::unique_ptr<ParallelMatrix> & rowConnLocPattern = m_sparsityPattern( rowFieldIndex, colFieldIndex ).first;
     rowConnLocPattern = std::make_unique<ParallelMatrix>();
@@ -1841,19 +1848,18 @@ void vectorOfPairsToCSR( std::vector<MatEntry<INDEX, T>> const & entries,
 
 }
 
-// Compute the sparsity pattern of the matrix connectivity - location for the specified
-// field (diagonal entry in the m_connectivity collection)
-void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
-                                     Connectivity const connectivity,
-                                     array1d <string> const & regions,
-                                     ParallelMatrix & connLocPattern )
+template< typename LAI >
+void DofManager< LAI >::makeConnLocPattern( FieldDescription const & fieldDesc,
+                                            DofConnectivity const connectivity,
+                                            array1d< string > const & regions,
+                                            ParallelMatrix & connLocPattern )
 {
-  localIndex const NC = fieldDesc.numComponents;
+  //localIndex const NC = fieldDesc.numComponents;
 
-  if( connectivity == Connectivity::None )
+  if( connectivity == DofConnectivity::None )
   {
     // Case of no connectivity (self connection)
-    Connectivity selfConnectivity = static_cast<Connectivity>( fieldDesc.location );
+    DofConnectivity selfConnectivity = static_cast<DofConnectivity>( fieldDesc.location );
     makeConnLocPattern( fieldDesc, selfConnectivity, regions, connLocPattern );
     return;
   }
@@ -1871,11 +1877,11 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
   localIndex numLocalConns;
 
   LocationSwitch( fieldDesc.location,
-                  static_cast<Location>( connectivity ),
+                  static_cast<DofLocation>( connectivity ),
                   [&] ( auto const loc, auto const conn )
   {
-    Location constexpr LOC  = decltype(loc)::value;
-    Location constexpr CONN = decltype(conn)::value;
+    DofLocation constexpr LOC  = decltype(loc)::value;
+    DofLocation constexpr CONN = decltype(conn)::value;
 
     // Create a unique global indexing for connectors in active regions
     FieldDescription fieldConn;
@@ -1883,20 +1889,20 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
     fieldConn.key = "connIndex" + suffix;
     fieldConn.regionNames = regions;
 
-    createIndexArrayImpl<CONN>( m_domain, m_mesh, fieldConn );
+    createIndexArray< LAI, CONN >( m_domain, m_mesh, fieldConn );
     numLocalConns = fieldConn.numLocalNodes;
 
     using ArrayHelperLoc = IndexArrayHelper<globalIndex const, LOC>;
     using ArrayHelperCon = IndexArrayHelper<globalIndex, CONN>;
 
-    typename ArrayHelperLoc::Accessor indexArrayLoc = ArrayHelperLoc::get( m_mesh, fieldDesc );
-    typename ArrayHelperCon::Accessor indexArrayCon = ArrayHelperCon::get( m_mesh, fieldConn );
+    typename ArrayHelperLoc::Accessor indexArrayLoc = ArrayHelperLoc::get( m_mesh, fieldDesc.key );
+    typename ArrayHelperCon::Accessor indexArrayCon = ArrayHelperCon::get( m_mesh, fieldConn.key );
 
     // XXX: special treatment for TPFA-style connectivity for fractures
     // We need this because edges are not added as face connectors when inserting a fracture element
-    if( LOC == Location::Elem && CONN == Location::Face )
+    if( LOC == DofLocation::Elem && CONN == DofLocation::Face )
     {
-      Location constexpr EDGE = Location::Edge; // for brevity
+      DofLocation constexpr EDGE = DofLocation::Edge; // for brevity
       using ArrayHelperEdge = IndexArrayHelper<globalIndex, EDGE>;
 
       FieldDescription fieldEdge;
@@ -1904,8 +1910,11 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
       fieldEdge.key = "connectorIndices" + suffix;
       fieldEdge.regionNames = regions;
 
-      createIndexArrayImpl<EDGE, FaceElementSubRegion>( m_domain, m_mesh, fieldEdge );
-      typename ArrayHelperEdge::Accessor & indexArrayEdge = ArrayHelperEdge::get( m_mesh, fieldEdge );
+      createIndexArray< LAI, EDGE, FaceElementSubRegion>( m_domain, m_mesh, fieldEdge );
+      typename ArrayHelperEdge::Accessor & indexArrayEdge = ArrayHelperEdge::get( m_mesh, fieldEdge.key );
+
+      // adjust face connector indexing to account for added edge connectors on every rank
+      // the reason is we need contiguous numbering of connectors within a rank in order to create CL matrix
       numLocalConns += fieldEdge.numLocalNodes;
 
       // adjust face connector indexing to account for added edge connectors on every rank
@@ -1949,9 +1958,9 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
         GEOS_ASSERT( indexEdge >= 0 );
         GEOS_ASSERT( indexElem >= 0 );
 
-        for( localIndex c = 0; c < NC; ++c )
+        for( localIndex c = 0; c < fieldDesc.numComponents; ++c )
         {
-          entries.emplace_back( indexEdge, indexElem + c, NC * k + c + 1 );
+          entries.emplace_back( indexEdge, indexElem + c, fieldDesc.numComponents * k + c + 1 );
         }
       } );
 
@@ -1969,11 +1978,13 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
         GEOS_ASSERT( indexElem >= 0 );
         GEOS_ASSERT( indexConn >= 0 );
 
-        for( localIndex c = 0; c < NC; ++c )
+        for( localIndex c = 0; c < fieldDesc.numComponents; ++c )
         {
-          entries.emplace_back( indexConn, indexElem + c, NC * k + c + 1 );
+          entries.emplace_back( indexConn, indexElem + c, fieldDesc.numComponents * k + c + 1 );
         }
       } );
+
+      removeIndexArray< EDGE >( m_mesh, fieldEdge.key, fieldEdge.regionNames );
     } //XXX: end special treatment for TPFA-style connectivity for fractures
 
     // loop over locally owned connectors and adjacent locations
@@ -1988,14 +1999,14 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
 
       if( indexLoc >= 0 )
       {
-        for( localIndex c = 0; c < NC; ++c )
+        for( localIndex c = 0; c < fieldDesc.numComponents; ++c )
         {
-          entries.emplace_back( indexConn, indexLoc + c, NC * k + c + 1 );
+          entries.emplace_back( indexConn, indexLoc + c, fieldDesc.numComponents * k + c + 1 );
         }
       }
     } );
 
-    removeIndexArray( fieldConn );
+    removeIndexArray< CONN >( m_mesh, fieldConn.key, fieldConn.regionNames );
   } );
 
 
@@ -2019,7 +2030,8 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
   connLocPattern.close();
 }
 
-void DofManager::close()
+template< typename LAI >
+void DofManager< LAI >::close()
 {
   if( m_fields.size() > 1 )
   {
@@ -2042,21 +2054,21 @@ void DofManager::close()
     // adjust index arrays for owned locations
     for( FieldDescription const & field : m_fields )
     {
-      globalIndex const adjustment = field.fieldOffset - field.firstLocalRow;
+      //globalIndex const adjustment = field.fieldOffset - field.firstLocalRow;
 
       LocationSwitch( field.location, [&]( auto const loc )
       {
-        Location constexpr LOC = decltype(loc)::value;
+        DofLocation constexpr LOC = decltype(loc)::value;
         using ArrayHelper = IndexArrayHelper< globalIndex, LOC >;
 
-        typename ArrayHelper::Accessor indexArray = ArrayHelper::get( m_mesh, field );
+        typename ArrayHelper::Accessor indexArray = ArrayHelper::get( m_mesh, field.key );
 
         forMeshLocation< LOC >( m_mesh, field.regionNames,
                                 [&]( auto const locIdx,
                                      auto const,
                                      localIndex const )
         {
-          ArrayHelper::reference( indexArray, locIdx ) += adjustment;
+          ArrayHelper::reference( indexArray, locIdx ) += field.fieldOffset - field.firstLocalRow;//adjustment;
         } );
 
         fieldNames[MeshHelper< LOC >::syncObjName].push_back( field.key );
@@ -2072,7 +2084,9 @@ void DofManager::close()
   m_closed = true;
 }
 
-void DofManager::printConnectivityLocationPattern( string const & fieldName, string const & fileName ) const
+template< typename LAI >
+void DofManager< LAI >::printConnectivityLocationPattern( string const & fieldName,
+                                                          string const & fileName ) const
 {
   // check if the field name is already added
   GEOS_ERROR_IF( !keyInUse( fieldName ),
@@ -2083,8 +2097,8 @@ void DofManager::printConnectivityLocationPattern( string const & fieldName, str
   m_sparsityPattern( fieldIndex, fieldIndex ).first->write( name );
 }
 
-// Print the coupling table on screen
-void DofManager::printConnectivityMatrix( std::ostream & os ) const
+template< typename LAI >
+void DofManager< LAI >::printConnectivityMatrix( std::ostream & os ) const
 {
   if( MpiWrapper::Comm_rank(MPI_COMM_GEOSX) == 0 )
   {
@@ -2097,22 +2111,22 @@ void DofManager::printConnectivityMatrix( std::ostream & os ) const
       {
         switch( m_connectivity[i][j] )
         {
-          case Connectivity::Elem:
+          case DofConnectivity::Elem:
             os << " E ";
             break;
-          case Connectivity::Face:
+          case DofConnectivity::Face:
             os << " F ";
             break;
-          case Connectivity::Edge:
+          case DofConnectivity::Edge:
             os << " G ";
             break;
-          case Connectivity::Node:
+          case DofConnectivity::Node:
             os << " N ";
             break;
-          case Connectivity::USER_DEFINED:
+          case DofConnectivity::USER_DEFINED:
             os << " U ";
             break;
-          case Connectivity::None:
+          case DofConnectivity::None:
             os << "   ";
             break;
         }
@@ -2135,4 +2149,21 @@ void DofManager::printConnectivityMatrix( std::ostream & os ) const
   }
 }
 
-}
+} //namespace geosx
+
+#include "common/GeosxConfig.hpp"
+
+#ifdef GEOSX_USE_TRILINOS
+#include "linearAlgebra/interfaces/TrilinosInterface.hpp"
+template class geosx::DofManager<geosx::TrilinosInterface>;
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+#include "linearAlgebra/interfaces/HypreInterface.hpp"
+//template class geosx::DofManager<geosx::HypreInterface>;
+#endif
+
+#ifdef GEOSX_USE_PETSC
+#include "linearAlgebra/interfaces/PetscInterface.hpp"
+template class geosx::DofManager<geosx::PetscInterface>;
+#endif

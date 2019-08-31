@@ -529,7 +529,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
 
 void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domain,
-                                             DofManager & dofManager ) const
+                                             DofManager<LAInterface> & dofManager ) const
 {
   MeshLevel const * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -541,8 +541,8 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
   } );
 
   dofManager.addField( WellElementDofName(),
-                       DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
+                       DofLocation::Elem,
+                       DofConnectivity::Node,
                        NumDofPerWellElement(),
                        regions );
 }
@@ -550,7 +550,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
 void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
-                                                     DofManager const * const dofManager,
+                                                     DofManager<LAInterface> const * const dofManager,
                                                      ParallelMatrix * const matrix,
                                                      ParallelVector * const rhs )
 {
@@ -830,7 +830,7 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                               real64 const GEOSX_UNUSED_ARG( dt ),
                                                               DomainPartition const * const domain,
-                                                              DofManager const * const dofManager,
+                                                              DofManager<LAInterface> const * const dofManager,
                                                               ParallelMatrix * const matrix,
                                                               ParallelVector * const rhs )
 {
@@ -930,7 +930,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
 void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                             real64 const dt,
                                                             DomainPartition const * const domain, 
-                                                            DofManager const * const dofManager,
+                                                            DofManager<LAInterface> const * const dofManager,
                                                             ParallelMatrix * const matrix,
                                                             ParallelVector * const rhs )
 {
@@ -1062,7 +1062,7 @@ void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_U
 
 real64
 CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * const domain,
-                                                    DofManager const & dofManager,
+                                                    DofManager<LAInterface> const & dofManager,
                                                     ParallelVector const & rhs )
 {
   // get a view into local residual vector
@@ -1119,7 +1119,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * cons
 
 bool
 CompositionalMultiphaseWell::CheckSystemSolution(  DomainPartition const * const domain,
-                                                   DofManager const & dofManager,
+                                                   DofManager<LAInterface> const & dofManager,
                                                    ParallelVector const & solution,
                                                    real64 const scalingFactor )
 {
@@ -1193,7 +1193,7 @@ CompositionalMultiphaseWell::CheckSystemSolution(  DomainPartition const * const
 }
 
 void
-CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
+CompositionalMultiphaseWell::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                                   ParallelVector const & solution,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
@@ -1366,7 +1366,7 @@ void CompositionalMultiphaseWell::ResetViews(DomainPartition * const domain)
 
 
 void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const * const domain,
-                                                         DofManager const * const dofManager, 
+                                                         DofManager<LAInterface> const * const dofManager,
                                                          ParallelMatrix * const matrix,
                                                          ParallelVector * const rhs )
 {
@@ -1512,7 +1512,7 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const *
 }
   
 void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * const domain,
-                                                       DofManager const * const dofManager,
+                                                       DofManager<LAInterface> const * const dofManager,
                                                        ParallelMatrix * const matrix,
                                                        ParallelVector * const rhs )
 {

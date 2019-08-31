@@ -48,10 +48,10 @@ public:
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void SetupDofs( DomainPartition const * const domain,
-                          DofManager & dofManager ) const override;
+                          DofManager<LAInterface> & dofManager ) const override;
 
   virtual void SetupSystem( DomainPartition * const domain,
-                            DofManager & dofManager,
+                            DofManager<LAInterface> & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
@@ -60,7 +60,7 @@ public:
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition * const domain,
-                     DofManager & dofManager,
+                     DofManager<LAInterface> & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override final;
@@ -72,34 +72,34 @@ public:
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition * const domain,
-                               DofManager const & dofManager,
+                               DofManager<LAInterface> const & dofManager,
                                ParallelMatrix & matrix,
                                ParallelVector & rhs ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition * const domain,
-                                        DofManager const & dofManager,
+                                        DofManager<LAInterface> const & dofManager,
                                         ParallelMatrix & matrix,
                                         ParallelVector & rhs ) override;
 
   virtual real64
   CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
+                         DofManager<LAInterface> const & dofManager,
                          ParallelVector const & rhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
+  virtual void SolveSystem( DofManager<LAInterface> const & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
   virtual real64
   ScalingForSystemSolution( DomainPartition const * const domain,
-                            DofManager const & dofManager,
+                            DofManager<LAInterface> const & dofManager,
                             ParallelVector const & solution ) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;

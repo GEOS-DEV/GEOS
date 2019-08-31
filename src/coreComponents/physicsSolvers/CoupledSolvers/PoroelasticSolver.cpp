@@ -79,7 +79,7 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
 void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                            real64 const & GEOSX_UNUSED_ARG( dt ),
                                            DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                           DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                                            ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                            ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                            ParallelVector & GEOSX_UNUSED_ARG( solution ) )

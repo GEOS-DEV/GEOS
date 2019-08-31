@@ -12,14 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * testLAIHelperFunctions.cpp
- *  Created on: Oct 29, 2019
+/**
+ * @file testLAIHelperFunctions.cpp
  */
 
 #include "gtest/gtest.h"
 
-#include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
@@ -29,43 +27,12 @@
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 using namespace geosx;
-using namespace geosx::testing;
-
-namespace
-{
-int global_argc;
-char** global_argv;
-}
 
 class LAIHelperFunctionsTest : public ::testing::Test
 {
-public:
-  /**
-   * @brief Set the timer function.
-   *
-   * @param [out] time double actual time.
-   */
-  void setTimer( double &time )
-  {
-    time = MpiWrapper::Wtime();
-  }
-
-  /**
-   * @brief Get elapsed time.
-   *
-   * @param [inout] time double
-   * - on input: actual time from setTimer;
-   * - on output: elapsed time.
-   */
-  void getElapsedTime( double &time )
-  {
-    time = MpiWrapper::Wtime() - time;
-  }
-
 protected:
 
   /**
@@ -145,18 +112,15 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
   MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   NodeManager * const nodeManager = meshLevel->getNodeManager();
 
-  DofManager dofManager( "test" );
+  DofManager<LAInterface> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array Region;
   Region.push_back( "region1" );
 
-  dofManager.addField( "nodalVariable", DofManager::Location::Node, DofManager::Connectivity::Elem, 3,
+  dofManager.addField( "nodalVariable", DofLocation::Node, DofConnectivity::Elem, 3,
                        Region );
   dofManager.close();
-
-  // ParallelMatrix pattern;
-  // dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
 
   localIndex nDof = 3*nodeManager->size();
   arrayView1d<globalIndex> const &  dofNumber =  nodeManager->getReference<globalIndex_array>( dofManager.getKey( "nodalVariable" )  );
@@ -219,13 +183,13 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();;
 
-  DofManager dofManager( "test" );
+  DofManager<LAInterface> dofManager( "test" );
   dofManager.setMesh( domain, 0, 0 );
 
   string_array region;
   region.push_back( "region1" );
 
-  dofManager.addField( "cellCentered", DofManager::Location::Elem, DofManager::Connectivity::Face, region );
+  dofManager.addField( "cellCentered", DofLocation::Elem, DofConnectivity::Face, region );
   dofManager.close();
 
   integer nDof = dofManager.numGlobalDofs("cellCentered");
@@ -292,16 +256,7 @@ int main( int argc, char** argv )
   // Global call will not work because CXXUtils has already been initialized in problemManager
   geosx::basicSetup( argc, argv );
 
-  global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>( global_argc )];
-  for( int i = 0 ; i < argc ; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
-
   int const result = RUN_ALL_TESTS();
-
-  delete[] global_argv;
 
   // Global call will not work because CXXUtils will be destructed by problemManager
   geosx::basicCleanup();

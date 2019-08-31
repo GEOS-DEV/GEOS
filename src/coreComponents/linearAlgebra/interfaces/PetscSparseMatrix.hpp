@@ -548,6 +548,11 @@ public:
   globalIndex iupper() const;
 
   /**
+   * @brief Returns the number of nonzeros in the local portion of the matrix
+   */
+  localIndex localNonzeros() const;
+
+  /**
    * @brief Returns the infinity norm of the matrix.
    */
   real64 normInf() const;

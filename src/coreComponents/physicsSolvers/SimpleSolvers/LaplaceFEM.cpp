@@ -144,7 +144,7 @@ real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
 void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                     real64 const & GEOSX_UNUSED_ARG( dt ),
                                     DomainPartition * const domain,
-                                    DofManager & dofManager,
+                                    DofManager<LAInterface> & dofManager,
                                     ParallelMatrix & matrix,
                                     ParallelVector & rhs,
                                     ParallelVector & solution )
@@ -160,17 +160,17 @@ void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n )
 }
 
 void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                            DofManager & dofManager ) const
+                            DofManager<LAInterface> & dofManager ) const
 {
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node,
-                       DofManager::Connectivity::Elem );
+                       DofLocation::Node,
+                       DofConnectivity::Elem );
 }
 
 void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  real64 const GEOSX_UNUSED_ARG( dt ),
                                  DomainPartition * const domain,
-                                 DofManager const & dofManager,
+                                 DofManager<LAInterface> const & dofManager,
                                  ParallelMatrix & matrix,
                                  ParallelVector & rhs )
 {
@@ -280,7 +280,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   }
 }
 
-void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
+void LaplaceFEM::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                       ParallelVector const & solution,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
@@ -302,7 +302,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition * const domain,
-                                          DofManager const & dofManager,
+                                          DofManager<LAInterface> const & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
@@ -334,7 +334,7 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
   }
 }
 
-void LaplaceFEM::SolveSystem( DofManager const & dofManager,
+void LaplaceFEM::SolveSystem( DofManager<LAInterface> const & dofManager,
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
                               ParallelVector & solution )
@@ -353,7 +353,7 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
-                                            DofManager const & dofManager,
+                                            DofManager<LAInterface> const & dofManager,
                                             DomainPartition & domain,
                                             ParallelMatrix & matrix,
                                             ParallelVector & rhs )

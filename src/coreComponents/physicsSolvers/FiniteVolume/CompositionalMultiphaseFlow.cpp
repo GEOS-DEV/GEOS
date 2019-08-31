@@ -663,7 +663,7 @@ void
 CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                                 real64 const & GEOSX_UNUSED_ARG( dt ),
                                                 DomainPartition * const domain,
-                                                DofManager & dofManager,
+                                                DofManager<LAInterface> & dofManager,
                                                 ParallelMatrix & matrix,
                                                 ParallelVector & rhs,
                                                 ParallelVector & solution )
@@ -685,11 +685,11 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG(
 }
 
 void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                             DofManager & dofManager ) const
+                                             DofManager<LAInterface> & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
-                       DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
+                       DofLocation::Elem,
+                       DofConnectivity::Face,
                        m_numDofPerCell,
                        m_targetRegions );
 }
@@ -697,7 +697,7 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
                                                   real64 const dt,
                                                   DomainPartition * const domain,
-                                                  DofManager const & dofManager,
+                                                  DofManager<LAInterface> const & dofManager,
                                                   ParallelMatrix & matrix,
                                                   ParallelVector & rhs )
 {
@@ -750,7 +750,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
 void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                              real64 const GEOSX_UNUSED_ARG( dt ),
                                                              DomainPartition const * const domain,
-                                                             DofManager const * const dofManager,
+                                                             DofManager<LAInterface> const * const dofManager,
                                                              ParallelMatrix * const matrix,
                                                              ParallelVector * const rhs )
 {
@@ -852,7 +852,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_
 void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
-                                                     DofManager const * const dofManager,
+                                                     DofManager<LAInterface> const * const dofManager,
                                                      ParallelMatrix * const matrix,
                                                      ParallelVector * const rhs )
 {
@@ -1003,7 +1003,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_A
 void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                               real64 const GEOSX_UNUSED_ARG( dt ),
                                                               DomainPartition const * const domain,
-                                                              DofManager const * const dofManager,
+                                                              DofManager<LAInterface> const * const dofManager,
                                                               ParallelMatrix * const matrix,
                                                               ParallelVector * const rhs )
 {
@@ -1084,7 +1084,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const GEOSX
 void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                                            real64 const dt,
                                                            DomainPartition * const domain,
-                                                           DofManager const & dofManager,
+                                                           DofManager<LAInterface> const & dofManager,
                                                            ParallelMatrix & matrix,
                                                            ParallelVector & rhs )
 {
@@ -1128,7 +1128,7 @@ void CompositionalMultiphaseFlow::ApplyBoundaryConditions( real64 const time_n,
 void
 CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                                                         real64 const dt,
-                                                        DofManager const * const dofManager,
+                                                        DofManager<LAInterface> const * const dofManager,
                                                         DomainPartition * const domain,
                                                         ParallelMatrix * const matrix,
                                                         ParallelVector * const rhs )
@@ -1276,7 +1276,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
 
 real64
 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * const domain,
-                                                    DofManager const & dofManager,
+                                                    DofManager<LAInterface> const & dofManager,
                                                     ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
@@ -1319,7 +1319,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
   return sqrt( globalResidualNorm );
 }
 
-void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
+void CompositionalMultiphaseFlow::SolveSystem( DofManager<LAInterface> const & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
@@ -1341,7 +1341,7 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
 
 bool
 CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const domain,
-                                                  DofManager const & dofManager,
+                                                  DofManager<LAInterface> const & dofManager,
                                                   ParallelVector const & solution,
                                                   real64 const scalingFactor )
 {
@@ -1398,7 +1398,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
 }
 
 void
-CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
+CompositionalMultiphaseFlow::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                                   ParallelVector const & solution,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )

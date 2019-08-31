@@ -90,7 +90,7 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
                                         real64 const & GEOSX_UNUSED_ARG( dt ),
                                         DomainPartition * const domain,
-                                        DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                        DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                                         ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                         ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                         ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -114,7 +114,7 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
 void WellSolverBase::AssembleSystem( real64 const time,
                                      real64 const dt,
                                      DomainPartition * const domain,
-                                     DofManager const & dofManager,
+                                     DofManager<LAInterface> const & dofManager,
                                      ParallelMatrix & matrix,
                                      ParallelVector & rhs )
 { 

@@ -104,8 +104,8 @@ public:
    * @brief Getter for degree-of-freedom manager
    * @return a reference to degree-of-freedom manager of this solver
    */
-  DofManager       & getDofManager()       { return m_dofManager; }
-  DofManager const & getDofManager() const { return m_dofManager; }
+  DofManager<LAInterface>       & getDofManager()       { return m_dofManager; }
+  DofManager<LAInterface> const & getDofManager() const { return m_dofManager; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -164,7 +164,7 @@ public:
                                         real64 const & dt,
                                         integer const cycleNumber,
                                         DomainPartition * const domain,
-                                        DofManager const & dofManager,
+                                        DofManager<LAInterface> const & dofManager,
                                         ParallelMatrix & matrix,
                                         ParallelVector & rhs,
                                         ParallelVector & solution );
@@ -192,7 +192,7 @@ public:
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition * const domain,
-              DofManager const & dofManager,
+              DofManager<LAInterface> const & dofManager,
               ParallelMatrix & matrix,
               ParallelVector & rhs,
               ParallelVector const & solution,
@@ -221,7 +221,7 @@ public:
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition * const domain,
-                                     DofManager & dofManager,
+                                     DofManager<LAInterface> & dofManager,
                                      ParallelMatrix & matrix,
                                      ParallelVector & rhs,
                                      ParallelVector & solution );
@@ -246,7 +246,7 @@ public:
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition * const domain,
-                     DofManager & dofManager,
+                     DofManager<LAInterface> & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution );
@@ -257,7 +257,7 @@ public:
    */
   virtual void
   SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const;
+             DofManager<LAInterface> & dofManager ) const;
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
@@ -272,7 +272,7 @@ public:
    */
   virtual void
   SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
+               DofManager<LAInterface> & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution );
@@ -300,7 +300,7 @@ public:
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
-                  DofManager const & dofManager,
+                  DofManager<LAInterface> const & dofManager,
                   ParallelMatrix & matrix,
                   ParallelVector & rhs );
 
@@ -320,7 +320,7 @@ public:
   ApplyBoundaryConditions( real64 const time,
                            real64 const dt,
                            DomainPartition * const domain,
-                           DofManager const & dofManager,
+                           DofManager<LAInterface> const & dofManager,
                            ParallelMatrix & matrix,
                            ParallelVector & rhs );
 
@@ -336,7 +336,7 @@ public:
    */
   virtual real64
   CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
+                         DofManager<LAInterface> const & dofManager,
                          ParallelVector const & rhs );
 
   /**
@@ -354,7 +354,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  SolveSystem( DofManager<LAInterface> const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution );
@@ -375,7 +375,7 @@ public:
    */
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
-                       DofManager const & dofManager,
+                       DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor );
 
@@ -388,7 +388,7 @@ public:
    */
   virtual real64
   ScalingForSystemSolution( DomainPartition const * const domain,
-                            DofManager const & dofManager,
+                            DofManager<LAInterface> const & dofManager,
                             ParallelVector const & solution );
 
   /**
@@ -415,7 +415,7 @@ public:
    *
    */
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
+  ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain );
@@ -559,7 +559,7 @@ protected:
 
 
   /// Data structure to handle degrees of freedom
-  DofManager m_dofManager;
+  DofManager<LAInterface> m_dofManager;
 
   /// System matrix, rhs and solution
   ParallelMatrix m_matrix;

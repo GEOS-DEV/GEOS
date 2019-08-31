@@ -173,7 +173,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   
   ParallelMatrix & jacobian = solver->getSystemMatrix();
   ParallelVector & residual = solver->getSystemRhs();
-  DofManager const & dofManager = solver->getDofManager();
+  DofManager<LAInterface> const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
   real64 const * localResidual = residual.extractLocalVector();
@@ -547,13 +547,14 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                              solver->getSystemSolution() );
 
 /*
-  testNumericalJacobian( solver, domain, system, eps, tol,
+  testNumericalJacobian( solver, domain, eps, tol,
                          [&] ( CompositionalMultiphaseWell * const targetSolver,
                                DomainPartition * const targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
+                               ParallelMatrix * targetJacobian,
+                               ParallelVector * targetResidual,
+                               DofManager<LAInterface> const * targetDofManager ) -> void
   {
-    targetSolver->AssemblePerforationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+    targetSolver->AssemblePerforationTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
   */
 }
@@ -581,7 +582,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
+                               DofManager<LAInterface> const * targetDofManager ) -> void
   {
     targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
@@ -612,7 +613,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Control)
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
+                               DofManager<LAInterface> const * targetDofManager ) -> void
   {
     targetSolver->FormControlEquation( targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
@@ -642,7 +643,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_VolumeBalance)
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
+                               DofManager<LAInterface> const * targetDofManager ) -> void
   {
     targetSolver->AssembleVolumeBalanceTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
@@ -671,7 +672,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
+                               DofManager<LAInterface> const * targetDofManager ) -> void
   {
     targetSolver->FormPressureRelations( targetDomain, targetDofManager, targetJacobian, targetResidual );
   });

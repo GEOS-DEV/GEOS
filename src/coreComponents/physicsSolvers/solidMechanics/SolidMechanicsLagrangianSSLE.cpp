@@ -39,7 +39,7 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
-void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofManager,
+void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                                         ParallelVector const & solution,
                                                         real64 const scalingFactor,
                                                         DomainPartition * const domain  )

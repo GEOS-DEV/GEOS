@@ -254,7 +254,7 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 
 
 void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
-                                 DofManager & dofManager ) const
+                                 DofManager<LAInterface> & dofManager ) const
 {
   MeshLevel const * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -266,8 +266,8 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
   } );
 
   dofManager.addField( WellElementDofName(),
-                       DofManager::Location::Elem,
-                       DofManager::Connectivity::Node,
+                       DofLocation::Elem,
+                       DofConnectivity::Node,
                        NumDofPerWellElement(),
                        regions );
 }
@@ -275,7 +275,7 @@ void SinglePhaseWell::SetupDofs( DomainPartition const * const domain,
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                          real64 const dt,
                                          DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
+                                         DofManager<LAInterface> const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs )
 {
@@ -392,7 +392,7 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
 void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                 real64 const dt,
                                                 DomainPartition const * const domain,
-                                                DofManager const * const dofManager,
+                                                DofManager<LAInterface> const * const dofManager,
                                                 ParallelMatrix * const matrix,
                                                 ParallelVector * const rhs )
 {
@@ -502,7 +502,7 @@ void SinglePhaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( t
 
 
 void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domain,
-                                             DofManager const * const dofManager,
+                                             DofManager<LAInterface> const * const dofManager,
                                              ParallelMatrix * const matrix,
                                              ParallelVector * const rhs )
 {
@@ -615,7 +615,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
 void SinglePhaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                   real64 const GEOSX_UNUSED_ARG( dt ),
                                                   DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                  DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+                                                  DofManager<LAInterface> const * const GEOSX_UNUSED_ARG( dofManager ),
                                                   ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
                                                   ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
 {
@@ -718,7 +718,7 @@ void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
 
 real64
 SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
-                                        DofManager const & dofManager,
+                                        DofManager<LAInterface> const & dofManager,
                                         ParallelVector const & rhs )
 {
   // get a view into local residual vector
@@ -774,7 +774,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
 
 bool
 SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
-                                      DofManager const & dofManager,
+                                      DofManager<LAInterface> const & dofManager,
                                       ParallelVector const & solution,
                                       real64 const scalingFactor )
 {
@@ -831,7 +831,7 @@ SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
 }
 
 void
-SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
+SinglePhaseWell::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                       ParallelVector const & solution,
                                       real64 const scalingFactor,
                                       DomainPartition * const domain )
@@ -1099,7 +1099,7 @@ void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * c
 
 
 void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
+                                           DofManager<LAInterface> const * const dofManager,
                                            ParallelMatrix * const matrix,
                                            ParallelVector * const rhs )
 {

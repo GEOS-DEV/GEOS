@@ -746,4 +746,23 @@ Mat PetscSparseMatrix::getMat()
   return m_mat;
 }
 
+localIndex PetscSparseMatrix::localNonzeros() const
+{
+  PetscInt firstrow, lastrow;
+  MatGetOwnershipRange( m_mat, &firstrow, &lastrow );
+
+  PetscInt numEntries;
+  localIndex result = 0;
+
+  // loop over rows
+  for( PetscInt row = firstrow; row < lastrow; ++row )
+  {
+    MatGetRow( m_mat, row, &numEntries, nullptr, nullptr );
+    result += numEntries;
+    MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr );
+  }
+
+  return result;
+}
+
 } // end geosx namespace

@@ -42,7 +42,7 @@ public:
 
 
 
-  virtual void ApplySystemSolution( DofManager const & dofManager,
+  virtual void ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                     ParallelVector const & solution,
                                     real64 const scalingFactor,
                                     DomainPartition * const domain  ) override;
@@ -104,7 +104,7 @@ public:
                                real64 const massDamping,
                                real64 const newmarkBeta,
                                real64 const newmarkGamma,
-                               DofManager const * const dofManager,
+                               DofManager<LAInterface> const * const dofManager,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const override
   {

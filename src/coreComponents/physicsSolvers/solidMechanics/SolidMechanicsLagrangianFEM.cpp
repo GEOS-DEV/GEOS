@@ -639,7 +639,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
 
 void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const time,
-                                                                DofManager const & dofManager,
+                                                                DofManager<LAInterface> const & dofManager,
                                                                 DomainPartition & domain,
                                                                 ParallelMatrix & matrix,
                                                                 ParallelVector & rhs )
@@ -672,7 +672,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
 
 
 void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
-                                                   DofManager const & dofManager,
+                                                   DofManager<LAInterface> const & dofManager,
                                                    DomainPartition * const domain,
                                                    ParallelVector & rhs )
 {
@@ -775,7 +775,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
   });
 }
 
-void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofManager,
+void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager<LAInterface> const & dofManager,
                                                        DomainPartition * const domain,
                                                        ParallelVector & rhs )
 {
@@ -819,7 +819,7 @@ SolidMechanicsLagrangianFEM::
 ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                    real64 const & dt,
                    DomainPartition * const domain,
-                   DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                   DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                    ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                    ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                    ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -926,16 +926,16 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
 }
 
 void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                             DofManager & dofManager ) const
+                                             DofManager<LAInterface> & dofManager ) const
 {
   dofManager.addField( keys::TotalDisplacement,
-                       DofManager::Location::Node,
-                       DofManager::Connectivity::Elem,
+                       DofLocation::Node,
+                       DofConnectivity::Elem,
                        3 );
 }
 
 void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
-                                               DofManager & dofManager,
+                                               DofManager<LAInterface> & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
@@ -988,7 +988,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
 void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                   real64 const dt,
                                                   DomainPartition * const domain,
-                                                  DofManager const & dofManager,
+                                                  DofManager<LAInterface> const & dofManager,
                                                   ParallelMatrix & matrix,
                                                   ParallelVector & rhs )
 {
@@ -1112,7 +1112,7 @@ SolidMechanicsLagrangianFEM::
 ApplyBoundaryConditions( real64 const time_n,
                          real64 const dt,
                          DomainPartition * const domain,
-                         DofManager const & dofManager,
+                         DofManager<LAInterface> const & dofManager,
                          ParallelMatrix & matrix,
                          ParallelVector & rhs )
 {
@@ -1181,7 +1181,7 @@ ApplyBoundaryConditions( real64 const time_n,
 real64
 SolidMechanicsLagrangianFEM::
 CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                       DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & rhs )
 {
   real64 const * localResidual = rhs.extractLocalVector();
@@ -1233,7 +1233,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 
 
 void
-SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
+SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                                   ParallelVector const & solution,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
@@ -1253,7 +1253,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 }
 
-void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
+void SolidMechanicsLagrangianFEM::SolveSystem( DofManager<LAInterface> const & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
@@ -1288,7 +1288,7 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
 }
 
 
-void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dofManager,
+void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager<LAInterface> const & dofManager,
                                                           DomainPartition & domain,
                                                           ParallelMatrix * const matrix,
                                                           ParallelVector * const rhs )
@@ -1397,7 +1397,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
 real64
 SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                       DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                                                        ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
 {
   GEOSX_MARK_FUNCTION;

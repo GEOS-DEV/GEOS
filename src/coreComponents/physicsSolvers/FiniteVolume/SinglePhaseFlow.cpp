@@ -278,7 +278,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                          real64 const & GEOSX_UNUSED_ARG( dt ),
                                          DomainPartition * const domain,
-                                         DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                         DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                                          ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                          ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                          ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -358,18 +358,18 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
 }
 
 void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
-                                 DofManager & dofManager ) const
+                                 DofManager<LAInterface> & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
-                       DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
+                       DofLocation::Elem,
+                       DofConnectivity::Face,
                        m_targetRegions );
 }
 
 void SinglePhaseFlow::AssembleSystem( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition * const domain,
-                                      DofManager const & dofManager,
+                                      DofManager<LAInterface> const & dofManager,
                                       ParallelMatrix & matrix,
                                       ParallelVector & rhs )
 {
@@ -430,7 +430,7 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           CellElementSubRegion const * const subRegion,
-                                          DofManager const * const dofManager,
+                                          DofManager<LAInterface> const * const dofManager,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
@@ -495,7 +495,7 @@ template< bool ISPORO >
 void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
                                           localIndex const esr,
                                           FaceElementSubRegion const * const subRegion,
-                                          DofManager const * const dofManager,
+                                          DofManager<LAInterface> const * const dofManager,
                                           ParallelMatrix * const matrix,
                                           ParallelVector * const rhs )
 {
@@ -534,7 +534,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
 
 template< bool ISPORO >
 void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const domain,
-                                                 DofManager const * const dofManager,
+                                                 DofManager<LAInterface> const * const dofManager,
                                                  ParallelMatrix * const matrix,
                                                  ParallelVector * const rhs )
 {
@@ -560,7 +560,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                          real64 const dt,
                                          DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
+                                         DofManager<LAInterface> const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs )
 {
@@ -628,7 +628,7 @@ void
 SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition * const domain,
-                                          DofManager const & dofManager,
+                                          DofManager<LAInterface> const & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
@@ -748,7 +748,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
 
 void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                                                      real64 const dt,
-                                                     DofManager const * const dofManager,
+                                                     DofManager<LAInterface> const * const dofManager,
                                                      DomainPartition * const domain,
                                                      ParallelMatrix * const matrix,
                                                      ParallelVector * const rhs )
@@ -1021,7 +1021,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
 }
 
 real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const domain,
-                                               DofManager const & dofManager,
+                                               DofManager<LAInterface> const & dofManager,
                                                ParallelVector const & rhs )
 {
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
@@ -1065,7 +1065,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   return sqrt(globalResidualNorm);
 }
 
-void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
+void SinglePhaseFlow::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                            ParallelVector const & solution,
                                            real64 const scalingFactor,
                                            DomainPartition * const domain )
@@ -1098,7 +1098,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
   } );
 }
 
-void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
+void SinglePhaseFlow::SolveSystem( DofManager<LAInterface> const & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
                                    ParallelVector & solution )

@@ -154,7 +154,7 @@ public:
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition * const domain,
-                                  DofManager & dofManager,
+                                  DofManager<LAInterface> & dofManager,
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override;
@@ -178,7 +178,7 @@ public:
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition * const domain,
-                               DofManager const & dofManager,
+                               DofManager<LAInterface> const & dofManager,
                                ParallelMatrix & matrix,
                                ParallelVector & rhs ) override;
 
@@ -194,7 +194,7 @@ public:
   virtual void AssembleFluxTerms( real64 const time_n,
                                   real64 const dt,
                                   DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
+                                  DofManager<LAInterface> const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs ) = 0;
 
@@ -209,7 +209,7 @@ public:
   virtual void AssemblePerforationTerms( real64 const time_n,
                                          real64 const dt,
                                          DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
+                                         DofManager<LAInterface> const * const dofManager,
                                          ParallelMatrix * const matrix,
                                          ParallelVector * const rhs ) = 0;
 
@@ -225,7 +225,7 @@ public:
   virtual void AssembleVolumeBalanceTerms( real64 const time_n,
                                            real64 const dt,
                                            DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
+                                           DofManager<LAInterface> const * const dofManager,
                                            ParallelMatrix * const matrix,
                                            ParallelVector * const rhs ) = 0;
 
@@ -237,7 +237,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void FormPressureRelations( DomainPartition const * const domain,
-                                      DofManager const * const dofManager,
+                                      DofManager<LAInterface> const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) = 0;
   
@@ -249,7 +249,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void FormControlEquation( DomainPartition const * const domain,
-                                    DofManager const * const dofManager,
+                                    DofManager<LAInterface> const * const dofManager,
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) = 0;
 

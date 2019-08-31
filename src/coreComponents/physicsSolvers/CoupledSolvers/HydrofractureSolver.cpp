@@ -42,7 +42,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
-                                      Group * const parent ):
+                                          Group * const parent ):
   SolverBase(name,parent),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -83,7 +83,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const GEOS
 void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
                                              DomainPartition * const domain,
-                                             DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                             DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                                              ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                              ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                              ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -404,7 +404,7 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 
 
 void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
-                                     DofManager & dofManager ) const
+                                     DofManager<LAInterface> & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->SetupDofs( domain, dofManager );
@@ -412,11 +412,11 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString,
-                          DofManager::Connectivity::Elem );
+                          DofConnectivity::Elem );
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
-                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       DofManager<LAInterface> & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                        ParallelVector & GEOSX_UNUSED_ARG( rhs ),
                                        ParallelVector & GEOSX_UNUSED_ARG( solution ) )
@@ -522,7 +522,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 void HydrofractureSolver::AssembleSystem( real64 const time,
                                           real64 const dt,
                                           DomainPartition * const domain,
-                                          DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                          DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                                           ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                           ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
 {
@@ -550,7 +550,7 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                    real64 const dt,
                                                    DomainPartition * const domain,
-                                                   DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                   DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                                                    ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                                    ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
 {
@@ -674,7 +674,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 real64
 HydrofractureSolver::
 CalculateResidualNorm( DomainPartition const * const domain,
-                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                       DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
@@ -896,7 +896,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 }
 void
 HydrofractureSolver::
-ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+ApplySystemSolution( DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                      ParallelVector const & GEOSX_UNUSED_ARG( solution ),
                      real64 const scalingFactor,
                      DomainPartition * const domain )
@@ -1160,7 +1160,7 @@ void scale2x2System( int const use_scaling,
   }
 }
 
-void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+void HydrofractureSolver::SolveSystem( DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
                                        ParallelVector &  )
@@ -1639,8 +1639,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
 real64
 HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const domain,
-                                                 DofManager const & GEOSX_UNUSED_ARG( dofManager ),
-                                                 ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
+                                               DofManager<LAInterface> const & GEOSX_UNUSED_ARG( dofManager ),
+                                               ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
 {
   return m_solidSolver->ScalingForSystemSolution( domain,
                                                   m_solidSolver->getDofManager(),

@@ -91,7 +91,7 @@ real64 ReservoirSolver::SolverStep( real64 const & time_n,
 void ReservoirSolver::ImplicitStepSetup( real64 const & time_n,
                                          real64 const & dt,
                                          DomainPartition * const domain,
-                                         DofManager & dofManager,
+                                         DofManager<LAInterface> & dofManager,
                                          ParallelMatrix & matrix,
                                          ParallelVector & rhs,
                                          ParallelVector & solution )
@@ -113,7 +113,7 @@ void ReservoirSolver::ImplicitStepSetup( real64 const & time_n,
 }
 
 void ReservoirSolver::SetupDofs( DomainPartition const * const domain,
-                                 DofManager & dofManager ) const
+                                 DofManager<LAInterface> & dofManager ) const
 {
   m_flowSolver->SetupDofs( domain, dofManager );
   m_wellSolver->SetupDofs( domain, dofManager );
@@ -122,7 +122,7 @@ void ReservoirSolver::SetupDofs( DomainPartition const * const domain,
 }
 
 void ReservoirSolver::SetupSystem( DomainPartition * const domain,
-                                   DofManager & dofManager,
+                                   DofManager<LAInterface> & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
                                    ParallelVector & solution )
@@ -227,7 +227,7 @@ void ReservoirSolver::SetupSystem( DomainPartition * const domain,
 void ReservoirSolver::AssembleSystem( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition * const domain,
-                                      DofManager const & dofManager,
+                                      DofManager<LAInterface> const & dofManager,
                                       ParallelMatrix & matrix,
                                       ParallelVector & rhs )
 {
@@ -276,7 +276,7 @@ void ReservoirSolver::AssembleSystem( real64 const time_n,
 void ReservoirSolver::ApplyBoundaryConditions( real64 const time_n,
                                                real64 const dt,
                                                DomainPartition * const domain,
-                                               DofManager const & dofManager,
+                                               DofManager<LAInterface> const & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs )
 {
@@ -288,7 +288,7 @@ void ReservoirSolver::ApplyBoundaryConditions( real64 const time_n,
 }
 
 real64 ReservoirSolver::CalculateResidualNorm( DomainPartition const * const domain,
-                                               DofManager const & dofManager,
+                                               DofManager<LAInterface> const & dofManager,
                                                ParallelVector const & rhs )
 {
   // compute norm of reservoir equations residuals
@@ -300,7 +300,7 @@ real64 ReservoirSolver::CalculateResidualNorm( DomainPartition const * const dom
              + wellResidualNorm*wellResidualNorm );
 }
 
-void ReservoirSolver::SolveSystem( DofManager const & dofManager,
+void ReservoirSolver::SolveSystem( DofManager<LAInterface> const & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
                                    ParallelVector & solution )
@@ -319,7 +319,7 @@ void ReservoirSolver::SolveSystem( DofManager const & dofManager,
 }
 
 bool ReservoirSolver::CheckSystemSolution( DomainPartition const * const domain,
-                                           DofManager const & dofManager,
+                                           DofManager<LAInterface> const & dofManager,
                                            ParallelVector const & solution,
                                            real64 const scalingFactor )
 {
@@ -329,7 +329,7 @@ bool ReservoirSolver::CheckSystemSolution( DomainPartition const * const domain,
   return ( validReservoirSolution && validWellSolution );
 }
 
-void ReservoirSolver::ApplySystemSolution( DofManager const & dofManager,
+void ReservoirSolver::ApplySystemSolution( DofManager<LAInterface> const & dofManager,
                                            ParallelVector const & solution,
                                            real64 const scalingFactor,
                                            DomainPartition * const domain )

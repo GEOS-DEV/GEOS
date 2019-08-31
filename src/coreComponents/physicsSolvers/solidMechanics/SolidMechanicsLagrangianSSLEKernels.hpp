@@ -291,7 +291,7 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
-          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+          DofManager<LAInterface> const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
