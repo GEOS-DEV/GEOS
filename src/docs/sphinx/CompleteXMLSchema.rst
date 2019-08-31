@@ -91,6 +91,13 @@ Element: CompositionalMultiphaseFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
 
 
+.. _XML_CompositionalMultiphaseWell:
+
+Element: CompositionalMultiphaseWell
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseWell.rst
+
+
 .. _XML_CompressibleSinglePhaseFluid:
 
 Element: CompressibleSinglePhaseFluid
@@ -252,6 +259,13 @@ Element: InternalMesh
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalMesh.rst
 
 
+.. _XML_InternalWell:
+
+Element: InternalWell
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/InternalWell.rst
+
+
 .. _XML_LagrangeBasis1:
 
 Element: LagrangeBasis1
@@ -392,6 +406,13 @@ Element: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
 
 
+.. _XML_Reservoir:
+
+Element: Reservoir
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir.rst
+
+
 .. _XML_Restart:
 
 Element: Restart
@@ -411,6 +432,13 @@ Element: Silo
 Element: SinglePhaseFlow
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFlow.rst
+
+
+.. _XML_SinglePhaseWell:
+
+Element: SinglePhaseWell
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -510,6 +538,13 @@ Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure.rst
 
+
+.. _XML_WellElementRegion:
+
+Element: WellElementRegion
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion.rst
+
 ********************************
 Datastructure Definitions
 ********************************
@@ -597,6 +632,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseWell:
+
+Datastructure: CompositionalMultiphaseWell
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseWell_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
@@ -774,6 +816,13 @@ Datastructure: InternalMesh
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalMesh_other.rst
 
 
+.. _DATASTRUCTURE_InternalWell:
+
+Datastructure: InternalWell
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/InternalWell_other.rst
+
+
 .. _DATASTRUCTURE_LagrangeBasis1:
 
 Datastructure: LagrangeBasis1
@@ -928,6 +977,13 @@ Datastructure: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
 
 
+.. _DATASTRUCTURE_Reservoir:
+
+Datastructure: Reservoir
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir_other.rst
+
+
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -947,6 +1003,13 @@ Datastructure: Silo
 Datastructure: SinglePhaseFlow
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseFlow_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseWell:
+
+Datastructure: SinglePhaseWell
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
@@ -1047,6 +1110,20 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/fileIO/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
+.. _DATASTRUCTURE_WellElementRegion:
+
+Datastructure: WellElementRegion
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_WellElementRegionuniqueSubRegion:
+
+Datastructure: WellElementRegionuniqueSubRegion
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+
+
 .. _DATASTRUCTURE_cellBlocks:
 
 Datastructure: cellBlocks
@@ -1089,11 +1166,11 @@ Datastructure: edgeManager
 .. include:: ../../coreComponents/fileIO/schema/docs/edgeManager_other.rst
 
 
-.. _DATASTRUCTURE_elementRegions:
+.. _DATASTRUCTURE_elementRegionsGroup:
 
-Datastructure: elementRegions
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/elementRegions_other.rst
+Datastructure: elementRegionsGroup
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/elementRegionsGroup_other.rst
 
 
 .. _DATASTRUCTURE_elementSubRegions:
@@ -1122,4 +1199,11 @@ Datastructure: nodeManager
 Datastructure: sets
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/sets_other.rst
+
+
+.. _DATASTRUCTURE_wellElementSubRegion:
+
+Datastructure: wellElementSubRegion
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/wellElementSubRegion_other.rst
 

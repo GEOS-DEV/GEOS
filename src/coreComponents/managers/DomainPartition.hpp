@@ -60,7 +60,6 @@ public:
 
   void InitializationOrder( string_array & order ) override final;
 
-  void SetMaps();
   void GenerateSets();
 
 

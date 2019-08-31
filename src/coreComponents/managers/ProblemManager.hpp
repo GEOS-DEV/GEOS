@@ -158,7 +158,6 @@ public:
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
     dataRepository::GroupKey domain    = { "domain" };
-    dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
     dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
     dataRepository::GroupKey functionManager = { "Functions" };
