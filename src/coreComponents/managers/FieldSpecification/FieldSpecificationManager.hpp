@@ -280,7 +280,7 @@ private:
       string_array setNames = fs->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+        dataRepository::Wrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
         if( setWrapper != nullptr )
         {
           set<localIndex> const & targetSet = setWrapper->reference();

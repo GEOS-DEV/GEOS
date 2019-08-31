@@ -87,7 +87,7 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
                           ManagedGroup const * targetGroup,
                           string const & targetName)
   {
-    ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>( setName );
+    Wrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
     computeBoundaryStencil( domain, targetSet, stencil->reference() );
   });

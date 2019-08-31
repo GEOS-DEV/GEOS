@@ -241,7 +241,7 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
+      const dataRepository::WrapperBase * vw = this->getWrapperBase( externalPropertyName );
       lambda( vw );
     }
   }

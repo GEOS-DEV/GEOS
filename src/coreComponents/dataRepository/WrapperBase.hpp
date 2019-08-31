@@ -18,8 +18,8 @@
 
 /** @file */
 
-#ifndef GEOSX_DATAREPOSITORY_VIEWWRAPPERBASE_HPP_
-#define GEOSX_DATAREPOSITORY_VIEWWRAPPERBASE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
+#define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include <string>
 #include <memory>
@@ -51,21 +51,21 @@ class ManagedGroup;
 /**
  * @class ViewWrapperBase
  */
-class ViewWrapperBase
+class WrapperBase
 {
 public:
 
   /**
    * @brief default destructor
    */
-  virtual ~ViewWrapperBase();
+  virtual ~WrapperBase();
 
   /**
    * @brief constructor
    * @param[in] name name of the object
    * @param[in] parent pointer to ManagedGroup that holds this ViewWrapperBase
    */
-  explicit ViewWrapperBase( string const & name,
+  explicit WrapperBase( string const & name,
                             ManagedGroup * const parent );
 
 
@@ -73,10 +73,10 @@ public:
    * @brief move operator
    * @param[in] source
    */
-  ViewWrapperBase( ViewWrapperBase && source );
+  WrapperBase( WrapperBase && source );
 
 
-  virtual void CopyWrapperAttributes( ViewWrapperBase const & source );
+  virtual void CopyWrapperAttributes( WrapperBase const & source );
 
   /**
    * @brief Virtual function to return the typeid of T.
@@ -163,7 +163,7 @@ public:
    * The overridden function will create a copy of the derived ViewWrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
+  virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                     ManagedGroup * const parent ) = 0;
 
   virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
@@ -291,7 +291,7 @@ public:
    * @param val
    * @return
    */
-  ViewWrapperBase * setSizedFromParent( int val )
+  WrapperBase * setSizedFromParent( int val )
   {
     m_sizedFromParent = val;
     return this;
@@ -308,7 +308,7 @@ public:
    * @param flags
    * @return
    */
-  ViewWrapperBase * setRestartFlags( RestartFlags flags )
+  WrapperBase * setRestartFlags( RestartFlags flags )
   {
     m_restart_flags = flags;
     return this;
@@ -336,7 +336,7 @@ public:
    * @param flag
    * @return
    */
-  ViewWrapperBase * setPlotLevel( PlotLevel const flag )
+  WrapperBase * setPlotLevel( PlotLevel const flag )
   {
     m_plotLevel = flag;
     return this;
@@ -347,7 +347,7 @@ public:
    * @param flag
    * @return
    */
-  ViewWrapperBase * setPlotLevel( int const flag )
+  WrapperBase * setPlotLevel( int const flag )
   {
     m_plotLevel = IntToPlotLevel( flag );
     return this;
@@ -367,7 +367,7 @@ public:
    * @param input
    * @return
    */
-  ViewWrapperBase * setInputFlag( InputFlags const input )
+  WrapperBase * setInputFlag( InputFlags const input )
   {
     if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
     {
@@ -391,7 +391,7 @@ public:
    * @param description
    * @return
    */
-  ViewWrapperBase * setDescription( string const & description )
+  WrapperBase * setDescription( string const & description )
   {
     m_description = description;
     return this;
@@ -402,7 +402,7 @@ public:
     return m_registeringObjects;
   }
 
-  ViewWrapperBase * setRegisteringObjects( string const & objectName )
+  WrapperBase * setRegisteringObjects( string const & objectName )
   {
     m_registeringObjects.push_back( objectName );
     return this;
@@ -465,14 +465,14 @@ private:
 #endif
 
 
-  ViewWrapperBase() = delete;
-  ViewWrapperBase( ViewWrapperBase const & ) = delete;
-  ViewWrapperBase & operator=( ViewWrapperBase const & ) = delete;
-  ViewWrapperBase & operator=( ViewWrapperBase && ) = delete;
+  WrapperBase() = delete;
+  WrapperBase( WrapperBase const & ) = delete;
+  WrapperBase & operator=( WrapperBase const & ) = delete;
+  WrapperBase & operator=( WrapperBase && ) = delete;
 
 };
 
 }
 } /* namespace geosx */
 
-#endif
+#endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */

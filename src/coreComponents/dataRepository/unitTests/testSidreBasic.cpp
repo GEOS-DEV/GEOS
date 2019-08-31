@@ -19,8 +19,9 @@
 #include <gtest/gtest.h>
 
 #include <mpi.h>
+
+#include "../Wrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
 
@@ -49,7 +50,7 @@ TEST( testSidreBasic, testSidreBasic )
   root->resize( group_size );
 
   /* Create a ViewWrapper which creates the associated sidre::View */
-  ViewWrapper< globalIndex_array > * data_view = root->RegisterViewWrapper< globalIndex_array >( "globalIndex_data" );
+  Wrapper< globalIndex_array > * data_view = root->RegisterViewWrapper< globalIndex_array >( "globalIndex_data" );
   data_view->setSizedFromParent( sized_from_parent );
 
   /* Resize the array */
@@ -90,7 +91,7 @@ TEST( testSidreBasic, testSidreBasic )
   root = new ManagedGroup( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  ViewWrapper< globalIndex_array > * data_view_new = root->RegisterViewWrapper< globalIndex_array >( "globalIndex_data" );
+  Wrapper< globalIndex_array > * data_view_new = root->RegisterViewWrapper< globalIndex_array >( "globalIndex_data" );
 
   /* Load the data */
   root->prepareToRead();
