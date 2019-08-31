@@ -112,7 +112,7 @@ WrapperBase * ManagedGroup::registerWrapper( std::string const & name, rtTypes::
 }
 
 WrapperBase * ManagedGroup::registerWrapper( string const & name,
-                                                     WrapperBase * const wrapper )
+                                             WrapperBase * const wrapper )
 {
   return m_wrappers.insert( name,
                             wrapper,

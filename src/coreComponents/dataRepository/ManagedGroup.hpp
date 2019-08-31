@@ -661,7 +661,7 @@ public:
     for( auto & wrapperIter : m_wrappers )
     {
       applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                               std::forward< LAMBDA >( lambda ));
+                                                                                   std::forward< LAMBDA >( lambda ));
     }
   }
 
@@ -671,7 +671,7 @@ public:
     for( auto const & wrapperIter : m_wrappers )
     {
       applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                               std::forward< LAMBDA >( lambda ));
+                                                                                   std::forward< LAMBDA >( lambda ));
     }
   }
   ///@}
@@ -687,7 +687,7 @@ public:
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
   registerWrapper( std::string const & name,
-                       wrapperMap::KeyIndex::index_type * const rkey = nullptr );
+                   wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
@@ -695,16 +695,16 @@ public:
 
 
   WrapperBase * registerWrapper( std::string const & name,
-                                         rtTypes::TypeIDs const & type );
+                                 rtTypes::TypeIDs const & type );
 
   template< typename T >
   Wrapper< T > * registerWrapper( std::string const & name,
-                                          std::unique_ptr< T > newObject );
+                                  std::unique_ptr< T > newObject );
 
   template< typename T >
   Wrapper< T > * registerWrapper( std::string const & name,
-                                          T * newObject,
-                                          bool takeOwnership );
+                                  T * newObject,
+                                  bool takeOwnership );
 
   /**
    * @brief Register a Wrapper into this ManagedGroup
@@ -713,7 +713,7 @@ public:
    * @return a WrapperBase pointer that holds the address of the new wrapper
    */
   WrapperBase * registerWrapper( string const & name,
-                                         WrapperBase * const wrapper );
+                                 WrapperBase * const wrapper );
 
   void deregisterWrapper( string const & name );
 
@@ -1098,7 +1098,7 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
 
 template< typename T, typename TBASE >
 Wrapper< TBASE > * ManagedGroup::registerWrapper( std::string const & name,
-                                                          ViewKey::index_type * const rkey )
+                                                  ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name,
                      (Wrapper< TBASE >::template Factory< T >( name, this ) ).release(),
@@ -1129,7 +1129,7 @@ Wrapper< TBASE > * ManagedGroup::registerWrapper( ViewKey & viewKey )
 
 template< typename T >
 Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
-                                                      std::unique_ptr< T > newObject )
+                                              std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
                      new Wrapper< T >( name, this, newObject.release(), true ),
@@ -1147,8 +1147,8 @@ Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
 
 template< typename T >
 Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
-                                                      T * newObject,
-                                                      bool takeOwnership )
+                                              T * newObject,
+                                              bool takeOwnership )
 {
   m_wrappers.insert( name,
                      new Wrapper< T >( name, this, newObject, takeOwnership ),
