@@ -23,5 +23,7 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/MPI_Communications/docs/SpatialPartition.rst
 
+   /coreComponents/fileIO/doc/Outputs.rst
+
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
