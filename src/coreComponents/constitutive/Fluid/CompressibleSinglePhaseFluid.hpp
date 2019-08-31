@@ -44,21 +44,21 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
 
-  CompressibleSinglePhaseFluid( std::string const & name, ManagedGroup * const parent );
+  CompressibleSinglePhaseFluid( std::string const & name, Group * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
   // *** ConstitutiveBase interface
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::compressibleSinglePhaseFluid; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluidBase interface

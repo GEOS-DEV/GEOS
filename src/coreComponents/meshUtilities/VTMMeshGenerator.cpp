@@ -41,7 +41,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-VTMMeshGenerator::VTMMeshGenerator( string const & name, ManagedGroup * const parent ):
+VTMMeshGenerator::VTMMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
 
@@ -95,12 +95,12 @@ void VTMMeshGenerator::PostProcessInput()
 
 
 
-void VTMMeshGenerator::RemapMesh(dataRepository::ManagedGroup * const domain)
+void VTMMeshGenerator::RemapMesh(dataRepository::Group * const domain)
 {
 
 }
 
-ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * VTMMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
   return nullptr;
 }
@@ -108,7 +108,7 @@ ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string co
 void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
     /// Basic mesh registration
-    ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+    Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
     MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
     MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
     NodeManager * nodeManager = meshLevel0->getNodeManager();
@@ -214,5 +214,5 @@ void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementTy
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTMMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTMMeshGenerator, std::string const &, Group * const )
 }

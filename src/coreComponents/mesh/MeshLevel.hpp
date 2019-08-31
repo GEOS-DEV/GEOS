@@ -32,11 +32,11 @@ namespace geosx
 {
 class ElementRegionManager;
 
-class MeshLevel : public dataRepository::ManagedGroup
+class MeshLevel : public dataRepository::Group
 {
 public:
   MeshLevel( string const & name,
-             ManagedGroup * const parent );
+             Group * const parent );
   virtual ~MeshLevel() override;
 
   void GenerateAdjacencyLists( localIndex_array & seedNodeList,
@@ -47,7 +47,7 @@ public:
                                integer const depth );
 
 
-  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const ) override;
+  virtual void InitializePostInitialConditions_PostSubGroups( Group * const ) override;
 
 
   struct viewStructKeys

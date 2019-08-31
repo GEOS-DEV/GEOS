@@ -76,7 +76,7 @@ public:
    * @param name the name of the object in the data repository
    * @param parent the parent object of this object in the data repository
    */
-  CellBlock( string const & name, ManagedGroup * const parent );
+  CellBlock( string const & name, Group * const parent );
 
   /**
    * @brief copy constructor

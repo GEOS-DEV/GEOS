@@ -28,13 +28,14 @@
 #include <vector>
 #include <math.h>
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/NodeManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include <numeric>
+
+#include "dataRepository/Group.hpp"
 namespace geosx
 {
 
@@ -52,7 +53,7 @@ using namespace dataRepository;
 
 
 SymbolicMathExample_JIT::SymbolicMathExample_JIT( const std::string& name,
-                                                  ManagedGroup * const parent ):
+                                                  Group * const parent ):
   SolverBase( name, parent )
 {}
 
@@ -115,22 +116,22 @@ void SymbolicMathExample_JIT::FillDocumentationNode()
 }
 
 
-void SymbolicMathExample_JIT::BuildDataStructure( ManagedGroup * const domain )
+void SymbolicMathExample_JIT::BuildDataStructure( Group * const domain )
 {
   SolverBase::BuildDataStructure( domain );
 }
 
 
-void SymbolicMathExample_JIT::Initialize( ManagedGroup * const problemManager )
+void SymbolicMathExample_JIT::Initialize( Group * const problemManager )
 {
   // Check to see if targets are valid
-  ManagedGroup * domain = problemManager->GetGroup(keys::domain);
+  Group * domain = problemManager->GetGroup(keys::domain);
   std::string targetObjectStr = getData<std::string>(keys::TargetObject);
   std::string targetName = getData<std::string>(keys::TargetName);
 
   if (domain->hasGroup(targetObjectStr))
   {
-    dataRepository::ManagedGroup * targetObject = domain->GetGroup<ManagedGroup>(targetObjectStr);
+    dataRepository::Group * targetObject = domain->GetGroup<Group>(targetObjectStr);
     if (targetObject->hasView(targetName))
     {
       GEOS_LOG("Symbolic expression is setting " << targetObjectStr << "/" << targetName);
@@ -154,7 +155,7 @@ real64 SymbolicMathExample_JIT::SolverStep( real64 const& time_n,
                                         DomainPartition * domain )
 {
   // Get target objects
-  dataRepository::ManagedGroup * targetObject = domain->GetGroup<ManagedGroup>(getData<std::string>(keys::TargetObject));
+  dataRepository::Group * targetObject = domain->GetGroup<Group>(getData<std::string>(keys::TargetObject));
   real64_array & targetField = targetObject->getReference<real64_array>(getData<std::string>(keys::TargetName));
   view_rtype_const<r1_array> X = targetObject->getData<r1_array>(keys::referencePositionString);
 
@@ -190,5 +191,5 @@ real64 SymbolicMathExample_JIT::SolverStep( real64 const& time_n,
 
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SymbolicMathExample_JIT, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SymbolicMathExample_JIT, std::string const &, Group * const )
 } /* namespace ANST */

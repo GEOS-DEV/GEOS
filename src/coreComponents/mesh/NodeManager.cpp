@@ -43,7 +43,7 @@ using namespace dataRepository;
  * @return
  */
 NodeManager::NodeManager( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition()
 {
@@ -356,6 +356,6 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, Group * const )
 
 }

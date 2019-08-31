@@ -48,8 +48,8 @@ namespace constitutive
 {
 
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    ManagedGroup * const parent ):
-  ManagedGroup( name, parent ),
+                                    Group * const parent ):
+  Group( name, parent ),
   m_numQuadraturePoints(1),
   m_constitutiveDataGroup(nullptr)
 {
@@ -67,7 +67,7 @@ ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
@@ -100,11 +100,11 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::ManagedGroup * 
 
 void ConstitutiveBase::resize( localIndex newsize )
 {
-  ManagedGroup::resize( newsize );
+  Group::resize( newsize );
 }
 
 void ConstitutiveBase::DeliverClone( string const & name,
-                                     ManagedGroup * const parent,
+                                     Group * const parent,
                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   clone->forWrappers([&]( WrapperBase & wrapper )

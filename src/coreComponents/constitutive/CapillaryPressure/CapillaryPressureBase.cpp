@@ -48,7 +48,7 @@ std::unordered_map<string, integer> const phaseDict =
 }
 
 CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
-                                              ManagedGroup * const parent )
+                                              Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
@@ -116,7 +116,7 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

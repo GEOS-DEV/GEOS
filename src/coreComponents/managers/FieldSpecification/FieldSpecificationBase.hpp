@@ -23,10 +23,10 @@
 #ifndef BOUNDARYCONDITIONBASE_H
 #define BOUNDARYCONDITIONBASE_H
 
+#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "linearAlgebraInterface/src/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
@@ -41,7 +41,7 @@ class Function;
  * @class FieldSpecificationBase
  * A class to hold values for and administer a single boundary condition
  */
-class FieldSpecificationBase : public dataRepository::ManagedGroup
+class FieldSpecificationBase : public dataRepository::Group
 {
 public:
 
@@ -55,7 +55,7 @@ public:
    */
   using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
-                                                            dataRepository::ManagedGroup * const >;
+                                                            dataRepository::Group * const >;
 
   /**
    * @brief static function to return static catalog.
@@ -80,7 +80,7 @@ public:
    * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  FieldSpecificationBase( string const & name, dataRepository::ManagedGroup * parent );
+  FieldSpecificationBase( string const & name, dataRepository::Group * parent );
 
   /**
    * destructor
@@ -91,7 +91,7 @@ public:
   void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
-                              ManagedGroup * dataGroup ) const;
+                              Group * dataGroup ) const;
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
@@ -107,7 +107,7 @@ public:
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( set<localIndex> const & targetSet,
                         real64 const time,
-                        dataRepository::ManagedGroup * dataGroup,
+                        dataRepository::Group * dataGroup,
                         string const & fieldname ) const;
 
   /**
@@ -133,7 +133,7 @@ public:
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                        bool normalizeBySetSize,
                                        real64 const time,
-                                       dataRepository::ManagedGroup * dataGroup,
+                                       dataRepository::Group * dataGroup,
                                        string const & fieldName,
                                        string const & dofMapName,
                                        integer const & dofDim,
@@ -169,7 +169,7 @@ public:
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   bool normalizeBySetSize,
                                   real64 const time,
-                                  dataRepository::ManagedGroup * dataGroup,
+                                  dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
@@ -206,7 +206,7 @@ public:
                                   bool normalizeBySetSize,
                                   real64 const time,
                                   real64 const dt,
-                                  dataRepository::ManagedGroup * dataGroup,
+                                  dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
@@ -365,7 +365,7 @@ template < typename FIELD_OP, typename POLICY, typename T, int N >
 void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
-                                                    ManagedGroup * dataGroup ) const
+                                                    Group * dataGroup ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
@@ -412,7 +412,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
 template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                               real64 const time,
-                                              ManagedGroup * dataGroup,
+                                              Group * dataGroup,
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
@@ -434,7 +434,7 @@ template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                              bool normalizeBySetSize,
                                                              real64 const time,
-                                                             dataRepository::ManagedGroup * dataGroup,
+                                                             dataRepository::Group * dataGroup,
                                                              string const & fieldName,
                                                              string const & dofMapName,
                                                              integer const & dofDim,
@@ -469,7 +469,7 @@ FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 bool normalizeBySetSize,
                                 real64 const time,
-                                dataRepository::ManagedGroup * dataGroup,
+                                dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
                                 integer const & dofDim,
                                 typename LAI::ParallelMatrix & matrix,
@@ -552,7 +552,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 bool normalizeBySetSize,
                                 real64 const time,
                                 real64 const dt,
-                                dataRepository::ManagedGroup * dataGroup,
+                                dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
                                 integer const & dofDim,
                                 typename LAI::ParallelMatrix & matrix,

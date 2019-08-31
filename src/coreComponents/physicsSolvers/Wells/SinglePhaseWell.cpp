@@ -22,12 +22,12 @@
 
 #include "SinglePhaseWell.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"
@@ -44,14 +44,14 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
-                                  ManagedGroup * const parent )
+                                  Group * const parent )
   :
   WellSolverBase( name, parent )
 {
   m_numDofPerWellElement = 2;
 }
 
-void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
+void SinglePhaseWell::RegisterDataOnMesh(Group * const meshBodies)
 {
 
   WellSolverBase::RegisterDataOnMesh(meshBodies);
@@ -74,7 +74,7 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
 
 }
   
-void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
 {
 
   WellSolverBase::InitializePreSubGroups( rootGroup );
@@ -1336,5 +1336,5 @@ void SinglePhaseWell::RecordWellData( WellElementSubRegion const * const subRegi
   }
 }
 
-REGISTER_CATALOG_ENTRY(SolverBase, SinglePhaseWell, string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(SolverBase, SinglePhaseWell, string const &, Group * const)
 }// namespace geosx

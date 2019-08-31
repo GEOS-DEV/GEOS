@@ -45,7 +45,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   SolverBase(name,parent),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -72,7 +72,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
 
 }
 
-void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
+void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
 
 }
@@ -155,7 +155,7 @@ void HydrofractureSolver::PostProcessInput()
 
 }
 
-void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
+void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
 {
 
 }
@@ -808,8 +808,8 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   {
 
 
-    dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
-    dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
+    dataRepository::Group const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+    dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
 
     arrayView1d<integer const>     const & elemGhostRank = subRegion->GhostRank();
     arrayView1d<globalIndex const> const & presDofNumber = subRegion->getReference<array1d<globalIndex>>( presDofKey );
@@ -1609,6 +1609,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 
 } /* namespace geosx */

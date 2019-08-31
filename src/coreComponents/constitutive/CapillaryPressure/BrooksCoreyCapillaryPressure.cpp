@@ -35,7 +35,7 @@ namespace constitutive
 
 
 BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & name,
-                                                            ManagedGroup * const parent )
+                                                            Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
@@ -67,7 +67,7 @@ BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()
 
 void
 BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BrooksCoreyCapillaryPressure > newModel = std::make_unique<BrooksCoreyCapillaryPressure>( name, parent );
@@ -172,7 +172,7 @@ void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d<real64 const> const
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

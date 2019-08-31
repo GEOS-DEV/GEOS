@@ -58,7 +58,7 @@ TEST( PAMELAImport, testXML )
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
   meshManager.GenerateMeshes( domain.get() );
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
   NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -86,7 +86,7 @@ TEST( PAMELAImport, testXML )
   elemManager->ProcessInputFileRecursive( xmlRegionNode );
   elemManager->PostProcessInputRecursive();
 
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager->GenerateMesh( cellBlockManager );

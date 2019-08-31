@@ -289,7 +289,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
+  void WriteManagedGroupSilo( dataRepository::Group const * group,
                               string const & siloDirName,
                               string const & meshname,
                               int const centering,
@@ -320,7 +320,7 @@ public:
    */
   template< typename OUTPUTTYPE >
   void WriteWrappersToSilo( string const & meshname,
-                                const dataRepository::ManagedGroup::wrapperMap & wrappers,
+                                const dataRepository::Group::wrapperMap & wrappers,
                                 int const centering,
                                 int const cycleNum,
                                 real64 const problemTime,
@@ -652,7 +652,7 @@ void SetVariableNames(string const & fieldName, string_array& varnamestring, cha
 
 template< typename OUTPUTTYPE >
 void SiloFile::WriteWrappersToSilo( string const & meshname,
-                                        const dataRepository::ManagedGroup::wrapperMap & wrappers,
+                                        const dataRepository::Group::wrapperMap & wrappers,
                                         int const centering,
                                         int const cycleNum,
                                         real64 const problemTime,

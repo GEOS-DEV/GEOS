@@ -22,13 +22,13 @@
 
 #include "CompositionalMultiphaseWell.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"
@@ -45,7 +45,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
-                                                                      ManagedGroup * const parent )
+                                                                      Group * const parent )
   :
   WellSolverBase( name, parent ),
   m_numPhases( 0 ),
@@ -68,7 +68,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
 
 }
 
-void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
+void CompositionalMultiphaseWell::RegisterDataOnMesh(Group * const meshBodies)
 {
   WellSolverBase::RegisterDataOnMesh(meshBodies);
   
@@ -104,7 +104,7 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
   
 }
   
-void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
   
@@ -177,7 +177,7 @@ void CompositionalMultiphaseWell::ResizeFields( WellElementSubRegion * const sub
 
 }
 
-void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
@@ -2246,5 +2246,5 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
 }
 
 
-REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseWell, string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseWell, string const &, Group * const)
 }// namespace geosx

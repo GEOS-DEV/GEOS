@@ -29,8 +29,8 @@ namespace geosx
 {
 using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
-                                                ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                                                Group * const parent ):
+  Group(name,parent),
   m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
@@ -174,7 +174,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 }
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, SystemSolverParameters, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( Group, SystemSolverParameters, std::string const &, Group * const )
 
 } /* namespace geosx */
 

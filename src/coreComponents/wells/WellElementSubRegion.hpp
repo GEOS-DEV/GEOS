@@ -56,7 +56,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */  
   WellElementSubRegion( string const & name, 
-                        ManagedGroup * const parent );
+                        Group * const parent );
 
   /**
    * @brief default destructor

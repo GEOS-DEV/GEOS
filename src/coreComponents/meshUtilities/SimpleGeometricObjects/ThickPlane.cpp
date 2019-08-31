@@ -26,7 +26,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ThickPlane::ThickPlane( const std::string& name, ManagedGroup * const parent ):
+ThickPlane::ThickPlane( const std::string& name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_origin{0.0,0.0,0.0},
   m_normal{0.0,0.0,1.0},
@@ -70,7 +70,7 @@ bool ThickPlane::IsCoordInObject( const R1Tensor& coord ) const
   return std::fabs(normalDistance) <= m_thickness;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, std::string const &, Group * const )
 
 } /* namespace geosx */
 

@@ -44,16 +44,16 @@ public:
    * @param name name of the instance in the catalog
    * @param parent the group which contains this instance
    */
-  LinearElasticIsotropic( string const & name, ManagedGroup * const parent );
+  LinearElasticIsotropic( string const & name, Group * const parent );
 
   virtual ~LinearElasticIsotropic() override;
 
   virtual void
   DeliverClone( string const & name,
-                ManagedGroup * const parent,
+                Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr auto m_catalogNameString = "LinearElasticIsotropic";

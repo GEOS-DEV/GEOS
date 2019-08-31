@@ -46,12 +46,12 @@ MeshUtilities::~MeshUtilities()
 
 
 
-void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
+void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
                                       ObjectManagerBase * const nodeManager )
 {
   GEOSX_MARK_FUNCTION; 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-  ManagedGroup * sets = nodeManager->sets();
+  Group * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {

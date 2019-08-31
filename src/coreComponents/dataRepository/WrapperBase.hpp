@@ -46,7 +46,7 @@ namespace geosx
 namespace dataRepository
 {
 
-class ManagedGroup;
+class Group;
 
 /**
  * @class WrapperBase
@@ -66,7 +66,7 @@ public:
    * @param[in] parent pointer to ManagedGroup that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
-                        ManagedGroup * const parent );
+                        Group * const parent );
 
 
   /**
@@ -164,7 +164,7 @@ public:
    * values of name and parent to differentiate itself from the source.
    */
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                ManagedGroup * const parent ) = 0;
+                                                Group * const parent ) = 0;
 
   virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
 
@@ -440,7 +440,7 @@ private:
   string m_name;
 
   /// pointer to ManagedGroup that holds this WrapperBase
-  ManagedGroup * m_parent;
+  Group * m_parent;
 
   /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized
   int m_sizedFromParent;

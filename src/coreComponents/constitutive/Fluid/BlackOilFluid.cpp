@@ -59,7 +59,7 @@ BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
 }
 
-BlackOilFluid::BlackOilFluid( std::string const & name, ManagedGroup * const parent )
+BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
@@ -85,7 +85,7 @@ BlackOilFluid::~BlackOilFluid()
 
 void
 BlackOilFluid::DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BlackOilFluid > newModel = std::make_unique<BlackOilFluid>( name, parent );
@@ -176,7 +176,7 @@ void BlackOilFluid::createFluid()
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

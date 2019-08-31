@@ -38,8 +38,8 @@ namespace geosx
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
-                                  ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                  Group * const parent ):
+  Group( name, parent )
 {
   this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
   this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
@@ -54,9 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
+void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 {
-  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
+  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -89,9 +89,9 @@ void DomainPartition::GenerateSets(  )
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup const * const nodeManager = mesh->getNodeManager();
+  Group const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * const
+  dataRepository::Group const * const
   nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
   map< string, array1d<bool> > nodeInSet; // map to contain indicator of whether a node is in a set.
@@ -119,7 +119,7 @@ void DomainPartition::GenerateSets(  )
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
   {
-    dataRepository::ManagedGroup * elementSets = subRegion->sets();
+    dataRepository::Group * elementSets = subRegion->sets();
 
     for( std::string const & setName : setNames )
     {
@@ -180,7 +180,7 @@ void DomainPartition::SetupCommunications()
     }
   }
 
-  ManagedGroup * const meshBodies = getMeshBodies();
+  Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 

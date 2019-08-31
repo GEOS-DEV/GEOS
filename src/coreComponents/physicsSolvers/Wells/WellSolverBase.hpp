@@ -32,7 +32,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class DomainPartition;
 class WellControls;
@@ -68,7 +68,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   WellSolverBase( const std::string& name,
-                  ManagedGroup * const parent );
+                  Group * const parent );
 
   /// default destructor
   virtual ~WellSolverBase() override;
@@ -88,7 +88,7 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
@@ -153,7 +153,7 @@ public:
    */
   /**@{*/
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
 
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -305,9 +305,9 @@ private:
   
 protected:
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   /**
    * @brief Setup stored views into domain data for the current step

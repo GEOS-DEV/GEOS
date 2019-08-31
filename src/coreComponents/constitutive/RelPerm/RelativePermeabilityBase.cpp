@@ -48,7 +48,7 @@ std::unordered_map<string, integer> const phaseDict =
 }
 
 
-RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, ManagedGroup * const parent )
+RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
@@ -109,7 +109,7 @@ void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex c
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

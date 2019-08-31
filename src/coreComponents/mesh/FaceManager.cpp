@@ -36,7 +36,7 @@ using namespace dataRepository;
  *
  * @return
  */
-FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
+FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
   this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
@@ -924,6 +924,6 @@ void FaceManager::depopulateUpMaps( std::set<localIndex> const & receivedFaces,
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, Group * const )
 
 }

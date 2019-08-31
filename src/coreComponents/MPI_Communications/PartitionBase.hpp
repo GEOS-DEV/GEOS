@@ -39,7 +39,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 
 class DomainPartition;
@@ -126,7 +126,7 @@ protected:
   PartitionBase();
   PartitionBase( const unsigned int numPartitions, const unsigned int thisPartiton );
 
-  virtual void InitializePostSubGroups( dataRepository::ManagedGroup * const ) = 0;
+  virtual void InitializePostSubGroups( dataRepository::Group * const ) = 0;
 
 //
   array1d<NeighborCommunicator> m_neighbors;

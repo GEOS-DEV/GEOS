@@ -42,7 +42,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   ReservoirSolver( const std::string& name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
   /**
    * @brief default destructor

@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * const parent ):
+WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_wellControlsName(""),
   m_topWellElementIndex( -1 ),
