@@ -1794,7 +1794,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     int count = 0;
 
-    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
+    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
     elementManager->forElementSubRegions( [&]( auto const * const elementSubRegion )
     {
