@@ -22,8 +22,9 @@
  */
 
 #include "SchemaUtilities.hpp"
+
+#include "../../dataRepository/Wrapper.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/ViewWrapper.hpp"
 #include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/InputFlags.hpp"
 
@@ -190,7 +191,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
 
       for ( string attributeName : groupWrapperNames )
       {
-        ViewWrapperBase * const wrapper = group->getWrapperBase(attributeName);
+        WrapperBase * const wrapper = group->getWrapperBase(attributeName);
         InputFlags flag = wrapper->getInputFlag();
         
         if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
@@ -246,7 +247,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
                                                   [&]( auto a, auto b ) -> void
               {
                 using COMPOSITE_TYPE = decltype(a);
-                ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+                Wrapper<COMPOSITE_TYPE>& typedWrapper = Wrapper<COMPOSITE_TYPE>::cast( *wrapper );
                 
                 if( typedWrapper.getDefaultValueStruct().has_default_value )
                 {

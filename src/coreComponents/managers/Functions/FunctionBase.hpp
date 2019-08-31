@@ -138,14 +138,14 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
     else
     {
-      dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
+      dataRepository::WrapperBase const & vwb = *(group->getWrapperBase( varName ));
       std::type_index typeIndex = std::type_index(vwb.get_typeid());
       rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
         {
           using containerType = decltype(container_type);
           using varType = decltype(var_type);
-          dataRepository::ViewWrapper<containerType> const & view =
-            dynamic_cast< dataRepository::ViewWrapper<containerType> const & >(vwb);
+          dataRepository::Wrapper<containerType> const & view =
+            dynamic_cast< dataRepository::Wrapper<containerType> const & >(vwb);
 
           input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
           varSize[varIndex] = sizeof(varType) / sizeof(double);

@@ -23,9 +23,9 @@
 #include "VTKFile.hpp"
 #include <sys/stat.h>
 
+#include "../../dataRepository/Wrapper.hpp"
 #include "managers/DomainPartition.hpp"
 
-#include "dataRepository/ViewWrapper.hpp"
 
 
 namespace geosx
@@ -195,7 +195,7 @@ class CustomVTUXMLWriter
   }
 
   template< typename T >
-  void WriteNodeData(  ViewWrapper< T > const & dataView, bool binary)
+  void WriteNodeData(  Wrapper< T > const & dataView, bool binary)
   {
     if( binary )
     {
@@ -526,7 +526,7 @@ class CustomVTUXMLWriter
     }
 
     template< typename T >
-    void WriteNodeAsciiData( ViewWrapper< T > const & dataView )
+    void WriteNodeAsciiData( Wrapper< T > const & dataView )
     {
       auto & viewRef = dataView.reference();
       for( localIndex i = 0; i < viewRef.size(); i++ )
@@ -536,7 +536,7 @@ class CustomVTUXMLWriter
     }
 
     template< typename T >
-    void WriteNodeBinaryData( ViewWrapper< T > const & dataView )
+    void WriteNodeBinaryData( Wrapper< T > const & dataView )
     {
       std::stringstream stream;
       auto & viewRef = dataView.reference();
@@ -630,7 +630,7 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::Eleme
 }
 
 template<>
-inline void CustomVTUXMLWriter::WriteNodeBinaryData( ViewWrapper< r1_array > const & dataView )
+inline void CustomVTUXMLWriter::WriteNodeBinaryData( Wrapper< r1_array > const & dataView )
 {
   std::stringstream stream;
   auto & viewRef = dataView.reference();
@@ -703,7 +703,7 @@ void VTKFile::Write( double const timeStep,
     {
       for( auto const & wrapperIter : subRegion->wrappers() )
       {
-        ViewWrapperBase const * const wrapper = wrapperIter.second;
+        WrapperBase const * const wrapper = wrapperIter.second;
 
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
@@ -732,7 +732,7 @@ void VTKFile::Write( double const timeStep,
   // Find all node fields to export
   for( auto const & wrapperIter : nodeManager->wrappers() )
   {
-    ViewWrapperBase const * const wrapper = wrapperIter.second;
+    WrapperBase const * const wrapper = wrapperIter.second;
     if( wrapper->getPlotLevel() < m_plotLevel )
     {  
        string const fieldName = wrapper->getName();
@@ -861,7 +861,7 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "PointData", {} );
   for( auto & nodeField : nodeFields )
   {
-    ViewWrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
+    WrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
     vtuWriter.OpenXMLNode( "DataArray", { { "type", std::get<1>( nodeField ) },
                                           { "Name", std::get<0>( nodeField ) },
                                           { "NumberOfComponents", std::to_string( std::get<2>( nodeField ) ) },
@@ -870,7 +870,7 @@ void VTKFile::Write( double const timeStep,
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
-      const ViewWrapper< cType > & view = ViewWrapper<cType>::cast( *wrapper );
+      const Wrapper< cType > & view = Wrapper<cType>::cast( *wrapper );
       vtuWriter.WriteNodeData( view, m_binary );
     });
     vtuWriter.CloseXMLNode( "DataArray" );

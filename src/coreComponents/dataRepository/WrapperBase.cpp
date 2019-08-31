@@ -18,7 +18,7 @@
 
 /** @file */
 
-#include "ViewWrapperBase.hpp"
+#include "WrapperBase.hpp"
 
 #include "ManagedGroup.hpp"
 #include "RestartFlags.hpp"
@@ -30,7 +30,7 @@ namespace dataRepository
 {
 
 
-ViewWrapperBase::ViewWrapperBase( std::string const & name,
+WrapperBase::WrapperBase( std::string const & name,
                                   ManagedGroup * const parent ):
   m_name( name ),
   m_parent( parent ),
@@ -59,11 +59,11 @@ ViewWrapperBase::ViewWrapperBase( std::string const & name,
 }
 
 
-ViewWrapperBase::~ViewWrapperBase()
+WrapperBase::~WrapperBase()
 {}
 
 
-ViewWrapperBase::ViewWrapperBase( ViewWrapperBase && source ):
+WrapperBase::WrapperBase( WrapperBase && source ):
   m_name( std::move( source.m_name ) ),
   m_parent( source.m_parent ),
   m_sizedFromParent( source.m_sizedFromParent ),
@@ -74,12 +74,12 @@ ViewWrapperBase::ViewWrapperBase( ViewWrapperBase && source ):
 
 {}
 
-void ViewWrapperBase::resize()
+void WrapperBase::resize()
 {
   resize( m_parent->size());
 }
 
-void ViewWrapperBase::CopyWrapperAttributes( ViewWrapperBase const & source )
+void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
 {
   m_name = source.m_name;
   m_sizedFromParent = source.m_sizedFromParent;
@@ -87,7 +87,7 @@ void ViewWrapperBase::CopyWrapperAttributes( ViewWrapperBase const & source )
 }
 
 #if defined(USE_TOTALVIEW_OUTPUT)
-int ViewWrapperBase::setTotalviewDisplay() const
+int WrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing ViewWrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
@@ -118,7 +118,7 @@ int ViewWrapperBase::setTotalviewDisplay() const
  * @param wrapper A pointer to the wrapper that will be displayed.
  * @return 0
  */
-int TV_ttf_display_type( const geosx::dataRepository::ViewWrapperBase * wrapper )
+int TV_ttf_display_type( const geosx::dataRepository::WrapperBase * wrapper )
 {
   if( wrapper!=nullptr )
   {

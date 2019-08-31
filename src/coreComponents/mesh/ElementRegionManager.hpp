@@ -705,7 +705,7 @@ ConstructFullMaterialViewAccessor( string const & viewName,
         dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
         if( constitutiveRelation != nullptr )
         {
-          dataRepository::ViewWrapper<VIEWTYPE> const * const
+          dataRepository::Wrapper<VIEWTYPE> const * const
           wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
 
           if( wrapper != nullptr )
