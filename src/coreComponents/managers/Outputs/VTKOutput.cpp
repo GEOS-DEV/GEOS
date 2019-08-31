@@ -31,7 +31,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 VTKOutput::VTKOutput( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
@@ -71,12 +71,12 @@ void VTKOutput::Execute(real64 const time_n,
                          integer const cycleNumber,
                          integer const eventCounter,
                          real64 const eventProgress,
-                         ManagedGroup * domain)
+                         Group * domain)
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   m_vtkFile.Write( time_n, *domainPartition);
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, Group * const )
 } /* namespace geosx */

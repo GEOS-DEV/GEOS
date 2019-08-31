@@ -26,8 +26,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 
-#include "../finiteElement/FiniteElementDiscretization.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 
 namespace geosx
 {
@@ -44,16 +44,16 @@ string const finiteVolumeManager = "FiniteVolume";
 }
 
 
-class NumericalMethodsManager : public dataRepository::ManagedGroup
+class NumericalMethodsManager : public dataRepository::Group
 {
 public:
   NumericalMethodsManager() = delete;
-  NumericalMethodsManager(string const & name, ManagedGroup * const parent);
+  NumericalMethodsManager(string const & name, Group * const parent);
   virtual ~NumericalMethodsManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  dataRepository::ManagedGroup const * FindNumericalMethodByName(string const & name) const;
+  dataRepository::Group const * FindNumericalMethodByName(string const & name) const;
 
 
 };

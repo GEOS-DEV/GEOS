@@ -50,7 +50,7 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 
 }
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
+CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag(InputFlags::REQUIRED);
@@ -89,7 +89,7 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 
 void
 CompositionalMultiphaseFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< CompositionalMultiphaseFluid > newModel = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
@@ -183,7 +183,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "ConstitutiveBase.hpp"
 
@@ -43,22 +43,22 @@ using ViewAccessor = array1d < VIEWTYPE >;
  * @class ConstitutiveManager
  * @brief Class to manage the allocation and access to constitutive relations
  */
-class ConstitutiveManager : public dataRepository::ManagedGroup
+class ConstitutiveManager : public dataRepository::Group
 {
 public:
   ConstitutiveManager() = delete;
 
   ConstitutiveManager( string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override final;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override final;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
   ConstitutiveBase *
   HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
-                            dataRepository::ManagedGroup * const parent,
+                            dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
 
   ~ConstitutiveManager() override;
@@ -95,7 +95,7 @@ public:
   template< typename T >
   ViewAccessor< T >
   GetConstitutiveData( string const & name,
-                       dataRepository::ManagedGroup const * const relationGroup ) const;
+                       dataRepository::Group const * const relationGroup ) const;
 
 
   struct groupKeyStruct
@@ -111,7 +111,7 @@ public:
 template< typename T >
 ViewAccessor< T >
 ConstitutiveManager::GetConstitutiveData( string const & name,
-                                          dataRepository::ManagedGroup const * const relationGroup ) const
+                                          dataRepository::Group const * const relationGroup ) const
 {
   ViewAccessor< T const > rval( relationGroup->numSubGroups() );
 

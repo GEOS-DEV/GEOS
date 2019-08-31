@@ -29,7 +29,7 @@ using namespace dataRepository;
 
 
 SoloEvent::SoloEvent( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   EventBase(name,parent),
   m_targetTime(-1.0),
   m_targetCycle(-1),
@@ -59,7 +59,7 @@ SoloEvent::~SoloEvent()
 void SoloEvent::EstimateEventTiming(real64 const time,
                                     real64 const dt, 
                                     integer const cycle,
-                                    ManagedGroup * domain)
+                                    Group * domain)
 {
   // Check event status
   if (m_lastCycle < 0)
@@ -110,5 +110,5 @@ real64 SoloEvent::GetEventTypeDtRequest(real64 const time)
 
 
 
-REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, std::string const &, Group * const )
 } /* namespace geosx */

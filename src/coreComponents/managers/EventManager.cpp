@@ -33,8 +33,8 @@ using namespace cxx_utilities;
 
 
 EventManager::EventManager( std::string const & name,
-                            ManagedGroup * const parent ):
-  ManagedGroup( name, parent),
+                            Group * const parent ):
+  Group( name, parent),
   m_maxTime(),
   m_maxCycle(),
   m_verbosity(),
@@ -84,7 +84,7 @@ EventManager::~EventManager()
 
 
 
-ManagedGroup * EventManager::CreateChild( string const & childKey, string const & childName )
+Group * EventManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
@@ -102,7 +102,7 @@ void EventManager::ExpandObjectCatalogs()
 }
 
 
-void EventManager::Run(dataRepository::ManagedGroup * domain)
+void EventManager::Run(dataRepository::Group * domain)
 {
   GEOSX_MARK_FUNCTION;
 

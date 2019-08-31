@@ -33,7 +33,7 @@ using namespace dataRepository;
 
 
 EventBase::EventBase( const std::string& name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   ExecutableGroup(name, parent),
   m_lastTime(-1.0e100),
   m_lastCycle(-1.0e9),
@@ -116,7 +116,7 @@ EventBase::CatalogInterface::CatalogType& EventBase::GetCatalog()
   return catalog;
 }
 
-ManagedGroup * EventBase::CreateChild( string const & childKey, string const & childName )
+Group * EventBase::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
@@ -142,8 +142,8 @@ void EventBase::GetTargetReferences()
 {
   if (!m_eventTarget.empty())
   {
-    ManagedGroup * tmp = this->GetGroupByPath(m_eventTarget);
-    m_target = ManagedGroup::group_cast<ExecutableGroup*>(tmp);
+    Group * tmp = this->GetGroupByPath(m_eventTarget);
+    m_target = Group::group_cast<ExecutableGroup*>(tmp);
     GEOS_ERROR_IF(m_target == nullptr, "The target of an event must be executable! " << m_target);
   }
 
@@ -157,7 +157,7 @@ void EventBase::GetTargetReferences()
 void EventBase::CheckEvents(real64 const time,
                             real64 const dt, 
                             integer const cycle,
-                            ManagedGroup * domain)
+                            Group * domain)
 {
   // Check event status
   if (time < m_beginTime)
@@ -191,7 +191,7 @@ void EventBase::CheckEvents(real64 const time,
 void EventBase::SignalToPrepareForExecution(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        dataRepository::ManagedGroup * domain)
+                                        dataRepository::Group * domain)
 {
   if (m_target != nullptr)
   {
@@ -213,7 +213,7 @@ void EventBase::Execute(real64 const time_n,
                         const integer cycleNumber,
                         integer const,
                         real64 const,
-                        ManagedGroup * domain)
+                        Group * domain)
 {
   GEOSX_MARK_FUNCTION;
   
@@ -317,7 +317,7 @@ void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        ManagedGroup * domain)
+                        Group * domain)
 {
   if (m_target != nullptr)
   {

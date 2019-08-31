@@ -25,7 +25,7 @@
 
 #include "FiniteElementDiscretization.hpp"
 
-#include "../mesh/CellElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
@@ -44,8 +44,8 @@ using namespace dataRepository;
 
 
 
-FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
@@ -133,9 +133,9 @@ void FiniteElementDiscretization::PostProcessInput()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  ManagedGroup const *  numericalMethods = this->getParent()->getParent();
-  ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
-  ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
+  Group const *  numericalMethods = this->getParent()->getParent();
+  Group const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
+  Group const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
   
   m_basis = basisManager->GetGroup<BasisBase>(basisName);
   m_quadrature = quadratureManager->GetGroup<QuadratureBase>(quadratureName);
@@ -144,6 +144,6 @@ void FiniteElementDiscretization::PostProcessInput()
 
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementDiscretization, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
 
 } /* namespace geosx */

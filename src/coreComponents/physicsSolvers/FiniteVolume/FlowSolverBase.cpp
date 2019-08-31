@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 FlowSolverBase::FlowSolverBase( std::string const & name,
-                                ManagedGroup * const parent )
+                                Group * const parent )
   : SolverBase( name, parent ),
     m_gravityFlag(1),
     m_fluidName(),
@@ -72,7 +72,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   
 }
 
-void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 {
   SolverBase::RegisterDataOnMesh( MeshBodies );
 
@@ -104,7 +104,7 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
   }
 }
 
-void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void FlowSolverBase::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
@@ -145,7 +145,7 @@ void FlowSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
 
 }
 
-void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 

@@ -30,7 +30,7 @@ using namespace dataRepository;
 
 
 HaltEvent::HaltEvent( const std::string& name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   EventBase(name,parent),
   m_externalStartTime(0.0),
   m_externalLastTime(0.0),
@@ -55,7 +55,7 @@ HaltEvent::~HaltEvent()
 void HaltEvent::EstimateEventTiming(real64 const time,
                                      real64 const dt, 
                                      integer const cycle,
-                                     ManagedGroup * domain)
+                                     Group * domain)
 {
   // Check run time
   timeval tim;
@@ -84,5 +84,5 @@ void HaltEvent::EstimateEventTiming(real64 const time,
 }
 
 
-REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, Group * const )
 } /* namespace geosx */

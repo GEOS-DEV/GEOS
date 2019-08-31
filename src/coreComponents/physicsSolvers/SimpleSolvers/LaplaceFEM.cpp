@@ -26,9 +26,9 @@
 #include <vector>
 #include <math.h>
 
+#include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -54,7 +54,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName("primaryField")
 {
@@ -72,7 +72,7 @@ LaplaceFEM::~LaplaceFEM()
   // TODO Auto-generated destructor stub
 }
 
-void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
@@ -179,7 +179,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -371,7 +371,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
+                    Group * const targetGroup,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
@@ -386,5 +386,5 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
   });
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
 } /* namespace ANST */

@@ -38,7 +38,7 @@ class ChomboIO : public OutputBase
 {
 public:
   /// Main constructor
-  ChomboIO(std::string const & name, ManagedGroup * const parent);
+  ChomboIO(std::string const & name, Group * const parent);
 
   /// Destructor
   virtual ~ChomboIO() final override;
@@ -53,14 +53,14 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) final override;
+                        dataRepository::Group * const domain ) final override;
 
   /// Write one final output as the code exits
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) final override 
+                        dataRepository::Group * const domain ) final override 
   { 
     m_waitForInput = 0;
     Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain);

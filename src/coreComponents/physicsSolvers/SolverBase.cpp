@@ -29,7 +29,7 @@ namespace geosx
 using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
-                        ManagedGroup * const parent )
+                        Group * const parent )
   :
   ExecutableGroup( name, parent ),
   m_verboseLevel( 0 ),
@@ -91,9 +91,9 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
-ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & childName )
+Group * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
   if( childKey == SystemSolverParameters::CatalogName() )
   {
     rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
@@ -186,7 +186,7 @@ void SolverBase::Execute( real64 const time_n,
                           integer const cycleNumber,
                           integer const eventCounter,
                           real64 const eventProgress,
-                          ManagedGroup * const domain )
+                          Group * const domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;

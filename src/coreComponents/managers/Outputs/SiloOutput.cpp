@@ -32,7 +32,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 SiloOutput::SiloOutput( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
@@ -63,9 +63,9 @@ void SiloOutput::Execute(real64 const time_n,
                          integer const cycleNumber,
                          integer const eventCounter,
                          real64 const eventProgress,
-                         ManagedGroup * domain)
+                         Group * domain)
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
   integer rank;
@@ -86,5 +86,5 @@ void SiloOutput::Execute(real64 const time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, SiloOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, SiloOutput, std::string const &, Group * const )
 } /* namespace geosx */

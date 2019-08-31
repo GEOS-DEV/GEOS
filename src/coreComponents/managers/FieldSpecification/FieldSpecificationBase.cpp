@@ -22,8 +22,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FieldSpecificationBase::FieldSpecificationBase( string const & name, ManagedGroup * parent ):
-  ManagedGroup( name, parent )
+FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
+  Group( name, parent )
 //  m_setNames(),
 //  m_objectPath(),
 //  m_fieldName(),
@@ -106,6 +106,6 @@ void FieldSpecificationBase::PostProcessInput()
 {}
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
 
 }

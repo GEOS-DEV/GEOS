@@ -32,7 +32,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
   
 namespace constitutive
@@ -70,7 +70,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   CompositionalMultiphaseWell( const string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
   /// deleted default constructor
   CompositionalMultiphaseWell() = delete;
@@ -98,7 +98,7 @@ public:
    */
   static string CatalogName() { return "CompositionalMultiphaseWell"; }
   
-  virtual void RegisterDataOnMesh(ManagedGroup * const meshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
   
 
   /**
@@ -318,9 +318,9 @@ public:
 
 protected:
 
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
   

@@ -26,7 +26,7 @@
 #ifndef NEWFUNCTIONMANAGER_HPP_
 #define NEWFUNCTIONMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
 
 namespace geosx
@@ -34,11 +34,11 @@ namespace geosx
 
 
 
-class NewFunctionManager : public dataRepository::ManagedGroup
+class NewFunctionManager : public dataRepository::Group
 {
 public:
   NewFunctionManager( const std::string& name,
-                      dataRepository::ManagedGroup * const parent );
+                      dataRepository::Group * const parent );
   virtual ~NewFunctionManager() override;
 
   static NewFunctionManager * Instance()
@@ -57,7 +57,7 @@ public:
   }
 
   static string CatalogName() { return "NewFunctionManager"; }
-  virtual ManagedGroup * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
+  virtual Group * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;

@@ -23,7 +23,7 @@
 #include "VTKFile.hpp"
 #include <sys/stat.h>
 
-#include "../../dataRepository/Wrapper.hpp"
+#include "dataRepository/Wrapper.hpp"
 #include "managers/DomainPartition.hpp"
 
 

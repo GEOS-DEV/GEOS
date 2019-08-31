@@ -59,7 +59,7 @@ public:
 
 
   EdgeManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
   ~EdgeManager() override;
 
 //  void Initialize() {}

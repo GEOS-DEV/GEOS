@@ -28,8 +28,8 @@ namespace geosx
 using namespace dataRepository;
 
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
-                                      ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                                      Group * const parent ):
+  Group(name,parent),
   m_sets(groupKeyStruct::setsString,this),
   m_localToGlobalMap(),
   m_globalToLocalMap()
@@ -544,7 +544,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
       packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      ObjectManagerBase const * const subObjectManager = ManagedGroup::group_cast<ObjectManagerBase const *>(keyGroupPair.second);
+      ObjectManagerBase const * const subObjectManager = Group::group_cast<ObjectManagerBase const *>(keyGroupPair.second);
       if( subObjectManager )
       {
         packedSize += subObjectManager->PackGlobalMapsPrivate<DOPACK>( buffer, packList, recursive );
@@ -739,7 +739,7 @@ void ObjectManagerBase::SetReceiveLists(  )
 
   for( map<int,localIndex_array>::const_iterator iter=receiveIndices.begin() ; iter!=receiveIndices.end() ; ++iter )
   {
-    ManagedGroup * const neighborData = GetGroup(m_ObjectManagerBaseGroupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
+    Group * const neighborData = GetGroup(m_ObjectManagerBaseGroupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
 
     localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
     nodeAdjacencyList = iter->second;

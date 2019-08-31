@@ -26,7 +26,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -38,14 +38,14 @@ namespace keys
 }
 
 
-class FiniteElementDiscretizationManager : public dataRepository::ManagedGroup
+class FiniteElementDiscretizationManager : public dataRepository::Group
 {
 public:
   FiniteElementDiscretizationManager() = delete;
-  FiniteElementDiscretizationManager(string const & name, ManagedGroup * const parent);
+  FiniteElementDiscretizationManager(string const & name, Group * const parent);
   virtual ~FiniteElementDiscretizationManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;

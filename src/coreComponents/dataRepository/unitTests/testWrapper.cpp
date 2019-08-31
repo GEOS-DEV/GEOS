@@ -17,16 +17,16 @@
  */
 
 #include <gtest/gtest.h>
-#include "../Wrapper.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/Wrapper.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 using namespace geosx;
 using namespace dataRepository;
 
 
 TEST( testWrapper, testSetters )
 {
-  ManagedGroup group( "group", nullptr );
+  Group group( "group", nullptr );
   Wrapper< int > wrapper( "wrapper", &group );
   WrapperBase * wrapperBasePtr = &wrapper;
 

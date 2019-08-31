@@ -32,7 +32,7 @@ namespace constitutive
 {
 
 
-PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, ManagedGroup * const parent ):
+PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
@@ -52,7 +52,7 @@ PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
 
 void
 PoreVolumeCompressibleSolid::DeliverClone( string const & name,
-                                           ManagedGroup * const parent,
+                                           Group * const parent,
                                            std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr<PoreVolumeCompressibleSolid> newConstitutiveRelation =
@@ -66,7 +66,7 @@ PoreVolumeCompressibleSolid::DeliverClone( string const & name,
   clone = std::move( newConstitutiveRelation );
 }
 
-void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -89,6 +89,6 @@ void PoreVolumeCompressibleSolid::PostProcessInput()
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, Group * const )
 }
 } /* namespace geosx */

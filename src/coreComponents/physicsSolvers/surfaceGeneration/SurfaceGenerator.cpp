@@ -169,7 +169,7 @@ static void CheckForAndRemoveDeadEndPath( const localIndex edgeIndex,
 
 
 SurfaceGenerator::SurfaceGenerator( const std::string& name,
-                                    ManagedGroup * const parent ):
+                                    Group * const parent ):
   SolverBase( name, parent ),
   m_failCriterion( 1 ),
   m_separableFaceSet()
@@ -190,7 +190,7 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
@@ -237,12 +237,12 @@ void SurfaceGenerator::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
   }
 }
 
-void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
@@ -273,7 +273,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGrou
 }
 
 
-void SurfaceGenerator::postRestartInitialization( ManagedGroup * const domain0 )
+void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 {
   DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
 
@@ -286,7 +286,7 @@ void SurfaceGenerator::postRestartInitialization( ManagedGroup * const domain0 )
   // repopulate the fracture stencil
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
@@ -330,7 +330,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     {
       NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -358,7 +358,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
 
     {
       NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -3633,6 +3633,6 @@ AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
 
 REGISTER_CATALOG_ENTRY( SolverBase,
                         SurfaceGenerator,
-                        std::string const &, dataRepository::ManagedGroup * const )
+                        std::string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

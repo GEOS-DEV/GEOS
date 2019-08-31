@@ -34,7 +34,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -46,13 +46,13 @@ class LaplaceFEM : public SolverBase
 public:
 
   LaplaceFEM( const std::string& name,
-              ManagedGroup * const parent );
+              Group * const parent );
 
   virtual ~LaplaceFEM() override;
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions

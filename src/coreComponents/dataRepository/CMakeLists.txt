@@ -6,9 +6,9 @@ set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
     ExecutableGroup.hpp
+    Group.hpp
     InputFlags.hpp
     KeyIndexT.hpp
-    ManagedGroup.hpp
     MappedVector.hpp
     ReferenceWrapper.hpp
     RestartFlags.hpp
@@ -21,7 +21,7 @@ set(dataRepository_headers
 # Specify all sources
 #
 set(dataRepository_sources
-    ManagedGroup.cpp
+    Group.cpp
     SidreWrapper.cpp
     Wrapper.cpp
     WrapperBase.cpp

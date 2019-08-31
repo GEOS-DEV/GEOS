@@ -32,7 +32,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
+CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
@@ -415,6 +415,6 @@ void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeMan
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, Group * const )
 
 }

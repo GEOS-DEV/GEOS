@@ -43,12 +43,12 @@ class VanGenuchtenBakerRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  VanGenuchtenBakerRelativePermeability( std::string const & name, dataRepository::ManagedGroup * const parent );
+  VanGenuchtenBakerRelativePermeability( std::string const & name, dataRepository::Group * const parent );
 
   virtual ~VanGenuchtenBakerRelativePermeability() override;
 
   void DeliverClone( string const & name,
-                     ManagedGroup * const parent,
+                     Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::vanGenuchtenBakerRelativePermeability; }
