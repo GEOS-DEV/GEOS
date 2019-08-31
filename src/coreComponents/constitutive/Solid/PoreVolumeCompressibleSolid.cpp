@@ -35,17 +35,17 @@ namespace constitutive
 PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, ManagedGroup * const parent ):
   ConstitutiveBase( name, parent )
 {
-  RegisterViewWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
+  registerWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Solid compressibility");
 
-  RegisterViewWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
+  registerWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Reference pressure for fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false )->
+  registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false )->
     setDefaultValue(1.0);
-  RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
+  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;

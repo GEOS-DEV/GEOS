@@ -47,20 +47,20 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * co
   MeshGeneratorBase( name, parent )
 {
 
-  RegisterViewWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
+  registerWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the mesh file");
-  RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
+  registerWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fields to be imported from the external mesh file");
-  RegisterViewWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
+  registerWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the fields within GEOSX");
-  RegisterViewWrapper(viewKeyStruct::scaleString, &m_scale, false)->
+  registerWrapper(viewKeyStruct::scaleString, &m_scale, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(1.)->setDescription("Scale the coordinates of the vertices");
-  RegisterViewWrapper(viewKeyStruct::reverseZString, &m_isZReverse, false)->
+  registerWrapper(viewKeyStruct::reverseZString, &m_isZReverse, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(0)->setDescription("0 : Z coordinate is upward, 1 : Z coordinate is downward");
 }

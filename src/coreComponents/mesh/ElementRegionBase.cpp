@@ -36,17 +36,17 @@ using namespace dataRepository;
 ElementRegionBase::ElementRegionBase( string const & name, ManagedGroup * const parent ):
   ObjectManagerBase( name, parent ),
   m_numericalMethod()  //,
-//    m_toNodesRelation(this->RegisterViewWrapper< array2d<integer>
+//    m_toNodesRelation(this->registerWrapper< array2d<integer>
 // >(keys::nodeList).reference())
 {
 //  m_toNodesRelation.resize2(0,8);
-//  this->RegisterViewWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
+//  this->registerWrapper<mapPair_array>(keys::constitutiveMap)->setSizedFromParent(1);
 
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   this->RegisterGroup(viewKeyStruct::elementSubRegions);
 
-  RegisterViewWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
+  registerWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of materials present in this region");
 

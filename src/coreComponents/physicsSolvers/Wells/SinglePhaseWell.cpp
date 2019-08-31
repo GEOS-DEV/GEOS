@@ -62,14 +62,14 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::connRateString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaConnRateString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::connRateString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaConnRateString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
-    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
+    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
+    perforationData->registerWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
   });
 
 }

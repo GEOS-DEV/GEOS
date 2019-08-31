@@ -102,16 +102,16 @@ ManagedGroup::CatalogInterface::CatalogType & ManagedGroup::GetCatalog()
   return catalog;
 }
 
-WrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+WrapperBase * ManagedGroup::registerWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda1( type,
                                     [this, &name]( auto a ) -> WrapperBase *
       {
-        return this->RegisterViewWrapper< decltype(a) >( name );
+        return this->registerWrapper< decltype(a) >( name );
       } );
 }
 
-WrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
+WrapperBase * ManagedGroup::registerWrapper( string const & name,
                                                      WrapperBase * const wrapper )
 {
   return m_wrappers.insert( name,
@@ -119,7 +119,7 @@ WrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
                             true );
 }
 
-void ManagedGroup::DeregisterViewWrapper( string const & name )
+void ManagedGroup::deregisterWrapper( string const & name )
 {
   m_sidreGroup->destroyView( name );
   m_wrappers.erase( name );

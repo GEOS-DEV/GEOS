@@ -233,7 +233,7 @@ public:
   T & AddProperty( string const & propertyName )
   {
     m_externalPropertyNames.push_back( propertyName );
-    return this->RegisterViewWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName )->reference();
   }
 
   template< typename LAMBDA >
@@ -241,8 +241,8 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::WrapperBase * vw = this->getWrapperBase( externalPropertyName );
-      lambda( vw );
+      const dataRepository::WrapperBase * wrapper = this->getWrapperBase( externalPropertyName );
+      lambda( wrapper );
     }
   }
 

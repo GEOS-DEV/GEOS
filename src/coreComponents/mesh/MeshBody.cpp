@@ -32,7 +32,7 @@ MeshBody::MeshBody( string const & name,
   ManagedGroup(name,parent),
   m_globalLengthScale(0)
 {
-  RegisterViewWrapper<integer>( viewKeys.meshLevels );
+  registerWrapper<integer>( viewKeys.meshLevels );
 }
 
 MeshBody::~MeshBody()

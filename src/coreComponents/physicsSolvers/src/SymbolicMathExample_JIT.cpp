@@ -138,7 +138,7 @@ void SymbolicMathExample_JIT::Initialize( ManagedGroup * const problemManager )
     else
     {
       GEOS_LOG("Target view wrapper is not present..  Initializing " << targetObjectStr << "/" << targetName);
-      targetObject->RegisterViewWrapper<real64_array>(targetName);
+      targetObject->registerWrapper<real64_array>(targetName);
     }
   }
   else

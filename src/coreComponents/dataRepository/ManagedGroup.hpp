@@ -78,7 +78,7 @@ public:
   using subGroupMap = MappedVector< ManagedGroup, ManagedGroup *, keyType, indexType >;
 
   /// type of the MappedVector to use for the collection of wrappers.
-  using viewWrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
+  using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
 
   /**
    * @name constructors, destructor, copy, move, assignments
@@ -621,7 +621,7 @@ public:
   ///@}
 
   /**
-   * @name FUNCTION GROUP for forViewWrappers()
+   * @name FUNCTION GROUP for forWrappers()
    * @brief These functions apply the specified lambda function to a Wrapper if the Wrapper can be
    *        casted to the templated type/s.
    * @tparam TYPE The first type that will be used in the attempted casting of Wrapper.
@@ -638,7 +638,7 @@ public:
    */
   ///@{
   template< typename LAMBDA >
-  void forViewWrappers( LAMBDA lambda )
+  void forWrappers( LAMBDA lambda )
   {
     for( auto & wrapperIter : m_wrappers )
     {
@@ -647,7 +647,7 @@ public:
   }
 
   template< typename LAMBDA >
-  void forViewWrappers( LAMBDA lambda ) const
+  void forWrappers( LAMBDA lambda ) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
@@ -656,7 +656,7 @@ public:
   }
 
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
-  void forViewWrappers( LAMBDA lambda )
+  void forWrappers( LAMBDA lambda )
   {
     for( auto & wrapperIter : m_wrappers )
     {
@@ -666,7 +666,7 @@ public:
   }
 
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
-  void forViewWrappers( LAMBDA lambda ) const
+  void forWrappers( LAMBDA lambda ) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
@@ -686,36 +686,36 @@ public:
 
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
-  RegisterViewWrapper( std::string const & name,
-                       viewWrapperMap::KeyIndex::index_type * const rkey = nullptr );
+  registerWrapper( std::string const & name,
+                       wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
-  RegisterViewWrapper( ManagedGroup::viewWrapperMap::KeyIndex & viewKey );
+  registerWrapper( ManagedGroup::wrapperMap::KeyIndex & viewKey );
 
 
-  WrapperBase * RegisterViewWrapper( std::string const & name,
+  WrapperBase * registerWrapper( std::string const & name,
                                          rtTypes::TypeIDs const & type );
 
   template< typename T >
-  Wrapper< T > * RegisterViewWrapper( std::string const & name,
+  Wrapper< T > * registerWrapper( std::string const & name,
                                           std::unique_ptr< T > newObject );
 
   template< typename T >
-  Wrapper< T > * RegisterViewWrapper( std::string const & name,
+  Wrapper< T > * registerWrapper( std::string const & name,
                                           T * newObject,
                                           bool takeOwnership );
 
   /**
-   * @brief Register a ViewWrapper into this ManagedGroup
+   * @brief Register a Wrapper into this ManagedGroup
    * @param[in] name the key name to use for this new wrapper
    * @param[in] wrapper a pointer to the new wrapper
-   * @return a ViewWrapperBase pointer that holds the address of the new wrapper
+   * @return a WrapperBase pointer that holds the address of the new wrapper
    */
-  WrapperBase * RegisterViewWrapper( string const & name,
+  WrapperBase * registerWrapper( string const & name,
                                          WrapperBase * const wrapper );
 
-  void DeregisterViewWrapper( string const & name );
+  void deregisterWrapper( string const & name );
 
 
   void PrintDataHierarchy( integer indent = 0 );
@@ -802,10 +802,10 @@ public:
   WrapperBase * getWrapperBase( std::string const & name )
   { return m_wrappers[name]; }
 
-  WrapperBase const * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex ) const
+  WrapperBase const * getWrapperBase( wrapperMap::KeyIndex const & keyIndex ) const
   { return m_wrappers[keyIndex]; }
 
-  WrapperBase * getWrapperBase( viewWrapperMap::KeyIndex const & keyIndex )
+  WrapperBase * getWrapperBase( wrapperMap::KeyIndex const & keyIndex )
   { return m_wrappers[keyIndex]; }
 
 
@@ -989,12 +989,12 @@ public:
   }
 
 
-  viewWrapperMap const & wrappers() const
+  wrapperMap const & wrappers() const
   {
     return m_wrappers;
   }
 
-  viewWrapperMap & wrappers()
+  wrapperMap & wrappers()
   {
     return m_wrappers;
   }
@@ -1046,7 +1046,7 @@ private:
   ManagedGroup * m_parent = nullptr;
 
   /// the container for all wrappers
-  viewWrapperMap m_wrappers;
+  wrapperMap m_wrappers;
 
   /// The container for all sub-groups
   subGroupMap m_subGroups;
@@ -1067,7 +1067,7 @@ private:
 };
 
 using GroupKey = ManagedGroup::subGroupMap::KeyIndex;
-using ViewKey = ManagedGroup::viewWrapperMap::KeyIndex;
+using ViewKey = ManagedGroup::wrapperMap::KeyIndex;
 
 
 
@@ -1097,7 +1097,7 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
 
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * ManagedGroup::RegisterViewWrapper( std::string const & name,
+Wrapper< TBASE > * ManagedGroup::registerWrapper( std::string const & name,
                                                           ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name,
@@ -1117,10 +1117,10 @@ Wrapper< TBASE > * ManagedGroup::RegisterViewWrapper( std::string const & name,
 }
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
+Wrapper< TBASE > * ManagedGroup::registerWrapper( ViewKey & viewKey )
 {
   ViewKey::index_type index;
-  Wrapper< TBASE > * const rval = RegisterViewWrapper< T, TBASE >( viewKey.Key(), &index );
+  Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.Key(), &index );
   viewKey.setIndex( index );
 
   return rval;
@@ -1128,7 +1128,7 @@ Wrapper< TBASE > * ManagedGroup::RegisterViewWrapper( ViewKey & viewKey )
 
 
 template< typename T >
-Wrapper< T > * ManagedGroup::RegisterViewWrapper( std::string const & name,
+Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
                                                       std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
@@ -1146,7 +1146,7 @@ Wrapper< T > * ManagedGroup::RegisterViewWrapper( std::string const & name,
 
 
 template< typename T >
-Wrapper< T > * ManagedGroup::RegisterViewWrapper( std::string const & name,
+Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
                                                       T * newObject,
                                                       bool takeOwnership )
 {

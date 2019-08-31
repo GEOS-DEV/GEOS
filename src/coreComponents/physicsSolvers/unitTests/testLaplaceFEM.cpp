@@ -169,7 +169,7 @@ protected:
 
     dataRepository::ManagedGroup * commandLine =
       problemManager.GetGroup<dataRepository::ManagedGroup>( problemManager.groupKeys.commandLine );
-    commandLine->RegisterViewWrapper<integer>( problemManager.viewKeys.zPartitionsOverride.Key() )->
+    commandLine->registerWrapper<integer>( problemManager.viewKeys.zPartitionsOverride.Key() )->
       setApplyDefaultValue(mpiSize);
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );

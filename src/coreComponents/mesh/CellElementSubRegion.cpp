@@ -29,19 +29,19 @@ using namespace constitutive;
 CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * const parent ):
   CellBlock( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
+  registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
     setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::constitutiveMapString,
+  registerWrapper( viewKeyStruct::constitutiveMapString,
                        &m_constitutiveMapView, 0);
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0);
 
 
-  RegisterViewWrapper( viewKeyStruct::constitutivePointVolumeFraction,
+  registerWrapper( viewKeyStruct::constitutivePointVolumeFraction,
                        &m_constitutivePointVolumeFraction, 0);
 
-  RegisterViewWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0)->setSizedFromParent(1);
 
 }
 
@@ -59,17 +59,17 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->nodeList() = source->nodeList();
   this->m_localToGlobalMap = source->m_localToGlobalMap;
   this->ConstructGlobalToLocalMap();
-  source->forExternalProperties([&]( const dataRepository::WrapperBase * vw )->void
+  source->forExternalProperties([&]( const dataRepository::WrapperBase * wrapper )->void
   {
-    std::type_index typeIndex = std::type_index( vw->get_typeid());
+    std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
                                     [&]( auto type, auto baseType ) -> void
     {
       using fieldType = decltype(type);
-      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *vw );
+      const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
       const fieldType & fieldref = field.reference();
-      this->RegisterViewWrapper( vw->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+      this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
     });
   });
 }

@@ -38,15 +38,15 @@ PerforationData::PerforationData(string const & name, ManagedGroup * const paren
   : ObjectManagerBase(name, parent),
     m_numPerforationsGlobal(0)
 {
-  RegisterViewWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal, false );
+  registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal, false );
  
-  RegisterViewWrapper( viewKeyStruct::reservoirElementRegionString,    &m_toMeshElements.m_toElementRegion,    false );
-  RegisterViewWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion, false );
-  RegisterViewWrapper( viewKeyStruct::reservoirElementIndexString,     &m_toMeshElements.m_toElementIndex,     false );
+  registerWrapper( viewKeyStruct::reservoirElementRegionString,    &m_toMeshElements.m_toElementRegion,    false );
+  registerWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion, false );
+  registerWrapper( viewKeyStruct::reservoirElementIndexString,     &m_toMeshElements.m_toElementIndex,     false );
 
-  RegisterViewWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
-  RegisterViewWrapper( viewKeyStruct::locationString, &m_location, false );
-  RegisterViewWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
+  registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
+  registerWrapper( viewKeyStruct::locationString, &m_location, false );
+  registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
 }
 
 PerforationData::~PerforationData()

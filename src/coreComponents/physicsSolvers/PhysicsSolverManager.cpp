@@ -40,7 +40,7 @@ PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
 {
   setInputFlags(InputFlags::REQUIRED);
 
-  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
+  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,0})->
     setInputFlag(InputFlags::OPTIONAL);
 }

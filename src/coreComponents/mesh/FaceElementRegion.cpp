@@ -141,7 +141,7 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   for( auto const & setIter : faceManager->sets()->wrappers() )
   {
     set<localIndex> const & faceSet = faceManager->sets()->getReference<set<localIndex> >( setIter.first );
-    set<localIndex> & faceElementSet = subRegion->sets()->RegisterViewWrapper< set<localIndex> >( setIter.first )->reference();
+    set<localIndex> & faceElementSet = subRegion->sets()->registerWrapper< set<localIndex> >( setIter.first )->reference();
     for( localIndex a=0 ; a<faceMap.size(0) ; ++a )
     {
       localIndex const faceIndex = faceMap[a][0];
