@@ -35,7 +35,7 @@ namespace dataRepository
 #ifdef GEOSX_USE_ATK
 template< typename T >
 Wrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string & name,
-                                               int sfp, const array1d< T > & data )
+                                           int sfp, const array1d< T > & data )
 {
   Wrapper< array1d< T > > * view = parent->registerWrapper< array1d< T > >( name );
   view->setSizedFromParent( sfp );
@@ -76,7 +76,7 @@ void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1
 
 template< typename T >
 Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string & name,
-                                                 int sfp, const array2d< T > & data )
+                                             int sfp, const array2d< T > & data )
 {
   Wrapper< array2d< T > > * view = parent->registerWrapper< array2d< T > >( name );
   view->setSizedFromParent( sfp );
@@ -133,7 +133,7 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 template< typename T >
 Wrapper< set< T > > * createSetView( ManagedGroup * parent, const string & name,
-                                         localIndex sfp, const set< T > & data )
+                                     localIndex sfp, const set< T > & data )
 {
   Wrapper< set< T > > * view = parent->registerWrapper< set< T > >( name );
   view->setSizedFromParent( int(sfp));
@@ -167,7 +167,7 @@ void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< 
 
 
 Wrapper< string > * createStringView( ManagedGroup * parent, const string & name,
-                                          int sfp, const string & str )
+                                      int sfp, const string & str )
 {
   Wrapper< string > * view = parent->registerWrapper< string >( name );
   view->setSizedFromParent( sfp );
@@ -196,7 +196,7 @@ void checkStringView( const Wrapper< string > * view, const int sfp, const strin
 
 
 Wrapper< string_array > * createStringArrayView( ManagedGroup * parent, const string & name,
-                                                     int sfp, const string_array & arr )
+                                                 int sfp, const string_array & arr )
 {
   Wrapper< string_array > * view = parent->registerWrapper< string_array >( name );
   view->setSizedFromParent( sfp );
@@ -232,7 +232,7 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 
 template< typename T >
 Wrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
-                                     int sfp, const T & value ) {
+                                 int sfp, const T & value ) {
   Wrapper< T > * view = parent->registerWrapper< T >( name );
   view->setSizedFromParent( sfp );
 

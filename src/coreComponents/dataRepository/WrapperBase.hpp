@@ -66,7 +66,7 @@ public:
    * @param[in] parent pointer to ManagedGroup that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
-                            ManagedGroup * const parent );
+                        ManagedGroup * const parent );
 
 
   /**
@@ -164,7 +164,7 @@ public:
    * values of name and parent to differentiate itself from the source.
    */
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                    ManagedGroup * const parent ) = 0;
+                                                ManagedGroup * const parent ) = 0;
 
   virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
 

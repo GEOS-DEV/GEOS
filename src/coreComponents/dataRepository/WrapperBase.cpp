@@ -31,7 +31,7 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( std::string const & name,
-                                  ManagedGroup * const parent ):
+                          ManagedGroup * const parent ):
   m_name( name ),
   m_parent( parent ),
   m_sizedFromParent( 1 ),
