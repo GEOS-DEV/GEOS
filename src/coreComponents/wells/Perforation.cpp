@@ -30,8 +30,8 @@ namespace geosx
 
 using namespace dataRepository;
 
-Perforation::Perforation(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent),
+Perforation::Perforation(string const & name, Group * const parent)
+  : Group(name, parent),
     m_distanceFromHead(0),
     m_transmissibility(0)
 {

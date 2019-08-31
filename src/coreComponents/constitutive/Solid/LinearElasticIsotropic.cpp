@@ -31,7 +31,7 @@ namespace constitutive
 
 
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
+LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
@@ -78,7 +78,7 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
 
 void
 LinearElasticIsotropic::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -100,7 +100,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 }
 
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -178,6 +178,6 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   m_deviatorStress[k][q] = temp;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

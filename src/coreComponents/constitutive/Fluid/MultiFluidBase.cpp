@@ -31,7 +31,7 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-MultiFluidBase::MultiFluidBase( std::string const & name, ManagedGroup * const parent )
+MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
     m_useMass( false )
 {
@@ -107,7 +107,7 @@ void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPt
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
 }
 
-void MultiFluidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void MultiFluidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

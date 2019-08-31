@@ -31,7 +31,7 @@ namespace constitutive
 
 
 
-LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, ManagedGroup * const parent ):
+LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultStiffness{},
   m_stiffness{}
@@ -168,7 +168,7 @@ LinearElasticAnisotropic::~LinearElasticAnisotropic()
 
 void
 LinearElasticAnisotropic::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -183,7 +183,7 @@ LinearElasticAnisotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_stiffness = m_stiffness;
 }
 
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -238,6 +238,6 @@ void LinearElasticAnisotropic::GetStiffness( localIndex const k, real64 c[6][6] 
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticAnisotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

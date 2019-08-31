@@ -26,7 +26,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-CellElementSubRegion::CellElementSubRegion( string const & name, ManagedGroup * const parent ):
+CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   CellBlock( name, parent )
 {
   registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0)->
@@ -87,7 +87,7 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 void CellElementSubRegion::MaterialPassThru( string const & matName,
                                            string const & setName,
                                            set<localIndex> & materialSet,
-                                           ManagedGroup * material )
+                                           Group * material )
 {}
 
 

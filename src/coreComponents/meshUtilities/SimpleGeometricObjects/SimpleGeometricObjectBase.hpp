@@ -27,8 +27,8 @@
 #define SIMPLEGEOMETRICOBJECTS_H_
 
 //#include "common/Common.h"
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "ObjectCatalog.hpp"
 
 class Function;
@@ -44,12 +44,12 @@ string const geometricObjects("GeometricObjects");
 }
 
 
-class SimpleGeometricObjectBase : public dataRepository::ManagedGroup
+class SimpleGeometricObjectBase : public dataRepository::Group
 {
 public:
 
   explicit SimpleGeometricObjectBase( std::string const & name,
-                                      ManagedGroup * const parent );
+                                      Group * const parent );
 
   virtual ~SimpleGeometricObjectBase();
 
@@ -57,7 +57,7 @@ public:
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 };

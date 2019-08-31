@@ -45,7 +45,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  WellElementRegion( string const & name, ManagedGroup * const parent );
+  WellElementRegion( string const & name, Group * const parent );
 
   WellElementRegion() = delete;
   virtual ~WellElementRegion() override;
@@ -90,7 +90,7 @@ public:
 
   
   // not implemented, this task is performed in GenerateWell
-  virtual void GenerateMesh( ManagedGroup const * ) override {}
+  virtual void GenerateMesh( Group const * ) override {}
 
  /**
   * @brief Build the local well elements and perforations from global well geometry

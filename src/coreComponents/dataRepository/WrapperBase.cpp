@@ -20,7 +20,7 @@
 
 #include "WrapperBase.hpp"
 
-#include "ManagedGroup.hpp"
+#include "Group.hpp"
 #include "RestartFlags.hpp"
 
 
@@ -31,7 +31,7 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   m_name( name ),
   m_parent( parent ),
   m_sizedFromParent( 1 ),
@@ -92,7 +92,7 @@ int WrapperBase::setTotalviewDisplay() const
   //std::cout<<"exectuing WrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
   TV_ttf_add_row( "m_name", totalview::typeName< string >().c_str(), &m_name );
-  TV_ttf_add_row( "m_parent", totalview::typeName< ManagedGroup >().c_str(), m_parent );
+  TV_ttf_add_row( "m_parent", totalview::typeName< Group >().c_str(), m_parent );
   TV_ttf_add_row( "m_sizedFromParent", "int", &m_sizedFromParent );
   TV_ttf_add_row( "m_restart_flags", totalview::typeName< RestartFlags >().c_str(), &m_restart_flags );
   TV_ttf_add_row( "m_plotLevel", totalview::typeName< PlotLevel >().c_str(), &m_plotLevel );

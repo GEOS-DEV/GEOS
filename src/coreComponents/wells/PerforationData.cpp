@@ -34,7 +34,7 @@ namespace geosx
 
 using namespace dataRepository;
 
-PerforationData::PerforationData(string const & name, ManagedGroup * const parent)
+PerforationData::PerforationData(string const & name, Group * const parent)
   : ObjectManagerBase(name, parent),
     m_numPerforationsGlobal(0)
 {
@@ -149,7 +149,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
   //DebugLocalPerforations();
 }
  
-void PerforationData::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void PerforationData::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   for (localIndex iperf = 0; iperf < size(); ++iperf)
   {

@@ -24,7 +24,7 @@
 #ifndef GEOSX_CORECOMPONENTS_WELLS_INTERNALWELLGENERATOR_HPP_
 #define GEOSX_CORECOMPONENTS_WELLS_INTERNALWELLGENERATOR_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "meshUtilities/MeshGeneratorBase.hpp"
 
 namespace geosx
@@ -61,7 +61,7 @@ public:
   };
 
   InternalWellGenerator( const std::string& name,
-                         ManagedGroup * const parent );
+                         Group * const parent );
 
   /**
    * @brief default destructor
@@ -76,7 +76,7 @@ public:
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition& domain ) override {}
 
-  virtual ManagedGroup * CreateChild( string const & childKey, 
+  virtual Group * CreateChild( string const & childKey, 
                                       string const & childName ) override;
 
 
@@ -94,7 +94,7 @@ public:
                                              const int size) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const domain ) override {}
 
 
      

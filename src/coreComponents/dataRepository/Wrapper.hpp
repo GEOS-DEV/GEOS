@@ -74,7 +74,7 @@ public:
    * @param parent parent group which owns the Wrapper
    */
   explicit Wrapper( std::string const & name,
-                    ManagedGroup * const parent ):
+                    Group * const parent ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
     m_data( new T() ),
@@ -94,7 +94,7 @@ public:
    * @param object object that is being wrapped by the Wrapper
    */
   explicit Wrapper( std::string const & name,
-                    ManagedGroup * const parent,
+                    Group * const parent,
                     std::unique_ptr< T > object ):
     WrapperBase( name, parent ),
     m_ownsData( true ),
@@ -116,7 +116,7 @@ public:
    * @param takeOwnership to indicate whether or not to take ownership of \p object
    */
   explicit Wrapper( std::string const & name,
-                    ManagedGroup * const parent,
+                    Group * const parent,
                     T * object,
                     bool takeOwnership ):
     WrapperBase( name, parent ),
@@ -200,14 +200,14 @@ public:
    */
   template< typename TNEW >
   static std::unique_ptr< WrapperBase > Factory( std::string const & name,
-                                                 ManagedGroup * const parent )
+                                                 Group * const parent )
   {
     std::unique_ptr< TNEW > newObject = std::make_unique< TNEW >();
     return std::make_unique< Wrapper< T > >( name, parent, std::move( newObject ));
   }
 
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                ManagedGroup * const parent ) override
+                                                Group * const parent ) override
   {
     std::unique_ptr< WrapperBase >
     clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data, false );

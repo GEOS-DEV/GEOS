@@ -18,7 +18,7 @@ namespace constitutive
 {
 
 template< typename BASE >
-PoroElastic<BASE>::PoroElastic( string const & name, ManagedGroup * const parent ):
+PoroElastic<BASE>::PoroElastic( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_compressibility(),
   m_referencePressure(),
@@ -73,7 +73,7 @@ void PoroElastic<BASE>::PostProcessInput()
 
 template< typename BASE >
 void PoroElastic<BASE>::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -92,7 +92,7 @@ void PoroElastic<BASE>::DeliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
   BASE::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -106,8 +106,8 @@ void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::ManagedGroup *
 typedef PoroElastic<LinearElasticIsotropic> PoroLinearElasticIsotropic;
 typedef PoroElastic<LinearElasticAnisotropic> PoroLinearElasticAnisotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, ManagedGroup * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -31,8 +31,8 @@ namespace geosx
 
 using namespace dataRepository;
 
-WellControls::WellControls(string const & name, ManagedGroup * const parent)
-  : ManagedGroup(name, parent),
+WellControls::WellControls(string const & name, Group * const parent)
+  : Group(name, parent),
     m_typeString(""),
     m_type( Type::PRODUCER ),
     m_refWellElemDepth( 0.0 ),
@@ -178,7 +178,7 @@ void WellControls::PostProcessInput()
   }
 }
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if (GetType() == Type::PRODUCER && m_targetRate > 0.0)

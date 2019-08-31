@@ -20,9 +20,9 @@
 
 #include <mpi.h>
 
-#include "../Wrapper.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/Wrapper.hpp"
 #include "common/DataTypes.hpp"
 
 
@@ -46,7 +46,7 @@ TEST( testSidreBasic, testSidreBasic )
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new ManagedGroup directly below the sidre::DataStore root. */
-  ManagedGroup * root = new ManagedGroup( std::string( "data" ), nullptr );
+  Group * root = new Group( std::string( "data" ), nullptr );
   root->resize( group_size );
 
   /* Create a Wrapper which creates the associated sidre::View */
@@ -88,7 +88,7 @@ TEST( testSidreBasic, testSidreBasic )
 
   /* Restore the sidre tree */
   SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_GEOSX );
-  root = new ManagedGroup( std::string( "data" ), nullptr );
+  root = new Group( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
   Wrapper< globalIndex_array > * data_view_new = root->registerWrapper< globalIndex_array >( "globalIndex_data" );

@@ -23,8 +23,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-QuadratureRuleManager::QuadratureRuleManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+QuadratureRuleManager::QuadratureRuleManager( string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -35,7 +35,7 @@ QuadratureRuleManager::~QuadratureRuleManager()
 }
 
 
-ManagedGroup * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
+Group * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<QuadratureBase>( childName, std::move(quadrature) );

@@ -51,7 +51,7 @@ static ExponentApproximationType stringToExponentType( string const & model )
   return ExponentApproximationType::Full;
 }
 
-CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, ManagedGroup * const parent ):
+CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, Group * const parent ):
   SingleFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
@@ -92,7 +92,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
-void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SingleFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
@@ -103,7 +103,7 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Man
 
 void
 CompressibleSinglePhaseFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -183,7 +183,7 @@ void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::string const &, Group * const )
 
 } /* namespace constitutive */
 

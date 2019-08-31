@@ -45,7 +45,7 @@ using namespace dataRepository;
 
 
 TableFunction::TableFunction( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   FunctionBase( name, parent ),
   m_coordinates(),
   m_values(),
@@ -210,6 +210,6 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
   return weightedValue;
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

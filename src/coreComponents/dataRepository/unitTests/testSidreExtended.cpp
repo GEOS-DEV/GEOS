@@ -21,11 +21,11 @@
 
 #include <mpi.h>
 
-#include "../Wrapper.hpp"
-#include "Logger.hpp"
-#include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/SidreWrapper.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/Wrapper.hpp"
+#include "Logger.hpp"
 
 namespace geosx
 {
@@ -34,7 +34,7 @@ namespace dataRepository
 
 #ifdef GEOSX_USE_ATK
 template< typename T >
-Wrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string & name,
+Wrapper< array1d< T > > * createArrayView( Group * parent, const string & name,
                                            int sfp, const array1d< T > & data )
 {
   Wrapper< array1d< T > > * view = parent->registerWrapper< array1d< T > >( name );
@@ -75,7 +75,7 @@ void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1
 }
 
 template< typename T >
-Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string & name,
+Wrapper< array2d< T > > * createArray2dView( Group * parent, const string & name,
                                              int sfp, const array2d< T > & data )
 {
   Wrapper< array2d< T > > * view = parent->registerWrapper< array2d< T > >( name );
@@ -132,7 +132,7 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 
 template< typename T >
-Wrapper< set< T > > * createSetView( ManagedGroup * parent, const string & name,
+Wrapper< set< T > > * createSetView( Group * parent, const string & name,
                                      localIndex sfp, const set< T > & data )
 {
   Wrapper< set< T > > * view = parent->registerWrapper< set< T > >( name );
@@ -166,7 +166,7 @@ void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< 
 }
 
 
-Wrapper< string > * createStringView( ManagedGroup * parent, const string & name,
+Wrapper< string > * createStringView( Group * parent, const string & name,
                                       int sfp, const string & str )
 {
   Wrapper< string > * view = parent->registerWrapper< string >( name );
@@ -195,7 +195,7 @@ void checkStringView( const Wrapper< string > * view, const int sfp, const strin
 }
 
 
-Wrapper< string_array > * createStringArrayView( ManagedGroup * parent, const string & name,
+Wrapper< string_array > * createStringArrayView( Group * parent, const string & name,
                                                  int sfp, const string_array & arr )
 {
   Wrapper< string_array > * view = parent->registerWrapper< string_array >( name );
@@ -231,7 +231,7 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 
 
 template< typename T >
-Wrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
+Wrapper< T > * createScalarView( Group * parent, const string & name,
                                  int sfp, const T & value ) {
   Wrapper< T > * view = parent->registerWrapper< T >( name );
   view->setSizedFromParent( sfp );
@@ -266,7 +266,7 @@ TEST( testSidreExtended, testSidreExtended )
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new ManagedGroup directly below the sidre::DataStore root. */
-  ManagedGroup * root = new ManagedGroup( std::string( "data" ), nullptr );
+  Group * root = new Group( std::string( "data" ), nullptr );
   root->resize( group_size );
 
   /* Create a new globalIndex_array Wrapper. */
@@ -299,7 +299,7 @@ TEST( testSidreExtended, testSidreExtended )
   createStringArrayView( root, view_restart_name, view_restart_sfp, view_restart_arr );
 
   /* Create a new group. */
-  ManagedGroup * strings_group = root->RegisterGroup( "strings" );
+  Group * strings_group = root->RegisterGroup( "strings" );
   strings_group->resize( group_size + 1 );
 
   /* Create a new string Wrapper. */
@@ -317,7 +317,7 @@ TEST( testSidreExtended, testSidreExtended )
                     view_goodbye_str );
 
   /* Create a new group. */
-  ManagedGroup * real64_group = root->RegisterGroup( "real64" );
+  Group * real64_group = root->RegisterGroup( "real64" );
   real64_group->resize( group_size + 2 );
 
   /* Create a new real64_array Wrapper. */
@@ -345,7 +345,7 @@ TEST( testSidreExtended, testSidreExtended )
                    view_real642_data );
 
   /* Create a new group. */
-  ManagedGroup * mixed_group = real64_group->RegisterGroup( "mixed" );
+  Group * mixed_group = real64_group->RegisterGroup( "mixed" );
   mixed_group->resize( group_size + 3 );
 
   /* Create a new localIndex_array Wrapper. */
@@ -457,22 +457,22 @@ TEST( testSidreExtended, testSidreExtended )
 
   /* Restore the sidre tree */
   SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_WORLD );
-  root = new ManagedGroup( std::string( "data" ), nullptr );
+  root = new Group( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
   Wrapper< globalIndex_array > * view_globalIndex_new = root->registerWrapper< globalIndex_array >( view_globalIndex_name );
   Wrapper< string > * view_hope_new = root->registerWrapper< string >( view_hope_name );
   Wrapper< string_array > * view_restart_new = root->registerWrapper< string_array >( view_restart_name );
 
-  ManagedGroup * strings_group_new = root->RegisterGroup( "strings" );
+  Group * strings_group_new = root->RegisterGroup( "strings" );
   Wrapper< string > * view_hello_new = strings_group_new->registerWrapper< string >( view_hello_name );
   Wrapper< string > * view_goodbye_new = strings_group_new->registerWrapper< string >( view_goodbye_name );
 
-  ManagedGroup * real64_group_new = root->RegisterGroup( "real64" );
+  Group * real64_group_new = root->RegisterGroup( "real64" );
   Wrapper< real64_array > * view_real641_new = real64_group_new->registerWrapper< real64_array >( view_real641_name );
   Wrapper< real64_array > * view_real642_new = real64_group_new->registerWrapper< real64_array >( view_real642_name );
 
-  ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup( "mixed" );
+  Group * mixed_group_new = real64_group_new->RegisterGroup( "mixed" );
   Wrapper< localIndex_array > * view_localIndex_new = mixed_group_new->registerWrapper< localIndex_array >( view_localIndex_name );
   Wrapper< real32_array > * view_real32_new = mixed_group_new->registerWrapper< real32_array >( view_real32_name );
   Wrapper< string > * view_what_new = mixed_group_new->registerWrapper< string >( view_what_name );

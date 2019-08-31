@@ -33,7 +33,7 @@ using namespace dataRepository;
 //using namespace constitutive;
 
 
-ElementRegionBase::ElementRegionBase( string const & name, ManagedGroup * const parent ):
+ElementRegionBase::ElementRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_numericalMethod()  //,
 //    m_toNodesRelation(this->registerWrapper< array2d<integer>

@@ -71,11 +71,11 @@ using indexType = localIndex;
  * class that encapsulates and manages a collection of DataObjects. Can be
  * considered a "node" in a hierarchy of managers that represent physical groupings of data/
  */
-class ManagedGroup
+class Group
 {
 public:
   /// the type of MappedVector to use for the subGroup collection
-  using subGroupMap = MappedVector< ManagedGroup, ManagedGroup *, keyType, indexType >;
+  using subGroupMap = MappedVector< Group, Group *, keyType, indexType >;
 
   /// type of the MappedVector to use for the collection of wrappers.
   using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
@@ -89,27 +89,27 @@ public:
    * @param[in] name the name of this object manager
    * @param[in]
    */
-  explicit ManagedGroup( std::string const & name,
-                         ManagedGroup * const parent );
+  explicit Group( std::string const & name,
+                  Group * const parent );
 
 
   /**
    * @brief move constructor
    * @param[in] source source ManagedGroup
    */
-  ManagedGroup( ManagedGroup && source );
+  Group( Group && source );
 
   /**
    *
    */
-  virtual ~ManagedGroup();
+  virtual ~Group();
 
 
 
-  ManagedGroup() = delete;
-  ManagedGroup( ManagedGroup const & source ) = delete;
-  ManagedGroup & operator=( ManagedGroup const & ) = delete;
-  ManagedGroup & operator=( ManagedGroup && ) = delete;
+  Group() = delete;
+  Group( Group const & source ) = delete;
+  Group & operator=( Group const & ) = delete;
+  Group & operator=( Group && ) = delete;
 
   ///@}
 
@@ -119,7 +119,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ManagedGroup, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< Group, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
   ///@}
 
@@ -153,8 +153,8 @@ public:
    * data repository takes ownership of the object that is passed in through
    * a unique_ptr.
    */
-  template< typename T = ManagedGroup >
-  T * RegisterGroup( std::string const & name, std::unique_ptr< ManagedGroup > newObject );
+  template< typename T = Group >
+  T * RegisterGroup( std::string const & name, std::unique_ptr< Group > newObject );
 
   /**
    *
@@ -171,7 +171,7 @@ public:
    * ManagedGroup. The data repository takes ownership of the new object if
    * \p takeOwnership is true.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * RegisterGroup( std::string const & name,
                      T * newObject,
                      bool const takeOwnership );
@@ -186,7 +186,7 @@ public:
    * derived from ManagedGroup and registers it as a subgroup of this
    * ManagedGroup. The data repository takes ownership of the new object.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
@@ -203,7 +203,7 @@ public:
    * derived from ManagedGroup and registers it as a subgroup of this
    * ManagedGroup. The data repository takes ownership of the new object.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
     T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
@@ -227,7 +227,7 @@ public:
    * object.
    *
    */
-  template< typename T = ManagedGroup, typename TBASE = ManagedGroup >
+  template< typename T = Group, typename TBASE = Group >
   T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
@@ -241,7 +241,7 @@ public:
    * @return a    Pointer to \p T that refers to the downcasted group
    */
   template< typename T >
-  static T group_cast( ManagedGroup * group )
+  static T group_cast( Group * group )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< T >( group );
@@ -257,7 +257,7 @@ public:
    * @return a    Pointer to \p T that refers to the downcasted group
    */
   template< typename T >
-  static T group_cast( ManagedGroup const * group )
+  static T group_cast( Group const * group )
   {
 #ifdef USE_DYNAMIC_CASTING
     return dynamic_cast< T >( group );
@@ -303,7 +303,7 @@ public:
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * GetGroup( localIndex index )
   {
     return group_cast< T * >( m_subGroups[index] );
@@ -315,7 +315,7 @@ public:
    * @return A pointer to const \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T const * GetGroup( localIndex index ) const
   {
     return group_cast< T const * >( m_subGroups[index] );
@@ -327,7 +327,7 @@ public:
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * GetGroup( string const & name )
   {
     return group_cast< T * >( m_subGroups[name] );
@@ -339,7 +339,7 @@ public:
    * @return A pointer to const \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T const * GetGroup( string const & name ) const
   {
     return group_cast< T const * >( m_subGroups[name] );
@@ -351,7 +351,7 @@ public:
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex & key )
   {
     return group_cast< T * >( m_subGroups[key] );
@@ -363,7 +363,7 @@ public:
    * @return A pointer to const \p T that refers to the group retrieved from
    *         the repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
     return group_cast< T const * >( m_subGroups[key] );
@@ -376,7 +376,7 @@ public:
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
     return group_cast< T * >( m_subGroups[key] );
@@ -389,7 +389,7 @@ public:
    * @return A pointer to const \p T that refers to the group retrieved from
    *         the repository.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
     return group_cast< T const * >( m_subGroups[key] );
@@ -400,7 +400,7 @@ public:
    * @param[in] path a unix-style string (absolute, relative paths valid)
    * @return A pointer to const \p T that refers to the target group.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T const * GetGroupByPath( string const & path ) const
   {
     // needed for getting root correctly with GetGroupByPath("/");
@@ -456,10 +456,10 @@ public:
    * @param[in] path a unix-style string (absolute, relative paths valid)
    * @return A pointer to \p T that refers to the target group.
    */
-  template< typename T = ManagedGroup >
+  template< typename T = Group >
   T * GetGroupByPath( string const & path )
   {
-    return const_cast< T * >(const_cast< ManagedGroup const * >(this)->GetGroupByPath< T >( path ));
+    return const_cast< T * >(const_cast< Group const * >(this)->GetGroupByPath< T >( path ));
   }
 
   /**
@@ -570,36 +570,36 @@ public:
    * GROUPTYPE/S list will be used to execute the lambda, and the next sub-group will be processed.
    */
   ///@{
-  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA lambda )
   {
     for( auto & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
     }
   }
 
-  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA lambda ) const
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
     }
   }
 
-  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( string_array const & subgroupNames, LAMBDA lambda )
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -607,12 +607,12 @@ public:
   }
 
 
-  template< typename GROUPTYPE = ManagedGroup, typename ... GROUPTYPES, typename LAMBDA >
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( string_array const & subgroupNames, LAMBDA lambda ) const
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< ManagedGroup, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
           {
             lambda( castedSubGroup );
           } );
@@ -677,12 +677,12 @@ public:
   ///@}
 
 
-  void Initialize( ManagedGroup * const group );
+  void Initialize( Group * const group );
 
   virtual void InitializationOrder( string_array & order );
 
 
-  void InitializePostInitialConditions( ManagedGroup * const group );
+  void InitializePostInitialConditions( Group * const group );
 
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
@@ -691,7 +691,7 @@ public:
 
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > *
-  registerWrapper( ManagedGroup::wrapperMap::KeyIndex & viewKey );
+  registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
 
 
   WrapperBase * registerWrapper( std::string const & name,
@@ -720,7 +720,7 @@ public:
 
   void PrintDataHierarchy( integer indent = 0 );
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName );
+  virtual Group * CreateChild( string const & childKey, string const & childName );
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
@@ -763,9 +763,9 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) {}
 
-  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies );
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) {}
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) {}
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;
@@ -821,7 +821,7 @@ public:
 
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > * getWrapper( LOOKUP_TYPE const & index )
-  { return const_cast< Wrapper< T > * >( const_cast< ManagedGroup const * >(this)->getWrapper< T >( index ) ); }
+  { return const_cast< Wrapper< T > * >( const_cast< Group const * >(this)->getWrapper< T >( index ) ); }
 
   template< typename T >
   Wrapper< T > const * getWrapper( char const * const key ) const
@@ -880,7 +880,7 @@ public:
 
   template< typename T, typename WRAPPEDTYPE=T, typename LOOKUP_TYPE >
   T & getReference( LOOKUP_TYPE const & lookup )
-  { return const_cast< T & >( const_cast< const ManagedGroup * >(this)->template getReference< T, WRAPPEDTYPE, LOOKUP_TYPE >( lookup ) ); }
+  { return const_cast< T & >( const_cast< const Group * >(this)->template getReference< T, WRAPPEDTYPE, LOOKUP_TYPE >( lookup ) ); }
 
   template< typename T, typename WRAPPEDTYPE=T >
   T const & getReference( char const * const name ) const
@@ -888,7 +888,7 @@ public:
 
   template< typename T, typename WRAPPEDTYPE=T >
   T & getReference( char const * const name )
-  { return const_cast< T & >( const_cast< const ManagedGroup * >(this)->getReference< T, WRAPPEDTYPE >( name ) ); }
+  { return const_cast< T & >( const_cast< const Group * >(this)->getReference< T, WRAPPEDTYPE >( name ) ); }
 
 
 
@@ -906,7 +906,7 @@ public:
 
   template< typename T, typename LOOKUP_TYPE >
   T * getPointer( LOOKUP_TYPE const & lookup )
-  { return const_cast< T * >( const_cast< ManagedGroup const * >(this)->getPointer< T >( lookup )); }
+  { return const_cast< T * >( const_cast< Group const * >(this)->getPointer< T >( lookup )); }
 
   template< typename T >
   T const * getPointer( char const * const name ) const
@@ -968,12 +968,12 @@ public:
   }
 
   static axom::sidre::Group * setSidreGroup( string const & name,
-                                             ManagedGroup * const parent );
+                                             Group * const parent );
 
-  ManagedGroup * getParent()             { return m_parent; }
-  ManagedGroup const * getParent() const { return m_parent; }
+  Group * getParent()             { return m_parent; }
+  Group const * getParent() const { return m_parent; }
 
-  ManagedGroup * setParent( ManagedGroup * const parent )
+  Group * setParent( Group * const parent )
   {
     m_parent = parent;
 #ifdef GEOSX_USE_ATK
@@ -1015,7 +1015,7 @@ public:
 
   void finishReading();
 
-  void postRestartInitializationRecursive( ManagedGroup * const domain );
+  void postRestartInitializationRecursive( Group * const domain );
 
 
 protected:
@@ -1024,15 +1024,15 @@ protected:
    */
   virtual void PostProcessInput() {}
 
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) {}
+  virtual void InitializePreSubGroups( Group * const group ) {}
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) {}
+  virtual void InitializePostSubGroups( Group * const group ) {}
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const group ) {}
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group ) {}
 
-  virtual void InitializePostInitialConditions_PostSubGroups( ManagedGroup * const group ) {}
+  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group ) {}
 
-  virtual void postRestartInitialization( ManagedGroup * const domain ) {}
+  virtual void postRestartInitialization( Group * const domain ) {}
 
 private:
   /**
@@ -1043,7 +1043,7 @@ private:
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
   /// the parent of this group
-  ManagedGroup * m_parent = nullptr;
+  Group * m_parent = nullptr;
 
   /// the container for all wrappers
   wrapperMap m_wrappers;
@@ -1066,14 +1066,14 @@ private:
 
 };
 
-using GroupKey = ManagedGroup::subGroupMap::KeyIndex;
-using ViewKey = ManagedGroup::wrapperMap::KeyIndex;
+using GroupKey = Group::subGroupMap::KeyIndex;
+using ViewKey = Group::wrapperMap::KeyIndex;
 
 
 
 template< typename T >
-T * ManagedGroup::RegisterGroup( std::string const & name,
-                                 std::unique_ptr< ManagedGroup > newObject )
+T * Group::RegisterGroup( std::string const & name,
+                          std::unique_ptr< Group > newObject )
 {
 #ifdef USE_DYNAMIC_CASTING
   return dynamic_cast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
@@ -1084,9 +1084,9 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
 
 
 template< typename T >
-T * ManagedGroup::RegisterGroup( std::string const & name,
-                                 T * newObject,
-                                 bool const takeOwnership )
+T * Group::RegisterGroup( std::string const & name,
+                          T * newObject,
+                          bool const takeOwnership )
 {
 #ifdef USE_DYNAMIC_CASTING
   return dynamic_cast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
@@ -1097,8 +1097,8 @@ T * ManagedGroup::RegisterGroup( std::string const & name,
 
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * ManagedGroup::registerWrapper( std::string const & name,
-                                                  ViewKey::index_type * const rkey )
+Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
+                                           ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name,
                      (Wrapper< TBASE >::template Factory< T >( name, this ) ).release(),
@@ -1117,7 +1117,7 @@ Wrapper< TBASE > * ManagedGroup::registerWrapper( std::string const & name,
 }
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * ManagedGroup::registerWrapper( ViewKey & viewKey )
+Wrapper< TBASE > * Group::registerWrapper( ViewKey & viewKey )
 {
   ViewKey::index_type index;
   Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.Key(), &index );
@@ -1128,8 +1128,8 @@ Wrapper< TBASE > * ManagedGroup::registerWrapper( ViewKey & viewKey )
 
 
 template< typename T >
-Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
-                                              std::unique_ptr< T > newObject )
+Wrapper< T > * Group::registerWrapper( std::string const & name,
+                                       std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
                      new Wrapper< T >( name, this, newObject.release(), true ),
@@ -1146,9 +1146,9 @@ Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
 
 
 template< typename T >
-Wrapper< T > * ManagedGroup::registerWrapper( std::string const & name,
-                                              T * newObject,
-                                              bool takeOwnership )
+Wrapper< T > * Group::registerWrapper( std::string const & name,
+                                       T * newObject,
+                                       bool takeOwnership )
 {
   m_wrappers.insert( name,
                      new Wrapper< T >( name, this, newObject, takeOwnership ),

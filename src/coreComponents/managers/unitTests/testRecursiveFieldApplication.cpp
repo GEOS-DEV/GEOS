@@ -49,7 +49,7 @@ void RegisterAndApplyField( DomainPartition * domain,
                                     [&] ( FieldSpecificationBase const * const bc,
                                           string const &,
                                           set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
+                                          Group * const targetGroup,
                                           string const name )
                                     {
                                       bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, name );

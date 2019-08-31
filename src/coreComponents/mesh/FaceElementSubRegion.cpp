@@ -33,7 +33,7 @@ using namespace dataRepository;
 
 
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
-                                      dataRepository::ManagedGroup * const parent ):
+                                      dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),

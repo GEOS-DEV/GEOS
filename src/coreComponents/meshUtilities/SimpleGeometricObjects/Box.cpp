@@ -29,7 +29,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string& name, ManagedGroup * const parent ):
+Box::Box( const std::string& name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_min{0.0,0.0,0.0},
   m_max{0.0,0.0,0.0},
@@ -141,6 +141,6 @@ bool Box::IsCoordInObject( const R1Tensor& coord ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
 
 } /* namespace geosx */

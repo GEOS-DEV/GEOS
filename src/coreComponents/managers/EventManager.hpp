@@ -20,7 +20,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
 
 
@@ -39,18 +39,18 @@ string const Events("Events");
  *
  * A class for managing code events.
  */
-class EventManager : public dataRepository::ManagedGroup
+class EventManager : public dataRepository::Group
 {
 public:
   /// Main constructor
   EventManager( std::string const & name,
-                ManagedGroup * const parent );
+                Group * const parent );
 
   /// Destructor
   virtual ~EventManager() override;
 
   /// A method to add child events
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -63,7 +63,7 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(dataRepository::ManagedGroup * domain);
+  void Run(dataRepository::Group * domain);
 
   struct viewKeyStruct
   {
@@ -86,7 +86,7 @@ public:
   } viewKeys;
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:

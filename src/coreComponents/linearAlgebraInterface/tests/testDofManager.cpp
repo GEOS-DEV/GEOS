@@ -33,7 +33,7 @@
 #include "common/DataTypes.hpp"
 #include "common/initialization.hpp"
 #include "common/TimingMacros.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -142,8 +142,8 @@ protected:
     }
 
     int mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
-    dataRepository::ManagedGroup * commandLine =
-      problemManager->GetGroup<dataRepository::ManagedGroup>( problemManager->groupKeys.commandLine );
+    dataRepository::Group * commandLine =
+      problemManager->GetGroup<dataRepository::Group>( problemManager->groupKeys.commandLine );
     commandLine->registerWrapper<integer>( problemManager->viewKeys.xPartitionsOverride.Key() )->
       setApplyDefaultValue(mpiSize);
 

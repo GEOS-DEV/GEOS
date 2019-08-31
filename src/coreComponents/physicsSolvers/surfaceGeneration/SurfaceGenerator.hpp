@@ -65,13 +65,13 @@ class SurfaceGenerator : public SolverBase
 {
 public:
   SurfaceGenerator( const std::string& name,
-                    ManagedGroup * const parent );
+                    Group * const parent );
   ~SurfaceGenerator() override;
 
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -85,7 +85,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override
+                        dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
@@ -124,8 +124,8 @@ public:
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
-  virtual void postRestartInitialization( ManagedGroup * const domain ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void postRestartInitialization( Group * const domain ) override final;
 
 private:
 

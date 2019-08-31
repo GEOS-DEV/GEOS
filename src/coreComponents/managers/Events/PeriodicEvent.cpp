@@ -30,7 +30,7 @@ using namespace dataRepository;
 
 
 PeriodicEvent::PeriodicEvent( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   EventBase(name,parent),
   m_functionTarget(nullptr),
   m_timeFrequency(-1.0),
@@ -95,7 +95,7 @@ PeriodicEvent::~PeriodicEvent()
 void PeriodicEvent::EstimateEventTiming(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        ManagedGroup * domain)
+                                        Group * domain)
 {
   // Check event status
   if (cycle == 0)
@@ -130,7 +130,7 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
                                                    real64 const dt, 
                                                    integer const cycle,
-                                                   ManagedGroup * domain)
+                                                   Group * domain)
 {
   // Grab the function
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -161,7 +161,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
     else
     {
-      dataRepository::ManagedGroup const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
+      dataRepository::Group const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
       mySet = sets->getReference< set<localIndex> >(m_functionInputSetname);
     }
 
@@ -216,5 +216,5 @@ real64 PeriodicEvent::GetEventTypeDtRequest(real64 const time)
 
 
 
-REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
 } /* namespace geosx */

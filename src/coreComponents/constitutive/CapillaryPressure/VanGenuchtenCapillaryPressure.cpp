@@ -35,7 +35,7 @@ namespace constitutive
 
 
 VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const & name,
-                                                            ManagedGroup * const parent )
+                                                            Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
@@ -66,7 +66,7 @@ VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 
 void
 VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
-                                             ManagedGroup * const parent,
+                                             Group * const parent,
                                              std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< VanGenuchtenCapillaryPressure > newModel = std::make_unique<VanGenuchtenCapillaryPressure>( name, parent );
@@ -170,7 +170,7 @@ void VanGenuchtenCapillaryPressure::PointUpdate( arraySlice1d<real64 const> cons
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

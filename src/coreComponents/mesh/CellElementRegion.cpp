@@ -31,7 +31,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellElementRegion::CellElementRegion( string const & name, ManagedGroup * const parent ):
+CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
@@ -45,9 +45,9 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-void CellElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
+void CellElementRegion::GenerateMesh( Group const * const cellBlocks )
 {
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
@@ -67,7 +67,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     return;
   }
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
     elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
@@ -180,6 +180,6 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

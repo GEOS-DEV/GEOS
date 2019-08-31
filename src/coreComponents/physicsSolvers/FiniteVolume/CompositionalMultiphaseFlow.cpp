@@ -22,6 +22,7 @@
 
 #include "CompositionalMultiphaseFlow.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -29,7 +30,6 @@
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
@@ -48,7 +48,7 @@ using namespace constitutive;
 using namespace CompositionalMultiphaseFlowKernels;
 
 CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
-                                                          ManagedGroup * const parent )
+                                                          Group * const parent )
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
@@ -107,13 +107,13 @@ void CompositionalMultiphaseFlow::PostProcessInput()
   }
 }
 
-void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
+void CompositionalMultiphaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * const meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * const meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const elementSubRegion)
     {
@@ -143,7 +143,7 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBo
   }
 }
 
-void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
@@ -194,7 +194,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( ManagedGroup * const r
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
     ResizeFields( meshLevel );
   }
 }
@@ -226,7 +226,7 @@ void CompositionalMultiphaseFlow::ResizeFields( MeshLevel * const meshLevel )
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateComponentFraction( ManagedGroup * const dataGroup ) const
+void CompositionalMultiphaseFlow::UpdateComponentFraction( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -266,7 +266,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( localIndex er, localI
                                                   m_dCompFrac_dCompDens[er][esr] );
 }
 
-void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( ManagedGroup * const dataGroup ) const
+void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -348,7 +348,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( localIndex er, loca
                                                     m_dPhaseVolFrac_dCompDens[er][esr] );
 }
 
-void CompositionalMultiphaseFlow::UpdatePhaseMobility( ManagedGroup * const dataGroup ) const
+void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -442,7 +442,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( localIndex er, localIndex
                                               m_dPhaseMob_dCompDens[er][esr] );
 }
 
-void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGroup )
+void CompositionalMultiphaseFlow::UpdateFluidModel( Group * const dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -460,7 +460,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( ManagedGroup * const dataGro
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
+void CompositionalMultiphaseFlow::UpdateSolidModel( Group * dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -475,7 +475,7 @@ void CompositionalMultiphaseFlow::UpdateSolidModel( ManagedGroup * dataGroup )
   });
 }
 
-void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
+void CompositionalMultiphaseFlow::UpdateRelPermModel( Group * dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -487,7 +487,7 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( ManagedGroup * dataGroup )
   relPerm->BatchUpdate( phaseVolFrac );
 }
 
-void CompositionalMultiphaseFlow::UpdateCapPressureModel( ManagedGroup * dataGroup )
+void CompositionalMultiphaseFlow::UpdateCapPressureModel( Group * dataGroup )
 {
   if (m_capPressureFlag)
   {
@@ -500,7 +500,7 @@ void CompositionalMultiphaseFlow::UpdateCapPressureModel( ManagedGroup * dataGro
   }
 }
 
-void CompositionalMultiphaseFlow::UpdateState( ManagedGroup * const dataGroup )
+void CompositionalMultiphaseFlow::UpdateState( Group * const dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -559,7 +559,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   });
 }
 
-void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1150,7 +1150,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     [&]( FieldSpecificationBase const * const fs,
                          string const & setName,
                          set<localIndex> const & targetSet,
-                         ManagedGroup * subRegion,
+                         Group * subRegion,
                          string const & )
   {
     // 1.0. Check whether pressure has already been applied to this set
@@ -1174,7 +1174,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     [&] ( FieldSpecificationBase const * const fs,
                           string const & setName,
                           set<localIndex> const & targetSet,
-                          ManagedGroup * subRegion,
+                          Group * subRegion,
                           string const & )
   {
     // 2.0. Check pressure and record composition bc application
@@ -1218,7 +1218,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     [&] ( FieldSpecificationBase const * const bc,
                           string const & setName,
                           set<localIndex> const & targetSet,
-                          ManagedGroup * subRegion,
+                          Group * subRegion,
                           string const & )
   {
     MultiFluidBase * const fluid = GetConstitutiveModel<MultiFluidBase>( subRegion, m_fluidName );
@@ -1607,5 +1607,5 @@ void CompositionalMultiphaseFlow::ResetViews( DomainPartition * const domain )
 }
 
 
-REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseFlow, string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseFlow, string const &, Group * const)
 }// namespace geosx

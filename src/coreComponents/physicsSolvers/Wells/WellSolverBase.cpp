@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace constitutive;
   
 WellSolverBase::WellSolverBase( std::string const & name,
-                                ManagedGroup * const parent )
+                                Group * const parent )
   : SolverBase( name, parent ),
     m_flowSolverName(""),
     m_gravityFlag(1),
@@ -57,9 +57,9 @@ WellSolverBase::WellSolverBase( std::string const & name,
 
 }
 
-ManagedGroup * WellSolverBase::CreateChild( string const & childKey, string const & childName )
+Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
 
   if( childKey == keys::wellControls )
   {
@@ -74,7 +74,7 @@ ManagedGroup * WellSolverBase::CreateChild( string const & childKey, string cons
 
 WellSolverBase::~WellSolverBase() = default;
 
-void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
+void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 {
   SolverBase::RegisterDataOnMesh( meshBodies );
 
@@ -161,7 +161,7 @@ void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
 
 }
  
-void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
@@ -174,7 +174,7 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   m_resFluidIndex = fluid->getIndexInParent(); 
 }
   
-void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
+void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
