@@ -5,16 +5,16 @@
 set(dataRepository_headers
     BufferOps_inline.hpp
     BufferOps.hpp
+    ExecutableGroup.hpp
     InputFlags.hpp
     KeyIndexT.hpp
     ManagedGroup.hpp
-    ExecutableGroup.hpp
     MappedVector.hpp
     ReferenceWrapper.hpp
-    SidreWrapper.hpp
-    ViewWrapper.hpp
-    ViewWrapperBase.hpp
     RestartFlags.hpp
+    SidreWrapper.hpp
+    Wrapper.hpp
+    WrapperBase.hpp
     )
 
 #
@@ -23,8 +23,8 @@ set(dataRepository_headers
 set(dataRepository_sources
     ManagedGroup.cpp
     SidreWrapper.cpp
-    ViewWrapper.cpp
-    ViewWrapperBase.cpp
+    Wrapper.cpp
+    WrapperBase.cpp
     )
 
 

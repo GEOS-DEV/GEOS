@@ -103,7 +103,7 @@ void DomainPartition::GenerateSets(  )
     string name = viewWrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = false;
-    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);

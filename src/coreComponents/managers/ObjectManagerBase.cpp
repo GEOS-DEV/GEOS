@@ -242,7 +242,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
-      dataRepository::ViewWrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      dataRepository::WrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
       if( wrapper!=nullptr )
       {
         packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
@@ -313,7 +313,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
       if( wrapperName != "nullptr" )
       {
-        ViewWrapperBase * const wrapper = this->getWrapperBase(wrapperName);
+        WrapperBase * const wrapper = this->getWrapperBase(wrapperName);
         unpackedSize += wrapper->Unpack(buffer,packList);
       }
     }

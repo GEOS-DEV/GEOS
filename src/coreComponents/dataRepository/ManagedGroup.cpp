@@ -102,17 +102,17 @@ ManagedGroup::CatalogInterface::CatalogType & ManagedGroup::GetCatalog()
   return catalog;
 }
 
-ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+WrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda1( type,
-                                    [this, &name]( auto a ) -> ViewWrapperBase *
+                                    [this, &name]( auto a ) -> WrapperBase *
       {
         return this->RegisterViewWrapper< decltype(a) >( name );
       } );
 }
 
-ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
-                                                     ViewWrapperBase * const wrapper )
+WrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
+                                                     WrapperBase * const wrapper )
 {
   return m_wrappers.insert( name,
                             wrapper,
@@ -190,7 +190,7 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
   std::set< string > processedXmlNodes;
   for( auto wrapperPair : m_wrappers )
   {
-    ViewWrapperBase * const wrapper = wrapperPair.second;
+    WrapperBase * const wrapper = wrapperPair.second;
     InputFlags const inputFlag = wrapper->getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
     {
@@ -203,7 +203,7 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 //        using BASE_TYPE = decltype(b);
             using COMPOSITE_TYPE = decltype(a);
 
-            ViewWrapper< COMPOSITE_TYPE > & typedWrapper = ViewWrapper< COMPOSITE_TYPE >::cast( *wrapper );
+            Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
             COMPOSITE_TYPE & objectReference = typedWrapper.reference();
             processedXmlNodes.insert( wrapperName );
 
@@ -351,7 +351,7 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
     packedSize += bufferOps::PackSize( static_cast< int >(wrapperNames.size()) );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
+      WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
@@ -416,7 +416,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< true >( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
+      WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
@@ -471,7 +471,7 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    ViewWrapperBase * const wrapper = this->getWrapperBase( wrapperName );
+    WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
     wrapper->Unpack( buffer, packList );
   }
 

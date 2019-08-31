@@ -23,7 +23,7 @@
  *      Author: settgast
  */
 
-#include "ViewWrapper.hpp"
+#include "Wrapper.hpp"
 
 namespace geosx
 {
