@@ -56,50 +56,50 @@ EventBase::EventBase( const std::string& name,
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
   
-  RegisterViewWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
+  registerWrapper(viewKeyStruct::eventTargetString, &m_eventTarget, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the object to be executed when the event criteria are met.");
 
-  RegisterViewWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
+  registerWrapper(viewKeyStruct::beginTimeString, &m_beginTime, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Start time of this event.");
 
-  RegisterViewWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
+  registerWrapper(viewKeyStruct::endTimeString, &m_endTime, false )->
     setApplyDefaultValue(1e100)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("End time of this event.");
 
-  RegisterViewWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
+  registerWrapper(viewKeyStruct::forceDtString, &m_forceDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("While active, this event will request this timestep value (ignoring any children/targets requests).");
 
-  RegisterViewWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
+  registerWrapper(viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("While active, this event will request a timestep <= this value (depending upon any child/target requests).");
 
-  RegisterViewWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
+  registerWrapper(viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.");
  
- RegisterViewWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
+ registerWrapper(viewKeyStruct::lastTimeString, &m_lastTime, false )->
     setApplyDefaultValue(-1.0e100)->
     setDescription("Last event occurrence (time)");
 
-  RegisterViewWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
+  registerWrapper(viewKeyStruct::lastCycleString, &m_lastCycle, false )->
     setApplyDefaultValue(-1.0e9)->
     setDescription("Last event occurrence (cycle)");
 
-  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setDescription("Index of the current subevent");
 
-  RegisterViewWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
+  registerWrapper(viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
     setDescription("Index of the current subevent");
 
-  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Verbosity level");

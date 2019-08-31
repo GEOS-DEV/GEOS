@@ -58,11 +58,11 @@ LaplaceFEM::LaplaceFEM( const std::string& name,
   SolverBase( name, parent ),
   m_fieldName("primaryField")
 {
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("option for default time integration method");
 
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+  registerWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of field variable");
 }
@@ -78,7 +78,7 @@ void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+    nodes->registerWrapper<real64_array >( m_fieldName )->
       setApplyDefaultValue(0.0)->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setDescription("Primary field variable");

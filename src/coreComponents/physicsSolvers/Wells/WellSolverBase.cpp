@@ -44,16 +44,16 @@ WellSolverBase::WellSolverBase( std::string const & name,
     m_numDofPerWellElement(0),
     m_numDofPerResElement(0)
 {
-  RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
+  registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Flag that enables/disables gravity");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
+  this->registerWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of fluid constitutive object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::resFluidIndexString, &m_resFluidIndex, false );
+  this->registerWrapper( viewKeyStruct::resFluidIndexString, &m_resFluidIndex, false );
 
 }
 
@@ -84,10 +84,10 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
   });
 }
 

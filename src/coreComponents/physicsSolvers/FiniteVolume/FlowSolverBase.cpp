@@ -50,25 +50,25 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_gravDepth(),
     m_porosityRef()
 {
-  RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
+  registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Flag that enables/disables gravity");
   
-  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of discretization object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
+  this->registerWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of fluid constitutive object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false )->
+  this->registerWrapper( viewKeyStruct::solidNameString,  &m_solidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of solid constitutive object to use for this solver");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
-  this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
+  this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
+  this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
   
 }
 
@@ -83,24 +83,24 @@ void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
 
     applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&] ( FaceElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );
 
-      subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+      subRegion->registerWrapper< array1d<R1Tensor> >( viewKeyStruct::permeabilityString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
     });
 
     FaceManager * const faceManager = mesh->getFaceManager();
-    faceManager->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
+    faceManager->registerWrapper< array1d<real64> >( viewKeyStruct::gravityDepthString )->setApplyDefaultValue( 0.0 );
   }
 }
 

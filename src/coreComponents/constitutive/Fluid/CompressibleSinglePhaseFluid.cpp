@@ -54,37 +54,37 @@ static ExponentApproximationType stringToExponentType( string const & model )
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, ManagedGroup * const parent ):
   SingleFluidBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
+  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::viscosibilityString, &m_viscosibility, false )->
+  registerWrapper( viewKeyStruct::viscosibilityString, &m_viscosibility, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid viscosity exponential coefficient");
 
-  RegisterViewWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
+  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference pressure");
 
-  RegisterViewWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
+  registerWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
     setApplyDefaultValue(1000.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid density");
 
-  RegisterViewWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
+  registerWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
     setApplyDefaultValue(0.001)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid viscosity");
 
-  RegisterViewWrapper( viewKeyStruct::densityModelString, &m_densityModelString, false )->
+  registerWrapper( viewKeyStruct::densityModelString, &m_densityModelString, false )->
     setApplyDefaultValue("linear")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Type of density model (linear, quadratic, exponential)");
 
-  RegisterViewWrapper( viewKeyStruct::viscosityModelString, &m_viscosityModelString, false )->
+  registerWrapper( viewKeyStruct::viscosityModelString, &m_viscosityModelString, false )->
     setApplyDefaultValue("linear")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Type of viscosity model (linear, quadratic, exponential)");

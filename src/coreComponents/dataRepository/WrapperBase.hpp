@@ -49,7 +49,7 @@ namespace dataRepository
 class ManagedGroup;
 
 /**
- * @class ViewWrapperBase
+ * @class WrapperBase
  */
 class WrapperBase
 {
@@ -63,7 +63,7 @@ public:
   /**
    * @brief constructor
    * @param[in] name name of the object
-   * @param[in] parent pointer to ManagedGroup that holds this ViewWrapperBase
+   * @param[in] parent pointer to ManagedGroup that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
                             ManagedGroup * const parent );
@@ -155,12 +155,12 @@ public:
 
 
   /**
-   * @brief     function to create a clone of *this ViewWrapperBase
+   * @brief     function to create a clone of *this WrapperBase
    * @param[in] name name of the clone
    * @param[in] parent parent ManagedGroup that will hold this clone
    * @return
    *
-   * The overridden function will create a copy of the derived ViewWrapper<T> the using the provided
+   * The overridden function will create a copy of the derived Wrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
@@ -419,8 +419,8 @@ public:
 
 #if defined(USE_TOTALVIEW_OUTPUT)
   /**
-   * @brief Virtual function to return the the typename for a ViewWrapper derived type that is
-   *                represented by a ViewWrapperBase *.
+   * @brief Virtual function to return the the typename for a Wrapper derived type that is
+   *                represented by a WrapperBase *.
    * @return A string that contains the typename for use in totalview.
    */
   virtual string totalviewTypeName() const = 0;
@@ -431,7 +431,7 @@ public:
    * @return 0
    */
   virtual int setTotalviewDisplay() const;
-//  static int TV_ttf_display_type( const ViewWrapperBase * wrapper);
+//  static int TV_ttf_display_type( const WrapperBase * wrapper);
 #endif
 
 private:
@@ -439,7 +439,7 @@ private:
   /// name of the object that is being wrapped
   string m_name;
 
-  /// pointer to ManagedGroup that holds this ViewWrapperBase
+  /// pointer to ManagedGroup that holds this WrapperBase
   ManagedGroup * m_parent;
 
   /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized

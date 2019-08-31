@@ -664,7 +664,7 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
 //        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
 //        if( constitutiveRelation != nullptr )
 //        {
-//          dataRepository::ViewWrapper<VIEWTYPE> const * const
+//          dataRepository::Wrapper<VIEWTYPE> const * const
 //          wrapper = constitutiveRelation->getWrapper<VIEWTYPE>(viewName);
 //
 //          if( wrapper != nullptr )

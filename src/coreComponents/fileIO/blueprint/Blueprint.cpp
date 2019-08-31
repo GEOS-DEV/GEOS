@@ -199,9 +199,9 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
   connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
 
-  // for ( const std::pair< const std::string, const ViewWrapperBase* >& pair : cell_block->wrappers() )
+  // for ( const std::pair< const std::string, const WrapperBase* >& pair : cell_block->wrappers() )
   // {
-  //   const ViewWrapperBase* view = pair.second;
+  //   const WrapperBase* view = pair.second;
   //   if ( view->sizedFromParent() == 1 &&
   //        view->size() > 0 &&
   //        view->shouldRegisterDataPtr() &&

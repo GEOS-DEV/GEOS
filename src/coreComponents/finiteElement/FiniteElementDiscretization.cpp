@@ -49,8 +49,8 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
-  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+  registerWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
+  registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -84,14 +84,14 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
 
   // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
-  array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
+  array3d< R1Tensor > &  dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
   dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
   auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
-  array2d< real64 > & detJ = cellBlock->RegisterViewWrapper< array2d< real64 > >(keys::detJ)->reference();
+  array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >(keys::detJ)->reference();
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 

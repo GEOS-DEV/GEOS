@@ -55,23 +55,23 @@ TableFunction::TableFunction( const std::string& name,
   m_corners(),
   m_numCorners(0)
 {
-  RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
+  registerWrapper<real64_array>(keys::tableCoordinates)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table coordinates inputs for 1D tables");
 
-  RegisterViewWrapper<real64_array>(keys::tableValues)->
+  registerWrapper<real64_array>(keys::tableValues)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table Values for 1D tables");
 
-  RegisterViewWrapper<string_array>(keys::coordinateFiles)->
+  registerWrapper<string_array>(keys::coordinateFiles)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of coordinate file names");
 
-  RegisterViewWrapper<string>(keys::voxelFile)->
+  registerWrapper<string>(keys::voxelFile)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Voxel file name");
 
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
+  registerWrapper<string>(keys::tableInterpolation)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method");
 }
