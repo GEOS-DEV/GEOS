@@ -15,24 +15,34 @@ Defining an output
 SILO Output
 ===========
 
-The SILO output is defined trough the ``<Silo>`` XML node (subnode of ``<Outputs> XML block``) this way:
+The SILO output is defined through the ``<Silo>`` XML node (subnode of ``<Outputs> XML block``) as shown here:
 
 .. code-block:: xml 
 
   <Outputs>
     <Silo name="siloOutput"/>
   </Outputs>
+  
+  
+The parameter options are listed in the following table:
+
+.. include:: /coreComponents/fileIO/schema/docs/Silo.rst
+
 
 VTK Output
 ===========
 
-The VTK output is defined trough the ``<VTK>`` XML node (subnode of ``<Outputs> XML block``) this way:
+The VTK output is defined through the ``<VTK>`` XML node (subnode of ``<Outputs> XML block``) as shown here:
 
 .. code-block:: xml 
 
   <Outputs>
     <VTK name="vtkOutput"/>
   </Outputs>
+
+The parameter options are listed in the following table:
+
+.. include:: /coreComponents/fileIO/schema/docs/VTK.rst
 
 ************************
 Triggering the outputs
