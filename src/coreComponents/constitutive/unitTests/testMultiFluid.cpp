@@ -355,7 +355,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   }
 }
 
-MultiFluidBase * makeCompositionalFluid( string const & name, ManagedGroup * parent )
+MultiFluidBase * makeCompositionalFluid( string const & name, Group * parent )
 {
   auto fluid = parent->RegisterGroup<CompositionalMultiphaseFluid>( name );
 
@@ -399,7 +399,7 @@ protected:
 
   static void SetUpTestCase()
   {
-    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent = std::make_unique<Group>( "parent", nullptr );
     parent->resize( 1 );
 
     fluid = makeCompositionalFluid( "fluid", parent.get() );
@@ -413,11 +413,11 @@ protected:
 
   }
 
-  static std::unique_ptr<ManagedGroup> parent;
+  static std::unique_ptr<Group> parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<ManagedGroup> CompositionalFluidTest::parent( nullptr );
+std::unique_ptr<Group> CompositionalFluidTest::parent( nullptr );
 MultiFluidBase * CompositionalFluidTest::fluid( nullptr );
 
 TEST_F(CompositionalFluidTest, numericalDerivativesMolar)
@@ -452,7 +452,7 @@ TEST_F(CompositionalFluidTest, numericalDerivativesMass)
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-MultiFluidBase * makeLiveOilFluid(string const & name, ManagedGroup * parent)
+MultiFluidBase * makeLiveOilFluid(string const & name, Group * parent)
 {
   auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
 
@@ -485,7 +485,7 @@ MultiFluidBase * makeLiveOilFluid(string const & name, ManagedGroup * parent)
   return fluid;
 }
 
-MultiFluidBase * makeDeadOilFluid( string const & name, ManagedGroup * parent )
+MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
 {
   auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
 
@@ -542,7 +542,7 @@ protected:
     writeTableToFile( "pvtg.txt", pvtg_str );
     writeTableToFile( "pvtw.txt", pvtw_str );
 
-    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent = std::make_unique<Group>( "parent", nullptr );
     parent->resize( 1 );
     fluid = makeLiveOilFluid("fluid", parent.get());
 
@@ -557,11 +557,11 @@ protected:
     removeFile( "pvtw.txt" );
   }
 
-  static std::unique_ptr<ManagedGroup> parent;
+  static std::unique_ptr<Group> parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<ManagedGroup> LiveOilFluidTest::parent( nullptr );
+std::unique_ptr<Group> LiveOilFluidTest::parent( nullptr );
 MultiFluidBase * LiveOilFluidTest::fluid( nullptr );
 
 TEST_F(LiveOilFluidTest, numericalDerivativesMolar)
@@ -607,7 +607,7 @@ protected:
     writeTableToFile( "pvdg.txt", pvdg_str );
     writeTableToFile( "pvdw.txt", pvdw_str );
 
-    parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+    parent = std::make_unique<Group>( "parent", nullptr );
     parent->resize( 1 );
     fluid = makeDeadOilFluid("fluid", parent.get());
 
@@ -622,11 +622,11 @@ protected:
     removeFile( "pvdw.txt" );
   }
 
-  static std::unique_ptr<ManagedGroup> parent;
+  static std::unique_ptr<Group> parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<ManagedGroup> DeadOilFluidTest::parent( nullptr );
+std::unique_ptr<Group> DeadOilFluidTest::parent( nullptr );
 MultiFluidBase * DeadOilFluidTest::fluid( nullptr );
 
 TEST_F(DeadOilFluidTest, numericalDerivativesMolar)

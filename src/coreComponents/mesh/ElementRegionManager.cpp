@@ -31,11 +31,11 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ElementRegionManager::ElementRegionManager(  string const & name, ManagedGroup * const parent ):
+ElementRegionManager::ElementRegionManager(  string const & name, Group * const parent ):
   ObjectManagerBase(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
-  this->RegisterGroup<ManagedGroup>(keys::elementRegionsGroup);
+  this->RegisterGroup<Group>(keys::elementRegionsGroup);
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -46,7 +46,7 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::getNumberOfElements() const
 {
   localIndex numElem = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
+  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
   {
     numElem += cellBlock->size();
   });
@@ -56,7 +56,7 @@ localIndex ElementRegionManager::getNumberOfElements() const
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
+  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
   {
     numCellBlocks += 1;
   });
@@ -77,12 +77,12 @@ void ElementRegionManager::resize( integer_array const & numElements,
 }
 
 
-ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
-  ManagedGroup * const elementRegions = this->GetGroup(keys::elementRegionsGroup);
+  Group * const elementRegions = this->GetGroup(keys::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
@@ -122,7 +122,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   });
 }
 
-void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
 {
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
@@ -487,5 +487,5 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

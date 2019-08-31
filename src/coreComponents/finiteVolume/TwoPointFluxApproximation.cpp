@@ -33,7 +33,7 @@ namespace geosx
 using namespace dataRepository;
 
 TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
-                                                     ManagedGroup *const parent)
+                                                     Group *const parent)
   : FluxApproximationBase(name, parent)
 {
   registerWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
@@ -489,6 +489,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 }
 
 
-REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, Group * const)
 
 }

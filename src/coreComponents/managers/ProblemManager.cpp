@@ -93,7 +93,7 @@ struct Arg : public option::Arg
 
 
 ProblemManager::ProblemManager( const std::string& name,
-                                ManagedGroup * const parent ):
+                                Group * const parent ):
   ObjectManagerBase(name, parent),
   m_physicsSolverManager(nullptr),
   m_eventManager(nullptr),
@@ -101,7 +101,7 @@ ProblemManager::ProblemManager( const std::string& name,
 {
   // Groups that do not read from the xml
   RegisterGroup<DomainPartition>(groupKeys.domain);
-  ManagedGroup * commandLine = RegisterGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = RegisterGroup<Group>(groupKeys.commandLine);
   commandLine->setRestartFlags(RestartFlags::WRITE);
 
   setInputFlags(InputFlags::PROBLEM_ROOT);
@@ -179,7 +179,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-ManagedGroup * ProblemManager::CreateChild( string const & childKey, string const & childName )
+Group * ProblemManager::CreateChild( string const & childKey, string const & childName )
 { return nullptr; }
 
 
@@ -201,15 +201,15 @@ void ProblemManager::ProblemSetup()
 }
 
 
-void ProblemManager::RegisterDataOnMeshRecursive( ManagedGroup * const )
+void ProblemManager::RegisterDataOnMeshRecursive( Group * const )
 {
   GEOSX_MARK_FUNCTION;
-  ManagedGroup::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
+  Group::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 }
 
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
 
   std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
   std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
@@ -509,7 +509,7 @@ void ProblemManager::GenerateDocumentation()
 {
   // Documentation output
   std::cout << "Trying to generate schema..." << std::endl;
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
   std::string const & schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
   
   if (schemaName.empty() == 0)
@@ -566,16 +566,16 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
 
   // Add entries that are only used in the pre-processor
-  ManagedGroup * IncludedList = this->RegisterGroup<ManagedGroup>("Included");
+  Group * IncludedList = this->RegisterGroup<Group>("Included");
   IncludedList->setInputFlags(InputFlags::OPTIONAL);
 
-  ManagedGroup * includedFile = IncludedList->RegisterGroup<ManagedGroup>("File");
+  Group * includedFile = IncludedList->RegisterGroup<Group>("File");
   includedFile->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
   
-  ManagedGroup * parameterList = this->RegisterGroup<ManagedGroup>("Parameters");
+  Group * parameterList = this->RegisterGroup<Group>("Parameters");
   parameterList->setInputFlags(InputFlags::OPTIONAL);
 
-  ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
+  Group * parameter = parameterList->RegisterGroup<Group>("Parameter");
   parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
   parameter->registerWrapper<string>("value")->
     setInputFlag(InputFlags::REQUIRED)->
@@ -590,7 +590,7 @@ void ProblemManager::ParseInputFile()
 {
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
   std::string const& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
 
 
@@ -660,7 +660,7 @@ void ProblemManager::PostProcessInput()
 {
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup const * commandLine = GetGroup<ManagedGroup>(groupKeys.commandLine);
+  Group const * commandLine = GetGroup<Group>(groupKeys.commandLine);
   integer const & xparCL = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
   integer const & yparCL = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
   integer const & zparCL = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
@@ -736,10 +736,10 @@ void ProblemManager::GenerateMesh()
 
   MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
   meshManager->GenerateMeshes(domain);
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
 
   for( localIndex a=0; a<meshBodies->GetSubGroups().size() ; ++a )
   {
@@ -772,7 +772,7 @@ void ProblemManager::GenerateMesh()
 
       elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
       {
-        ManagedGroup * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+        Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
         subRegions->forSubGroups<ElementSubRegionBase>( [&]( ElementSubRegionBase * const subRegion ) -> void
         {
           subRegion->setupRelatedObjectsInRelations( meshLevel );
@@ -799,11 +799,11 @@ void ProblemManager::ApplyNumericalMethods()
 
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup const * const cellBlockManager = domain->GetGroup(keys::cellManager);
+  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
 
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
 
 
   map<string,localIndex> regionQuadrature;
@@ -884,14 +884,14 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( ManagedGroup * const group )
+void ProblemManager::InitializePostSubGroups( Group * const group )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
 //
   DomainPartition * domain  = getDomainPartition();
 
-  ManagedGroup * const meshBodies = domain->getMeshBodies();
+  Group * const meshBodies = domain->getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
@@ -944,6 +944,6 @@ void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ProblemManager, string const &, Group * const )
 
 } /* namespace geosx */

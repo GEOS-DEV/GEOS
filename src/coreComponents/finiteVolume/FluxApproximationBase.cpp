@@ -30,8 +30,8 @@ namespace geosx
 
 using namespace dataRepository;
 
-FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent),
+FluxApproximationBase::FluxApproximationBase(string const &name, Group *const parent)
+  : Group(name, parent),
     m_fieldName(),
     m_boundaryFieldName(),
     m_coeffName()
@@ -84,7 +84,7 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
                     [&] ( FieldSpecificationBase const * bc,
                           string const & setName,
                           set<localIndex> const & targetSet,
-                          ManagedGroup const * targetGroup,
+                          Group const * targetGroup,
                           string const & targetName)
   {
     Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
@@ -111,7 +111,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   compute( *domain );

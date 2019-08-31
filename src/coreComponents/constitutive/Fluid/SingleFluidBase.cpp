@@ -30,7 +30,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SingleFluidBase::SingleFluidBase( std::string const & name, ManagedGroup * const parent )
+SingleFluidBase::SingleFluidBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
@@ -61,7 +61,7 @@ void SingleFluidBase::PostProcessInput()
 
 }
 
-void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
+void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -78,7 +78,7 @@ void SingleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
 
 void
 SingleFluidBase::DeliverClone( string const & name,
-                               ManagedGroup * const parent,
+                               Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   GEOS_ERROR_IF( !clone, "clone not allocated" );

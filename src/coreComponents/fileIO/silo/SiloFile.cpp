@@ -1538,7 +1538,7 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 
 
 
-void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
+void SiloFile::WriteManagedGroupSilo( Group const * group,
                                       string const & siloDirName,
                                       string const & meshname,
                                       int const centering,
@@ -1587,7 +1587,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 {
 
   localIndex numElems = 0;
-  dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
+  dataRepository::Group fakeGroup(elementManager->getName(), nullptr);
   array1d< array1d< std::map< string, WrapperBase const * > > > viewPointers(elementManager->numRegions());
 
   elementManager->forElementRegionsComplete( [&]( localIndex const er,
@@ -1794,7 +1794,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     int count = 0;
 
-    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
     elementManager->forElementSubRegions( [&]( auto const * const elementSubRegion )
     {

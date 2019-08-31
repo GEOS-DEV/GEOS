@@ -55,12 +55,12 @@ public:
 
   static FluidType stringToFluidType( string const & str );
 
-  BlackOilFluid( std::string const & name, ManagedGroup * const parent );
+  BlackOilFluid( std::string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
 
   void DeliverClone( string const & name,
-                     ManagedGroup * const parent,
+                     Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::blackOilFluid; }

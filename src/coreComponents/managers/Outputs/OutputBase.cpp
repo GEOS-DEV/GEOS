@@ -30,7 +30,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   ExecutableGroup( name, parent),
   m_slaveDirectory(),
   m_parallelThreads(1)
@@ -58,7 +58,7 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
 }
 
 
-void OutputBase::InitializePreSubGroups( ManagedGroup * const group )
+void OutputBase::InitializePreSubGroups( Group * const group )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();

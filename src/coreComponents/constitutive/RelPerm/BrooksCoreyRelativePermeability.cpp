@@ -35,7 +35,7 @@ namespace constitutive
 
 
 BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string const & name,
-                                                                  ManagedGroup * const parent )
+                                                                  Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
@@ -63,7 +63,7 @@ BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 
 void
 BrooksCoreyRelativePermeability::DeliverClone( string const & name,
-                                               ManagedGroup * const parent,
+                                               Group * const parent,
                                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BrooksCoreyRelativePermeability > newModel = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
@@ -156,7 +156,7 @@ void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> co
            m_satScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

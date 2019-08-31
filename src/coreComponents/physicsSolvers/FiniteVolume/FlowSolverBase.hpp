@@ -30,7 +30,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -51,7 +51,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   FlowSolverBase( const std::string& name,
-                  ManagedGroup * const parent );
+                  Group * const parent );
 
 
   /// deleted default constructor
@@ -74,7 +74,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
   
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
@@ -141,9 +141,9 @@ private:
 
 protected:
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   /**
    * @brief Setup stored views into domain data for the current step

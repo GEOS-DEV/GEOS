@@ -44,7 +44,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ):
+InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
 //    m_vertices({this->registerWrapper<real64_array>(keys::xCoords).reference(),
 //                this->registerWrapper<real64_array>(keys::yCoords).reference(),
@@ -303,7 +303,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
   return nullptr;
 }
@@ -320,7 +320,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+  Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
@@ -333,7 +333,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // Make sure that the node manager fields are initialized
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  ManagedGroup * nodeSets = nodeManager->sets();
+  Group * nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
@@ -1216,7 +1216,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const domain )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
@@ -1257,5 +1257,5 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, Group * const )
 }

@@ -14,7 +14,7 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_defaultDensity{0},
   m_density{},
@@ -47,7 +47,7 @@ SolidBase::~SolidBase()
 
 void
 SolidBase::DeliverClone( string const & name,
-                         ManagedGroup * const parent,
+                         Group * const parent,
                          std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());
@@ -60,7 +60,7 @@ SolidBase::DeliverClone( string const & name,
 }
 
 
-void SolidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

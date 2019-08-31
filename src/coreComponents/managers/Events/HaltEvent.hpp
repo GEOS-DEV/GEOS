@@ -39,7 +39,7 @@ class HaltEvent : public EventBase
 public:
   /// Constructor
   HaltEvent(const std::string& name,
-                ManagedGroup * const parent);
+                Group * const parent);
   
   /// Destructor
   virtual ~HaltEvent() override;
@@ -55,7 +55,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::ManagedGroup * domain) override;
+                                   dataRepository::Group * domain) override;
 
   /// Timing values
   real64 m_externalStartTime;

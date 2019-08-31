@@ -36,7 +36,7 @@ using namespace dataRepository;
 using namespace constitutive;
   
 ReservoirSolver::ReservoirSolver( const std::string& name,
-                                  ManagedGroup * const parent ):
+                                  Group * const parent ):
   SolverBase(name,parent),
   m_flowSolverName(),
   m_wellSolverName()
@@ -361,6 +361,6 @@ void ReservoirSolver::ImplicitStepComplete( real64 const& time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, ReservoirSolver, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ReservoirSolver, std::string const &, Group * const )
 
 } /* namespace geosx */

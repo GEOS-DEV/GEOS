@@ -43,7 +43,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
+PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
 
@@ -85,12 +85,12 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
-void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
+void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const domain )
 {
   return;
 }
 
-ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
   return nullptr;
 }
@@ -99,7 +99,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
   GEOS_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+  Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
@@ -357,5 +357,5 @@ void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elemen
                                                        const int node_size )
 {}
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, Group * const )
 }

@@ -35,7 +35,7 @@ namespace constitutive
 
 
 VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( std::string const & name,
-                                                                              ManagedGroup * const parent )
+                                                                              Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
@@ -74,7 +74,7 @@ VanGenuchtenBakerRelativePermeability::~VanGenuchtenBakerRelativePermeability()
 
 void
 VanGenuchtenBakerRelativePermeability::DeliverClone( string const & name, 
-                                                     ManagedGroup * const parent,
+                                                     Group * const parent,
                                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< VanGenuchtenBakerRelativePermeability > newModel = std::make_unique<VanGenuchtenBakerRelativePermeability>( name, parent );
@@ -214,7 +214,7 @@ void VanGenuchtenBakerRelativePermeability::PointUpdate( arraySlice1d<real64 con
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

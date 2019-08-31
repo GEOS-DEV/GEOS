@@ -36,7 +36,7 @@ namespace geosx
 using namespace dataRepository;
 
 EdgeManager::EdgeManager( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   ObjectManagerBase(name,parent),
   m_edgesToFractureConnectorsEdges(),
   m_fractureConnectorsEdgesToEdges(),

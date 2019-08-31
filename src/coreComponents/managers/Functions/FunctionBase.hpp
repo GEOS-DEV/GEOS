@@ -23,7 +23,7 @@
 #ifndef FUNCTIONBASE_HPP_
 #define FUNCTIONBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -43,12 +43,12 @@ string const inputVarNames("inputVarNames");
  *
  * An object for interfacing with arbitrary N-dimensional functions.
  */
-class FunctionBase : public dataRepository::ManagedGroup
+class FunctionBase : public dataRepository::Group
 {
 public:
   /// Main constructor
   FunctionBase( const std::string& name,
-                dataRepository::ManagedGroup * const parent );
+                dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~FunctionBase() override;
@@ -69,7 +69,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
@@ -81,7 +81,7 @@ public:
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
-  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -95,7 +95,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @return An array holding the min, average, max values of the results
    */
-  real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
+  real64_array EvaluateStats( dataRepository::Group const * const group,
                               real64 const time,
                               set<localIndex> const & set) const;
 
@@ -103,7 +103,7 @@ protected:
   string_array m_inputVarNames;
 
   template< typename LEAF >
-  void EvaluateT( dataRepository::ManagedGroup const * const group,
+  void EvaluateT( dataRepository::Group const * const group,
                   real64 const time,
                   SortedArrayView<localIndex const> const & set,
                   real64_array & result ) const;
@@ -114,7 +114,7 @@ protected:
 
 /// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
-void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
+void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64 const time,
                               SortedArrayView<localIndex const> const & set,
                               real64_array & result ) const

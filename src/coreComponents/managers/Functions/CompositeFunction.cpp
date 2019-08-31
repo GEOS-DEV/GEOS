@@ -41,7 +41,7 @@ using namespace dataRepository;
 
 
 CompositeFunction::CompositeFunction( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   FunctionBase( name, parent ),
 #ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
@@ -96,7 +96,7 @@ void CompositeFunction::InitializeFunction()
 }
 
 
-void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
+void CompositeFunction::Evaluate( dataRepository::Group const * const group,
                                   real64 const time,
                                   SortedArrayView<localIndex const> const & set,
                                   real64_array & result ) const
@@ -147,6 +147,6 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 }
 
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
 
 } /* namespace ANST */
