@@ -43,30 +43,30 @@ WellControls::WellControls(string const & name, ManagedGroup * const parent)
     m_targetRate( 0.0 )
 {
 
-  RegisterViewWrapper( viewKeyStruct::typeString, &m_typeString, false )->
+  registerWrapper( viewKeyStruct::typeString, &m_typeString, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well type (producer/injector)");
 
-  RegisterViewWrapper( viewKeyStruct::controlString, &m_inputControlString, false )->
+  registerWrapper( viewKeyStruct::controlString, &m_inputControlString, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Well control (BHP/gasRate/oilRate/waterRate)");
 
-  RegisterViewWrapper( viewKeyStruct::targetBHPString, &m_targetBHP, false )->
+  registerWrapper( viewKeyStruct::targetBHPString, &m_targetBHP, false )->
     setDefaultValue(-1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Target bottom-hole pressure");
 
-  RegisterViewWrapper( viewKeyStruct::targetRateString, &m_targetRate, false )->
+  registerWrapper( viewKeyStruct::targetRateString, &m_targetRate, false )->
     setDefaultValue(-1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Target rate");
 
-  RegisterViewWrapper( viewKeyStruct::refWellElemDepthString, &m_refWellElemDepth, false )->
+  registerWrapper( viewKeyStruct::refWellElemDepthString, &m_refWellElemDepth, false )->
     setDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference depth for well bottom hole pressure");
 
-  RegisterViewWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
+  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
     setDefaultValue(-1)->
     setSizedFromParent(0)->
     setInputFlag(InputFlags::OPTIONAL)->

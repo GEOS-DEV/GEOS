@@ -47,11 +47,11 @@ SymbolicFunction::SymbolicFunction( const std::string& name,
   parserExpression()
 #endif
 {
-  RegisterViewWrapper<string_array>(keys::variableNames)->
+  registerWrapper<string_array>(keys::variableNames)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of variables in expression.  The order must match the evaluate argument");
 
-  RegisterViewWrapper<string>(keys::expression)->
+  registerWrapper<string>(keys::expression)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Symbolic math expression");
 }

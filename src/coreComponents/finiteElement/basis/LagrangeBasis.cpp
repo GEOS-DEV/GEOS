@@ -34,7 +34,7 @@ LagrangeBasis<dim>::LagrangeBasis(std::string const & name, ManagedGroup * const
   m_degree(0),
   n_shape_functions(0)
 {
-  RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Basis degree");
 }

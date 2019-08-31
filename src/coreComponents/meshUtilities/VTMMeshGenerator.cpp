@@ -57,7 +57,7 @@ VTMMeshGenerator::VTMMeshGenerator( string const & name, ManagedGroup * const pa
      }
    */
 
-  RegisterViewWrapper<string>(keys::filePath)->
+  registerWrapper<string>(keys::filePath)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the vtm file");
 }

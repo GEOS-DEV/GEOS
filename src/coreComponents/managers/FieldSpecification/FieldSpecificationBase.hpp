@@ -415,15 +415,15 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                               ManagedGroup * dataGroup,
                                               string const & fieldName ) const
 {
-  dataRepository::WrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                  false,
                                  [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *vw );
+    dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
 
     typename ArrayType::ViewType const & field = view.referenceAsView();
     ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
@@ -441,8 +441,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
@@ -450,7 +450,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
     [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*vw);
+      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapper);
       fieldType & field = view.reference();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,

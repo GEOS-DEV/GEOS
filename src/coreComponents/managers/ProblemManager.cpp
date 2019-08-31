@@ -129,47 +129,47 @@ ProblemManager::ProblemManager( const std::string& name,
                                      false );
 
   // Command line entries
-  commandLine->RegisterViewWrapper<string>( viewKeys.inputFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.inputFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the input xml file.");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.restartFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.restartFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the restart file.");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.beginFromRestart.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.beginFromRestart.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate restart run.");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.problemName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.problemName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Used in writing the output files, if not specified defaults to the name of the input file..");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.outputDirectory.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.outputDirectory.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Directory in which to put the output files, if not specified defaults to the current directory.");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.xPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the x-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.yPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the y-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.zPartitionsOverride.Key() )->
     setApplyDefaultValue(1)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Number of partitions in the z-direction");
 
-  commandLine->RegisterViewWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
+  commandLine->registerWrapper<integer>( viewKeys.overridePartitionNumbers.Key() )->
     setApplyDefaultValue(0)->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Flag to indicate partition number override");
 
-  commandLine->RegisterViewWrapper<string>( viewKeys.schemaFileName.Key() )->
+  commandLine->registerWrapper<string>( viewKeys.schemaFileName.Key() )->
     setRestartFlags(RestartFlags::WRITE)->
     setDescription("Name of the output schema");
 }
@@ -577,7 +577,7 @@ void ProblemManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
 
   ManagedGroup * parameter = parameterList->RegisterGroup<ManagedGroup>("Parameter");
   parameter->setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
-  parameter->RegisterViewWrapper<string>("value")->
+  parameter->registerWrapper<string>("value")->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Input parameter definition for the preprocessor");
 

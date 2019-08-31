@@ -95,42 +95,42 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   m_sendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes");
   m_nonSendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+  registerWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+  registerWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
                    "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
-  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
+  registerWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of mass based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+  registerWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of stiffness based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
     setDescription("Time integration enum class value.");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic");
 
-  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+  registerWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step.");
 
-  RegisterViewWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+  registerWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
@@ -138,7 +138,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology.");
 
-  RegisterViewWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
+  registerWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Indicates whether or not to use "
@@ -147,7 +147,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain");
 
-  RegisterViewWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
+  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "The name of the material that should be used in the constitutive updates");
 
@@ -180,44 +180,44 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the total displacements on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_3)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Velocity )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current velocity on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Acceleration )->
       setPlotLevel(PlotLevel::LEVEL_1)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
                       "to hold the summation of nodal forces resulting from the governing equations.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                       " conditions as well as coupling forces such as hydraulic forces.");
 
-    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
+    nodes->registerWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
         setPlotLevel(PlotLevel::LEVEL_0)->
         setRegisteringObjects(this->getName())->
         setDescription( "An array that holds the mass on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the velocity predictors on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacement predictors on the nodes.");

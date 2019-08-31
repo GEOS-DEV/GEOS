@@ -37,14 +37,14 @@ template< typename T >
 Wrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string & name,
                                                int sfp, const array1d< T > & data )
 {
-  Wrapper< array1d< T > > * view = parent->RegisterViewWrapper< array1d< T > >( name );
+  Wrapper< array1d< T > > * view = parent->registerWrapper< array1d< T > >( name );
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
   localIndex expected_size = data.size() * sizeof(T);
   view->resize( data.size());
 
-  /* Check that the ViewWrapper size and byteSize return the proper values */
+  /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), data.size());
   EXPECT_EQ( view->byteSize(), expected_size );
 
@@ -55,7 +55,7 @@ Wrapper< array1d< T > > * createArrayView( ManagedGroup * parent, const string &
     view_data[i] = data[i];
   }
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
+  /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( view->dataPtr(), view_data.data());
 
   return view;
@@ -78,7 +78,7 @@ template< typename T >
 Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string & name,
                                                  int sfp, const array2d< T > & data )
 {
-  Wrapper< array2d< T > > * view = parent->RegisterViewWrapper< array2d< T > >( name );
+  Wrapper< array2d< T > > * view = parent->registerWrapper< array2d< T > >( name );
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
@@ -88,7 +88,7 @@ Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string
   dims[1] = data.size( 1 );
   view->resize( 2, dims );
 
-  /* Check that the ViewWrapper size and byteSize return the proper values */
+  /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size( 0 ), data.size( 0 ));
   EXPECT_EQ( view->size( 1 ), data.size( 1 ));
   EXPECT_EQ( view->size(), data.size());
@@ -104,7 +104,7 @@ Wrapper< array2d< T > > * createArray2dView( ManagedGroup * parent, const string
     }
   }
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
+  /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_TRUE( view->dataPtr() == &view_data[0][0] );
 
   return view;
@@ -135,18 +135,18 @@ template< typename T >
 Wrapper< set< T > > * createSetView( ManagedGroup * parent, const string & name,
                                          localIndex sfp, const set< T > & data )
 {
-  Wrapper< set< T > > * view = parent->RegisterViewWrapper< set< T > >( name );
+  Wrapper< set< T > > * view = parent->registerWrapper< set< T > >( name );
   view->setSizedFromParent( int(sfp));
 
   /* Insert the data */
   view->reference().insert( data.values(), data.size());
 
-  /* Check that the ViewWrapper size and byteSize return the proper values */
+  /* Check that the Wrapper size and byteSize return the proper values */
   localIndex expected_size = data.size() * sizeof(T);
   EXPECT_EQ( view->size(), data.size());
   EXPECT_EQ( view->byteSize(), expected_size );
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
+  /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( view->dataPtr(), view->reference().values());
 
   return view;
@@ -169,7 +169,7 @@ void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< 
 Wrapper< string > * createStringView( ManagedGroup * parent, const string & name,
                                           int sfp, const string & str )
 {
-  Wrapper< string > * view = parent->RegisterViewWrapper< string >( name );
+  Wrapper< string > * view = parent->registerWrapper< string >( name );
   view->setSizedFromParent( sfp );
 
   localIndex expected_size = static_cast< localIndex >(str.size()) * sizeof(char);
@@ -177,11 +177,11 @@ Wrapper< string > * createStringView( ManagedGroup * parent, const string & name
   /* Set the data */
   view->reference() = str;
 
-  /* Check that the ViewWrapper size and byteSize return the proper values */
+  /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( static_cast< uint >(view->size()), str.size());
   EXPECT_EQ( view->byteSize(), expected_size );
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
+  /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( view->dataPtr(), view->reference().c_str());
 
   return view;
@@ -198,7 +198,7 @@ void checkStringView( const Wrapper< string > * view, const int sfp, const strin
 Wrapper< string_array > * createStringArrayView( ManagedGroup * parent, const string & name,
                                                      int sfp, const string_array & arr )
 {
-  Wrapper< string_array > * view = parent->RegisterViewWrapper< string_array >( name );
+  Wrapper< string_array > * view = parent->registerWrapper< string_array >( name );
   view->setSizedFromParent( sfp );
 
   unsigned long expected_size = arr.size() * sizeof(string);
@@ -233,17 +233,17 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 template< typename T >
 Wrapper< T > * createScalarView( ManagedGroup * parent, const string & name,
                                      int sfp, const T & value ) {
-  Wrapper< T > * view = parent->RegisterViewWrapper< T >( name );
+  Wrapper< T > * view = parent->registerWrapper< T >( name );
   view->setSizedFromParent( sfp );
 
   /* Set the data */
   view->reference() = value;
 
-  /* Check that the ViewWrapper size and byteSize return the proper values */
+  /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), 1 );
   EXPECT_EQ( view->byteSize(), sizeof(T));
 
-  /* Check that the ViewWrapper dataPtr points to the right thing */
+  /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( *(view->dataPtr()), value );
 
   return view;
@@ -269,7 +269,7 @@ TEST( testSidreExtended, testSidreExtended )
   ManagedGroup * root = new ManagedGroup( std::string( "data" ), nullptr );
   root->resize( group_size );
 
-  /* Create a new globalIndex_array ViewWrapper. */
+  /* Create a new globalIndex_array Wrapper. */
   string view_globalIndex_name = "globalIndex";
   int view_globalIndex_sfp = sfp++;
   int view_globalIndex_size = 100;
@@ -280,13 +280,13 @@ TEST( testSidreExtended, testSidreExtended )
   }
   createArrayView( root, view_globalIndex_name, view_globalIndex_sfp, view_globalIndex_data );
 
-  /* Create a new string ViewWrapper. */
+  /* Create a new string Wrapper. */
   string view_hope_name = "hope";
   int view_hope_sfp = sfp++;
   string view_hope_str = "I sure hope these tests pass.";
   createStringView( root, view_hope_name, view_hope_sfp, view_hope_str );
 
-  /* Create a new string array ViewWrapper. */
+  /* Create a new string array Wrapper. */
   string view_restart_name = "restart";
   int view_restart_sfp = sfp++;
   string_array view_restart_arr( 6 );
@@ -302,14 +302,14 @@ TEST( testSidreExtended, testSidreExtended )
   ManagedGroup * strings_group = root->RegisterGroup( "strings" );
   strings_group->resize( group_size + 1 );
 
-  /* Create a new string ViewWrapper. */
+  /* Create a new string Wrapper. */
   string view_hello_name = "hello";
   int view_hello_sfp = sfp++;
   string view_hello_str = "Hello, how are you doing on this fine day?";
   createStringView( strings_group, view_hello_name, view_hello_sfp,
                     view_hello_str );
 
-  /* Create a new string ViewWrapper. */
+  /* Create a new string Wrapper. */
   string view_goodbye_name = "goodbye";
   int view_goodbye_sfp = sfp++;
   string view_goodbye_str = "I hate this weather so I'm heading inside. Goodbye.";
@@ -320,7 +320,7 @@ TEST( testSidreExtended, testSidreExtended )
   ManagedGroup * real64_group = root->RegisterGroup( "real64" );
   real64_group->resize( group_size + 2 );
 
-  /* Create a new real64_array ViewWrapper. */
+  /* Create a new real64_array Wrapper. */
   string view_real641_name = "real641";
   int view_real641_sfp = sfp++;
   int view_real641_size = 1000;
@@ -332,7 +332,7 @@ TEST( testSidreExtended, testSidreExtended )
   createArrayView( real64_group, view_real641_name, view_real641_sfp,
                    view_real641_data );
 
-  /* Create a new real64_array ViewWrapper. */
+  /* Create a new real64_array Wrapper. */
   string view_real642_name = "real642";
   int view_real642_sfp = sfp++;
   int view_real642_size = 1000;
@@ -348,7 +348,7 @@ TEST( testSidreExtended, testSidreExtended )
   ManagedGroup * mixed_group = real64_group->RegisterGroup( "mixed" );
   mixed_group->resize( group_size + 3 );
 
-  /* Create a new localIndex_array ViewWrapper. */
+  /* Create a new localIndex_array Wrapper. */
   string view_localIndex_name = "localIndex";
   int view_localIndex_sfp = sfp++;
   int view_localIndex_size = 953;
@@ -359,7 +359,7 @@ TEST( testSidreExtended, testSidreExtended )
   }
   createArrayView( mixed_group, view_localIndex_name, view_localIndex_sfp, view_localIndex_data );
 
-  /* Create a new real32_array ViewWrapper. */
+  /* Create a new real32_array Wrapper. */
   string view_real32_name = "real32";
   int view_real32_sfp = sfp++;
   int view_real32_size = 782;
@@ -371,20 +371,20 @@ TEST( testSidreExtended, testSidreExtended )
   createArrayView( mixed_group, view_real32_name, view_real32_sfp,
                    view_real32_data );
 
-  /* Create a new string ViewWrapper. */
+  /* Create a new string Wrapper. */
   string view_what_name = "what";
   int view_what_sfp = sfp++;
   string view_what_str = "What are you talking about? Who doesn't like storms?";
   createStringView( mixed_group, view_what_name, view_what_sfp, view_what_str );
 
-  /* Create a new real64 ViewWrapper. */
+  /* Create a new real64 Wrapper. */
   string view_pi_name = "pi";
   int view_pi_sfp = sfp++;
   real64 view_pi_value = 3.14159;
   createScalarView( mixed_group, view_pi_name, view_pi_sfp, view_pi_value );
 
 
-  /* Create a new set<int> ViewWrapper. */
+  /* Create a new set<int> Wrapper. */
   string view_setlocalIndex_name = "view_setlocalIndex";
   localIndex view_setlocalIndex_sfp = sfp++;
   set< localIndex > view_setlocalIndex_set;
@@ -397,7 +397,7 @@ TEST( testSidreExtended, testSidreExtended )
   createSetView( mixed_group, view_setlocalIndex_name, view_setlocalIndex_sfp, view_setlocalIndex_set );
 
 
-  /* Create a new set<string> ViewWrapper. */
+  /* Create a new set<string> Wrapper. */
   string view_setString_name = "view_setString";
   int view_setString_sfp = sfp++;
   set< string > view_setString_set;
@@ -460,27 +460,27 @@ TEST( testSidreExtended, testSidreExtended )
   root = new ManagedGroup( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
-  Wrapper< globalIndex_array > * view_globalIndex_new = root->RegisterViewWrapper< globalIndex_array >( view_globalIndex_name );
-  Wrapper< string > * view_hope_new = root->RegisterViewWrapper< string >( view_hope_name );
-  Wrapper< string_array > * view_restart_new = root->RegisterViewWrapper< string_array >( view_restart_name );
+  Wrapper< globalIndex_array > * view_globalIndex_new = root->registerWrapper< globalIndex_array >( view_globalIndex_name );
+  Wrapper< string > * view_hope_new = root->registerWrapper< string >( view_hope_name );
+  Wrapper< string_array > * view_restart_new = root->registerWrapper< string_array >( view_restart_name );
 
   ManagedGroup * strings_group_new = root->RegisterGroup( "strings" );
-  Wrapper< string > * view_hello_new = strings_group_new->RegisterViewWrapper< string >( view_hello_name );
-  Wrapper< string > * view_goodbye_new = strings_group_new->RegisterViewWrapper< string >( view_goodbye_name );
+  Wrapper< string > * view_hello_new = strings_group_new->registerWrapper< string >( view_hello_name );
+  Wrapper< string > * view_goodbye_new = strings_group_new->registerWrapper< string >( view_goodbye_name );
 
   ManagedGroup * real64_group_new = root->RegisterGroup( "real64" );
-  Wrapper< real64_array > * view_real641_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real641_name );
-  Wrapper< real64_array > * view_real642_new = real64_group_new->RegisterViewWrapper< real64_array >( view_real642_name );
+  Wrapper< real64_array > * view_real641_new = real64_group_new->registerWrapper< real64_array >( view_real641_name );
+  Wrapper< real64_array > * view_real642_new = real64_group_new->registerWrapper< real64_array >( view_real642_name );
 
   ManagedGroup * mixed_group_new = real64_group_new->RegisterGroup( "mixed" );
-  Wrapper< localIndex_array > * view_localIndex_new = mixed_group_new->RegisterViewWrapper< localIndex_array >( view_localIndex_name );
-  Wrapper< real32_array > * view_real32_new = mixed_group_new->RegisterViewWrapper< real32_array >( view_real32_name );
-  Wrapper< string > * view_what_new = mixed_group_new->RegisterViewWrapper< string >( view_what_name );
-  Wrapper< real64 > * view_pi_new = mixed_group_new->RegisterViewWrapper< real64 >( view_pi_name );
-  Wrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->RegisterViewWrapper< set< localIndex > >( view_setlocalIndex_name );
-  Wrapper< set< string > > * view_setString_new = mixed_group_new->RegisterViewWrapper< set< string > >( view_setString_name );
-  Wrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->RegisterViewWrapper< array2d< real64 > >( view_real642d_name );
-  Wrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->RegisterViewWrapper< array2d< R1Tensor > >( view_r1t2d_name );
+  Wrapper< localIndex_array > * view_localIndex_new = mixed_group_new->registerWrapper< localIndex_array >( view_localIndex_name );
+  Wrapper< real32_array > * view_real32_new = mixed_group_new->registerWrapper< real32_array >( view_real32_name );
+  Wrapper< string > * view_what_new = mixed_group_new->registerWrapper< string >( view_what_name );
+  Wrapper< real64 > * view_pi_new = mixed_group_new->registerWrapper< real64 >( view_pi_name );
+  Wrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->registerWrapper< set< localIndex > >( view_setlocalIndex_name );
+  Wrapper< set< string > > * view_setString_new = mixed_group_new->registerWrapper< set< string > >( view_setString_name );
+  Wrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->registerWrapper< array2d< real64 > >( view_real642d_name );
+  Wrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->registerWrapper< array2d< R1Tensor > >( view_r1t2d_name );
 
 
   /* Load the data */
@@ -494,7 +494,7 @@ TEST( testSidreExtended, testSidreExtended )
   EXPECT_EQ( real64_group_new->size(), group_size + 2 );
   EXPECT_EQ( mixed_group_new->size(), group_size + 3 );
 
-  /* Check that ViewWrapper values were restored. */
+  /* Check that Wrapper values were restored. */
   checkArrayView( view_globalIndex_new, view_globalIndex_sfp, view_globalIndex_data );
   checkStringView( view_hope_new, view_hope_sfp, view_hope_str );
   checkStringArrayView( view_restart_new, view_restart_sfp, view_restart_arr );

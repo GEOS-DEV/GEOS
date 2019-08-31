@@ -54,7 +54,7 @@ MeshLevel::MeshLevel( string const & name,
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
 
-  RegisterViewWrapper<integer>( viewKeys.meshLevel );
+  registerWrapper<integer>( viewKeys.meshLevel );
 }
 
 MeshLevel::~MeshLevel()

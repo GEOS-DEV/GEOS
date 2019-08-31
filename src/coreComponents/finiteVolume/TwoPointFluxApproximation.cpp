@@ -36,10 +36,10 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
                                                      ManagedGroup *const parent)
   : FluxApproximationBase(name, parent)
 {
-  RegisterViewWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
+  registerWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
-  RegisterViewWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
+  registerWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
 }

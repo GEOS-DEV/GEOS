@@ -48,15 +48,15 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
   m_couplingTypeOption()
 
 {
-  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+  registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+  registerWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+  registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
@@ -72,9 +72,9 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const
     elemManager->forElementSubRegions<CellElementSubRegion,
                                       FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
       {
-        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+        elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");
-        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+        elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
           setDescription("Total Mean Stress");
       });
   }

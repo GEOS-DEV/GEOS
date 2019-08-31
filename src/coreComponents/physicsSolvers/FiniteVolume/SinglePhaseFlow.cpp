@@ -66,29 +66,29 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
 
     elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
     });
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
         setDefaultValue(1.0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
         setDefaultValue(1.0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
         setDefaultValue(0.0);
 
     } );
@@ -96,10 +96,10 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
     // TODO restrict this to boundary sets
     FaceManager * const faceManager = meshLevel->getFaceManager();
     {
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
-      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::faceDensityString )->reference().resizeDimension<1>(1);
-      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::faceViscosityString )->reference().resizeDimension<1>(1);
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::faceMobilityString );
+      faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
+      faceManager->registerWrapper<array2d<real64> >( viewKeyStruct::faceDensityString )->reference().resizeDimension<1>(1);
+      faceManager->registerWrapper<array2d<real64> >( viewKeyStruct::faceViscosityString )->reference().resizeDimension<1>(1);
+      faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::faceMobilityString );
     }
   }
 }

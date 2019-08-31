@@ -42,7 +42,7 @@ ContactRelationBase::ContactRelationBase( string const & name,
   m_penaltyStiffness(0.0),
   m_apertureFunction(nullptr)
 {
-  RegisterViewWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
