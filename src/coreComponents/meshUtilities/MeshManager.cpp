@@ -30,8 +30,8 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 MeshManager::MeshManager( std::string const & name,
-                          ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+                          Group * const parent ):
+  Group( name, parent)
 {
   setInputFlags(InputFlags::REQUIRED);
 }
@@ -39,7 +39,7 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-ManagedGroup * MeshManager::CreateChild( string const & childKey, string const & childName )
+Group * MeshManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Mesh: " << childKey << ", " << childName);
   std::unique_ptr<MeshGeneratorBase> solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );

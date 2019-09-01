@@ -44,11 +44,11 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup * const parent ):
+InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
-//    m_vertices({this->RegisterViewWrapper<real64_array>(keys::xCoords).reference(),
-//                this->RegisterViewWrapper<real64_array>(keys::yCoords).reference(),
-//                this->RegisterViewWrapper<real64_array>(keys::zCoords).reference()
+//    m_vertices({this->registerWrapper<real64_array>(keys::xCoords).reference(),
+//                this->registerWrapper<real64_array>(keys::yCoords).reference(),
+//                this->registerWrapper<real64_array>(keys::zCoords).reference()
 // }),
   m_dim( 0 ),
   m_min(),
@@ -68,62 +68,62 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, ManagedGroup 
    */
   m_dim = 3;
 
-  RegisterViewWrapper(keys::xCoords, &(m_vertices[0]), false )->
+  registerWrapper(keys::xCoords, &(m_vertices[0]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("x-coordinates of each mesh block vertex");
 
-  RegisterViewWrapper(keys::yCoords, &(m_vertices[1]), false )->
+  registerWrapper(keys::yCoords, &(m_vertices[1]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("y-coordinates of each mesh block vertex");
 
-  RegisterViewWrapper(keys::zCoords, &(m_vertices[2]), false )->
+  registerWrapper(keys::zCoords, &(m_vertices[2]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("z-coordinates of each mesh block vertex");
 
-  RegisterViewWrapper(keys::xElems, &(m_nElems[0]), false )->
+  registerWrapper(keys::xElems, &(m_nElems[0]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("number of elements in the x-direction within each mesh block");
 
-  RegisterViewWrapper(keys::yElems, &(m_nElems[1]), false )->
+  registerWrapper(keys::yElems, &(m_nElems[1]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("number of elements in the y-direction within each mesh block");
 
-  RegisterViewWrapper(keys::zElems, &(m_nElems[2]), false )->
+  registerWrapper(keys::zElems, &(m_nElems[2]), false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("number of elements in the z-direction within each mesh block");
 
-  RegisterViewWrapper(keys::xBias, &(m_nElemBias[0]), false )->
+  registerWrapper(keys::xBias, &(m_nElemBias[0]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
     setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper(keys::yBias, &(m_nElemBias[1]), false )->
+  registerWrapper(keys::yBias, &(m_nElemBias[1]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
     setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper(keys::zBias, &(m_nElemBias[2]), false )->
+  registerWrapper(keys::zBias, &(m_nElemBias[2]), false )->
     setApplyDefaultValue(1.0)->
     setSizedFromParent(0)->
     setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper(keys::cellBlockNames, &m_regionNames, false )->
+  registerWrapper(keys::cellBlockNames, &m_regionNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("names of each mesh block");
 
-  RegisterViewWrapper(keys::elementTypes, &m_elementType, false )->
+  registerWrapper(keys::elementTypes, &m_elementType, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("element types of each mesh block");
 
-  RegisterViewWrapper(keys::trianglePattern, &m_trianglePattern, false )->
+  registerWrapper(keys::trianglePattern, &m_trianglePattern, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");
@@ -303,7 +303,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-ManagedGroup * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
 {
   return nullptr;
 }
@@ -320,7 +320,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // This cannot find groupkeys:
   // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+  Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
 
@@ -333,7 +333,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // Make sure that the node manager fields are initialized
 
   CellBlockManager * elementManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
-  ManagedGroup * nodeSets = nodeManager->sets();
+  Group * nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference<PartitionBase>(keys::partitionManager);
 
@@ -348,13 +348,13 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
 
-  localIndex_set & xnegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xneg") )->reference();
-  localIndex_set & xposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("xpos") )->reference();
-  localIndex_set & ynegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("yneg") )->reference();
-  localIndex_set & yposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("ypos") )->reference();
-  localIndex_set & znegNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("zneg") )->reference();
-  localIndex_set & zposNodes = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("zpos") )->reference();
-  localIndex_set & allNodes  = nodeSets->RegisterViewWrapper<localIndex_set>( std::string("all") )->reference();
+  localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
+  localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
+  localIndex_set & ynegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("yneg") )->reference();
+  localIndex_set & yposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("ypos") )->reference();
+  localIndex_set & znegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zneg") )->reference();
+  localIndex_set & zposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("zpos") )->reference();
+  localIndex_set & allNodes  = nodeSets->registerWrapper<localIndex_set>( std::string("all") )->reference();
 
 
   // partition based on even spacing to get load balance
@@ -1216,7 +1216,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const domain )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())
@@ -1257,5 +1257,5 @@ void InternalMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const doma
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, std::string const &, Group * const )
 }

@@ -29,14 +29,14 @@ namespace geosx
 {
 using namespace dataRepository;
 
-WellElementRegion::WellElementRegion( string const & name, ManagedGroup * const parent ):
+WellElementRegion::WellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent ),
   m_subRegionName(name+"uniqueSubRegion"),
   m_wellControlsName(""),
   m_wellGeneratorName("")
 {
-  RegisterViewWrapper( viewKeyStruct::wellControlsString,  &m_wellControlsName,  false );
-  RegisterViewWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName, false );
+  registerWrapper( viewKeyStruct::wellControlsString,  &m_wellControlsName,  false );
+  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName, false );
 
   this->GetGroup( viewKeyStruct::elementSubRegions )
       ->RegisterGroup<WellElementSubRegion>( m_subRegionName );
@@ -130,6 +130,6 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

@@ -32,7 +32,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 BlueprintOutput::BlueprintOutput( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   OutputBase( name, parent)
 {
 }
@@ -46,9 +46,9 @@ void BlueprintOutput::Execute(real64 const time_n,
                               integer const cycleNumber,
                               integer const eventCounter,
                               real64 const eventProgress,
-                              ManagedGroup * domain)
+                              Group * domain)
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   
   const MeshLevel * meshLevel = domainPartition->getMeshBody(0)->getMeshLevel(0);
   Blueprint bpWriter(*meshLevel->getNodeManager(),
@@ -59,5 +59,5 @@ void BlueprintOutput::Execute(real64 const time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, std::string const &, Group * const )
 } /* namespace geosx */

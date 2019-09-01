@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 namespace geosx
@@ -41,11 +41,11 @@ string const partitionManager("partitionManager");
 class ObjectManagerBase;
 class PartitionBase;
 
-class DomainPartition : public dataRepository::ManagedGroup
+class DomainPartition : public dataRepository::Group
 {
 public:
   DomainPartition( std::string const & name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
   ~DomainPartition() override;
 
@@ -55,7 +55,7 @@ public:
   DomainPartition& operator=( DomainPartition const & ) = delete;
   DomainPartition& operator=( DomainPartition && ) = delete;
 
-  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
 
   void InitializationOrder( string_array & order ) override final;
@@ -121,9 +121,9 @@ public:
   { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
 
 
-  ManagedGroup const * getMeshBodies() const
+  Group const * getMeshBodies() const
   { return this->GetGroup(groupKeys.meshBodies); }
-  ManagedGroup * getMeshBodies()
+  Group * getMeshBodies()
   { return this->GetGroup(groupKeys.meshBodies); }
 
   MeshBody const * getMeshBody( string const & meshName ) const

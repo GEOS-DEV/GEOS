@@ -23,7 +23,7 @@
 #ifndef FUNCTIONBASE_HPP_
 #define FUNCTIONBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -43,12 +43,12 @@ string const inputVarNames("inputVarNames");
  *
  * An object for interfacing with arbitrary N-dimensional functions.
  */
-class FunctionBase : public dataRepository::ManagedGroup
+class FunctionBase : public dataRepository::Group
 {
 public:
   /// Main constructor
   FunctionBase( const std::string& name,
-                dataRepository::ManagedGroup * const parent );
+                dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~FunctionBase() override;
@@ -69,7 +69,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const = 0;
@@ -81,7 +81,7 @@ public:
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
-  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -95,7 +95,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @return An array holding the min, average, max values of the results
    */
-  real64_array EvaluateStats( dataRepository::ManagedGroup const * const group,
+  real64_array EvaluateStats( dataRepository::Group const * const group,
                               real64 const time,
                               set<localIndex> const & set) const;
 
@@ -103,7 +103,7 @@ protected:
   string_array m_inputVarNames;
 
   template< typename LEAF >
-  void EvaluateT( dataRepository::ManagedGroup const * const group,
+  void EvaluateT( dataRepository::Group const * const group,
                   real64 const time,
                   SortedArrayView<localIndex const> const & set,
                   real64_array & result ) const;
@@ -114,7 +114,7 @@ protected:
 
 /// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
-void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
+void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64 const time,
                               SortedArrayView<localIndex const> const & set,
                               real64_array & result ) const
@@ -138,14 +138,14 @@ void FunctionBase::EvaluateT( dataRepository::ManagedGroup const * const group,
     }
     else
     {
-      dataRepository::ViewWrapperBase const & vwb = *(group->getWrapperBase( varName ));
-      std::type_index typeIndex = std::type_index(vwb.get_typeid());
+      dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
+      std::type_index typeIndex = std::type_index(wrapperb.get_typeid());
       rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
         {
           using containerType = decltype(container_type);
           using varType = decltype(var_type);
-          dataRepository::ViewWrapper<containerType> const & view =
-            dynamic_cast< dataRepository::ViewWrapper<containerType> const & >(vwb);
+          dataRepository::Wrapper<containerType> const & view =
+            dynamic_cast< dataRepository::Wrapper<containerType> const & >(wrapperb);
 
           input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
           varSize[varIndex] = sizeof(varType) / sizeof(double);

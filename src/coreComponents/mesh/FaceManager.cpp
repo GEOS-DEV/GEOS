@@ -36,31 +36,31 @@ using namespace dataRepository;
  *
  * @return
  */
-FaceManager::FaceManager( string const &, ManagedGroup * const parent ):
+FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase("FaceManager",parent)
 {
-  this->RegisterViewWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
-  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
+  this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
-  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+  this->registerWrapper( viewKeyStruct::elementRegionListString,
                              &(m_toElements.m_toElementRegion),
                              false )->
     setApplyDefaultValue(-1);
 
-  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
                              &(m_toElements.m_toElementSubRegion),
                              false )->
     setApplyDefaultValue(-1);
 
-  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+  this->registerWrapper( viewKeyStruct::elementListString,
                              &(m_toElements.m_toElementIndex),
                              false )->
     setApplyDefaultValue(-1);
 
-  this->RegisterViewWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
-  this->RegisterViewWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
-  this->RegisterViewWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false);
+  this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false);
+  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false);
+  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false);
 
   m_toElements.resize(0,2);
 
@@ -924,6 +924,6 @@ void FaceManager::depopulateUpMaps( std::set<localIndex> const & receivedFaces,
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, FaceManager, std::string const &, Group * const )
 
 }

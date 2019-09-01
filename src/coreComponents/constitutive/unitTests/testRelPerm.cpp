@@ -186,7 +186,7 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
   }
 }
 
-RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyRelativePermeability>( name );
 
@@ -210,7 +210,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, ManagedG
   return relPerm;
 }
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
 
@@ -235,7 +235,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
 }
 
 
-RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<BrooksCoreyBakerRelativePermeability>( name );
 
@@ -267,7 +267,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
   return relPerm;
 }
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
 
@@ -292,7 +292,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 }
 
 
-RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, ManagedGroup * parent )
+RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group * parent )
 {
   auto relPerm = parent->RegisterGroup<VanGenuchtenBakerRelativePermeability>( name );
 
@@ -328,7 +328,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const 
 
 TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
@@ -348,7 +348,7 @@ TEST(testRelPerm, numericalDerivatives_brooksCoreyRelPerm)
 
 TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
@@ -377,7 +377,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase)
 
 TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
@@ -408,7 +408,7 @@ TEST(testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase)
 
 TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
@@ -436,7 +436,7 @@ TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase)
 
 TEST(testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase)
 {
-  auto parent = std::make_unique<ManagedGroup>( "parent", nullptr );
+  auto parent = std::make_unique<Group>( "parent", nullptr );
   parent->resize( 1 );
 
   RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );

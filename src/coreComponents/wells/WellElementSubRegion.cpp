@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * const parent ):
+WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_wellControlsName(""),
   m_topWellElementIndex( -1 ),
@@ -35,15 +35,15 @@ WellElementSubRegion::WellElementSubRegion( string const & name, ManagedGroup * 
   m_topRank( -1 )
 {
 
-  RegisterViewWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
-  RegisterViewWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation, false );
-  RegisterViewWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
-  RegisterViewWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal, false );
-  RegisterViewWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex, false );
-  RegisterViewWrapper( viewKeyStruct::topRankString, &m_topRank, false );
+  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
+  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation, false );
+  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
+  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal, false );
+  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex, false );
+  registerWrapper( viewKeyStruct::topRankString, &m_topRank, false );
 
-  RegisterViewWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
-  RegisterViewWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
+  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
+  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
 
   RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData, false );
 

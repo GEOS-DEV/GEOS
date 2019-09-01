@@ -22,7 +22,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
 
@@ -39,7 +39,7 @@ class OutputBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit OutputBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -51,7 +51,7 @@ public:
   virtual void SetupDirectoryStructure();
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeysStruct
@@ -64,7 +64,7 @@ public:
   integer parallelThreads() const { return m_parallelThreads; }
 
 protected:
-  virtual void InitializePreSubGroups( ManagedGroup * const group ) override;
+  virtual void InitializePreSubGroups( Group * const group ) override;
 
 private:
   string m_slaveDirectory;

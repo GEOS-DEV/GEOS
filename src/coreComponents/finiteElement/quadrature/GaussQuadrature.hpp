@@ -39,7 +39,7 @@ public:
     return name;
   }
 
-  GaussQuadrature( std::string const & name, ManagedGroup * const parent );
+  GaussQuadrature( std::string const & name, Group * const parent );
 
   virtual ~GaussQuadrature() override;
 

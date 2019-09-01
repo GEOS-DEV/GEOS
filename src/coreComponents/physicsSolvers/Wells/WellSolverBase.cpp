@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace constitutive;
   
 WellSolverBase::WellSolverBase( std::string const & name,
-                                ManagedGroup * const parent )
+                                Group * const parent )
   : SolverBase( name, parent ),
     m_flowSolverName(""),
     m_gravityFlag(1),
@@ -44,22 +44,22 @@ WellSolverBase::WellSolverBase( std::string const & name,
     m_numDofPerWellElement(0),
     m_numDofPerResElement(0)
 {
-  RegisterViewWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
+  registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Flag that enables/disables gravity");
 
-  this->RegisterViewWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
+  this->registerWrapper( viewKeyStruct::fluidNameString,  &m_fluidName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of fluid constitutive object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::resFluidIndexString, &m_resFluidIndex, false );
+  this->registerWrapper( viewKeyStruct::resFluidIndexString, &m_resFluidIndex, false );
 
 }
 
-ManagedGroup * WellSolverBase::CreateChild( string const & childKey, string const & childName )
+Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
 
   if( childKey == keys::wellControls )
   {
@@ -74,7 +74,7 @@ ManagedGroup * WellSolverBase::CreateChild( string const & childKey, string cons
 
 WellSolverBase::~WellSolverBase() = default;
 
-void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
+void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 {
   SolverBase::RegisterDataOnMesh( meshBodies );
 
@@ -84,10 +84,10 @@ void WellSolverBase::RegisterDataOnMesh( ManagedGroup * const meshBodies )
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
+    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::gravityDepthString );
   });
 }
 
@@ -161,7 +161,7 @@ void WellSolverBase::UpdateStateAll( DomainPartition * const domain )
 
 }
  
-void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void WellSolverBase::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
@@ -174,7 +174,7 @@ void WellSolverBase::InitializePreSubGroups(ManagedGroup * const rootGroup)
   m_resFluidIndex = fluid->getIndexInParent(); 
 }
   
-void WellSolverBase::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup)
+void WellSolverBase::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups(rootGroup);
 

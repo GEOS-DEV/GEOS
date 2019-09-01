@@ -53,11 +53,11 @@ template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
       CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
@@ -72,11 +72,11 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
       CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);

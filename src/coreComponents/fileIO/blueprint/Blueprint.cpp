@@ -154,9 +154,9 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
   z_view->setExternalDataPtr( const_cast< R1Tensor* >( position.data() ) );
   z_view->apply( axom::sidre::TypeID::DOUBLE_ID, n_nodes, 2, 3 );
 
-  for ( const std::pair< const std::string, const dataRepository::ViewWrapperBase* >& pair : m_node_manager.wrappers() )
+  for ( const std::pair< const std::string, const dataRepository::WrapperBase* >& pair : m_node_manager.wrappers() )
   {
-    const dataRepository::ViewWrapperBase* view = pair.second;
+    const dataRepository::WrapperBase* view = pair.second;
     // if ( view->sizedFromParent() == 1 &&
     //      view->size() > 0 &&
     //      view->shouldRegisterDataPtr() &&
@@ -199,9 +199,9 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
   connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
 
-  // for ( const std::pair< const std::string, const ViewWrapperBase* >& pair : cell_block->wrappers() )
+  // for ( const std::pair< const std::string, const WrapperBase* >& pair : cell_block->wrappers() )
   // {
-  //   const ViewWrapperBase* view = pair.second;
+  //   const WrapperBase* view = pair.second;
   //   if ( view->sizedFromParent() == 1 &&
   //        view->size() > 0 &&
   //        view->shouldRegisterDataPtr() &&
