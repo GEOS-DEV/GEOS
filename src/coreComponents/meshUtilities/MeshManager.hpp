@@ -20,22 +20,22 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MESHMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_MESHMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
 class SolverBase;
 
-class MeshManager : public dataRepository::ManagedGroup
+class MeshManager : public dataRepository::Group
 {
 public:
   MeshManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
 
   virtual ~MeshManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;

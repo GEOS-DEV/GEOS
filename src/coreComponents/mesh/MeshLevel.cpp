@@ -34,8 +34,8 @@ namespace geosx
 using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
-                      ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                      Group * const parent ):
+  Group(name,parent),
   m_nodeManager( groupStructKeys::nodeManagerString,this),
   m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
@@ -54,13 +54,13 @@ MeshLevel::MeshLevel( string const & name,
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
 
-  RegisterViewWrapper<integer>( viewKeys.meshLevel );
+  registerWrapper<integer>( viewKeys.meshLevel );
 }
 
 MeshLevel::~MeshLevel()
 {}
 
-void MeshLevel::InitializePostInitialConditions_PostSubGroups( ManagedGroup * const )
+void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
 {
   m_elementManager.forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
   {

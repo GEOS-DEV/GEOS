@@ -167,9 +167,9 @@ protected:
       GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
     }
 
-    dataRepository::ManagedGroup * commandLine =
-      problemManager.GetGroup<dataRepository::ManagedGroup>( problemManager.groupKeys.commandLine );
-    commandLine->RegisterViewWrapper<integer>( problemManager.viewKeys.zPartitionsOverride.Key() )->
+    dataRepository::Group * commandLine =
+      problemManager.GetGroup<dataRepository::Group>( problemManager.groupKeys.commandLine );
+    commandLine->registerWrapper<integer>( problemManager.viewKeys.zPartitionsOverride.Key() )->
       setApplyDefaultValue(mpiSize);
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );

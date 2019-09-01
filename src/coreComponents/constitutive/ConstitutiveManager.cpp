@@ -35,8 +35,8 @@ namespace constitutive
 
 
 ConstitutiveManager::ConstitutiveManager( string const & name,
-                                          ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                          Group * const parent ):
+  Group( name, parent )
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -45,7 +45,7 @@ ConstitutiveManager::~ConstitutiveManager()
 {}
 
 
-ManagedGroup * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
+Group * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
   return RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
@@ -64,7 +64,7 @@ void ConstitutiveManager::ExpandObjectCatalogs()
 
 ConstitutiveBase *
 ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
-                                               dataRepository::ManagedGroup * const parent,
+                                               dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
   ConstitutiveBase const * const
@@ -76,7 +76,7 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   material->AllocateConstitutiveData( parent,
                                       numConstitutivePointsPerParentIndex );
 
-  dataRepository::ManagedGroup * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
+  dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
     constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString );

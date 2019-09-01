@@ -31,27 +31,27 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 VTKOutput::VTKOutput( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   OutputBase( name, parent),
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel(),
   m_vtkFile(name)
 {
-  RegisterViewWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+  registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+  registerWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
+  registerWrapper(viewKeysStruct::plotLevel, &m_plotLevel, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::binaryString, &m_writeBinaryData, false )->
+  registerWrapper(viewKeysStruct::binaryString, &m_writeBinaryData, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Output the data in binary format");
@@ -71,12 +71,12 @@ void VTKOutput::Execute(real64 const time_n,
                          integer const cycleNumber,
                          integer const eventCounter,
                          real64 const eventProgress,
-                         ManagedGroup * domain)
+                         Group * domain)
 {
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   m_vtkFile.Write( time_n, *domainPartition);
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, std::string const &, Group * const )
 } /* namespace geosx */

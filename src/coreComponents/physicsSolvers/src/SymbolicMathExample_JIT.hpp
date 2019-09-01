@@ -32,7 +32,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class DomainPartition;
 
@@ -40,7 +40,7 @@ class SymbolicMathExample_JIT : public SolverBase
 {
 public:
   SymbolicMathExample_JIT( const std::string& name,
-                           ManagedGroup * const parent );
+                           Group * const parent );
 
 
   virtual ~SymbolicMathExample_JIT() override;
@@ -49,9 +49,9 @@ public:
 
   virtual void FillDocumentationNode() override;
 
-  virtual void BuildDataStructure( dataRepository::ManagedGroup * const domain ) override;
+  virtual void BuildDataStructure( dataRepository::Group * const domain ) override;
 
-  virtual void Initialize( ManagedGroup * const problemManager ) override final;
+  virtual void Initialize( Group * const problemManager ) override final;
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,

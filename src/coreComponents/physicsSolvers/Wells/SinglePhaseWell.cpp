@@ -22,12 +22,12 @@
 
 #include "SinglePhaseWell.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"
@@ -44,14 +44,14 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
-                                  ManagedGroup * const parent )
+                                  Group * const parent )
   :
   WellSolverBase( name, parent )
 {
   m_numDofPerWellElement = 2;
 }
 
-void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
+void SinglePhaseWell::RegisterDataOnMesh(Group * const meshBodies)
 {
 
   WellSolverBase::RegisterDataOnMesh(meshBodies);
@@ -62,19 +62,19 @@ void SinglePhaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::connRateString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaConnRateString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::connRateString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaConnRateString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
-    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
+    perforationData->registerWrapper<array1d<real64>>( viewKeyStruct::perforationRateString );
+    perforationData->registerWrapper<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
   });
 
 }
   
-void SinglePhaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
 {
 
   WellSolverBase::InitializePreSubGroups( rootGroup );
@@ -1336,5 +1336,5 @@ void SinglePhaseWell::RecordWellData( WellElementSubRegion const * const subRegi
   }
 }
 
-REGISTER_CATALOG_ENTRY(SolverBase, SinglePhaseWell, string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(SolverBase, SinglePhaseWell, string const &, Group * const)
 }// namespace geosx

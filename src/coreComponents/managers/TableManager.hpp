@@ -35,7 +35,7 @@
 #include "managers/Tables/TableTypes.hpp"
 
 #include <map>
-#include "../codingUtilities/IOUtilities.hpp"
+#include "codingUtilities/IOUtilities.hpp"
 
 class TableManager
 {

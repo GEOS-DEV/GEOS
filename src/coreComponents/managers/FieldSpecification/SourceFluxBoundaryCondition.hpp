@@ -32,11 +32,11 @@ namespace geosx
 class SourceFluxBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  SourceFluxBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
+  SourceFluxBoundaryCondition( string const & name, dataRepository::Group *const parent );
   SourceFluxBoundaryCondition() = delete;
   virtual ~SourceFluxBoundaryCondition() override;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const ) override;
+  virtual void InitializePreSubGroups( Group * const ) override;
 
   static string CatalogName() { return "SourceFlux"; }
 

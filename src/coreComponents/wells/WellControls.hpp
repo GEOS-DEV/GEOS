@@ -24,7 +24,7 @@
 #ifndef GEOSX_CORECOMPONENTS_WELLS_WELLCONTROLS_HPP
 #define GEOSX_CORECOMPONENTS_WELLS_WELLCONTROLS_HPP
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -43,7 +43,7 @@ static constexpr auto wellControls = "WellControls";
  *
  * This class describes the controls used to operate a well
  */  
-class WellControls : public dataRepository::ManagedGroup
+class WellControls : public dataRepository::Group
 {
 public:
 
@@ -69,7 +69,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  explicit WellControls( string const & name, dataRepository::ManagedGroup * const parent );
+  explicit WellControls( string const & name, dataRepository::Group * const parent );
   
   /**
    * @brief default destructor
@@ -175,7 +175,7 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
 

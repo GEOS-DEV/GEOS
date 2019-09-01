@@ -43,26 +43,26 @@ using namespace dataRepository;
  * @return
  */
 NodeManager::NodeManager( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition()
 {
-  RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
+  registerWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
 
-  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
+  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+  this->registerWrapper( viewKeyStruct::elementRegionListString,
                              &(elementRegionList()),
                              false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
                              &(elementSubRegionList()),
                              false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+  this->registerWrapper( viewKeyStruct::elementListString,
                              &(elementList()),
                              false );
 
@@ -356,6 +356,6 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, Group * const )
 
 }

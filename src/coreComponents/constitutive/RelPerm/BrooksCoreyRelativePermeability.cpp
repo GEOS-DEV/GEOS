@@ -35,21 +35,21 @@ namespace constitutive
 
 
 BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string const & name,
-                                                                  ManagedGroup * const parent )
+                                                                  Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("MinimumRel perm power law exponent for each phase");
 
 
-  RegisterViewWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum rel perm value for each phase");
@@ -63,7 +63,7 @@ BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 
 void
 BrooksCoreyRelativePermeability::DeliverClone( string const & name,
-                                               ManagedGroup * const parent,
+                                               Group * const parent,
                                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< BrooksCoreyRelativePermeability > newModel = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
@@ -156,7 +156,7 @@ void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> co
            m_satScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx
