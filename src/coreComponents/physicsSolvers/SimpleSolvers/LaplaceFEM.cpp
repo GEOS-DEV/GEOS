@@ -26,9 +26,9 @@
 #include <vector>
 #include <math.h>
 
+#include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -54,15 +54,15 @@ using namespace dataRepository;
 using namespace constitutive;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName("primaryField")
 {
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("option for default time integration method");
 
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+  registerWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of field variable");
 }
@@ -72,13 +72,13 @@ LaplaceFEM::~LaplaceFEM()
   // TODO Auto-generated destructor stub
 }
 
-void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+    nodes->registerWrapper<real64_array >( m_fieldName )->
       setApplyDefaultValue(0.0)->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setDescription("Primary field variable");
@@ -179,7 +179,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -371,7 +371,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
+                    Group * const targetGroup,
                     string const fieldName )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
@@ -386,5 +386,5 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
   });
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
 } /* namespace ANST */

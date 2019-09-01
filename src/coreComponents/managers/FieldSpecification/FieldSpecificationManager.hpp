@@ -45,7 +45,7 @@ string const boundaryConditionManager( "BoundaryConditionManager" );
  * This class contains the field objects and provides an interface for administering
  * to specify them The class is a singleton.
  */
-class FieldSpecificationManager : public dataRepository::ManagedGroup
+class FieldSpecificationManager : public dataRepository::Group
 {
 public:
 
@@ -64,7 +64,7 @@ public:
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
    * @param childName the name of the new FieldSpecificationBase object in the repository
    */
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -96,7 +96,7 @@ public:
    */
   template< typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::ManagedGroup * domain,
+                        dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName ) const
   {
@@ -138,14 +138,14 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::ManagedGroup * domain,
+                        dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName,
                         LAMBDA && lambda ) const;
 
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void ApplyFieldValue( real64 const time,
-                        dataRepository::ManagedGroup * domain,
+                        dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName,
                         PRELAMBDA && preLambda,
@@ -156,7 +156,7 @@ public:
    * @brief function to apply initial conditions
    * @param domain the DomainParition object
    */
-  void ApplyInitialConditions( dataRepository::ManagedGroup * domain ) const;
+  void ApplyInitialConditions( dataRepository::Group * domain ) const;
 
 
   /**
@@ -184,7 +184,7 @@ public:
    */
   template< typename LAMBDA >
   void Apply( real64 const time,
-              dataRepository::ManagedGroup * domain,
+              dataRepository::Group * domain,
               string const & fieldPath,
               string const & fieldName,
               LAMBDA && lambda ) const
@@ -209,18 +209,18 @@ public:
           MeshLevel * const meshLevel = domain->group_cast<DomainPartition*>()->
                                         getMeshBody( 0 )->getMeshLevel( 0 );
 
-          dataRepository::ManagedGroup * targetGroup = meshLevel;
+          dataRepository::Group * targetGroup = meshLevel;
 
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            dataRepository::ManagedGroup * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegionsGroup );
+            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegionsGroup );
             if( elemRegionSubGroup!=nullptr )
             {
               targetGroup = elemRegionSubGroup;
             }
 
-            dataRepository::ManagedGroup * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
             if( elemSubRegionSubGroup!=nullptr )
             {
               targetGroup = elemSubRegionSubGroup;
@@ -259,11 +259,11 @@ private:
    * @param name The name of the BoundaryConditionManager in the data repository.
    * @param parent The parent of BoundaryConditionManager in the data repository.
    */
-  FieldSpecificationManager( string const & name, dataRepository::ManagedGroup * const parent );
+  FieldSpecificationManager( string const & name, dataRepository::Group * const parent );
   virtual ~FieldSpecificationManager() override;
 
   template< typename LAMBDA >
-  void ApplyOnTargetRecursive( ManagedGroup * target,
+  void ApplyOnTargetRecursive( Group * target,
                                FieldSpecificationBase const * fs,
                                string const & targetName,
                                LAMBDA && lambda
@@ -276,11 +276,11 @@ private:
         && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
         && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
     {
-      dataRepository::ManagedGroup const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+      dataRepository::Group const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
       string_array setNames = fs->GetSetNames();
       for( auto & setName : setNames )
       {
-        dataRepository::ViewWrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
+        dataRepository::Wrapper<set<localIndex> > const * const setWrapper = setGroup->getWrapper<set<localIndex> >( setName );
         if( setWrapper != nullptr )
         {
           set<localIndex> const & targetSet = setWrapper->reference();
@@ -290,7 +290,7 @@ private:
     }
     else
     {
-      target->forSubGroups([&]( ManagedGroup * subTarget ) -> void
+      target->forSubGroups([&]( Group * subTarget ) -> void
       {
         ApplyOnTargetRecursive( subTarget, fs, targetName, lambda );
       });
@@ -302,7 +302,7 @@ template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                 dataRepository::ManagedGroup * domain,
+                 dataRepository::Group * domain,
                  string const & fieldPath,
                  string const & fieldName,
                  LAMBDA && lambda ) const
@@ -313,7 +313,7 @@ ApplyFieldValue( real64 const time,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
              set<localIndex> const & targetSet,
-             ManagedGroup * const targetGroup,
+             Group * const targetGroup,
              string const & targetField )
     {
       fs->ApplyFieldValue<FieldSpecificationEqual, POLICY>( targetSet, time, targetGroup, targetField );
@@ -325,7 +325,7 @@ template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
 ApplyFieldValue( real64 const time,
-                 dataRepository::ManagedGroup * domain,
+                 dataRepository::Group * domain,
                  string const & fieldPath,
                  string const & fieldName,
                  PRELAMBDA && preLambda,
@@ -337,7 +337,7 @@ ApplyFieldValue( real64 const time,
         [&]( FieldSpecificationBase const * const fs,
              string const &,
              set<localIndex> const & targetSet,
-             ManagedGroup * const targetGroup,
+             Group * const targetGroup,
              string const & targetField )
     {
       preLambda( fs, targetSet );

@@ -48,13 +48,13 @@ public:
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
   
   CapillaryPressureBase( std::string const & name,
-                         dataRepository::ManagedGroup * const parent );
+                         dataRepository::Group * const parent );
   
   virtual ~CapillaryPressureBase() override;
 
   // *** ManagedGroup interface
   
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** CapillaryPressure-specific interface

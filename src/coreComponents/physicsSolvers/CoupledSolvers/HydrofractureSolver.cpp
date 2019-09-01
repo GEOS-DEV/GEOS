@@ -45,7 +45,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 HydrofractureSolver::HydrofractureSolver( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   SolverBase(name,parent),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -54,25 +54,25 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_solidSolver(nullptr),
   m_flowSolver(nullptr)
 {
-  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+  registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+  registerWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+  registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
-  RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+  registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
 
 }
 
-void HydrofractureSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
+void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
 
 }
@@ -155,7 +155,7 @@ void HydrofractureSolver::PostProcessInput()
 
 }
 
-void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
+void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
 {
 
 }
@@ -808,8 +808,8 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   {
 
 
-    dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
-    dataRepository::ManagedGroup const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
+    dataRepository::Group const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+    dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup(constitutiveName);
 
     arrayView1d<integer const>     const & elemGhostRank = subRegion->GhostRank();
     arrayView1d<globalIndex const> const & presDofNumber = subRegion->getReference<array1d<globalIndex>>( presDofKey );
@@ -1609,6 +1609,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 
 } /* namespace geosx */

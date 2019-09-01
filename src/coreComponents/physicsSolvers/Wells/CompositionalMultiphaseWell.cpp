@@ -22,13 +22,13 @@
 
 #include "CompositionalMultiphaseWell.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"
@@ -45,30 +45,30 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
-                                                                      ManagedGroup * const parent )
+                                                                      Group * const parent )
   :
   WellSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 )
 {
-  this->RegisterViewWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
+  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Temperature");
 
-  this->RegisterViewWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
+  this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Use mass formulation instead of molar");
 
-  this->RegisterViewWrapper( viewKeyStruct::resRelPermNameString,  &m_resRelPermName,  false )->
+  this->registerWrapper( viewKeyStruct::resRelPermNameString,  &m_resRelPermName,  false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the relative permeability constitutive model to use");
 
-  this->RegisterViewWrapper( viewKeyStruct::resRelPermIndexString, &m_resRelPermIndex, false );
+  this->registerWrapper( viewKeyStruct::resRelPermIndexString, &m_resRelPermIndex, false );
 
 }
 
-void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBodies)
+void CompositionalMultiphaseWell::RegisterDataOnMesh(Group * const meshBodies)
 {
   WellSolverBase::RegisterDataOnMesh(meshBodies);
   
@@ -78,33 +78,33 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh(ManagedGroup * const meshBo
   // loop over the wells
   elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
   {
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalCompDensityString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureConnRateString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureConnRateString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaPressureString );
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::globalCompDensityString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::deltaGlobalCompDensityString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::mixtureConnRateString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::deltaMixtureConnRateString );
 
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::globalCompFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::globalCompFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array3d<real64>>( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
-    subRegion->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::phaseVolumeFractionString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+    subRegion->registerWrapper<array3d<real64>>( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::mixtureDensityString )->setPlotLevel(PlotLevel::LEVEL_0);
-    subRegion->RegisterViewWrapper<array1d<real64>>( viewKeyStruct::dMixtureDensity_dPressureString );
-    subRegion->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::mixtureDensityString )->setPlotLevel(PlotLevel::LEVEL_0);
+    subRegion->registerWrapper<array1d<real64>>( viewKeyStruct::dMixtureDensity_dPressureString );
+    subRegion->registerWrapper<array2d<real64>>( viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
 
     PerforationData * const perforationData = subRegion->GetPerforationData();
-    perforationData->RegisterViewWrapper<array2d<real64>>( viewKeyStruct::compPerforationRateString );
-    perforationData->RegisterViewWrapper<array3d<real64>>( viewKeyStruct::dCompPerforationRate_dPresString );
-    perforationData->RegisterViewWrapper<array4d<real64>>( viewKeyStruct::dCompPerforationRate_dCompString );
+    perforationData->registerWrapper<array2d<real64>>( viewKeyStruct::compPerforationRateString );
+    perforationData->registerWrapper<array3d<real64>>( viewKeyStruct::dCompPerforationRate_dPresString );
+    perforationData->registerWrapper<array4d<real64>>( viewKeyStruct::dCompPerforationRate_dCompString );
   });
   
 }
   
-void CompositionalMultiphaseWell::InitializePreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
   
@@ -177,7 +177,7 @@ void CompositionalMultiphaseWell::ResizeFields( WellElementSubRegion * const sub
 
 }
 
-void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
@@ -2246,5 +2246,5 @@ void CompositionalMultiphaseWell::CheckWellControlSwitch( DomainPartition * cons
 }
 
 
-REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseWell, string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(SolverBase, CompositionalMultiphaseWell, string const &, Group * const)
 }// namespace geosx

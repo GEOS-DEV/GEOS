@@ -32,7 +32,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class DomainPartition;
 
@@ -40,7 +40,7 @@ class NewComponent : public SolverBase
 {
 public:
   NewComponent( std::string const & name,
-                ManagedGroup * const parent);
+                Group * const parent);
   virtual ~NewComponent() override;
 
   static std::string CatalogName() { return "NewComponent"; }

@@ -33,7 +33,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 
 namespace keys
 {
@@ -64,7 +64,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   CompositionalMultiphaseFlow( const string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
   /// deleted default constructor
   CompositionalMultiphaseFlow() = delete;
@@ -92,7 +92,7 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -170,7 +170,7 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( ManagedGroup * dataGroup ) const;
+  void UpdateComponentFraction( Group * dataGroup ) const;
 
   /**
    * @brief Recompute component fractions from primary variables (component densities)
@@ -183,7 +183,7 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( ManagedGroup * dataGroup ) const;
+  void UpdatePhaseVolumeFraction( Group * dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -196,31 +196,31 @@ public:
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateFluidModel( ManagedGroup * dataGroup );
+  void UpdateFluidModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant solid models using current values of pressure
    * @param dataGroup the group storing the required fields
    */
-  void UpdateSolidModel( ManagedGroup * dataGroup );
+  void UpdateSolidModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateRelPermModel( ManagedGroup * dataGroup );
+  void UpdateRelPermModel( Group * dataGroup );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateCapPressureModel( ManagedGroup * dataGroup );
+  void UpdateCapPressureModel( Group * dataGroup );
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( ManagedGroup * dataGroup ) const;
+  void UpdatePhaseMobility( Group * dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
@@ -233,7 +233,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateState( ManagedGroup * dataGroup );
+  void UpdateState( Group * dataGroup );
 
   /**
    * @brief Get the number of fluid components (species)
@@ -396,9 +396,9 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 

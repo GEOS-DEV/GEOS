@@ -38,7 +38,7 @@ ChomboCoupler::ChomboCoupler(MPI_Comm const comm, const std::string& outputPath,
   m_mesh(mesh),
   m_counter(0)
 {
-  m_mesh.getFaceManager()->RegisterViewWrapper< array1d<real64> >("ChomboPressure");
+  m_mesh.getFaceManager()->registerWrapper< array1d<real64> >("ChomboPressure");
 }
 
 void ChomboCoupler::write(double dt)
