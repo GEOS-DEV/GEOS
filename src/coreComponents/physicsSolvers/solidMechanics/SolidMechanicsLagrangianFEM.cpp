@@ -72,7 +72,7 @@ inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & Tota
 }
 
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& name,
-                                                          ManagedGroup * const parent ):
+                                                          Group * const parent ):
   SolverBase( name, parent ),
   m_newmarkGamma(0.5),
   m_newmarkBeta(0.25),
@@ -95,42 +95,42 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
   m_sendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes");
   m_nonSendOrReceiveNodes.setUserCallBack("SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+  registerWrapper(viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option");
 
-  RegisterViewWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+  registerWrapper(viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
     setApplyDefaultValue(0.25)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
                    "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.");
 
-  RegisterViewWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
+  registerWrapper(viewKeyStruct::massDampingString, &m_massDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of mass based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+  registerWrapper(viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value of stiffness based damping coefficient. ");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
     setInputFlag(InputFlags::FALSE)->
     setDescription("Time integration enum class value.");
 
-  RegisterViewWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+  registerWrapper(viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic");
 
-  RegisterViewWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+  registerWrapper(viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step.");
 
-  RegisterViewWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+  registerWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
@@ -138,7 +138,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology.");
 
-  RegisterViewWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
+  registerWrapper(viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription( "Indicates whether or not to use "
@@ -147,7 +147,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain");
 
-  RegisterViewWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
+  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "The name of the material that should be used in the constitutive updates");
 
@@ -173,51 +173,51 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 }
 
 
-void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::TotalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the total displacements on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::IncrementalDisplacement )->
       setPlotLevel(PlotLevel::LEVEL_3)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacements for the current time step on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Velocity )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Velocity )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current velocity on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( keys::Acceleration )->
+    nodes->registerWrapper<array1d<R1Tensor> >( keys::Acceleration )->
       setPlotLevel(PlotLevel::LEVEL_1)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
                       "to hold the summation of nodal forces resulting from the governing equations.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::forceExternal )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
                       " conditions as well as coupling forces such as hydraulic forces.");
 
-    nodes->RegisterViewWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
+    nodes->registerWrapper<array1d<real64> >( keys::Mass )->setPlotLevel(PlotLevel::LEVEL_0)->
         setPlotLevel(PlotLevel::LEVEL_0)->
         setRegisteringObjects(this->getName())->
         setDescription( "An array that holds the mass on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::vTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the velocity predictors on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::uhatTildeString )->
       setPlotLevel(PlotLevel::NOPLOT)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacement predictors on the nodes.");
@@ -226,7 +226,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( ManagedGroup * const MeshB
 }
 
 
-void SolidMechanicsLagrangianFEM::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup)
 {
   SolverBase::InitializePreSubGroups(rootGroup);
 
@@ -307,7 +307,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   }
 }
 
-void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
+void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -411,7 +411,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, ManagedGroup::group_cast<DomainPartition*>(domain) );
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
@@ -640,7 +640,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                      [&]( FieldSpecificationBase const * const bc,
                           string const &,
                           set<localIndex> const & targetSet,
-                          ManagedGroup * const targetGroup,
+                          Group * const targetGroup,
                           string const fieldName )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
@@ -682,7 +682,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
+                    Group * const targetGroup,
                     string const fieldName ) -> void
   {
     string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
@@ -800,7 +800,7 @@ ImplicitStepSetup( real64 const & time_n,
                    ParallelVector & solution )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
@@ -865,7 +865,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & time_n,
                                                              DomainPartition * const domain)
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
   r1_array& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
@@ -919,7 +919,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
                                                   ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -1059,7 +1059,7 @@ ApplyBoundaryConditions( real64 const time_n,
                     [&]( FieldSpecificationBase const * const bc,
                          string const &,
                          set< localIndex > const & targetSet,
-                         ManagedGroup * const targetGroup,
+                         Group * const targetGroup,
                          string const fieldName )
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( targetSet,
@@ -1217,5 +1217,5 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition *
 
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
 }

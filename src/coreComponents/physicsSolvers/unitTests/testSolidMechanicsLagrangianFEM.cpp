@@ -21,7 +21,7 @@
 
 //#include <cstring>
 
-//#include "../src/codingUtilities/stackTrace.hpp"
+//#include "src/codingUtilities/stackTrace.hpp"
 
 // API coverage tests
 // Each test should be documented with the interface functions being tested

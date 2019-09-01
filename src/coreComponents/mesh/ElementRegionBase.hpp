@@ -55,14 +55,14 @@ public:
 
   ElementRegionBase() = delete;
 
-  ElementRegionBase( string const & name, ManagedGroup * const parent );
+  ElementRegionBase( string const & name, Group * const parent );
 
 
   ElementRegionBase(const ElementRegionBase& init);
 
   virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( ManagedGroup const * const cellBlocks )
+  virtual void GenerateMesh( Group const * const cellBlocks )
   {
     GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
@@ -125,14 +125,14 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    Group const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    Group * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 

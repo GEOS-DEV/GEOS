@@ -48,47 +48,47 @@ using namespace constitutive;
 using namespace SinglePhaseFlowKernels;
 
 SinglePhaseFlow::SinglePhaseFlow( const std::string& name,
-                                  ManagedGroup * const parent ):
+                                  Group * const parent ):
   FlowSolverBase(name, parent)
 {
   m_numDofPerCell = 1;
 }
 
-void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
+void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
     elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
     });
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::mobilityString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
         setDefaultValue(1.0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
         setDefaultValue(1.0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
         setDefaultValue(0.0);
 
     } );
@@ -96,15 +96,15 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
     // TODO restrict this to boundary sets
     FaceManager * const faceManager = meshLevel->getFaceManager();
     {
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
-      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::faceDensityString )->reference().resizeDimension<1>(1);
-      faceManager->RegisterViewWrapper<array2d<real64> >( viewKeyStruct::faceViscosityString )->reference().resizeDimension<1>(1);
-      faceManager->RegisterViewWrapper<array1d<real64> >( viewKeyStruct::faceMobilityString );
+      faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::facePressureString );
+      faceManager->registerWrapper<array2d<real64> >( viewKeyStruct::faceDensityString )->reference().resizeDimension<1>(1);
+      faceManager->registerWrapper<array2d<real64> >( viewKeyStruct::faceViscosityString )->reference().resizeDimension<1>(1);
+      faceManager->registerWrapper<array1d<real64> >( viewKeyStruct::faceMobilityString );
     }
   }
 }
 
-void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup) const
+void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -121,7 +121,7 @@ void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup) const
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup) const
+void SinglePhaseFlow::UpdateSolidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -136,7 +136,7 @@ void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup) const
   });
 }
 
-void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
+void SinglePhaseFlow::UpdateMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -174,7 +174,7 @@ void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
 }
 
 
-void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
+void SinglePhaseFlow::UpdateState( Group * dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -183,7 +183,7 @@ void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
   UpdateMobility( dataGroup );
 }
 
-void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -636,7 +636,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
-                         ManagedGroup * subRegion,
+                         Group * subRegion,
                          string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
@@ -663,7 +663,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
-                         ManagedGroup * subRegion,
+                         Group * subRegion,
                          string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
@@ -781,7 +781,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
   arrayView1d<real64>       const & mobFace       = faceManager->getReference< array1d<real64> >( viewKeyStruct::faceMobilityString );
   arrayView1d<real64 const> const & gravDepthFace = faceManager->getReference< array1d<real64> >( viewKeyStruct::gravityDepthString );
 
-  dataRepository::ManagedGroup const * sets = faceManager->sets();
+  dataRepository::Group const * sets = faceManager->sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::facePressure, time + dt);
@@ -792,7 +792,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     [&] ( FieldSpecificationBase const * const fs,
                           string const &,
                           set<localIndex> const & targetSet,
-                          ManagedGroup * const targetGroup,
+                          Group * const targetGroup,
                           string const fieldName )
   {
     fs->ApplyFieldValue<FieldSpecificationEqual>(targetSet,time_n + dt, targetGroup, fieldName);
@@ -807,7 +807,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     [&] ( FieldSpecificationBase const * bc,
                           string const &,
                           set<localIndex> const & targetSet,
-                          ManagedGroup * const,
+                          Group * const,
                           string const & )
   {
     for (auto kf : targetSet)
@@ -848,7 +848,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     [&] ( FieldSpecificationBase const * bc,
                           string const & setName,
                           set<localIndex> const &,
-                          ManagedGroup * const,
+                          Group * const,
                           string const & )
   {
     if (!sets->hasView(setName) || !fluxApprox->hasBoundaryStencil(setName))
@@ -1176,5 +1176,5 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlow, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlow, std::string const &, Group * const )
 } /* namespace geosx */

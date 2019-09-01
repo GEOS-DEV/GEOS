@@ -36,7 +36,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-InternalWellGenerator::InternalWellGenerator( string const & name, ManagedGroup * const parent ):
+InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
   m_numElemsPerSegment(0),
   m_crossSectionArea(0),
@@ -50,37 +50,37 @@ InternalWellGenerator::InternalWellGenerator( string const & name, ManagedGroup 
   m_nDims(3),
   m_polylineHeadNodeId(-1)
 {
-  RegisterViewWrapper(keys::nodeCoords, &m_inputPolyNodeCoords, false )->
+  registerWrapper(keys::nodeCoords, &m_inputPolyNodeCoords, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("physical coordinates of the well polyline nodes");
 
-  RegisterViewWrapper(keys::segmentConn, &m_segmentToPolyNodeMap, false )->
+  registerWrapper(keys::segmentConn, &m_segmentToPolyNodeMap, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("connectivity of the polyline segments");
 
-RegisterViewWrapper(keys::crossSectionArea, &m_crossSectionArea, false )->
+registerWrapper(keys::crossSectionArea, &m_crossSectionArea, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("cross section area of the well");
 
-  RegisterViewWrapper(keys::nElems, &m_numElemsPerSegment, false )->
+  registerWrapper(keys::nElems, &m_numElemsPerSegment, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("number of well elements per polyline segment");
 
-  RegisterViewWrapper(keys::wellRegionName, &m_wellRegionName, false )->
+  registerWrapper(keys::wellRegionName, &m_wellRegionName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the well element region");
 
-  RegisterViewWrapper(keys::wellControlsName, &m_wellControlsName, false )->
+  registerWrapper(keys::wellControlsName, &m_wellControlsName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the set of constraints associated with this well");
 
-  RegisterViewWrapper(keys::meshBodyName, &m_meshBodyName, false )->
+  registerWrapper(keys::meshBodyName, &m_meshBodyName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("name of the reservoir mesh associated with this well");
@@ -132,7 +132,7 @@ void InternalWellGenerator::PostProcessInput()
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
 }
 
-ManagedGroup * InternalWellGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalWellGenerator::CreateChild( string const & childKey, string const & childName )
 {
     if ( childKey == keys::perforation )
   {
@@ -567,5 +567,5 @@ void InternalWellGenerator::DebugWellGeometry() const
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, std::string const &, Group * const )
 }

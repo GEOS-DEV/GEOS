@@ -58,7 +58,7 @@ class ProblemManager : public ObjectManagerBase
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           ManagedGroup * const parent );
+                           Group * const parent );
 
   ~ProblemManager() override;
 
@@ -80,9 +80,9 @@ public:
                                    xmlWrapper::xmlNode schemaParent,
                                    integer documentationType) override;
 
-  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
@@ -123,16 +123,16 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const string & getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
 
   const string & getInputFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
 
   const string & getRestartFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
   const string & getSchemaFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
@@ -181,7 +181,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override final;
+  virtual void InitializePostSubGroups( Group * const group ) override final;
 
 private:
 

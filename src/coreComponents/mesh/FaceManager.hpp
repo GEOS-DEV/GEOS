@@ -58,7 +58,7 @@ public:
   ///
   ///
   ///
-  FaceManager( string const &, ManagedGroup * const parent );
+  FaceManager( string const &, Group * const parent );
   virtual ~FaceManager() override final;
 
 

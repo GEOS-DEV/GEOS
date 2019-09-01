@@ -24,7 +24,7 @@
 #ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
 #define GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -43,7 +43,7 @@ static constexpr auto perforation = "Perforation";
  *
  * This class describes a perforation with its location, transmissibility and corresponding well element
  */  
-class Perforation : public dataRepository::ManagedGroup
+class Perforation : public dataRepository::Group
 {
 public:
 
@@ -52,7 +52,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  explicit Perforation( string const & name, dataRepository::ManagedGroup * const parent );
+  explicit Perforation( string const & name, dataRepository::Group * const parent );
   
   /**
    * @brief default destructor

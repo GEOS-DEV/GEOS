@@ -24,7 +24,7 @@
 #ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
 #define GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "InternalWellGenerator.hpp"
@@ -51,7 +51,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   explicit PerforationData( string const & name, 
-                            dataRepository::ManagedGroup * const parent );
+                            dataRepository::Group * const parent );
 
   /**
    * @brief default destructor
@@ -183,7 +183,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const group ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group ) override;
 
 private:
 

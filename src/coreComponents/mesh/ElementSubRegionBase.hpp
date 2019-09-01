@@ -36,7 +36,7 @@ class DomainPartition;
 class ElementSubRegionBase : public ObjectManagerBase
 {
 public:
-  ElementSubRegionBase( string const & name, dataRepository::ManagedGroup * const parent );
+  ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,
@@ -115,10 +115,10 @@ public:
     return m_elementVolume;
   }
 
-  dataRepository::ManagedGroup const * GetConstitutiveModels() const
+  dataRepository::Group const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
 
-  dataRepository::ManagedGroup * GetConstitutiveModels()
+  dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
   virtual string GetElementTypeString() const { return m_elementTypeString; }
@@ -128,7 +128,7 @@ public:
   virtual void SetElementType( string const & elementType );
 
 private:
-  dataRepository::ManagedGroup m_constitutiveModels;
+  dataRepository::Group m_constitutiveModels;
 
 protected:
   /// The number of nodes per element in this cell block
