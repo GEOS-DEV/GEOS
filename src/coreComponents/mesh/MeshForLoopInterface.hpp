@@ -49,7 +49,8 @@ template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  dataRepository::Group const * const
+  elementRegions = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
@@ -68,7 +69,8 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  dataRepository::Group const * const
+  elementRegions = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
