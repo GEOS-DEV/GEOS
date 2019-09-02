@@ -210,7 +210,7 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegionsGroup );
+            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
             if( elemRegionSubGroup!=nullptr )
             {
               targetGroup = elemRegionSubGroup;
@@ -231,7 +231,7 @@ public:
 //              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
 //            }
 
-            if( targetPath[pathLevel] == dataRepository::keys::elementRegionsGroup ||
+            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup ||
                 targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
             {
               continue;
