@@ -30,21 +30,21 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Cylinder::Cylinder( const std::string& name, ManagedGroup * const parent ):
+Cylinder::Cylinder( const std::string& name, Group * const parent ):
   SimpleGeometricObjectBase( name, parent ),
   m_point1{0.0,0.0,0.0},
   m_point2{0.0,0.0,0.0},
   m_radius{0.0}
 {
-  RegisterViewWrapper( viewKeyStruct::point1String, &m_point1, false )->
+  registerWrapper( viewKeyStruct::point1String, &m_point1, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Center point of one (upper or lower) face of the cylinder");
 
-  RegisterViewWrapper( viewKeyStruct::point2String, &m_point2, false )->
+  registerWrapper( viewKeyStruct::point2String, &m_point2, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Center point of the other face of the cylinder");
 
-  RegisterViewWrapper( viewKeyStruct::radiusString, &m_radius, false )->
+  registerWrapper( viewKeyStruct::radiusString, &m_radius, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Radius of the cylinder");
 
@@ -82,6 +82,6 @@ bool Cylinder::IsCoordInObject( const R1Tensor& coord ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, std::string const &, Group * const )
 
 } /* namespace geosx */
