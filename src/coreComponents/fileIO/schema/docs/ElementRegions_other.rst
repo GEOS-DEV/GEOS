@@ -10,7 +10,8 @@ isExternal              integer_array                                           
 localToGlobalMap        globalIndex_array                                            Array that contains a map from localIndex to globalIndex. 
 CellElementRegion       node                                                         :ref:`DATASTRUCTURE_CellElementRegion`                    
 FaceElementRegion       node                                                         :ref:`DATASTRUCTURE_FaceElementRegion`                    
-elementRegions          node                                                         :ref:`DATASTRUCTURE_elementRegions`                       
+WellElementRegion       node                                                         :ref:`DATASTRUCTURE_WellElementRegion`                    
+elementRegionsGroup     node                                                         :ref:`DATASTRUCTURE_elementRegionsGroup`                  
 neighborData            node                                                         :ref:`DATASTRUCTURE_neighborData`                         
 sets                    node                                                         :ref:`DATASTRUCTURE_sets`                                 
 ======================= ============================================================ ========================================================= 

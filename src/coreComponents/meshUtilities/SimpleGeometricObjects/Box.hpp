@@ -33,7 +33,7 @@ class Box : public SimpleGeometricObjectBase
 {
 public:
   Box( const std::string& name,
-       ManagedGroup * const parent );
+       Group * const parent );
 
   virtual ~Box() override;
 

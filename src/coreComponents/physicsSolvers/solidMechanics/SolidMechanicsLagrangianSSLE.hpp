@@ -39,7 +39,7 @@ class SolidMechanicsLagrangianSSLE : public SolidMechanicsLagrangianFEM
 {
 public:
   SolidMechanicsLagrangianSSLE( string const & name,
-                                ManagedGroup * const parent );
+                                Group * const parent );
   virtual ~SolidMechanicsLagrangianSSLE() override;
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }

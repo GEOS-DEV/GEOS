@@ -76,7 +76,7 @@ public:
    * @param name the name of the object in the data repository
    * @param parent the parent object of this object in the data repository
    */
-  CellBlock( string const & name, ManagedGroup * const parent );
+  CellBlock( string const & name, Group * const parent );
 
   /**
    * @brief copy constructor
@@ -239,7 +239,7 @@ public:
   T & AddProperty( string const & propertyName )
   {
     m_externalPropertyNames.push_back( propertyName );
-    return this->RegisterViewWrapper< T >( propertyName )->reference();
+    return this->registerWrapper< T >( propertyName )->reference();
   }
 
   template< typename LAMBDA >
@@ -247,8 +247,8 @@ public:
   {
     for( auto & externalPropertyName : m_externalPropertyNames )
     {
-      const dataRepository::ViewWrapperBase * vw = this->getWrapperBase( externalPropertyName );
-      lambda( vw );
+      const dataRepository::WrapperBase * wrapper = this->getWrapperBase( externalPropertyName );
+      lambda( wrapper );
     }
   }
 

@@ -67,15 +67,15 @@ public:
 
   ///@}
 
-  CellBlockManager( string const &, ManagedGroup * const parent );
+  CellBlockManager( string const &, Group * const parent );
   virtual ~CellBlockManager() override;
 
 
 //  void Initialize(  ){}
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  using ManagedGroup::resize;
+  using Group::resize;
 
   void resize( integer_array const & numElements,
                string_array const & regionNames,
@@ -93,7 +93,7 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    Group * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
     elementRegions->forSubGroups<CellBlock>( lambda );
   }
 private:

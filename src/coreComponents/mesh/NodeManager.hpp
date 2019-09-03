@@ -66,7 +66,7 @@ public:
    * @param parent the parent group of this instantiation of NodeManager
    */
   NodeManager( std::string const & name,
-               dataRepository::ManagedGroup * const parent );
+               dataRepository::Group * const parent );
 
   /**
    *  @brief default destructor

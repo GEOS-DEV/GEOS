@@ -29,7 +29,7 @@ namespace geosx
 {
 
 NewComponent::NewComponent( std::string const & name,
-                            ManagedGroup * const parent ):
+                            Group * const parent ):
     SolverBase(name,parent)
 {
 
@@ -50,6 +50,6 @@ real64 NewComponent::SolverStep( real64 const & /*time_n*/,
   return 0;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

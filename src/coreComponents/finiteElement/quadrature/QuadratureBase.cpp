@@ -21,8 +21,8 @@
 namespace geosx
 {
 QuadratureBase::QuadratureBase( std::string const & name,
-                                ManagedGroup * const parent):
-  ManagedGroup(name, parent)
+                                Group * const parent):
+  Group(name, parent)
 {
   setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
 }
