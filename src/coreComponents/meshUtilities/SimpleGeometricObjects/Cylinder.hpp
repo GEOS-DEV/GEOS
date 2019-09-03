@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
+/**
  * @file Cylinder.hpp
  *
  */
@@ -33,7 +33,7 @@ class Cylinder : public SimpleGeometricObjectBase
 {
 public:
   Cylinder( const std::string& name,
-       ManagedGroup * const parent );
+            Group * const parent );
 
   virtual ~Cylinder() override;
 
