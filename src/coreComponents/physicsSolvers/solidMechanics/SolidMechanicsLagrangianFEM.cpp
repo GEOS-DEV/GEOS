@@ -152,7 +152,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& nam
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "The name of the material that should be used in the constitutive updates");
 
-  RegisterViewWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
+  registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
     setApplyDefaultValue("NOCONTACT")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
@@ -228,7 +228,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the incremental displacement predictors on the nodes.");
 
-    nodes->RegisterViewWrapper<array1d<R1Tensor> >( viewKeyStruct::contactForceString )->
+    nodes->registerWrapper<array1d<R1Tensor> >( viewKeyStruct::contactForceString )->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setRegisteringObjects(this->getName())->
       setDescription( "An array that holds the contact force.");
@@ -935,7 +935,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
 
   // need this for contact enforcement in the fracture
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
 
   constexpr int dim = 3;
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
