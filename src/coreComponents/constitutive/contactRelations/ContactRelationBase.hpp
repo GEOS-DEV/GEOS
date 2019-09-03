@@ -52,7 +52,7 @@ public:
    * @param parent The name of the parent ManagedGroup that holds this relation object.
    */
   ContactRelationBase( string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   /**
    * @brief default destructor
@@ -68,13 +68,13 @@ public:
   virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override {}
 
-  virtual ManagedGroup * CreateChild( string const & catalogKey,
+  virtual Group * CreateChild( string const & catalogKey,
                                       string const & name ) override;
 
-  virtual void InitializePreSubGroups( ManagedGroup * const ) override;
+  virtual void InitializePreSubGroups( Group * const ) override;
 
 
   /// accessor for penalty stiffness

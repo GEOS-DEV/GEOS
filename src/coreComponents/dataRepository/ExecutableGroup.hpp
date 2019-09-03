@@ -23,8 +23,8 @@
 #ifndef EXECUTABLEGROUP_HPP_
 #define EXECUTABLEGROUP_HPP_
 
-#include "ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
+#include "Group.hpp"
 
 
 /** Objects that are executable and/or able to request changes dt, should
@@ -39,11 +39,11 @@ namespace geosx
  * Objects that are executable and/or able to request changes dt
  * should be derived from this type.
  */
-class ExecutableGroup : public dataRepository::ManagedGroup
+class ExecutableGroup : public dataRepository::Group
 {
 public:
 
-  using dataRepository::ManagedGroup::ManagedGroup;
+  using dataRepository::Group::Group;
 
   /*
    * If the start criteria are satisfied, then the event manager
@@ -54,7 +54,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) = 0;
+                        dataRepository::Group * domain ) = 0;
 
   /*
    * This method will inform the object that it expects to execute
@@ -63,7 +63,7 @@ public:
   virtual void SignalToPrepareForExecution( real64 const time,
                                             real64 const dt,
                                             integer const cycle,
-                                            dataRepository::ManagedGroup * domain ) {}
+                                            dataRepository::Group * domain ) {}
   /*
    * This method is called as the code exits the main run loop
    */
@@ -71,7 +71,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) {}
+                        dataRepository::Group * domain ) {}
 
   /*
    * This supplies the timestep request for each executable

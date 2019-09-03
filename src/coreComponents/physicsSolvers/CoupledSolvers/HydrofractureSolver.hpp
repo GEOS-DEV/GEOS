@@ -36,7 +36,7 @@ class HydrofractureSolver : public SolverBase
 {
 public:
   HydrofractureSolver( const std::string& name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   ~HydrofractureSolver() override;
 
@@ -49,9 +49,10 @@ public:
     return "Hydrofracture";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DofManager & dofManager ) const override;
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,
@@ -157,7 +158,7 @@ protected:
   virtual void PostProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
 

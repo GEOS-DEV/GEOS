@@ -34,7 +34,7 @@ namespace geosx
 using namespace constitutive;
 
 SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
-                                                            ManagedGroup * const parent ):
+                                                            Group * const parent ):
   SolidMechanicsLagrangianFEM( name, parent )
 {
   this->m_strainTheory = 0;
@@ -114,6 +114,6 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */
 

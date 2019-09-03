@@ -37,7 +37,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 
 

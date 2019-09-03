@@ -38,7 +38,7 @@ class PeriodicEvent : public EventBase
 public:
   /// Main constructor
   PeriodicEvent(const std::string& name,
-                ManagedGroup * const parent);
+                Group * const parent);
   
   /// Destructor
   virtual ~PeriodicEvent() override;
@@ -58,7 +58,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::ManagedGroup * domain) override;
+                                   dataRepository::Group * domain) override;
 
   /**
    * If the event forecast is zero, and an optional function (f) is specified, then
@@ -79,7 +79,7 @@ public:
   void CheckOptionalFunctionThreshold(real64 const time,
                                       real64 const dt, 
                                       integer const cycle,
-                                      dataRepository::ManagedGroup * domain);
+                                      dataRepository::Group * domain);
 
   /**
    * Grab the next time-step.  If requested, then limit the requested
@@ -88,7 +88,7 @@ public:
   virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
   /// A pointer to an optional function
-  dataRepository::ManagedGroup * m_functionTarget;
+  dataRepository::Group * m_functionTarget;
 
   struct viewKeyStruct
   {

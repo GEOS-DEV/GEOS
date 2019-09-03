@@ -190,7 +190,7 @@ public:
 
 
 protected:
-  void InitializePostSubGroups( dataRepository::ManagedGroup * const );
+  void InitializePostSubGroups( dataRepository::Group * const );
 
 public:
   array1d<int> m_Partitions; // number of partitions

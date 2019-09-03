@@ -55,7 +55,7 @@ public:
   }
 
   FaceElementSubRegion( string const & name,
-                     dataRepository::ManagedGroup * const parent );
+                     dataRepository::Group * const parent );
   virtual ~FaceElementSubRegion() override;
 
   virtual R1Tensor const & calculateElementCenter( localIndex k,

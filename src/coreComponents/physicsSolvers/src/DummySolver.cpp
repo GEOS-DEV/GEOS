@@ -18,10 +18,10 @@
 
 
 #include "DummySolver.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "MPI_Communications/CommunicationTools.hpp"
 #include <thread>
 #include <chrono>
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -31,17 +31,17 @@ using namespace dataRepository;
 
 
 DummySolver::DummySolver( const std::string& name,
-                                                  ManagedGroup * const parent ):
+                                                  Group * const parent ):
   SolverBase( name, parent ),
   m_randScale(0.0),
   m_randSeed(0)
 {
-  RegisterViewWrapper(viewKeyStruct::randScaleString, &m_randScale, false )->
+  registerWrapper(viewKeyStruct::randScaleString, &m_randScale, false )->
     setApplyDefaultValue(1e-9)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale for modifying requested dt");
 
-  RegisterViewWrapper(viewKeyStruct::randSeedString, &m_randSeed, false )->
+  registerWrapper(viewKeyStruct::randSeedString, &m_randSeed, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Scale for modifying requested dt");
@@ -55,7 +55,7 @@ DummySolver::~DummySolver()
 }
 
 
-void DummySolver::InitializePreSubGroups( ManagedGroup * const problemManager )
+void DummySolver::InitializePreSubGroups( Group * const problemManager )
 {
   if (m_randSeed > 0)
   {
@@ -81,5 +81,5 @@ real64 DummySolver::GetTimestepRequest(real64 const time)
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, DummySolver, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, DummySolver, std::string const &, Group * const )
 } /* namespace ANST */

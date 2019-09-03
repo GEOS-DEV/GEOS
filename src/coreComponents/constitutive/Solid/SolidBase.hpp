@@ -19,15 +19,15 @@ class SolidBase : public constitutive::ConstitutiveBase
 {
 public:
   SolidBase( string const & name,
-             ManagedGroup * const parent );
+             Group * const parent );
 
   virtual ~SolidBase() override;
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void StateUpdatePoint( localIndex const k,
