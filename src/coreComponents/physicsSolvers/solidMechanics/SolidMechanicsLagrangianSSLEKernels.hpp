@@ -43,7 +43,7 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-struct Kernels
+struct StressCalculationKernel
 {
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
