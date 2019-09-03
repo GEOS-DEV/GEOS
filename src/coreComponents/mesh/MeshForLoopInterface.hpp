@@ -53,11 +53,11 @@ template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
   for( auto & region : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
     {
       CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
@@ -72,11 +72,11 @@ void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIn
 {
 
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
   
   for( auto const & region : elementRegions->GetSubGroups() )
     {
-    dataRepository::ManagedGroup const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
       CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
@@ -165,6 +165,65 @@ void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 
 //   return sum;
 // }
+
+
+template<typename NUMBER=real64,class POLICY=serialPolicy,typename LAMBDA=void>
+std::pair<NUMBER, localIndex>
+minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
+{
+  NUMBER minDist = std::numeric_limits<NUMBER>::max();
+  localIndex minDistId = -1;
+
+  // TODO: make this a RAJA loop
+  for ( localIndex ei = begin; ei < end; ++ei )
+  {
+    NUMBER dist = body( ei );
+
+    if ( dist < minDist )
+    {
+      minDist   = dist;
+      minDistId = ei;
+    }
+  }
+ 
+  return std::make_pair( minDist, minDistId );
+}
+
+
+template<typename NUMBER=real64,class POLICY=serialPolicy, typename LAMBDA=void>
+std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
+{
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
+
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, auto * const subRegion )
+    {
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
+
+      auto ret = minloc_in_range<NUMBER,POLICY>(0, subRegion->size(), ebody);
+
+      if (ret.first < minVal)
+      {
+        minVal    = ret.first;
+        minReg    = er;
+        minSubreg = esr;
+        minIndex  = ret.second;
+      }
+    });
+  }
+
+  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+}
 
 
 }

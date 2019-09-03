@@ -40,18 +40,18 @@ using namespace dataRepository;
 
 
 SymbolicFunction::SymbolicFunction( const std::string& name,
-                                    ManagedGroup * const parent ):
+                                    Group * const parent ):
   FunctionBase( name, parent )
 #ifdef GEOSX_USE_MATHPRESSO
   , parserContext(),
   parserExpression()
 #endif
 {
-  RegisterViewWrapper<string_array>(keys::variableNames)->
+  registerWrapper<string_array>(keys::variableNames)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of variables in expression.  The order must match the evaluate argument");
 
-  RegisterViewWrapper<string>(keys::expression)->
+  registerWrapper<string>(keys::expression)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Symbolic math expression");
 }
@@ -82,6 +82,6 @@ void SymbolicFunction::InitializeFunction()
 }
 
 
-REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

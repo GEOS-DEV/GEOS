@@ -30,7 +30,7 @@ using namespace dataRepository;
 
 
 PeriodicEvent::PeriodicEvent( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   EventBase(name,parent),
   m_functionTarget(nullptr),
   m_timeFrequency(-1.0),
@@ -42,41 +42,41 @@ PeriodicEvent::PeriodicEvent( const std::string& name,
   m_functionStatOption(0),
   m_eventThreshold(0.0)
 {
-  RegisterViewWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
+  registerWrapper(viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
     setApplyDefaultValue(-1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.");
 
-  RegisterViewWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
+  registerWrapper(viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Event application frequency (cycle, default)");
 
-  RegisterViewWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+  registerWrapper(viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).");
 
-  RegisterViewWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
+  registerWrapper(viewKeyStruct::functionNameString, &m_functionName, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of an optional function to evaluate when the time/cycle criteria are met."
                    "If the result is greater than the specified eventThreshold, the function will continue to execute.");
 
-  RegisterViewWrapper(viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
+  registerWrapper(viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If the optional function requires an object as an input, specify its path here.");
 
-  RegisterViewWrapper(viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
+  registerWrapper(viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If the optional function is applied to an object, specify the setname to evaluate (default = everything).");
 
-  RegisterViewWrapper(viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
+  registerWrapper(viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If the optional function is applied to an object, specify the statistic to compare to the eventThreshold."
                    "The current options include: min, avg, and max.");
 
-  RegisterViewWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
+  registerWrapper(viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("If the optional function is used, the event will execute if the value returned by the function exceeds this threshold.");
@@ -95,7 +95,7 @@ PeriodicEvent::~PeriodicEvent()
 void PeriodicEvent::EstimateEventTiming(real64 const time,
                                         real64 const dt, 
                                         integer const cycle,
-                                        ManagedGroup * domain)
+                                        Group * domain)
 {
   // Check event status
   if (cycle == 0)
@@ -130,7 +130,7 @@ void PeriodicEvent::EstimateEventTiming(real64 const time,
 void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
                                                    real64 const dt, 
                                                    integer const cycle,
-                                                   ManagedGroup * domain)
+                                                   Group * domain)
 {
   // Grab the function
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -161,7 +161,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold(real64 const time,
     }
     else
     {
-      dataRepository::ManagedGroup const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
+      dataRepository::Group const * sets = m_functionTarget->GetGroup(periodicEventViewKeys.functionSetNames);
       mySet = sets->getReference< set<localIndex> >(m_functionInputSetname);
     }
 
@@ -216,5 +216,5 @@ real64 PeriodicEvent::GetEventTypeDtRequest(real64 const time)
 
 
 
-REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
 } /* namespace geosx */

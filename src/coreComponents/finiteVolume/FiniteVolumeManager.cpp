@@ -35,8 +35,8 @@ namespace geosx
 using namespace dataRepository;
 
 
-FiniteVolumeManager::FiniteVolumeManager(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent)
+FiniteVolumeManager::FiniteVolumeManager(string const &name, Group *const parent)
+  : Group(name, parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -46,7 +46,7 @@ FiniteVolumeManager::~FiniteVolumeManager()
 
 }
 
-ManagedGroup * FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
+Group * FiniteVolumeManager::CreateChild(string const &childKey, string const &childName)
 {
   std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
   return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));

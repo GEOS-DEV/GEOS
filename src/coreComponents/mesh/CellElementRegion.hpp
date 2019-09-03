@@ -46,7 +46,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  CellElementRegion( string const & name, ManagedGroup * const parent );
+  CellElementRegion( string const & name, Group * const parent );
 
   CellElementRegion() = delete;
   virtual ~CellElementRegion() override;
@@ -67,7 +67,7 @@ public:
     m_cellBlockNames.push_back( cellBlockName );
   }
 
-  virtual void GenerateMesh( ManagedGroup const * const cellBlocks ) override;
+  virtual void GenerateMesh( Group const * const cellBlocks ) override;
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 

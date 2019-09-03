@@ -25,7 +25,7 @@
 
 #include "FiniteElementDiscretization.hpp"
 
-#include "../mesh/CellElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
@@ -44,17 +44,14 @@ using namespace dataRepository;
 
 
 
-FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  RegisterViewWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
-  RegisterViewWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
-
-  RegisterViewWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag(InputFlags::REQUIRED);
-
-
+  registerWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
+  registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+  registerWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag(InputFlags::REQUIRED);
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -90,14 +87,14 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
   // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
-  array3d< R1Tensor > &  dNdX = cellBlock->RegisterViewWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
+  array3d< R1Tensor > &  dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
   dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
   auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(CellElementSubRegion::viewKeyStruct::constitutiveMapString)->reference();
   constitutiveMap.first.resize(cellBlock->size(), m_quadrature->size() );
   constitutiveMap.second.resize(cellBlock->size(), m_quadrature->size() );
 
-  array2d< real64 > & detJ = cellBlock->RegisterViewWrapper< array2d< real64 > >(keys::detJ)->reference();
+  array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >(keys::detJ)->reference();
   detJ.resize(cellBlock->size(), m_quadrature->size() );
 }
 
@@ -139,9 +136,9 @@ void FiniteElementDiscretization::PostProcessInput()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  ManagedGroup const *  numericalMethods = this->getParent()->getParent();
-  ManagedGroup const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
-  ManagedGroup const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
+  Group const *  numericalMethods = this->getParent()->getParent();
+  Group const *  basisManager = numericalMethods->GetGroup(keys::basisFunctions);
+  Group const *  quadratureManager = numericalMethods->GetGroup(keys::quadratureRules);
   
   m_basis = basisManager->GetGroup<BasisBase>(basisName);
   m_quadrature = quadratureManager->GetGroup<QuadratureBase>(quadratureName);
@@ -150,6 +147,6 @@ void FiniteElementDiscretization::PostProcessInput()
 
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, FiniteElementDiscretization, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
 
 } /* namespace geosx */

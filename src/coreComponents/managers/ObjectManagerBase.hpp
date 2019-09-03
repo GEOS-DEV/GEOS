@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -34,13 +34,13 @@ class SiloFile;
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
  *
  */
-class ObjectManagerBase : public dataRepository::ManagedGroup
+class ObjectManagerBase : public dataRepository::Group
 {
 public:
   ObjectManagerBase() = delete;
 
   explicit ObjectManagerBase( std::string const & name,
-                              dataRepository::ManagedGroup * const parent );
+                              dataRepository::Group * const parent );
 
   ~ObjectManagerBase() override;
 
@@ -49,14 +49,14 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  using dataRepository::ManagedGroup::PackSize;
-  using dataRepository::ManagedGroup::Pack;
+  using dataRepository::Group::PackSize;
+  using dataRepository::Group::Pack;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
@@ -154,11 +154,11 @@ public:
   localIndex resize( localIndex const newSize,
                      const bool /*assignGlobals*/ )
   {
-    dataRepository::ManagedGroup::resize(newSize);
+    dataRepository::Group::resize(newSize);
     return 0;
   }
 
-  using dataRepository::ManagedGroup::resize;
+  using dataRepository::Group::resize;
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -329,8 +329,8 @@ public:
 
 
 
-  ManagedGroup * sets()             {return &m_sets;}
-  ManagedGroup const * sets() const {return &m_sets;}
+  Group * sets()             {return &m_sets;}
+  Group const * sets() const {return &m_sets;}
 
   set<localIndex> & externalSet()
   {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
@@ -350,7 +350,7 @@ public:
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
 
-  ManagedGroup m_sets;
+  Group m_sets;
 
   globalIndex_array  m_localToGlobalMap;
   unordered_map<globalIndex,localIndex>  m_globalToLocalMap;

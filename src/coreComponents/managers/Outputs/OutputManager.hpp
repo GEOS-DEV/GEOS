@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 
 namespace geosx
@@ -40,18 +40,18 @@ namespace keys
  *
  * An class for managing output types
  */
-class OutputManager : public dataRepository::ManagedGroup
+class OutputManager : public dataRepository::Group
 {
 public:
   /// Main constructor
   OutputManager( std::string const & name,
-                 ManagedGroup * const parent );
+                 Group * const parent );
 
   /// Destructor
   virtual ~OutputManager() override;
 
   /// Catalog name interface
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
