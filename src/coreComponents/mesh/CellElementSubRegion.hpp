@@ -28,7 +28,7 @@ namespace geosx
 class CellElementSubRegion : public CellBlock
 {
 public:
-  CellElementSubRegion( string const & name, ManagedGroup * const parent );
+  CellElementSubRegion( string const & name, Group * const parent );
   virtual ~CellElementSubRegion() override;
 
   void CopyFromCellBlock( CellBlock const * source );
@@ -49,7 +49,7 @@ public:
   void MaterialPassThru( string const & matName,
                          string const & setName,
                          set<localIndex> & materialSet,
-                         ManagedGroup * material );
+                         Group * material );
 
 
   virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;

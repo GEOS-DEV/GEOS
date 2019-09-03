@@ -24,11 +24,12 @@
  * @author white230
  */
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
 
 #include <cassert>
+
+#include "dataRepository/Group.hpp"
 #include "fileIO/xmlWrapper.hpp"
 
 /*
@@ -37,12 +38,12 @@
 namespace geosx
 {
 
-class QuadratureBase : public dataRepository::ManagedGroup
+class QuadratureBase : public dataRepository::Group
 {
 public:
   /// Main constructor
   explicit QuadratureBase( std::string const & name,
-                           ManagedGroup * const parent );
+                           Group * const parent );
 
   /// Destructor
   virtual ~QuadratureBase() override;
@@ -50,7 +51,7 @@ public:
   // Catalog name interface
   static string CatalogName() { return "QuadratureBase"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;

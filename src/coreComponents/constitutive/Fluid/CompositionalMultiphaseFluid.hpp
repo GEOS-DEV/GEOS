@@ -47,12 +47,12 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent );
+  CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
 
   virtual ~CompositionalMultiphaseFluid() override;
 
   void DeliverClone( string const & name,
-                     ManagedGroup * const parent,
+                     Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::compositionalMultiphaseFluid; }

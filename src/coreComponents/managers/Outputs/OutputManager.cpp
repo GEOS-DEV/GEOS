@@ -30,8 +30,8 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 OutputManager::OutputManager( std::string const & name,
-                              ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+                              Group * const parent ):
+  Group( name, parent)
 {
   setInputFlags(InputFlags::REQUIRED);
 }
@@ -41,7 +41,7 @@ OutputManager::~OutputManager()
 
 
 
-ManagedGroup * OutputManager::CreateChild( string const & childKey, string const & childName )
+Group * OutputManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Output: " << childKey << ", " << childName);
   std::unique_ptr<OutputBase> output = OutputBase::CatalogInterface::Factory( childKey, childName, this );

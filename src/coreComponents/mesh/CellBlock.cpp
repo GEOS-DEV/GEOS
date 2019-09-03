@@ -32,20 +32,20 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlock::CellBlock( string const & name, ManagedGroup * const parent ):
+CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_toFacesRelation()
 {
-  RegisterViewWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
-  RegisterViewWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
-  RegisterViewWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
-  RegisterViewWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
-  RegisterViewWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
-  RegisterViewWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
-  RegisterViewWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
-  RegisterViewWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
+  registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
+  registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
+  registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
+  registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
+  registerWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
+  registerWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
+  registerWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
 }
 
 
@@ -422,6 +422,6 @@ void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeMan
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlock, std::string const &, Group * const )
 
 }

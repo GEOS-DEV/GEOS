@@ -60,11 +60,11 @@ public:
 
 
 
-  RelativePermeabilityBase( std::string const & name, dataRepository::ManagedGroup * const parent );
+  RelativePermeabilityBase( std::string const & name, dataRepository::Group * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**

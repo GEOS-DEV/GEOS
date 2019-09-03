@@ -22,9 +22,10 @@
  */
 
 #include "SchemaUtilities.hpp"
+
+#include "dataRepository/Group.hpp"
+#include "dataRepository/Wrapper.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/ViewWrapper.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/InputFlags.hpp"
 
 namespace geosx
@@ -46,7 +47,7 @@ SchemaUtilities::~SchemaUtilities()
 
 
 void SchemaUtilities::ConvertDocumentationToSchema(std::string const & fname,
-                                                   ManagedGroup * const group,
+                                                   Group * const group,
                                                    integer documentationType)
 {
   GEOS_LOG_RANK_0("Generating XML Schema...");
@@ -105,7 +106,7 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
 }
 
 
-void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
+void SchemaUtilities::SchemaConstruction(Group * const group,
                                          xmlWrapper::xmlNode schemaRoot,
                                          xmlWrapper::xmlNode schemaParent,
                                          integer documentationType)
@@ -169,7 +170,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
         // Add children of the group
         for ( string subName : subGroupNames )
         {
-          ManagedGroup * const subGroup = group->GetGroup(subName);
+          Group * const subGroup = group->GetGroup(subName);
           SchemaConstruction(subGroup, schemaRoot, targetChoiceNode, documentationType);
         }
       }
@@ -190,7 +191,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
 
       for ( string attributeName : groupWrapperNames )
       {
-        ViewWrapperBase * const wrapper = group->getWrapperBase(attributeName);
+        WrapperBase * const wrapper = group->getWrapperBase(attributeName);
         InputFlags flag = wrapper->getInputFlag();
         
         if (( flag > InputFlags::FALSE ) != ( documentationType == 1 ))
@@ -246,7 +247,7 @@ void SchemaUtilities::SchemaConstruction(ManagedGroup * const group,
                                                   [&]( auto a, auto b ) -> void
               {
                 using COMPOSITE_TYPE = decltype(a);
-                ViewWrapper<COMPOSITE_TYPE>& typedWrapper = ViewWrapper<COMPOSITE_TYPE>::cast( *wrapper );
+                Wrapper<COMPOSITE_TYPE>& typedWrapper = Wrapper<COMPOSITE_TYPE>::cast( *wrapper );
                 
                 if( typedWrapper.getDefaultValueStruct().has_default_value )
                 {

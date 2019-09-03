@@ -39,7 +39,7 @@ class SiloOutput : public OutputBase
 public:
   /// Main constructor
   SiloOutput( std::string const & name,
-              ManagedGroup * const parent );
+              Group * const parent );
 
   /// Destructor
   virtual ~SiloOutput() override;
@@ -53,14 +53,14 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override;
+                        dataRepository::Group * domain ) override;
 
   /// Write one final output as the code exits
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override
+                        dataRepository::Group * domain ) override
   {
     Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
   }

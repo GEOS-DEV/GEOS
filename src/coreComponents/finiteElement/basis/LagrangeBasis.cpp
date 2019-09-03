@@ -28,13 +28,13 @@ namespace geosx
 using namespace dataRepository;
 
 template <int dim>
-LagrangeBasis<dim>::LagrangeBasis(std::string const & name, ManagedGroup * const parent)
+LagrangeBasis<dim>::LagrangeBasis(std::string const & name, Group * const parent)
   :
   BasisBase(name, parent),
   m_degree(0),
   n_shape_functions(0)
 {
-  RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Basis degree");
 }
@@ -239,7 +239,7 @@ void LagrangeBasis<dim>::PostProcessInput()
 //template class LagrangeBasis<3>;
 
 //REGISTER_CATALOG_ENTRY( BasisBase, LagrangeBasis<1>,void )
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis1; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis2; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, ManagedGroup * const > catEntry_LagrangeBasis3; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, Group * const > catEntry_LagrangeBasis1; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, Group * const > catEntry_LagrangeBasis2; }
+namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, Group * const > catEntry_LagrangeBasis3; }
 }
