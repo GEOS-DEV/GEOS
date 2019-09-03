@@ -96,6 +96,11 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution ) override;
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
