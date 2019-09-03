@@ -30,31 +30,31 @@ namespace geosx
 
 using namespace dataRepository;
 
-FluxApproximationBase::FluxApproximationBase(string const &name, ManagedGroup *const parent)
-  : ManagedGroup(name, parent),
+FluxApproximationBase::FluxApproximationBase(string const &name, Group *const parent)
+  : Group(name, parent),
     m_fieldName(),
     m_boundaryFieldName(),
     m_coeffName()
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  RegisterViewWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
+  registerWrapper(viewKeyStruct::fieldNameString, &m_fieldName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of primary solution field");
 
-  RegisterViewWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
+  registerWrapper(viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of boundary (face) field");
 
-  RegisterViewWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
+  registerWrapper(viewKeyStruct::coeffNameString, &m_coeffName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of coefficient field");
 
-  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false)->
+  registerWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of regions to build the stencil for");
 
-  RegisterViewWrapper(viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol, false)->
+  registerWrapper(viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setApplyDefaultValue(1.0e-8)->
     setDescription("Relative tolerance for area calculations.");
@@ -84,10 +84,10 @@ void FluxApproximationBase::compute( DomainPartition const & domain )
                     [&] ( FieldSpecificationBase const * bc,
                           string const & setName,
                           set<localIndex> const & targetSet,
-                          ManagedGroup const * targetGroup,
+                          Group const * targetGroup,
                           string const & targetName)
   {
-    ViewWrapper<BoundaryStencil> * stencil = this->RegisterViewWrapper<BoundaryStencil>( setName );
+    Wrapper<BoundaryStencil> * stencil = this->registerWrapper<BoundaryStencil>( setName );
     stencil->setRestartFlags(RestartFlags::NO_WRITE);
     computeBoundaryStencil( domain, targetSet, stencil->reference() );
   });
@@ -111,7 +111,7 @@ bool FluxApproximationBase::hasBoundaryStencil(string const & setName) const
   return this->hasView(setName);
 }
 
-void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   DomainPartition const * domain = rootGroup->GetGroup<DomainPartition>( keys::domain );
   compute( *domain );

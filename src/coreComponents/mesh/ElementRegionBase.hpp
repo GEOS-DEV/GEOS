@@ -20,8 +20,9 @@
 #define ELEMENT_REGION_BASE_H
 
 #include "CellElementSubRegion.hpp"
-#include "managers/ObjectManagerBase.hpp"
 #include "FaceElementSubRegion.hpp"
+#include "wells/WellElementSubRegion.hpp"
+#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -54,14 +55,14 @@ public:
 
   ElementRegionBase() = delete;
 
-  ElementRegionBase( string const & name, ManagedGroup * const parent );
+  ElementRegionBase( string const & name, Group * const parent );
 
 
   ElementRegionBase(const ElementRegionBase& init);
 
   virtual ~ElementRegionBase() override;
 
-  virtual void GenerateMesh( ManagedGroup const * const cellBlocks )
+  virtual void GenerateMesh( Group const * const cellBlocks )
   {
     GEOS_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
@@ -112,26 +113,26 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    ManagedGroup const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    Group const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    ManagedGroup * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    Group * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
@@ -139,13 +140,13 @@ public:
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion>( std::forward<LAMBDA>(lambda) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >

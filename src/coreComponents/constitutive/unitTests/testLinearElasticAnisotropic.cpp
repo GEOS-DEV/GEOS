@@ -31,7 +31,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(numElems);
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -91,7 +91,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
                                                   { 5.0e10, 5.1e10, 5.2e10, 5.3e10, 5.4e10, 5.5e10 }
                                               } };
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 
@@ -234,7 +234,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   constitutiveManager.PostProcessInputRecursive();
 
   LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation<LinearElasticAnisotropic>("granite");
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(1);
   model->AllocateConstitutiveData( &disc, 1 );
 

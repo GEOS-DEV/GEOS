@@ -31,41 +31,41 @@ namespace constitutive
 
 
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
+LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
   m_shearModulus()
 {
-  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Bulk Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
 
-  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
+  registerWrapper<real64>( viewKeyStruct::youngsModulus0String )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Young's Modulus.");
 
-  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
+  registerWrapper<real64>( viewKeyStruct::poissonRatioString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Poisson's ratio");
 
 
 
-  RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Bulk Modulus Field");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
 
@@ -78,7 +78,7 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
 
 void
 LinearElasticIsotropic::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -100,7 +100,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 }
 
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -178,6 +178,6 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   m_deviatorStress[k][q] = temp;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

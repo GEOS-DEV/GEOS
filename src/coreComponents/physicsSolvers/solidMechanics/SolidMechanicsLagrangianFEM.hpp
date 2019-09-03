@@ -35,7 +35,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -56,7 +56,7 @@ public:
    * @param parent the parent group of the solver
    */
   SolidMechanicsLagrangianFEM( const std::string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
 
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
@@ -75,9 +75,9 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -109,7 +109,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   SetupSystem( DomainPartition * const domain,
@@ -395,7 +396,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;

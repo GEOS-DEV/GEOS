@@ -37,12 +37,12 @@ namespace constitutive
 
 
 ContactRelationBase::ContactRelationBase( string const & name,
-                                          ManagedGroup * const parent ):
+                                          Group * const parent ):
   ConstitutiveBase(name, parent),
   m_penaltyStiffness(0.0),
   m_apertureFunction(nullptr)
 {
-  RegisterViewWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
@@ -57,10 +57,10 @@ ContactRelationBase::~ContactRelationBase()
 
 
 
-ManagedGroup *
+Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
 
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
   if( functionCatalog.count(catalogKey) )
@@ -75,7 +75,7 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   return rval;
 }
 
-void ContactRelationBase::InitializePreSubGroups( ManagedGroup * const )
+void ContactRelationBase::InitializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast<TableFunction*>(m_apertureFunction);
   if( apertureTable!=nullptr )
@@ -119,7 +119,7 @@ void ContactRelationBase::InitializePreSubGroups( ManagedGroup * const )
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )
 
 }
 } /* namespace geosx */

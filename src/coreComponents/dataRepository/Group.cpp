@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "ManagedGroup.hpp"
+#include "Group.hpp"
 
 #include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
@@ -33,8 +33,8 @@ namespace geosx
 namespace dataRepository
 {
 
-axom::sidre::Group * ManagedGroup::setSidreGroup( string const & name,
-                                                  ManagedGroup * const parent )
+axom::sidre::Group * Group::setSidreGroup( string const & name,
+                                           Group * const parent )
 {
 
   axom::sidre::Group * sidreParent = nullptr;
@@ -64,13 +64,13 @@ axom::sidre::Group * ManagedGroup::setSidreGroup( string const & name,
 #endif
 }
 
-ManagedGroup::ManagedGroup( std::string const & name,
-                            ManagedGroup * const parent ):
+Group::Group( std::string const & name,
+              Group * const parent ):
   m_parent( parent ),
   m_wrappers(),
   m_subGroups(),
 #ifdef GEOSX_USE_ATK
-  m_sidreGroup( ManagedGroup::setSidreGroup( name, parent )),
+  m_sidreGroup( Group::setSidreGroup( name, parent )),
 #endif
   m_size( 0 ),
   m_capacity( 0 ),
@@ -79,10 +79,10 @@ ManagedGroup::ManagedGroup( std::string const & name,
   m_name( name )
 {}
 
-ManagedGroup::~ManagedGroup()
+Group::~Group()
 {}
 
-ManagedGroup::ManagedGroup( ManagedGroup && source ):
+Group::Group( Group && source ):
   m_parent( std::move( source.m_parent ) ),
   m_wrappers( std::move( source.m_wrappers ) ),
 #ifdef GEOSX_USE_ATK
@@ -96,37 +96,37 @@ ManagedGroup::ManagedGroup( ManagedGroup && source ):
 
 
 
-ManagedGroup::CatalogInterface::CatalogType & ManagedGroup::GetCatalog()
+Group::CatalogInterface::CatalogType & Group::GetCatalog()
 {
-  static ManagedGroup::CatalogInterface::CatalogType catalog;
+  static Group::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-ViewWrapperBase * ManagedGroup::RegisterViewWrapper( std::string const & name, rtTypes::TypeIDs const & type )
+WrapperBase * Group::registerWrapper( std::string const & name, rtTypes::TypeIDs const & type )
 {
   return rtTypes::ApplyTypeLambda1( type,
-                                    [this, &name]( auto a ) -> ViewWrapperBase *
+                                    [this, &name]( auto a ) -> WrapperBase *
       {
-        return this->RegisterViewWrapper< decltype(a) >( name );
+        return this->registerWrapper< decltype(a) >( name );
       } );
 }
 
-ViewWrapperBase * ManagedGroup::RegisterViewWrapper( string const & name,
-                                                     ViewWrapperBase * const wrapper )
+WrapperBase * Group::registerWrapper( string const & name,
+                                      WrapperBase * const wrapper )
 {
   return m_wrappers.insert( name,
                             wrapper,
                             true );
 }
 
-void ManagedGroup::DeregisterViewWrapper( string const & name )
+void Group::deregisterWrapper( string const & name )
 {
   m_sidreGroup->destroyView( name );
   m_wrappers.erase( name );
 }
 
 
-void ManagedGroup::resize( indexType const newsize )
+void Group::resize( indexType const newsize )
 {
   for( auto && i : this->wrappers() )
   {
@@ -142,7 +142,7 @@ void ManagedGroup::resize( indexType const newsize )
   }
 }
 
-void ManagedGroup::reserve( indexType const newsize )
+void Group::reserve( indexType const newsize )
 {
   for( auto && i : this->wrappers() )
   {
@@ -154,7 +154,7 @@ void ManagedGroup::reserve( indexType const newsize )
   m_capacity = newsize;
 }
 
-void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
+void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
@@ -169,7 +169,7 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
 
     // Create children
-    ManagedGroup * newChild = CreateChild( childNode.name(), childName );
+    Group * newChild = CreateChild( childNode.name(), childName );
     if( newChild == nullptr )
     {
       newChild = GetGroup( childName );
@@ -184,13 +184,13 @@ void ManagedGroup::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 //  ProcessInputFile_PostProcess();
 }
 
-void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
   for( auto wrapperPair : m_wrappers )
   {
-    ViewWrapperBase * const wrapper = wrapperPair.second;
+    WrapperBase * const wrapper = wrapperPair.second;
     InputFlags const inputFlag = wrapper->getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
     {
@@ -203,7 +203,7 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 //        using BASE_TYPE = decltype(b);
             using COMPOSITE_TYPE = decltype(a);
 
-            ViewWrapper< COMPOSITE_TYPE > & typedWrapper = ViewWrapper< COMPOSITE_TYPE >::cast( *wrapper );
+            Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
             COMPOSITE_TYPE & objectReference = typedWrapper.reference();
             processedXmlNodes.insert( wrapperName );
 
@@ -233,7 +233,7 @@ void ManagedGroup::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 
 }
 
-void ManagedGroup::PostProcessInputRecursive()
+void Group::PostProcessInputRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
   {
@@ -244,7 +244,7 @@ void ManagedGroup::PostProcessInputRecursive()
 
 
 
-void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies )
+void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
 {
   RegisterDataOnMesh( meshBodies );
   for( auto && subGroup : m_subGroups )
@@ -254,7 +254,7 @@ void ManagedGroup::RegisterDataOnMeshRecursive( ManagedGroup * const meshBodies 
 }
 
 
-ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const & childName )
+Group * Group::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                  "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog" );
@@ -264,7 +264,7 @@ ManagedGroup * ManagedGroup::CreateChild( string const & childKey, string const 
 }
 
 
-void ManagedGroup::PrintDataHierarchy( integer indent )
+void Group::PrintDataHierarchy( integer indent )
 {
   for( auto & view : this->wrappers() )
   {
@@ -278,7 +278,7 @@ void ManagedGroup::PrintDataHierarchy( integer indent )
   }
 }
 
-void ManagedGroup::InitializationOrder( string_array & order )
+void Group::InitializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
@@ -286,7 +286,7 @@ void ManagedGroup::InitializationOrder( string_array & order )
   }
 }
 
-void ManagedGroup::Initialize( ManagedGroup * const group )
+void Group::Initialize( Group * const group )
 {
   static localIndex indent = 0;
 
@@ -306,7 +306,7 @@ void ManagedGroup::Initialize( ManagedGroup * const group )
 }
 
 
-void ManagedGroup::InitializePostInitialConditions( ManagedGroup * const rootGroup )
+void Group::InitializePostInitialConditions( Group * const rootGroup )
 {
   InitializePostInitialConditions_PreSubGroups( rootGroup );
 
@@ -322,9 +322,9 @@ void ManagedGroup::InitializePostInitialConditions( ManagedGroup * const rootGro
 }
 
 
-localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                                   arrayView1d< localIndex const > const & packList,
-                                   integer const recursive ) const
+localIndex Group::PackSize( string_array const & wrapperNames,
+                            arrayView1d< localIndex const > const & packList,
+                            integer const recursive ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::PackSize( this->getName());
@@ -351,7 +351,7 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
     packedSize += bufferOps::PackSize( static_cast< int >(wrapperNames.size()) );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
+      WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
@@ -378,18 +378,18 @@ localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
 }
 
 
-localIndex ManagedGroup::PackSize( string_array const & wrapperNames,
-                                   integer const recursive ) const
+localIndex Group::PackSize( string_array const & wrapperNames,
+                            integer const recursive ) const
 {
   arrayView1d< localIndex > nullArray;
   return PackSize( wrapperNames, nullArray, recursive );
 }
 
 
-localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                               string_array const & wrapperNames,
-                               arrayView1d< localIndex const > const & packList,
-                               integer const recursive ) const
+localIndex Group::Pack( buffer_unit_type * & buffer,
+                        string_array const & wrapperNames,
+                        arrayView1d< localIndex const > const & packList,
+                        integer const recursive ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< true >( buffer, this->getName() );
@@ -416,7 +416,7 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< true >( buffer, wrapperNames.size() );
     for( auto const & wrapperName : wrapperNames )
     {
-      ViewWrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
+      WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
@@ -444,17 +444,17 @@ localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-localIndex ManagedGroup::Pack( buffer_unit_type * & buffer,
-                               string_array const & wrapperNames,
-                               integer const recursive ) const
+localIndex Group::Pack( buffer_unit_type * & buffer,
+                        string_array const & wrapperNames,
+                        integer const recursive ) const
 {
   arrayView1d< localIndex > nullArray;
   return Pack( buffer, wrapperNames, nullArray, recursive );
 }
 
-localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
-                                 arrayView1d< localIndex > & packList,
-                                 integer const recursive )
+localIndex Group::Unpack( buffer_unit_type const * & buffer,
+                          arrayView1d< localIndex > & packList,
+                          integer const recursive )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -471,7 +471,7 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    ViewWrapperBase * const wrapper = this->getWrapperBase( wrapperName );
+    WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
     wrapper->Unpack( buffer, packList );
   }
 
@@ -498,7 +498,7 @@ localIndex ManagedGroup::Unpack( buffer_unit_type const * & buffer,
 }
 
 
-void ManagedGroup::prepareToWrite()
+void Group::prepareToWrite()
 {
 #ifdef GEOSX_USE_ATK
   if( getRestartFlags() == RestartFlags::NO_WRITE )
@@ -525,7 +525,7 @@ void ManagedGroup::prepareToWrite()
     m_sidreGroup->createView( "__size__" )->setScalar( m_size );
   }
 
-  forSubGroups([]( ManagedGroup * subGroup ) -> void
+  forSubGroups([]( Group * subGroup ) -> void
       {
         subGroup->prepareToWrite();
       } );
@@ -533,7 +533,7 @@ void ManagedGroup::prepareToWrite()
 }
 
 
-void ManagedGroup::finishWriting() const
+void Group::finishWriting() const
 {
 #ifdef GEOSX_USE_ATK
   if( getRestartFlags() == RestartFlags::NO_WRITE )
@@ -549,7 +549,7 @@ void ManagedGroup::finishWriting() const
     pair.second->finishWriting();
   }
 
-  forSubGroups([]( const ManagedGroup * subGroup ) -> void
+  forSubGroups([]( const Group * subGroup ) -> void
       {
         subGroup->finishWriting();
       } );
@@ -557,7 +557,7 @@ void ManagedGroup::finishWriting() const
 }
 
 
-void ManagedGroup::prepareToRead()
+void Group::prepareToRead()
 {
 #ifdef GEOSX_USE_ATK
   if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
@@ -577,7 +577,7 @@ void ManagedGroup::prepareToRead()
     pair.second->registerToRead();
   }
 
-  forSubGroups([]( ManagedGroup * subGroup ) -> void
+  forSubGroups([]( Group * subGroup ) -> void
       {
         subGroup->prepareToRead();
       } );
@@ -585,7 +585,7 @@ void ManagedGroup::prepareToRead()
 }
 
 
-void ManagedGroup::finishReading()
+void Group::finishReading()
 {
 #ifdef GEOSX_USE_ATK
   if( getRestartFlags() != RestartFlags::WRITE_AND_READ )
@@ -598,16 +598,16 @@ void ManagedGroup::finishReading()
     pair.second->finishReading();
   }
 
-  forSubGroups([]( ManagedGroup * subGroup ) -> void
+  forSubGroups([]( Group * subGroup ) -> void
       {
         subGroup->finishReading();
       } );
 #endif
 }
 
-void ManagedGroup::postRestartInitializationRecursive( ManagedGroup * const domain )
+void Group::postRestartInitializationRecursive( Group * const domain )
 {
-  forSubGroups([&]( ManagedGroup * const subGroup )
+  forSubGroups([&]( Group * const subGroup )
       {
         subGroup->postRestartInitializationRecursive( domain );
       } );

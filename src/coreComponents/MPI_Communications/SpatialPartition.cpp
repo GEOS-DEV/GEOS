@@ -88,7 +88,7 @@ SpatialPartition::~SpatialPartition()
 //}
 
 
-void SpatialPartition::InitializePostSubGroups( ManagedGroup * const )
+void SpatialPartition::InitializePostSubGroups( Group * const )
 {
   //get size of problem and decomposition
   MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
