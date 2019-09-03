@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="2"
+      verboseLevel="0"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -63,7 +63,7 @@
     
     <SurfaceGenerator
       name="SurfaceGen"
-      verboseLevel="1"
+      verboseLevel="0"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
       >
@@ -74,11 +74,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{ -1, 1}"
-                  yCoords="{0, 2}"
+                  xCoords="{ -5, 5}"
+                  yCoords="{0, 10}"
                   zCoords="{0, 1}"
-                  nx="{2}"
-                  ny="{2}"
+                  nx="{10}"
+                  ny="{10}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -93,7 +93,7 @@
   </Geometry>
 
 
-  <Events maxTime="0.1">
+  <Events maxTime="50.0">
   
     <SoloEvent 
       name="initialPlot"
@@ -137,7 +137,7 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    cycleFrequency="1"
-                   targetExactTimestep="1"
+                   targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
     <!-- PeriodicEvent name="restarts"
@@ -183,7 +183,7 @@
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
-                                  referenceViscosity="0.01"
+                                  referenceViscosity="1.0e2"
                                   viscosibility="0.0"/>
 
     <PoroLinearElasticIsotropic name="rock"
@@ -200,7 +200,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 1.0e-4}" 
+        values      = "{  1.0e-5, 1.0e-4}" 
         />
     </Contact>
   </Constitutive>
@@ -252,14 +252,14 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="-0.0"
+               scale="0.0"
                setNames="{xneg}"/>
 
     <FieldSpecification name="right"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="0.0"
+               scale="-0.0"
                setNames="{xpos}"/>
 
 

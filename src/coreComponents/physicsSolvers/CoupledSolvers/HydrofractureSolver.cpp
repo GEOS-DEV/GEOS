@@ -1021,8 +1021,14 @@ ApplySystemSolution( DofManager const & dofManager,
                      DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ApplySystemSolution( m_solidSolver->getDofManager(), m_solidSolver->getSystemSolution(), 1.0, domain );
-  m_flowSolver->ApplySystemSolution( m_flowSolver->getDofManager(), m_flowSolver->getSystemSolution(), -1.0, domain );
+  m_solidSolver->ApplySystemSolution( m_solidSolver->getDofManager(),
+                                      m_solidSolver->getSystemSolution(),
+                                      scalingFactor,
+                                      domain );
+  m_flowSolver->ApplySystemSolution( m_flowSolver->getDofManager(),
+                                     m_flowSolver->getSystemSolution(),
+                                     -scalingFactor,
+                                     domain );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -1753,6 +1759,16 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
   }
 }
 
+
+real64
+HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const domain,
+                                                 DofManager const & dofManager,
+                                                 ParallelVector const & solution )
+{
+  return m_solidSolver->ScalingForSystemSolution( domain,
+                                                  m_solidSolver->getDofManager(),
+                                                  m_solidSolver->getSystemSolution() );
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, ManagedGroup * const )
 

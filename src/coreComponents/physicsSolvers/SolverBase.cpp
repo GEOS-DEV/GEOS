@@ -252,7 +252,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              DofManager const & dofManager,
                              ParallelMatrix & matrix,
                              ParallelVector & rhs,
-                             ParallelVector & solution,
+                             ParallelVector const & solution,
+                             real64 const scaleFactor,
                              real64 & lastResidual )
 {
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
@@ -268,16 +269,16 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
   // scale factor is value applied to the previous solution. In this case we want to
   // subtract a portion of the previous solution.
-  real64 scaleFactor = -1.0;
+  real64 localScaleFactor = -scaleFactor;
 
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
     // cut the scale factor by half. This means that the scale factors will
     // have values of -0.5, -0.25, -0.125, ...
-    scaleFactor *= lineSearchCutFactor;
+    localScaleFactor *= lineSearchCutFactor;
 
-    if( !CheckSystemSolution( domain, dofManager, solution, scaleFactor ) )
+    if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
       if( m_verboseLevel >= 1 )
       {
@@ -286,7 +287,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
       continue;
     }
 
-    ApplySystemSolution( dofManager, solution, scaleFactor, domain );
+    ApplySystemSolution( dofManager, solution, localScaleFactor, domain );
 
     // re-assemble system
     AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
@@ -355,6 +356,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // keep residual from previous iteration in case we need to do a line search
     real64 lastResidual = 1e99;
     integer & newtonIter = solverParams->numNewtonIterations();
+    real64 scaleFactor = 1.0;
 
     // main Newton loop
     for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
@@ -389,7 +391,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n, stepDt, cycleNumber, domain, dofManager,
-                                             matrix, rhs, solution, residualNorm );
+                                             matrix, rhs, solution, scaleFactor, residualNorm );
 
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
@@ -401,7 +403,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
-      if( !CheckSystemSolution( domain, dofManager, solution, 1.0 ) )
+      scaleFactor = ScalingForSystemSolution( domain, dofManager, solution );
+
+      if( !CheckSystemSolution( domain, dofManager, solution, scaleFactor ) )
       {
         // TODO try chopping (similar to line search)
         GEOS_LOG_RANK_0( "Solution check failed. Newton loop terminated." );
@@ -409,7 +413,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // apply the system solution to the fields/variables
-      ApplySystemSolution( dofManager, solution, 1.0, domain );
+      ApplySystemSolution( dofManager, solution, scaleFactor, domain );
 
       lastResidual = residualNorm;
     }
@@ -533,6 +537,13 @@ bool SolverBase::CheckSystemSolution( DomainPartition const * const domain,
                                       real64 const scalingFactor )
 {
   return true;
+}
+
+real64 SolverBase::ScalingForSystemSolution( DomainPartition const * const domain,
+                                             DofManager const & dofManager,
+                                             ParallelVector const & solution )
+{
+  return 1.0;
 }
 
 void SolverBase::ApplySystemSolution( DofManager const & dofManager,

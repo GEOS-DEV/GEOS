@@ -112,6 +112,13 @@ public:
   SetupDofs( DofManager & dofManager ) const override;
 
   virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -323,6 +330,12 @@ public:
                                DomainPartition & domain,
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs );
+
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution ) override;
+
 
   void SetTimeIntegrationOption( string const & stringVal )
   {
