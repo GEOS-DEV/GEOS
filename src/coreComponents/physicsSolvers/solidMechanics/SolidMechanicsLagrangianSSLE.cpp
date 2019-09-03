@@ -97,7 +97,7 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 
       // space for element matrix and rhs
 
-      using Kernels = SolidMechanicsLagrangianSSLEKernels::Kernels;
+      using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
       return SolidMechanicsLagrangianFEMKernels::
              ElementKernelLaunchSelector<Kernels>( numNodesPerElement,
                                                    fe->n_quadrature_points(),
