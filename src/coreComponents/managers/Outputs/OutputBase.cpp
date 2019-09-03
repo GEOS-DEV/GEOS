@@ -30,18 +30,18 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   ExecutableGroup( name, parent),
   m_slaveDirectory(),
   m_parallelThreads(1)
 {
   setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  RegisterViewWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
+  registerWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("slave directory path");
 
-  RegisterViewWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
+  registerWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Number of plot files.");
@@ -58,7 +58,7 @@ OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
 }
 
 
-void OutputBase::InitializePreSubGroups( ManagedGroup * const group )
+void OutputBase::InitializePreSubGroups( Group * const group )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();

@@ -47,7 +47,7 @@ std::unordered_map<string, PHASE_TYPE> const PVTPackage_phaseDict =
 
 }
 
-MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & name, ManagedGroup * const parent )
+MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & name, Group * const parent )
   : MultiFluidBase( name, parent ),
     m_fluid( nullptr )
 {
@@ -75,7 +75,7 @@ void MultiFluidPVTPackageWrapper::PostProcessInput()
   }
 }
 
-void MultiFluidPVTPackageWrapper::InitializePostSubGroups( ManagedGroup * const group )
+void MultiFluidPVTPackageWrapper::InitializePostSubGroups( Group * const group )
 {
   MultiFluidBase::InitializePostSubGroups(group);
   createFluid();

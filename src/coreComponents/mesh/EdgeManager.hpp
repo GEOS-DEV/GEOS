@@ -59,7 +59,7 @@ public:
 
 
   EdgeManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
   ~EdgeManager() override;
 
 //  void Initialize() {}
@@ -153,6 +153,7 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxEdgesPerNode() const { return 100; }
 
   FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }

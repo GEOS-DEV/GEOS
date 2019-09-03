@@ -47,7 +47,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  FaceElementRegion( string const & name, ManagedGroup * const parent );
+  FaceElementRegion( string const & name, Group * const parent );
 
   FaceElementRegion() = delete;
   virtual ~FaceElementRegion() override;
@@ -64,7 +64,7 @@ public:
 
 
 
-  virtual void GenerateMesh( ManagedGroup const * ) override {}
+  virtual void GenerateMesh( Group const * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh

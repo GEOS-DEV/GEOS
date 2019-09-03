@@ -33,7 +33,7 @@
 #include "common/DataTypes.hpp"
 #include "common/initialization.hpp"
 #include "common/TimingMacros.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -142,9 +142,9 @@ protected:
     }
 
     int mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
-    dataRepository::ManagedGroup * commandLine =
-      problemManager->GetGroup<dataRepository::ManagedGroup>( problemManager->groupKeys.commandLine );
-    commandLine->RegisterViewWrapper<integer>( problemManager->viewKeys.xPartitionsOverride.Key() )->
+    dataRepository::Group * commandLine =
+      problemManager->GetGroup<dataRepository::Group>( problemManager->groupKeys.commandLine );
+    commandLine->registerWrapper<integer>( problemManager->viewKeys.xPartitionsOverride.Key() )->
       setApplyDefaultValue(mpiSize);
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
@@ -406,7 +406,7 @@ void makeSparsityTPFA( DomainPartition * const domain,
   {
     array1d<integer> const & elemGhostRank = subRegion->GhostRank();
     array1d<globalIndex> const & dofNumber =
-      subRegion->template RegisterViewWrapper< array1d<globalIndex> >( "dof_index" )->reference();
+      subRegion->template registerWrapper< array1d<globalIndex> >( "dof_index" )->reference();
 
     for( localIndex ei = 0; ei < subRegion->size(); ++ei )
     {
@@ -423,7 +423,7 @@ void makeSparsityTPFA( DomainPartition * const domain,
 
   // prepare a face indexing array
   array1d<integer> const & faceGhostRank = faceManager->GhostRank();
-  array1d<globalIndex> & connIndex = faceManager->RegisterViewWrapper< array1d<globalIndex> >( "conn_index" )->reference();
+  array1d<globalIndex> & connIndex = faceManager->registerWrapper< array1d<globalIndex> >( "conn_index" )->reference();
 
   localIndex faceIndex = 0;
   for( localIndex kf = 0; kf < faceManager->size(); ++kf )
@@ -507,9 +507,9 @@ void makeSparsityTPFA( DomainPartition * const domain,
   // delete the temporary DoF index field
   elemManager->forElementSubRegions( regions, [&]( ElementSubRegionBase * const subRegion )
   {
-    subRegion->DeregisterViewWrapper( "dof_index" );
+    subRegion->deregisterWrapper( "dof_index" );
   } );
-  faceManager->DeregisterViewWrapper( "conn_index" );
+  faceManager->deregisterWrapper( "conn_index" );
 }
 
 /**

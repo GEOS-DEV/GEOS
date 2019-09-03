@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_EVENTSBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
@@ -40,7 +40,7 @@ class EventBase : public ExecutableGroup
 public:
   /// Main constructor
   explicit EventBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   /// Destructor
   virtual ~EventBase() override;
@@ -55,7 +55,7 @@ public:
   virtual void SignalToPrepareForExecution(real64 const time,
                                            real64 const dt,  
                                            integer const cycle,
-                                           dataRepository::ManagedGroup * domain) override;
+                                           dataRepository::Group * domain) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    */
@@ -64,7 +64,7 @@ public:
                         integer const cycleNumber,
                         integer const,
                         real64 const,
-                        dataRepository::ManagedGroup * domain ) override;
+                        dataRepository::Group * domain ) override;
 
   /**
    * This method will call the execute method on the target
@@ -73,7 +73,7 @@ public:
   void Step(real64 const time,
             real64 const dt,  
             integer const cycle,
-            dataRepository::ManagedGroup * domain );
+            dataRepository::Group * domain );
 
   /*
    * This method is called as the code exits the main run loop
@@ -82,7 +82,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override;
+                        dataRepository::Group * domain ) override;
 
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
@@ -93,7 +93,7 @@ public:
    *         </PeriodicEvent>
    *       </Events>
    */
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
 
   /// This function is used to expand any catalogs in the data structure
@@ -116,13 +116,13 @@ public:
   virtual void CheckEvents(real64 const time, 
                               real64 const dt,
                               integer const cycle,
-                              dataRepository::ManagedGroup * domain);
+                              dataRepository::Group * domain);
 
   /// Method to estimate the timing of the event
   virtual void EstimateEventTiming(real64 const time, 
                                       real64 const dt,
                                       integer const cycle,
-                                      dataRepository::ManagedGroup * domain) = 0;
+                                      dataRepository::Group * domain) = 0;
 
   /**
    * This method will collect time-step size requests from its
@@ -178,7 +178,7 @@ public:
     } viewKeys;
 
   ///Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   /// Access functions

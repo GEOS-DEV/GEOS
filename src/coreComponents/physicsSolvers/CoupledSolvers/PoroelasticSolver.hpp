@@ -33,7 +33,7 @@ class PoroelasticSolver : public SolverBase
 {
 public:
   PoroelasticSolver( const std::string& name,
-                     ManagedGroup * const parent );
+                     Group * const parent );
   ~PoroelasticSolver() override;
 
   /**
@@ -42,7 +42,7 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -99,7 +99,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::ManagedGroup * const problemManager) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
 
 
 private:

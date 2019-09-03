@@ -17,16 +17,14 @@
  */
 
 /**
- * @file ViewWrapper.hpp
+ * @file Wrapper.hpp
  * @authors settgast
  */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPERVIEW_HPP_
+#ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
+#define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 
 #include <type_traits>
-
-#include "ViewWrapperBase.hpp"
 
 #include "KeyNames.hpp"
 #include "IntegerConversion.hpp"
@@ -40,6 +38,7 @@
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
 #include "cxx-utilities/src/src/StringUtilities.hpp"
+#include "WrapperBase.hpp"
 
 
 #ifdef GEOSX_USE_ATK
@@ -61,10 +60,10 @@ namespace dataRepository
 
 /**
  * Templated class to serve as a wrapper to arbitrary objects.
- * @tparam T is any object that is to be wrapped by ViewWrapper
+ * @tparam T is any object that is to be wrapped by Wrapper
  */
 template< typename T >
-class ViewWrapper : public ViewWrapperBase
+class Wrapper : public WrapperBase
 {
 
 public:
@@ -72,11 +71,11 @@ public:
   using TYPE = T;
   /**
    * @param name name of the object
-   * @param parent parent group which owns the ViewWrapper
+   * @param parent parent group which owns the Wrapper
    */
-  explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent ):
-    ViewWrapperBase( name, parent ),
+  explicit Wrapper( std::string const & name,
+                    Group * const parent ):
+    WrapperBase( name, parent ),
     m_ownsData( true ),
     m_data( new T() ),
     m_default()
@@ -91,13 +90,13 @@ public:
 
   /**
    * @param name name of the object
-   * @param parent parent group that owns the ViewWrapper
-   * @param object object that is being wrapped by the ViewWrapper
+   * @param parent parent group that owns the Wrapper
+   * @param object object that is being wrapped by the Wrapper
    */
-  explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent,
-                        std::unique_ptr< T > object ):
-    ViewWrapperBase( name, parent ),
+  explicit Wrapper( std::string const & name,
+                    Group * const parent,
+                    std::unique_ptr< T > object ):
+    WrapperBase( name, parent ),
     m_ownsData( true ),
     m_data( object.release() ),
     m_default()
@@ -112,15 +111,15 @@ public:
 
   /**
    * @param name name of the object
-   * @param parent parent group that owns the ViewWrapper
-   * @param object object that is being wrapped by the ViewWrapper
+   * @param parent parent group that owns the Wrapper
+   * @param object object that is being wrapped by the Wrapper
    * @param takeOwnership to indicate whether or not to take ownership of \p object
    */
-  explicit ViewWrapper( std::string const & name,
-                        ManagedGroup * const parent,
-                        T * object,
-                        bool takeOwnership ):
-    ViewWrapperBase( name, parent ),
+  explicit Wrapper( std::string const & name,
+                    Group * const parent,
+                    T * object,
+                    bool takeOwnership ):
+    WrapperBase( name, parent ),
     m_ownsData( takeOwnership ),
     m_data( object ),
     m_default()
@@ -136,7 +135,7 @@ public:
   /**
    * default destructor
    */
-  virtual ~ViewWrapper() noexcept override final
+  virtual ~Wrapper() noexcept override final
   {
     if( m_ownsData )
     {
@@ -149,8 +148,8 @@ public:
    * Copy Constructor
    * @param source source for the copy
    */
-  ViewWrapper( ViewWrapper const & source ):
-    ViewWrapperBase( "copy_constructor_test", nullptr ),
+  Wrapper( Wrapper const & source ):
+    WrapperBase( "copy_constructor_test", nullptr ),
     m_ownsData( source.m_ownsData ),
     m_data( source.m_data ),
     m_default( source.m_default )
@@ -160,8 +159,8 @@ public:
    * Move Constructor
    * @param source source to be moved
    */
-  ViewWrapper( ViewWrapper && source ):
-    ViewWrapperBase( source ),
+  Wrapper( Wrapper && source ):
+    WrapperBase( source ),
     m_ownsData( source.m_ownsData ),
     m_data( std::move( source.m_data ) ),
     m_default( source.m_default )
@@ -172,7 +171,7 @@ public:
    * @param source rhs
    * @return *this
    */
-  ViewWrapper & operator=( ViewWrapper const & source )
+  Wrapper & operator=( Wrapper const & source )
   {
     m_data = source.m_data;
     return *this;
@@ -183,7 +182,7 @@ public:
    * @param source
    * @return *this
    */
-  ViewWrapper & operator=( ViewWrapper && source )
+  Wrapper & operator=( Wrapper && source )
   {
     m_data = std::move( source.m_data );
     return *this;
@@ -191,36 +190,36 @@ public:
 
 
   /**
-   * Factory Method to make a new ViewWrapper<T>, allocating a new T. Only is
+   * Factory Method to make a new Wrapper<T>, allocating a new T. Only is
    * going to work if T has a default constructor.
    * Perhaps this is worthless in the general case.
    * @param name name of the object
-   * @param parent group that owns the ViewWrapper
-   * @return A std::unique_ptr<ViewWrapperBase> that holds the newly allocated
-   * ViewWrapper.
+   * @param parent group that owns the Wrapper
+   * @return A std::unique_ptr<WrapperBase> that holds the newly allocated
+   * Wrapper.
    */
   template< typename TNEW >
-  static std::unique_ptr< ViewWrapperBase > Factory( std::string const & name,
-                                                     ManagedGroup * const parent )
+  static std::unique_ptr< WrapperBase > Factory( std::string const & name,
+                                                 Group * const parent )
   {
     std::unique_ptr< TNEW > newObject = std::make_unique< TNEW >();
-    return std::make_unique< ViewWrapper< T > >( name, parent, std::move( newObject ));
+    return std::make_unique< Wrapper< T > >( name, parent, std::move( newObject ));
   }
 
-  virtual std::unique_ptr< ViewWrapperBase > clone( string const & name,
-                                                    ManagedGroup * const parent ) override
+  virtual std::unique_ptr< WrapperBase > clone( string const & name,
+                                                Group * const parent ) override
   {
-    std::unique_ptr< ViewWrapperBase >
-    clonedWrapper = std::make_unique< ViewWrapper< T > >( name, parent, this->m_data, false );
+    std::unique_ptr< WrapperBase >
+    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data, false );
     clonedWrapper->CopyWrapperAttributes( *this );
 
     return clonedWrapper;
   }
 
-  virtual void CopyWrapperAttributes( ViewWrapperBase const & source ) override
+  virtual void CopyWrapperAttributes( WrapperBase const & source ) override
   {
-    ViewWrapperBase::CopyWrapperAttributes( source );
-    ViewWrapper< T > const & castedSource = *cast( &source );
+    WrapperBase::CopyWrapperAttributes( source );
+    Wrapper< T > const & castedSource = *cast( &source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
   }
@@ -233,59 +232,59 @@ public:
 
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted ViewWrapper<T>
+   * @return casted Wrapper<T>
    */
-  static ViewWrapper< T > * cast( ViewWrapperBase * const base )
+  static Wrapper< T > * cast( WrapperBase * const base )
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper< T > * >(base);
+    return dynamic_cast< Wrapper< T > * >(base);
 #else
-    return static_cast< ViewWrapper< T > * >(base);
+    return static_cast< Wrapper< T > * >(base);
 #endif
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted reference to const ViewWrapper<T>
+   * @return casted reference to const Wrapper<T>
    */
-  static ViewWrapper< T > const * cast( ViewWrapperBase const * const base )
+  static Wrapper< T > const * cast( WrapperBase const * const base )
   {
 #ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< ViewWrapper< T > const * >(base);
+    return dynamic_cast< Wrapper< T > const * >(base);
 #else
-    return static_cast< ViewWrapper< T > const * >(base);
+    return static_cast< Wrapper< T > const * >(base);
 #endif
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted ViewWrapper<T>
+   * @return casted Wrapper<T>
    */
-  static ViewWrapper< T > & cast( ViewWrapperBase & base )
+  static Wrapper< T > & cast( WrapperBase & base )
   {
     if( base.get_typeid() != typeid(T) )
     {
       GEOS_ERROR( "invalid cast attempt" );
     }
-    return static_cast< ViewWrapper< T > & >(base);
+    return static_cast< Wrapper< T > & >(base);
   }
 
   /**
-   * static function to cast a ViewWrapper base to a derived ViewWrapper<T>
+   * static function to cast a Wrapper base to a derived Wrapper<T>
    * @param base
-   * @return casted reference to const ViewWrapper<T>
+   * @return casted reference to const Wrapper<T>
    */
-  static ViewWrapper< T > const & cast( ViewWrapperBase const & base )
+  static Wrapper< T > const & cast( WrapperBase const & base )
   {
     if( base.get_typeid() != typeid(T) )
     {
       GEOS_ERROR( "invalid cast attempt" );
     }
-    return static_cast< ViewWrapper< T > const & >(base);
+    return static_cast< Wrapper< T > const & >(base);
   }
 
   /**
@@ -383,7 +382,7 @@ public:
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
-    GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
+    GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
@@ -396,7 +395,7 @@ public:
       {
         string name;
         unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to viewWrapper names that don't match" );
+        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
         unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
       }
     }
@@ -413,13 +412,13 @@ public:
     HAS_MEMBER_FUNCTION( empty, bool, const, , )
     template< class U = T >
     static typename std::enable_if< has_memberfunction_empty< U >::value, bool >::type
-    empty( ViewWrapper< T > const * parent )
+    empty( Wrapper< T > const * parent )
     {
       return parent->m_data->empty();
     }
     template< class U = T >
     static typename std::enable_if< !has_memberfunction_empty< U >::value, bool >::type
-    empty( ViewWrapper< T > const * parent )
+    empty( Wrapper< T > const * parent )
     {
       return parent;
     }
@@ -446,7 +445,7 @@ public:
                                     has_memberfunction_v3_size< U >::value ||
                                     has_memberfunction_v4_size< U >::value ||
                                     has_memberfunction_v5_size< U >::value, localIndex >::type
-    size( ViewWrapper< T > const * parent )
+    size( Wrapper< T > const * parent )
     { return static_cast< localIndex >(parent->m_data->size()); }
 
     template< class U = T >
@@ -456,7 +455,7 @@ public:
                                       has_memberfunction_v3_size< U >::value ||
                                       has_memberfunction_v4_size< U >::value ||
                                       has_memberfunction_v5_size< U >::value), localIndex >::type
-    size( ViewWrapper< T > const * parent )
+    size( Wrapper< T > const * parent )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual localIndex size() const override final
@@ -472,12 +471,12 @@ public:
 
     template< class U = T >
     static typename std::enable_if< has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( ViewWrapper< T > const * parent )
+    numDimensions( Wrapper< T > const * parent )
     { return static_cast< int >(parent->m_data->numDimensions()); }
 
     template< class U = T >
     static typename std::enable_if< !has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( ViewWrapper< T > const * parent )
+    numDimensions( Wrapper< T > const * parent )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual int numDimensions() const override final
@@ -502,7 +501,7 @@ public:
                                     has_memberfunction_v3_size< U >::value ||
                                     has_memberfunction_v4_size< U >::value ||
                                     has_memberfunction_v5_size< U >::value, localIndex >::type
-    size( ViewWrapper< T > const * const parent, int const i )
+    size( Wrapper< T > const * const parent, int const i )
     { return integer_conversion< localIndex >( parent->m_data->size( i )); }
 
     template< class U = T >
@@ -512,7 +511,7 @@ public:
                                       has_memberfunction_v3_size< U >::value ||
                                       has_memberfunction_v4_size< U >::value ||
                                       has_memberfunction_v5_size< U >::value), localIndex >::type
-    size( ViewWrapper< T > const * const parent, int const i )
+    size( Wrapper< T > const * const parent, int const i )
     {
       if( i != 0 )
       {
@@ -536,12 +535,12 @@ public:
 
     template< class U=T >
     static typename std::enable_if< has_memberfunction_resize< U >::value, void >::type
-    resize( ViewWrapper< T > * parent, int num_dims, localIndex const * const dims )
+    resize( Wrapper< T > * parent, int num_dims, localIndex const * const dims )
     { parent->m_data->resize( num_dims, dims ); }
 
     template< class U=T >
     static typename std::enable_if< !has_memberfunction_resize< U >::value, void >::type
-    resize( ViewWrapper< T > * parent, int num_dims, localIndex const * const dims )
+    resize( Wrapper< T > * parent, int num_dims, localIndex const * const dims )
     {
       if( num_dims != 1 )
       {
@@ -559,12 +558,12 @@ public:
   {
     HAS_MEMBER_FUNCTION( reserve, void, , VA_LIST( std::size_t ), VA_LIST( std::size_t( 1 )) )
     template< class U = T >
-    static typename std::enable_if< has_memberfunction_reserve< U >::value, void >::type reserve( ViewWrapper< T > * const parent, std::size_t new_cap )
+    static typename std::enable_if< has_memberfunction_reserve< U >::value, void >::type reserve( Wrapper< T > * const parent, std::size_t new_cap )
     {
       return parent->m_data->reserve( new_cap );
     }
     template< class U = T >
-    static typename std::enable_if< !has_memberfunction_reserve< U >::value, void >::type reserve( ViewWrapper< T > * const, std::size_t )
+    static typename std::enable_if< !has_memberfunction_reserve< U >::value, void >::type reserve( Wrapper< T > * const, std::size_t )
     {
       return; //parent->m_data;
     }
@@ -578,16 +577,16 @@ public:
 
 
   HAS_MEMBER_FUNCTION( capacity, std::size_t, const, , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( ViewWrapper< T >, capacity, std::size_t, const )
+  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, capacity, std::size_t, const )
 
   HAS_MEMBER_FUNCTION( max_size, std::size_t, const, , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( ViewWrapper< T >, max_size, std::size_t, const )
+  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, max_size, std::size_t, const )
 
   HAS_MEMBER_FUNCTION( clear, void, , , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( ViewWrapper< T >, clear, void, )
+  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, clear, void, )
 
   HAS_MEMBER_FUNCTION( insert, void, , , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( ViewWrapper< T >, insert, void, )
+  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, insert, void, )
 
 
   /// @cond DO_NOT_DOCUMENT
@@ -639,7 +638,7 @@ public:
     template< class U = T >
     static typename std::enable_if< has_memberfunction_resize2< U >::value &&
                                     DefaultValue< U >::has_default_value, void >::type
-    resize( ViewWrapper * const parent, localIndex const new_size )
+    resize( Wrapper * const parent, localIndex const new_size )
     {
       return parent->m_data->resizeDefault( new_size, parent->m_default.value );
     }
@@ -648,7 +647,7 @@ public:
     static typename std::enable_if< !(has_memberfunction_resize2< U >::value &&
                                       DefaultValue< U >::has_default_value) &&
                                     has_memberfunction_resize< U >::value, void >::type
-    resize( ViewWrapper * const parent, localIndex const new_size )
+    resize( Wrapper * const parent, localIndex const new_size )
     {
       return parent->m_data->resize( new_size );
     }
@@ -658,7 +657,7 @@ public:
     static typename std::enable_if< !(has_memberfunction_resize2< U >::value &&
                                       DefaultValue< U >::has_default_value) &&
                                     !has_memberfunction_resize< U >::value, void >::type
-    resize( ViewWrapper * const, localIndex )
+    resize( Wrapper * const, localIndex )
     {
       return;
     }
@@ -866,10 +865,10 @@ public:
 
   /**
    * @brief setter for default value
-   * @return pointer to ViewWrapper<T>
+   * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, ViewWrapper< T > * >::type
+  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
   setDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
@@ -878,10 +877,10 @@ public:
 
   /**
    * @brief set and apply for default value
-   * @return pointer to ViewWrapper<T>
+   * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, ViewWrapper< T > * >::type
+  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
@@ -1405,7 +1404,7 @@ public:
 
 
   /** @name overridden setters
-   *  Group of setters that override non-virtual functions in ViewWrapperBase
+   *  Group of setters that override non-virtual functions in WrapperBase
    */
   ///@{
 
@@ -1414,9 +1413,9 @@ public:
    * @param val an int that is converted into a bool
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setSizedFromParent( int val )
+  Wrapper< T > * setSizedFromParent( int val )
   {
-    ViewWrapperBase::setSizedFromParent( val );
+    WrapperBase::setSizedFromParent( val );
     return this;
   }
 
@@ -1425,9 +1424,9 @@ public:
    * @param flags the new RestartFlags value
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setRestartFlags( RestartFlags flags )
+  Wrapper< T > * setRestartFlags( RestartFlags flags )
   {
-    ViewWrapperBase::setRestartFlags( flags );
+    WrapperBase::setRestartFlags( flags );
     return this;
   }
 
@@ -1436,9 +1435,9 @@ public:
    * @param flag the new PlotLevel value
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setPlotLevel( PlotLevel const flag )
+  Wrapper< T > * setPlotLevel( PlotLevel const flag )
   {
-    ViewWrapperBase::setPlotLevel( flag );
+    WrapperBase::setPlotLevel( flag );
     return this;
   }
 
@@ -1447,9 +1446,9 @@ public:
    * @param flag an integer that specifies the new plotLevel value
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setPlotLevel( int const flag )
+  Wrapper< T > * setPlotLevel( int const flag )
   {
-    ViewWrapperBase::setPlotLevel( flag );
+    WrapperBase::setPlotLevel( flag );
     return this;
   }
 
@@ -1458,9 +1457,9 @@ public:
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setInputFlag( InputFlags const input )
+  Wrapper< T > * setInputFlag( InputFlags const input )
   {
-    ViewWrapperBase::setInputFlag( input );
+    WrapperBase::setInputFlag( input );
     return this;
   }
 
@@ -1469,9 +1468,9 @@ public:
    * @param description the description
    * @return a pointer to this wrapper
    */
-  ViewWrapper< T > * setDescription( string const & description )
+  Wrapper< T > * setDescription( string const & description )
   {
-    ViewWrapperBase::setDescription( description );
+    WrapperBase::setDescription( description );
     return this;
   }
 
@@ -1481,13 +1480,13 @@ public:
 #if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override final
   {
-    return cxx_utilities::demangle( typeid( ViewWrapper< T > ).name() );
+    return cxx_utilities::demangle( typeid( Wrapper< T > ).name() );
   }
 
   virtual int setTotalviewDisplay() const override final
   {
-    //std::cout<<"executing ViewWrapper::setTotalviewDisplay()"<<std::endl;
-    ViewWrapperBase::setTotalviewDisplay();
+    //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
+    WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
     TV_ttf_add_row( "m_data", totalview::typeName< T >().c_str(), m_data );
     TV_ttf_add_row( "m_default", totalview::typeName< DefaultValue< T > >().c_str(), &m_default );
@@ -1508,26 +1507,26 @@ private:
   DefaultValue< T > m_default;
 
 
-  ViewWrapper() = delete;
+  Wrapper() = delete;
 };
 
 }
 } /* namespace geosx */
 
 //template< typename T >
-//int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<T> const * wrapper)
+//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
 //{
 //  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
 //  return TV_ttf_format_raw;
 //}
 //
-//template int TV_ttf_display_type( geosx::dataRepository::ViewWrapper<int> const * wrapper );
+//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
 //
 //template< typename T >
-//void geosx::dataRepository::ViewWrapper<T>::tvTemplateInstantiation()
+//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
 //{
 //  TV_ttf_display_type<T>(this);
 //}
 
 
-#endif /* CORE_SRC_DATAREPOSITORY_DATAOBJECT_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */
