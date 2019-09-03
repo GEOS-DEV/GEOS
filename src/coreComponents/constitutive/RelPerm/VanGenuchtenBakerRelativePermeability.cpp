@@ -35,32 +35,32 @@ namespace constitutive
 
 
 VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( std::string const & name,
-                                                                              ManagedGroup * const parent )
+                                                                              Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Minimum volume fraction value for each phase");
 
 
-  RegisterViewWrapper( viewKeyStruct::waterOilRelPermExponentInvString,   &m_waterOilRelPermExponentInv,   false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString,   &m_waterOilRelPermExponentInv,   false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation");
 
-  RegisterViewWrapper( viewKeyStruct::waterOilRelPermMaxValueString,   &m_waterOilRelPermMaxValue,   false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString,   &m_waterOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation");
 
 
-  RegisterViewWrapper( viewKeyStruct::gasOilRelPermExponentInvString,   &m_gasOilRelPermExponentInv,   false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString,   &m_gasOilRelPermExponentInv,   false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation");
 
-  RegisterViewWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString,   &m_gasOilRelPermMaxValue,   false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation");
@@ -74,7 +74,7 @@ VanGenuchtenBakerRelativePermeability::~VanGenuchtenBakerRelativePermeability()
 
 void
 VanGenuchtenBakerRelativePermeability::DeliverClone( string const & name, 
-                                                     ManagedGroup * const parent,
+                                                     Group * const parent,
                                                      std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< VanGenuchtenBakerRelativePermeability > newModel = std::make_unique<VanGenuchtenBakerRelativePermeability>( name, parent );
@@ -214,7 +214,7 @@ void VanGenuchtenBakerRelativePermeability::PointUpdate( arraySlice1d<real64 con
            m_volFracScale );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

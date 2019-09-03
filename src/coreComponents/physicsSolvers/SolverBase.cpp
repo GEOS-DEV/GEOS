@@ -29,7 +29,7 @@ namespace geosx
 using namespace dataRepository;
 
 SolverBase::SolverBase( std::string const & name,
-                        ManagedGroup * const parent )
+                        Group * const parent )
   :
   ExecutableGroup( name, parent ),
   m_verboseLevel( 0 ),
@@ -41,29 +41,29 @@ SolverBase::SolverBase( std::string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
+  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, false );
 
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
 
-  RegisterViewWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
+  registerWrapper( viewKeyStruct::verboseLevelString, &m_verboseLevel, false )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Verbosity level for this solver. Higher values will lead to more screen output. For non-debug "
                     " simulations, this should remain at 0." );
 
-  RegisterViewWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  RegisterViewWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::FALSE )->
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
-  this->RegisterViewWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setApplyDefaultValue( "none" )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
@@ -71,7 +71,7 @@ SolverBase::SolverBase( std::string const & name,
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  RegisterViewWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
@@ -91,9 +91,9 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
-ManagedGroup * SolverBase::CreateChild( string const & childKey, string const & childName )
+Group * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
   if( childKey == SystemSolverParameters::CatalogName() )
   {
     rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
@@ -186,7 +186,7 @@ void SolverBase::Execute( real64 const time_n,
                           integer const cycleNumber,
                           integer const eventCounter,
                           real64 const eventProgress,
-                          ManagedGroup * const domain )
+                          Group * const domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtRemaining = dt;
@@ -467,7 +467,8 @@ void SolverBase::ImplicitStepSetup( real64 const & time_n,
   GEOS_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
 
-void SolverBase::SetupDofs( DofManager & dofManager ) const
+void SolverBase::SetupDofs( DomainPartition const * const domain,
+                            DofManager & dofManager ) const
 {
   GEOS_ERROR( "SolverBase::SetupDofs called!. Should be overridden." );
 }
@@ -482,7 +483,7 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
 
   dofManager.setMesh( domain, 0, 0 );
 
-  SetupDofs( dofManager );
+  SetupDofs( domain, dofManager );
   dofManager.close();
 
   dofManager.setSparsityPattern( matrix );

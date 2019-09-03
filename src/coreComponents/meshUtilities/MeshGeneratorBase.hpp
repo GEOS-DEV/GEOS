@@ -26,7 +26,7 @@
 #ifndef MESHGENERATORBASE_H_
 #define MESHGENERATORBASE_H_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
@@ -39,11 +39,11 @@ namespace dataRepository
 class NodeManager;
 class DomainPartition;
 
-class MeshGeneratorBase : public dataRepository::ManagedGroup
+class MeshGeneratorBase : public dataRepository::Group
 {
 public:
   explicit MeshGeneratorBase( std::string const & name,
-                              ManagedGroup * const parent );
+                              Group * const parent );
 
   virtual ~MeshGeneratorBase();
 
@@ -62,11 +62,11 @@ public:
                                              int nodeIDInBox[],
                                              const int size) = 0;
 
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) = 0;
+  virtual void RemapMesh ( dataRepository::Group * const domain ) = 0;
 
   int m_delayMeshDeformation = 0;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 };

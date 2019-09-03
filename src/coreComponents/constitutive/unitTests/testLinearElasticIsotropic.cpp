@@ -31,7 +31,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(numElems);
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -61,7 +61,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   cm.bulkModulus0() = K;
   cm.defaultShearModulus() = G;
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 

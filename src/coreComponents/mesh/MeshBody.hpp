@@ -33,11 +33,11 @@ namespace geosx
 
 class MeshLevel;
 
-class MeshBody : public dataRepository::ManagedGroup
+class MeshBody : public dataRepository::Group
 {
 public:
   MeshBody( string const & name,
-            ManagedGroup * const parent );
+            Group * const parent );
   virtual ~MeshBody();
 
   MeshLevel * CreateMeshLevel( localIndex const newLevel );

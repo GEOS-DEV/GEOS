@@ -32,7 +32,7 @@ This is done by:
 
 InputFlags Applied to Nodes
 ------------------------------
-Similar to ViewWrappers, each object derived from ManagedGroup has an InputFlag defined.
+Similar to Wrappers, each object derived from ManagedGroup has an InputFlag defined.
 If this flag is set to the default value (INVALID), the code will not include the group or its children in the schema.
 The available options for node input flags are: OPTIONAL, OPTIONAL_NONUNIQUE, REQUIRED, and REQUIRED_NONUNIQUE.
 

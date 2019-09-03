@@ -325,6 +325,7 @@ public:
    * @return the number of data entries (Length) for the tensor
    * @brief gives the number of data entries (Length) for the tensor
    */
+  GEOSX_HOST_DEVICE CONSTEXPRFUNC
   static int Length( void )
   {
     return T_length;

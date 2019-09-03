@@ -43,26 +43,26 @@ using namespace dataRepository;
  * @return
  */
 NodeManager::NodeManager( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition()
 {
-  RegisterViewWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
+  registerWrapper(viewKeyStruct::referencePositionString, &m_referencePosition, false );
 
 
-  this->RegisterViewWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
+  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementRegionListString,
+  this->registerWrapper( viewKeyStruct::elementRegionListString,
                              &(elementRegionList()),
                              false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementSubRegionListString,
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
                              &(elementSubRegionList()),
                              false );
 
-  this->RegisterViewWrapper( viewKeyStruct::elementListString,
+  this->registerWrapper( viewKeyStruct::elementListString,
                              &(elementList()),
                              false );
 
@@ -90,8 +90,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   localIndex const totalNumEdges = edgeToNodeMap.size( 0 );
   localIndex const totalNumNodes = size();
 
-  constexpr int MAX_EDGES_PER_NODE = 10;
-  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, MAX_EDGES_PER_NODE );
+  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, edgeManager->maxEdgesPerNode() );
 
   forall_in_range< parallelHostPolicy >( 0, totalNumEdges, [&]( localIndex const edgeID )
   {
@@ -126,8 +125,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   localIndex const totalNumFaces = faceToNodes.size();
   localIndex const totalNumNodes = size();
 
-  constexpr int MAX_FACES_PER_NODE = 20;
-  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, MAX_FACES_PER_NODE );
+  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, faceManager->maxFacesPerNode() );
 
   forall_in_range< parallelHostPolicy >( 0, totalNumFaces, [&]( localIndex const faceID )
   {
@@ -358,6 +356,6 @@ void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, std::string const &, Group * const )
 
 }

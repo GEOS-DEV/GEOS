@@ -26,18 +26,18 @@
 #ifndef GEOSX_SYSTEMSOLVERPARAMETERS_HPP_
 #define GEOSX_SYSTEMSOLVERPARAMETERS_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
 
-class SystemSolverParameters : public dataRepository::ManagedGroup
+class SystemSolverParameters : public dataRepository::Group
 {
 public:
   SystemSolverParameters() = delete;
 
   SystemSolverParameters( std::string const & name,
-                          ManagedGroup * const parent );
+                          Group * const parent );
 
   SystemSolverParameters(SystemSolverParameters &&) = default;
 

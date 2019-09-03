@@ -36,30 +36,30 @@ namespace geosx
 using namespace dataRepository;
 
 EdgeManager::EdgeManager( std::string const & name,
-                          ManagedGroup * const parent ):
+                          Group * const parent ):
   ObjectManagerBase(name,parent),
   m_edgesToFractureConnectorsEdges(),
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->RegisterViewWrapper(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
-  this->RegisterViewWrapper(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
+  this->registerWrapper(viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
+  this->registerWrapper(viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
 
   m_toNodesRelation.resize( 0, 2 );
   // TODO Auto-generated constructor stub
 
 
-  RegisterViewWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges, 0 )->
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges, 0 )->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of edge local indices to the fracture connector local indices.")->
     setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges, 0 )->
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges, 0 )->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of fracture connector local indices to edge local indices.")->
     setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
+  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
                        &m_fractureConnectorEdgesToFaceElements, 0 )->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of fracture connector local indices face element local indices")->
@@ -88,9 +88,9 @@ struct EdgeBuilder
   EdgeBuilder( localIndex const n1_,
                localIndex const faceID_,
                localIndex const faceLocalEdgeIndex_ ) :
-    n1( uint32_t( n1_ ) ),
-    faceID( uint32_t( faceID_ ) ),
-    faceLocalEdgeIndex( uint32_t( faceLocalEdgeIndex_ ) )
+    n1( int32_t( n1_ ) ),
+    faceID( int32_t( faceID_ ) ),
+    faceLocalEdgeIndex( int32_t( faceLocalEdgeIndex_ ) )
   {}
 
   /**
@@ -118,9 +118,9 @@ struct EdgeBuilder
   bool operator!=( EdgeBuilder const & rhs ) const
   { return n1 != rhs.n1; }
 
-  uint32_t n1;                  // The larger of the two node indices that comprise the edge.
-  uint32_t faceID;              // The face the edge came from.
-  uint32_t faceLocalEdgeIndex;  // The face local index of the edge.
+  int32_t n1;                  // The larger of the two node indices that comprise the edge.
+  int32_t faceID;              // The face the edge came from.
+  int32_t faceLocalEdgeIndex;  // The face local index of the edge.
 };
 
 /**
@@ -324,17 +324,14 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 {
   GEOSX_MARK_FUNCTION;
 
-  constexpr int MAX_EDGES_PER_NODE = 10;
   localIndex const numNodes = nodeManager->size();
-
   arrayView1d< arrayView1d< localIndex const > const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
-  ArrayOfArrays<EdgeBuilder> edgesByLowestNode( numNodes, 2 * MAX_EDGES_PER_NODE );
+  ArrayOfArrays<EdgeBuilder> edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
   createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode );
   
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
   localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode, uniqueEdgeOffsets );
-
 
   OrderedVariableOneToManyRelation& faceToEdgeMap = faceManager->edgeList();
   faceToEdgeMap.SetRelatedObject( this );
