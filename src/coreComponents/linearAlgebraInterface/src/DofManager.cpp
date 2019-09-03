@@ -206,6 +206,8 @@ struct MeshHelper
 {
 };
 
+HAS_ALIAS( NodeMapType )
+
 template<>
 struct MeshHelper<DofManager::Location::Node>
 {
@@ -218,14 +220,14 @@ struct MeshHelper<DofManager::Location::Node>
   template< typename MANAGER >
   using MapType = typename MANAGER::NodeMapType;
 
-  HAS_ALIAS( NodeMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
     return has_alias_NodeMapType<MANAGER>::value;
   }
 };
+
+HAS_ALIAS( EdgeMapType )
 
 template<>
 struct MeshHelper<DofManager::Location::Edge>
@@ -239,14 +241,14 @@ struct MeshHelper<DofManager::Location::Edge>
   template< typename MANAGER >
   using MapType = typename MANAGER::EdgeMapType;
 
-  HAS_ALIAS( EdgeMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
     return has_alias_EdgeMapType<MANAGER>::value;
   }
 };
+
+HAS_ALIAS( FaceMapType )
 
 template<>
 struct MeshHelper<DofManager::Location::Face>
@@ -260,8 +262,6 @@ struct MeshHelper<DofManager::Location::Face>
   template< typename MANAGER >
   using MapType = typename MANAGER::FaceMapType;
 
-  HAS_ALIAS( FaceMapType )
-
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
   {
@@ -269,19 +269,17 @@ struct MeshHelper<DofManager::Location::Face>
   }
 };
 
+HAS_ALIAS( ElemMapType )
+
 template<>
 struct MeshHelper<DofManager::Location::Elem>
 {
   using ManagerType = ElementSubRegionBase;
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::elemManagerString;
-  static constexpr auto mapViewKey = FaceManager::viewKeyStruct::elementListString; // TODO which key
   static constexpr auto syncObjName = "elems";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::ElemMapType;
-
-  HAS_ALIAS( ElemMapType )
 
   template< typename MANAGER >
   static bool constexpr hasMapTypeAlias()
@@ -788,7 +786,7 @@ struct IndexArrayHelper
     GEOS_ASSERT( field.location == LOC );
 
     ObjectManagerBase * baseManager = getObjectManager<LOC>( mesh );
-    baseManager->RegisterViewWrapper<ArrayType>( field.key )->
+    baseManager->registerWrapper<ArrayType>( field.key )->
       setApplyDefaultValue( -1 )->
       setPlotLevel( PlotLevel::LEVEL_1 )->
       setRestartFlags( RestartFlags::NO_WRITE )->
@@ -815,7 +813,7 @@ struct IndexArrayHelper
   static void
   remove( Mesh * const mesh, DofManager::FieldDescription const & field )
   {
-    getObjectManager<LOC>( mesh )->DeregisterViewWrapper( field.key );
+    getObjectManager<LOC>( mesh )->deregisterWrapper( field.key );
   }
 };
 
@@ -840,7 +838,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
                                                                      auto * const region,
                                                                      auto * const subRegion )
     {
-      subRegion->template RegisterViewWrapper<ArrayType>( field.key )->
+      subRegion->template registerWrapper<ArrayType>( field.key )->
         setApplyDefaultValue( -1 )->
         setPlotLevel( PlotLevel::LEVEL_1 )->
         setRestartFlags( RestartFlags::NO_WRITE )->
@@ -883,7 +881,7 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
                                                                     auto * const,
                                                                     auto * const subRegion )
     {
-      subRegion->DeregisterViewWrapper( field.key );
+      subRegion->deregisterWrapper( field.key );
     } );
   }
 };
@@ -1199,9 +1197,10 @@ void DofManager::addField( string const & fieldName,
 }
 
 // Create the sparsity pattern (location-location). High level interface
-void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPattern( ParallelMatrix & matrix,
                                      string const & rowFieldName,
-                                     string const & colFieldName ) const
+                                     string const & colFieldName,
+                                     bool const closePattern ) const
 {
   localIndex rowFieldIndex, colFieldIndex;
 
@@ -1237,20 +1236,21 @@ void DofManager::setSparsityPattern( ParallelMatrix & locLocDistr,
   }
 
   // Call the low level routine
-  setSparsityPattern( locLocDistr, rowFieldIndex, colFieldIndex );
+  setSparsityPattern( matrix, rowFieldIndex, colFieldIndex, closePattern );
 }
 
 
-void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
+void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
                                              localIndex const rowFieldIndex,
-                                             localIndex const colFieldIndex ) const
+                                             localIndex const colFieldIndex,
+                                             bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex >= 0 );
   GEOS_ASSERT( colFieldIndex >= 0 );
 
-  locLocDistr.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
-                                   m_fields[colFieldIndex].numLocalRows,
-                                   1, MPI_COMM_GEOSX );
+  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
+                               m_fields[colFieldIndex].numLocalRows,
+                               1, MPI_COMM_GEOSX );
 
   if( colFieldIndex == rowFieldIndex )
   {
@@ -1260,7 +1260,8 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
     connLocPattDistr->MatrixMatrixMultiply( true,
                                             *connLocPattDistr,
                                             false,
-                                            locLocDistr );
+                                            pattern,
+                                            closePattern );
   }
   else
   {
@@ -1281,11 +1282,14 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
         CL2 = m_sparsityPattern( colFieldIndex, rowFieldIndex ).first.get();
       }
 
-      CL1->MatrixMatrixMultiply( true, *CL2, false, locLocDistr );
+      CL1->MatrixMatrixMultiply( true, *CL2, false, pattern, closePattern );
     }
     else
     {
-      locLocDistr.close(); // empty matrix, but still needs to be closed
+      if( closePattern )
+      {
+        pattern.close(); // empty matrix, but still needs to be closed
+      }
     }
   }
 }
@@ -1293,7 +1297,8 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & locLocDistr,
 // Create the sparsity pattern (location-location). Low level interface
 void DofManager::setSparsityPattern( ParallelMatrix & matrix,
                                      localIndex const rowFieldIndex,
-                                     localIndex const colFieldIndex ) const
+                                     localIndex const colFieldIndex,
+                                     bool const closePattern ) const
 {
   GEOS_ASSERT( rowFieldIndex < m_fields.size() );
   GEOS_ASSERT( colFieldIndex < m_fields.size() );
@@ -1303,16 +1308,19 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
 
   if( rowFieldIndex >= 0 ) // both nonnegative => single row/col field
   {
-    setSparsityPatternOneBlock( matrix, rowFieldIndex, colFieldIndex );
+    setSparsityPatternOneBlock( matrix, rowFieldIndex, colFieldIndex, closePattern );
   }
   else if( m_fields.empty() ) // both negative, no fields present
   {
     matrix.createWithLocalSize( 0, 0, 0, MPI_COMM_GEOSX );
-    matrix.close();
+    if( closePattern )
+    {
+      matrix.close();
+    }
   }
   else if( m_fields.size() == 1 ) // both negative, single field present
   {
-    setSparsityPatternOneBlock( matrix, 0, 0 );
+    setSparsityPatternOneBlock( matrix, 0, 0, closePattern );
   }
   else // both negative, multiple fields
   {
@@ -1370,7 +1378,7 @@ void DofManager::setSparsityPattern( ParallelMatrix & matrix,
     colPerm.close();
 
     // Permute the columns to adjust for rank-based ordering
-    sparsity.MatrixMatrixMultiply( false, colPerm, false, matrix );
+    sparsity.MatrixMatrixMultiply( false, colPerm, false, matrix, closePattern );
   }
 }
 
@@ -1442,19 +1450,19 @@ void DofManager::vectorToField( ParallelVector const & vector,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  ViewWrapperBase * const vw = manager->getWrapperBase( dstFieldName );
-  GEOS_ASSERT( vw != nullptr );
-  std::type_index typeIndex = std::type_index( vw->get_typeid() );
+  WrapperBase * const wrapper = manager->getWrapperBase( dstFieldName );
+  GEOS_ASSERT( wrapper != nullptr );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    ViewWrapper<ArrayType> & view = ViewWrapper<ArrayType>::cast( *vw );
-    typename ViewWrapper<ArrayType>::ViewType const & field = view.referenceAsView();
+    Wrapper<ArrayType> & view = Wrapper<ArrayType>::cast( *wrapper );
+    typename Wrapper<ArrayType>::ViewType const & field = view.referenceAsView();
 
-    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
       if( ghostRank[i] < 0 )
       {
@@ -1537,19 +1545,19 @@ void DofManager::fieldToVector( ObjectManagerBase const * const manager,
   real64 * localVector = nullptr;
   vector.extractLocalVector( &localVector );
 
-  ViewWrapperBase const * const vw = manager->getWrapperBase( srcFieldName );
-  GEOS_ASSERT( vw != nullptr );
-  std::type_index typeIndex = std::type_index( vw->get_typeid() );
+  WrapperBase const * const wrapper = manager->getWrapperBase( srcFieldName );
+  GEOS_ASSERT( wrapper != nullptr );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   false,
                                   [&]( auto arrayInstance, auto dataTypeInstance )
   {
     using ArrayType = decltype(arrayInstance);
-    ViewWrapper<ArrayType> const & view = ViewWrapper<ArrayType>::cast( *vw );
-    typename ViewWrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
+    Wrapper<ArrayType> const & view = Wrapper<ArrayType>::cast( *wrapper );
+    typename Wrapper<ArrayType>::ViewTypeConst const & field = view.referenceAsView();
 
-    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+    forall_in_range<POLICY>( 0, indexArray.size(), GEOSX_LAMBDA( localIndex const i )
     {
       if( ghostRank[i] < 0 )
       {

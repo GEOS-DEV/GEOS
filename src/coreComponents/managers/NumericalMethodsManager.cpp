@@ -34,8 +34,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-NumericalMethodsManager::NumericalMethodsManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 
@@ -50,12 +50,12 @@ NumericalMethodsManager::~NumericalMethodsManager()
   // TODO Auto-generated destructor stub
 }
 
-ManagedGroup * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
+Group * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
   return nullptr;
 }
 
-dataRepository::ManagedGroup const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
+dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
 {
   for( auto & iterNumericalMethod : this->GetSubGroups() )
   {

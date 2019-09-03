@@ -24,16 +24,18 @@
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-ElementRegionManager::ElementRegionManager(  string const & name, ManagedGroup * const parent ):
+ElementRegionManager::ElementRegionManager(  string const & name, Group * const parent ):
   ObjectManagerBase(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
-  this->RegisterGroup<ManagedGroup>(keys::elementRegions);
+  this->RegisterGroup<Group>(keys::elementRegionsGroup);
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -44,20 +46,20 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::getNumberOfElements() const
 {
   localIndex numElem = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
-    {
-      numElem += cellBlock->size();
-    });
+  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
+  {
+    numElem += cellBlock->size();
+  });
   return numElem;
 }
 
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( ManagedGroup const * cellBlock ) -> void
-    {
+  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
+  {
     numCellBlocks += 1;
-    });
+  });
   return numCellBlocks;
 }
 
@@ -75,12 +77,12 @@ void ElementRegionManager::resize( integer_array const & numElements,
 }
 
 
-ManagedGroup * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
  {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
-  ManagedGroup * const elementRegions = this->GetGroup(keys::elementRegions);
+  Group * const elementRegions = this->GetGroup(keys::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
@@ -120,7 +122,7 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
   });
 }
 
-void ElementRegionManager::GenerateMesh( ManagedGroup const * const cellBlockManager )
+void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
 {
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
   {
@@ -136,6 +138,59 @@ void ElementRegionManager::GenerateAggregates( FaceManager const * const faceMan
   });
 }
 
+void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
+                                          MeshLevel   * const meshLevel )
+{
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+
+  // get the offsets to construct local-to-global maps for well nodes and elements
+  nodeManager->SetMaxGlobalIndex();
+  globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
+  localIndex  const elemOffsetLocal  = this->getNumberOfElements();
+  globalIndex const elemOffsetGlobal = CommunicationTools::Sum( elemOffsetLocal );
+
+  globalIndex wellElemCount = 0;
+  globalIndex wellNodeCount = 0;
+
+  // construct the wells one by one
+  forElementRegions<WellElementRegion>([&]( WellElementRegion * const wellRegion )
+  {
+
+    // get the global well geometry from the well generator
+    string const generatorName = wellRegion->GetWellGeneratorName();
+    InternalWellGenerator const * const wellGeometry =
+    meshManager->GetGroup<InternalWellGenerator>( generatorName );
+
+    GEOS_ERROR_IF( wellGeometry == nullptr,
+                  "InternalWellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
+
+    // generate the local data (well elements, nodes, perforations) on this well
+    // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
+    // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
+    wellRegion->GenerateWell( *meshLevel, *wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+
+    // increment counters with global number of nodes and elements
+    wellElemCount += wellGeometry->GetNumElements();
+    wellNodeCount += wellGeometry->GetNumNodes();
+
+    string const subRegionName = wellRegion->GetSubRegionName();
+    WellElementSubRegion * const
+    subRegion = wellRegion->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
+                          ->GetGroup<WellElementSubRegion>( subRegionName );
+
+    GEOS_ERROR_IF( subRegion == nullptr,
+                   "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
+
+    globalIndex const numWellElemsGlobal = CommunicationTools::Sum( subRegion->size() );
+
+    GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
+                   "Invalid partitioning in well " << subRegionName );
+
+  });
+
+  // communicate to rebuild global node info since we modified global ordering
+  nodeManager->SetMaxGlobalIndex();
+}
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
@@ -432,5 +487,5 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

@@ -14,7 +14,7 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name,
-                      ManagedGroup * const parent ):
+                      Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_defaultDensity{0},
   m_density{},
@@ -22,19 +22,19 @@ SolidBase::SolidBase( string const & name,
   m_deviatorStress{}
 {
 
-  RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Default Material Density");
 
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, 0 )->
+  registerWrapper( viewKeyStruct::densityString, &m_density, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Material Density");
 
-  RegisterViewWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
+  registerWrapper( viewKeyStruct::deviatorStressString, &m_deviatorStress, 0 )->
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Stress Deviator");
 
-  RegisterViewWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
+  registerWrapper( viewKeyStruct::meanStressString, &m_meanStress, 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::LEVEL_0)->
     setDescription("Mean stress");
@@ -47,7 +47,7 @@ SolidBase::~SolidBase()
 
 void
 SolidBase::DeliverClone( string const & name,
-                         ManagedGroup * const parent,
+                         Group * const parent,
                          std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());
@@ -60,7 +60,7 @@ SolidBase::DeliverClone( string const & name,
 }
 
 
-void SolidBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

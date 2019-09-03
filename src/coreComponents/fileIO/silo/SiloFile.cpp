@@ -55,7 +55,6 @@ class NodeManager;
 namespace geosx
 {
 
-
 /**
  *
  * @return
@@ -945,7 +944,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   int dims = 0;
   int mixlen=0;
 
-  elementManager->forElementRegions<CellElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
+  elementManager->forElementRegions( [&]( ElementRegionBase const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
@@ -966,7 +965,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   int elemCount = 0;
   int mixCount = 0;
-  elementManager->forElementRegions<CellElementRegion,FaceElementRegion>( [&]( auto const * const elemRegion )
+  elementManager->forElementRegions( [&]( ElementRegionBase const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     if (numMatInRegion > 0)
@@ -980,7 +979,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                         getIndexInParent();
       }
 
-      elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
+      elemRegion->forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
       {
         if( numMatInRegion == 1 )
         {
@@ -1115,7 +1114,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   }
 
-  std::set<std::pair<string, ViewWrapperBase const *>> fieldNames;
+  std::set<std::pair<string, WrapperBase const *>> fieldNames;
   for( localIndex matI=0 ; matI<nmat ; ++matI )
   {
     ConstitutiveBase const * const
@@ -1188,7 +1187,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       {
         if (constitutiveModel->hasView(fieldName.first))
         {
-          ViewWrapperBase const * wrapper = fieldName.second;
+          WrapperBase const * wrapper = fieldName.second;
           if (wrapper->get_typeid() == typeid(array2d<real64>))
           {
             WriteMaterialVarDefinition( subDirectory, matDir, matIndex, fieldName.first );
@@ -1196,7 +1195,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           if (wrapper->get_typeid() == typeid(array3d<real64>))
           {
             array3d<real64> const & data =
-              dynamic_cast<dataRepository::ViewWrapper<array3d<real64>> const &>(*wrapper).reference();
+              dynamic_cast<dataRepository::Wrapper<array3d<real64>> const &>(*wrapper).reference();
 
             for (localIndex i = 0; i < data.size(2); ++i)
             {
@@ -1207,7 +1206,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
           if (wrapper->get_typeid() == typeid(array4d<real64>))
           {
             array4d<real64> const & data =
-              dynamic_cast<dataRepository::ViewWrapper<array4d<real64>> const &>(*wrapper).reference();
+              dynamic_cast<dataRepository::Wrapper<array4d<real64>> const &>(*wrapper).reference();
 
             for (localIndex i = 0; i < data.size(2); ++i)
             {
@@ -1480,6 +1479,12 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
     nodeOrdering[3] = 1;
     nodeOrdering[4] = 4;
   }
+  else if (!elementType.compare(0, 4, "BEAM"))
+  {
+    nodeOrdering.resize(2);
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+  }
 
 //  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
 //  {
@@ -1533,7 +1538,7 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 
 
 
-void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
+void SiloFile::WriteManagedGroupSilo( Group const * group,
                                       string const & siloDirName,
                                       string const & meshname,
                                       int const centering,
@@ -1559,7 +1564,7 @@ void SiloFile::WriteManagedGroupSilo( ManagedGroup const * group,
     DBSetDir(m_dbFilePtr, shortsubdir.c_str());
   }
 
-  WriteViewWrappersToSilo<real64>( meshname,
+  WriteWrappersToSilo<real64>( meshname,
                                    group->wrappers(),
                                    centering,
                                    cycleNum,
@@ -1582,21 +1587,21 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 {
 
   localIndex numElems = 0;
-  dataRepository::ManagedGroup fakeGroup(elementManager->getName(), nullptr);
-  array1d< array1d< std::map< string, ViewWrapperBase const * > > > viewPointers(elementManager->numRegions());
+  dataRepository::Group fakeGroup(elementManager->getName(), nullptr);
+  array1d< array1d< std::map< string, WrapperBase const * > > > viewPointers(elementManager->numRegions());
 
-  elementManager->forElementRegionsComplete<CellElementRegion,FaceElementRegion>( [&]( localIndex const er,
-                                                                                   auto const * const elemRegion )
+  elementManager->forElementRegionsComplete( [&]( localIndex const er,
+                                                  ElementRegionBase const * const elemRegion )
   {
     viewPointers[er].resize( elemRegion->numSubRegions() );
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
-                                               auto const * const subRegion )
+                                               ElementSubRegionBase const * const subRegion )
     {
       numElems += subRegion->size();
 
       for( auto const & wrapperIter : subRegion->wrappers() )
       {
-        ViewWrapperBase const * const wrapper = wrapperIter.second;
+        WrapperBase const * const wrapper = wrapperIter.second;
 
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
@@ -1612,12 +1617,12 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
                                           [&]( auto array, auto Type )->void
           {
             typedef decltype(array) arrayType;
-            ViewWrapper<arrayType> const &
-            sourceWrapper = ViewWrapper<arrayType>::cast( *wrapper );
+            Wrapper<arrayType> const &
+            sourceWrapper = Wrapper<arrayType>::cast( *wrapper );
             arrayType const & sourceArray = sourceWrapper.reference();
 
-            ViewWrapper<arrayType> * const
-            newWrapper = fakeGroup.RegisterViewWrapper<arrayType>( fieldName );
+            Wrapper<arrayType> * const
+            newWrapper = fakeGroup.registerWrapper<arrayType>( fieldName );
             newWrapper->setPlotLevel(0);
             arrayType & newarray = newWrapper->reference();
             newarray.resize( arrayType::ndim, sourceArray.dims() );
@@ -1631,7 +1636,7 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
 
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
-    ViewWrapperBase * const wrapper = wrapperIter.second;
+    WrapperBase * const wrapper = wrapperIter.second;
     string const fieldName = wrapper->getName();
     std::type_info const & typeID = wrapper->get_typeid();
 
@@ -1640,21 +1645,21 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
                                     [&]( auto array, auto scalar )->void
     {
       typedef decltype(array) arrayType;
-      ViewWrapper<arrayType> & wrapperT = ViewWrapper<arrayType>::cast( *wrapper );
+      Wrapper<arrayType> & wrapperT = Wrapper<arrayType>::cast( *wrapper );
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elementManager->forElementRegionsComplete<CellElementRegion,FaceElementRegion>( [&]( localIndex const er,
-                                                                                       auto const * const elemRegion )
+      elementManager->forElementRegionsComplete( [&]( localIndex const er,
+                                                      ElementRegionBase const * const elemRegion )
       {
-        elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
-                                                   auto const * const subRegion )
+        elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
+                                                    ElementSubRegionBase const * const subRegion )
         {
           // check if the field actually exists / plotted on the current subregion
           if (viewPointers[er][esr].count(fieldName) > 0)
           {
-            ViewWrapper<arrayType> const & sourceWrapper =
-              ViewWrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
+            Wrapper<arrayType> const & sourceWrapper =
+              Wrapper<arrayType>::cast(*(viewPointers[er][esr][fieldName]));
             arrayType const & sourceArray = sourceWrapper.reference();
 
             targetArray.copy(counter, sourceArray);
@@ -1773,7 +1778,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
     localIndex numElementShapes = 0;
 
-    elementManager->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto const * const subRegion )
+    elementManager->forElementSubRegions( [&]( auto const * const subRegion )
     {
       ++numElementShapes;
     });
@@ -1789,9 +1794,9 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     int count = 0;
 
-    ManagedGroup const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegions);
+    Group const * elementRegions = elementManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
-    elementManager->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto const * const elementSubRegion )
+    elementManager->forElementSubRegions( [&]( auto const * const elementSubRegion )
     {
       TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
 
@@ -1846,6 +1851,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         shapetype[count] = DB_ZONETYPE_PYRAMID;
         writeArbitraryPolygon = true; 
+      }
+      else if ( !elementType.compare(0, 4, "BEAM") )
+      {
+        shapetype[count] = DB_ZONETYPE_BEAM;
       }
       //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
       // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )

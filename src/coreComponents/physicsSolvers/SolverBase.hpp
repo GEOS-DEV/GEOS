@@ -24,9 +24,9 @@
 #include <string>
 #include <limits>
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -55,7 +55,7 @@ class SolverBase : public ExecutableGroup
 public:
 
   explicit SolverBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   SolverBase( SolverBase && ) = default;
 
@@ -80,7 +80,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) override;
+                        dataRepository::Group * const domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -259,7 +259,8 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DofManager & dofManager ) const;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const;
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
@@ -457,10 +458,10 @@ public:
   /**@}*/
 
 
-  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct
@@ -542,10 +543,10 @@ protected:
   string getDiscretizationName() const {return m_discretizationName;}
 
   template<typename BASETYPE>
-  static BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
+  static BASETYPE const * GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name );
 
   template<typename BASETYPE>
-  static BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
+  static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
@@ -574,9 +575,9 @@ protected:
 };
 
 template<typename BASETYPE>
-BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name )
 {
-  ManagedGroup const * const constitutiveModels =
+  Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
@@ -587,9 +588,9 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup 
 }
 
 template<typename BASETYPE>
-BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name )
 {
-  ManagedGroup * const constitutiveModels =
+  Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 

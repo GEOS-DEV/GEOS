@@ -27,13 +27,15 @@
 //#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 
+#include "wells/WellElementSubRegion.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
 
 MeshLevel::MeshLevel( string const & name,
-                      ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                      Group * const parent ):
+  Group(name,parent),
   m_nodeManager( groupStructKeys::nodeManagerString,this),
   m_edgeManager( groupStructKeys::edgeManagerString,this),
   m_faceManager( groupStructKeys::faceManagerString,this),
@@ -52,13 +54,13 @@ MeshLevel::MeshLevel( string const & name,
   RegisterGroup<ElementRegionManager>( groupStructKeys::elemManagerString, &m_elementManager, false );
 
 
-  RegisterViewWrapper<integer>( viewKeys.meshLevel );
+  registerWrapper<integer>( viewKeys.meshLevel );
 }
 
 MeshLevel::~MeshLevel()
 {}
 
-void MeshLevel::InitializePostInitialConditions_PostSubGroups( ManagedGroup * const )
+void MeshLevel::InitializePostInitialConditions_PostSubGroups( Group * const )
 {
   m_elementManager.forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
   {
@@ -118,9 +120,10 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
     {
       ElementRegionBase const * const elemRegion = elemManager->GetRegion(kReg);
 
-      for( typename dataRepository::indexType kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
+      elemRegion->forElementSubRegionsIndex<CellElementSubRegion,
+                                            WellElementSubRegion>([&]( localIndex const kSubReg, 
+                                                                       auto const * const subRegion )
       {
-        CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(kSubReg);
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();
@@ -145,7 +148,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
           }
 
         }
-      }
+      });
     }
     nodeAdjacencyList.clear();
     nodeAdjacencyList.resize( integer_conversion<localIndex>(nodeAdjacencySet.size()));

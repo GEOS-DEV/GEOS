@@ -31,13 +31,13 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellElementRegion::CellElementRegion( string const & name, ManagedGroup * const parent ):
+CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
+  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
     setInputFlag(InputFlags::OPTIONAL);
 
-  RegisterViewWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
     setInputFlag(InputFlags::OPTIONAL);
 }
 
@@ -45,9 +45,9 @@ CellElementRegion::~CellElementRegion()
 {}
 
 
-void CellElementRegion::GenerateMesh( ManagedGroup const * const cellBlocks )
+void CellElementRegion::GenerateMesh( Group const * const cellBlocks )
 {
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
@@ -67,7 +67,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     return;
   }
-  ManagedGroup * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+  Group * elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
     elementSubRegions->RegisterGroup<AggregateElementSubRegion>("coarse");
@@ -78,10 +78,10 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
-    {
-      nbCellElements += elementSubRegion->size();
-    });
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
+  {
+    nbCellElements += elementSubRegion->size();
+  });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
@@ -132,7 +132,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< real64 > normalizeVolumes( nbCellElements );
 
   // First, compute the volume of each aggregates
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
@@ -144,7 +144,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
 
   // Second, compute the normalized volume of each fine elements
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
@@ -157,7 +157,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
 
   // Third, normalize the centers
-  this->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+  this->forElementSubRegions<CellElementSubRegion,FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
   {
     localIndex const subRegionIndex = elementSubRegion->getIndexInParent();
     for(localIndex cellIndex = 0; cellIndex< elementSubRegion->size() ; cellIndex++)
@@ -180,6 +180,6 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 }
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

@@ -57,7 +57,7 @@ public:
   }
 
   AggregateElementSubRegion( string const & name,
-                             dataRepository::ManagedGroup * const parent );
+                             dataRepository::Group * const parent );
 
   virtual ~AggregateElementSubRegion() override;
  

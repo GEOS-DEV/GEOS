@@ -593,7 +593,7 @@ public:
                              EpetraMatrix const &B,
                              bool const transB,
                              EpetraMatrix &C,
-                             bool const call_FillComplete = true ) const;
+                             bool const closeResult = true ) const;
 
   /**
    * @brief Map a global row index to local row index
