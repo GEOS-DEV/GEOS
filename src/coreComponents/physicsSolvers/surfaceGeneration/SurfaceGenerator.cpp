@@ -185,39 +185,37 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
                              &this->m_failCriterion,
                              0 );
 
-<<<<<<< HEAD
-  RegisterViewWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0)->
+  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0)->
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("Name of the solid material used in solid mechanic solver");
 
-  RegisterViewWrapper(viewKeyStruct::rockToughnessString, &m_rockToughness, 0)->
+  registerWrapper(viewKeyStruct::rockToughnessString, &m_rockToughness, 0)->
       setInputFlag(InputFlags::REQUIRED)->
       setDescription("Rock toughness of the solid material");
 
-  RegisterViewWrapper(viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0)->
+  registerWrapper(viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Rock toughness of the solid material");
 
-  this->RegisterViewWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+  this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
       setInputFlag(dataRepository::InputFlags::OPTIONAL)->
       setApplyDefaultValue("FractureRegion");
 
-  RegisterViewWrapper( viewKeyStruct::tipNodesString, &m_tipNodes, 0 )->
+  registerWrapper( viewKeyStruct::tipNodesString, &m_tipNodes, 0 )->
       setDescription("Set containing all the nodes at the fracture tip");
 
-  RegisterViewWrapper( viewKeyStruct::tipEdgesString, &m_tipEdges, 0 )->
+  registerWrapper( viewKeyStruct::tipEdgesString, &m_tipEdges, 0 )->
       setDescription("Set containing all the tip edges");
 
-  RegisterViewWrapper( viewKeyStruct::tipFacesString, &m_tipFaces, 0 )->
+  registerWrapper( viewKeyStruct::tipFacesString, &m_tipFaces, 0 )->
       setDescription("Set containing all the tip faces");
 
-  RegisterViewWrapper( viewKeyStruct::trailingFacesString, &m_trailingFaces, 0 )->
+  registerWrapper( viewKeyStruct::trailingFacesString, &m_trailingFaces, 0 )->
       setDescription("Set containing all the trailing faces");
-=======
+
   this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
     setInputFlag(dataRepository::InputFlags::OPTIONAL)->
     setApplyDefaultValue("FractureRegion");
->>>>>>> develop
 
 
 }
@@ -243,21 +241,17 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("Parent index of node.");
 
-<<<<<<< HEAD
-    nodeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("Child index of node.");
 
-    nodeManager->RegisterViewWrapper<integer_array>(viewKeyStruct::degreeFromCrackString)->
-=======
     nodeManager->registerWrapper<integer_array>(viewKeyStruct::degreeFromCrackString)->
->>>>>>> develop
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("connectivity distance from crack.");
 
-    nodeManager->RegisterViewWrapper<real64_array>(viewKeyStruct::SIFNodeString)->
+    nodeManager->registerWrapper<real64_array>(viewKeyStruct::SIFNodeString)->
       setApplyDefaultValue(0)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("SIF on the node");
@@ -267,31 +261,27 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("Parent index of the edge.");
 
-<<<<<<< HEAD
-    edgeManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("Child index of the edge.");
 
-    edgeManager->RegisterViewWrapper<real64_array>(viewKeyStruct::SIF_IString)->
+    edgeManager->registerWrapper<real64_array>(viewKeyStruct::SIF_IString)->
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("SIF_I of the edge.");
 
-    edgeManager->RegisterViewWrapper<real64_array>(viewKeyStruct::SIF_IIString)->
+    edgeManager->registerWrapper<real64_array>(viewKeyStruct::SIF_IIString)->
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("SIF_II of the edge.");
 
-    edgeManager->RegisterViewWrapper<real64_array>(viewKeyStruct::SIF_IIIString)->
+    edgeManager->registerWrapper<real64_array>(viewKeyStruct::SIF_IIIString)->
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("SIF_III of the edge.");
 
-    faceManager->RegisterViewWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-=======
     faceManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
->>>>>>> develop
       setApplyDefaultValue(-1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
       setDescription("Parent index of the face.");
@@ -306,21 +296,21 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
 
-    faceManager->RegisterViewWrapper<real64_array>(viewKeyStruct::SIFonFaceString)->
+    faceManager->registerWrapper<real64_array>(viewKeyStruct::SIFonFaceString)->
       setApplyDefaultValue(0)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("SIF on the face");
 
-    faceManager->RegisterViewWrapper<array1d<R1Tensor>>(viewKeyStruct::K_ICString)->
+    faceManager->registerWrapper<array1d<R1Tensor>>(viewKeyStruct::K_ICString)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("K_IC on the face");
 
-    faceManager->RegisterViewWrapper<localIndex_array>(viewKeyStruct::primaryCandidateFaceString)->
+    faceManager->registerWrapper<localIndex_array>(viewKeyStruct::primaryCandidateFaceString)->
       setApplyDefaultValue(0)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("The face that has the highest score for splitability");
 
-    faceManager->RegisterViewWrapper<integer_array>(viewKeyStruct::isFaceSeparableString)->
+    faceManager->registerWrapper<integer_array>(viewKeyStruct::isFaceSeparableString)->
       setApplyDefaultValue(0)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("A flag to mark if the face is separable");
@@ -328,12 +318,12 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void SurfaceGenerator::InitializePostSubGroups( ManagedGroup * const problemManager )
+void SurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     //TODO: roughness to KIC should be made a material constitutive relationship.
