@@ -886,6 +886,25 @@ void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 
 }
 
+void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices )
+{
+  arrayView1d<localIndex const> const &
+  childFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::childIndexString );
+
+  ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange (targetIndices);
+
+  for( localIndex const targetIndex : targetIndices )
+  {
+    localIndex const childIndex = childFaceIndices[targetIndex];
+    if( childIndex != -1 )
+    {
+      m_faceNormal[targetIndex] =  m_faceNormal[childIndex];
+      m_faceNormal[targetIndex] *= -1;
+    }
+  }
+}
+
+
 
 void FaceManager::depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                                     ElementRegionManager const & elemRegionManager )
