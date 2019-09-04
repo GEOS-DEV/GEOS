@@ -282,6 +282,7 @@
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -293,6 +294,7 @@
 		<!--sinStrike => (no description available)-->
 		<xsd:attribute name="sinStrike" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="CylinderType" />
 	<xsd:complexType name="ThickPlaneType" />
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -557,6 +559,14 @@
 		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--tipEdges => Set containing all the tip edges-->
+		<xsd:attribute name="tipEdges" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<!--tipFaces => Set containing all the tip faces-->
+		<xsd:attribute name="tipFaces" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<!--tipNodes => Set containing all the nodes at the fracture tip-->
+		<xsd:attribute name="tipNodes" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<!--trailingFaces => Set containing all the trailing faces-->
+		<xsd:attribute name="trailingFaces" type="LvArray::SortedArray&lt;long, long&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -859,6 +869,14 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--SIF_I => SIF_I of the edge.-->
+		<xsd:attribute name="SIF_I" type="real64_array" />
+		<!--SIF_II => SIF_II of the edge.-->
+		<xsd:attribute name="SIF_II" type="real64_array" />
+		<!--SIF_III => SIF_III of the edge.-->
+		<xsd:attribute name="SIF_III" type="real64_array" />
+		<!--childIndex => Child index of the edge.-->
+		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
@@ -887,6 +905,10 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
+		<!--K_IC => K_IC on the face-->
+		<xsd:attribute name="K_IC" type="r1_array" />
+		<!--SIFonFace => SIF on the face-->
+		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--childIndex => child index of the face.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
@@ -921,12 +943,16 @@
 		<xsd:attribute name="gravityDepth" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--isFaceSeparable => A flag to mark if the face is separable-->
+		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
 		<!--parentIndex => Parent index of the face.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<!--primaryCandidateFace => The face that has the highest score for splitability-->
+		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
 		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
 	</xsd:complexType>
@@ -943,10 +969,14 @@
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="r1_array" />
+		<!--SIFNode => SIF on the node-->
+		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="r1_array" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="r1_array" />
+		<!--childIndex => Child index of node.-->
+		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->

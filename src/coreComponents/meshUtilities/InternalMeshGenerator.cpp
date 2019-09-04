@@ -341,10 +341,12 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 
   // This should probably handled elsewhere:
+  int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>(cellBlockName);
-    cellBlock->SetElementType("C3D8");
+    string elementType = m_elementType[aa++];
+    cellBlock->SetElementType(elementType);
   }
 
 
