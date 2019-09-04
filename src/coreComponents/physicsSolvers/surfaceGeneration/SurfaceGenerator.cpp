@@ -223,6 +223,7 @@ SurfaceGenerator::~SurfaceGenerator()
 
 void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
+  std::cout << "1. Register data on mesh \n";
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
@@ -335,6 +336,7 @@ void SurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
 
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
+  std::cout << "2. InitializePostInitialConditions_PreSubGroups \n";
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
   for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
   {
@@ -371,6 +373,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
 
 void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 {
+  std::cout << "postRestartInitialization \n";
   DomainPartition * const domain = domain0->group_cast<DomainPartition *>();
 
   NumericalMethodsManager * const
@@ -419,6 +422,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      const int GEOSX_UNUSED_ARG( cycleNumber ),
                                      DomainPartition * const domain )
 {
+  std::cout << "3. SolverStep (after running simulation) \n";
   int rval = 0;
   array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
@@ -482,7 +486,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         bool const prefrac,
                                         real64 const GEOSX_UNUSED_ARG( time ) )
 {
-
+  std::cout << "SeparationDriver \n";
   NodeManager & nodeManager = *(mesh->getNodeManager());
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());

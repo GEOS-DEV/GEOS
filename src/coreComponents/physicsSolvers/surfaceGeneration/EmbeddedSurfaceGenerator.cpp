@@ -39,8 +39,7 @@ namespace geosx
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator(const std::string& name,
                                                    ManagedGroup * const parent ):
   SolverBase( name, parent ),
-  m_failCriterion( 1 ),
-  m_separableFaceSet()
+  m_failCriterion( 1 )
 {
   this->RegisterViewWrapper( viewKeyStruct::failCriterionString,
   &this->m_failCriterion,
@@ -68,7 +67,7 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const& time_n,
                              integer const cycleNumber,
                              DomainPartition * domain )
 {
-  std::cout << "SolverStep \n";
+  std::cout << "3. SolverStep \n";
   real64 test = 0;
   return test;
 }
@@ -76,7 +75,8 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const& time_n,
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager )
 {
-
+  // Matteo: to be filled in
+  std::cout << "2. InitializePostInitialConditions_PreSubGroups \n";
 }
 
 

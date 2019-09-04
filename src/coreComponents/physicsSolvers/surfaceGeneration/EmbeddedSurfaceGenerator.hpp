@@ -118,9 +118,6 @@ private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
-  /// set of separable faces
-  localIndex_set m_separableFaceSet;
-
   /// name of the element region to place all new fractures
   string m_fractureRegionName;
 

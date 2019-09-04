@@ -43,7 +43,10 @@
                    timeFrequency="1.0"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
-
+    <PeriodicEvent name = "outputs2"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/vtkOutput"/>
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0"
                    target="/Solvers/SinglePhaseFlow" />
@@ -139,6 +142,7 @@
 
   <Outputs>
     <Silo name="siloOutput"/>
+    <VTK name="vtkOutput"/>
     <Restart name="sidreRestart"/>
   </Outputs>
 

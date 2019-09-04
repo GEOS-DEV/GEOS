@@ -93,7 +93,11 @@
             cycleFrequency="1"
             targetExactTimestep="1"
             target="/Outputs/siloOutput" />
-
+        <PeriodicEvent
+            name="outputs2"
+            cycleFrequency="1"
+            targetExactTimestep="1"
+            target="/Outputs/vtkOutput"/>
         <PeriodicEvent
             name="restarts"
             timeFrequency="25000"
@@ -215,7 +219,8 @@
             plotFileRoot="fractureMatrixFlow"
             plotLevel="1" />
         <Restart name="sidreRestart" />
+        <VTK
+           name="vtkOutput"/>
     </Outputs>
-
 
 </Problem>
