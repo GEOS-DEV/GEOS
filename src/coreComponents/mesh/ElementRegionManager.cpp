@@ -43,16 +43,6 @@ ElementRegionManager::~ElementRegionManager()
   // TODO Auto-generated destructor stub
 }
 
-localIndex ElementRegionManager::getTotalNumberOfElements() const
-{
-  localIndex numElem = 0;
-  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
-  {
-    numElem += cellBlock->size();
-  });
-  return numElem;
-}
-
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
@@ -146,7 +136,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
   // get the offsets to construct local-to-global maps for well nodes and elements
   nodeManager->SetMaxGlobalIndex();
   globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
-  localIndex  const elemOffsetLocal  = this->getTotalNumberOfElements();
+  localIndex  const elemOffsetLocal  = this->getNumberOfElements();
   globalIndex const elemOffsetGlobal = CommunicationTools::Sum( elemOffsetLocal );
 
   globalIndex wellElemCount = 0;

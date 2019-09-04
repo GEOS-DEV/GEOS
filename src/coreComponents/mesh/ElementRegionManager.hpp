@@ -91,15 +91,9 @@ public:
   virtual ~ElementRegionManager() override;
 
   /**
-   * @brief Get the number of all elements (CellElements, FaceElements, WellElements...) 
-   * within the mesh
-   */
-  localIndex getTotalNumberOfElements() const;
-
-  /**
    * @brief Get the number of elements within all ElementSubRegions of type T
    */
-  template< typename T >
+  template< typename T = ElementSubRegionBase >
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
