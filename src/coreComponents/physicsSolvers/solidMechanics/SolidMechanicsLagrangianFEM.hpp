@@ -376,6 +376,7 @@ public:
     static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
+    static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
 
     dataRepository::ViewKey vTilde = { vTildeString };
