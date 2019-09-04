@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="0"
+      verboseLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -74,11 +74,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{ -5, 5}"
-                  yCoords="{0, 10}"
+                  xCoords="{ -1, 1}"
+                  yCoords="{0, 2}"
                   zCoords="{0, 1}"
-                  nx="{10}"
-                  ny="{10}"
+                  nx="{2}"
+                  ny="{2}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -93,7 +93,7 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="2.0">
   
     <SoloEvent 
       name="initialPlot"
@@ -115,22 +115,9 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="2.0"
-      forceDt="0.1"
-      target="/Solvers/hydrofracture" />
-    <PeriodicEvent 
-      name="solverApplications1"
-      beginTime="2.0"
-      endTime="10.0"
-      forceDt="0.5"
-      target="/Solvers/hydrofracture" />
-    <PeriodicEvent 
-      name="solverApplications2"
-      beginTime="10.0"
-      endTime="50.0"
+      endTime="20.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture" />
-
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -183,7 +170,7 @@
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
-                                  referenceViscosity="1.0e2"
+                                  referenceViscosity="1.0e-3"
                                   viscosibility="0.0"/>
 
     <PoroLinearElasticIsotropic name="rock"
@@ -196,11 +183,11 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e8" >
+      penaltyStiffness="0.0e8" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-5, 1.0e-4}" 
+        values      = "{  1.0e-6, 1.0e-4}" 
         />
     </Contact>
   </Constitutive>
