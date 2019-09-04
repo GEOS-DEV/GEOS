@@ -90,7 +90,25 @@ public:
   ElementRegionManager( string const &, Group * const parent );
   virtual ~ElementRegionManager() override;
 
-  localIndex getNumberOfElements() const;
+  /**
+   * @brief Get the number of all elements (CellElements, FaceElements, WellElements...) 
+   * within the mesh
+   */
+  localIndex getTotalNumberOfElements() const;
+
+  /**
+   * @brief Get the number of elements within all ElementSubRegions of type T
+   */
+  template< typename T >
+  localIndex getNumberOfElements() const
+  {
+    localIndex numElem = 0;
+    this->forElementSubRegions< T >([&]( Group const * cellBlock ) -> void
+    {
+      numElem += cellBlock->size();
+    });
+    return numElem;
+  }
 
 //  void Initialize(  ){}
 
