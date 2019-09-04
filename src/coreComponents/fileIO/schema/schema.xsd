@@ -424,6 +424,7 @@
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Box" type="BoxType" />
+			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -434,6 +435,16 @@
 		<xsd:attribute name="xMax" type="R1Tensor" use="required" />
 		<!--xMin => Minimum (x,y,z) coordinates of the box-->
 		<xsd:attribute name="xMin" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CylinderType">
+		<!--point1 => Center point of one (upper or lower) face of the cylinder-->
+		<xsd:attribute name="point1" type="R1Tensor" use="required" />
+		<!--point2 => Center point of the other face of the cylinder-->
+		<xsd:attribute name="point2" type="R1Tensor" use="required" />
+		<!--radius => Radius of the cylinder-->
+		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -563,6 +574,8 @@
 	<xsd:complexType name="FiniteElementSpaceType">
 		<!--basis => (no description available)-->
 		<xsd:attribute name="basis" type="string" use="required" />
+		<!--parentSpace => (no description available)-->
+		<xsd:attribute name="parentSpace" type="string" use="required" />
 		<!--quadrature => (no description available)-->
 		<xsd:attribute name="quadrature" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1028,6 +1041,12 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
+		<!--nodeBasedSIF => Rock toughness of the solid material-->
+		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
+		<!--rockToughness => Rock toughness of the solid material-->
+		<xsd:attribute name="rockToughness" type="real64" use="required" />
+		<!--solidMaterialName => Name of the solid material used in solid mechanic solver-->
+		<xsd:attribute name="solidMaterialName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->

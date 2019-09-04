@@ -3,6 +3,10 @@
 ================================ =========================================================================================================== ==================================================================== 
 Name                             Type                                                                                                        Description                                                          
 ================================ =========================================================================================================== ==================================================================== 
+SIF_I                            real64_array                                                                                                SIF_I of the edge.                                                   
+SIF_II                           real64_array                                                                                                SIF_II of the edge.                                                  
+SIF_III                          real64_array                                                                                                SIF_III of the edge.                                                 
+childIndex                       localIndex_array                                                                                            Child index of the edge.                                             
 domainBoundaryIndicator          integer_array                                                                                               (no description available)                                           
 edgesToFractureConnectors        mapBase< long, long, integral_constant< bool, true > >                                                      A map of edge local indices to the fracture connector local indices. 
 faceList                         InterObjectRelation< Array< SortedArray< long, long >, 1, long, ChaiVector< SortedArray< long, long > > > > (no description available)                                           
