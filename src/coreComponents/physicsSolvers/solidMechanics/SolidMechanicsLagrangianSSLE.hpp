@@ -44,6 +44,13 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
+
+
+  virtual void ApplySystemSolution( DofManager const & dofManager,
+                                    ParallelVector const & solution,
+                                    real64 const scalingFactor,
+                                    DomainPartition * const domain  ) override;
+
   virtual real64
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,

@@ -17,10 +17,8 @@
  */
 
 /*
- * Box.hpp
+ * @file Box.hpp
  *
- *  Created on: Aug 4, 2017
- *      Author: settgast
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOX_HPP_

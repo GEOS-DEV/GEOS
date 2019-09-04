@@ -186,12 +186,19 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       {
         arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(ke);
         
+        localIndex_array nodeIndices;
         for( localIndex a=0 ; a<subRegion->numNodesPerElement() ; ++a )
         {
           localIndex nodeIndex = elemToNodes[a];
-          toElementRegionList.appendToArray( nodeIndex, kReg );
-          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-          toElementList.appendToArray( nodeIndex, ke );
+
+          if (std::find(nodeIndices.begin(), nodeIndices.end(), nodeIndex) == nodeIndices.end())
+          {
+            toElementRegionList.appendToArray( nodeIndex, kReg );
+            toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
+            toElementList.appendToArray( nodeIndex, ke );
+
+            nodeIndices.push_back(nodeIndex);
+          }
         }
       }
     });
