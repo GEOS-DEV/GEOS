@@ -253,6 +253,8 @@ public:
                           array1d<set<localIndex> > & upmap,
                           array1d< array1d<localIndex > > const & downmap );
 
+  virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
+
   static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
                                        localIndex const lookup )
   {

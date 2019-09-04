@@ -44,7 +44,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -66,7 +66,7 @@
       <LinearElasticIsotropic name="water"
                               defaultDensity="1000"
                               defaultBulkModulus="2.0e9"
-                              defaultShearModulus="0.0"/>
+                              defaultShearModulus="1.0e-9"/>
   </Constitutive>
 
 
