@@ -597,7 +597,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     ModifiedObjectLists receivedObjects;
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
-    ParallelTopologyChange::SynchronizeTopologyChange( mesh,
+    ParallelTopologyChange::SyncronizeTopologyChange( mesh,
                                                       neighbors,
                                                       modifiedObjects,
                                                       receivedObjects );
