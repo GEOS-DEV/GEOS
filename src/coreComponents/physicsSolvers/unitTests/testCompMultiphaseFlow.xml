@@ -71,7 +71,7 @@
     </QuadratureRules>
 
     <FiniteElements>
-      <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace name="FE1" basis="linearBasis" parentSpace="C3D8" quadrature="gaussian" />
     </FiniteElements>
 
     <FiniteVolume>

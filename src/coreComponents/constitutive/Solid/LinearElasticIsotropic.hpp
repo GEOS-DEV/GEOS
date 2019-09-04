@@ -69,21 +69,17 @@ public:
 
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    static constexpr auto bulkModulus0String  = "defaultBulkModulus";
-    static constexpr auto poissonRatioString =  "defaultPoissonRatio" ;
-    static constexpr auto shearModulus0String = "defaultShearModulus";
-    static constexpr auto youngsModulus0String =  "defaultYoungsModulus" ;
+    static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
+    static constexpr auto defaultPoissonRatioString =  "defaultPoissonRatio" ;
+    static constexpr auto defaultShearModulusString = "defaultShearModulus";
+    static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus" ;
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
   };
 
-
-  real64   bulkModulus0()  const { return m_defaultBulkModulus; }
-  real64 & bulkModulus0()        { return m_defaultBulkModulus; }
-
-  real64 defaultShearModulus() const { return m_defaultShearModulus; }
-  real64 & defaultShearModulus()     { return m_defaultShearModulus; }
+  void setDefaultBulkModulus (real64 const bulkModulus) {m_defaultBulkModulus = bulkModulus;}
+  void setDefaultShearModulus (real64 const shearModulus) {m_defaultShearModulus = shearModulus;}
 
   arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
   arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
@@ -149,6 +145,7 @@ private:
   real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
+  bool m_postProcessed = false;
 };
 
 

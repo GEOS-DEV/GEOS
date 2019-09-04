@@ -116,7 +116,13 @@ public:
   void calculateElementCenters( arrayView1d<R1Tensor const> const & X ) const
   {
     arrayView1d<R1Tensor> const & elementCenters = m_elementCenter;
-    localIndex const nNodes = numNodesPerElement();
+    localIndex nNodes = numNodesPerElement();
+
+    if (!m_elementTypeString.compare(0, 4, "C3D6"))
+    {
+      nNodes -= 2;
+    }
+
     forall_in_range<parallelHostPolicy>( 0, size(), GEOSX_LAMBDA( localIndex const k )
     {
       elementCenters[k] = 0;

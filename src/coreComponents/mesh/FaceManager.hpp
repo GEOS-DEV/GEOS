@@ -93,6 +93,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices ) override;
+
   void depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                          ElementRegionManager const & elemRegionManager );
 

@@ -51,6 +51,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 
   registerWrapper( keys::basis, &m_basisName, false )->setInputFlag(InputFlags::REQUIRED);
   registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag(InputFlags::REQUIRED);
+  registerWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag(InputFlags::REQUIRED);
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -63,9 +64,9 @@ localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
   return m_quadrature->size();
 }
 
-std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement( string const & catalogName ) const
+std::unique_ptr<FiniteElementBase> FiniteElementDiscretization::getFiniteElement( string const &  ) const
 {
-  return FiniteElementBase::CatalogInterface::Factory( catalogName,
+  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
                                                        *m_basis,
                                                        *m_quadrature,
                                                        0 );
@@ -81,7 +82,9 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   // registration, or only allow documentation node
   // registration.
 
-  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( cellBlock->GetElementTypeString() );
+  //TODO: wu40: Temporarily use the parent space (read from xml) to assign element type for finite element calculation (for C3D6 mesh).
+  //Need to do this in a more natural way.
+  std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
   // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
   array3d< R1Tensor > &  dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >(keys::dNdX)->reference();
@@ -106,7 +109,7 @@ void FiniteElementDiscretization::CalculateShapeFunctionGradients( arrayView1d<R
 
   PRAGMA_OMP( omp parallel )
   {
-    std::unique_ptr<FiniteElementBase> fe = getFiniteElement( elementSubRegion->GetElementTypeString() );
+    std::unique_ptr<FiniteElementBase> fe = getFiniteElement( m_parentSpace );
 
     PRAGMA_OMP( omp for )
     for (localIndex k = 0 ; k < elementSubRegion->size() ; ++k)
