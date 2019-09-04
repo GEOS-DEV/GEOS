@@ -570,9 +570,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       for( localIndex a=0 ; a<nodeManager.size() ; ++a )
       {
         int didSplit = 0;
-        if((true || prefrac)&&
-          isNodeGhost[a]<0 &&
-          nodesToElementList.sizeOfArray(a)>1 )
+        if(isNodeGhost[a]<0 &&
+           nodesToElementList.sizeOfArray(a)>1 )
         {
           didSplit += ProcessNode( a, nodeManager, edgeManager, faceManager, elementManager, nodesToRupturedFaces, edgesToRupturedFaces, elementManager,
                                    modifiedObjects, prefrac );
@@ -598,7 +597,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     ModifiedObjectLists receivedObjects;
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly communicated
-    ParallelTopologyChange::SyncronizeTopologyChange( mesh,
+    ParallelTopologyChange::SynchronizeTopologyChange( mesh,
                                                       neighbors,
                                                       modifiedObjects,
                                                       receivedObjects );
