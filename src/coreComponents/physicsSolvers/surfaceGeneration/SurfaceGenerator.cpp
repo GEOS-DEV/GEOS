@@ -3934,13 +3934,13 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( const localIndex edgeID,
   localIndex faceWithSecondScore = std::numeric_limits<localIndex>::max();
 
   R1Tensor vecEdge, edgeCenter;
-  realT edgeLength;
+//  realT edgeLength;
   computationalGeometry::
   VectorDifference( X,
                     edgesToNodes[edgeID][0],
                     edgesToNodes[edgeID][1],
                     vecEdge );
-  edgeLength = vecEdge.Normalize();
+//  edgeLength = vecEdge.Normalize();
 
   edgeManager.calculateCenter( edgeID, X, edgeCenter );
 
