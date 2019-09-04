@@ -156,7 +156,7 @@ class CustomVTUXMLWriter
   {
     if( binary )
     {
-      WriteSize( elemManager->getNumberOfElements(), sizeof( localIndex ) );
+      WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( localIndex ) );
       WriteBinaryOffsets( elemManager );
     }
     else
@@ -172,7 +172,7 @@ class CustomVTUXMLWriter
   {
     if( binary )
     {
-      WriteSize( elemManager->getNumberOfElements(), sizeof( integer ) );
+      WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( integer ) );
       WriteBinaryTypes( elemManager );
     }
     else
@@ -486,8 +486,8 @@ class CustomVTUXMLWriter
     void WriteCellBinaryData( ElementRegionManager::ElementViewAccessor< T > const & dataView, ElementRegionManager const * const elemManager )
     {
       std::stringstream stream;
-      std::uint32_t size = integer_conversion < std::uint32_t >( elemManager->getNumberOfElements() * sizeof( dataView[0][0][0] ) );
-      WriteSize( elemManager->getNumberOfElements(), sizeof( dataView[0][0][0] ) );
+      std::uint32_t size = integer_conversion < std::uint32_t >( elemManager->getNumberOfElements< CellElementSubRegion >() * sizeof( dataView[0][0][0] ) );
+      WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( dataView[0][0][0] ) );
       integer multiplier = FindMultiplier( sizeof( dataView[0][0][0] ) );// We do not write all the data at once to avoid creating a big table each time.
       string outputString;
       outputString.resize( FindBase64StringLength( sizeof( dataView[0][0][0] )  * multiplier ) );
@@ -603,7 +603,7 @@ inline void CustomVTUXMLWriter::WriteCellBinaryData( ElementRegionManager::Eleme
   std::stringstream stream;
   string outputString;
   outputString.resize(  FindBase64StringLength( sizeof( real64 ) * 3) );
-  WriteSize( elemManager->getNumberOfElements() * 3, sizeof( real64 ) );
+  WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >() * 3, sizeof( real64 ) );
   elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
                                                                 auto const * const elemRegion )
   {
@@ -835,7 +835,7 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "UnstructuredGrid",{} );
 
   // Declaration of the node Piece and the basic informations of the mesh
-  localIndex totalNumberOfCells = elemManager->getNumberOfElements();
+  localIndex totalNumberOfCells = elemManager->getNumberOfElements< CellElementSubRegion >();
   localIndex totalNumberOfSubRegion = 0;
   elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const er,
                                                               auto const * const elemRegion )

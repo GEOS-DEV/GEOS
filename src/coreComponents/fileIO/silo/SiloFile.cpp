@@ -808,7 +808,7 @@ void SiloFile::WriteMaterialMapsCompactStorage( ElementRegionManager const * con
   }
 
   int ndims = 1;
-  int dims = elementManager->getNumberOfElements();
+  int dims = elementManager->getTotalNumberOfElements();
 
   array1d<integer> matlist(dims * nmat);
 
