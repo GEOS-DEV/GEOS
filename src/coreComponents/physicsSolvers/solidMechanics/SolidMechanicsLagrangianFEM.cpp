@@ -405,6 +405,9 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
                                                 const int cycleNumber,
                                                 DomainPartition * domain )
 {
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * elemManager = mesh->getElemManager();
+
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
@@ -412,6 +415,12 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
+
+    if( surfaceGenerator!=nullptr )
+    {
+      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+    }
+
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
@@ -427,7 +436,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
                                         m_matrix, m_rhs, m_solution );
       if( surfaceGenerator!=nullptr )
       {
-        if( !( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 ) )
+        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
@@ -519,11 +528,15 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> > meanStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<real64>, arrayView2d<real64> >("MeanStress", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
+  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                               arrayView2d<real64> >("MeanStress",
+                                                                                     constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const devStress =
-    elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>, arrayView2d<R2SymTensor> >("DeviatorStress", constitutiveManager);
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+                                                                                         constitutiveManager);
 
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
@@ -672,9 +685,10 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  arrayView1d<globalIndex> const & blockLocalDofNumber =
-    nodeManager->getReference<globalIndex_array>( dofKey );
+  arrayView1d<globalIndex> const &
+  blockLocalDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
 
+  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
   fsManager->Apply( time,
                     domain,
                     "faceManager",
@@ -695,15 +709,18 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
     {
       for( auto kf : targetSet )
       {
-        localIndex const numNodes = facesToNodes[kf].size();
-        nodeDOF.resize( numNodes );
-        nodeRHS.resize( numNodes );
-        for( localIndex a=0 ; a<numNodes ; ++a )
+        if( faceGhostRank[kf] < 0 )
         {
-          nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
-          nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
+          localIndex const numNodes = facesToNodes[kf].size();
+          nodeDOF.resize( numNodes );
+          nodeRHS.resize( numNodes );
+          for( localIndex a=0 ; a<numNodes ; ++a )
+          {
+            nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+            nodeRHS[a] = bc->GetScale() * faceArea[kf] / numNodes;
+          }
+          rhs.add( nodeDOF, nodeRHS );
         }
-        rhs.add( nodeDOF, nodeRHS );
       }
     }
     else
@@ -716,15 +733,18 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
           real64 value = bc->GetScale() * function->Evaluate( &time );
           for( auto kf : targetSet )
           {
-            localIndex const numNodes = facesToNodes[kf].size();
-            nodeDOF.resize( numNodes );
-            nodeRHS.resize( numNodes );
-            for( localIndex a=0 ; a<numNodes ; ++a )
+            if( faceGhostRank[kf] < 0 )
             {
-              nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = value * faceArea[kf] / numNodes;
+              localIndex const numNodes = facesToNodes[kf].size();
+              nodeDOF.resize( numNodes );
+              nodeRHS.resize( numNodes );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+                nodeRHS[a] = value * faceArea[kf] / numNodes;
+              }
+              rhs.add( nodeDOF, nodeRHS );
             }
-            rhs.add( nodeDOF, nodeRHS );
           }
         }
         else
@@ -735,15 +755,18 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
 
           for( auto kf : targetSet )
           {
-            localIndex const numNodes = facesToNodes[kf].size();
-            nodeDOF.resize( numNodes );
-            nodeRHS.resize( numNodes );
-            for( localIndex a=0 ; a<numNodes ; ++a )
+            if( faceGhostRank[kf] < 0 )
             {
-              nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
-              nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
+              localIndex const numNodes = facesToNodes[kf].size();
+              nodeDOF.resize( numNodes );
+              nodeRHS.resize( numNodes );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                nodeDOF[a] = blockLocalDofNumber[facesToNodes[kf][a]]+component;
+                nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
+              }
+              rhs.add( nodeDOF, nodeRHS );
             }
-            rhs.add( nodeDOF, nodeRHS );
           }
       }
     }
@@ -982,6 +1005,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
       // space for element matrix and rhs
+
       m_maxForce = ImplicitElementKernelLaunch( numNodesPerElement,
                                                 fe->n_quadrature_points(),
                                                 constitutiveRelations[er][esr][m_solidMaterialFullIndex],
@@ -1020,10 +1044,10 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const time_n,
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    std::cout << matrix;
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    std::cout << rhs;
+    GEOS_LOG_RANK_0( "\nMatrix:\n" );
+    matrix.print(std::cout);
+    GEOS_LOG_RANK_0( "\nRhs:\n" );
+    rhs.print(std::cout);
   }
 }
 

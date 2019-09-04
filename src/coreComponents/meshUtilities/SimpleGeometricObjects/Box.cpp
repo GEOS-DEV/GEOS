@@ -17,10 +17,11 @@
  */
 
 /*
- * Box.cpp
- *
- *  Created on: Aug 4, 2017
- *      Author: settgast
+ * @file Box.cpp
+ * @brief Generate a box geometry.
+ * @param Maximum (x,y,z) coordinates of the box
+ * @param Minimum (x,y,z) coordinates of the box
+ * @param The strike angle of the box
  */
 
 #include "Box.hpp"

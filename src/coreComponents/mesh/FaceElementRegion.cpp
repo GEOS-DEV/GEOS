@@ -81,7 +81,10 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
   // Add the nodes that compose the new FaceElement to the nodeList
   arrayView1d<localIndex const> const & faceToNodesMap0 = facesToNodesMap[faceIndices[0]];
   arrayView1d<localIndex const> const & faceToNodesMap1 = facesToNodesMap[faceIndices[1]];
-  nodeMap[kfe].resize( faceToNodesMap0.size() * 2 );
+
+ //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
+  nodeMap[kfe].resize( 8 );
+
   for( localIndex a=0 ; a<faceToNodesMap0.size() ; ++a )
   {
     localIndex const aa = a < 2 ? a : faceToNodesMap0.size() - a + 1;
@@ -89,7 +92,13 @@ localIndex FaceElementRegion::AddToFractureMesh( EdgeManager * const edgeManager
 
     // TODO HACK need to generalize to something other than quads
     nodeMap[kfe][a]   = faceToNodesMap0[aa];
-    nodeMap[kfe][a+4] = faceToNodesMap1[bb];
+    nodeMap[kfe][a+faceToNodesMap0.size()] = faceToNodesMap1[bb];
+  }
+
+  if( faceToNodesMap0.size()==3 )
+  {
+    nodeMap[kfe][6] = faceToNodesMap0[2];
+    nodeMap[kfe][7] =faceToNodesMap1[2];
   }
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
