@@ -117,7 +117,7 @@ void LinearElasticIsotropic::PostProcessInput()
   if( !m_postProcessed )
   {
     real64 & nu = getReference<real64> (viewKeyStruct::defaultPoissonRatioString);
-    real64 & E  = getReference<real64> (viewKeyStruct::defaultYoungsModulusString);;
+    real64 & E  = getReference<real64> (viewKeyStruct::defaultYoungsModulusString);
     real64 & K  = m_defaultBulkModulus;
     real64 & G  = m_defaultShearModulus;
 
