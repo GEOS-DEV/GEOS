@@ -257,8 +257,8 @@ void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
 Group * Group::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog." );
+                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return RegisterGroup( childName,
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
@@ -459,11 +459,11 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match" );
+  GEOS_ERROR_IF( groupName != this->getName(), "Group::Unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect" );
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -480,11 +480,11 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match" );
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups" );
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->m_subGroups )
     {

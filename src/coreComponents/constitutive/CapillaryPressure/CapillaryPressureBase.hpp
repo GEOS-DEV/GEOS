@@ -52,7 +52,7 @@ public:
   
   virtual ~CapillaryPressureBase() override;
 
-  // *** ManagedGroup interface
+  // *** Group interface
   
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

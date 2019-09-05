@@ -217,10 +217,10 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std:
 
 template< typename K, typename V, typename SORTED >
 inline
-std::ostream& operator<< ( std::ostream& stream, mapBase< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
 {
   stream << "{\n";
-  for ( auto const & pair : map )
+  for( auto const & pair : map )
   {
     stream << pair.first << " : " << pair.second << "\n";
   }

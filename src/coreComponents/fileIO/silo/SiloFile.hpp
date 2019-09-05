@@ -273,14 +273,14 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteManagedGroupSilo( dataRepository::Group const * group,
-                              string const & siloDirName,
-                              string const & meshname,
-                              int const centering,
-                              int const cycleNum,
-                              real64 const problemTime,
-                              bool const isRestart,
-                              const localIndex_array& mask );
+  void WriteGroupSilo( dataRepository::Group const * group,
+                       string const & siloDirName,
+                       string const & meshname,
+                       int const centering,
+                       int const cycleNum,
+                       real64 const problemTime,
+                       bool const isRestart,
+                       const localIndex_array& mask );
 
 
 
