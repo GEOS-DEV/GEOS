@@ -84,6 +84,38 @@ public:
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
+  enum class timeIntegrationOption
+  {
+    SteadyState,
+    ImplicitTransient,
+    ExplicitTransient,
+    InertialTransient
+  };
+
+  void SetTimeIntegrationOption( string const & stringVal )
+  {
+    if( stringVal == "ImplicitTransient" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitTransient;
+    }
+    else if( stringVal == "ExplicitTransient" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitTransient;
+    }
+    else if( stringVal == "InertialTransient" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::InertialTransient;
+    }
+    else if ( stringVal == "SteadyState" )
+    {
+      this->m_timeIntegrationOption = timeIntegrationOption::SteadyState;
+    }
+    else
+    {
+      GEOS_ERROR("Invalid time integration option for flow solver: " << stringVal);
+    }
+  }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -102,6 +134,9 @@ public:
 
     static constexpr auto aperture0String  = "aperture_n";
 
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
+    static constexpr auto maximumApertureString      = "maximumAperture";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
@@ -118,6 +153,8 @@ public:
     ViewKey solidName      = { solidNameString };
     ViewKey fluidIndex     = { fluidIndexString };
     ViewKey solidIndex     = { solidIndexString };
+    ViewKey timeIntegrationOption = { timeIntegrationOptionString };
+    ViewKey maximumAperture = { maximumApertureString };
 
   } viewKeysFlowSolverBase;
 
@@ -134,6 +171,8 @@ private:
   void PrecomputeData(DomainPartition *const domain);
 
 protected:
+
+  virtual void PostProcessInput() override;
 
   virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
 
@@ -165,6 +204,16 @@ protected:
 
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
+
+  /// maximum aperture (for permeability cap) used in explicit solver
+  real64 m_maximumAperture;
+
+  /// pressure cap used in explicit solver
+  real64 m_pressureCap;
+
+  /// option for time integration
+  string m_timeIntegrationOptionString;
+  timeIntegrationOption m_timeIntegrationOption;
 
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;

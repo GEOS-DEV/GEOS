@@ -74,6 +74,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::massString );
       subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
     });
 
@@ -89,6 +90,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
         setDefaultValue(1.0);
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::massString );
       subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
       subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
@@ -114,14 +116,24 @@ void SinglePhaseFlow::UpdateFluidModel(ManagedGroup * const dataGroup) const
   SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
 
   arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
-  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-  // TODO replace with batch update (need up-to-date pressure and temperature fields)
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  if (m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
-    fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
-  });
-  //fluid->BatchUpdate( pres, temp, compFrac );
+    forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+    {
+      fluid->PointUpdateExplicit( pres[a], a, 0 );
+    } );
+  }
+  else
+  {
+    arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
+    // TODO replace with batch update (need up-to-date pressure and temperature fields)
+    forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+    {
+      fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
+    });
+    //fluid->BatchUpdate( pres, temp, compFrac );
+  }
 }
 
 void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup) const
@@ -131,12 +143,23 @@ void SinglePhaseFlow::UpdateSolidModel(ManagedGroup * const dataGroup) const
   ConstitutiveBase * const solid = GetConstitutiveModel<ConstitutiveBase>( dataGroup, m_solidName );
 
   arrayView1d<real64 const> const & pres  = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
-  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-  forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  if (m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
-    solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
-  });
+    forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+    {
+      solid->StateUpdatePointPressure( pres[a], a, 0 );
+    });
+  }
+  else
+  {
+    arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
+
+    forall_in_range( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+    {
+      solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
+    });
+  }
 }
 
 void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
@@ -148,9 +171,6 @@ void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
   arrayView1d<real64> const & mob =
     dataGroup->getReference< array1d<real64> >( viewKeyStruct::mobilityString );
 
-  arrayView1d<real64> const & dMob_dPres =
-    dataGroup->getReference< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
-
   // input
 
   SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
@@ -158,24 +178,37 @@ void SinglePhaseFlow::UpdateMobility( ManagedGroup * const dataGroup ) const
   arrayView2d<real64 const> const & dens =
     fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString );
 
-  arrayView2d<real64 const> const & dDens_dPres =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString );
-
   arrayView2d<real64 const> const & visc =
     fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString );
 
-  arrayView2d<real64 const> const & dVisc_dPres =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
-  MobilityKernel::Launch( 0, dataGroup->size(),
-                          dens,
-                          dDens_dPres,
-                          visc,
-                          dVisc_dPres,
-                          mob,
-                          dMob_dPres );
+  if (m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  {
+    MobilityKernel::Launch( 0, dataGroup->size(),
+                            dens,
+                            visc,
+                            mob );
+  }
+  else
+  {
+    arrayView1d<real64> const & dMob_dPres =
+      dataGroup->getReference< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
+
+    arrayView2d<real64 const> const & dDens_dPres =
+      fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString );
+
+    arrayView2d<real64 const> const & dVisc_dPres =
+      fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
+
+    MobilityKernel::Launch( 0, dataGroup->size(),
+                            dens,
+                            dDens_dPres,
+                            visc,
+                            dVisc_dPres,
+                            mob,
+                            dMob_dPres );
+  }
 }
-
 
 void SinglePhaseFlow::UpdateState( ManagedGroup * dataGroup ) const
 {
@@ -251,19 +284,164 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 dt_return;
+  real64 dt_return = dt;
 
-  ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  {
+    ExplicitStepSetup( time_n, dt, domain);
 
-  // currently the only method is implicit time integration
-  dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+    dt_return = ExplicitStep( time_n, dt, cycleNumber, domain );
+  }
+  else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
+           m_timeIntegrationOption == timeIntegrationOption::SteadyState )
+  {
+    ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt_return, domain );
+    // currently the only method is implicit time integration
+    dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
+    // final step for completion of timestep. typically secondary variable updates and cleanup.
+    ImplicitStepComplete( time_n, dt_return, domain );
+  }
+  else if( m_timeIntegrationOption == timeIntegrationOption::InertialTransient )
+  {
+    GEOS_ERROR( "timeIntegrationOption::InertialTransient not yet implemented");
+  }
 
   return dt_return;
 }
 
+real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
+                                      real64 const& dt,
+                                      const int cycleNumber,
+                                      DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager);
+
+  // apply mass flux boundary condition in the explicit solver
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+
+//  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+//                    [&]( FieldSpecificationBase const * const fs,
+//                         string const &,
+//                         set<localIndex> const & lset,
+//                         ManagedGroup * subRegion,
+//                         string const & ) -> void
+//  {
+//    fs->ApplyFieldValue<FieldSpecificationAdd>( lset,
+//                                                time_n + dt,
+//                                                subRegion,
+//                                                viewKeyStruct::massString );
+//  } );
+
+  // synchronize element fields
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  std::map<string, string_array> fieldNames;
+  fieldNames["elems"].push_back( viewKeyStruct::massString );
+
+  array1d<NeighborCommunicator> & comms =
+    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
+
+  // update density from mass and then pressure
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                                 ElementRegion * const region,
+                                 ElementSubRegionBase * const subRegion )
+  {
+    SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
+    arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64> const & vol  = m_volume[er][esr];
+    arrayView1d<real64> const & mass = m_mass[er][esr];
+    arrayView1d<real64> const & pres = m_pressure[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      dens[ei][0] = mass[ei] / vol[ei];
+      fluid->PointUpdatePressure( pres[ei], ei, 0);
+    } );
+  } );
+
+  // apply pressure boundary condition in the explicit solver
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         ManagedGroup * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::pressureString );
+  });
+
+  // update state from pressure
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+  {
+    UpdateState( subRegion );
+  } );
+
+  return m_maxStableDt;
+}
+
+void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
+                                         real64 const & dt,
+                                         DomainPartition * const domain)
+{
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  // apply pressure boundary condition in the explicit solver
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         ManagedGroup * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::pressureString );
+  });
+
+  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
+                                 ElementRegion * const region,
+                                 ElementSubRegionBase * const subRegion )
+  {
+    UpdateState( subRegion );
+    arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64> const & vol  = m_volume[er][esr];
+    arrayView1d<real64> const & mass = m_mass[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      mass[ei] = dens[ei][0] * vol[ei];
+    } );
+  } );
+
+  mesh->getElemManager()->
+      forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
+                                                          [&] ( localIndex const er,
+                                                                localIndex const esr,
+                                                                ElementRegion *,
+                                                                FaceElementSubRegion * subRegion )
+  {
+    arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
+    arrayView1d<real64 const> const & aper = m_elementAperture[er][esr];
+
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
+      aper0[ei] = aper[ei];
+    } );
+
+    UpdateMobility( subRegion );
+  } );
+}
 
 void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
                                          real64 const & dt,
@@ -555,10 +733,9 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem: " );
-    GEOS_LOG_RANK_0( "\nJacobian:\n" );
-    matrix.print(std::cout);
-    rhs.print(std::cout);
+    GEOS_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
   }
 
   if( verboseLevel() >= 3 )
@@ -764,6 +941,68 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const time_n,
 
 }
 
+void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
+                                                 real64 const dt,
+                                                 DomainPartition * const domain,
+                                                 DofManager const * const dofManager)
+{
+  GEOSX_MARK_FUNCTION;
+
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+
+  FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber = m_dofNumber.toViewConst();
+
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
+  FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
+  FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc        = m_viscosity.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
+
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
+  FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture   = m_elementAperture.toViewConst();
+
+  integer const gravityFlag = m_gravityFlag;
+  localIndex const fluidIndex = m_fluidIndex;
+  m_maxStableDt = std::numeric_limits<real64>::max();
+
+  fluxApprox->forCellStencils( [&]( auto const & stencil )
+  {
+    FluxKernel::Launch( stencil,
+                        dt,
+                        fluidIndex,
+                        gravityFlag,
+                        dofNumber,
+                        pres,
+                        dPres,
+                        gravDepth,
+                        dens,
+                        visc,
+                        mob,
+                        aperture0,
+                        aperture ,
+                        &m_mass,
+                        &m_maxStableDt);
+  });
+
+  real64 minCompressibility = std::numeric_limits<real64>::max();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  {
+    SingleFluidBase * fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
+    CompressibleSinglePhaseFluid * compressibleFluid = dynamic_cast<CompressibleSinglePhaseFluid*>(fluid);
+    minCompressibility = std::min(minCompressibility, compressibleFluid->Compressibility());
+  } );
+  m_maxStableDt *= minCompressibility * m_cflFactor;
+
+}
+
 void
 SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
@@ -850,9 +1089,8 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
   if( verboseLevel() == 2 )
   {
     GEOS_LOG_RANK_0( "After SinglePhaseFlow::ApplyBoundaryConditions" );
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    matrix.print(std::cout);
-    rhs.print(std::cout);
+    GEOS_LOG_RANK_0("\nJacobian:\n" << matrix);
+    GEOS_LOG_RANK_0("\nResidual:\n" << rhs);
   }
 
   if( verboseLevel() >= 3 )
@@ -1243,8 +1481,8 @@ void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
 
   if( verboseLevel() == 2 )
   {
-    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem\nSolution\n");
-    GEOS_LOG(solution);
+    GEOS_LOG_RANK_0("After SinglePhaseFlow::SolveSystem");
+    GEOS_LOG_RANK_0("\nSolution\n" << solution);
   }
 }
 
@@ -1293,6 +1531,9 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::porosityOldString );
   m_densityOld =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::densityOldString );
+
+  m_mass =
+    elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::massString );
 
   m_pvMult =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,

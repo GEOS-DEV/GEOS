@@ -54,7 +54,7 @@ void makeStencilTPFA(localIndex size, FluxStencil<INDEX, T> & stencil)
     weights[0] = 1.0/2.0;
     weights[1] = 1.0/2.0;
 
-    stencil.add(2, cells.data(), weights.data(), kf);
+    stencil.add(2, cells.data(), weights.data(), weights.data(), kf);
   }
   stencil.compress();
 }

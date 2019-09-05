@@ -88,6 +88,11 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setApplyDefaultValue("linear")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Type of viscosity model (linear, quadratic, exponential)");
+
+  RegisterViewWrapper( viewKeyStruct::pressureCapString, &m_pressureCap, false )->
+    setApplyDefaultValue(1.0e99)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Pressure cap needed by the modified pressure-density relationship in explicit flow solver");
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
@@ -123,6 +128,7 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   newConstitutiveRelation->m_viscosityModelString = this->m_viscosityModelString;
   newConstitutiveRelation->m_densityModelType     = this->m_densityModelType;
   newConstitutiveRelation->m_viscosityModelType   = this->m_viscosityModelType;
+  newConstitutiveRelation->m_pressureCap   = this->m_pressureCap;
 
 }
 
@@ -155,6 +161,24 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
 {
   Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
+}
+
+void CompressibleSinglePhaseFluid::PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q)
+{
+  pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * m_pressureCap
+                                                        ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility
+                                                        : 0.5 * m_pressureCap + ( pressure - 0.5 * m_pressureCap) / (1.0 / m_compressibility - 0.5 * m_pressureCap) * 0.5 * m_pressureCap);
+}
+
+void CompressibleSinglePhaseFluid::PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q )
+{
+  m_density[k][q] = pressure <= 0.5 * m_pressureCap ? m_referenceDensity / (1 - pressure * m_compressibility)
+                                                    : m_referenceDensity / (1 - 0.5 * m_pressureCap * m_compressibility - (2.0 * pressure / m_pressureCap - 1.0) * (1.0 - 0.5 * m_pressureCap * m_compressibility));
+
+  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
+  {
+    Compute( pressure, m_viscosity[k][q], m_dViscosity_dPressure[k][q], relation );
+  } );
 }
 
 void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const & pressure )

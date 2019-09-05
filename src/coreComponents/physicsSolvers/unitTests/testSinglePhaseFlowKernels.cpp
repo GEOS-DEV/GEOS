@@ -280,6 +280,7 @@ TEST( SinglePhaseFlowKernels, fluxFull )
                elemSubReg,
                elemIndex,
                weight,
+               weight,
                0 );
 
 
@@ -328,6 +329,7 @@ TEST( SinglePhaseFlowKernels, fluxRegion )
                elemReg,
                elemSubReg,
                elemIndex,
+               weight,
                weight,
                0 );
 

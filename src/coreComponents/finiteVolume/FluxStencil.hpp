@@ -70,6 +70,7 @@ public:
   void add( localIndex const numPts,
             INDEX  const * const indices,
             WEIGHT const * const weights,
+            WEIGHT const * const weightedElementCenterToConnectorCenterSquare,
             localIndex const connectorIndex );
 
   /// zero out connections
@@ -82,6 +83,7 @@ public:
   {
     INDEX  index;
     WEIGHT weight;
+    WEIGHT weightedElementCenterToConnectorCenterSquare;
   };
 
   ArrayOfArraysView<Entry const, true> getConnections() const { return m_connections; }
@@ -89,7 +91,7 @@ public:
 private:
 
   ArrayOfArrays<Entry> m_connections;
-  map<localIndex, localIndex> m_connectorIndices;
+  map<localIndex, localIndex> m_stencilIndices;
 
 };
 
@@ -126,6 +128,7 @@ template<typename INDEX, typename WEIGHT>
 void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
                                       INDEX  const * const indices,
                                       WEIGHT const * const weights,
+                                      WEIGHT const * const weightedElementCenterToConnectorCenterSquare,
                                       localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -133,18 +136,18 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
   stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
   for (localIndex i = 0; i < numPts; ++i)
   {
-    entries[i] = { indices[i], weights[i] };
+    entries[i] = { indices[i], weights[i], weightedElementCenterToConnectorCenterSquare[i] };
   }
 
   m_connections.appendArray( entries.data(), numPts );
-  m_connectorIndices[connectorIndex] = m_connections.size() - 1;
+  m_stencilIndices[connectorIndex] = m_connections.size() - 1;
 }
 
 template<typename INDEX, typename WEIGHT>
 bool FluxStencil<INDEX, WEIGHT>::zero( localIndex const connectorIndex )
 {
   return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
+  executeOnMapValue( m_stencilIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
     Entry * const entries = m_connections[connectionListIndex];
     for (localIndex i = 0; i < m_connections.sizeOfArray( connectionListIndex ); ++i)

@@ -38,6 +38,7 @@ void CellElementStencilMPFA::reserve( localIndex const size )
   m_elementSubRegionIndices.reserve( size * 9 );
   m_elementIndices.reserve( size * 9 );
   m_weights.reserve( size * 9 );
+  m_weightedElementCenterToConnectorCenterSquare.reserve( size * 9 );
 }
 
 void CellElementStencilMPFA::add( localIndex const numPts,
@@ -45,6 +46,7 @@ void CellElementStencilMPFA::add( localIndex const numPts,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
                                   real64 const * const weights,
+                                  real64 const * const weightedElementCenterToConnectorCenterSquare,
                                   localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -53,8 +55,9 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_elementSubRegionIndices.appendArray( elementSubRegionIndices, numPts );
   m_elementIndices.appendArray( elementIndices, numPts );
   m_weights.appendArray( weights, numPts );
+  m_weightedElementCenterToConnectorCenterSquare.appendArray( weightedElementCenterToConnectorCenterSquare, numPts );
 
-  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
+  m_stencilIndices[connectorIndex] = m_elementRegionIndices.size()-1;
 }
 
 } /* namespace geosx */

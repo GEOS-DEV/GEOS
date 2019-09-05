@@ -36,7 +36,7 @@ SolverBase::SolverBase( std::string const & name,
   m_gravityVector( R1Tensor( 0.0 ) ),
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
-  m_maxStableDt{ 1e99 }
+  m_maxStableDt{ std::numeric_limits<real64>::max() }
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

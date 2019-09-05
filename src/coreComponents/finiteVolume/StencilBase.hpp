@@ -44,7 +44,8 @@ public:
     m_elementSubRegionIndices(),
     m_elementIndices(),
     m_weights(),
-    m_connectorIndices()
+    m_weightedElementCenterToConnectorCenterSquare(),
+    m_stencilIndices()
   {}
 
   virtual ~StencilBase() = default;
@@ -70,6 +71,7 @@ public:
                     localIndex  const * const elementSubRegionIndices,
                     localIndex  const * const elementIndices,
                     real64 const * const weights,
+                    real64 const * const weightedElementCenterToConnectorCenterSquare,
                     localIndex const connectorIndex ) = 0;
 
   /**
@@ -111,6 +113,12 @@ public:
    */
   typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights; }
 
+  /**
+   * @brief Const access to the weightedElementCenterToConnectorCenterSquare
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getweightedElementCenterToConnectorCenterSquare() const { return m_weightedElementCenterToConnectorCenterSquare; }
+
 protected:
   /// The container for the element region indices for each point in each stencil
   typename LEAFCLASSTRAITS::IndexContainerType  m_elementRegionIndices;
@@ -124,8 +132,11 @@ protected:
   /// The container for the weights for each point in each stencil
   typename LEAFCLASSTRAITS::WeightContainerType m_weights;
 
+  /// The container for the weighted Element Center To Connector Center (Square of distance divided by permeability) for each point in each stencil
+  typename LEAFCLASSTRAITS::WeightContainerType m_weightedElementCenterToConnectorCenterSquare;
+
   /// The map that provides the stencil index given the index of the underlying connector object.
-  map<localIndex, localIndex> m_connectorIndices;
+  map<localIndex, localIndex> m_stencilIndices;
 
 };
 
@@ -138,6 +149,7 @@ void StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::reserve( localIndex const size )
   m_elementSubRegionIndices.reserve( size * 2 );
   m_elementIndices.reserve( size * 2 );
   m_weights.reserve( size * 2 );
+  m_weightedElementCenterToConnectorCenterSquare.reserve( size * 2 );
 }
 
 
@@ -145,11 +157,12 @@ template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
 bool StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::zero( localIndex const connectorIndex )
 {
   return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
+  executeOnMapValue( m_stencilIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
     for (localIndex i = 0; i < static_cast<LEAFCLASS *>(this)->stencilSize(connectorIndex); ++i)
     {
       m_weights[connectionListIndex][i] = 0;
+      m_weightedElementCenterToConnectorCenterSquare[connectionListIndex][i] = 0;
     }
   });
 }

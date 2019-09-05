@@ -65,7 +65,13 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) override;
 
+  virtual void PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q ) override;
+
+  virtual void PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q ) override;
+
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) override;
+
+  real64 Compressibility() const { return m_compressibility; }
 
   virtual void Compute( real64 const & pressure,
                         real64 & density,
@@ -121,6 +127,7 @@ public:
     static constexpr auto referenceViscosityString = "referenceViscosity";
     static constexpr auto densityModelString       = "densityModel";
     static constexpr auto viscosityModelString     = "viscosityModel";
+    static constexpr auto pressureCapString        = "pressureCap";
 
     dataRepository::ViewKey compressibility    = { compressibilityString    };
     dataRepository::ViewKey viscosibility      = { viscosibilityString      };
@@ -129,6 +136,7 @@ public:
     dataRepository::ViewKey referenceViscosity = { referenceViscosityString };
     dataRepository::ViewKey densityModel       = { densityModelString       };
     dataRepository::ViewKey viscosityModel     = { viscosityModelString     };
+    dataRepository::ViewKey pressureCap        = { pressureCapString  };
 
   } viewKeysCompressibleSinglePhaseFluid;
 
@@ -163,6 +171,9 @@ private:
 
   /// type of viscosity model (linear, quadratic, exponential)
   ExponentApproximationType m_viscosityModelType;
+
+  /// reference pressure parameter
+  real64 m_pressureCap;
 };
 
 

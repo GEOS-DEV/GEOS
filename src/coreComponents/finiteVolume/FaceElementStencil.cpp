@@ -35,19 +35,24 @@ void FaceElementStencil::add( localIndex const numPts,
                               localIndex  const * const elementSubRegionIndices,
                               localIndex  const * const elementIndices,
                               real64 const * const weights,
+                              real64 const * const weightedElementCenterToConnectorCenterSquare,
                               localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  typename decltype( m_connectorIndices )::iterator iter = m_connectorIndices.find(connectorIndex);
-  if( iter==m_connectorIndices.end() )
+  stackArray1d<localIndex, 1> connectorIndexArray;
+  connectorIndexArray[0] = connectorIndex;
+
+  typename decltype( m_stencilIndices )::iterator iter = m_stencilIndices.find(connectorIndex);
+  if( iter==m_stencilIndices.end() )
   {
     m_elementRegionIndices.appendArray( elementRegionIndices, numPts );
     m_elementSubRegionIndices.appendArray( elementSubRegionIndices, numPts );
     m_elementIndices.appendArray( elementIndices, numPts );
     m_weights.appendArray( weights, numPts );
+    m_weightedElementCenterToConnectorCenterSquare.appendArray( weightedElementCenterToConnectorCenterSquare, numPts );
 
-    m_connectorIndices[connectorIndex] = m_weights.size() - 1;
+    m_stencilIndices[connectorIndex] = m_weights.size() - 1;
   }
   else
   {
@@ -56,11 +61,13 @@ void FaceElementStencil::add( localIndex const numPts,
     m_elementSubRegionIndices.clearArray( stencilIndex );
     m_elementIndices.clearArray( stencilIndex );
     m_weights.clearArray( stencilIndex );
+    m_weightedElementCenterToConnectorCenterSquare.clearArray( stencilIndex );
 
     m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, numPts );
     m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, numPts );
     m_elementIndices.appendToArray( stencilIndex, elementIndices, numPts );
     m_weights.appendToArray( stencilIndex, weights, numPts );
+    m_weightedElementCenterToConnectorCenterSquare.appendToArray( stencilIndex, weightedElementCenterToConnectorCenterSquare, numPts );
   }
 }
 

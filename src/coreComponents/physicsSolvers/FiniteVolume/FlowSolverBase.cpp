@@ -44,6 +44,10 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_solidIndex(),
     m_poroElasticFlag(0),
     m_numDofPerCell(0),
+    m_maximumAperture(0.05),
+    m_pressureCap(1e7),
+    m_timeIntegrationOptionString(),
+    m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
     m_elemGhostRank(),
     m_volume(),
     m_gravDepth(),
@@ -69,7 +73,23 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
 
+  this->RegisterViewWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOptionString, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Time integration method. Options are: \n SteadyState \n ImplicitTransient \n ExplicitTransient \n InertialTransient");
 
+  this->RegisterViewWrapper( viewKeyStruct::maximumApertureString, &m_maximumAperture, false )->
+      setInputFlag(InputFlags::OPTIONAL)->
+      setDescription("Maximum aperture for updating the fracture permeability in explicit flow solver");
+}
+
+void FlowSolverBase::PostProcessInput()
+{
+  SolverBase::PostProcessInput();
+
+  if( !m_timeIntegrationOptionString.empty() )
+  {
+    SetTimeIntegrationOption( m_timeIntegrationOptionString );
+  }
 }
 
 void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
@@ -214,8 +234,6 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( FaceElementSubRegion::viewKeyStruct::elementApertureString );
   m_elementAperture0 =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::aperture0String );
-
-
 }
 
 

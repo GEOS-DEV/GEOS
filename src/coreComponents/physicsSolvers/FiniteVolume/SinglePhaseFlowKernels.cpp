@@ -307,6 +307,111 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
 
 
 
+template<>
+void FluxKernel::
+Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
+                                real64 const dt,
+                                localIndex const fluidIndex,
+                                integer const gravityFlag,
+                                FluxKernel::ElementView< arrayView1d<globalIndex> > const & dofNumber,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                                FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
+                                FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                FluxKernel::ElementView < arrayView1d<real64 const> > const &,
+                                ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
+                                real64 * const maxStableDt)
+{
+  constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+  constexpr localIndex stencilSize  = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weightedElementCenterToConnectorCenterSquare = stencil.getweightedElementCenterToConnectorCenterSquare();
+
+  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  {
+    FluxKernel::Compute( stencilSize,
+                         seri[iconn],
+                         sesri[iconn],
+                         sei[iconn],
+                         weights[iconn],
+                         weightedElementCenterToConnectorCenterSquare[iconn],
+                         pres,
+                         dPres,
+                         gravDepth,
+                         dens,
+                         visc,
+                         mob,
+                         fluidIndex,
+                         gravityFlag,
+                         dt,
+                         mass,
+                         maxStableDt);
+  } );
+}
+
+template<>
+void FluxKernel::
+Launch<FaceElementStencil>( FaceElementStencil const & stencil,
+                            real64 const dt,
+                            localIndex const fluidIndex,
+                            integer const gravityFlag,
+                            FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
+                            FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens,
+                            FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & mob,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
+                            FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
+                            ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
+                            real64 * const maxStableDt)
+{
+  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
+
+  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename FaceElementStencil::WeightContainerViewConstType const & weightedElementCenterToConnectorCenterSquare = stencil.getweightedElementCenterToConnectorCenterSquare();
+
+  forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+  {
+    localIndex const numFluxElems = stencil.stencilSize(iconn);
+    localIndex const stencilSize  = numFluxElems;
+
+    localIndex const er = seri[iconn][0];
+    localIndex const esr = sesri[iconn][0];
+
+    FluxKernel::ComputeJunction( numFluxElems,
+                                 sei[iconn],
+                                 weights[iconn],
+                                 weightedElementCenterToConnectorCenterSquare[iconn],
+                                 pres[er][esr],
+                                 dPres[er][esr],
+                                 gravDepth[er][esr],
+                                 dens[er][esr][fluidIndex],
+                                 visc[er][esr][fluidIndex],
+                                 mob[er][esr],
+                                 aperture0[er][esr],
+                                 aperture[er][esr],
+                                 fluidIndex,
+                                 gravityFlag,
+                                 dt,
+                                 &((*mass)[er][esr]),
+                                 maxStableDt);
+  } );
+}
 
 } // namespace SinglePhaseFlowKernels
 

@@ -25,6 +25,7 @@
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Fluid/CompressibleSinglePhaseFluid.hpp"
 
 namespace geosx
 {
@@ -91,12 +92,23 @@ public:
               integer const cycleNumber,
               DomainPartition * domain ) override;
 
+  virtual real64
+  ExplicitStep( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition * domain ) override;
+
   /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
+
+  void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain);
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -195,6 +207,19 @@ public:
                           ParallelMatrix * const matrix,
                           ParallelVector * const rhs );
 
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void AssembleFluxTermsExplicit( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition * const domain,
+                                  DofManager const * const dofManager);
 
 
   /**@}*/
@@ -216,6 +241,8 @@ public:
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
     static constexpr auto porosityString = "porosity";
+
+    static constexpr auto massString = "mass";
 
     // face fields
     static constexpr auto faceDensityString = "faceDensity";
@@ -325,6 +352,11 @@ private:
    */
   void UpdateState( ManagedGroup * dataGroup ) const;
 
+  /**
+   * @brief Function to explicitly update all constitutive state and dependent variables
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateStateExplicit( ManagedGroup * dataGroup ) const;
 
   /// views into primary variable fields
 
@@ -334,6 +366,8 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_mass;
 
   /// views into intermediate fields
 

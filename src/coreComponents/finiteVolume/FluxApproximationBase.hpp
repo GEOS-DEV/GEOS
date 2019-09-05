@@ -136,6 +136,9 @@ public:
   string_array const & targetRegions() const { return m_targetRegions; }
   string_array &       targetRegions()       { return m_targetRegions; }
 
+  string const & coeffName() const { return m_coeffName; }
+  string &       coeffName()       { return m_coeffName; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
