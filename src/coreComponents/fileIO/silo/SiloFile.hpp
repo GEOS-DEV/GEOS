@@ -257,22 +257,6 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
-
-  /**
-   *
-   * @param elementManager the element region manager
-   * @param constitutiveManager the constitutive manager
-   * @param meshName the name of the mesh that this write applies to
-   * @param cycleNumber current cycle number
-   * @param problemTime current problem time
-   */
-  void WriteMaterialMapsCompactStorage( ElementRegionManager const * const elementManager,
-                          constitutive::ConstitutiveManager const * const constitutiveManager,
-                          string const & meshName,
-                          int const cycleNumber,
-                          real64 const problemTime);
-
-
   void WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
                           constitutive::ConstitutiveManager const * const constitutiveManager,
                           string const & meshName,
