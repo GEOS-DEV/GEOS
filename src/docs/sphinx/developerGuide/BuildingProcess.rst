@@ -14,8 +14,10 @@ The build management process it self uses
 - `python <https://www.python.org/>`_ (version 2.7 tested and validated, only standard modules are used).
 
 **It is the developer’s responsibility to provide these tools.**
-On Debian flavor distributions, consider the following command line.
+On Debian flavored distributions, consider the following command line.
+
 .. code-block:: console
+
     apt-get install git git-lfs gcc g++ gfortran python2.7
 
 The GEOSX software makes use of multiple libraries.
@@ -48,7 +50,7 @@ A graph partitioning tool
 
 - `parmetis <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_
 
-A large and comple data collection library
+A large and complex data collection library
 
 - `hdf5 <https://bitbucket.hdfgroup.org/scm/hdffv/hdf5.git>`_ or its `clone on github <https://github.com/live-clones/hdf5>`_ and `its project page <https://portal.hdfgroup.org/display/knowledge>`_
 
@@ -68,6 +70,7 @@ As well as the zlib compression library.
 On Debian flavored distribution, consider installing (apt-get install) the
 
 .. code-block:: console
+
     zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
 
 packages.
@@ -76,7 +79,7 @@ Third party libraries build management pattern
 ==============================================
 
 Each dependency of GEOSX has its own build system.
-The `thirdPartyLibs/CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ cmake script was written to automatise the build of all the external libraries.
+The `thirdPartyLibs/CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ cmake script was written to automate the build of all the external libraries.
 In case the developer is no cmake expert (or simply to save time on a repetitive task),
 it is convenient to use the `thirdPartyLibs/scripts/config-build.py <https://github.com/GEOSX/thirdPartyLibs/blob/master/scripts/config-build.py>`_ script that will manage the main key parameters of the dependency build.
 This python script runs the proper cmake command line; generating the Makefiles accordingly.
@@ -86,9 +89,24 @@ These two scripts are also used the build the docker images easier without repea
 
 The most crucial parameters of the python script are `--installpath`, `--buildtype`, `--hostconfig`.
 (Other parameters do exist, check the script).
-While the first two parameters are obvious, the last one requires some explaination.
-The `-—hostconfig` option requires a cmake file containing some build parameters (compiler location, etc.).
-You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
+While the first parameter is obvious, the other one requires some explaination.
+
+* `--buildtype` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
+* The `-—hostconfig` option requires a cmake file containing some build parameters (compiler location, etc.).
+  You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
+
+To be more practicle, you may need to run the following command line
+
+.. code-block:: console
+
+    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/opt
+
+We do recommend using a *host config cmake file* for fine grained control of the build.
+Have a look at some of the `already existing examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_
+
+Last, note that any extra argument will be tranfered directly as a `cmake` argument.
+
+If you want to directly write the `cmake` command line, we advise you to dig into the `config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ python code.
 
 Continuous Integration process
 ==============================
