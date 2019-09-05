@@ -90,7 +90,7 @@ public:
   // template< typename T >
   // ViewAccessor< T >
   // GetConstitutiveData( string const & name,
-  //                      dataRepository::ManagedGroup * const relationGroup );
+  //                      dataRepository::Group * const relationGroup );
 
   template< typename T >
   ViewAccessor< T >
@@ -130,7 +130,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
 // template< typename T >
 // ViewAccessor< T >
 // ConstitutiveManager::GetConstitutiveData( string const & name,
-//                                           dataRepository::ManagedGroup * const relationGroup )
+//                                           dataRepository::Group * const relationGroup )
 // {
 //   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
 //                                        GetConstitutiveData<T>( name, relationGroup ) );

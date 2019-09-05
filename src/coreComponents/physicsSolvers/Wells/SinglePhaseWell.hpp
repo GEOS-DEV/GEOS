@@ -64,9 +64,9 @@ public:
   };
   
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   SinglePhaseWell( const string& name,
                    Group * const parent );

@@ -356,11 +356,11 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
@@ -696,11 +696,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {

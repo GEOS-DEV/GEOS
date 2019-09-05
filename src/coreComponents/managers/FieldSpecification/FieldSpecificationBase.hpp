@@ -98,7 +98,7 @@ public:
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
-   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
    * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
@@ -115,7 +115,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] fieldName The name of the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
@@ -149,7 +149,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -185,7 +185,7 @@ public:
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance

@@ -101,7 +101,7 @@ public:
 
   /**
    * The target object for an event may be specified via the keyword "target" in the input xml.
-   * This string is empty by default and uses GetGroupByPath() method in ManagedGroup, which returns
+   * This string is empty by default and uses GetGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */

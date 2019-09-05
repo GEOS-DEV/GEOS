@@ -70,7 +70,7 @@ TEST(testXML,testXML)
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput( global_argc, global_argv );
   // {
-  //   dataRepository::ManagedGroup * commandLine = problemManager.GetGroup<ManagedGroup>(std::string("commandLine"));
+  //   dataRepository::Group * commandLine = problemManager.GetGroup<Group>(std::string("commandLine"));
   //   Wrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(std::string("inputFileName"));
   //   inputFileName = "../../src/components/core/tests/xmlTests/basic_input.xml";
   // }

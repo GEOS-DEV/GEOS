@@ -244,16 +244,16 @@ void for_elems_by_constitutive( MeshLevel const * const mesh,
                                LAMBDA && body )
 {
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
 
   for( auto const & regionPair : elementRegions->GetSubGroups() )
   {
-    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    dataRepository::Group const * const elementRegion = regionPair.second;
     auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
     FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-    dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
+    dataRepository::Group const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
     for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
     {
       CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
