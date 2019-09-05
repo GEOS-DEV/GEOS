@@ -48,14 +48,14 @@ public:
                                 ObjectManagerBase * const nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
-//                                                     ManagedGroup&
+//                                                     Group&
 // faceManager,
-//                                                     ManagedGroup&
+//                                                     Group&
 // nodeManager);
 //
 //  static void GenerateElementsets ( xmlWrapper const & hdn,
-//                                    const ManagedGroup& nodeManager,
-//                                    ManagedGroup& elementManager);
+//                                    const Group& nodeManager,
+//                                    Group& elementManager);
 
 };
 

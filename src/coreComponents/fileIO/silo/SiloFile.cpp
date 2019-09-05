@@ -1386,14 +1386,14 @@ integer_array SiloFile::SiloNodeOrdering(const string  & elementType)
 
 
 
-void SiloFile::WriteManagedGroupSilo( Group const * group,
-                                      string const & siloDirName,
-                                      string const & meshname,
-                                      int const centering,
-                                      int const cycleNum,
-                                      real64 const problemTime,
-                                      bool const isRestart,
-                                      const localIndex_array& mask )
+void SiloFile::WriteGroupSilo( Group const * group,
+                               string const & siloDirName,
+                               string const & meshname,
+                               int const centering,
+                               int const cycleNum,
+                               real64 const problemTime,
+                               bool const isRestart,
+                               const localIndex_array& mask )
 {
 
   string subDirectory = siloDirName;
@@ -1522,14 +1522,14 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
     });
   }
 
-  WriteManagedGroupSilo( &fakeGroup,
-                         siloDirName,
-                         meshName,
-                         DB_ZONECENT,
-                         cycleNum,
-                         problemTime,
-                         isRestart,
-                         localIndex_array() );
+  WriteGroupSilo( &fakeGroup,
+                  siloDirName,
+                  meshName,
+                  DB_ZONECENT,
+                  cycleNum,
+                  problemTime,
+                  isRestart,
+                  localIndex_array() );
 }
 
 
@@ -1749,14 +1749,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     // write node fields in silo mesh, and all restart data as unassociated
     // variables.
-    WriteManagedGroupSilo( nodeManager,
-                           "NodalFields",
-                           meshName,
-                           DB_NODECENT,
-                           cycleNum,
-                           problemTime,
-                           isRestart,
-                           localIndex_array());
+    WriteGroupSilo( nodeManager,
+                    "NodalFields",
+                    meshName,
+                    DB_NODECENT,
+                    cycleNum,
+                    problemTime,
+                    isRestart,
+                    localIndex_array() );
 
 
 
@@ -1788,14 +1788,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 //
 //          string regionName = elemRegion->getName() + "_" + subRegion->getName();
 //
-//          WriteManagedGroupSilo( subRegion,
-//                                 regionName,
-//                                 meshName,
-//                                 DB_ZONECENT,
-//                                 cycleNum,
-//                                 problemTime,
-//                                 isRestart,
-//                                 localIndex_array());
+//          WriteGroupSilo( subRegion,
+//                              regionName,
+//                              meshName,
+//                              DB_ZONECENT,
+//                              cycleNum,
+//                              problemTime,
+//                              isRestart,
+//                              localIndex_array());
 //
 //
 //
@@ -1914,14 +1914,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                        problemTime);
     }
 
-    WriteManagedGroupSilo( faceManager,
-                           "FaceFields",
-                           facemeshName,
-                           DB_ZONECENT,
-                           cycleNum,
-                           problemTime,
-                           isRestart,
-                           localIndex_array());
+    WriteGroupSilo( faceManager,
+                    "FaceFields",
+                    facemeshName,
+                    DB_ZONECENT,
+                    cycleNum,
+                    problemTime,
+                    isRestart,
+                    localIndex_array());
 
   }
 
@@ -1987,14 +1987,14 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                      cycleNum,
                      problemTime);
 
-    WriteManagedGroupSilo( edgeManager,
-                           "EdgeFields",
-                           edgeMeshName,
-                           DB_ZONECENT,
-                           cycleNum,
-                           problemTime,
-                           isRestart,
-                           localIndex_array());
+    WriteGroupSilo( edgeManager,
+                         "EdgeFields",
+                         edgeMeshName,
+                         DB_ZONECENT,
+                         cycleNum,
+                         problemTime,
+                         isRestart,
+                         localIndex_array());
   }
 
 }

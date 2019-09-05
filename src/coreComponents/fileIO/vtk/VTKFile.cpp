@@ -691,7 +691,7 @@ void VTKFile::Write( double const timeStep,
     format = "ascii";
   }
 
-  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
   // Find all cell fields to export
   elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_ARG( er ),
                                                                     auto const * const elemRegion )
@@ -725,7 +725,7 @@ void VTKFile::Write( double const timeStep,
     });
   });
 
-  set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
   // Find all node fields to export
   for( auto const & wrapperIter : nodeManager->wrappers() )
   {
