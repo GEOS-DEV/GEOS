@@ -63,7 +63,7 @@ public:
   /**
    * @brief constructor
    * @param[in] name name of the object
-   * @param[in] parent pointer to ManagedGroup that holds this WrapperBase
+   * @param[in] parent pointer to Group that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
                         Group * const parent );
@@ -157,7 +157,7 @@ public:
   /**
    * @brief     function to create a clone of *this WrapperBase
    * @param[in] name name of the clone
-   * @param[in] parent parent ManagedGroup that will hold this clone
+   * @param[in] parent parent Group that will hold this clone
    * @return
    *
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
@@ -217,7 +217,7 @@ public:
   virtual void finishReading( axom::sidre::View * view=nullptr ) = 0;
 
   /**
-   * @brief function to call resize( newsize ) where newsize is taken from the parent ManagedGroup
+   * @brief function to call resize( newsize ) where newsize is taken from the parent Group
    */
   void resize();
 
@@ -439,7 +439,7 @@ private:
   /// name of the object that is being wrapped
   string m_name;
 
-  /// pointer to ManagedGroup that holds this WrapperBase
+  /// pointer to Group that holds this WrapperBase
   Group * m_parent;
 
   /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized

@@ -517,7 +517,7 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
   referenceObject->CheckTypeID( typeid( NodeManager ) );
 
   // cast the referenceObject into a faceManager
-  FaceManager const * const faceManager = ManagedGroup::group_cast<const FaceManager *>( referenceObject );
+  FaceManager const * const faceManager = Group::group_cast<const FaceManager *>( referenceObject );
 
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!

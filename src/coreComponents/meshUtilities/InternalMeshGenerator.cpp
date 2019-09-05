@@ -314,7 +314,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   GEOSX_MARK_FUNCTION;
 
   // This cannot find groupkeys:
-  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));

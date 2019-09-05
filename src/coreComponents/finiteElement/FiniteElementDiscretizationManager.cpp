@@ -50,7 +50,7 @@ Group * FiniteElementDiscretizationManager::CreateChild( string const & childKey
 
 void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from ManagedGroup here
+  // During schema generation, register one of each type derived from Group here
   for (auto& catalogIter: Group::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );

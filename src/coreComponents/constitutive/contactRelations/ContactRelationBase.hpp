@@ -49,7 +49,7 @@ public:
   /**
    * @brief The standard data repository constructor
    * @param name The name of the relation in the data repository
-   * @param parent The name of the parent ManagedGroup that holds this relation object.
+   * @param parent The name of the parent Group that holds this relation object.
    */
   ContactRelationBase( string const & name,
                        Group * const parent );

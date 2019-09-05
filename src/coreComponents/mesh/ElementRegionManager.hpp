@@ -666,12 +666,12 @@ ConstructReferenceAccessor( string const & viewName, string const & neighborName
 //    for( localIndex kSubReg=0 ; kSubReg<elemRegion->numSubRegions() ; ++kSubReg  )
 //    {
 //      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion(kSubReg);
-//      dataRepository::ManagedGroup const * const constitutiveGroup = subRegion->GetConstitutiveModels();
+//      dataRepository::Group const * const constitutiveGroup = subRegion->GetConstitutiveModels();
 //      accessor[kReg][kSubReg].resize( constitutiveGroup->numSubGroups() );
 //
 //      for( localIndex matIndex=0 ; matIndex<constitutiveGroup->numSubGroups() ; ++matIndex )
 //      {
-//        dataRepository::ManagedGroup const * const
+//        dataRepository::Group const * const
 //        constitutiveRelation = constitutiveGroup->GetGroup(matIndex);
 //        if( constitutiveRelation != nullptr )
 //        {
