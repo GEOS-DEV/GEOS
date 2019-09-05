@@ -43,16 +43,6 @@ ElementRegionManager::~ElementRegionManager()
   // TODO Auto-generated destructor stub
 }
 
-localIndex ElementRegionManager::getNumberOfElements() const
-{
-  localIndex numElem = 0;
-  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
-  {
-    numElem += cellBlock->size();
-  });
-  return numElem;
-}
-
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
