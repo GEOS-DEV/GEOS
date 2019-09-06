@@ -23,6 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
+#include "IntegerConversion.hpp"
 #include "Logger.hpp"
 #include "KeyIndexT.hpp"
 #include "SFINAE_Macros.hpp"
@@ -343,6 +344,9 @@ public:
     // delete the pointed-to value, if owned
     deleteValue( index );
 
+    // delete lookup entry
+    m_keyLookup.erase( m_values[index].first );
+
     // delete and shift vector entries
     m_values.erase( m_values.begin() + index );
     m_ownsValues.erase( m_ownsValues.begin() + index );
@@ -357,7 +361,6 @@ public:
     }
 
     // adjust lookup map indices
-    m_keyLookup.erase( m_values[index].first );
     for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
     {
       m_keyLookup[m_values[i].first] = i;
@@ -543,9 +546,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
-        string const message = "MappedVector::insert(): Tried to insert existing key with a "
-                               "different type without overwrite flag\n";
-        GEOS_ERROR( message<<" "<<source->get_typeid().name()<<"!="<<m_values[index].second->get_typeid().name() );
+        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
+                    ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
+                    m_values[index].second->get_typeid().name() );
       }
       else
       {

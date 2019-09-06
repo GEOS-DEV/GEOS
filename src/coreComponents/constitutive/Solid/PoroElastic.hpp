@@ -21,7 +21,7 @@ template< typename BASE >
 class PoroElastic : public BASE
 {
 public:
-  PoroElastic( string const & name, dataRepository::ManagedGroup * const parent );
+  PoroElastic( string const & name, dataRepository::Group * const parent );
   virtual ~PoroElastic() override;
 
 
@@ -32,10 +32,10 @@ public:
 
   virtual void
   DeliverClone( string const & name,
-                dataRepository::ManagedGroup * const parent,
+                dataRepository::Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   inline virtual void

@@ -34,7 +34,7 @@ namespace geosx
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  DirichletBoundaryCondition( string const & name, dataRepository::ManagedGroup *const parent );
+  DirichletBoundaryCondition( string const & name, dataRepository::Group *const parent );
   DirichletBoundaryCondition() = delete;
   virtual ~DirichletBoundaryCondition();
 

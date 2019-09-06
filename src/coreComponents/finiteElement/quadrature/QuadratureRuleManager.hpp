@@ -19,7 +19,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "fileIO/xmlWrapper.hpp"
 
 namespace geosx
@@ -32,14 +32,14 @@ namespace keys
 }
 
 
-class QuadratureRuleManager : public dataRepository::ManagedGroup
+class QuadratureRuleManager : public dataRepository::Group
 {
 public:
   QuadratureRuleManager() = delete;
-  QuadratureRuleManager(string const & name, ManagedGroup * const parent);
+  QuadratureRuleManager(string const & name, Group * const parent);
   virtual ~QuadratureRuleManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;

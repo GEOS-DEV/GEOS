@@ -86,11 +86,11 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  MultiFluidBase( std::string const & name, ManagedGroup * const parent );
+  MultiFluidBase( std::string const & name, Group * const parent );
 
   virtual ~MultiFluidBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface

@@ -33,7 +33,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class ObjectManagerBase;
 class xmlWrapper;
@@ -46,7 +46,7 @@ public:
 
 
 
-  static void GenerateNodesets( dataRepository::ManagedGroup const * geometry,
+  static void GenerateNodesets( dataRepository::Group const * geometry,
                                 ObjectManagerBase * const nodeManager );
 
 //  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,

@@ -31,44 +31,41 @@ namespace constitutive
 
 
 
-LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, ManagedGroup * const parent ):
+LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
-  m_shearModulus()
+  m_shearModulus(),
+  m_postProcessed(false)
 {
-  RegisterViewWrapper( viewKeyStruct::bulkModulus0String, &m_defaultBulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Bulk Modulus Parameter");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulus0String, &m_defaultShearModulus, 0 )->
+  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Shear Modulus Parameter");
 
-
-  RegisterViewWrapper<real64>( viewKeyStruct::youngsModulus0String )->
+  registerWrapper<real64>( viewKeyStruct::defaultYoungsModulusString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Elastic Young's Modulus.");
 
-  RegisterViewWrapper<real64>( viewKeyStruct::poissonRatioString )->
+  registerWrapper<real64>( viewKeyStruct::defaultPoissonRatioString )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Poisson's ratio");
 
-
-
-  RegisterViewWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Bulk Modulus Field");
 
-  RegisterViewWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
-
 }
 
 
@@ -78,7 +75,7 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
 
 void
 LinearElasticIsotropic::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -100,7 +97,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
 }
 
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -116,47 +113,78 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::ManagedGr
 
 void LinearElasticIsotropic::PostProcessInput()
 {
-  real64 & nu = getReference<real64>( viewKeyStruct::poissonRatioString );
-  real64 & E  = getReference<real64>( viewKeyStruct::youngsModulus0String );
-  real64 & K  = m_defaultBulkModulus;
-  real64 & G  = m_defaultShearModulus;
 
-  int numConstantsSpecified = 0;
-  if( nu >= 0.0 )
+  if( !m_postProcessed )
   {
-    ++numConstantsSpecified;
-  }
-  if( E >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
-  if( K >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
-  if( G >= 0.0 )
-  {
-    ++numConstantsSpecified;
-  }
+    real64 & nu = getReference<real64> (viewKeyStruct::defaultPoissonRatioString);
+    real64 & E  = getReference<real64> (viewKeyStruct::defaultYoungsModulusString);
+    real64 & K  = m_defaultBulkModulus;
+    real64 & G  = m_defaultShearModulus;
 
-  if( numConstantsSpecified == 2 )
-  {
+    string errorCheck( "( ");
+    int numConstantsSpecified = 0;
+    if( nu >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "nu, ";
+    }
+    if( E >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "E, ";
+    }
+    if( K >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "K, ";
+    }
+    if( G >= 0.0 )
+    {
+      ++numConstantsSpecified;
+      errorCheck += "G, ";
+    }
+    errorCheck += ")";
+
+    GEOS_ERROR_IF( numConstantsSpecified != 2,
+                   "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                   "You have specified "<<errorCheck );
+
     if( nu >= 0.0 && E >= 0.0 )
     {
       K = E / (3 * ( 1 - 2*nu ) );
       G = E / (2 * ( 1 + nu ) );
     }
-    else if( !( K >= 0.0 && G >= 0.0 ) )
+    else if( nu >= 0.0 && G >= 0.0 )
     {
-      string const message = "A specific pair of elastic constants is required. Either (K,G) or (E,nu)";
-      GEOS_ERROR( message );
+      E = 2 * G * ( 1 + nu );
+      K = E / (3 * ( 1 - 2*nu ) );
     }
-    else
+    else if( nu >= 0 && K >= 0.0 )
+    {
+      E = 3 * K * ( 1 - 2 * nu );
+      G = E / ( 2 * ( 1 + nu ) );
+    }
+    else if( E >= 0.0 && K >=0 )
+    {
+      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
+      G = E / ( 2 * ( 1 + nu ) );
+    }
+    else if( E >= 0.0 && G >= 0 )
+    {
+      nu = 0.5 * E / G - 1.0;
+      K = E / (3 * ( 1 - 2*nu ) );
+    }
+    else if( K >= 0.0 && G >= 0.0)
     {
       E = 9 * K * G / ( 3 * K + G );
       nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
     }
+    else
+    {
+      GEOS_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
+    }
   }
+  m_postProcessed = true;
 }
 
 void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
@@ -178,6 +206,6 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
   m_deviatorStress[k][q] = temp;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

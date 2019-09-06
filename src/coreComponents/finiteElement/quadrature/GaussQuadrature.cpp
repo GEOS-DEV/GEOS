@@ -34,13 +34,13 @@ namespace geosx
 using namespace dataRepository;
 
 template <int dim>
-GaussQuadrature<dim>::GaussQuadrature(std::string const & name, ManagedGroup * const parent)
+GaussQuadrature<dim>::GaussQuadrature(std::string const & name, Group * const parent)
   :
   QuadratureBase(name, parent),
   m_degree(0),
   m_n_gauss_points(0)
 {
-  RegisterViewWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Quadrature degree");
 }
@@ -148,9 +148,9 @@ void GaussQuadrature<dim>::PostProcessInput()
 
 namespace
 {
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature1;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature2;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, ManagedGroup * const > catEntry_GaussQuadrature3;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, Group * const > catEntry_GaussQuadrature1;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, Group * const > catEntry_GaussQuadrature2;
+cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, Group * const > catEntry_GaussQuadrature3;
 }
 
 }

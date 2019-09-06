@@ -34,8 +34,8 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 GeometricObjectManager::GeometricObjectManager( std::string const & name,
-                                                ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+                                                Group * const parent ):
+  Group( name, parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -43,7 +43,7 @@ GeometricObjectManager::GeometricObjectManager( std::string const & name,
 GeometricObjectManager::~GeometricObjectManager()
 {}
 
-ManagedGroup * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
+Group * GeometricObjectManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Geometric Object: " << childKey << ", " << childName);
   std::unique_ptr<SimpleGeometricObjectBase> geometriObject = SimpleGeometricObjectBase::CatalogInterface::Factory( childKey, childName, this );

@@ -48,20 +48,24 @@ std::unordered_map<string, integer> const phaseDict =
 }
 
 CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
-                                              ManagedGroup * const parent )
+                                              Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+    setSizedFromParent(0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of fluid phases");
 
-  RegisterViewWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false );
+  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false )->
+    setSizedFromParent(0);
 
-  RegisterViewWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false );
+  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false )->
+    setSizedFromParent(0);
   
-  RegisterViewWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure, false )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
   
-  RegisterViewWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac, false );
+  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac, false );
 }
 
 CapillaryPressureBase::~CapillaryPressureBase()
@@ -112,7 +116,7 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

@@ -26,7 +26,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class DomainPartition;
 
@@ -34,7 +34,7 @@ class DummySolver : public SolverBase
 {
 public:
   DummySolver( const std::string& name,
-                           ManagedGroup * const parent );
+                           Group * const parent );
 
 
   virtual ~DummySolver() override;
@@ -58,7 +58,7 @@ public:
     } viewKeysDummySolver;
 
 protected:
-  virtual void InitializePreSubGroups( ManagedGroup * const problemManager ) override final;
+  virtual void InitializePreSubGroups( Group * const problemManager ) override final;
 
   real64 m_randScale;
   integer m_randSeed;
