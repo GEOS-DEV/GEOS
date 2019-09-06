@@ -33,17 +33,17 @@ namespace geosx
 
 class MeshLevel;
 
-class MeshBody : public dataRepository::ManagedGroup
+class MeshBody : public dataRepository::Group
 {
 public:
   MeshBody( string const & name,
-            ManagedGroup * const parent );
+            Group * const parent );
   virtual ~MeshBody();
 
-  MeshLevel * CreateMeshLevel( integer const newLevel );
+  MeshLevel * CreateMeshLevel( localIndex const newLevel );
 
-  MeshLevel * getMeshLevel( integer const level ) { return this->GetGroup<MeshLevel>(level); }
-  MeshLevel const * getMeshLevel( integer const level ) const { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel * getMeshLevel( localIndex const level ) { return this->GetGroup<MeshLevel>(level); }
+  MeshLevel const * getMeshLevel( localIndex const level ) const { return this->GetGroup<MeshLevel>(level); }
 
   void setGlobalLengthScale( real64 scale );
 

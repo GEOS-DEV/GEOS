@@ -23,8 +23,8 @@ namespace geosx
 
 
 BasisBase::BasisBase( std::string const & name,
-                      ManagedGroup * const parent ):
-  ManagedGroup(name, parent)
+                      Group * const parent ):
+  Group(name, parent)
 {
   setInputFlags(dataRepository::InputFlags::OPTIONAL_NONUNIQUE);
 }

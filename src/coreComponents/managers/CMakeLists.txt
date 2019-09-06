@@ -11,6 +11,7 @@ set(managers_headers
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
+    Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/BlueprintOutput.hpp
     Outputs/ChomboIO.hpp
@@ -22,6 +23,7 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
+    FieldSpecification/FieldSpecificationOps.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
@@ -41,6 +43,7 @@ set(managers_sources
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
+    Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
     Outputs/BlueprintOutput.cpp
     Outputs/ChomboIO.cpp

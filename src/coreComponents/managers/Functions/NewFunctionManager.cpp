@@ -24,7 +24,8 @@
  */
 
 #include "NewFunctionManager.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+
+#include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
 #include "common/DataTypes.hpp"
 
@@ -35,8 +36,8 @@ using namespace dataRepository;
 
 
 NewFunctionManager::NewFunctionManager( const std::string& name,
-                                        ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                        Group * const parent ):
+  Group( name, parent )
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -47,7 +48,7 @@ NewFunctionManager::~NewFunctionManager()
 }
 
 
-ManagedGroup * NewFunctionManager::CreateChild( string const & functionCatalogKey,
+Group * NewFunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
   GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);

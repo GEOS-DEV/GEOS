@@ -23,9 +23,9 @@
 #ifndef CONSTITUTIVEBASE_HPP_
 #define CONSTITUTIVEBASE_HPP_
 
-#include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
-#include "dataRepository/ManagedGroup.hpp"
+#include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -34,7 +34,7 @@ namespace constitutive
 {
 
 
-class ConstitutiveBase : public dataRepository::ManagedGroup
+class ConstitutiveBase : public dataRepository::Group
 {
 public:
 
@@ -49,7 +49,7 @@ public:
 
 
   ConstitutiveBase( string const & name,
-                    ManagedGroup * const parent );
+                    Group * const parent );
 
   virtual ~ConstitutiveBase() override;
 
@@ -60,7 +60,7 @@ public:
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
 
 
@@ -75,7 +75,7 @@ public:
   virtual void resize( localIndex newSize ) override;
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   /**
@@ -93,7 +93,7 @@ public:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
@@ -113,7 +113,7 @@ protected:
 
 private:
   localIndex m_numQuadraturePoints;
-  ManagedGroup * m_constitutiveDataGroup = nullptr;
+  Group * m_constitutiveDataGroup = nullptr;
 
   ConstitutiveBase( ConstitutiveBase const & ) = delete;
   ConstitutiveBase( ConstitutiveBase && ) = delete;

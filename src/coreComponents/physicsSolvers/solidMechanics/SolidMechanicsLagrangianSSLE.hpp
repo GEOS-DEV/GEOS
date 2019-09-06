@@ -39,10 +39,17 @@ class SolidMechanicsLagrangianSSLE : public SolidMechanicsLagrangianFEM
 {
 public:
   SolidMechanicsLagrangianSSLE( string const & name,
-                                ManagedGroup * const parent );
+                                Group * const parent );
   virtual ~SolidMechanicsLagrangianSSLE() override;
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
+
+
+
+  virtual void ApplySystemSolution( DofManager const & dofManager,
+                                    ParallelVector const & solution,
+                                    real64 const scalingFactor,
+                                    DomainPartition * const domain  ) override;
 
   virtual real64
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,

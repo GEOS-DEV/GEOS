@@ -23,7 +23,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "../../common/ArrayT/ArrayT.h"
+#include "common/ArrayT/ArrayT.h"
 
 /// returns the amount of cpu time use for this process
 realT getcputime(void);

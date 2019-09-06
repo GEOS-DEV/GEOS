@@ -394,23 +394,25 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
   GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
 
-  int n_entries = m_matrix->NumGlobalEntries( globalRow );
+  int n_entries;
+  int * indices_ptr;
+  double * values_ptr;
 
-  localIndex length = integer_conversion<localIndex, int>( n_entries );
-
-  values.resize( length );
-  colIndices.resize( length );
-
-  array1d<int> local_indices ( length );
-
-  int localRow = m_matrix->LRID( globalRow );
-  int err = m_matrix->ExtractMyRowCopy( localRow, n_entries, n_entries, values.data(), local_indices.data() );
+  int const localRow = m_matrix->LRID( globalRow );
+  int const err = m_matrix->ExtractMyRowView( localRow, n_entries, values_ptr, indices_ptr );
   GEOS_ERROR_IF( err != 0,
                  "getRowCopy failed. This often happens if the requested global row "
                  "is not local to this processor, or if close() hasn't been called." );
 
+  localIndex const length = integer_conversion<localIndex, int>( n_entries );
+  values.resize( length );
+  colIndices.resize( length );
+
   for( localIndex i=0 ; i<length ; ++i )
-    colIndices[i] = m_matrix->GCID64( local_indices[i] );
+  {
+    colIndices[i] = m_matrix->GCID64( indices_ptr[i] );
+    values[i] = values_ptr[i];
+  }
 }
 
 real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
@@ -509,6 +511,24 @@ globalIndex EpetraMatrix::iupper() const
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get number of local nonzeros.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Accessor for the number of local nonzeros
+localIndex EpetraMatrix::localNonzeros() const
+{
+  return m_matrix->NumMyNonzeros();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get number of global nonzeros.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Accessor for the number of global nonzeros
+globalIndex EpetraMatrix::globalNonzeros() const
+{
+  return m_matrix->NumGlobalNonzeros64();
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print to terminal.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Wrapper to print the trilinos output of the matrix
@@ -587,7 +607,7 @@ void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
                                          EpetraMatrix const &B,
                                          bool const transB,
                                          EpetraMatrix &C,
-                                         bool const call_FillComplete ) const
+                                         bool const closeResult ) const
 {
   int
   err = EpetraExt::MatrixMatrix::Multiply( *m_matrix,
@@ -595,17 +615,13 @@ void EpetraMatrix::MatrixMatrixMultiply( bool const transA,
                                            *B.unwrappedPointer(),
                                            transB,
                                            *C.unwrappedPointer(),
-                                           call_FillComplete );
+                                           closeResult );
 
   GEOS_ERROR_IF( err != 0, "Error thrown in matrix/matrix multiply routine" );
 
   // Using "call_FillComplete_on_result = false" with rectangular matrices because in this
   // case the function does not work. After the multiplication is performed, call close().
-  if( !call_FillComplete )
-  {
-    C.close();
-  }
-  else
+  if( closeResult )
   {
     C.m_assembled = true;
   }

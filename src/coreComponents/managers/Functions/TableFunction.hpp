@@ -38,7 +38,7 @@ class TableFunction : public FunctionBase
 public:
   /// Main constructor
   TableFunction( const std::string& name,
-                 dataRepository::ManagedGroup * const parent );
+                 dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~TableFunction() override;
@@ -58,7 +58,7 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView<localIndex const> const & set,
                          real64_array & result ) const override final

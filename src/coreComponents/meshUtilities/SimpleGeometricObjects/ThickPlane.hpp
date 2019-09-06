@@ -32,7 +32,7 @@ class ThickPlane : public SimpleGeometricObjectBase
 {
 public:
   ThickPlane( const std::string& name,
-              ManagedGroup * const parent );
+              Group * const parent );
 
   virtual ~ThickPlane() override;
 

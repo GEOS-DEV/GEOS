@@ -24,7 +24,7 @@
 #ifndef BASIS_H
 #define BASIS_H
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "ObjectCatalog.hpp"
 
@@ -38,12 +38,12 @@ namespace geosx
 {
 
 
-class BasisBase : public dataRepository::ManagedGroup
+class BasisBase : public dataRepository::Group
 {
 public:
   /// Main constructor
   explicit BasisBase( std::string const & name,
-                      ManagedGroup * const parent );
+                      Group * const parent );
 
   /// Destructor
   virtual ~BasisBase() override;
@@ -51,7 +51,7 @@ public:
   // Catalog name interface
   static string CatalogName() { return "BasisBase"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;
