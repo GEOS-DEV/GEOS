@@ -8,6 +8,8 @@ Welcome to the GEOSX developer guide.
    :maxdepth: 1
 
    DeveloperGuidelines
+
+   BuildingProcess
    
    GitWorkflow
 
