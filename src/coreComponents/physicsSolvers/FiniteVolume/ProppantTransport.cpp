@@ -64,11 +64,11 @@ ProppantTransport::ProppantTransport( const std::string& name,
 
   RegisterViewWrapper( viewKeyStruct::updatePermeabilityString, &m_updatePermeability, false )->setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Update fracture permeability");
+    setDescription("Flag that enables/disables real-time fracture permeability update");
 
   RegisterViewWrapper( viewKeyStruct::updateProppantMobilityString, &m_updateProppantMobility, false )->setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Update proppant mobility");  
+    setDescription("Flag that enables/disables real-time proppant mobility update");
   
 }
 
