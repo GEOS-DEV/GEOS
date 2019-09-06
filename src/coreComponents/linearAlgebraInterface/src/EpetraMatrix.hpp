@@ -539,6 +539,16 @@ public:
   globalIndex iupper() const;
 
   /**
+   * @brief Returns the number of nonzeros in the local portion of the matrix
+   */
+  localIndex localNonzeros() const;
+
+  /**
+   * @brief Returns the total number of nonzeros in the matrix
+   */
+  globalIndex globalNonzeros() const;
+
+  /**
    * @brief Returns the infinity norm of the matrix.
    */
   real64 normInf() const;
@@ -583,7 +593,7 @@ public:
                              EpetraMatrix const &B,
                              bool const transB,
                              EpetraMatrix &C,
-                             bool const call_FillComplete = true ) const;
+                             bool const closeResult = true ) const;
 
   /**
    * @brief Map a global row index to local row index

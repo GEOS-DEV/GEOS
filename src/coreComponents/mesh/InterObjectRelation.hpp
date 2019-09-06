@@ -39,6 +39,7 @@ class InterObjectRelation : public BASETYPE
 {
 public:
 
+  using base_type = BASETYPE;
 
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
@@ -47,8 +48,8 @@ public:
     return (*this);
   }
 
-  const BASETYPE& Base() const { return static_cast<const BASETYPE&>(*this); }
-  BASETYPE& Base() { return dynamic_cast<BASETYPE&>(*this); }
+  const base_type & Base() const { return static_cast<const BASETYPE&>(*this); }
+  base_type & Base() { return dynamic_cast<BASETYPE&>(*this); }
 
   void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }

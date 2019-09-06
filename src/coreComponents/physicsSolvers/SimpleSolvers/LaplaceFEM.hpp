@@ -34,7 +34,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -46,13 +46,13 @@ class LaplaceFEM : public SolverBase
 public:
 
   LaplaceFEM( const std::string& name,
-              ManagedGroup * const parent );
+              Group * const parent );
 
   virtual ~LaplaceFEM() override;
 
   static string CatalogName() { return "LaplaceFEM"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -80,6 +80,9 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -118,12 +121,6 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
   /**@}*/
-
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DofManager const & dofManager,

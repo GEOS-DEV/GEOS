@@ -44,7 +44,7 @@ public:
     return name;
   }
 
-  LagrangeBasis( std::string const & name, ManagedGroup * const parent );
+  LagrangeBasis( std::string const & name, Group * const parent );
 
   virtual ~LagrangeBasis() override;
 

@@ -35,7 +35,7 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 RestartOutput::RestartOutput( std::string const & name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   OutputBase( name, parent)
 {
 }
@@ -48,13 +48,13 @@ void RestartOutput::Execute(real64 const time_n,
                             integer const cycleNumber,
                             integer const eventCounter,
                             real64 const eventProgress,
-                            ManagedGroup * domain)
+                            Group * domain)
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition* domainPartition = ManagedGroup::group_cast<DomainPartition*>(domain);
-  ProblemManager* problemManager = ManagedGroup::group_cast<ProblemManager*>(domainPartition->getParent());
+  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
+  ProblemManager* problemManager = Group::group_cast<ProblemManager*>(domainPartition->getParent());
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
@@ -74,5 +74,5 @@ void RestartOutput::Execute(real64 const time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( OutputBase, RestartOutput, std::string const &, Group * const )
 } /* namespace geosx */

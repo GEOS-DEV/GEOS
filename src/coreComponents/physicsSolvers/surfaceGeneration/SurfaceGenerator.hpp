@@ -41,6 +41,8 @@ struct ModifiedObjectLists
   map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 
   void clearNewFromModified();
+
+  void insert( ModifiedObjectLists const & lists );
 };
 
 
@@ -51,7 +53,7 @@ class EdgeManager;
 class FaceManager;
 class ExternalFaceManager;
 class ElementRegionManager;
-class ElementRegion;
+class ElementRegionBase;
 
 /**
  * @class SurfaceGenerator
@@ -63,13 +65,13 @@ class SurfaceGenerator : public SolverBase
 {
 public:
   SurfaceGenerator( const std::string& name,
-                    ManagedGroup * const parent );
+                    Group * const parent );
   ~SurfaceGenerator() override;
 
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -83,7 +85,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * domain ) override
+                        dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
   }
@@ -96,12 +98,13 @@ public:
   /**@}*/
 
 
-  int SeparationDriver( MeshLevel * const mesh,
+  int SeparationDriver( DomainPartition * domain,
+                        MeshLevel * const mesh,
                         array1d<NeighborCommunicator> & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time );
+                        const realT time);
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -122,7 +125,10 @@ public:
                                 map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
 
 protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const problemManager ) override final;
+
+  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void postRestartInitialization( Group * const domain ) override final;
 
 private:
 
@@ -136,12 +142,12 @@ private:
    * @param partition
    * @param prefrac
    */
-  void IdentifyRupturedFaces( NodeManager & nodeManager,
+  void IdentifyRupturedFaces( DomainPartition * domain,
+                              NodeManager & nodeManager,
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
                               ElementRegionManager & elementManager,
-                              SpatialPartition& partition,
-                              const bool prefrac );
+                              const bool prefrac);
 
   /**
    * @brief
@@ -155,7 +161,8 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( const localIndex edgeID,
+  realT CalculateEdgeSIF ( DomainPartition * domain,
+                           const localIndex edgeID,
                            localIndex& trailFaceID,
                            NodeManager & nodeManager,
                            EdgeManager & edgeManager,
@@ -163,6 +170,47 @@ private:
                            ElementRegionManager & elementManager,
                            R1Tensor& vecTipNorm,
                            R1Tensor& vecTip );
+
+  /**
+   * @brief
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @return
+   */
+  void CalculateNodeAndFaceSIF ( DomainPartition * domain,
+                           NodeManager & nodeManager,
+                           EdgeManager & edgeManager,
+                           FaceManager & faceManager,
+                           ElementRegionManager & elementManager);
+
+  /**
+   * @brief Function to calculate f_disconnect and f_u.
+   * @param edgeID
+   * @param edgeLength
+   * @param nodeIndices
+   * @param nodeManager
+   * @param edgeManager
+   * @param elementManager
+   * @param vecTipNorm
+   * @param fNode
+   * @param GdivBeta
+   * @param threeNodesPinched
+   * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
+   */
+  int CalculateElementForcesOnEdge ( DomainPartition * domain,
+                           const localIndex edgeID,
+                           realT edgeLength,
+                           localIndex_array & nodeIndices,
+                           NodeManager & nodeManager,
+                           EdgeManager & edgeManager,
+                           ElementRegionManager & elementManager,
+                           R1Tensor& vecTipNorm,
+                           R1Tensor& fNode,
+                           realT& GdivBeta,
+                           bool threeNodesPinched,
+                           bool calculatef_u);
 
   /**
    * @brief
@@ -181,10 +229,26 @@ private:
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
+                                 ElementRegionManager & elementManager,
                                  R1Tensor& vecTipNorm,
                                  R1Tensor& vecTip,
                                  ModifiedObjectLists& modifiedObjects,
                                  const int edgeMode );
+
+  /**
+   * @brief
+   *    * @param nodeManager
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param modifiedObjects
+   */
+  void MarkRuptureFaceFromNode ( const localIndex nodeIndex,
+                                 NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager,
+                                 ElementRegionManager & elementManager,
+                                 ModifiedObjectLists& modifiedObjects);
 
   /**
    *
@@ -204,6 +268,16 @@ private:
 
   /**
    *
+   * @param elementManager
+   * @param faceManager
+   * @param iFace
+   */
+  int CheckOrphanElement( ElementRegionManager & elementManager,
+                           FaceManager & faceManager,
+                           localIndex iFace);
+
+  /**
+   *
    * @param edgeID
    * @param nodeManager
    * @param faceManager
@@ -217,20 +291,6 @@ private:
                              EdgeManager & edgeManager,
                              const bool prefrac );
 
-  /**
-   *
-   * @param nodeID
-   * @param nodeManager
-   * @param faceManager
-   * @param edgeManager
-   * @param prefrac
-   * @return
-   */
-  int CheckNodeSplitability( const localIndex nodeID,
-                             NodeManager & nodeManager,
-                             FaceManager & faceManager,
-                             EdgeManager & edgeManager,
-                             const bool prefrac );
 
 //  void UpdatePathCheckingArrays();
 
@@ -397,6 +457,16 @@ private:
 
   /**
    *
+   * @param ModifiedObjectLists
+   */
+  void SynchronizeTipSets ( FaceManager & faceManager,
+                           EdgeManager & edgeManager,
+                           NodeManager & nodeManager,
+                           ModifiedObjectLists& receivedObjects);
+
+
+  /**
+   *
    * @param edgeID
    * @param nodeManager
    * @param edgeManager
@@ -409,19 +479,64 @@ private:
                                 FaceManager & faceManager );
 
   /**
+   *
+   * @param nodeID
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @return
+   */
+  realT MinimumToughnessOnNode( const localIndex nodeID,
+                                const NodeManager & nodeManager,
+                                EdgeManager & edgeManager,
+                                FaceManager & faceManager );
+
+
+  /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto ruptureStateString = "ruptureState";
+    constexpr static auto SIFonFaceString = "SIFonFace";
+    constexpr static auto K_ICString = "K_IC";
+    constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
+    constexpr static auto isFaceSeparableString = "isFaceSeparable";
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
+    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto fExternalString = "fExternal";
+    constexpr static auto SIFNodeString = "SIFNode";
+    constexpr static auto tipNodesString = "tipNodes";
+    constexpr static auto tipEdgesString = "tipEdges";
+    constexpr static auto tipFacesString = "tipFaces";
+    constexpr static auto trailingFacesString = "trailingFaces";
     constexpr static auto fractureRegionNameString = "fractureRegion";
+
+    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
+    constexpr static auto rockToughnessString = "rockToughness";
+
+    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
+    constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
+    constexpr static auto SIF_IString = "SIF_I";
+    constexpr static auto SIF_IIString = "SIF_II";
+    constexpr static auto SIF_IIIString = "SIF_III";
+
   }; //SurfaceGenViewKeys;
+
 
 private:
   /// choice of failure criterion
   integer m_failCriterion=1;
+
+  // solid solver name
+  string m_solidMaterialName;
+
+  localIndex m_solidMaterialFullIndex;
+
+  int m_nodeBasedSIF;
+
+  realT m_rockToughness;
 
   /// set of separable faces
   localIndex_set m_separableFaceSet;
@@ -449,6 +564,14 @@ private:
 
   /// name of the element region to place all new fractures
   string m_fractureRegionName;
+
+  set< localIndex > m_tipNodes;
+
+  set< localIndex > m_tipEdges;
+
+  set< localIndex > m_tipFaces;
+
+  set< localIndex > m_trailingFaces;
 
 };
 
