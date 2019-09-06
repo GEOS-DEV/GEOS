@@ -323,18 +323,18 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   // apply mass flux boundary condition in the explicit solver
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
 
-//  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
-//                    [&]( FieldSpecificationBase const * const fs,
-//                         string const &,
-//                         set<localIndex> const & lset,
-//                         ManagedGroup * subRegion,
-//                         string const & ) -> void
-//  {
-//    fs->ApplyFieldValue<FieldSpecificationAdd>( lset,
-//                                                time_n + dt,
-//                                                subRegion,
-//                                                viewKeyStruct::massString );
-//  } );
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         ManagedGroup * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationAdd>( lset,
+                                                time_n + dt,
+                                                subRegion,
+                                                viewKeyStruct::massString );
+  } );
 
   // synchronize element fields
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
@@ -394,26 +394,26 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  // apply pressure boundary condition in the explicit solver
-  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         ManagedGroup * subRegion,
-                         string const & ) -> void
-  {
-    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  viewKeyStruct::pressureString );
-  });
+//  // apply pressure boundary condition in the explicit solver
+//  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+//  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+//                    [&]( FieldSpecificationBase const * const fs,
+//                         string const &,
+//                         set<localIndex> const & lset,
+//                         ManagedGroup * subRegion,
+//                         string const & ) -> void
+//  {
+//    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+//                                                  time_n + dt,
+//                                                  subRegion,
+//                                                  viewKeyStruct::pressureString );
+//  });
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegion * const region,
                                  ElementSubRegionBase * const subRegion )
   {
-    UpdateState( subRegion );
+//    UpdateState( subRegion );
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
     arrayView1d<real64> const & mass = m_mass[er][esr];
