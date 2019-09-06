@@ -36,7 +36,7 @@ class HydrofractureSolver : public SolverBase
 {
 public:
   HydrofractureSolver( const std::string& name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   ~HydrofractureSolver() override;
 
@@ -49,21 +49,16 @@ public:
     return "Hydrofracture";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  void SetupSystem ( DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution );
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
-
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -129,7 +124,7 @@ public:
                                                    ParallelMatrix * const matrix01,
                                                    ParallelVector * const rhs0 );
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition * const domain,
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                            ParallelMatrix * const matrix10,
                                                            ParallelVector * const rhs0 );
 
@@ -163,7 +158,7 @@ protected:
   virtual void PostProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
 

@@ -37,6 +37,10 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
+  using NodeMapType = OrderedVariableOneToManyRelation;
+  using EdgeMapType = OrderedVariableOneToManyRelation;
+  using ElemMapType = FixedToManyElementRelation;
+
   /**
    * @name Static Factory Catalog Functions
    */
@@ -54,7 +58,7 @@ public:
   ///
   ///
   ///
-  FaceManager( string const &, ManagedGroup * const parent );
+  FaceManager( string const &, Group * const parent );
   virtual ~FaceManager() override final;
 
 
@@ -89,6 +93,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices ) override;
+
   void depopulateUpMaps( std::set<localIndex> const & receivedFaces,
                          ElementRegionManager const & elemRegionManager );
 
@@ -119,6 +125,8 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxFacesPerNode() const { return 100; }
+
   array1d<real64> &       faceArea()       { return m_faceArea; }
   array1d<real64> const & faceArea() const { return m_faceArea; }
 
@@ -144,7 +152,8 @@ public:
   array2d<localIndex>       & elementList()       { return m_toElements.m_toElementIndex; }
   array2d<localIndex> const & elementList() const { return m_toElements.m_toElementIndex; }
 
-
+  ElemMapType       & toElementRelation()       { return m_toElements; }
+  ElemMapType const & toElementRelation() const { return m_toElements; }
 
 private:
 
@@ -153,9 +162,9 @@ private:
                                     arrayView1d<localIndex const> const & packList ) const;
 
 
-  OrderedVariableOneToManyRelation m_nodeList;
-  OrderedVariableOneToManyRelation m_edgeList;
-  FixedToManyElementRelation m_toElements;
+  NodeMapType m_nodeList;
+  EdgeMapType m_edgeList;
+  ElemMapType m_toElements;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;

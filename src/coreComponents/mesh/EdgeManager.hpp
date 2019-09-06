@@ -27,6 +27,7 @@
 
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 
 namespace geosx
@@ -38,6 +39,9 @@ class CellBlockManager;
 class EdgeManager : public ObjectManagerBase
 {
 public:
+
+  using NodeMapType = FixedOneToManyRelation;
+  using FaceMapType = UnorderedVariableOneToManyRelation;
 
   /**
     * @name Static Factory Catalog Functions
@@ -55,7 +59,7 @@ public:
 
 
   EdgeManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
   ~EdgeManager() override;
 
 //  void Initialize() {}
@@ -112,6 +116,8 @@ public:
                         arraySlice1d<R1Tensor const> const & X,
                         R1Tensor & center ) const;
 
+
+
 //  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
 // nodeB, const NodeManager& nodeManager);
 
@@ -129,6 +135,12 @@ public:
     static constexpr auto elementSubRegionListString  = "elemSubRegionList";
     static constexpr auto elementListString           = "elemList";
 
+
+    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
+    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
+    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+
+
     dataRepository::ViewKey nodesList             = { nodeListString };
     dataRepository::ViewKey faceList              = { faceListString };
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
@@ -141,6 +153,7 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxEdgesPerNode() const { return 100; }
 
   FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
@@ -159,12 +172,23 @@ public:
   UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
 
+  // TODO These should be in their own subset of edges when we add that capability.
+  /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
+  set< localIndex > m_recalculateFractureConnectorEdges;
+  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  array1d<localIndex> m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
+
+
 private:
-  FixedOneToManyRelation m_toNodesRelation;
-  UnorderedVariableOneToManyRelation m_toFacesRelation;
+
+  NodeMapType m_toNodesRelation;
+  FaceMapType m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+
+
 
 
   template<bool DOPACK>

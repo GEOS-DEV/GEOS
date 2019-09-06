@@ -24,8 +24,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-BasisFunctionManager::BasisFunctionManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+BasisFunctionManager::BasisFunctionManager( string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -36,7 +36,7 @@ BasisFunctionManager::~BasisFunctionManager()
 }
 
 
-ManagedGroup * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
+Group * BasisFunctionManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<BasisBase> basis = BasisBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<BasisBase>( childName, std::move(basis) );

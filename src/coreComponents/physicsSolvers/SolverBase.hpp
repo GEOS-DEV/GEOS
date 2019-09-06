@@ -24,9 +24,9 @@
 #include <string>
 #include <limits>
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -55,7 +55,7 @@ class SolverBase : public ExecutableGroup
 public:
 
   explicit SolverBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   SolverBase( SolverBase && ) = default;
 
@@ -80,7 +80,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) override;
+                        dataRepository::Group * const domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -254,6 +254,32 @@ public:
                      ParallelVector & solution );
 
   /**
+   * @brief Populate degree-of-freedom manager with fields relevant to this solver
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  virtual void
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const;
+
+  /**
+   * @brief Set up the linear system (DOF indices and sparsity patterns)
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
+   *
+   * @note While the function is virtual, the base class implementation should be
+   *       sufficient for most single-physics solvers.
+   */
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution );
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
@@ -272,12 +298,13 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void AssembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs );
+  virtual void
+  AssembleSystem( real64 const time,
+                  real64 const dt,
+                  DomainPartition * const domain,
+                  DofManager const & dofManager,
+                  ParallelMatrix & matrix,
+                  ParallelVector & rhs );
 
   /**
    * @brief apply boundary condition to system
@@ -291,12 +318,13 @@ public:
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
    */
-  virtual void ApplyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs );
+  virtual void
+  ApplyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs );
 
   /**
    * @brief calculate the norm of the global system residual
@@ -417,10 +445,10 @@ public:
   /**@}*/
 
 
-  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct
@@ -431,7 +459,6 @@ public:
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";
-    static constexpr auto globalDofNumberString = "globalDOFNumber";
 
   } viewKeys;
 
@@ -482,7 +509,7 @@ public:
 
   template<bool CONST>
   using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
-                                                     add_const_if_t<ElementRegion, CONST> *,
+                                                     add_const_if_t<ElementRegionBase, CONST> *,
                                                      add_const_if_t<ElementSubRegionBase, CONST> * )>;
 
   template<typename MESH, typename LAMBDA>
@@ -503,10 +530,10 @@ protected:
   string getDiscretizationName() const {return m_discretizationName;}
 
   template<typename BASETYPE>
-  static BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
+  static BASETYPE const * GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name );
 
   template<typename BASETYPE>
-  static BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
+  static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
@@ -535,9 +562,9 @@ protected:
 };
 
 template<typename BASETYPE>
-BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name )
 {
-  ManagedGroup const * const constitutiveModels =
+  Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
@@ -548,9 +575,9 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup 
 }
 
 template<typename BASETYPE>
-BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name )
 {
-  ManagedGroup * const constitutiveModels =
+  Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 

@@ -20,8 +20,8 @@
 #include "BufferOps.hpp"
 #include "dataRepository/BufferOps.hpp"
 #include "ToElementRelation.hpp"
-#include "ElementRegionManager.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -53,7 +53,7 @@ localIndex Pack( char*& buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
         sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
       }
@@ -118,7 +118,7 @@ localIndex Unpack( char const * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
       {
-        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
 
         localIndex localElementIndex = softMapLookup( elemSubRegion->m_globalToLocalMap,
@@ -183,7 +183,7 @@ localIndex Pack( char*& buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegion const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
+        ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion(elemRegionIndex);
         ElementSubRegionBase const * const elemSubRegion = elemRegion->GetSubRegion(elemSubRegionIndex);
         sizeOfPackedChars += bufferOps::Pack<DO_PACKING>( buffer, elemSubRegion->m_localToGlobalMap[elemIndex] );
       }
@@ -237,7 +237,7 @@ localIndex Unpack( char const * & buffer,
 
       if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {
-        ElementRegion const * const
+        ElementRegionBase const * const
         elemRegion = elementRegionManager->GetRegion(recvElemRegionIndex);
 
         ElementSubRegionBase const * const

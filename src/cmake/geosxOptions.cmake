@@ -10,8 +10,6 @@ option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
-option( ENABLE_TOTALVIEW_OUTPUT "" OFF )
-
 option( ENABLE_CHAI "Enables CHAI" ON )
 option( BUILD_LOCAL_CHAI "Use the local mirrored CHAI" OFF )
 
@@ -33,7 +31,7 @@ option( ENABLE_UNCRUSTIFY "" ON )
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
 
-option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables ViewWrapper to return pointers instead of references" ON )
+option(ENABLE_CONTAINERARRAY_RETURN_PTR     "Enables Wrapper to return pointers instead of references" ON )
 
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_METIS "Enables METIS" ON )
@@ -41,6 +39,10 @@ option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" ON )
+
+
+
+option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 
 # LAI setup
 

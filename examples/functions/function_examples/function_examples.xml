@@ -61,7 +61,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
+    <CellElementRegion name="Region2" cellBlocks="cb1" numericalMethod="FE1" material="shale" />
   </ElementRegions>
 
   <Constitutive>

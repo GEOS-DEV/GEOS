@@ -41,7 +41,7 @@ using namespace dataRepository;
 
 
 CompositeFunction::CompositeFunction( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   FunctionBase( name, parent ),
 #ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
@@ -50,15 +50,15 @@ CompositeFunction::CompositeFunction( const std::string& name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  RegisterViewWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( keys::functionNames, &m_functionNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of source functions. The order must match the variableNames argument.");
 
-  RegisterViewWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( keys::variableNames, &m_variableNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of variables in expression");
 
-  RegisterViewWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( keys::expression, &m_expression, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Composite math expression");
 }
@@ -96,7 +96,7 @@ void CompositeFunction::InitializeFunction()
 }
 
 
-void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
+void CompositeFunction::Evaluate( dataRepository::Group const * const group,
                                   real64 const time,
                                   SortedArrayView<localIndex const> const & set,
                                   real64_array & result ) const
@@ -147,6 +147,6 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 }
 
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

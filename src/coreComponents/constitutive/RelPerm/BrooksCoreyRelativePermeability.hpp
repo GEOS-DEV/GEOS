@@ -43,12 +43,12 @@ class BrooksCoreyRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  BrooksCoreyRelativePermeability( std::string const & name, dataRepository::ManagedGroup * const parent );
+  BrooksCoreyRelativePermeability( std::string const & name, dataRepository::Group * const parent );
 
   virtual ~BrooksCoreyRelativePermeability() override;
 
   void DeliverClone( string const & name,
-                     ManagedGroup * const parent,
+                     Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::brooksCoreyRelativePermeability; }

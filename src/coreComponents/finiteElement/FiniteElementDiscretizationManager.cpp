@@ -31,8 +31,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, ManagedGroup * const parent ):
-  ManagedGroup(name,parent)
+FiniteElementDiscretizationManager::FiniteElementDiscretizationManager( string const & name, Group * const parent ):
+  Group(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
@@ -43,10 +43,10 @@ FiniteElementDiscretizationManager::~FiniteElementDiscretizationManager()
 }
 
 
-ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & childKey, string const & childName )
+Group * FiniteElementDiscretizationManager::CreateChild( string const & childKey, string const & childName )
 {
   // These objects should probably not be registered on managed group...
-  std::unique_ptr<ManagedGroup> fem = ManagedGroup::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr<Group> fem = Group::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move(fem) );
 }
 
@@ -54,7 +54,7 @@ ManagedGroup * FiniteElementDiscretizationManager::CreateChild( string const & c
 void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ManagedGroup here
-  for (auto& catalogIter: ManagedGroup::GetCatalog())
+  for (auto& catalogIter: Group::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

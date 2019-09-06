@@ -28,11 +28,11 @@ namespace geosx
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
-                    ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                    Group * const parent ):
+  Group(name,parent),
   m_globalLengthScale(0)
 {
-  RegisterViewWrapper<integer>( viewKeys.meshLevels );
+  registerWrapper<integer>( viewKeys.meshLevels );
 }
 
 MeshBody::~MeshBody()
@@ -42,7 +42,7 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( integer const newLevel )
+MeshLevel * MeshBody::CreateMeshLevel( localIndex const newLevel )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }

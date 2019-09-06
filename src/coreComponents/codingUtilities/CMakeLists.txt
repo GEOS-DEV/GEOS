@@ -5,6 +5,7 @@
 set( codingUtilities_headers
      StringUtilities.hpp
      IOUtilities.hpp
+     UnitTestUtilities.hpp
    )
 
 #
