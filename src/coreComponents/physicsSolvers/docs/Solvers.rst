@@ -19,6 +19,7 @@ The following solvers are currently available in GEOSX:
 
   * :doc:`/coreComponents/physicsSolvers/docs/SinglePhaseFlow`
   * :doc:`/coreComponents/physicsSolvers/docs/CompositionalMultiphaseFlow`
+  * :doc:`/coreComponents/physicsSolvers/docs/ProppantTransport`
 
 * Coupled mechanics and fluid flow
 
