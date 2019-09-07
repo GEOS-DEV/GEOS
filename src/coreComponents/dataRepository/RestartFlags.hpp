@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 #ifndef RESTARTFLAGS_H_
 #define RESTARTFLAGS_H_
 
 /**
- * @file RestartFlags.hpp
- */
+* @file RestartFlags.hpp
+*/
 
 namespace geosx
 {
@@ -29,111 +25,111 @@ namespace dataRepository
 {
 
 /**
- * @enum RestartFlags
- *
- * A scoped enum for the restart options.
- */
+* @enum RestartFlags
+*
+* A scoped enum for the restart options.
+*/
 enum class RestartFlags : unsigned char
 {
-  NO_WRITE,     //!< NO_WRITE
-  WRITE,        //!< WRITE
-  WRITE_AND_READ//!< WRITE_AND_READ
+NO_WRITE,     //!< NO_WRITE
+WRITE,        //!< WRITE
+WRITE_AND_READ//!< WRITE_AND_READ
 };
 
 /**
- * @enum PlotLevel
- *
- * A scoped enum for the Plot options.
- */
+* @enum PlotLevel
+*
+* A scoped enum for the Plot options.
+*/
 enum class PlotLevel : int
 {
-  LEVEL_0, ///< Write to plot always
-  LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input
-  LEVEL_2, ///< Write to plot when plotLevel>=2 is specified in input
-  LEVEL_3, ///< Write to plot when plotLevel>=3 is specified in input
-  NOPLOT   ///< Do not ever write to plot file
+LEVEL_0, ///< Write to plot always
+LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input
+LEVEL_2, ///< Write to plot when plotLevel>=2 is specified in input
+LEVEL_3, ///< Write to plot when plotLevel>=3 is specified in input
+NOPLOT   ///< Do not ever write to plot file
 };
 
 /**
- * @brief Function to get a PlotLevel enum from an int
- * @param val int that represents the PlotLevel
- * @return The PlotLevel that corresponds to the input
- */
+* @brief Function to get a PlotLevel enum from an int
+* @param val int that represents the PlotLevel
+* @return The PlotLevel that corresponds to the input
+*/
 inline PlotLevel IntToPlotLevel( int const val )
 {
-  PlotLevel rval = PlotLevel::NOPLOT;
-  switch( val )
-  {
-    case 0:
-    {
-      rval = PlotLevel::LEVEL_0;
-      break;
-    }
-    case 1:
-    {
-      rval = PlotLevel::LEVEL_1;
-      break;
-    }
-    case 2:
-    {
-      rval = PlotLevel::LEVEL_2;
-      break;
-    }
-    case 3:
-    {
-      rval = PlotLevel::LEVEL_3;
-      break;
-    }
-    default:
-    {
-      break;
-    }
-  }
-  return rval;
+PlotLevel rval = PlotLevel::NOPLOT;
+switch( val )
+{
+case 0:
+{
+rval = PlotLevel::LEVEL_0;
+break;
+}
+case 1:
+{
+rval = PlotLevel::LEVEL_1;
+break;
+}
+case 2:
+{
+rval = PlotLevel::LEVEL_2;
+break;
+}
+case 3:
+{
+rval = PlotLevel::LEVEL_3;
+break;
+}
+default:
+{
+break;
+}
+}
+return rval;
 }
 
 /**
- * @brief boolean operator< for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left<right
- */
+* @brief boolean operator< for PlotLevel
+* @param[in] left
+* @param[in] right
+* @return boolean result of left<right
+*/
 inline bool operator<( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast< int >(left) < static_cast< int >(right);
+return static_cast< int >(left) < static_cast< int >(right);
 }
 
 /**
- * @brief boolean operator> for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left>right
- */
+* @brief boolean operator> for PlotLevel
+* @param[in] left
+* @param[in] right
+* @return boolean result of left>right
+*/
 inline bool operator>( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast< int >(left) > static_cast< int >(right);
+return static_cast< int >(left) > static_cast< int >(right);
 }
 
 /**
- * @brief boolean operator== for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left==right
- */
+* @brief boolean operator== for PlotLevel
+* @param[in] left
+* @param[in] right
+* @return boolean result of left==right
+*/
 inline bool operator==( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast< int >(left) == static_cast< int >(right);
+return static_cast< int >(left) == static_cast< int >(right);
 }
 
 /**
- * @brief boolean operator!= for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left!=right
- */
+* @brief boolean operator!= for PlotLevel
+* @param[in] left
+* @param[in] right
+* @return boolean result of left!=right
+*/
 inline bool operator!=( PlotLevel const left, PlotLevel const right )
 {
-  return static_cast< int >(left) != static_cast< int >(right);
+return static_cast< int >(left) != static_cast< int >(right);
 }
 
 

@@ -1,20 +1,18 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
+
+
 
 /*
  * @file InternalWellGenerator.cpp
@@ -97,32 +95,32 @@ void InternalWellGenerator::PostProcessInput()
                  "Currently, the well generator must contain the word well in its name ");
 
   GEOS_ERROR_IF( m_inputPolyNodeCoords.size(1) != m_nDims,
-                 "Invalid number of physical coordinates in " << keys::nodeCoords << " for well " << getName() ); 
+                 "Invalid number of physical coordinates in " << keys::nodeCoords << " for well " << getName() );
 
   GEOS_ERROR_IF( m_segmentToPolyNodeMap.size(1) != 2,
-                 "Invalid size in " << keys::segmentConn << " for well " << getName() ); 
+                 "Invalid size in " << keys::segmentConn << " for well " << getName() );
 
   GEOS_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
-                 "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() ); 
- 
+                 "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() );
+
   GEOS_ERROR_IF( m_crossSectionArea <= 0,
                  "Invalid " << keys::crossSectionArea << " in well " << getName() );
 
-  GEOS_ERROR_IF( m_wellRegionName.empty(), 
+  GEOS_ERROR_IF( m_wellRegionName.empty(),
                  "Invalid well region name in well " << getName() );
 
-  GEOS_ERROR_IF( m_meshBodyName.empty(), 
+  GEOS_ERROR_IF( m_meshBodyName.empty(),
                  "Invalid mesh name in well " << getName() );
 
-  GEOS_ERROR_IF( m_wellControlsName.empty(), 
+  GEOS_ERROR_IF( m_wellControlsName.empty(),
                  "Invalid well constraint name in well " << getName() );
 
   // convert the 2D array to an 1D array of R1Tensor
   m_polyNodeCoords.resize( m_inputPolyNodeCoords.size(0) );
   for (globalIndex inode = 0; inode < m_inputPolyNodeCoords.size(0); ++inode)
   {
-    R1Tensor coords = { m_inputPolyNodeCoords[inode][0], 
-                        m_inputPolyNodeCoords[inode][1], 
+    R1Tensor coords = { m_inputPolyNodeCoords[inode][0],
+                        m_inputPolyNodeCoords[inode][1],
                         m_inputPolyNodeCoords[inode][2] };
     m_polyNodeCoords[inode] = coords;
   }
@@ -155,7 +153,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
   // count the number of well elements to create
   m_numElems = m_numElemsPerSegment * m_segmentToPolyNodeMap.size(0);
   m_numNodes = m_numElems + 1;
- 
+
   // resize the well element, node, and perforation arrays
   m_elemCenterCoords.resize( m_numElems );
   m_nextElemId.resize( m_numElems );
@@ -163,7 +161,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
   m_elemToNodesMap.resizeDimension<0>( m_numElems );
   m_elemToNodesMap.resizeDimension<1>( m_numNodesPerElem );
   m_elemVolume.resize( m_numElems );
- 
+
   m_nodeDistFromHead.resize( m_numNodes );
   m_nodeCoords.resize( m_numNodes );
 
@@ -195,11 +193,11 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
   // get the element (sub) region to populate and save the well generator and constraints names
   MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();  
-  WellElementRegion * const 
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  WellElementRegion * const
   wellRegion = elemManager->GetGroup(keys::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
 
-  GEOS_ERROR_IF( wellRegion == nullptr, 
+  GEOS_ERROR_IF( wellRegion == nullptr,
                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );
 
   wellRegion->SetWellGeneratorName( this->getName() );
@@ -208,7 +206,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
 
 
-void InternalWellGenerator::ConstructPolylineNodeToSegmentMap() 
+void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
 {
   m_polyNodeToSegmentMap.resize( m_polyNodeCoords.size() );
 
@@ -223,7 +221,7 @@ void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
 
     // various checks and warnings on the segment and element length
     GEOS_ERROR_IF( v.L2_Norm() < 1e-2,
-                   "Error in the topology of well " << getName() 
+                   "Error in the topology of well " << getName()
                 << ": we detected a polyline segment measuring less than 1 cm" );
 
     if ( v.L2_Norm() < 1 )
@@ -233,7 +231,7 @@ void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
 
     if ( v.L2_Norm() / static_cast<real64>(m_numElemsPerSegment) < 1e-2 )
     {
-      GEOS_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment 
+      GEOS_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment
                     << ") leads to well elements measuring less than 1 cm in the topology of well " << getName() );
     }
 
@@ -247,7 +245,7 @@ void InternalWellGenerator::FindPolylineHeadNodeIndex()
 {
   // we assume that the first *polyline segment* in the XML input is the well head segment
   globalIndex const wellHeadSegId = 0;
-  
+
   // get the corresponding node indices
   globalIndex const ipolyNode_a = m_segmentToPolyNodeMap[wellHeadSegId][0];
   globalIndex const ipolyNode_b = m_segmentToPolyNodeMap[wellHeadSegId][1];
@@ -255,14 +253,14 @@ void InternalWellGenerator::FindPolylineHeadNodeIndex()
   // we determine which node is the head node based on depth
   // therefore here we throw an error if the well head segment is horizontal
   GEOS_ERROR_IF(    !(m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2])
-                 && !(m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2]), 
+                 && !(m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2]),
                  "The head polyline segment cannot be horizontal in well " << getName()
               << " since we use depth to determine which of its nodes is to head node of the well" );
 
   // detect the top node, assuming z oriented upwards
-  m_polylineHeadNodeId = 
+  m_polylineHeadNodeId =
     ( m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2] )
-    ? ipolyNode_a 
+    ? ipolyNode_a
     : ipolyNode_b;
 
   real64 const headZcoord = m_polyNodeCoords[m_polylineHeadNodeId][2];
@@ -274,8 +272,8 @@ void InternalWellGenerator::FindPolylineHeadNodeIndex()
     }
     real64 const currentZcoord = m_polyNodeCoords[inode][2];
 
-    GEOS_ERROR_IF( !(currentZcoord < headZcoord), 
-                   "Error in the topology of well " << getName() 
+    GEOS_ERROR_IF( !(currentZcoord < headZcoord),
+                   "Error in the topology of well " << getName()
                 << " since we found a well node that is above the head node" );
   }
 }
@@ -305,7 +303,7 @@ void InternalWellGenerator::DiscretizePolyline()
     globalIndex const ipolyNodeBottom = ( ipolyNodeTop == m_segmentToPolyNodeMap[isegCurrent][0] )
                                       ? m_segmentToPolyNodeMap[isegCurrent][1]
                                       : m_segmentToPolyNodeMap[isegCurrent][0];
-  
+
     R1Tensor vPoly = m_polyNodeCoords[ipolyNodeBottom];
     vPoly -= m_polyNodeCoords[ipolyNodeTop];
 
@@ -317,7 +315,7 @@ void InternalWellGenerator::DiscretizePolyline()
       real64 const scaleCenter = (iw + 0.5) / static_cast<real64>(m_numElemsPerSegment);
       m_elemCenterCoords[iwelemCurrent]  = vPoly;
       m_elemCenterCoords[iwelemCurrent] *= scaleCenter;
-      m_elemCenterCoords[iwelemCurrent] += m_polyNodeCoords[ipolyNodeTop];      
+      m_elemCenterCoords[iwelemCurrent] += m_polyNodeCoords[ipolyNodeTop];
 
       GEOS_ERROR_IF( iwelemCurrent >= m_numElems,
                      "Invalid well topology in well " << getName() );
@@ -334,7 +332,7 @@ void InternalWellGenerator::DiscretizePolyline()
       globalIndex const iwellNodeTop    = iwelemCurrent;
       globalIndex const iwellNodeBottom = iwelemCurrent+1;
       m_elemToNodesMap[iwelemCurrent][NodeLocation::TOP]    = iwellNodeTop;
-      m_elemToNodesMap[iwelemCurrent][NodeLocation::BOTTOM] = iwellNodeBottom; 
+      m_elemToNodesMap[iwelemCurrent][NodeLocation::BOTTOM] = iwellNodeBottom;
 
       real64 const scaleBottom = (iw + 1.0) / static_cast<real64>(m_numElemsPerSegment);
       m_nodeCoords[iwellNodeBottom]  = vPoly;
@@ -346,7 +344,7 @@ void InternalWellGenerator::DiscretizePolyline()
       vWellElem -= m_nodeCoords[iwellNodeTop];
       m_nodeDistFromHead[iwellNodeBottom]  = vWellElem.L2_Norm();
       m_nodeDistFromHead[iwellNodeBottom] += m_nodeDistFromHead[iwellNodeTop];
-       
+
       // 4) set element volume
       m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * m_crossSectionArea;
 
@@ -356,7 +354,7 @@ void InternalWellGenerator::DiscretizePolyline()
 
     // then consider the next polyline segment
     ipolyNodeTop = ipolyNodeBottom;
-    isegCurrent  = GetNextSegmentIndex( isegCurrent, ipolyNodeTop ); 
+    isegCurrent  = GetNextSegmentIndex( isegCurrent, ipolyNodeTop );
   }
 
   // set the previous index for the bottom segment
@@ -366,38 +364,38 @@ void InternalWellGenerator::DiscretizePolyline()
 }
 
 
-void InternalWellGenerator::ConnectPerforationsToWellElements() 
+void InternalWellGenerator::ConnectPerforationsToWellElements()
 {
- 
+
   // assign a well element to each perforation
   for (globalIndex iperf = 0; iperf < m_numPerforations; ++iperf)
   {
 
     // get the perforation and its properties
-    Perforation const * const perf = 
+    Perforation const * const perf =
       this->GetGroup<Perforation>( m_perforationList[iperf] );
     m_perfDistFromHead[iperf] = perf->GetDistanceFromWellHead();
-    m_perfTrans[iperf]        = perf->GetTransmissibility();    
+    m_perfTrans[iperf]        = perf->GetTransmissibility();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
     globalIndex iwelemBottom = m_numElems - 1;
 
     // check the validity of the perforation before starting
-    real64 const wellLength = 
+    real64 const wellLength =
       m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
 
     GEOS_ERROR_IF( m_perfDistFromHead[iperf] > wellLength,
-                  "Distance from perforation " << perf->getName() << " to head is larger than well length for well " << getName() ); 
-    
+                  "Distance from perforation " << perf->getName() << " to head is larger than well length for well " << getName() );
+
     // start binary search
     const globalIndex maxNumSteps = m_numElems + 1;
     globalIndex currentNumSteps = 0;
     while ( iwelemTop < iwelemBottom )
     {
-      globalIndex iwelemMid = 
+      globalIndex iwelemMid =
         static_cast<globalIndex>(floor( static_cast<real64>(iwelemTop + iwelemBottom) / 2.0 ));
-      real64 const headToBottomDist =       
+      real64 const headToBottomDist =
         m_nodeDistFromHead[m_elemToNodesMap[iwelemMid][NodeLocation::BOTTOM]];
 
       if (headToBottomDist < m_perfDistFromHead[iperf])
@@ -411,7 +409,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
 
       GEOS_ERROR_IF( currentNumSteps > maxNumSteps,
                     "Perforation " << perf->getName() << " cannot be mapped to a well element in well " << getName() );
-  
+
       currentNumSteps++;
     }
 
@@ -420,7 +418,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
     GEOS_ERROR_IF( iwelemMatched >= m_numElems,
                   "Invalid topology in well " << getName() );
 
-    m_perfElemId[iperf] = iwelemMatched;    
+    m_perfElemId[iperf] = iwelemMatched;
 
     // compute the physical location of the perforation
     globalIndex const inodeTop    = m_elemToNodesMap[iwelemMatched][NodeLocation::TOP];
@@ -430,7 +428,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
 
     GEOS_ERROR_IF( (elemLength <= 0) || (topToPerfDist < 0),
                   "Invalid topology in well " << getName() );
- 
+
     R1Tensor v = m_nodeCoords[inodeBottom];
     v -= m_nodeCoords[inodeTop];
     m_perfCoords[iperf]  = v;
@@ -445,7 +443,7 @@ globalIndex InternalWellGenerator::GetNextSegmentIndex( globalIndex topSegId,
                                                         globalIndex currentPolyNodeId ) const
 {
   globalIndex nextSegId = -1;
-  
+
   // get the index of the two segments sharing this node
   for ( auto is : m_polyNodeToSegmentMap[currentPolyNodeId] )
   {
@@ -487,7 +485,7 @@ void InternalWellGenerator::MergePerforations()
           maxTrans = m_perfTrans[iperfMaxTrans];
         }
       }
-      
+
       // assign the coordinates of the perf with the largest trans to the other perfs on this elem
       for (localIndex ip = 0; ip < elemToPerfMap[iwelem].size(); ++ip)
       {
@@ -496,9 +494,9 @@ void InternalWellGenerator::MergePerforations()
           continue;
         }
 
-        GEOS_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip] 
+        GEOS_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip]
                       << " of well " << getName()
-                      << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]] 
+                      << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]]
                       << " to " << m_perfCoords[iperfMaxTrans] << " to make sure that no well element is shared between two MPI ranks" );
         m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxTrans];
       }
@@ -507,34 +505,34 @@ void InternalWellGenerator::MergePerforations()
     // in passing, check that there is always a perforation in the last well element (otherwise, the problem is not well posed)
     for (localIndex iwelemPrev = 0; iwelemPrev < m_prevElemId[iwelem].size(); ++iwelemPrev)
     {
-      GEOS_ERROR_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0, 
-                     "The bottom element of well " << getName() << " does not have a perforation" 
+      GEOS_ERROR_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0,
+                     "The bottom element of well " << getName() << " does not have a perforation"
                   << " This is needed to have a well-posed problem" );
     }
   }
 }
 
 
-void InternalWellGenerator::DebugWellGeometry() const 
+void InternalWellGenerator::DebugWellGeometry() const
 {
   if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 0)
   {
     return;
-  } 
+  }
 
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "InternalWellGenerator = " << getName() << std::endl;
   std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of well elements = " << m_numElems << std::endl;
-  
+
   for (globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem)
   {
-    std::cout << "m_elemCenterCoords[" << iwelem << "] = " << m_elemCenterCoords[iwelem] 
+    std::cout << "m_elemCenterCoords[" << iwelem << "] = " << m_elemCenterCoords[iwelem]
               << std::endl;
-    std::cout << "m_nextElemId[" << iwelem << "] = " << m_nextElemId[iwelem] 
+    std::cout << "m_nextElemId[" << iwelem << "] = " << m_nextElemId[iwelem]
               << std::endl;
-    std::cout << "m_prevElemId[" << iwelem << "] = " << m_prevElemId[iwelem][0] 
+    std::cout << "m_prevElemId[" << iwelem << "] = " << m_prevElemId[iwelem][0]
               << std::endl;
     for (globalIndex inode = 0; inode < m_numNodesPerElem; ++inode)
     {
@@ -544,10 +542,10 @@ void InternalWellGenerator::DebugWellGeometry() const
   }
 
   std::cout << "Number of well nodes = " << m_numNodes << std::endl;
-  
+
   for (globalIndex inode = 0; inode < m_numNodes; ++inode)
   {
-    std::cout << "m_nodeCoords[" << inode << "] = " << m_nodeCoords[inode] 
+    std::cout << "m_nodeCoords[" << inode << "] = " << m_nodeCoords[inode]
               << std::endl;
     std::cout << "m_nodeDistFromHead[" << inode << "] = " << m_nodeDistFromHead[inode]
               << std::endl;
@@ -555,13 +553,13 @@ void InternalWellGenerator::DebugWellGeometry() const
 
   std::cout << "Number of perforations = " << m_numPerforations << std::endl;
 
-  for (globalIndex iperf = 0; iperf < m_numPerforations; ++iperf) 
+  for (globalIndex iperf = 0; iperf < m_numPerforations; ++iperf)
   {
-    std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf] 
+    std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf]
               << std::endl;
-    std::cout << "m_perfTrans[" << iperf << "] = " << m_perfTrans[iperf] 
+    std::cout << "m_perfTrans[" << iperf << "] = " << m_perfTrans[iperf]
               << std::endl;
-    std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf] 
+    std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf]
               << std::endl;
   }
 

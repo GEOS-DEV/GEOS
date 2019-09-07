@@ -1,25 +1,21 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /*
- * @file Perforation.hpp
- *
- */
+* @file Perforation.hpp
+*
+*/
 
 #ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
 #define GEOSX_CORECOMPONENTS_WELLS_PERFORATION_HPP
@@ -39,75 +35,75 @@ static constexpr auto perforation = "Perforation";
 
 
 /**
- * @class Perforation
- *
- * This class describes a perforation with its location, transmissibility and corresponding well element
- */  
+* @class Perforation
+*
+* This class describes a perforation with its location, transmissibility and corresponding well element
+*/
 class Perforation : public dataRepository::Group
 {
 public:
 
-  /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
-   */
-  explicit Perforation( string const & name, dataRepository::Group * const parent );
-  
-  /**
-   * @brief default destructor
-   */
-  ~Perforation() override;
+/**
+* @brief main constructor for ManagedGroup Objects
+* @param name the name of this instantiation of ManagedGroup in the repository
+* @param parent the parent group of this instantiation of ManagedGroup
+*/
+explicit Perforation( string const & name, dataRepository::Group * const parent );
 
-  /// deleted default constructor
-  Perforation() = delete;
+/**
+* @brief default destructor
+*/
+~Perforation() override;
 
-  /// deleted copy constructor
-  Perforation( Perforation const &) = delete;
+/// deleted default constructor
+Perforation() = delete;
 
-  /// deleted move constructor
-  Perforation( Perforation && ) = delete;
+/// deleted copy constructor
+Perforation( Perforation const &) = delete;
 
-  /// deleted assignment operator
-  Perforation & operator=( Perforation const & ) = delete;
+/// deleted move constructor
+Perforation( Perforation && ) = delete;
 
-  /// deleted move operator
-  Perforation & operator=( Perforation && ) = delete;
+/// deleted assignment operator
+Perforation & operator=( Perforation const & ) = delete;
 
-  /**
-   * @brief Getter for the linear distance between the well head and the perforation
-   * @return the distance between the well head and the perforation
-   */
-  real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
+/// deleted move operator
+Perforation & operator=( Perforation && ) = delete;
 
-  /**
-   * @brief Getter for the transmissibility at the perforation
-   * @return the transmissibility
-   */
-  real64 GetTransmissibility() const { return m_transmissibility; }
+/**
+* @brief Getter for the linear distance between the well head and the perforation
+* @return the distance between the well head and the perforation
+*/
+real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
+
+/**
+* @brief Getter for the transmissibility at the perforation
+* @return the transmissibility
+*/
+real64 GetTransmissibility() const { return m_transmissibility; }
 
 
-  struct viewKeyStruct
-  {
-    static constexpr auto distanceFromHeadString = "distanceFromHead";
-    static constexpr auto transmissibilityString = "transmissibility";
+struct viewKeyStruct
+{
+static constexpr auto distanceFromHeadString = "distanceFromHead";
+static constexpr auto transmissibilityString = "transmissibility";
 
-    dataRepository::ViewKey distanceFromHead = { distanceFromHeadString };
-    dataRepository::ViewKey transmissibility = { transmissibilityString };
+dataRepository::ViewKey distanceFromHead = { distanceFromHeadString };
+dataRepository::ViewKey transmissibility = { transmissibilityString };
 
-  } viewKeysPerforation;
+} viewKeysPerforation;
 
 protected:
 
-  void PostProcessInput() override;
+void PostProcessInput() override;
 
 private:
-  
-  // linear distance from well head
-  real64 m_distanceFromHead;
 
-  // transmissibility (well index) at this perforation
-  real64 m_transmissibility;
+// linear distance from well head
+real64 m_distanceFromHead;
+
+// transmissibility (well index) at this perforation
+real64 m_transmissibility;
 
 };
 

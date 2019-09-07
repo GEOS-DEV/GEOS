@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /*
- * PAMELAMeshGenerator.cpp
- *
- *  Created on: Oct 08, 2018
- *      Author: Antoine Mazuyer
- */
+* PAMELAMeshGenerator.cpp
+*
+*  Created on: Oct 08, 2018
+*      Author: Antoine Mazuyer
+*/
 
 #pragma once
 
@@ -40,69 +36,69 @@ namespace geosx
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
-  PAMELAMeshGenerator( const std::string& name,
-                       Group * const parent );
+PAMELAMeshGenerator( const std::string& name,
+Group * const parent );
 
-  virtual ~PAMELAMeshGenerator() override;
+virtual ~PAMELAMeshGenerator() override;
 
-  static string CatalogName() { return "PAMELAMeshGenerator"; }
+static string CatalogName() { return "PAMELAMeshGenerator"; }
 
-  struct viewKeyStruct
-  {
-    constexpr static auto filePathString = "file";
-    constexpr static auto scaleString = "scale";
-    constexpr static auto fieldsToImportString = "fieldsToImport";
-    constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
-    constexpr static auto reverseZString = "reverseZ";
-  };
+struct viewKeyStruct
+{
+constexpr static auto filePathString = "file";
+constexpr static auto scaleString = "scale";
+constexpr static auto fieldsToImportString = "fieldsToImport";
+constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
+constexpr static auto reverseZString = "reverseZ";
+};
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) override;
+virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+virtual void GenerateMesh( DomainPartition * const domain ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                             const int index[],
-                                             const int& iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
+virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
+const int index[],
+const int& iEle,
+int nodeIDInBox[],
+const int size ) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+virtual void RemapMesh ( dataRepository::Group * const domain ) override;
 
 protected:
-  void PostProcessInput() override final;
+void PostProcessInput() override final;
 
 private:
 
-  /// Mesh in the data structure of PAMELA.
-  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+/// Mesh in the data structure of PAMELA.
+std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
-  /// Names of the fields to be copied from PAMELA to GEOSX data structure
-  string_array m_fieldsToImport;
+/// Names of the fields to be copied from PAMELA to GEOSX data structure
+string_array m_fieldsToImport;
 
-  /// Path to the mesh file
-  string m_filePath;
+/// Path to the mesh file
+string m_filePath;
 
-  /// Scale factor that will be applied to the point coordinates
-  real64 m_scale;
+/// Scale factor that will be applied to the point coordinates
+real64 m_scale;
 
-  string_array m_fieldNamesInGEOSX;
+string_array m_fieldNamesInGEOSX;
 
-  int m_isZReverse;
+int m_isZReverse;
 
-  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
-    =
-    {
-    { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
-    { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
-    { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
-    { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
-    { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
-    { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
-    };
+const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
+=
+{
+{ PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
+{ PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
+{ PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
+{ PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
+{ PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
+{ PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
+{ PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
+{ PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
+};
 };
 
 }

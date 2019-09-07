@@ -1,20 +1,16 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 
 #include "testCompFlowUtils.hpp"
@@ -44,231 +40,231 @@ char** global_argv;
 template<int DIM>
 struct TestReservoirVarContainer
 {
-  array_slice<real64,DIM> value; // variable value
-  array_slice<real64,DIM> dPres; // derivative w.r.t. pressure
-  array_slice<real64,DIM> dRate; // derivative w.r.t. rate
+array_slice<real64,DIM> value; // variable value
+array_slice<real64,DIM> dPres; // derivative w.r.t. pressure
+array_slice<real64,DIM> dRate; // derivative w.r.t. rate
 };
 
 template<typename LAMBDA>
 void testNumericalJacobian( ReservoirSolver * solver,
-                            DomainPartition * domain,
-                            double perturbParameter,
-                            double relTol,
-                            LAMBDA && assembleFunction )
+DomainPartition * domain,
+double perturbParameter,
+double relTol,
+LAMBDA && assembleFunction )
 {
-  SinglePhaseWell * wellSolver = solver->GetWellSolver()->group_cast<SinglePhaseWell*>();
-  SinglePhaseFlow * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFlow*>();
+SinglePhaseWell * wellSolver = solver->GetWellSolver()->group_cast<SinglePhaseWell*>();
+SinglePhaseFlow * flowSolver = solver->GetFlowSolver()->group_cast<SinglePhaseFlow*>();
 
-  ParallelMatrix & jacobian = solver->getSystemMatrix();
-  ParallelVector & residual = solver->getSystemRhs();
-  DofManager const & dofManager = solver->getDofManager();
+ParallelMatrix & jacobian = solver->getSystemMatrix();
+ParallelVector & residual = solver->getSystemRhs();
+DofManager const & dofManager = solver->getDofManager();
 
-  // get a view into local residual vector
-  double* localResidual = nullptr;
-  residual.extractLocalVector( &localResidual );
+// get a view into local residual vector
+double* localResidual = nullptr;
+residual.extractLocalVector( &localResidual );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  // assemble the analytical residual
-  solver->ResetStateToBeginningOfStep( domain );
-  residual.zero();
-  assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+// assemble the analytical residual
+solver->ResetStateToBeginningOfStep( domain );
+residual.zero();
+assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
 
-  // copy the analytical residual
-  ParallelVector residualOrig( residual );
-  double* localResidualOrig = nullptr;
-  residualOrig.extractLocalVector( &localResidualOrig );
+// copy the analytical residual
+ParallelVector residualOrig( residual );
+double* localResidualOrig = nullptr;
+residualOrig.extractLocalVector( &localResidualOrig );
 
-  // create the numerical jacobian
-  ParallelMatrix jacobianFD( jacobian );
-  jacobianFD.zero();
+// create the numerical jacobian
+ParallelMatrix jacobianFD( jacobian );
+jacobianFD.zero();
 
-  string const resDofKey  = dofManager.getKey( wellSolver->ResElementDofName() );
-  string const wellDofKey = dofManager.getKey( wellSolver->WellElementDofName() );
+string const resDofKey  = dofManager.getKey( wellSolver->ResElementDofName() );
+string const wellDofKey = dofManager.getKey( wellSolver->WellElementDofName() );
 
-  // at this point we start assembling the finite-difference block by block
+// at this point we start assembling the finite-difference block by block
 
-  ////////////////////////////////////////////////
-  // Step 1) Compute the terms in J_RR and J_WR //
-  ////////////////////////////////////////////////
-  
-  for (localIndex er = 0; er < elemManager->numRegions(); ++er)
-  {
-    ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                        auto * const subRegion )
-    {
-      // get the dof numbers and ghosting information
-      arrayView1d<globalIndex> & dofNumber =
-        subRegion-> template getReference<array1d<globalIndex >>( resDofKey );
+////////////////////////////////////////////////
+// Step 1) Compute the terms in J_RR and J_WR //
+////////////////////////////////////////////////
 
-      arrayView1d<integer> & elemGhostRank =
-        subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+for (localIndex er = 0; er < elemManager->numRegions(); ++er)
+{
+ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
+elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
+auto * const subRegion )
+{
+// get the dof numbers and ghosting information
+arrayView1d<globalIndex> & dofNumber =
+subRegion-> template getReference<array1d<globalIndex >>( resDofKey );
 
-      // get the primary variables on reservoir elements
-      arrayView1d<real64> & pres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
+arrayView1d<integer> & elemGhostRank =
+subRegion-> template getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-      arrayView1d<real64> & dPres =
-        subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
+// get the primary variables on reservoir elements
+arrayView1d<real64> & pres =
+subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
 
-      // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei 
-      for (localIndex ei = 0; ei < subRegion->size(); ++ei)
-      {
-        if (elemGhostRank[ei] >= 0)
-        {
-          continue;
-        }
-        
-        globalIndex const eiOffset = dofNumber[ei];
+arrayView1d<real64> & dPres =
+subRegion-> template getReference<array1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
 
-        {
-          solver->ResetStateToBeginningOfStep(domain);
+// a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
+for (localIndex ei = 0; ei < subRegion->size(); ++ei)
+{
+if (elemGhostRank[ei] >= 0)
+{
+continue;
+}
 
-          // here is the perturbation in the pressure of the element
-          real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-          dPres[ei] = dP;
-          // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
-          {
-            flowSolver->UpdateState( subRegion2 );
-          });
+globalIndex const eiOffset = dofNumber[ei];
 
-          residual.zero();
-          assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+{
+solver->ResetStateToBeginningOfStep(domain);
 
-          globalIndex const dofIndex = integer_conversion<long long>(eiOffset);
+// here is the perturbation in the pressure of the element
+real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
+dPres[ei] = dP;
+// after perturbing, update the pressure-dependent quantities in the reservoir
+flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion2 )
+{
+flowSolver->UpdateState( subRegion2 );
+});
 
-          // consider mass balance eq lid in RESERVOIR elems and WELL elems
-          // this is computing J_RR and J_RW
-          for (localIndex lid = 0; lid < residual.localSize(); ++lid)
-          {
-            real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
-            if (std::fabs(dRdP) > 0.0)
-            {
-              globalIndex gid = residual.getGlobalRowID( lid );
-              jacobianFD.set( gid, dofIndex, dRdP );
-            }
-          }
-        }
-      }
-    });
-  }
+residual.zero();
+assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
 
-  /////////////////////////////////////////////////
-  // Step 2) Compute the terms in J_RW and J_WW //
-  /////////////////////////////////////////////////      
+globalIndex const dofIndex = integer_conversion<long long>(eiOffset);
 
-  // loop over the wells
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
-  {
-    
-    // get the degrees of freedom and ghosting information
-    array1d<globalIndex const> const & wellElemDofNumber =
-      subRegion->getReference<array1d<globalIndex>>( wellDofKey );
+// consider mass balance eq lid in RESERVOIR elems and WELL elems
+// this is computing J_RR and J_RW
+for (localIndex lid = 0; lid < residual.localSize(); ++lid)
+{
+real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
+if (std::fabs(dRdP) > 0.0)
+{
+globalIndex gid = residual.getGlobalRowID( lid );
+jacobianFD.set( gid, dofIndex, dRdP );
+}
+}
+}
+}
+});
+}
 
-    arrayView1d<integer const> const & wellElemGhostRank =
-      subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
+/////////////////////////////////////////////////
+// Step 2) Compute the terms in J_RW and J_WW //
+/////////////////////////////////////////////////
 
-    // get the primary variables on well elements
-    array1d<real64> const & wellElemPressure =
-      subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::pressureString );
+// loop over the wells
+elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion * const subRegion )
+{
 
-    array1d<real64> const & dWellElemPressure =
-      subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaPressureString );
+// get the degrees of freedom and ghosting information
+array1d<globalIndex const> const & wellElemDofNumber =
+subRegion->getReference<array1d<globalIndex>>( wellDofKey );
 
-    array1d<real64> const & connRate  =
-      subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::connRateString );
+arrayView1d<integer const> const & wellElemGhostRank =
+subRegion->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-    array1d<real64> const & dConnRate =
-      subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaConnRateString );    
-    
-    // a) compute all the derivatives wrt to the pressure in WELL elem iwelem 
-    for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)
-    {
-      if (wellElemGhostRank[iwelem] >= 0)
-      {
-        continue;
-      }
+// get the primary variables on well elements
+array1d<real64> const & wellElemPressure =
+subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::pressureString );
 
-      globalIndex const iwelemOffset = wellElemDofNumber[iwelem];
+array1d<real64> const & dWellElemPressure =
+subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaPressureString );
 
-      {
-        solver->ResetStateToBeginningOfStep(domain);
-        
-        // here is the perturbation in the pressure of the well element
-        real64 const dP = perturbParameter * (wellElemPressure[iwelem] + perturbParameter);
-        dWellElemPressure[iwelem] = dP;
-        // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver->UpdateState( subRegion );
+array1d<real64> const & connRate  =
+subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::connRateString );
 
-        residual.zero();
-        assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+array1d<real64> const & dConnRate =
+subRegion->getReference<array1d<real64>>( SinglePhaseWell::viewKeyStruct::deltaConnRateString );
 
-        globalIndex const dofIndex = iwelemOffset + SinglePhaseWell::ColOffset::DPRES;
+// a) compute all the derivatives wrt to the pressure in WELL elem iwelem
+for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)
+{
+if (wellElemGhostRank[iwelem] >= 0)
+{
+continue;
+}
 
-        // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
-        for (int lid = 0; lid < residual.localSize(); ++lid)
-        {
-          real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
-          if (std::fabs(dRdP) > 0.0)
-          {
-            globalIndex gid = residual.getGlobalRowID( lid );
-            jacobianFD.set( gid, dofIndex, dRdP );
-          }
-        }
-      }
-    }
+globalIndex const iwelemOffset = wellElemDofNumber[iwelem];
 
-    // b) compute all the derivatives wrt to the connection in WELL elem iwelem 
-    for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)
-    {
-      globalIndex iwelemOffset = wellElemDofNumber[iwelem];
+{
+solver->ResetStateToBeginningOfStep(domain);
 
-      {
-        solver->ResetStateToBeginningOfStep(domain);
-        
-        // here is the perturbation in the pressure of the well element
-        real64 const dRate = perturbParameter * (connRate[iwelem] + perturbParameter);
-        dConnRate[iwelem] = dRate;
+// here is the perturbation in the pressure of the well element
+real64 const dP = perturbParameter * (wellElemPressure[iwelem] + perturbParameter);
+dWellElemPressure[iwelem] = dP;
+// after perturbing, update the pressure-dependent quantities in the well
+wellSolver->UpdateState( subRegion );
 
-        residual.zero();
-        assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+residual.zero();
+assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
 
-        globalIndex const dofIndex = integer_conversion<globalIndex>(iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
+globalIndex const dofIndex = iwelemOffset + SinglePhaseWell::ColOffset::DPRES;
 
-        // consider mass balance eq lid in RESERVOIR elems and WELL elems
-        //      this is computing J_RW and J_WW
-        for (localIndex lid = 0; lid < residual.localSize(); ++lid)
-        {
-          real64 dRdRate = (localResidual[lid] - localResidualOrig[lid]) / dRate;
-          if (std::fabs(dRdRate) > 0.0)
-          {
-            globalIndex gid = residual.getGlobalRowID( lid );
-            jacobianFD.set( gid, dofIndex, dRdRate );
-          }
-        }
-      }
-    }
-  });
-        
-  jacobianFD.close();
+// consider mass balance eq lid in RESERVOIR elems and WELL elems
+//      this is computing J_RW and J_WW
+for (int lid = 0; lid < residual.localSize(); ++lid)
+{
+real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
+if (std::fabs(dRdP) > 0.0)
+{
+globalIndex gid = residual.getGlobalRowID( lid );
+jacobianFD.set( gid, dofIndex, dRdP );
+}
+}
+}
+}
 
-  // assemble the analytical jacobian
-  solver->ResetStateToBeginningOfStep( domain );
-  jacobian.zero();
-  assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+// b) compute all the derivatives wrt to the connection in WELL elem iwelem
+for (localIndex iwelem = 0; iwelem < subRegion->size(); ++iwelem)
+{
+globalIndex iwelemOffset = wellElemDofNumber[iwelem];
 
-  compareMatrices( jacobian, jacobianFD, relTol );
+{
+solver->ResetStateToBeginningOfStep(domain);
+
+// here is the perturbation in the pressure of the well element
+real64 const dRate = perturbParameter * (connRate[iwelem] + perturbParameter);
+dConnRate[iwelem] = dRate;
+
+residual.zero();
+assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+
+globalIndex const dofIndex = integer_conversion<globalIndex>(iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
+
+// consider mass balance eq lid in RESERVOIR elems and WELL elems
+//      this is computing J_RW and J_WW
+for (localIndex lid = 0; lid < residual.localSize(); ++lid)
+{
+real64 dRdRate = (localResidual[lid] - localResidualOrig[lid]) / dRate;
+if (std::fabs(dRdRate) > 0.0)
+{
+globalIndex gid = residual.getGlobalRowID( lid );
+jacobianFD.set( gid, dofIndex, dRdRate );
+}
+}
+}
+}
+});
+
+jacobianFD.close();
+
+// assemble the analytical jacobian
+solver->ResetStateToBeginningOfStep( domain );
+jacobian.zero();
+assembleFunction( wellSolver, domain, &jacobian, &residual, &dofManager );
+
+compareMatrices( jacobian, jacobianFD, relTol );
 
 #if 0
-  if (::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure())
-  {
-    jacobian->Print(std::cout);
-    jacobianFD->Print(std::cout);
-  }
+if (::testing::Test::HasFatalFailure() || ::testing::Test::HasNonfatalFailure())
+{
+jacobian->Print(std::cout);
+jacobianFD->Print(std::cout);
+}
 #endif
 }
 
@@ -276,45 +272,45 @@ class ReservoirSolverTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
-  {
-    problemManager = new ProblemManager("Problem", nullptr);
-    char buf[2][1024];
+static void SetUpTestCase()
+{
+problemManager = new ProblemManager("Problem", nullptr);
+char buf[2][1024];
 
-    char const * workdir  = global_argv[1];
-    char const * filename = "testReservoirSinglePhaseMSWells.xml";
+char const * workdir  = global_argv[1];
+char const * filename = "testReservoirSinglePhaseMSWells.xml";
 
-    strcpy(buf[0], "-i");
-    sprintf(buf[1], "%s/%s", workdir, filename);
+strcpy(buf[0], "-i");
+sprintf(buf[1], "%s/%s", workdir, filename);
 
-    constexpr int argc = 3;
-    char * argv[argc] = {
-      global_argv[0],
-      buf[0],
-      buf[1]
-    };
+constexpr int argc = 3;
+char * argv[argc] = {
+global_argv[0],
+buf[0],
+buf[1]
+};
 
-    problemManager->InitializePythonInterpreter();
-    problemManager->ParseCommandLineInput( argc, argv );
-    problemManager->ParseInputFile();
+problemManager->InitializePythonInterpreter();
+problemManager->ParseCommandLineInput( argc, argv );
+problemManager->ParseInputFile();
 
-    problemManager->ProblemSetup();
+problemManager->ProblemSetup();
 
-    solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
+solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
 
-    GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
-  }
+}
 
-  static void TearDownTestCase()
-  {
-    delete problemManager;
-    problemManager = nullptr;
-    solver = nullptr;
-  }
+static void TearDownTestCase()
+{
+delete problemManager;
+problemManager = nullptr;
+solver = nullptr;
+}
 
-  static ProblemManager * problemManager;
-  static ReservoirSolver * solver;
+static ProblemManager * problemManager;
+static ReservoirSolver * solver;
 
 };
 
@@ -324,142 +320,142 @@ ReservoirSolver * ReservoirSolverTest::solver = nullptr;
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-1; // 10% error margin
+real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+real64 const tol = 1e-1; // 10% error margin
 
-  real64 const time = 0.0;
-  real64 const dt = 1e4;
+real64 const time = 0.0;
+real64 const dt = 1e4;
 
-  DomainPartition * domain = problemManager->getDomainPartition();
+DomainPartition * domain = problemManager->getDomainPartition();
 
-  solver->ImplicitStepSetup( time,
-                             dt,
-                             domain,
-                             solver->getDofManager(),
-                             solver->getSystemMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
+solver->ImplicitStepSetup( time,
+dt,
+domain,
+solver->getDofManager(),
+solver->getSystemMatrix(),
+solver->getSystemRhs(),
+solver->getSystemSolution() );
 
-  testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
-                               DomainPartition * const targetDomain,
-                               ParallelMatrix * targetJacobian,
-                               ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
-  {
-    targetSolver->AssemblePerforationTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
-  });
-  
+testNumericalJacobian( solver, domain, eps, tol,
+[&] ( SinglePhaseWell * const targetSolver,
+DomainPartition * const targetDomain,
+ParallelMatrix * targetJacobian,
+ParallelVector * targetResidual,
+DofManager const * targetDofManager ) -> void
+{
+targetSolver->AssemblePerforationTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+});
+
 }
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-1; // 10% error margin
+real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+real64 const tol = 1e-1; // 10% error margin
 
-  real64 const time = 0.0;
-  real64 const dt = 1e4;
+real64 const time = 0.0;
+real64 const dt = 1e4;
 
-  DomainPartition * domain = problemManager->getDomainPartition();
+DomainPartition * domain = problemManager->getDomainPartition();
 
-  solver->ImplicitStepSetup( time,
-                             dt,
-                             domain,
-                             solver->getDofManager(),
-                             solver->getSystemMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
+solver->ImplicitStepSetup( time,
+dt,
+domain,
+solver->getDofManager(),
+solver->getSystemMatrix(),
+solver->getSystemRhs(),
+solver->getSystemSolution() );
 
-  testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
-                               DomainPartition * const targetDomain,
-                               ParallelMatrix * targetJacobian,
-                               ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
-  {
-    targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
-  });
-  
+testNumericalJacobian( solver, domain, eps, tol,
+[&] ( SinglePhaseWell * const targetSolver,
+DomainPartition * const targetDomain,
+ParallelMatrix * targetJacobian,
+ParallelVector * targetResidual,
+DofManager const * targetDofManager ) -> void
+{
+targetSolver->AssembleFluxTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+});
+
 }
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Control)
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-1; // 10% error margin
+real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+real64 const tol = 1e-1; // 10% error margin
 
-  real64 const time = 0.0;
-  real64 const dt = 1e4;
+real64 const time = 0.0;
+real64 const dt = 1e4;
 
-  DomainPartition * domain = problemManager->getDomainPartition();
-  
-  solver->ImplicitStepSetup( time,
-                             dt,
-                             domain,
-                             solver->getDofManager(),
-                             solver->getSystemMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
+DomainPartition * domain = problemManager->getDomainPartition();
 
-  testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
-                               DomainPartition * const targetDomain,
-                               ParallelMatrix * targetJacobian,
-                               ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
-  {
-    targetSolver->FormControlEquation( targetDomain, targetDofManager, targetJacobian, targetResidual );
-  });
-  
+solver->ImplicitStepSetup( time,
+dt,
+domain,
+solver->getDofManager(),
+solver->getSystemMatrix(),
+solver->getSystemRhs(),
+solver->getSystemSolution() );
+
+testNumericalJacobian( solver, domain, eps, tol,
+[&] ( SinglePhaseWell * const targetSolver,
+DomainPartition * const targetDomain,
+ParallelMatrix * targetJacobian,
+ParallelVector * targetResidual,
+DofManager const * targetDofManager ) -> void
+{
+targetSolver->FormControlEquation( targetDomain, targetDofManager, targetJacobian, targetResidual );
+});
+
 }
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_PressureRel)
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  real64 const tol = 1e-1; // 10% error margin
+real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+real64 const tol = 1e-1; // 10% error margin
 
-  real64 const time = 0.0;
-  real64 const dt = 1e4;
+real64 const time = 0.0;
+real64 const dt = 1e4;
 
-  DomainPartition * domain = problemManager->getDomainPartition();
+DomainPartition * domain = problemManager->getDomainPartition();
 
-  solver->ImplicitStepSetup( time,
-                             dt,
-                             domain,
-                             solver->getDofManager(),
-                             solver->getSystemMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
+solver->ImplicitStepSetup( time,
+dt,
+domain,
+solver->getDofManager(),
+solver->getSystemMatrix(),
+solver->getSystemRhs(),
+solver->getSystemSolution() );
 
-  testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( SinglePhaseWell * const targetSolver,
-                               DomainPartition * const targetDomain,
-                               ParallelMatrix * targetJacobian,
-                               ParallelVector * targetResidual,
-                               DofManager const * targetDofManager ) -> void
-  {
-    targetSolver->FormPressureRelations( targetDomain, targetDofManager, targetJacobian, targetResidual );
-  });
-  
+testNumericalJacobian( solver, domain, eps, tol,
+[&] ( SinglePhaseWell * const targetSolver,
+DomainPartition * const targetDomain,
+ParallelMatrix * targetJacobian,
+ParallelVector * targetResidual,
+DofManager const * targetDofManager ) -> void
+{
+targetSolver->FormPressureRelations( targetDomain, targetDofManager, targetJacobian, targetResidual );
+});
+
 }
 
 int main(int argc, char** argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
+::testing::InitGoogleTest(&argc, argv);
 
-  geosx::basicSetup( argc, argv );
+geosx::basicSetup( argc, argv );
 
-  global_argc = argc;
-  global_argv = new char*[static_cast<unsigned int>(global_argc)];
-  for( int i=0 ; i<argc ; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+global_argc = argc;
+global_argv = new char*[static_cast<unsigned int>(global_argc)];
+for( int i=0 ; i<argc ; ++i )
+{
+global_argv[i] = argv[i];
+}
 
-  int const result = RUN_ALL_TESTS();
+int const result = RUN_ALL_TESTS();
 
-  delete[] global_argv;
+delete[] global_argv;
 
-  geosx::basicCleanup();
+geosx::basicCleanup();
 
-  return result;
+return result;
 }

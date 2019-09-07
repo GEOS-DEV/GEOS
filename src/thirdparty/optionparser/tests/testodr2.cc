@@ -1,14 +1,28 @@
-/* Written 2012 by Matthias S. Benkmann
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * The author hereby waives all copyright and related rights to the contents
- * of this example file (testodr2.cc) to the extent possible under the law.
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
+/* Written 2012 by Matthias S. Benkmann
+*
+* The author hereby waives all copyright and related rights to the contents
+* of this example file (testodr2.cc) to the extent possible under the law.
+*/
+
 /**
- * @file
- * @brief Test for multiple definition errors.
- * @copydoc testodr1.cc
- */
+* @file
+* @brief Test for multiple definition errors.
+* @copydoc testodr1.cc
+*/
 
 #include <cstdio>
 #include "../../optionparser/src/optionparser.h"
@@ -19,20 +33,20 @@ enum OptionIndex {CREATE};
 enum OptionType {DISABLE, ENABLE, OTHER};
 
 extern const Descriptor usage[] = {
-   { CREATE, OTHER,
-     "c", "create",
-     Arg::None,
-     "--create\t\t\tTells the program to create something."
-   }
- };
+{ CREATE, OTHER,
+"c", "create",
+Arg::None,
+"--create\t\t\tTells the program to create something."
+}
+};
 
 extern bool foo(int argc, const char* argv[])
 {
-  printUsage(std::fwrite, stdout, usage);
-  option::Stats stats(usage, argc, argv);
-  option::Option buffer [stats.buffer_max];
-  option::Option options[stats.options_max];
-  option::Parser parse(usage, argc, argv, options, buffer);
-  return parse.error();
+printUsage(std::fwrite, stdout, usage);
+option::Stats stats(usage, argc, argv);
+option::Option buffer [stats.buffer_max];
+option::Option options[stats.options_max];
+option::Parser parse(usage, argc, argv, options, buffer);
+return parse.error();
 }
 

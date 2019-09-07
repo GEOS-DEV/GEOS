@@ -1,24 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
-  * @file CompositionalMultiphaseFluid.hpp
-  */
+* @file CompositionalMultiphaseFluid.hpp
+*/
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
@@ -47,57 +43,57 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
+CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
 
-  virtual ~CompositionalMultiphaseFluid() override;
+virtual ~CompositionalMultiphaseFluid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+void DeliverClone( string const & name,
+Group * const parent,
+std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::compositionalMultiphaseFluid; }
+static std::string CatalogName() { return dataRepository::keys::compositionalMultiphaseFluid; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+virtual string GetCatalogName() override { return CatalogName(); }
 
 
-  struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
-  {
-    static constexpr auto equationsOfStateString = "equationsOfState";
+struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
+{
+static constexpr auto equationsOfStateString = "equationsOfState";
 
-    static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
-    static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
-    static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
-    static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
-    static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-    
-    using ViewKey = dataRepository::ViewKey;
+static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
+static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
+static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
+static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
+static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
 
-    ViewKey equationsOfState = { equationsOfStateString };
+using ViewKey = dataRepository::ViewKey;
 
-    ViewKey componentCriticalPressure    = { componentCriticalPressureString };
-    ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
-    ViewKey componentAcentricFactor      = { componentAcentricFactorString };
-    ViewKey componentVolumeShift         = { componentVolumeShiftString };
-    ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
+ViewKey equationsOfState = { equationsOfStateString };
 
-  } viewKeysCompositionalMultiphaseFluid;
+ViewKey componentCriticalPressure    = { componentCriticalPressureString };
+ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
+ViewKey componentAcentricFactor      = { componentAcentricFactorString };
+ViewKey componentVolumeShift         = { componentVolumeShiftString };
+ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
+
+} viewKeysCompositionalMultiphaseFluid;
 
 protected:
-  virtual void PostProcessInput() override;
+virtual void PostProcessInput() override;
 
 private:
 
-  void createFluid() override;
+void createFluid() override;
 
-  // names of equations of state to use for each phase
-  string_array m_equationsOfState;
+// names of equations of state to use for each phase
+string_array m_equationsOfState;
 
-  // standard EOS component input
-  array1d<real64> m_componentCriticalPressure;
-  array1d<real64> m_componentCriticalTemperature;
-  array1d<real64> m_componentAcentricFactor;
-  array1d<real64> m_componentVolumeShift;
-  array2d<real64> m_componentBinaryCoeff;
+// standard EOS component input
+array1d<real64> m_componentCriticalPressure;
+array1d<real64> m_componentCriticalTemperature;
+array1d<real64> m_componentAcentricFactor;
+array1d<real64> m_componentVolumeShift;
+array2d<real64> m_componentBinaryCoeff;
 
 };
 

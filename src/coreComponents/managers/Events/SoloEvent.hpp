@@ -1,24 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
- * @file SoloEvent.hpp
- */
+* @file SoloEvent.hpp
+*/
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_SOLOEVENT_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_EVENTS_SOLOEVENT_HPP_
@@ -29,52 +25,52 @@ namespace geosx
 {
 
 /**
- * @class SoloEvent
- *
- * An event type for events that occur only once.
- */
+* @class SoloEvent
+*
+* An event type for events that occur only once.
+*/
 class SoloEvent : public EventBase
 {
 public:
-  /// Main constructor
-  SoloEvent(const std::string& name,
-                Group * const parent);
-  
-  /// Destructor
-  virtual ~SoloEvent() override;
+/// Main constructor
+SoloEvent(const std::string& name,
+Group * const parent);
 
-  /// Catalog name interface
-  static string CatalogName() { return "SoloEvent"; }
+/// Destructor
+virtual ~SoloEvent() override;
 
-  /**
-   * Estimate the expected number of cycles until an event is expected to trigger.
-   */
-  virtual void EstimateEventTiming(real64 const time,
-                                   real64 const dt, 
-                                   integer const cycle,
-                                   dataRepository::Group * domain) override;
+/// Catalog name interface
+static string CatalogName() { return "SoloEvent"; }
 
-  /**
-   * Grab the next time-step.  If requested, then limit the requested
-   * dt to exactly match the application time
-   */
-  virtual real64 GetEventTypeDtRequest(real64 const time) override;
+/**
+* Estimate the expected number of cycles until an event is expected to trigger.
+*/
+virtual void EstimateEventTiming(real64 const time,
+real64 const dt,
+integer const cycle,
+dataRepository::Group * domain) override;
+
+/**
+* Grab the next time-step.  If requested, then limit the requested
+* dt to exactly match the application time
+*/
+virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
 
-  struct viewKeyStruct
-  {
-    static constexpr auto targetTimeString = "targetTime";
-    static constexpr auto targetCycleString = "targetCycle";
-    static constexpr auto targetExactTimestepString = "targetExactTimestep";
+struct viewKeyStruct
+{
+static constexpr auto targetTimeString = "targetTime";
+static constexpr auto targetCycleString = "targetCycle";
+static constexpr auto targetExactTimestepString = "targetExactTimestep";
 
-    dataRepository::ViewKey targetTime = { "targetTime" };
-    dataRepository::ViewKey targetCycle = { "targetCycle" };
-    dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
-  } SoloEventViewKeys;
+dataRepository::ViewKey targetTime = { "targetTime" };
+dataRepository::ViewKey targetCycle = { "targetCycle" };
+dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
+} SoloEventViewKeys;
 
-  real64 m_targetTime;
-  integer m_targetCycle;
-  integer m_targetExactTimestep;
+real64 m_targetTime;
+integer m_targetCycle;
+integer m_targetExactTimestep;
 
 };
 

@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /*
- * NumericalMethodsManager.cpp
- *
- *  Created on: Apr 18, 2017
- *      Author: rrsettgast
- */
+* NumericalMethodsManager.cpp
+*
+*  Created on: Apr 18, 2017
+*      Author: rrsettgast
+*/
 
 #include "NumericalMethodsManager.hpp"
 
@@ -35,37 +31,37 @@ namespace geosx
 using namespace dataRepository;
 
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
-  Group(name,parent)
+Group(name,parent)
 {
-  setInputFlags(InputFlags::OPTIONAL);
+setInputFlags(InputFlags::OPTIONAL);
 
-  this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
-  this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
-  this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
-  this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
+this->RegisterGroup<BasisFunctionManager>(keys::basisFunctions);
+this->RegisterGroup<QuadratureRuleManager>(keys::quadratureRules);
+this->RegisterGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+this->RegisterGroup<FiniteVolumeManager>(keys::finiteVolumeManager);
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()
 {
-  // TODO Auto-generated destructor stub
+// TODO Auto-generated destructor stub
 }
 
 Group * NumericalMethodsManager::CreateChild( string const & childKey, string const & childName )
 {
-  return nullptr;
+return nullptr;
 }
 
 dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName(string const & name) const
 {
-  for( auto & iterNumericalMethod : this->GetSubGroups() )
-  {
-    if( iterNumericalMethod.second->getName() == name)
-    {
-      return iterNumericalMethod.second;
-    }
-  }
-  GEOS_ERROR("Can't find subgroup named " + name + " in " + this->getName());
-  return nullptr;
+for( auto & iterNumericalMethod : this->GetSubGroups() )
+{
+if( iterNumericalMethod.second->getName() == name)
+{
+return iterNumericalMethod.second;
+}
+}
+GEOS_ERROR("Can't find subgroup named " + name + " in " + this->getName());
+return nullptr;
 }
 
 

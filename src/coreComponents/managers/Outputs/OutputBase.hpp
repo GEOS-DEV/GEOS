@@ -1,24 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
- * @file OutputBase.hpp
- */
+* @file OutputBase.hpp
+*/
 #ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
 
@@ -30,45 +26,45 @@ namespace geosx
 {
 
 /**
- * @class OutputBase
- *
- * A base class for output types
- */
+* @class OutputBase
+*
+* A base class for output types
+*/
 class OutputBase : public ExecutableGroup
 {
 public:
-  /// Main constructor
-  explicit OutputBase( std::string const & name,
-                       Group * const parent );
+/// Main constructor
+explicit OutputBase( std::string const & name,
+Group * const parent );
 
-  /// Destructor
-  virtual ~OutputBase() override;
+/// Destructor
+virtual ~OutputBase() override;
 
-  /// Catalog name interface
-  static string CatalogName() { return "OutputBase"; }
+/// Catalog name interface
+static string CatalogName() { return "OutputBase"; }
 
-  /// Method for setting up output directories
-  virtual void SetupDirectoryStructure();
+/// Method for setting up output directories
+virtual void SetupDirectoryStructure();
 
-  /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+/// Catalog interface
+using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, Group * const >;
+static CatalogInterface::CatalogType& GetCatalog();
 
-  struct viewKeysStruct
-  {
-    static constexpr auto slaveDirectoryString = "slaveDirectory";
-    static constexpr auto parallelThreadsString = "parallelThreads";
-  } outputBaseViewKeys;
+struct viewKeysStruct
+{
+static constexpr auto slaveDirectoryString = "slaveDirectory";
+static constexpr auto parallelThreadsString = "parallelThreads";
+} outputBaseViewKeys;
 
-  string slaveDirectory() const { return m_slaveDirectory; }
-  integer parallelThreads() const { return m_parallelThreads; }
+string slaveDirectory() const { return m_slaveDirectory; }
+integer parallelThreads() const { return m_parallelThreads; }
 
 protected:
-  virtual void InitializePreSubGroups( Group * const group ) override;
+virtual void InitializePreSubGroups( Group * const group ) override;
 
 private:
-  string m_slaveDirectory;
-  integer m_parallelThreads;
+string m_slaveDirectory;
+integer m_parallelThreads;
 
 };
 

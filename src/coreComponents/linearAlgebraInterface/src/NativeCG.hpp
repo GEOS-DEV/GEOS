@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
- * @file CGsolver.hpp
- *
- *  Created on: Sep 12, 2018
- *      Author: Matthias Cremon
- */
+* @file CGsolver.hpp
+*
+*  Created on: Sep 12, 2018
+*      Author: Matthias Cremon
+*/
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_SOLVER_CG_HPP_
 #define SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_SOLVER_CG_HPP_
@@ -35,66 +31,66 @@ namespace geosx
 {
 
 /**
- * \class CGsolver
- * \brief This class creates and provides basic support for block
- *        CG (templated on the LA interface).
- * \note  The notation is consistent with "Iterative Methods for
- *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
- *        and "Iterative Methods for Sparse Linear Systems"
- *        from Y. Saad (2003).
- */
+* \class CGsolver
+* \brief This class creates and provides basic support for block
+*        CG (templated on the LA interface).
+* \note  The notation is consistent with "Iterative Methods for
+*        Linear and Non-Linear Equations" from C.T. Kelley (1995)
+*        and "Iterative Methods for Sparse Linear Systems"
+*        from Y. Saad (2003).
+*/
 
 template< typename LAI >
 class CGsolver
 {
 
-  using ParallelMatrix = typename LAI::ParallelMatrix;
-  using ParallelVector = typename LAI::ParallelVector;
+using ParallelMatrix = typename LAI::ParallelMatrix;
+using ParallelVector = typename LAI::ParallelVector;
 
 public:
 
-  //! @name Constructor/Destructor Methods
-  //@{
-  /**
-   * @brief Empty constructor.
-   *
-   * Creates a solver object.
-   */
-  CGsolver();
+//! @name Constructor/Destructor Methods
+//@{
+/**
+* @brief Empty constructor.
+*
+* Creates a solver object.
+*/
+CGsolver();
 
-  /**
-   * @brief Virtual destructor.
-   */
-  virtual ~CGsolver() = default;
-  //@}
+/**
+* @brief Virtual destructor.
+*/
+virtual ~CGsolver() = default;
+//@}
 
-  /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
-   * using monolithic GEOSX matrices.
-   *
-   * \param A system matrix.
-   * \param x system solution (input = initial guess, output = solution).
-   * \param b system right hand side.
-   * \param M preconditioner.
-   */
-  void solve( ParallelMatrix const &A,
-              ParallelVector &x,
-              ParallelVector const &b,
-              ParallelMatrix const &M );
+/**
+* @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
+* using monolithic GEOSX matrices.
+*
+* \param A system matrix.
+* \param x system solution (input = initial guess, output = solution).
+* \param b system right hand side.
+* \param M preconditioner.
+*/
+void solve( ParallelMatrix const &A,
+ParallelVector &x,
+ParallelVector const &b,
+ParallelMatrix const &M );
 
-  /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
-   * using block GEOSX matrices.
-   *
-   * \param A system block matrix.
-   * \param x system block solution (input = initial guess, output = solution).
-   * \param b system block right hand side.
-   * \param M block preconditioner.
-   */
-  void solve( BlockMatrixView<LAI> const &A,
-              BlockVectorView<LAI> &x,
-              BlockVectorView<LAI> const &b,
-              BlockMatrixView<LAI> const &M );
+/**
+* @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
+* using block GEOSX matrices.
+*
+* \param A system block matrix.
+* \param x system block solution (input = initial guess, output = solution).
+* \param b system block right hand side.
+* \param M block preconditioner.
+*/
+void solve( BlockMatrixView<LAI> const &A,
+BlockVectorView<LAI> &x,
+BlockVectorView<LAI> const &b,
+BlockMatrixView<LAI> const &M );
 
 private:
 
@@ -123,97 +119,97 @@ CGsolver<LAI>::CGsolver()
 // ----------------------------
 template< typename LAI >
 void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
-                           typename LAI::ParallelVector &x,
-                           typename LAI::ParallelVector const &b,
-                           typename LAI::ParallelMatrix const &M )
+typename LAI::ParallelVector &x,
+typename LAI::ParallelVector const &b,
+typename LAI::ParallelMatrix const &M )
 
 {
 
-  // Get the global size
-  globalIndex N = x.globalSize();
+// Get the global size
+globalIndex N = x.globalSize();
 
-  // Placeholder for the number of iterations
-  localIndex numIt = 0;
+// Placeholder for the number of iterations
+localIndex numIt = 0;
 
-  // Get the norm of the right hand side
-  real64 normb = b.norm2();
+// Get the norm of the right hand side
+real64 normb = b.norm2();
 
-  // Define residual vector
-  ParallelVector rk( x );
+// Define residual vector
+ParallelVector rk( x );
 
-  // Compute initial rk =  b - Ax
-  A.residual( x, b, rk );
+// Compute initial rk =  b - Ax
+A.residual( x, b, rk );
 
-  // Preconditioning
-  ParallelVector zk( x );
-  M.multiply( rk, zk );
+// Preconditioning
+ParallelVector zk( x );
+M.multiply( rk, zk );
 
-  // pk = zk
-  ParallelVector pk( zk );
-  ParallelVector Apk( zk );
+// pk = zk
+ParallelVector pk( zk );
+ParallelVector Apk( zk );
 
-  // Declare alpha and beta scalars
-  real64 alpha, beta;
+// Declare alpha and beta scalars
+real64 alpha, beta;
 
-  // Convergence check
-  real64 convCheck = rk.norm2();
+// Convergence check
+real64 convCheck = rk.norm2();
 
-  // Declare temp scalar for alpha computation.
-  real64 temp;
+// Declare temp scalar for alpha computation.
+real64 temp;
 
-  // Declare older vectors
-  ParallelVector rkold( rk );
-  ParallelVector zkold( zk );
+// Declare older vectors
+ParallelVector rkold( rk );
+ParallelVector zkold( zk );
 
-  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: this needs a max_iter param of type localIndex
-  {
-    // Compute rkT.rk
-    alpha = rk.dot( zk );
+for( globalIndex k = 0 ; k < N ; k++ ) // TODO: this needs a max_iter param of type localIndex
+{
+// Compute rkT.rk
+alpha = rk.dot( zk );
 
-    // Compute Apk
-    A.multiply( pk, Apk );
+// Compute Apk
+A.multiply( pk, Apk );
 
-    // compute alpha
-    temp = pk.dot( Apk );
-    alpha = alpha/temp;
+// compute alpha
+temp = pk.dot( Apk );
+alpha = alpha/temp;
 
-    // Update x = x + alpha*ph
-    x.axpby( alpha, pk, 1.0 );
+// Update x = x + alpha*ph
+x.axpby( alpha, pk, 1.0 );
 
-    // Update rk = rk - alpha*Apk
-    rkold.copy( rk );
-    zkold.copy( zk );
-    rk.axpby( -alpha, Apk, 1.0 );
+// Update rk = rk - alpha*Apk
+rkold.copy( rk );
+zkold.copy( zk );
+rk.axpby( -alpha, Apk, 1.0 );
 
-    // Convergence check on ||rk||/||b||
-    convCheck = rk.norm2();
-    if( convCheck/normb < 1e-8 )
-    {
-      numIt = k;
-      break;
-    }
+// Convergence check on ||rk||/||b||
+convCheck = rk.norm2();
+if( convCheck/normb < 1e-8 )
+{
+numIt = k;
+break;
+}
 
-    // Update zk = Mrk
-    M.multiply( rk, zk );
+// Update zk = Mrk
+M.multiply( rk, zk );
 
-    // Compute beta
-    beta = zk.dot( rk );
-    temp = zkold.dot( rkold );
-    beta = beta/temp;
+// Compute beta
+beta = zk.dot( rk );
+temp = zkold.dot( rkold );
+beta = beta/temp;
 
-    // Update pk = pk + beta*zk
-    pk.axpby( 1.0, zk, beta );
+// Update pk = pk + beta*zk
+pk.axpby( 1.0, zk, beta );
 
-  }
+}
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+// Get the MPI rank
+int rank;
+MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // TODO verbosity management
-  if( rank == 0 )
-    std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
-  return;
+// TODO verbosity management
+if( rank == 0 )
+std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
+return;
 
 }
 
@@ -222,104 +218,104 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 // ----------------------------
 template< typename LAI >
 void CGsolver<LAI>::solve( BlockMatrixView<LAI> const &A,
-                           BlockVectorView<LAI> &x,
-                           BlockVectorView<LAI> const &b,
-                           BlockMatrixView<LAI> const &M )
+BlockVectorView<LAI> &x,
+BlockVectorView<LAI> const &b,
+BlockMatrixView<LAI> const &M )
 
 {
-  GEOS_ERROR( "Not implemented" );
+GEOS_ERROR( "Not implemented" );
 
-  // TODO: BlockVectorView is a view that doesn't handle any vector
-  //       storage.  The copy and copy constructor functions below
-  //       won't work.
+// TODO: BlockVectorView is a view that doesn't handle any vector
+//       storage.  The copy and copy constructor functions below
+//       won't work.
 
 #if 0
-  // Get the global size
-  globalIndex N = x.globalSize();
+// Get the global size
+globalIndex N = x.globalSize();
 
-  // Placeholder for the number of iterations
-  localIndex numIt = 0;
+// Placeholder for the number of iterations
+localIndex numIt = 0;
 
-  // Get the norm of the right hand side
-  real64 normb = b.norm2();
+// Get the norm of the right hand side
+real64 normb = b.norm2();
 
-  // Define vectors
-  BlockVectorView<LAI> rk( x );
+// Define vectors
+BlockVectorView<LAI> rk( x );
 
-  // Compute initial rk =  b - Ax
-  A.residual( x, b, rk );
+// Compute initial rk =  b - Ax
+A.residual( x, b, rk );
 
-  // Preconditioning
-  BlockVectorView<LAI> zk( x );
-  M.multiply( rk, zk );
+// Preconditioning
+BlockVectorView<LAI> zk( x );
+M.multiply( rk, zk );
 
-  // pk = zk
-  BlockVectorView<LAI> pk( zk );
-  BlockVectorView<LAI> Apk( zk );
+// pk = zk
+BlockVectorView<LAI> pk( zk );
+BlockVectorView<LAI> Apk( zk );
 
-  // Declare alpha and beta scalars
-  real64 alpha, beta;
+// Declare alpha and beta scalars
+real64 alpha, beta;
 
-  // Convergence check
-  real64 convCheck = rk.norm2();
+// Convergence check
+real64 convCheck = rk.norm2();
 
-  // Declare temp scalar for alpha computation
-  real64 temp;
+// Declare temp scalar for alpha computation
+real64 temp;
 
-  // Declare older vectors
-  BlockVectorView<LAI> rkold( rk );
-  BlockVectorView<LAI> zkold( zk );
+// Declare older vectors
+BlockVectorView<LAI> rkold( rk );
+BlockVectorView<LAI> zkold( zk );
 
-  for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs maxIter param of type localIndex
-  {
-    // Compute rkT.rk
-    alpha = rk.dot( zk );
+for( globalIndex k = 0 ; k < N ; k++ ) // TODO: needs maxIter param of type localIndex
+{
+// Compute rkT.rk
+alpha = rk.dot( zk );
 
-    // Compute Apk
-    A.multiply( pk, Apk );
+// Compute Apk
+A.multiply( pk, Apk );
 
-    // compute alpha
-    temp = pk.dot( Apk );
+// compute alpha
+temp = pk.dot( Apk );
 
-    alpha = alpha/temp;
+alpha = alpha/temp;
 
-    // Update x = x + alpha*pk
-    x.axpby( alpha, pk, 1.0 );
+// Update x = x + alpha*pk
+x.axpby( alpha, pk, 1.0 );
 
-    // Update rk = rk - alpha*Apk
-    rkold.copy( rk );
-    zkold.copy( zk );
-    rk.axpby( -alpha, Apk, 1.0 );
+// Update rk = rk - alpha*Apk
+rkold.copy( rk );
+zkold.copy( zk );
+rk.axpby( -alpha, Apk, 1.0 );
 
-    // Convergence check on ||rk||/||b||
-    convCheck = rk.norm2();
-    if( convCheck/normb < 1e-8 )
-    {
-      numIt = k;
-      break;
-    }
+// Convergence check on ||rk||/||b||
+convCheck = rk.norm2();
+if( convCheck/normb < 1e-8 )
+{
+numIt = k;
+break;
+}
 
-    // Update zk = Mrk
-    M.multiply( rk, zk );
+// Update zk = Mrk
+M.multiply( rk, zk );
 
-    // Compute beta
-    beta = zk.dot( rk );
-    temp = zkold.dot( rkold );
-    beta = beta/temp;
+// Compute beta
+beta = zk.dot( rk );
+temp = zkold.dot( rkold );
+beta = beta/temp;
 
-    // Update pk = pk + beta*zk
-    pk.axpby( 1.0, zk, beta );
+// Update pk = pk + beta*zk
+pk.axpby( 1.0, zk, beta );
 
-  }
+}
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+// Get the MPI rank
+int rank;
+MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-  // verbose output (TODO verbosity manager?)
-  if( rank == 1 )
-    std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
-  return;
+// verbose output (TODO verbosity manager?)
+if( rank == 1 )
+std::cout << std::endl << "Block CG converged in " << numIt << " iterations." << std::endl;
+return;
 
 #endif
 }

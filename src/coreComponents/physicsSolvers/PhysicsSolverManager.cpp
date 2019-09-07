@@ -1,27 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /*
- * PhysicsSolverManager.cpp
- *
- *  Created on: Sep 7, 2016
- *      Author: rrsettgast
- */
+* PhysicsSolverManager.cpp
+*
+*  Created on: Sep 7, 2016
+*      Author: rrsettgast
+*/
 
 #include "PhysicsSolverManager.hpp"
 
@@ -34,15 +30,15 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
-                                            Group * const parent ):
-  Group( name, parent),
-  m_gravityVector( R1Tensor(0.0) )
+Group * const parent ):
+Group( name, parent),
+m_gravityVector( R1Tensor(0.0) )
 {
-  setInputFlags(InputFlags::REQUIRED);
+setInputFlags(InputFlags::REQUIRED);
 
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-    setApplyDefaultValue({0,0,0})->
-    setInputFlag(InputFlags::OPTIONAL);
+this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
+setApplyDefaultValue({0,0,0})->
+setInputFlag(InputFlags::OPTIONAL);
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
@@ -51,24 +47,24 @@ PhysicsSolverManager::~PhysicsSolverManager()
 
 Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
-  Group * rval = nullptr;
-  if( SolverBase::CatalogInterface::hasKeyName(childKey) )
-  {
-    GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
-    rval = RegisterGroup( childName,
-                          SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
-  }
-  return rval;
+Group * rval = nullptr;
+if( SolverBase::CatalogInterface::hasKeyName(childKey) )
+{
+GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
+rval = RegisterGroup( childName,
+SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
+}
+return rval;
 }
 
 
 void PhysicsSolverManager::ExpandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from SolverBase here
-  for (auto& catalogIter: SolverBase::GetCatalog())
-  {
-    CreateChild( catalogIter.first, catalogIter.first );
-  }
+// During schema generation, register one of each type derived from SolverBase here
+for (auto& catalogIter: SolverBase::GetCatalog())
+{
+CreateChild( catalogIter.first, catalogIter.first );
+}
 }
 
 

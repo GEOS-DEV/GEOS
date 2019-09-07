@@ -1,20 +1,16 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 #ifndef AGGREGATECELLSUBREGION_HPP_
 #define AGGREGATECELLSUBREGION_HPP_
@@ -31,98 +27,98 @@ class AggregateElementSubRegion : public ElementSubRegionBase
 {
 public:
 
-  using NodeMapType=FixedOneToManyRelation;
+using NodeMapType=FixedOneToManyRelation;
 
-  static const string CatalogName()
-  { return "AggregateCell"; }
+static const string CatalogName()
+{ return "AggregateCell"; }
 
-  virtual const string getCatalogName() const override
-  {
-    return AggregateElementSubRegion::CatalogName();
-  }
+virtual const string getCatalogName() const override
+{
+return AggregateElementSubRegion::CatalogName();
+}
 
-  template< typename LAMBDA >
-  void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
-  {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex]; 
-        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
-    {
-      lambda(m_fineToCoarse[fineCell]);
-    }
-  }
+template< typename LAMBDA >
+void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
+{
+for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex];
+fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
+{
+lambda(m_fineToCoarse[fineCell]);
+}
+}
 
-  localIndex GetNbCellsPerAggregate( localIndex aggregateIndex ) const
-  {
-    return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] - m_nbFineCellsPerCoarseCell[aggregateIndex];
-  }
+localIndex GetNbCellsPerAggregate( localIndex aggregateIndex ) const
+{
+return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] - m_nbFineCellsPerCoarseCell[aggregateIndex];
+}
 
-  AggregateElementSubRegion( string const & name,
-                             dataRepository::Group * const parent );
+AggregateElementSubRegion( string const & name,
+dataRepository::Group * const parent );
 
-  virtual ~AggregateElementSubRegion() override;
- 
-  void CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                  array1d< localIndex > const & fineToCoarse,
-                                  array1d< R1Tensor > const & barycenters);
+virtual ~AggregateElementSubRegion() override;
 
-  const array1d< localIndex >& GetFineToCoarseMap()
-  {
-    return m_fineToCoarse;
-  }
-  
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   NodeManager const & nodeManager,
-                                                   const bool useReferencePos = true) const override
-  {
-    return m_elementCenter[k];
-  }
+void CreateFromFineToCoarseMap( localIndex nbAggregates,
+array1d< localIndex > const & fineToCoarse,
+array1d< R1Tensor > const & barycenters);
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) override
-  {
-      //TODO ?
-  }
+const array1d< localIndex >& GetFineToCoarseMap()
+{
+return m_fineToCoarse;
+}
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
-  {
-    //TODO ?
-  }
+virtual R1Tensor const & calculateElementCenter( localIndex k,
+NodeManager const & nodeManager,
+const bool useReferencePos = true) const override
+{
+return m_elementCenter[k];
+}
 
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
-  {
-    static constexpr auto elementVolumeString          = "elementVolume";
-    static constexpr auto fineElementsListString       = "fineElements";
-  };
+virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+FaceManager const & faceManager ) override
+{
+//TODO ?
+}
 
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
-    return m_toNodesRelation[k];
-  }
+virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
+{
+//TODO ?
+}
 
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
-  }
+struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+{
+static constexpr auto elementVolumeString          = "elementVolume";
+static constexpr auto fineElementsListString       = "fineElements";
+};
+
+/*!
+* @brief returns the element to node relations.
+* @details The aggregates are elements composed of 1 node.
+* @param[in] k the index of the element.
+*/
+virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
+{
+return m_toNodesRelation[k];
+}
+
+/*!
+* @brief returns the element to node relations.
+* @details The aggregates are elements composed of 1 node.
+* @param[in] k the index of the element.
+*/
+virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
+{
+return m_toNodesRelation[k];
+}
 
 private:
-  /// The elements to nodes relation is one to one relation.
-  NodeMapType  m_toNodesRelation;
+/// The elements to nodes relation is one to one relation.
+NodeMapType  m_toNodesRelation;
 
-  /// Relation between fine and coarse elements ordered by aggregates
-  array1d< localIndex > m_fineToCoarse;
+/// Relation between fine and coarse elements ordered by aggregates
+array1d< localIndex > m_fineToCoarse;
 
-  /// Number of fine cells per aggregate
-  array1d< localIndex > m_nbFineCellsPerCoarseCell;
+/// Number of fine cells per aggregate
+array1d< localIndex > m_nbFineCellsPerCoarseCell;
 };
 }
 

@@ -1,24 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
- * @file SymbolicFunction.hpp
- */
+* @file SymbolicFunction.hpp
+*/
 
 #ifndef SYMBOLICFUNCTION_HPP_
 #define SYMBOLICFUNCTION_HPP_
@@ -33,60 +29,60 @@ namespace geosx
 {
 
 /**
- * @class SymbolicFunction
- *
- * An interface for an arbitrary symbolic function
- */
+* @class SymbolicFunction
+*
+* An interface for an arbitrary symbolic function
+*/
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// Main constructor
-  SymbolicFunction( const std::string& name,
-                    dataRepository::Group * const parent );
+/// Main constructor
+SymbolicFunction( const std::string& name,
+dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~SymbolicFunction() override;
+/// Destructor
+virtual ~SymbolicFunction() override;
 
-  /// Catalog name interface
-  static string CatalogName() { return "SymbolicFunction"; }
-  
-  /// Function initialization
-  virtual void InitializeFunction() override;
+/// Catalog name interface
+static string CatalogName() { return "SymbolicFunction"; }
 
-  /**
-   * @brief Method to evaluate a function on a target object
-   * @param group a pointer to the object holding the function arguments
-   * @param time current time
-   * @param set the subset of nodes to apply the function to
-   * @param result an array to hold the results of the function
-   */
-  inline void Evaluate( dataRepository::Group const * const group,
-                        real64 const time,
-                        SortedArrayView<localIndex const> const & set,
-                        real64_array & result ) const override final
-  {
-    FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );
-  }
+/// Function initialization
+virtual void InitializeFunction() override;
 
-  /**
-   * @brief Method to evaluate a function
-   * @param input a scalar input
-   */
-  inline real64 Evaluate( real64 const * const input ) const override final
-  {
+/**
+* @brief Method to evaluate a function on a target object
+* @param group a pointer to the object holding the function arguments
+* @param time current time
+* @param set the subset of nodes to apply the function to
+* @param result an array to hold the results of the function
+*/
+inline void Evaluate( dataRepository::Group const * const group,
+real64 const time,
+SortedArrayView<localIndex const> const & set,
+real64_array & result ) const override final
+{
+FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );
+}
+
+/**
+* @brief Method to evaluate a function
+* @param input a scalar input
+*/
+inline real64 Evaluate( real64 const * const input ) const override final
+{
 #ifdef GEOSX_USE_MATHPRESSO
-    return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
+return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
 #else
-    GEOS_ERROR("GEOSX was not built with mathpresso!");
-    return 0;
+GEOS_ERROR("GEOSX was not built with mathpresso!");
+return 0;
 #endif
-  }
+}
 
 private:
-  // Symbolic math driver objects
+// Symbolic math driver objects
 #ifdef GEOSX_USE_MATHPRESSO
-  mathpresso::Context parserContext;
-  mathpresso::Expression parserExpression;
+mathpresso::Context parserContext;
+mathpresso::Expression parserExpression;
 #endif
 };
 

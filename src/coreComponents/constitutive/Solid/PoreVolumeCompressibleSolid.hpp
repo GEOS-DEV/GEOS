@@ -1,24 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 /**
- * @file PoreVolumeCompressibleSolid.hpp
- */
+* @file PoreVolumeCompressibleSolid.hpp
+*/
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
@@ -44,54 +40,54 @@ namespace constitutive
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
+PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
 
-  virtual ~PoreVolumeCompressibleSolid() override;
+virtual ~PoreVolumeCompressibleSolid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+void DeliverClone( string const & name,
+Group * const parent,
+std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string CatalogName() { return dataRepository::keys::poreVolumeCompressibleSolid; }
+static std::string CatalogName() { return dataRepository::keys::poreVolumeCompressibleSolid; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdatePointPressure(real64 const & pres,
-                                        localIndex const k,
-                                        localIndex const q) override final;
+virtual void StateUpdatePointPressure(real64 const & pres,
+localIndex const k,
+localIndex const q) override final;
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {
-    dataRepository::ViewKey compressibility   = { "compressibility"   };
-    dataRepository::ViewKey referencePressure = { "referencePressure" };
-  } viewKeys;
+struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+{
+dataRepository::ViewKey compressibility   = { "compressibility"   };
+dataRepository::ViewKey referencePressure = { "referencePressure" };
+} viewKeys;
 
 protected:
-  virtual void PostProcessInput() override;
+virtual void PostProcessInput() override;
 
 private:
 
-  /// scalar compressibility parameter
-  real64 m_compressibility;
+/// scalar compressibility parameter
+real64 m_compressibility;
 
-  /// reference pressure parameter
-  real64 m_referencePressure;
+/// reference pressure parameter
+real64 m_referencePressure;
 
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
+array2d<real64> m_poreVolumeMultiplier;
+array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
+ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
 inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,
-                                                                  localIndex const k,
-                                                                  localIndex const q)
+localIndex const k,
+localIndex const q)
 {
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }
 
 }/* namespace constitutive */

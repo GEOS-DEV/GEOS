@@ -1,20 +1,16 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
 
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
@@ -39,28 +35,28 @@ class Function
 {
 
 public:
-  Function(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  Function(const std::string& name);
-  virtual ~Function()
-  {}
+Function(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+Function(const std::string& name);
+virtual ~Function()
+{}
 
-  virtual void ReadXML(TICPP::HierarchicalDataNode* hdn)=0;
-  virtual realT operator()(const realT& x)
-  {
-    return 0.0;
-  }
+virtual void ReadXML(TICPP::HierarchicalDataNode* hdn)=0;
+virtual realT operator()(const realT& x)
+{
+return 0.0;
+}
 
-  std::string Name()
-  {
-    return m_name;
-  }
+std::string Name()
+{
+return m_name;
+}
 
-  /// returns name of specific function instance
-  /// derived classes must define "static const char* FunctionName()"
-  /// which returns name of derived class.
+/// returns name of specific function instance
+/// derived classes must define "static const char* FunctionName()"
+/// which returns name of derived class.
 
 private:
-  std::string m_name;
+std::string m_name;
 };
 
 /// Class representing a constant function
@@ -68,23 +64,23 @@ class ConstantFunction : public Function
 {
 
 public:
-  ConstantFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  ~ConstantFunction()
-  {}
+ConstantFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+~ConstantFunction()
+{}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x)
-  {
-    return m_value;
-  }
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x)
+{
+return m_value;
+}
 
-  static const char* FunctionName()
-  {
-    return "ConstantFunction";
-  }
+static const char* FunctionName()
+{
+return "ConstantFunction";
+}
 
 private:
-  realT m_value;
+realT m_value;
 };
 
 /// Class representing a polynomial function
@@ -92,20 +88,20 @@ class PolynomialFunction : public Function
 {
 
 public:
-  PolynomialFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  ~PolynomialFunction()
-  {}
+PolynomialFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+~PolynomialFunction()
+{}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x);
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x);
 
-  static const char* FunctionName()
-  {
-    return "PolynomialFunction";
-  }
+static const char* FunctionName()
+{
+return "PolynomialFunction";
+}
 
 private:
-  array1d<real64> coeffs;
+array1d<real64> coeffs;
 };
 
 /// Class representing a uniform random distribution
@@ -113,23 +109,23 @@ class UniformRandomDistribution : public Function
 {
 
 public:
-  UniformRandomDistribution(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  ~UniformRandomDistribution()
-  {}
+UniformRandomDistribution(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+~UniformRandomDistribution()
+{}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x);
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x);
 
-  static const char* FunctionName()
-  {
-    return "UniformRandomDistribution";
-  }
+static const char* FunctionName()
+{
+return "UniformRandomDistribution";
+}
 
 private:
-  realT df;
-  realT min;
-  bool uniqueAcrossProcessors;
-  int rank;
+realT df;
+realT min;
+bool uniqueAcrossProcessors;
+int rank;
 };
 
 #if USE_FPARSER==1
@@ -138,24 +134,24 @@ class SymbolicFunction : public Function
 {
 
 public:
-  SymbolicFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  ~SymbolicFunction()
-  {}
+SymbolicFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+~SymbolicFunction()
+{}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
 
-  realT operator()(const realT& x)
-  {
-    return m_fParser.Eval(&x);
-  }
+realT operator()(const realT& x)
+{
+return m_fParser.Eval(&x);
+}
 
-  static const char* FunctionName()
-  {
-    return "SymbolicFunction";
-  }
+static const char* FunctionName()
+{
+return "SymbolicFunction";
+}
 
 private:
-  FunctionParser m_fParser;
+FunctionParser m_fParser;
 };
 #endif
 
@@ -167,35 +163,35 @@ class Lookup4DTable : public Function
 {
 
 public:
-  Lookup4DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  Lookup4DTable(const std::string& name, const Table4D* tablePtr):
-    Function(name),
-    m_tablePtr(tablePtr)
-  {/** Empty **/
-  }
+Lookup4DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+Lookup4DTable(const std::string& name, const Table4D* tablePtr):
+Function(name),
+m_tablePtr(tablePtr)
+{/** Empty **/
+}
 
-  ~Lookup4DTable()
-  {/** Empty **/
-  }
+~Lookup4DTable()
+{/** Empty **/
+}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x)
-  {
-    array1d<real64> xx(3);
-    xx[0] = (&x)[0];
-    xx[1] = (&x)[1];
-    xx[2] = (&x)[2];
-    xx[3] = (&x)[3];
-    return m_tablePtr->Lookup(xx);
-  }
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x)
+{
+array1d<real64> xx(3);
+xx[0] = (&x)[0];
+xx[1] = (&x)[1];
+xx[2] = (&x)[2];
+xx[3] = (&x)[3];
+return m_tablePtr->Lookup(xx);
+}
 
-  static const char* FunctionName()
-  {
-    return "Lookup4DTable";
-  }
+static const char* FunctionName()
+{
+return "Lookup4DTable";
+}
 
 private:
-  const Table4D* m_tablePtr;
+const Table4D* m_tablePtr;
 };
 
 /// Function wrapper for 3D tables
@@ -203,34 +199,34 @@ class Lookup3DTable : public Function
 {
 
 public:
-  Lookup3DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  Lookup3DTable(const std::string& name, const Table3D* tablePtr):
-    Function(name),
-    m_tablePtr(tablePtr)
-  {/** Empty **/
-  }
+Lookup3DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+Lookup3DTable(const std::string& name, const Table3D* tablePtr):
+Function(name),
+m_tablePtr(tablePtr)
+{/** Empty **/
+}
 
-  ~Lookup3DTable()
-  {/** Empty **/
-  }
+~Lookup3DTable()
+{/** Empty **/
+}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x)
-  {
-    array1d<real64> xx(3);
-    xx[0] = (&x)[0];
-    xx[1] = (&x)[1];
-    xx[2] = (&x)[2];
-    return m_tablePtr->Lookup(xx);
-  }
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x)
+{
+array1d<real64> xx(3);
+xx[0] = (&x)[0];
+xx[1] = (&x)[1];
+xx[2] = (&x)[2];
+return m_tablePtr->Lookup(xx);
+}
 
-  static const char* FunctionName()
-  {
-    return "Lookup3DTable";
-  }
+static const char* FunctionName()
+{
+return "Lookup3DTable";
+}
 
 private:
-  const Table3D* m_tablePtr;
+const Table3D* m_tablePtr;
 };
 
 /// Function wrapper for 2D tables
@@ -238,33 +234,33 @@ class Lookup2DTable : public Function
 {
 
 public:
-  Lookup2DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  Lookup2DTable(const std::string& name, const Table2D* tablePtr):
-    Function(name),
-    m_tablePtr(tablePtr)
-  {/** Empty **/
-  }
+Lookup2DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+Lookup2DTable(const std::string& name, const Table2D* tablePtr):
+Function(name),
+m_tablePtr(tablePtr)
+{/** Empty **/
+}
 
-  ~Lookup2DTable()
-  {/** Empty **/
-  }
+~Lookup2DTable()
+{/** Empty **/
+}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x)
-  {
-    array1d<real64> xx(2);
-    xx[0] = (&x)[0];
-    xx[1] = (&x)[1];
-    return m_tablePtr->Lookup(xx);
-  }
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x)
+{
+array1d<real64> xx(2);
+xx[0] = (&x)[0];
+xx[1] = (&x)[1];
+return m_tablePtr->Lookup(xx);
+}
 
-  static const char* FunctionName()
-  {
-    return "Lookup2DTable";
-  }
+static const char* FunctionName()
+{
+return "Lookup2DTable";
+}
 
 private:
-  const Table2D* m_tablePtr;
+const Table2D* m_tablePtr;
 };
 
 /// Function wrapper for 1D tables
@@ -272,31 +268,31 @@ class Lookup1DTable : public Function
 {
 
 public:
-  Lookup1DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
-  Lookup1DTable(const std::string& name, const Table1D* tablePtr):
-    Function(name),
-    m_tablePtr(tablePtr)
-  {/** Empty **/
-  }
+Lookup1DTable(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm);
+Lookup1DTable(const std::string& name, const Table1D* tablePtr):
+Function(name),
+m_tablePtr(tablePtr)
+{/** Empty **/
+}
 
-  ~Lookup1DTable()
-  {/** Empty **/
-  }
+~Lookup1DTable()
+{/** Empty **/
+}
 
-  void ReadXML(TICPP::HierarchicalDataNode* hdn);
-  realT operator()(const realT& x)
-  {
-    array1d<real64> xx(1);
-    xx[0] = x;
-    return m_tablePtr->Lookup(xx);
-  }
+void ReadXML(TICPP::HierarchicalDataNode* hdn);
+realT operator()(const realT& x)
+{
+array1d<real64> xx(1);
+xx[0] = x;
+return m_tablePtr->Lookup(xx);
+}
 
-  static const char* FunctionName()
-  {
-    return "Lookup1DTable";
-  }
+static const char* FunctionName()
+{
+return "Lookup1DTable";
+}
 private:
-  const Table1D* m_tablePtr;
+const Table1D* m_tablePtr;
 };
 
 /// Evaluates a mathematical expression in a string with the warp function
@@ -327,15 +323,15 @@ realT EvaluateStringFunction(const std::string& fString);
 
 /// The Function Factory.
 Function* newFunction(const std::string& FunctionName, TICPP::HierarchicalDataNode* hdn,
-                      const ProblemManagerT* const pm);
+const ProblemManagerT* const pm);
 
 /// Base class to generate new Function pointers
 class FunctionInitializer
 {
 public:
-  virtual Function* initializeFunction(TICPP::HierarchicalDataNode* hdn,
-                                       const ProblemManagerT* const pm) = 0;
-  virtual ~FunctionInitializer() {}
+virtual Function* initializeFunction(TICPP::HierarchicalDataNode* hdn,
+const ProblemManagerT* const pm) = 0;
+virtual ~FunctionInitializer() {}
 };
 
 /// Interface to the Function name -> Function initializer map
@@ -350,16 +346,16 @@ class FunctionRegistrator : public FunctionInitializer
 {
 
 public:
-  FunctionRegistrator(void)
-  {
-    std::string FunctionName = std::string(FunctionType::FunctionName());
-    getFunctionCatalogue()[FunctionName] = this;
-  }
+FunctionRegistrator(void)
+{
+std::string FunctionName = std::string(FunctionType::FunctionName());
+getFunctionCatalogue()[FunctionName] = this;
+}
 
-  Function* initializeFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm)
-  {
-    return new FunctionType(hdn, pm);
-  }
+Function* initializeFunction(TICPP::HierarchicalDataNode* hdn, const ProblemManagerT* const pm)
+{
+return new FunctionType(hdn, pm);
+}
 };
 
 /// Compiler directive to simplify function autoregistration

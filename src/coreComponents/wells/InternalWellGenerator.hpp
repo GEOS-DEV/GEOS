@@ -1,20 +1,17 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+* ------------------------------------------------------------------------------------------------------------
+* SPDX-License-Identifier: LGPL-2.1-only
+*
+* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+* Copyright (c) 2018-2019 Total, S.A
+* Copyright (c) 2019-     GEOSX Contributors
+* All right reserved
+*
+* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+* ------------------------------------------------------------------------------------------------------------
+*/
+
 
 /*
  * @file InternalWellGenerator.hpp
@@ -48,7 +45,7 @@ string const meshBodyName     = "meshName";
  * @class InternalWellGenerator
  *
  * This class processes the data of a single well from the XML and generates the well geometry
- */  
+ */
 class InternalWellGenerator : public MeshGeneratorBase
 {
 public:
@@ -70,23 +67,23 @@ public:
 
   /**
    * @return the name of this type in the catalog
-   */  
+   */
   static string CatalogName() { return "InternalWell"; }
 
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition& domain ) override {}
 
-  virtual Group * CreateChild( string const & childKey, 
+  virtual Group * CreateChild( string const & childKey,
                                       string const & childName ) override;
 
 
   /**
    * @brief main function of this class: processes the well input and creates the globla well topology
    * @param domain the physical domain object
-   */  
+   */
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
-  /// not implemented 
+  /// not implemented
   virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
                                              const int index[],
                                              const int& iEle,
@@ -97,7 +94,7 @@ public:
   virtual void RemapMesh ( dataRepository::Group * const domain ) override {}
 
 
-     
+
   // getters for element data
 
   /**
@@ -107,7 +104,7 @@ public:
   globalIndex GetNumElements() const { return m_numElems; }
 
   /**
-   * @brief Getter for the physical location of the centers of well elements 
+   * @brief Getter for the physical location of the centers of well elements
    * @return list of center locations of the well elements
    */
   array1d<R1Tensor const> const & GetElemCoords() const { return m_elemCenterCoords; }
@@ -131,7 +128,7 @@ public:
   array2d<globalIndex const> const & GetElemToNodesMap() const { return m_elemToNodesMap; }
 
   /**
-   * @brief Getter for the volume of the well elements 
+   * @brief Getter for the volume of the well elements
    * @return list of volumes of the well elements
    */
   array1d<real64 const> const & GetElemVolume() const { return m_elemVolume; }
@@ -146,7 +143,7 @@ public:
   globalIndex GetNumNodes() const { return m_numNodes; }
 
   /**
-   * @brief Getter for the physical location of the centers of well elements 
+   * @brief Getter for the physical location of the centers of well elements
    * @return list of center locations of the well elements
    */
   array1d<R1Tensor const> const & GetNodeCoords() const { return m_nodeCoords; }
@@ -179,7 +176,7 @@ public:
    */
   array1d<globalIndex const> const & GetPerfElemIndex() const { return m_perfElemId; }
 
- 
+
 
 protected:
 
@@ -199,14 +196,14 @@ private:
 
   /**
    * @brief Discretize the polyline by placing well elements
-   */  
+   */
   void DiscretizePolyline();
 
   /**
    * @brief Map each perforation to a well element
-   */  
+   */
   void ConnectPerforationsToWellElements();
- 
+
   /**
    * @brief Merge perforations on the elements with multiple perforations
    */
@@ -214,7 +211,7 @@ private:
 
   /**
    * @brief At a given node, find the next segment going in the direction of the bottom of the well
-   */  
+   */
   globalIndex GetNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
 
@@ -244,7 +241,7 @@ private:
   string m_meshBodyName;
 
 
-  
+
   // Geometry of the well (later passed to the WellElementSubRegion)
 
   // well element data
@@ -272,19 +269,19 @@ private:
 
   /// Number of nodes per well element
   globalIndex const    m_numNodesPerElem;
- 
+
   /// Global number of well nodes
   globalIndex          m_numNodes;
- 
+
   /// Physical location of the nodes
   array1d<R1Tensor>    m_nodeCoords;
 
   // perforation data
- 
+
   /// Global number of perforations
   globalIndex          m_numPerforations;
 
-  /// Absolute physical location of the perforation 
+  /// Absolute physical location of the perforation
   array1d<R1Tensor>    m_perfCoords;
 
   /// Transmissibility at the perforation
@@ -302,7 +299,7 @@ private:
 
   /// Coordinates of the polyline nodes in R1Tensor format
   array1d<R1Tensor>           m_polyNodeCoords;
-  
+
   /// Map from the polyline nodes to the polyline nodes
   array1d< set<globalIndex> > m_polyNodeToSegmentMap;
 
