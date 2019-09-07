@@ -34,27 +34,24 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
-                                            ManagedGroup * const parent ):
-  ManagedGroup( name, parent),
-  m_gravityVector( R1Tensor(0.0) ),
-  m_blockSystemRepository()
+                                            Group * const parent ):
+  Group( name, parent),
+  m_gravityVector( R1Tensor(0.0) )
 {
   setInputFlags(InputFlags::REQUIRED);
 
-  this->RegisterViewWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
+  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
     setApplyDefaultValue({0,0,0})->
     setInputFlag(InputFlags::OPTIONAL);
-
-  this->RegisterViewWrapper( viewKeyStruct::blockSystemRepositoryString, &m_blockSystemRepository, 0 )->setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
 
 
-ManagedGroup * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
+Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName(childKey) )
   {
     GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);

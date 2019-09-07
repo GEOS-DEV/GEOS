@@ -38,7 +38,7 @@ class SoloEvent : public EventBase
 public:
   /// Main constructor
   SoloEvent(const std::string& name,
-                ManagedGroup * const parent);
+                Group * const parent);
   
   /// Destructor
   virtual ~SoloEvent() override;
@@ -52,7 +52,7 @@ public:
   virtual void EstimateEventTiming(real64 const time,
                                    real64 const dt, 
                                    integer const cycle,
-                                   dataRepository::ManagedGroup * domain) override;
+                                   dataRepository::Group * domain) override;
 
   /**
    * Grab the next time-step.  If requested, then limit the requested

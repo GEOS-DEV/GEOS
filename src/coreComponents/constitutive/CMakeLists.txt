@@ -24,6 +24,7 @@ set( constitutive_headers
      CapillaryPressure/CapillaryPressureBase.hpp
      CapillaryPressure/BrooksCoreyCapillaryPressure.hpp
      CapillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contactRelations/ContactRelationBase.hpp
    )
 #
 # Specify all sources
@@ -50,6 +51,7 @@ set( constitutive_sources
      CapillaryPressure/CapillaryPressureBase.cpp
      CapillaryPressure/BrooksCoreyCapillaryPressure.cpp
      CapillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contactRelations/ContactRelationBase.cpp
    )
 
 set( dependencyList dataRepository )
@@ -70,6 +72,13 @@ if( ENABLE_PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}

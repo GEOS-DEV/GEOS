@@ -44,16 +44,16 @@ public:
    * @param name name of the instance in the catalog
    * @param parent the group which contains this instance
    */
-  LinearElasticIsotropic( string const & name, ManagedGroup * const parent );
+  LinearElasticIsotropic( string const & name, Group * const parent );
 
   virtual ~LinearElasticIsotropic() override;
 
   virtual void
   DeliverClone( string const & name,
-                ManagedGroup * const parent,
+                Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr auto m_catalogNameString = "LinearElasticIsotropic";
@@ -67,30 +67,19 @@ public:
                                  integer const updateStiffnessFlag ) override;
 
 
-  /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
-   */
-  void GetStiffness( localIndex const k, real64 c[6][6] ) const;
-
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    static constexpr auto bulkModulus0String  = "defaultBulkModulus";
-    static constexpr auto poissonRatioString =  "defaultPoissonRatio" ;
-    static constexpr auto shearModulus0String = "defaultShearModulus";
-    static constexpr auto youngsModulus0String =  "defaultYoungsModulus" ;
+    static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
+    static constexpr auto defaultPoissonRatioString =  "defaultPoissonRatio" ;
+    static constexpr auto defaultShearModulusString = "defaultShearModulus";
+    static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus" ;
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
   };
 
-
-  real64   bulkModulus0()  const { return m_defaultBulkModulus; }
-  real64 & bulkModulus0()        { return m_defaultBulkModulus; }
-
-  real64 defaultShearModulus() const { return m_defaultShearModulus; }
-  real64 & defaultShearModulus()     { return m_defaultShearModulus; }
+  void setDefaultBulkModulus (real64 const bulkModulus) {m_defaultBulkModulus = bulkModulus;}
+  void setDefaultShearModulus (real64 const shearModulus) {m_defaultShearModulus = shearModulus;}
 
   arrayView1d<real64> const &       bulkModulus()       { return m_bulkModulus; }
   arrayView1d<real64 const> const & bulkModulus() const { return m_bulkModulus; }
@@ -98,18 +87,65 @@ public:
   arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
   arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
 
+  class KernelWrapper
+  {
+  public:
+    KernelWrapper( arrayView1d<real64 const> const bulkModulus,
+                   arrayView1d<real64 const> const shearModulus ) :
+      m_bulkModulus( bulkModulus ),
+      m_shearModulus( shearModulus )
+    {}
+
+    /**
+     * accessor to return the stiffness at a given element
+     * @param k the element number
+     * @param c the stiffness array
+     */
+    GEOSX_HOST_DEVICE inline
+    void GetStiffness( localIndex const k, real64 (&c)[6][6] ) const
+    {
+      real64 const G = m_shearModulus[k];
+      real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+
+      memset( c, 0, sizeof( c ) );
+
+      c[0][0] = Lame + 2 * G;
+      c[0][1] = Lame;
+      c[0][2] = Lame;
+
+      c[1][0] = Lame;
+      c[1][1] = Lame + 2 * G;
+      c[1][2] = Lame;
+
+      c[2][0] = Lame;
+      c[2][1] = Lame;
+      c[2][2] = Lame + 2 * G;
+
+      c[3][3] = G;
+
+      c[4][4] = G;
+
+      c[5][5] = G;
+    }
+
+  private:
+    arrayView1d<real64 const> const m_bulkModulus;
+    arrayView1d<real64 const> const m_shearModulus;
+  };
+
+  KernelWrapper createKernelWrapper() const
+  { return KernelWrapper( m_bulkModulus, m_shearModulus ); }
 
 protected:
   virtual void PostProcessInput() override;
 
 private:
 
-
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
   array1d<real64> m_bulkModulus;
   array1d<real64> m_shearModulus;
-
+  bool m_postProcessed = false;
 };
 
 

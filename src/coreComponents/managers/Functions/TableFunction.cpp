@@ -45,7 +45,7 @@ using namespace dataRepository;
 
 
 TableFunction::TableFunction( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   FunctionBase( name, parent ),
   m_coordinates(),
   m_values(),
@@ -55,31 +55,25 @@ TableFunction::TableFunction( const std::string& name,
   m_corners(),
   m_numCorners(0)
 {
-  RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
+  registerWrapper<real64_array>(keys::tableCoordinates)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table coordinates inputs for 1D tables");
 
-  RegisterViewWrapper<real64_array>(keys::tableValues)->
+  registerWrapper<real64_array>(keys::tableValues)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table Values for 1D tables");
 
-  RegisterViewWrapper<string_array>(keys::coordinateFiles)->
+  registerWrapper<string_array>(keys::coordinateFiles)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of coordinate file names");
 
-  RegisterViewWrapper<string>(keys::voxelFile)->
+  registerWrapper<string>(keys::voxelFile)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Voxel file name");
 
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
+  registerWrapper<string>(keys::tableInterpolation)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method");
-
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Value Type");
-
-
 }
 
 TableFunction::~TableFunction()
@@ -122,19 +116,24 @@ void TableFunction::InitializeFunction()
     }
   }
 
+  reInitializeFunction();
+}
+
+void TableFunction::reInitializeFunction()
+{
+
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
+  m_indexIncrement.resize(m_dimensions);
   for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
   {
-    m_indexIncrement.push_back(increment);
+    m_size[ii] = m_coordinates[ii].size();
+    m_indexIncrement[ii] = increment;
     increment *= m_size[ii];
   }
 
   // Error checking
-  if (increment != m_values.size())
-  {
-    throw std::invalid_argument("Table dimensions do not match!");
-  }
+  GEOS_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!");
 
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast<localIndex>(pow(2, m_dimensions));
@@ -147,13 +146,6 @@ void TableFunction::InitializeFunction()
   }
 }
 
-void TableFunction::Evaluate( dataRepository::ManagedGroup const * const group,
-                              real64 const time,
-                              set<localIndex> const & set,
-                              real64_array & result ) const
-{
-  FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
-}
 
 real64 TableFunction::Evaluate( real64 const * const input ) const
 {
@@ -218,6 +210,6 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
   return weightedValue;
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

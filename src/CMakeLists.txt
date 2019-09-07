@@ -86,6 +86,10 @@ if( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
 endif()
 
+if( ENABLE_CUDA )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
                    DEPENDS_ON geosx_core sidre
@@ -99,7 +103,7 @@ target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 add_custom_target( geosx_update_rst_tables
                    ALL
-                   COMMAND bash ../scripts/updateRstTables.bash > /dev/null 2>&1
+                   COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash > updateRstTables.log
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    DEPENDS geosx
                  )

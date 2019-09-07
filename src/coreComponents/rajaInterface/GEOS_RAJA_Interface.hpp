@@ -22,60 +22,61 @@
 #include "RAJA/RAJA.hpp"
 #include "common/DataTypes.hpp"
 
-typedef RAJA::loop_exec elemPolicy;
-typedef RAJA::loop_exec onePointPolicy;
 
-typedef RAJA::loop_exec memSetPolicy;
-typedef RAJA::loop_exec computeForcePolicy;
+using serialPolicy = RAJA::loop_exec;
 
-typedef RAJA::seq_exec quadraturePolicy;
-typedef RAJA::atomic::seq_atomic atomicPolicy;
+#if defined(GEOSX_USE_OPENMP)
 
-typedef RAJA::loop_exec stencilPolicy;
-typedef RAJA::seq_reduce reducePolicy;
+using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 
-typedef RAJA::loop_exec parallelHostPolicy;
+#else
 
-typedef RAJA::loop_exec materialUpdatePolicy;
+using parallelHostPolicy = RAJA::loop_exec;
 
-#define GEOSX_LAMBDA [=]
+#endif
+
+#if defined(GEOSX_USE_CUDA)
+
+template< int BLOCK_SIZE = 256 >
+using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
+
+#elif defined(GEOSX_USE_OPENMP)
+
+template< int BLOCK_SIZE = 0 >
+using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
+
+#else
+
+template< int BLOCK_SIZE = 0 >
+using parallelDevicePolicy = RAJA::loop_exec;
+
+#endif
 
 namespace geosx
 {
 
-//Alias to RAJA reduction operators
-template< typename POLICY, typename T >
-using ReduceSum = RAJA::ReduceSum<POLICY, T>;
-
-//
-template<typename POLICY=atomicPolicy, typename T>
-RAJA_INLINE void atomicAdd(T *acc, T value)
-{
-  RAJA::atomic::atomicAdd<POLICY>(acc, value);
-}
-
 //RAJA wrapper for loops over ranges - local index
-template<class POLICY=elemPolicy, typename LAMBDA=void>
+template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const localIndex begin, const localIndex end, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), body);
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
-//RAJA wrapper for loops over ranges - local index
-template<class POLICY=elemPolicy, typename LAMBDA=void>
+//RAJA wrapper for loops over ranges - global index
+template<class POLICY=serialPolicy, typename LAMBDA=void>
 RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), body);
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<globalIndex>(begin, end), std::forward<LAMBDA>(body));
 }
 
 //RAJA wrapper for loops over sets
-template<class POLICY=elemPolicy, typename T, typename LAMBDA=void>
+template<class POLICY=serialPolicy, typename T, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), body);
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), std::forward<LAMBDA>(body));
 }
 
-template< typename T , typename atomicPol=atomicPolicy>
+template< typename T , typename atomicPol=RAJA::atomic::auto_atomic>
 inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & localField,
                               arraySlice1d< T const >& globalField,
@@ -83,11 +84,11 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField[ globalToLocalRelation[a] ], localField[a] );
   }
 }
 
-template< typename atomicPol=atomicPolicy>
+template< typename atomicPol=RAJA::atomic::auto_atomic>
 inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d<R1Tensor const> const & localField,
                               arraySlice1d<R1Tensor>& globalField,
@@ -97,13 +98,13 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    atomicAdd<atomicPol>( &gData[0], lData[0] );
-    atomicAdd<atomicPol>( &gData[1], lData[1] );
-    atomicAdd<atomicPol>( &gData[2], lData[2] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
-template< localIndex N, typename atomicPol=atomicPolicy>
+template< localIndex N, typename atomicPol=RAJA::atomic::auto_atomic>
 inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               R1Tensor const * const restrict localField,
                               arraySlice1d<R1Tensor> & globalField )
@@ -112,13 +113,13 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
   {
     real64 * __restrict__ const gData = globalField[globalToLocalRelation[a]].Data();
     real64 const * __restrict__ const lData = localField[a].Data();
-    atomicAdd<atomicPol>( &gData[0], lData[0] );
-    atomicAdd<atomicPol>( &gData[1], lData[1] );
-    atomicAdd<atomicPol>( &gData[2], lData[2] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[0], lData[0] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[1], lData[1] );
+    RAJA::atomic::atomicAdd<atomicPol>( &gData[2], lData[2] );
   }
 }
 
-template< typename T, typename atomicPol=atomicPolicy >
+template< typename T, typename atomicPol=RAJA::atomic::auto_atomic >
 inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & localField1,
                               arraySlice1d< T const > const & localField2,
@@ -128,8 +129,8 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 {
   for( localIndex a=0 ; a<N ; ++a )
   {
-    atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
-    atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField1[ globalToLocalRelation[a] ], localField1[a] );
+    RAJA::atomic::atomicAdd<atomicPol>( &globalField2[ globalToLocalRelation[a] ], localField2[a] );
   }
 }
 

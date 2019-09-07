@@ -38,11 +38,11 @@ namespace geosx
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
-                                  ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                  Group * const parent ):
+  Group( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -54,9 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
+void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 {
-  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
+  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -84,89 +84,54 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::SetMaps(  )
-{
-  // ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
-  // ElementRegionManager * elementRegionManager =
-  // this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
-
-  // {
-  //  integer_array & elementRegionMap =
-  // nodeManager->getReference(keys::elementRegionMap);
-  //  integer_array & elementSubRegionMap =
-  // nodeManager->getReference(keys::elementSubRegionMap);
-  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
-
-  //  ManagedGroup * elementRegions =
-  // this->GetGroup(dataRepository::keys::elementRegions);
-
-  //  integer elementRegionIndex = 0;
-  //  elementRegionManager->forElementRegions( [&](ElementRegion&
-  // elementRegion)-> void
-  //  {
-  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
-  //    {
-
-  //    });
-  //    ++elementRegionIndex;
-  //  });
-  // }
-}
-
 void DomainPartition::GenerateSets(  )
 {
-  MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup const * const nodeManager = mesh->getNodeManager();
+  GEOSX_MARK_FUNCTION;
 
-  dataRepository::ManagedGroup const * const
+  MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
+  Group const * const nodeManager = mesh->getNodeManager();
+
+  dataRepository::Group const * const
   nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
-  std::map< string, integer_array > nodeInSet; // map to contain indicator of whether a node is in a set.
+  map< string, array1d<bool> > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & viewWrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets->wrappers() )
   {
-    string name = viewWrapper.second->getName();
+    string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
-    nodeInSet[name] = 0;
-    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    nodeInSet[name] = false;
+    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
       set<localIndex> const & set = setPtr->reference();
-      for( auto const a : set )
+      for( localIndex const a : set )
       {
-        nodeInSet[name][a] = 1;
+        nodeInSet[name][a] = true;
       }
     }
   }
 
 
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
-
   elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
   {
-    dataRepository::ManagedGroup * elementSets = subRegion->sets();
-    std::map< string, integer_array > numNodesInSet;
+    dataRepository::Group * elementSets = subRegion->sets();
 
-    for( auto & setName : setNames )
+    for( std::string const & setName : setNames )
     {
+      arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
-        arraySlice1d<localIndex const> const elemToNodes = subRegion->nodeList(k);
+        localIndex const * const elemToNodes = subRegion->nodeList(k);
         localIndex const numNodes = subRegion->numNodesPerElement( k );
-        integer count = 0;
-        for( localIndex a = 0 ; a<numNodes ; ++a )
-        {
-          if( nodeInSet[setName][elemToNodes[a]] == 1 )
-          {
-            ++count;
-          }
-        }
-        if( count == numNodes )
+
+        if ( std::all_of( elemToNodes, elemToNodes + numNodes, [&nodeInCurSet](localIndex const nodeIndex) { return nodeInCurSet[nodeIndex]; } ) )
         {
           targetSet.insert(k);
         }
@@ -215,7 +180,7 @@ void DomainPartition::SetupCommunications()
     }
   }
 
-  ManagedGroup * const meshBodies = getMeshBodies();
+  Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
@@ -242,24 +207,8 @@ void DomainPartition::SetupCommunications()
 
   CommunicationTools::FindGhosts( meshLevel, allNeighbors );
 
-
-
-
   faceManager->SortAllFaceNodes( nodeManager, meshLevel->getElemManager() );
-  real64_array & faceArea  = faceManager->faceArea();
-  r1_array & faceNormal = faceManager->faceNormal();
-  r1_array & faceCenter = faceManager->faceCenter();
-  r1_array const & X = nodeManager->referencePosition();
-  array1d<array1d<localIndex> > const & nodeList = faceManager->nodeList();
-
-  for (localIndex kf = 0; kf < faceManager->size(); ++kf)
-  {
-    faceArea[kf] = computationalGeometry::Centroid_3DPolygon(nodeList[kf],
-                                                             X,
-                                                             faceCenter[kf],
-                                                             faceNormal[kf]);
-  }
-
+  faceManager->computeGeometry( nodeManager );
 }
 
 void DomainPartition::AddNeighbors(const unsigned int idim,

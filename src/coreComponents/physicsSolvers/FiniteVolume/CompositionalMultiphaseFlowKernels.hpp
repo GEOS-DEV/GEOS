@@ -646,7 +646,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::asViewConst;
+  using ElementView = typename ElementRegionManager::ElementViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   /**
    * @brief The type for element-based constitutive data parameters.
@@ -656,12 +656,15 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::asViewConst;
+  using MaterialView = typename ElementRegionManager::MaterialViewAccessor<VIEWTYPE>::ViewTypeConst;
 
   static inline void
   Compute( localIndex const NC, localIndex const NP,
            localIndex const stencilSize,
-           FluxApproximationBase::CellStencil::Entry const * const stencil,
+           arraySlice1d<localIndex const> const & seri,
+           arraySlice1d<localIndex const> const & sesri,
+           arraySlice1d<localIndex const> const & sei,
+           arraySlice1d<real64 const> const & stencilWeights,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
@@ -687,8 +690,8 @@ struct FluxKernel
            arraySlice1d<real64> const & localFlux,
            arraySlice2d<real64> const & localFluxJacobian )
   {
-    localIndex constexpr numElems   = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
+    localIndex constexpr numElems   = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
     localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
     localIndex const NDOF = NC + 1;
@@ -753,11 +756,9 @@ struct FluxKernel
       // calculate quantities on primary connected cells
       for (localIndex i = 0; i < numElems; ++i)
       {
-        CellDescriptor const & cell = stencil[i].index;
-
-        localIndex const er  = cell.region;
-        localIndex const esr = cell.subRegion;
-        localIndex const ei  = cell.index;
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
 
         // density
         real64 const density  = phaseDens[er][esr][fluidIndex][ei][0][ip];
@@ -784,12 +785,10 @@ struct FluxKernel
       // compute potential difference MPFA-style
       for (localIndex i = 0; i < stencilSize; ++i)
       {
-        FluxApproximationBase::CellStencil::Entry const & entry = stencil[i];
-
-        localIndex const er  = entry.index.region;
-        localIndex const esr = entry.index.subRegion;
-        localIndex const ei  = entry.index.index;
-        real64 const weight  = entry.weight;
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
+        real64 weight = stencilWeights[i];
 
         //capillary pressure
         real64 capPressure     = 0.0;
@@ -847,10 +846,9 @@ struct FluxKernel
       // choose upstream cell
       localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-      CellDescriptor const & cell_up = stencil[k_up].index;
-      localIndex er_up  = cell_up.region;
-      localIndex esr_up = cell_up.subRegion;
-      localIndex ei_up  = cell_up.index;
+      localIndex er_up  = seri[k_up];
+      localIndex esr_up = sesri[k_up];
+      localIndex ei_up  = sei[k_up];
 
       real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
@@ -1071,32 +1069,18 @@ namespace helpers
 {
 
 template<typename T, typename LAMBDA>
-bool KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
+void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
   static_assert( std::is_integral<T>::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
 
   switch (value)
   {
-    case 1:  lambda( std::integral_constant<T, 1>() );  return true;
-    case 2:  lambda( std::integral_constant<T, 2>() );  return true;
-    case 3:  lambda( std::integral_constant<T, 3>() );  return true;
-    case 4:  lambda( std::integral_constant<T, 4>() );  return true;
-    case 5:  lambda( std::integral_constant<T, 5>() );  return true;
-    default: return false;
-  }
-}
-
-template<typename T, typename LAMBDA>
-bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral<T>::value, "KernelLaunchSelectorPhaseSwitch: type should be integral" );
-
-  switch (value)
-  {
-    case 1:  lambda( std::integral_constant<T, 1>() ); return true;
-    case 2:  lambda( std::integral_constant<T, 2>() ); return true;
-    case 3:  lambda( std::integral_constant<T, 3>() ); return true;
-    default: return false;
+    case 1:  lambda( std::integral_constant<T, 1>() ); return;
+    case 2:  lambda( std::integral_constant<T, 2>() ); return;
+    case 3:  lambda( std::integral_constant<T, 3>() ); return;
+    case 4:  lambda( std::integral_constant<T, 4>() ); return;
+    case 5:  lambda( std::integral_constant<T, 5>() ); return;
+    default: GEOS_ERROR("Unknown numComp value: " << value);
   }
 }
 
@@ -1105,39 +1089,25 @@ bool KernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
 template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
-  bool const run =
   helpers::KernelLaunchSelectorCompSwitch( numComp, [&] (auto NC)
   {
     KERNELWRAPPER::template Launch<NC()>( std::forward<ARGS>(args)... );
   });
-
-  if (!run)
-  {
-    KERNELWRAPPER::Launch( numComp, std::forward<ARGS>(args)... );
-  }
 }
 
 template<typename KERNELWRAPPER, typename... ARGS>
 void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
 {
-  bool run2 = false;
-  // gcc-7 produces bugged code without explicit capture list here...
-  bool const run =
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [ &numPhase, &run2, &args... ] ( auto NC )
+  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
-    run2 =
-    helpers::KernelLaunchSelectorPhaseSwitch( numPhase, [&args...] ( auto NP )
+    switch (numPhase)
     {
-      // damn you stupid C++ rules (https://stackoverflow.com/questions/43665610)
-      auto constexpr NC_ = decltype(NC)::value;
-      KERNELWRAPPER::template Launch<NC_, NP()>( std::forward<ARGS>(args)... );
-    });
+      case 1: KERNELWRAPPER::template Launch<NC(), 1>( std::forward<ARGS>(args)... ); return;
+      case 2: KERNELWRAPPER::template Launch<NC(), 2>( std::forward<ARGS>(args)... ); return;
+      case 3: KERNELWRAPPER::template Launch<NC(), 3>( std::forward<ARGS>(args)... ); return;
+      default: GEOS_ERROR("Unknown numPhase value: " << numPhase);
+    }
   });
-
-  if (!run || !run2)
-  {
-    KERNELWRAPPER::Launch( numComp, numPhase, std::forward<ARGS>(args)... );
-  }
 }
 
 } // namespace CompositionalMultiphaseFlowKernels

@@ -49,10 +49,10 @@ void RegisterAndApplyField( DomainPartition * domain,
                                     [&] ( FieldSpecificationBase const * const bc,
                                           string const &,
                                           set<localIndex> const & targetSet,
-                                          ManagedGroup * const targetGroup,
-                                          string const fieldNamee )
+                                          Group * const targetGroup,
+                                          string const name )
                                     {
-                                      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldNamee );
+                                      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, name );
                                     });
 }
 
@@ -97,10 +97,10 @@ TEST(FieldSpecification, Recursive)
   cellToVertexreg1Tet.resize( nbTetReg1, 4);
 
   ElementRegionManager * elemManager = meshLevel0->getElemManager();
-  ElementRegion* reg0 = elemManager->CreateChild("ElementRegion","reg0")->group_cast<ElementRegion*>();
+  CellElementRegion* reg0 = elemManager->CreateChild("CellElementRegion","reg0")->group_cast<CellElementRegion*>();
   reg0->AddCellBlockName(reg0Hex->getName());
   reg0->AddCellBlockName(reg0Tet->getName());
-  ElementRegion* reg1 = elemManager->CreateChild("ElementRegion","reg1")->group_cast<ElementRegion*>();
+  CellElementRegion* reg1 = elemManager->CreateChild("CellElementRegion","reg1")->group_cast<CellElementRegion*>();
   reg1->AddCellBlockName(reg1Hex->getName());
   reg1->AddCellBlockName(reg1Tet->getName());
   reg0->GenerateMesh(cellBlockManager->GetGroup(keys::cellBlocks) );
@@ -110,37 +110,37 @@ TEST(FieldSpecification, Recursive)
   /// Field Definition
   auto fieldSpecificationManager = FieldSpecificationManager::get();
 
-  reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field0" );
-  reg0->GetSubRegion("reg0tet")->RegisterViewWrapper< array1d<real64> >( "field0" );
-  reg1->GetSubRegion("reg1tet")->RegisterViewWrapper< array1d<real64> >( "field0" );
-  reg1->GetSubRegion("reg1hex")->RegisterViewWrapper< array1d<real64> >( "field0" );
+  reg0->GetSubRegion("reg0hex")->registerWrapper< array1d<real64> >( "field0" );
+  reg0->GetSubRegion("reg0tet")->registerWrapper< array1d<real64> >( "field0" );
+  reg1->GetSubRegion("reg1tet")->registerWrapper< array1d<real64> >( "field0" );
+  reg1->GetSubRegion("reg1hex")->registerWrapper< array1d<real64> >( "field0" );
 
-  reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field1" );
-  reg0->GetSubRegion("reg0tet")->RegisterViewWrapper< array1d<real64> >( "field1" );
+  reg0->GetSubRegion("reg0hex")->registerWrapper< array1d<real64> >( "field1" );
+  reg0->GetSubRegion("reg0tet")->registerWrapper< array1d<real64> >( "field1" );
 
-  reg0->GetSubRegion("reg0hex")->RegisterViewWrapper< array1d<real64> >( "field2" );
+  reg0->GetSubRegion("reg0hex")->registerWrapper< array1d<real64> >( "field2" );
 
-  reg1->GetSubRegion("reg1tet")->RegisterViewWrapper< array1d<real64> >( "field3" );
+  reg1->GetSubRegion("reg1tet")->registerWrapper< array1d<real64> >( "field3" );
 
-  auto set0hex = reg0->GetSubRegion("reg0hex")->GetGroup("sets")->RegisterViewWrapper<localIndex_set>( std::string("all") );
+  auto set0hex = reg0->GetSubRegion("reg0hex")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
   set0hex->resize(nbHexReg0);
   for(localIndex i = 0; i < set0hex->size() ; i++)
   {
     set0hex->dataPtr()[i]=i;
   }
-  auto set0tet = reg0->GetSubRegion("reg0tet")->GetGroup("sets")->RegisterViewWrapper<localIndex_set>( std::string("all") );
+  auto set0tet = reg0->GetSubRegion("reg0tet")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
   set0tet->resize(nbTetReg0);
   for(localIndex i = 0; i < set0tet->size() ; i++)
   {
     set0tet->dataPtr()[i] = i;
   }
-  auto set1hex = reg1->GetSubRegion("reg1hex")->GetGroup("sets")->RegisterViewWrapper<localIndex_set>( std::string("all") );
+  auto set1hex = reg1->GetSubRegion("reg1hex")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
   set1hex->resize(nbHexReg1);
   for(localIndex i = 0; i < set1hex->size() ; i++)
   {
     set1hex->dataPtr()[i] = i;
   }
-  auto set1tet = reg1->GetSubRegion("reg1tet")->GetGroup("sets")->RegisterViewWrapper<localIndex_set>( std::string("all") );
+  auto set1tet = reg1->GetSubRegion("reg1tet")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
   set1tet->resize(nbTetReg1);
   for(localIndex i = 0; i < set1tet->size() ; i++)
   {
@@ -159,10 +159,10 @@ TEST(FieldSpecification, Recursive)
   auto field2 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field2" );
   auto field3 = elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( "field3" );
   elemManager->forElementSubRegionsComplete( [&] ( localIndex er, localIndex esr,
-                                                   ElementRegion * const region,
+                                                   ElementRegionBase * const region,
                                                    ElementSubRegionBase const * const subRegion )
   {
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       GEOS_ERROR_IF(field0[er][esr][ei] < 1. || field0[er][esr][ei] > 1., "Recursive fields are not set");
     });
@@ -170,18 +170,18 @@ TEST(FieldSpecification, Recursive)
 
   reg0->forElementSubRegionsIndex( [&](localIndex const esr, ElementSubRegionBase * const subRegion )->void
   {
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       GEOS_ERROR_IF(field1[0][esr][ei] < 2. || field1[0][esr][ei] > 2., "Recursive fields are not set");
     });
   });
 
-  forall_in_range<elemPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, reg0Hex->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     GEOS_ERROR_IF(field2[0][0][ei] < 1. || field2[0][0][ei] > 3., "Recursive fields are not set");
   });
 
-  forall_in_range<elemPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
+  forall_in_range<serialPolicy>( 0, reg1Tet->size(), GEOSX_LAMBDA ( localIndex ei )
   {
     GEOS_ERROR_IF(field3[1][1][ei] < 4. || field3[1][1][ei] > 4., "Recursive fields are not set");
   });

@@ -7,6 +7,7 @@ add_subdirectory(coupling/hdf5_interface)
 set(fileIO_headers
   xmlWrapper.hpp
   silo/SiloFile.hpp
+  vtk/VTKFile.hpp
   vtm/VtmFile.hpp
   blueprint/Blueprint.hpp
   schema/SchemaUtilities.hpp
@@ -19,6 +20,7 @@ set(fileIO_headers
 set(fileIO_sources
   xmlWrapper.cpp
   silo/SiloFile.cpp
+  vtk/VTKFile.cpp
   vtm/VtmFile.cpp
   schema/SchemaUtilities.cpp
   blueprint/Blueprint.cpp
@@ -27,6 +29,14 @@ set(fileIO_sources
 set( dependencyList common silo hdf5 mpi pugixml RAJA hdf5_interface )
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
+endif()
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME                  fileIO

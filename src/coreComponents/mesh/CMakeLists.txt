@@ -4,10 +4,11 @@ set(mesh_headers
     BufferOps.hpp
     CellBlockManager.hpp
     CellBlock.hpp
-    CellElementSubRegion.hpp    
+    CellElementRegion.hpp
+    CellElementSubRegion.hpp
     EdgeManager.hpp
     ElementSubRegionBase.hpp
-    ElementRegion.hpp
+    ElementRegionBase.hpp
     ElementRegionManager.hpp
     FaceElementSubRegion.hpp
     FaceElementRegion.hpp
@@ -25,10 +26,11 @@ set(mesh_sources
     BufferOps.cpp
     CellBlockManager.cpp
     CellBlock.cpp
+    CellElementRegion.cpp
     CellElementSubRegion.cpp
     EdgeManager.cpp
     ElementSubRegionBase.cpp
-    ElementRegion.cpp
+    ElementRegionBase.cpp
     ElementRegionManager.cpp
     FaceElementRegion.cpp
     FaceElementSubRegion.cpp
@@ -39,12 +41,20 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(mesh_dependencies managers metis)
+set(dependencyList managers metis)
+
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
-                 DEPENDS_ON            ${mesh_dependencies}
+                 DEPENDS_ON            ${dependencyList}
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

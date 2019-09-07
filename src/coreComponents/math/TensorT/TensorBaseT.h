@@ -92,12 +92,15 @@ public:
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator=( const int& rhs );
 
   /// assignment to all data to a realT
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator=( const realT& rhs );
 
   /// assignment to another TensorBaseT
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator=( const TensorBaseT& rhs );
 
   /// add a realT to data
@@ -254,6 +257,7 @@ public:
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE inline constexpr
   realT* Data( void )
   {
     return t_data;
@@ -264,6 +268,7 @@ public:
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
+  GEOSX_HOST_DEVICE inline constexpr
   const realT* Data( void ) const
   {
     return t_data;
@@ -320,6 +325,7 @@ public:
    * @return the number of data entries (Length) for the tensor
    * @brief gives the number of data entries (Length) for the tensor
    */
+  GEOSX_HOST_DEVICE CONSTEXPRFUNC
   static int Length( void )
   {
     return T_length;
@@ -455,6 +461,7 @@ TensorBaseT< T_length >::~TensorBaseT( void )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const int& rhs )
 {
@@ -468,6 +475,7 @@ TensorBaseT< T_length >::operator=( const int& rhs )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const realT& rhs )
 {
@@ -482,6 +490,7 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 inline TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator=( const TensorBaseT< T_length >& rhs )
 {

@@ -27,9 +27,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "fileIO/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-
-//#include "ObjectManagers/PhysicalDomainT.h"
-//#include "SimpleGeometricObjects.hpp"
+#include "common/TimingMacros.hpp"
 
 namespace geosx
 {
@@ -48,21 +46,21 @@ MeshUtilities::~MeshUtilities()
 
 
 
-void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geometries,
+void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
                                       ObjectManagerBase * const nodeManager )
 {
-
+  GEOSX_MARK_FUNCTION; 
   array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-  ManagedGroup * sets = nodeManager->sets();
+  Group * sets = nodeManager->sets();
 
   for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
   {
-//    ViewWrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
+//    Wrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
 //    if (wrapper!=nullptr)
 //    {
 //      SimpleGeometricObjectBase const & object = wrapper->reference();
 //      string name = wrapper->getName();
-//      set<localIndex> & set = sets->RegisterViewWrapper<set<localIndex>>(name)->reference();
+//      set<localIndex> & set = sets->registerWrapper<set<localIndex>>(name)->reference();
 //      for (localIndex a=0 ; a<X.size() ; ++a)
 //      {
 //        if (object.IsCoordInObject(X[a]))
@@ -75,7 +73,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::ManagedGroup const * geome
         if (object!=nullptr)
         {
           string name = object->getName();
-          set<localIndex> & targetSet = sets->RegisterViewWrapper< set<localIndex> >(name)->reference();
+          set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
           for (localIndex a=0 ; a<X.size() ; ++a)
           {
             if (object->IsCoordInObject(X[a]))

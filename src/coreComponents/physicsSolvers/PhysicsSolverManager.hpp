@@ -19,8 +19,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace pugi
 {
@@ -31,15 +30,15 @@ namespace geosx
 {
 class SolverBase;
 
-class PhysicsSolverManager : public dataRepository::ManagedGroup
+class PhysicsSolverManager : public dataRepository::Group
 {
 public:
   PhysicsSolverManager( std::string const & name,
-                        ManagedGroup * const parent );
+                        Group * const parent );
 
   virtual ~PhysicsSolverManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -47,7 +46,6 @@ public:
   struct viewKeyStruct
   {
       constexpr static auto gravityVectorString = "gravityVector";
-      constexpr static auto blockSystemRepositoryString = "blockSystemRepository";
   } viewKeys;
 
   struct groupKeyStruct
@@ -63,9 +61,6 @@ private:
   PhysicsSolverManager() = delete;
 
   R1Tensor m_gravityVector;
-
-  /// this is a block structured linear system object used to hold the system
-  systemSolverInterface::EpetraBlockSystem m_blockSystemRepository;
 
 };
 

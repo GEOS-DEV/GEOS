@@ -239,6 +239,45 @@ inline void StringToType<std::string>( std::vector<std::string>& destination, st
   destination.push_back( source );
 }
 
+static const std::string base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                       "abcdefghijklmnopqrstuvwxyz"
+                                       "0123456789+/";
+
+inline string & EncodeBase64( unsigned char const * const bytes,
+                              string & outputString,
+                              int len)
+{
+  char * out = &outputString[0];
+  integer val = 0;
+  integer valB = -6;
+  integer size = 0;
+
+  for( integer i = 0 ; i < len ; i++ )
+  {
+    val = ( val << 8 ) + bytes[i];
+    valB += 8;
+    while ( valB >= 0 )
+    {
+      *out = base64Chars[ ( val>>valB ) &0x3F ] ; //0x3f is the Hexadecimal for 63
+      ++out;
+      ++size;
+      valB -= 6;
+    }
+  }
+  if( valB > -6 )
+  {
+    *out = base64Chars[ ( ( val << 8 ) >> ( valB + 8 ) ) &0x3F ];
+    ++out;
+    ++size;
+  }
+  while( size % 4 )
+  {
+    *out = '=';
+    ++out;
+    ++size;
+  }
+  return outputString;
+}
 
 }
 }

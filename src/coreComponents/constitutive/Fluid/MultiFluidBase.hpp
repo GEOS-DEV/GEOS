@@ -86,11 +86,11 @@ class MultiFluidBase : public ConstitutiveBase
 {
 public:
 
-  MultiFluidBase( std::string const & name, ManagedGroup * const parent );
+  MultiFluidBase( std::string const & name, Group * const parent );
 
   virtual ~MultiFluidBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface
@@ -304,7 +304,7 @@ protected:
    * @param composition array containing the fluid composition
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView1d<real64 const> const & pressure,
                           arrayView1d<real64 const> const & temperature,
                           arrayView2d<real64 const> const & composition,

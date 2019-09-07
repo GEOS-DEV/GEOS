@@ -24,16 +24,19 @@
 #ifndef HydrofractureSolver_HPP_
 #define HydrofractureSolver_HPP_
 
-#include "../SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {
+
+class FlowSolverBase;
+class SolidMechanicsLagrangianFEM;
 
 class HydrofractureSolver : public SolverBase
 {
 public:
   HydrofractureSolver( const std::string& name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   ~HydrofractureSolver() override;
 
@@ -46,23 +49,66 @@ public:
     return "Hydrofracture";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override final;
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override final;
 
   virtual void ImplicitStepComplete( real64 const& time_n,
                                      real64 const& dt,
                                      DomainPartition * const domain ) override final;
+
+  virtual void AssembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
+
+  virtual void ApplyBoundaryConditions( real64 const time,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs ) override;
+
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+
+  virtual void SolveSystem( DofManager const & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
+                       real64 const scalingFactor,
+                       DomainPartition * const domain ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition * const domain ) override;
 
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
@@ -70,6 +116,18 @@ public:
                                DomainPartition * const domain ) override;
 
   void UpdateDeformationForCoupling( DomainPartition * const domain );
+
+//  void ApplyFractureFluidCoupling( DomainPartition * const domain,
+//                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+
+  void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+                                                   ParallelMatrix * const matrix01,
+                                                   ParallelVector * const rhs0 );
+
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
+                                                           ParallelMatrix * const matrix10,
+                                                           ParallelVector * const rhs0 );
+
 
   real64 SplitOperatorStep( real64 const& time_n,
                             real64 const& dt,
@@ -92,13 +150,15 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
+
+    constexpr static auto contactRelationNameString = "contactRelationName";
   } HydrofractureSolverViewKeys;
 
 protected:
   virtual void PostProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
 
@@ -106,6 +166,14 @@ private:
   string m_flowSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
+
+  SolidMechanicsLagrangianFEM * m_solidSolver;
+  FlowSolverBase * m_flowSolver;
+
+  string m_contactRelationName;
+
+  ParallelMatrix m_matrix01;
+  ParallelMatrix m_matrix10;
 
 };
 

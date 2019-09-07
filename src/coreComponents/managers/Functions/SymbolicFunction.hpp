@@ -42,7 +42,7 @@ class SymbolicFunction : public FunctionBase
 public:
   /// Main constructor
   SymbolicFunction( const std::string& name,
-                    dataRepository::ManagedGroup * const parent );
+                    dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~SymbolicFunction() override;
@@ -60,9 +60,9 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  inline void Evaluate( dataRepository::ManagedGroup const * const group,
+  inline void Evaluate( dataRepository::Group const * const group,
                         real64 const time,
-                        set<localIndex> const & set,
+                        SortedArrayView<localIndex const> const & set,
                         real64_array & result ) const override final
   {
     FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );

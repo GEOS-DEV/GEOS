@@ -48,13 +48,13 @@ public:
   static constexpr integer REFERENCE_PHASE = PhaseType::OIL; 
   
   CapillaryPressureBase( std::string const & name,
-                         dataRepository::ManagedGroup * const parent );
+                         dataRepository::Group * const parent );
   
   virtual ~CapillaryPressureBase() override;
 
   // *** ManagedGroup interface
   
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** CapillaryPressure-specific interface
@@ -111,7 +111,7 @@ protected:
    * @param phaseVolumeFraction array containing the phase volume fraction, which is input to the update.
    * @param args arbitrary number of arbitrary types that are passed to the kernel
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 

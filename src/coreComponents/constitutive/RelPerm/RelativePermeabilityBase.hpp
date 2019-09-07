@@ -60,11 +60,11 @@ public:
 
 
 
-  RelativePermeabilityBase( std::string const & name, dataRepository::ManagedGroup * const parent );
+  RelativePermeabilityBase( std::string const & name, dataRepository::Group * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
@@ -125,7 +125,7 @@ protected:
    * @param args arbitrary number of arbitrary types that are passed to the
    *             kernel
    */
-  template< typename LEAFCLASS, typename POLICY=elemPolicy, typename ... ARGS >
+  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
   void BatchUpdateKernel( arrayView2d<real64 const> const & phaseVolumeFraction,
                           ARGS&& ... args );
 

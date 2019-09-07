@@ -38,7 +38,7 @@ class TableFunction : public FunctionBase
 public:
   /// Main constructor
   TableFunction( const std::string& name,
-                 dataRepository::ManagedGroup * const parent );
+                 dataRepository::Group * const parent );
 
   /// Destructor
   virtual ~TableFunction() override;
@@ -49,6 +49,8 @@ public:
   /// Initialize the function
   virtual void InitializeFunction() override;
 
+  void reInitializeFunction();
+
   /**
    * @brief Method to evaluate a function on a target object
    * @param group a pointer to the object holding the function arguments
@@ -56,16 +58,26 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::ManagedGroup const * const group,
+  virtual void Evaluate( dataRepository::Group const * const group,
                          real64 const time,
-                         set<localIndex> const & sets,
-                         real64_array & result ) const override final;
+                         SortedArrayView<localIndex const> const & set,
+                         real64_array & result ) const override final
+  {
+    FunctionBase::EvaluateT<TableFunction>( group, time, set, result );
+  }
 
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
    */
   virtual real64 Evaluate( real64 const * const input) const override final;
+
+
+  array1d<real64_array> const & getCoordinates() const { return m_coordinates; }
+  array1d<real64_array>       & getCoordinates()       { return m_coordinates; }
+
+  array1d<real64> const & getValues() const { return m_values; }
+  array1d<real64>       & getValues()       { return m_values; }
 
 private:
   /// An array of table axes

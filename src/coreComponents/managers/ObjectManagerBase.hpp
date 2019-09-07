@@ -23,7 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -34,13 +34,13 @@ class SiloFile;
  * @brief The ObjectManagerBase is the base object of all object managers in the mesh data hierachy.
  *
  */
-class ObjectManagerBase : public dataRepository::ManagedGroup
+class ObjectManagerBase : public dataRepository::Group
 {
 public:
   ObjectManagerBase() = delete;
 
   explicit ObjectManagerBase( std::string const & name,
-                              dataRepository::ManagedGroup * const parent );
+                              dataRepository::Group * const parent );
 
   ~ObjectManagerBase() override;
 
@@ -49,14 +49,14 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< ObjectManagerBase, std::string const &, dataRepository::Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual const string getCatalogName() const = 0;
   ///@}
 
-  using dataRepository::ManagedGroup::PackSize;
-  using dataRepository::ManagedGroup::Pack;
+  using dataRepository::Group::PackSize;
+  using dataRepository::Group::Pack;
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d<localIndex const> const & packList,
@@ -154,11 +154,11 @@ public:
   localIndex resize( localIndex const newSize,
                      const bool /*assignGlobals*/ )
   {
-    dataRepository::ManagedGroup::resize(newSize);
+    dataRepository::Group::resize(newSize);
     return 0;
   }
 
-  using dataRepository::ManagedGroup::resize;
+  using dataRepository::Group::resize;
 
   void WriteSilo( SiloFile& siloFile,
                   const std::string& meshname,
@@ -199,15 +199,17 @@ public:
   void ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const;
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const ,
-                                                                array1d<globalIndex_array>&  )
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const,
+                                                                std::vector< std::vector< globalIndex > > & )
   {}
 
   void SetGhostRankForSenders( arrayView1d<localIndex> const & indicesToSend )
   {
     for( auto index : indicesToSend )
     {
-//      GEOS_ERROR_IF( m_ghostRank[index] >= 0, "trying to set ghostRank of non-locally owned index: m_ghostRank["<<index<<"]="<<m_ghostRank[index] );
+      GEOS_ERROR_IF( m_ghostRank[index] >= 0,
+                     "trying to set ghostRank of non-locally owned index: "
+                     "m_ghostRank[" << index << "]=" << m_ghostRank[index] );
       m_ghostRank[index] = -1;
     }
   }
@@ -250,6 +252,8 @@ public:
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
                           array1d< array1d<localIndex > > const & downmap );
+
+  virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
   static localIndex GetParentRecusive( arraySlice1d<localIndex const> const & parentIndices,
                                        localIndex const lookup )
@@ -325,8 +329,8 @@ public:
 
 
 
-  ManagedGroup * sets()             {return &m_sets;}
-  ManagedGroup const * sets() const {return &m_sets;}
+  Group * sets()             {return &m_sets;}
+  Group const * sets() const {return &m_sets;}
 
   set<localIndex> & externalSet()
   {return m_sets.getReference<set<localIndex>>(m_ObjectManagerBaseViewKeys.externalSet);}
@@ -346,10 +350,10 @@ public:
   integer_array const & GhostRank() const
   { return this->m_ghostRank; }
 
-  ManagedGroup m_sets;
+  Group m_sets;
 
   globalIndex_array  m_localToGlobalMap;
-  map<globalIndex,localIndex>  m_globalToLocalMap;
+  unordered_map<globalIndex,localIndex>  m_globalToLocalMap;
   integer_array m_isExternal;
   integer_array m_ghostRank;
 
@@ -376,7 +380,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        bool const  )
 {
   bool allValuesMapped = true;
-  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, array1d<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )
@@ -409,7 +413,7 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, set<globalIndex> > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  unordered_map<globalIndex,localIndex> const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, set<globalIndex> >::iterator iter = unmappedIndices.begin() ;
        iter != unmappedIndices.end() ;
        ++iter )

@@ -29,6 +29,7 @@ set(meshUtilities_sources
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp
+    SimpleGeometricObjects/Cylinder.cpp
     SimpleGeometricObjects/ThickPlane.cpp
    )
 
@@ -42,7 +43,14 @@ if( ENABLE_PAMELA )
     set( dependencyList ${dependencyList} PAMELA )
 endif()
 
-    
+if( ENABLE_OPENMP )
+    set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
 blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
