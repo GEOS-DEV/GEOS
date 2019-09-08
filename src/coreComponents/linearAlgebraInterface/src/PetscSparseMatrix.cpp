@@ -210,7 +210,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              localIndex size )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, size, colIndices, values, ADD_VALUES );
+  MatSetValues( _mat, 1, rows, size, toPetscInt(colIndices), values, ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
@@ -219,7 +219,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              localIndex size )
 { 
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
+  MatSetValues( _mat, 1, rows, size, toPetscInt(colIndices), values, INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
@@ -228,7 +228,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 localIndex size )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, size, colIndices, values, INSERT_VALUES );
+  MatSetValues( _mat, 1, rows, size, toPetscInt(colIndices), values, INSERT_VALUES );
 }
 
 // 1xN array1d style 
@@ -237,7 +237,7 @@ void PetscSparseMatrix::add( globalIndex const rowIndex,
                              array1d<real64> const &values )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), ADD_VALUES );
+  MatSetValues( _mat, 1, rows, values.size(), toPetscInt(colIndices.data()), values.data(), ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( globalIndex const rowIndex,
@@ -245,7 +245,7 @@ void PetscSparseMatrix::set( globalIndex const rowIndex,
                              array1d<real64> const &values )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat, 1, rows, values.size(), toPetscInt(colIndices.data()), values.data(), INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( globalIndex const rowIndex,
@@ -253,7 +253,7 @@ void PetscSparseMatrix::insert( globalIndex const rowIndex,
                                 array1d<real64> const &values )
 {
   PetscInt rows[1] = {rowIndex};
-  MatSetValues( _mat, 1, rows, values.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat, 1, rows, values.size(), toPetscInt(colIndices.data()), values.data(), INSERT_VALUES );
 }
 
 // MxN array2d style
@@ -261,21 +261,39 @@ void PetscSparseMatrix::add( array1d<globalIndex> const & rowIndices,
                              array1d<globalIndex> const & colIndices,
                              array2d<real64> const & values )
 {
-  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), ADD_VALUES );
+  MatSetValues( _mat,
+                rowIndices.size(),
+                toPetscInt(rowIndices.data()),
+                colIndices.size(),
+                toPetscInt(colIndices.data()),
+                values.data(),
+                ADD_VALUES );
 }
 
 void PetscSparseMatrix::set( array1d<globalIndex> const & rowIndices,
                              array1d<globalIndex> const & colIndices,
                              array2d<real64> const & values )
 {
-  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat,
+                rowIndices.size(),
+                toPetscInt(rowIndices.data()),
+                colIndices.size(),
+                toPetscInt(colIndices.data()),
+                values.data(),
+                INSERT_VALUES );
 }
 
 void PetscSparseMatrix::insert( array1d<globalIndex> const & rowIndices,
                                 array1d<globalIndex> const & colIndices,
                                 array2d<real64> const & values )
 {
-  MatSetValues( _mat, rowIndices.size(), rowIndices.data(), colIndices.size(), colIndices.data(), values.data(), INSERT_VALUES );
+  MatSetValues( _mat,
+                rowIndices.size(),
+                toPetscInt(rowIndices.data()),
+                colIndices.size(),
+                toPetscInt(colIndices.data()),
+                values.data(),
+                INSERT_VALUES );
 }
 
 // -------------------------
