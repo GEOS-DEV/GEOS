@@ -70,7 +70,7 @@ old_copyright_str = \
 old_copyright_str = \
     """/*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
  *
@@ -140,7 +140,7 @@ def locate_string(pattern, file_content):
     return ids
 
 
-def process_file(file_name, test_only):
+def process_file(file_name):
     """
     Return process code:
     0: old copyright found and removed, new copyright not found, new copyright prepended [intended purpose]
@@ -202,11 +202,12 @@ def process_file(file_name, test_only):
         process_code = 7
 
     # Now do the file rewrite, if desired
-    if not test_only:
+    testOnly = False
+    if not testOnly:
         if process_code in [3, 5, 6]:
             pass
         else:
-            with open(file_name, 'w') as f_out:
+            with open('/Users/j0529096/Documents/code/tmp.out', 'w') as f_out:
                 f_out.seek(0)
                 if process_code in [0, 2, 4]:  # prepending copyrights
                     f_out.write(new_copyright_str)
@@ -277,7 +278,7 @@ if __name__ == "__main__":
     file_names = []  # File name
 
     for file_name in file_list:
-        process_code = process_file(file_name, args.test)
+        process_code = process_file(file_name)
         process_codes.append(process_code)
         file_names.append(file_name)
 

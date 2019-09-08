@@ -1,21 +1,25 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
-* @file MesquireRelaxer.h
-* @author herbold, settgast
-*/
+ * @file MesquireRelaxer.h
+ * @author herbold, settgast
+ */
 #ifndef MESQUITE_RELAXER_H_
 #define MESQUITE_RELAXER_H_
 
@@ -28,77 +32,77 @@ class MesquiteRelaxer
 {
 public:
 
-enum class ElementTypes
-{
-QUADS = 9,
-HEXES = 12,
-TETS  = 11,
-TRIS  = 8
-};
+  enum class ElementTypes
+  {
+    QUADS = 9,
+    HEXES = 12,
+    TETS  = 11,
+    TRIS  = 8
+  };
 
-enum class SolverTypes
-{
-SMOOTH_OFF         = 1, // do nothing if smooting is turned off
-LAPLACE            = 2,
-SMART_LAPLACE      = 3,
-CONJUGATE_GRADIENT = 4,
-FEASIBLE_NEWTON    = 5,
-STEEPEST_DESCENT   = 6,
-BOUNDARY           = 7
-};
+  enum class SolverTypes
+  {
+    SMOOTH_OFF         = 1, // do nothing if smooting is turned off
+    LAPLACE            = 2,
+    SMART_LAPLACE      = 3,
+    CONJUGATE_GRADIENT = 4,
+    FEASIBLE_NEWTON    = 5,
+    STEEPEST_DESCENT   = 6,
+    BOUNDARY           = 7
+  };
 
-enum class PatchType
-{
-PATCH_GLOBAL       = 1,
-PATCH_NASH         = 2,
-PATCH_BLOCK        = 3,
-PATCH_CULL         = 4,
-PATCH_JACOBI       = 5
-};
+  enum class PatchType
+  {
+    PATCH_GLOBAL       = 1,
+    PATCH_NASH         = 2,
+    PATCH_BLOCK        = 3,
+    PATCH_CULL         = 4,
+    PATCH_JACOBI       = 5
+  };
 
-void RelaxMesh( PhysicalDomainT& domain );
+  void RelaxMesh( PhysicalDomainT& domain );
 
-/*
-void RelaxMesh(int *dimen,
-unsigned long *num_nod,
-double *coords,
-const int *fixed,
-int *num_elem,
-const unsigned long int *quads,
-int *num_iter,
-const ElementTypes topo,
-const SolverTypes solver,
-const PatchType patch);
-*/
+  /*
+     void RelaxMesh(int *dimen,
+                 unsigned long *num_nod,
+                 double *coords,
+                 const int *fixed,
+                 int *num_elem,
+                 const unsigned long int *quads,
+                 int *num_iter,
+                 const ElementTypes topo,
+                 const SolverTypes solver,
+                 const PatchType patch);
+   */
 
-// EBH: you may want to declare a default constructor/destructor for
-// MesquiteRelaxer
-//MesquiteRelaxer();
-//~MesquiteRelaxer();
+  // EBH: you may want to declare a default constructor/destructor for
+  // MesquiteRelaxer
+  //MesquiteRelaxer();
+  //~MesquiteRelaxer();
 
 private:
 
-double OF_value = 1.e-5;
+  double OF_value = 1.e-5;
 
-MESQUITE_NS::ArrayMesh mesh;
+  MESQUITE_NS::ArrayMesh mesh;
 
-void RunLaplace(const ElementTypes topo, const int num_iter);
-void RunSmartLaplace(const ElementTypes topo, const int num_iter);
-void RunConjugateGradient(const ElementTypes topo,
-const int num_iter,
-const PatchType patch);
-void RunFeasibleNewton(const ElementTypes topo,
-const int num_iter,
-const PatchType patch);
-void RunSteepestDescent(const ElementTypes topo,
-const int num_iter,
-const PatchType patch);
-void ConstructMesh(unsigned long num_nod,
-double *coords,
-const int *fixed,
-unsigned long num_elem,
-const unsigned long *quads,
-const ElementTypes topo);
+  void RunLaplace(const ElementTypes topo, const int num_iter);
+  void RunSmartLaplace(const ElementTypes topo, const int num_iter);
+  void RunConjugateGradient(const ElementTypes topo,
+                            const int num_iter,
+                            const PatchType patch);
+  void RunFeasibleNewton(const ElementTypes topo,
+                         const int num_iter,
+                         const PatchType patch);
+  void RunSteepestDescent(const ElementTypes topo,
+                          const int num_iter,
+                          const PatchType patch);
+  void ConstructMesh(unsigned long num_nod,
+                     double *coords,
+                     const int *fixed,
+                     unsigned long num_elem,
+                     const unsigned long *quads,
+                     const ElementTypes topo);
 };
 
 #endif

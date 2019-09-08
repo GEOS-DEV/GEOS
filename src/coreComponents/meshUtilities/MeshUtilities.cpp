@@ -1,23 +1,27 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /*
-* MeshUtilities.cpp
-*
-*  Created on: Dec 5, 2012
-*      Author: settgast1
-*/
+ * MeshUtilities.cpp
+ *
+ *  Created on: Dec 5, 2012
+ *      Author: settgast1
+ */
 
 #include "MeshUtilities.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -31,26 +35,26 @@ using namespace dataRepository;
 
 MeshUtilities::MeshUtilities()
 {
-// TODO Auto-generated constructor stub
+  // TODO Auto-generated constructor stub
 
 }
 
 MeshUtilities::~MeshUtilities()
 {
-// TODO Auto-generated destructor stub
+  // TODO Auto-generated destructor stub
 }
 
 
 
 void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
-ObjectManagerBase * const nodeManager )
+                                      ObjectManagerBase * const nodeManager )
 {
-GEOSX_MARK_FUNCTION;
-array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
-Group * sets = nodeManager->sets();
+  GEOSX_MARK_FUNCTION; 
+  array1d<R1Tensor>& X = nodeManager->getReference<r1_array>(keys::referencePositionString);
+  Group * sets = nodeManager->sets();
 
-for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
-{
+  for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
+  {
 //    Wrapper<SimpleGeometricObjectBase> const * const wrapper = geometries->getGroup<SimpleGeometricObjectBase>(i);
 //    if (wrapper!=nullptr)
 //    {
@@ -65,21 +69,21 @@ for (int i = 0 ; i < geometries->GetSubGroups().size() ; ++i)
 //        }
 //      }
 //    }
-SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>(i);
-if (object!=nullptr)
-{
-string name = object->getName();
-set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
-for (localIndex a=0 ; a<X.size() ; ++a)
-{
-if (object->IsCoordInObject(X[a]))
-{
-targetSet.insert(a);
-}
-}
-}
+        SimpleGeometricObjectBase const * const object = geometries->GetGroup<SimpleGeometricObjectBase>(i);
+        if (object!=nullptr)
+        {
+          string name = object->getName();
+          set<localIndex> & targetSet = sets->registerWrapper< set<localIndex> >(name)->reference();
+          for (localIndex a=0 ; a<X.size() ; ++a)
+          {
+            if (object->IsCoordInObject(X[a]))
+            {
+              targetSet.insert(a);
+            }
+          }
+        }
 
-}
+  }
 }
 //
 //void MeshUtilities::GenerateFasesetsAndAssociatedNodesets(

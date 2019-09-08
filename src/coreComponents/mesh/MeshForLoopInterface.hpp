@@ -1,16 +1,20 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 #ifndef __GEOS_RAJA_WRAPPER__HPP
 #define __GEOS_RAJA_WRAPPER__HPP
@@ -26,89 +30,89 @@
 
 namespace geosx
 {
-
+   
 //-------------
-//Here we want to unpack data and
+//Here we want to unpack data and 
 //use one of the templated loops above
 //------------
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_nodes( MeshLevel const * const mesh, LAMBDA && body)
-{
-NodeManager const * const nodeManager = mesh->getNodeManager();
-forall_in_range<POLICY> (0, nodeManager->size(), body);
+{  
+  NodeManager const * const nodeManager = mesh->getNodeManager();  
+  forall_in_range<POLICY> (0, nodeManager->size(), body);
 }
 
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_faces( MeshLevel const * const mesh, LAMBDA && body)
 {
-FaceManager const * const faceManager = mesh->getFaceManager();
-forall_in_range<POLICY> (0, faceManager->size(), body);
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  forall_in_range<POLICY> (0, faceManager->size(), body);
 }
 
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, LAMBDA && body)
 {
-ElementRegionManager const * const elemManager = mesh->getElemManager();
-dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
 
-for( auto & region : elementRegions->GetSubGroups() )
-{
-dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
-{
-CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
+  for( auto & region : elementRegions->GetSubGroups() )
+  {
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    for( auto const & iterSubRegions : elementSubRegions->GetSubGroups() )
+    {
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterSubRegions.first);
+      
+      forall_in_range<POLICY>(0,elementSubRegion->size(), body);
 
-forall_in_range<POLICY>(0,elementSubRegion->size(), body);
-
-}
-}
+    }
+  }
 }
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems( MeshLevel const * const mesh, const localIndex *setList, localIndex listLen, LAMBDA && body)
 {
 
-ElementRegionManager const * const elemManager = mesh->getElemManager();
-dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  dataRepository::Group const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegionsGroup);
+  
+  for( auto const & region : elementRegions->GetSubGroups() )
+    {
+    dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
+    {
+      CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
 
-for( auto const & region : elementRegions->GetSubGroups() )
-{
-dataRepository::Group const * const elementSubRegions = region.second->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
-{
-CellElementSubRegion const * const elementSubRegion = elementSubRegions->GetGroup<CellElementSubRegion>(iterCellBlocks.first);
-
-forall_in_set<POLICY>(setList, listLen, body);
-}
-}
+      forall_in_set<POLICY>(setList, listLen, body);
+    }
+  }
 }
 
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems_in_subRegion( ElementSubRegionBase const * const subRegion, LAMBDA && body)
 {
-forall_in_range<POLICY>(0,subRegion->size(), body);
+  forall_in_range<POLICY>(0,subRegion->size(), body);
 }
 
-
+  
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
 
-ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-{
-ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
-for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-{
-ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+    for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+    {
+      ElementSubRegionBase const * const elementSubRegion = elemRegion->GetSubRegion(esr);
 
-forall_in_range<POLICY>(0, elementSubRegion->size(),
-[=](localIndex index) mutable -> void
-{
-lambdaBody(er,esr,index);
-});
-}
-}
+      forall_in_range<POLICY>(0, elementSubRegion->size(),
+                              [=](localIndex index) mutable -> void
+                              {
+                                lambdaBody(er,esr,index);
+                              });
+    }
+  }
 }
 
 
@@ -116,12 +120,12 @@ lambdaBody(er,esr,index);
 // NUMBER sum_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
 // {
 //   ReduceSum<REDUCE_POLICY, NUMBER> sum(NUMBER(0));
-
+  
 //   forall_in_range(begin, end, GEOSX_LAMBDA (localIndex index) mutable -> void
 //   {
 //       sum += body(index);
 //   });
-
+  
 //   return sum.get();
 // }
 
@@ -134,7 +138,7 @@ lambdaBody(er,esr,index);
 //    {
 //      sum += body(index);
 //    });
-
+  
 //   return sum.get();
 // }
 
@@ -167,22 +171,22 @@ template<typename NUMBER=real64,class POLICY=serialPolicy,typename LAMBDA=void>
 std::pair<NUMBER, localIndex>
 minloc_in_range(localIndex const begin, const localIndex end, LAMBDA && body)
 {
-NUMBER minDist = std::numeric_limits<NUMBER>::max();
-localIndex minDistId = -1;
+  NUMBER minDist = std::numeric_limits<NUMBER>::max();
+  localIndex minDistId = -1;
 
-// TODO: make this a RAJA loop
-for ( localIndex ei = begin; ei < end; ++ei )
-{
-NUMBER dist = body( ei );
+  // TODO: make this a RAJA loop
+  for ( localIndex ei = begin; ei < end; ++ei )
+  {
+    NUMBER dist = body( ei );
 
-if ( dist < minDist )
-{
-minDist   = dist;
-minDistId = ei;
-}
-}
-
-return std::make_pair( minDist, minDistId );
+    if ( dist < minDist )
+    {
+      minDist   = dist;
+      minDistId = ei;
+    }
+  }
+ 
+  return std::make_pair( minDist, minDistId );
 }
 
 
@@ -190,35 +194,35 @@ template<typename NUMBER=real64,class POLICY=serialPolicy, typename LAMBDA=void>
 std::pair<NUMBER, std::tuple<localIndex,localIndex,localIndex>>
 minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambdaBody)
 {
-NUMBER minVal = std::numeric_limits<NUMBER>::max();
-localIndex minReg = -1, minSubreg = -1, minIndex = -1;
+  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  localIndex minReg = -1, minSubreg = -1, minIndex = -1;
 
-ElementRegionManager const * const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-{
-ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
 
-elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, auto * const subRegion )
-{
-auto ebody = [=](localIndex index) mutable -> real64
-{
-return lambdaBody(er,esr,index);
-};
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, auto * const subRegion )
+    {
+      auto ebody = [=](localIndex index) mutable -> real64
+      {
+        return lambdaBody(er,esr,index);
+      };
 
-auto ret = minloc_in_range<NUMBER,POLICY>(0, subRegion->size(), ebody);
+      auto ret = minloc_in_range<NUMBER,POLICY>(0, subRegion->size(), ebody);
 
-if (ret.first < minVal)
-{
-minVal    = ret.first;
-minReg    = er;
-minSubreg = esr;
-minIndex  = ret.second;
-}
-});
-}
+      if (ret.first < minVal)
+      {
+        minVal    = ret.first;
+        minReg    = er;
+        minSubreg = esr;
+        minIndex  = ret.second;
+      }
+    });
+  }
 
-return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
 }
 
 
@@ -236,97 +240,97 @@ return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
 /*
 template<class POLICY=serialPolicy,typename LAMBDA=void>
 void for_elems_by_constitutive( MeshLevel const * const mesh,
-constitutive::ConstitutiveManager * const constitutiveManager,
-FiniteElementSpaceManager const * const feDiscretizationManager,
-LAMBDA && body )
+                               constitutive::ConstitutiveManager * const constitutiveManager,
+                               FiniteElementSpaceManager const * const feDiscretizationManager,
+                               LAMBDA && body )
 {
-ElementRegionManager const * const elemManager = mesh->getElemManager();
-dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  dataRepository::ManagedGroup const * const elementRegions = elemManager->GetGroup(dataRepository::keys::elementRegions);
 
 
-for( auto const & regionPair : elementRegions->GetSubGroups() )
-{
-dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
-auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
-FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
+  for( auto const & regionPair : elementRegions->GetSubGroups() )
+  {
+    dataRepository::ManagedGroup const * const elementRegion = regionPair.second;
+    auto const & numMethodName = elementRegion->getReference<string>(dataRepository::keys::numericalMethod);
+    FiniteElementSpace const * const feDiscretization = feDiscretizationManager->GetGroup<FiniteElementSpace>(numMethodName);
 
-dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
-for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
-{
-CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
+    dataRepository::ManagedGroup const * const elementSubRegions = elementRegion->GetGroup(dataRepository::keys::elementSubRegions);
+    for( auto & iterCellBlocks : elementSubRegions->GetSubGroups() )
+    {
+      CellBlockSubRegion const * cellBlock = elementSubRegions->GetGroup<CellBlockSubRegion>(iterCellBlocks.first);
 
-//auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
-arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);
+      //auto const & dNdX = cellBlock->getData< multidimensionalArray::ManagedArray< R1Tensor, 3 > >(keys::dNdX);
+      arrayView3d<R1Tensor> const & dNdX = cellBlock->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);
+      
+      arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ);
 
-arrayView2d<real64> const & detJ = cellBlock->getReference< array2d<real64> >(dataRepository::keys::detJ);
-
-auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
+      auto const & constitutiveMap = cellBlock->getReference< std::pair< array2d<localIndex>,array2d<localIndex> > >(CellBlockSubRegion::viewKeyStruct::constitutiveMapString);
 //      RAJA::View< localIndex const, RAJA::Layout<2> > constitutiveMapView( reinterpret_cast<localIndex const*>(constitutiveMap.second.data()),
 //                                                                           constitutiveMap.second.size(0),
 //                                                                           constitutiveMap.second.size(1) );
-arrayView2d<localIndex> const & constitutiveMapView = constitutiveMap.second;
+      arrayView2d<localIndex> const & constitutiveMapView = constitutiveMap.second;
 
-auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
-arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
+      auto const & constitutiveGrouping = cellBlock->getReference< map< string, localIndex_array > >(CellBlockSubRegion::viewKeyStruct::constitutiveGroupingString);
+      arrayView2d<localIndex> const & elemsToNodes = cellBlock->getWrapper<FixedOneToManyRelation>(cellBlock->viewKeys().nodeList)->reference();// getData<array2d<localIndex>>(keys::nodeList);
 
-localIndex const numNodesPerElement = elemsToNodes.size(1);
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
 
-for( auto const & constitutiveGroup : constitutiveGrouping )
-{
-string const constitutiveName = constitutiveGroup.first;
+      for( auto const & constitutiveGroup : constitutiveGrouping )
+      {
+        string const constitutiveName = constitutiveGroup.first;
 //      localIndex_array const & elementList = constitutiveGroup.second;
-arrayView1d<localIndex> const & elementList = constitutiveGroup.second;
+        arrayView1d<localIndex> const & elementList = constitutiveGroup.second;
 
-constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
+        constitutive::ConstitutiveBase * constitutiveModel = constitutiveManager->GetGroup<constitutive::ConstitutiveBase>( constitutiveName );
 
-void * constitutiveModelData;
-constitutiveModel->SetParamStatePointers(constitutiveModelData);
+        void * constitutiveModelData;
+        constitutiveModel->SetParamStatePointers(constitutiveModelData);
 
-constitutive::ConstitutiveBase::UpdateFunctionPointer
-constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
+        constitutive::ConstitutiveBase::UpdateFunctionPointer
+        constitutiveUpdate = constitutiveModel->GetStateUpdateFunctionPointer();
 
-///Local copies --------
-arrayView1d<real64> const & meanStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress"));
-arrayView1d<R2SymTensor> const & devStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress"));
-//------------------------
+        ///Local copies --------
+        arrayView1d<real64> const & meanStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<real64_array>(std::string("MeanStress"));
+        arrayView1d<R2SymTensor> const & devStress = constitutiveModel->GetGroup(std::string("StateData"))->getReference<r2Sym_array>(std::string("DeviatorStress"));
+        //------------------------
 
-//Element loop is packed with parameters...
-auto ebody = [=](localIndex index) mutable -> void
-{body(index,
-numNodesPerElement,
-elemsToNodes,
-feDiscretization->m_finiteElement->n_quadrature_points(),
-dNdX,
-constitutiveMapView,
-detJ,
-devStress,
-meanStress,
-constitutiveUpdate,
-constitutiveModelData
-); };
+        //Element loop is packed with parameters...
+        auto ebody = [=](localIndex index) mutable -> void
+          {body(index,
+                numNodesPerElement,
+                elemsToNodes,
+                feDiscretization->m_finiteElement->n_quadrature_points(),
+                dNdX,
+                constitutiveMapView,
+                detJ,
+                devStress,
+                meanStress,
+                constitutiveUpdate,
+                constitutiveModelData
+                ); };
 
+        
+        forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
 
-forall_in_set<POLICY>(elementList.data(), elementList.size(), ebody);
-
-}
-}
-}
+      }
+    }
+  }
 }
 
 #define FOR_ELEMS_FOR_CONSTITUTIVE( mesh, constitutiveManager, feDiscretizationManager)\
-for_elems_by_constitutive( mesh,\
-constitutiveManager,\
-feDiscretizationManager,\
-GEOSX_LAMBDA( localIndex const k,\
-localIndex const numNodesPerElement,\
-arrayView2d<localIndex> const elemsToNodes,\
-localIndex const numQuadraturePoints,\
-arrayView3d<R1Tensor> const & dNdX,\
-arrayView2d<localIndex> const constitutiveMapView,\
-arrayView2d<real64> const detJ,\
-arrayView1d<R2SymTensor> devStress,\
-arrayView1d<real64> meanStress,\
-constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
-void * constitutiveModelData\
-) mutable -> void
+    for_elems_by_constitutive( mesh,\
+    constitutiveManager,\
+    feDiscretizationManager,\
+    GEOSX_LAMBDA( localIndex const k,\
+    localIndex const numNodesPerElement,\
+    arrayView2d<localIndex> const elemsToNodes,\
+    localIndex const numQuadraturePoints,\
+    arrayView3d<R1Tensor> const & dNdX,\
+    arrayView2d<localIndex> const constitutiveMapView,\
+    arrayView2d<real64> const detJ,\
+    arrayView1d<R2SymTensor> devStress,\
+    arrayView1d<real64> meanStress,\
+    constitutive::ConstitutiveBase::UpdateFunctionPointer constitutiveUpdate,\
+    void * constitutiveModelData\
+    ) mutable -> void
 */

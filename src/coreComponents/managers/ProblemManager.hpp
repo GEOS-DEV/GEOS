@@ -1,23 +1,27 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /*
-* ProblemManager.hpp
-*
-*  Created on: Jul 21, 2016
-*      Author: rrsettgast
-*/
+ * ProblemManager.hpp
+ *
+ *  Created on: Jul 21, 2016
+ *      Author: rrsettgast
+ */
 
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
 #define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
@@ -53,137 +57,137 @@ class DomainPartition;
 class ProblemManager : public ObjectManagerBase
 {
 public:
-explicit ProblemManager( const std::string& name,
-Group * const parent );
+  explicit ProblemManager( const std::string& name,
+                           Group * const parent );
 
-~ProblemManager() override;
+  ~ProblemManager() override;
 
-/**
-* @name Static Factory Catalog Functions
-*/
-///@{
-const static string CatalogName()
-{ return "Problem"; }
-virtual const string getCatalogName() const override final
-{ return ProblemManager::CatalogName(); }
-///@}
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+  const static string CatalogName() 
+  { return "Problem"; }
+  virtual const string getCatalogName() const override final
+  { return ProblemManager::CatalogName(); }
+  ///@}
 
-/**
-* This function is used to inform the schema generator of any
-* deviations between the xml and GEOS data structures.
-*/
-virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-xmlWrapper::xmlNode schemaParent,
-integer documentationType) override;
+  /**
+   * This function is used to inform the schema generator of any
+   * deviations between the xml and GEOS data structures.
+   */
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
 
-virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
-virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-void ParseCommandLineInput( int argc, char* argv[]);
+  void ParseCommandLineInput( int argc, char* argv[]);
 
-static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
+  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
 
-void InitializePythonInterpreter();
+  void InitializePythonInterpreter();
 
-void ClosePythonInterpreter();
+  void ClosePythonInterpreter();
 
-void GenerateDocumentation();
+  void GenerateDocumentation();
 
-void ParseInputFile();
+  void ParseInputFile();
 
-void GenerateMesh();
+  void GenerateMesh();
 
-void ApplyNumericalMethods();
+  void ApplyNumericalMethods();
 
-void InitializationOrder( string_array & order ) override final;
+  void InitializationOrder( string_array & order ) override final;
 
-/**
-* Function to setup the problem once the input has been read in, or the values
-* of the objects in the hierarchy have been sufficently set to generate a
-* mesh, etc.
-*/
-void ProblemSetup();
+  /**
+   * Function to setup the problem once the input has been read in, or the values
+   * of the objects in the hierarchy have been sufficently set to generate a
+   * mesh, etc.
+   */
+  void ProblemSetup();
 
-/**
-* Run the events in the scheduler.
-*/
-void RunSimulation();
+  /**
+   * Run the events in the scheduler.
+   */
+  void RunSimulation();
 
 
-void ReadRestartOverwrite( const std::string& restartFileName );
+  void ReadRestartOverwrite( const std::string& restartFileName );
 
-void ApplyInitialConditions();
+  void ApplyInitialConditions();
 
-DomainPartition * getDomainPartition();
-DomainPartition const * getDomainPartition() const;
+  DomainPartition * getDomainPartition();
+  DomainPartition const * getDomainPartition() const;
 
-const string & getProblemName() const
-{ return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  const string & getProblemName() const
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
 
-const string & getInputFileName() const
-{ return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  const string & getInputFileName() const
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
 
-const string & getRestartFileName() const
-{ return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  const string & getRestartFileName() const
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
-const string & getSchemaFileName() const
-{ return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  const string & getSchemaFileName() const
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
 
-xmlWrapper::xmlDocument xmlDocument;
-xmlWrapper::xmlResult xmlResult;
-xmlWrapper::xmlNode xmlProblemNode;
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult;
+  xmlWrapper::xmlNode xmlProblemNode;
 
-struct viewKeysStruct
-{
-dataRepository::ViewKey verbosity                = { "verbosityFlag" };
-dataRepository::ViewKey inputFileName            = {"inputFileName"};
-dataRepository::ViewKey restartFileName          = {"restartFileName"};
-dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};
-dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};
-dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
-dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
-dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
-dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
-dataRepository::ViewKey problemName              = {"problemName"};
-dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
-} viewKeys;
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey verbosity                = { "verbosityFlag" };
+    dataRepository::ViewKey inputFileName            = {"inputFileName"};
+    dataRepository::ViewKey restartFileName          = {"restartFileName"};
+    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};
+    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};
+    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
+    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
+    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
+    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
+    dataRepository::ViewKey problemName              = {"problemName"};
+    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
+  } viewKeys;
 
-struct groupKeysStruct
-{
-dataRepository::GroupKey commandLine    = { "commandLine" };
-dataRepository::GroupKey constitutiveManager = { "Constitutive" };
-dataRepository::GroupKey domain    = { "domain" };
-dataRepository::GroupKey eventManager = { "Events" };
-dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
-dataRepository::GroupKey functionManager = { "Functions" };
-dataRepository::GroupKey geometricObjectManager = { "Geometry" };
-dataRepository::GroupKey meshManager = { "Mesh" };
-dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
-dataRepository::GroupKey outputManager = { "Outputs" };
-dataRepository::GroupKey physicsSolverManager = { "Solvers" };
-} groupKeys;
+  struct groupKeysStruct
+  {
+    dataRepository::GroupKey commandLine    = { "commandLine" };
+    dataRepository::GroupKey constitutiveManager = { "Constitutive" };
+    dataRepository::GroupKey domain    = { "domain" };
+    dataRepository::GroupKey eventManager = { "Events" };
+    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
+    dataRepository::GroupKey functionManager = { "Functions" };
+    dataRepository::GroupKey geometricObjectManager = { "Geometry" };
+    dataRepository::GroupKey meshManager = { "Mesh" };
+    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
+    dataRepository::GroupKey outputManager = { "Outputs" };
+    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
+  } groupKeys;
 
-PhysicsSolverManager & GetPhysicsSolverManager()
-{
-return *m_physicsSolverManager;
-}
+  PhysicsSolverManager & GetPhysicsSolverManager()
+  {
+    return *m_physicsSolverManager;
+  }
 
-PhysicsSolverManager const & GetPhysicsSolverManager() const
-{
-return *m_physicsSolverManager;
-}
+  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  {
+    return *m_physicsSolverManager;
+  }
 
 protected:
-virtual void PostProcessInput() override final;
+  virtual void PostProcessInput() override final;
 
-virtual void InitializePostSubGroups( Group * const group ) override final;
+  virtual void InitializePostSubGroups( Group * const group ) override final;
 
 private:
 
-PhysicsSolverManager * m_physicsSolverManager;
-EventManager * m_eventManager;
-NewFunctionManager * m_functionManager;
+  PhysicsSolverManager * m_physicsSolverManager;
+  EventManager * m_eventManager;
+  NewFunctionManager * m_functionManager;
 };
 
 } /* namespace geosx */

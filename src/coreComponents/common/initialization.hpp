@@ -1,15 +1,19 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2.1-only
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Produced at the Lawrence Livermore National Laboratory
  *
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
- * ------------------------------------------------------------------------------------------------------------
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
 #ifndef _COMMON_INITIALIZATION_HPP_
@@ -19,48 +23,48 @@ namespace geosx
 {
 
 /**
-* @brief Perform the basic GEOSX initialization.
-* @param [in] argc the number of command line arguments.
-* @param [in/out] argv the command line arguments.
-*/
+ * @brief Perform the basic GEOSX initialization.
+ * @param [in] argc the number of command line arguments.
+ * @param [in/out] argv the command line arguments.
+ */
 void basicSetup( int argc, char * argv[] );
 
 /**
-* @brief Perform the basic GEOSX cleanup.
-*/
+ * @brief Perform the basic GEOSX cleanup.
+ */
 void basicCleanup();
 
 /**
-* @brief Setup the cxx-utilities library. This initializes the logger,
-* signal handling and the floating point environment.
-*/
+ * @brief Setup the cxx-utilities library. This initializes the logger,
+ * signal handling and the floating point environment.
+ */
 void setupCXXUtils();
 
 /**
-* @brief Finalize the cxx-utilities library. This finalizes the logger and chai.
-*/
+ * @brief Finalize the cxx-utilities library. This finalizes the logger and chai.
+ */
 void finalizeCXXUtils();
 
 /**
-* @brief We link to MKL with the single dynamic library approach, so this sets some MKL parameters.
-*/
+ * @brief We link to MKL with the single dynamic library approach, so this sets some MKL parameters.
+ */
 void setupMKL();
 
 /**
-* @brief Setup OpenMP.
-*/
+ * @brief Setup OpenMP.
+ */
 void setupOpenMP();
 
 /**
-* @brief Setup MPI.
-* @param [in] argc the number of command line arguments.
-* @param [in/out] argv the command line arguments.
-*/
+ * @brief Setup MPI.
+ * @param [in] argc the number of command line arguments.
+ * @param [in/out] argv the command line arguments.
+ */
 void setupMPI( int argc, char * argv[] );
 
 /**
-* @brief Finalize MPI.
-*/
+ * @brief Finalize MPI.
+ */
 void finalizeMPI();
 
 } // namespace geosx

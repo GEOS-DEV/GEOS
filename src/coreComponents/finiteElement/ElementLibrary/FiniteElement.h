@@ -1,24 +1,28 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 #ifndef FINITE_ELEMENT_H
 #define FINITE_ELEMENT_H
 
 /**
-* @file FiniteElement.h
-* @author white230
-*/
+ * @file FiniteElement.h
+ * @author white230
+ */
 
 #include "finiteElement/basis/BasisBase.hpp"
 #include "finiteElement/quadrature/QuadratureBase.hpp"
@@ -26,20 +30,20 @@
 #include "common/TimingMacros.hpp"
 
 /**
-* Class representing a generic finite element.  Its constructor
-* takes a specific interpolation basis and quadrature rule in
-* order to define a complete element.
-*
-* The class assume that the
-* mapping from parent coordinates to real coordinates is
-* iso-parametric, and therefore the same basis is used for both
-* interpolation and mapping.
-*
-* The class also defines a generic interface for accessing finite
-* element data.  In the future, more sophisticated element
-* definitions that do not fit within the current class can be
-* defined through derived classes.
-*/
+ * Class representing a generic finite element.  Its constructor
+ * takes a specific interpolation basis and quadrature rule in
+ * order to define a complete element.
+ *
+ * The class assume that the
+ * mapping from parent coordinates to real coordinates is
+ * iso-parametric, and therefore the same basis is used for both
+ * interpolation and mapping.
+ *
+ * The class also defines a generic interface for accessing finite
+ * element data.  In the future, more sophisticated element
+ * definitions that do not fit within the current class can be
+ * defined through derived classes.
+ */
 namespace geosx
 {
 template <int dim>
@@ -47,90 +51,90 @@ class FiniteElement : public FiniteElementBase
 {
 public:
 
-FiniteElement( BasisBase const & basis,
-QuadratureBase const & quadrature,
-const int num_zero_energy_modes = 0 );
+  FiniteElement( BasisBase const & basis,
+                 QuadratureBase const & quadrature,
+                 const int num_zero_energy_modes = 0 );
 
-~FiniteElement() override
-{}
+  ~FiniteElement() override
+  {}
 
-static string CatalogName() { return "C3D8"; }
+  static string CatalogName() { return "C3D8"; }
 
-void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) override;
+  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) override;
 
 };
 
 
 
 /**
-* Constructor.  Takes an interpolation basis and quadrature rule,
-* and pre-computes all static finite element data.  Any data
-* that depends on the mapped configuration of the element, however,
-* is left uninitialized until reinit(...) is called.
-*/
+ * Constructor.  Takes an interpolation basis and quadrature rule,
+ * and pre-computes all static finite element data.  Any data
+ * that depends on the mapped configuration of the element, however,
+ * is left uninitialized until reinit(...) is called.
+ */
 
 template <int dim>
 FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
-QuadratureBase const & quadrature,
-const int num_zero_energy_modes ):
-FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
+                                     QuadratureBase const & quadrature,
+                                     const int num_zero_energy_modes ):
+  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
 {
 
-data.resize(n_q_points);
-for(auto q=0 ; q<n_q_points ; ++q)
-{
-data[q].parent_q_point = quadrature.integration_point(q);
-data[q].parent_q_weight = quadrature.integration_weight(q);
+  data.resize(n_q_points);
+  for(auto q=0 ; q<n_q_points ; ++q)
+  {
+    data[q].parent_q_point = quadrature.integration_point(q);
+    data[q].parent_q_weight = quadrature.integration_weight(q);
 
-data[q].parent_values.resize(n_dofs);
-data[q].parent_gradients.resize(n_dofs);
-data[q].mapped_gradients.resize(n_dofs);
+    data[q].parent_values.resize(n_dofs);
+    data[q].parent_gradients.resize(n_dofs);
+    data[q].mapped_gradients.resize(n_dofs);
 
-for(auto i=0 ; i<n_dofs ; ++i)
-{
-data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
-data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
-}
-}
+    for(auto i=0 ; i<n_dofs ; ++i)
+    {
+      data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
+      data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
+    }
+  }
 }
 
 
 
 /**
-* Reinitialize the finite element basis on a particular element.
-* We use the coordinates of the support points in real space to
-* construct the forward mapping from the parent coordinate system.  The
-* support points are assumed to follow a lexicographic ordering:
-* On the parent element, we loop over the x-coordinate fastest,
-* the y, then z (depending on the desired spatial dimension of the
-* element).
-*/
+ * Reinitialize the finite element basis on a particular element.
+ * We use the coordinates of the support points in real space to
+ * construct the forward mapping from the parent coordinate system.  The
+ * support points are assumed to follow a lexicographic ordering:
+ * On the parent element, we loop over the x-coordinate fastest,
+ * the y, then z (depending on the desired spatial dimension of the
+ * element).
+ */
 
 template <int dim>
 void FiniteElement<dim> :: reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points )
 {
-for(int q=0 ; q<n_q_points ; ++q)
-{
-R2TensorT<3> jacobian;
-jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
+  for(int q=0 ; q<n_q_points ; ++q)
+  {
+    R2TensorT<3> jacobian;
+    jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
 
-for(int a=1 ; a<n_dofs ; ++a)
-{
-jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
-}
+    for(int a=1 ; a<n_dofs ; ++a)
+    {
+      jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
+    }
 
-if( dim==2 )
-{
-jacobian(2,2) = 1;
-}
+    if( dim==2 )
+    {
+      jacobian(2,2) = 1;
+    }
 
-data[q].jacobian_determinant = jacobian.Inverse();
+    data[q].jacobian_determinant = jacobian.Inverse();
 
-for(int i=0 ; i<n_dofs ; ++i)
-{
-data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
-}
-}
+    for(int i=0 ; i<n_dofs ; ++i)
+    {
+      data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
+    }
+  }
 }
 
 

@@ -1,20 +1,24 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
-* @file DomainPartition.hpp
-*/
+ * @file DomainPartition.hpp
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
@@ -40,29 +44,29 @@ class PartitionBase;
 class DomainPartition : public dataRepository::Group
 {
 public:
-DomainPartition( std::string const & name,
-Group * const parent );
+  DomainPartition( std::string const & name,
+                   Group * const parent );
 
-~DomainPartition() override;
+  ~DomainPartition() override;
 
-DomainPartition() = delete;
-DomainPartition( DomainPartition const &) = delete;
-DomainPartition( DomainPartition &&) = delete;
-DomainPartition& operator=( DomainPartition const & ) = delete;
-DomainPartition& operator=( DomainPartition && ) = delete;
+  DomainPartition() = delete;
+  DomainPartition( DomainPartition const &) = delete;
+  DomainPartition( DomainPartition &&) = delete;
+  DomainPartition& operator=( DomainPartition const & ) = delete;
+  DomainPartition& operator=( DomainPartition && ) = delete;
 
-virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
-
-
-void InitializationOrder( string_array & order ) override final;
-
-void GenerateSets();
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
 
-/**
-* @name MPI functionality
-*/
-///@{
+  void InitializationOrder( string_array & order ) override final;
+
+  void GenerateSets();
+
+
+  /**
+   * @name MPI functionality
+   */
+  ///@{
 
 //  void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 //                                            array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects );
@@ -71,73 +75,73 @@ void GenerateSets();
 //  static int reserveCommID();
 //  static void releaseCommID( int & ID );
 
-void SetupCommunications();
+  void SetupCommunications();
 
-void AddNeighbors(const unsigned int idim,
-MPI_Comm& cartcomm,
-int* ncoords);
-///@}
-
-
-void ReadSilo( const SiloFile& siloFile,
-const int cycleNum,
-const realT problemTime,
-const bool isRestart );
-
-void WriteFiniteElementMesh( SiloFile& siloFile,
-const int cycleNum,
-const realT problemTime,
-const bool isRestart );
-
-void ReadFiniteElementMesh( const SiloFile& siloFile,
-const int cycleNum,
-const realT problemTime,
-const bool isRestart );
-
-struct viewKeysStruct
-{
-dataRepository::ViewKey neighbors = { "Neighbors" };
-} viewKeys;
-
-struct groupKeysStruct
-{
-static constexpr auto meshBodiesString = "MeshBodies";
-static constexpr auto constitutiveManagerString = "Constitutive";
-
-dataRepository::GroupKey meshBodies           = { meshBodiesString };
-dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
-dataRepository::GroupKey communicationManager    = { "communicationManager" };
-} groupKeys;
+  void AddNeighbors(const unsigned int idim,
+                    MPI_Comm& cartcomm,
+                    int* ncoords);
+  ///@}
 
 
-constitutive::ConstitutiveManager const * getConstitutiveManager() const
-{ return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  void ReadSilo( const SiloFile& siloFile,
+                 const int cycleNum,
+                 const realT problemTime,
+                 const bool isRestart );
 
-constitutive::ConstitutiveManager * getConstitutiveManager()
-{ return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
+  void WriteFiniteElementMesh( SiloFile& siloFile,
+                               const int cycleNum,
+                               const realT problemTime,
+                               const bool isRestart );
+
+  void ReadFiniteElementMesh( const SiloFile& siloFile,
+                              const int cycleNum,
+                              const realT problemTime,
+                              const bool isRestart );
+
+  struct viewKeysStruct
+  {
+    dataRepository::ViewKey neighbors = { "Neighbors" };
+  } viewKeys;
+
+  struct groupKeysStruct
+  {
+    static constexpr auto meshBodiesString = "MeshBodies";
+    static constexpr auto constitutiveManagerString = "Constitutive";
+
+    dataRepository::GroupKey meshBodies           = { meshBodiesString };
+    dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
+    dataRepository::GroupKey communicationManager    = { "communicationManager" };
+  } groupKeys;
 
 
-Group const * getMeshBodies() const
-{ return this->GetGroup(groupKeys.meshBodies); }
-Group * getMeshBodies()
-{ return this->GetGroup(groupKeys.meshBodies); }
+  constitutive::ConstitutiveManager const * getConstitutiveManager() const
+  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
 
-MeshBody const * getMeshBody( string const & meshName ) const
-{ return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
-MeshBody * getMeshBody( string const & meshName )
-{ return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  constitutive::ConstitutiveManager * getConstitutiveManager()
+  { return this->GetGroup<constitutive::ConstitutiveManager>(groupKeys.constitutiveManager); }
 
-MeshBody const * getMeshBody( localIndex const index ) const
-{ return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
-MeshBody * getMeshBody( localIndex const index )
-{ return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
 
-std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
-std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
+  Group const * getMeshBodies() const
+  { return this->GetGroup(groupKeys.meshBodies); }
+  Group * getMeshBodies()
+  { return this->GetGroup(groupKeys.meshBodies); }
+
+  MeshBody const * getMeshBody( string const & meshName ) const
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+  MeshBody * getMeshBody( string const & meshName )
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName); }
+
+  MeshBody const * getMeshBody( localIndex const index ) const
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+  MeshBody * getMeshBody( localIndex const index )
+  { return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index); }
+
+  std::set<int>       & getMetisNeighborList()       {return m_metisNeighborList;}
+  std::set<int> const & getMetisNeighborList() const {return m_metisNeighborList;}
 
 private:
 
-std::set<int> m_metisNeighborList;
+  std::set<int> m_metisNeighborList;
 
 };
 

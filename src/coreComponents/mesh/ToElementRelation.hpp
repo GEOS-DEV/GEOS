@@ -1,23 +1,27 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /*
-* ToElementRelation.hpp
-*
-*  Created on: Jun 6, 2018
-*      Author: settgast
-*/
+ * ToElementRelation.hpp
+ *
+ *  Created on: Jun 6, 2018
+ *      Author: settgast
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_
 #define SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_
@@ -34,47 +38,47 @@ class ToElementRelation
 {
 public:
 
-using base_type = BASETYPE;
+  using base_type = BASETYPE;
 
-ToElementRelation();
-~ToElementRelation();
+  ToElementRelation();
+  ~ToElementRelation();
 
-template< typename... DIMS >
-void resize( DIMS... newdims );
+  template< typename... DIMS >
+  void resize( DIMS... newdims );
 
-localIndex size() const
-{
-return m_toElementRegion.size();
-}
+  localIndex size() const
+  {
+    return m_toElementRegion.size();
+  }
 
-localIndex size( int const dim ) const
-{
-return m_toElementRegion.size( dim );
-}
+  localIndex size( int const dim ) const
+  {
+    return m_toElementRegion.size( dim );
+  }
 
-void setElementRegionManager( ElementRegionManager const * const input )
-{
-m_elemRegionManager = input;
-}
+  void setElementRegionManager( ElementRegionManager const * const input )
+  {
+    m_elemRegionManager = input;
+  }
 
-ElementRegionManager const * getElementRegionManager() const
-{
-return m_elemRegionManager;
-}
+  ElementRegionManager const * getElementRegionManager() const
+  {
+    return m_elemRegionManager;
+  }
 
-BASETYPE m_toElementRegion;
-BASETYPE m_toElementSubRegion;
-BASETYPE m_toElementIndex;
+  BASETYPE m_toElementRegion;
+  BASETYPE m_toElementSubRegion;
+  BASETYPE m_toElementIndex;
 
-ElementRegionManager const * m_elemRegionManager;
+  ElementRegionManager const * m_elemRegionManager;
 };
 
 template< typename BASETYPE >
 ToElementRelation<BASETYPE>::ToElementRelation():
-m_toElementRegion(),
-m_toElementSubRegion(),
-m_toElementIndex(),
-m_elemRegionManager(nullptr)
+  m_toElementRegion(),
+  m_toElementSubRegion(),
+  m_toElementIndex(),
+  m_elemRegionManager(nullptr)
 {
 
 }
@@ -89,9 +93,9 @@ template< typename BASETYPE >
 template< typename... DIMS >
 void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
 {
-m_toElementRegion.resize(newdims...);
-m_toElementSubRegion.resize(newdims...);
-m_toElementIndex.resize(newdims...);
+  m_toElementRegion.resize(newdims...);
+  m_toElementSubRegion.resize(newdims...);
+  m_toElementIndex.resize(newdims...);
 }
 
 typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
@@ -99,16 +103,16 @@ typedef ToElementRelation<ArrayOfArrays<localIndex> > OrderedVariableToManyEleme
 typedef ToElementRelation<array1d<set<localIndex>> > UnorderedVariableToManyElementRelation;
 
 void erase( OrderedVariableToManyElementRelation & relation,
-localIndex const firstIndex,
-localIndex const er,
-localIndex const esr,
-localIndex const ei );
+            localIndex const firstIndex,
+            localIndex const er,
+            localIndex const esr,
+            localIndex const ei );
 
 void insert( OrderedVariableToManyElementRelation & relation,
-localIndex const firstIndex,
-localIndex const er,
-localIndex const esr,
-localIndex const ei );
+             localIndex const firstIndex,
+             localIndex const er,
+             localIndex const esr,
+             localIndex const ei );
 
 
 

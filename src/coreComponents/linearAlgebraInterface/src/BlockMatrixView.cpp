@@ -1,20 +1,24 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
-* @file BlockMatrixView.cpp
-*/
+ * @file BlockMatrixView.cpp
+ */
 
 #include "BlockMatrixView.hpp"
 
@@ -46,9 +50,9 @@ BlockMatrixView<LAI>::BlockMatrixView()
 // Constructor with a size (number of rows and columns)
 template< typename LAI >
 BlockMatrixView<LAI>::BlockMatrixView( localIndex const nRows,
-localIndex const nCols )
+                                       localIndex const nCols )
 {
-m_matrices.resize( nRows, nCols );
+  m_matrices.resize( nRows, nCols );
 }
 
 // ----------------------------
@@ -61,21 +65,21 @@ m_matrices.resize( nRows, nCols );
 // Apply the block matrix to a block vector and compute the result.
 template< typename LAI >
 void BlockMatrixView<LAI>::multiply( BlockVectorView<LAI> const &x,
-BlockVectorView<LAI> &b ) const
+                                     BlockVectorView<LAI> &b ) const
 {
-for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
-{
-b.block( row ).zero();
-ParallelVector temp( b.block( row ));
-for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
-{
-if( m_matrices[row][col] != nullptr )
-{
-m_matrices[row][col]->multiply( x.block( col ), temp );
-b.block( row ).axpy( 1.0, temp );
-}
-}
-}
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  {
+    b.block( row ).zero();
+    ParallelVector temp( b.block( row ));
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    {
+      if( m_matrices[row][col] != nullptr )
+      {
+        m_matrices[row][col]->multiply( x.block( col ), temp );
+        b.block( row ).axpy( 1.0, temp );
+      }
+    }
+  }
 }
 
 
@@ -85,22 +89,22 @@ b.block( row ).axpy( 1.0, temp );
 // Compute the residual r = b - Ax.
 template< typename LAI >
 void BlockMatrixView<LAI>::residual( BlockVectorView<LAI> const &x,
-BlockVectorView<LAI> const &b,
-BlockVectorView<LAI> &r ) const
+                                     BlockVectorView<LAI> const &b,
+                                     BlockVectorView<LAI> &r ) const
 {
-for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
-{
-r.block( row ).copy( b.block( row ));
-ParallelVector temp( b.block( row ));
-for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
-{
-if( m_matrices[row][col] != nullptr )
-{
-m_matrices[row][col]->multiply( x.block( col ), temp );
-r.block( row ).axpy( -1.0, temp );
-}
-}
-}
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  {
+    r.block( row ).copy( b.block( row ));
+    ParallelVector temp( b.block( row ));
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    {
+      if( m_matrices[row][col] != nullptr )
+      {
+        m_matrices[row][col]->multiply( x.block( col ), temp );
+        r.block( row ).axpy( -1.0, temp );
+      }
+    }
+  }
 }
 
 
@@ -111,16 +115,16 @@ r.block( row ).axpy( -1.0, temp );
 template< typename LAI >
 void BlockMatrixView<LAI>::scale( real64 const factor )
 {
-for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
-{
-for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
-{
-if( m_matrices[row][col] != nullptr )
-{
-m_matrices[row][col]->scale( factor );
-}
-}
-}
+  for( localIndex row = 0 ; row < m_matrices.size( 0 ) ; row++ )
+  {
+    for( localIndex col = 0 ; col < m_matrices.size( 1 ) ; col++ )
+    {
+      if( m_matrices[row][col] != nullptr )
+      {
+        m_matrices[row][col]->scale( factor );
+      }
+    }
+  }
 }
 
 
@@ -133,9 +137,9 @@ m_matrices[row][col]->scale( factor );
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 typename LAI::ParallelMatrix & BlockMatrixView<LAI>::block( localIndex const blockRowIndex,
-localIndex const blockColIndex ) const
+                                                            localIndex const blockColIndex ) const
 {
-return *m_matrices[blockRowIndex][blockColIndex];
+  return *m_matrices[blockRowIndex][blockColIndex];
 }
 
 // ----------------------------
@@ -147,10 +151,10 @@ return *m_matrices[blockRowIndex][blockColIndex];
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 template< typename LAI >
 void BlockMatrixView<LAI>::set( localIndex const blockRowIndex,
-localIndex const blockColIndex,
-typename LAI::ParallelMatrix &matrix )
+                                localIndex const blockColIndex,
+                                typename LAI::ParallelMatrix &matrix )
 {
-m_matrices[blockRowIndex][blockColIndex] = &matrix;
+  m_matrices[blockRowIndex][blockColIndex] = &matrix;
 }
 
 // -----------------------

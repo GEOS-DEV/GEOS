@@ -1,23 +1,27 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /*
-* GeosxTraits.hpp
-*
-*  Created on: Feb 22, 2018
-*      Author: settgast
-*/
+ * GeosxTraits.hpp
+ *
+ *  Created on: Feb 22, 2018
+ *      Author: settgast
+ */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
@@ -55,8 +59,8 @@ constexpr bool is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > = true;
 
 template <class T>
 constexpr bool is_tensorT = is_instance_of_v<R1Tensor, T> ||
-is_instance_of_v<R2Tensor, T> ||
-is_instance_of_v<R2SymTensor, T>;
+                            is_instance_of_v<R2Tensor, T> ||
+                            is_instance_of_v<R2SymTensor, T>;
 
 } /* namespace traits */
 
@@ -73,10 +77,10 @@ struct is_packable;
 template< typename T >
 struct is_noncontainer_type_packable
 {
-static constexpr bool value = std::is_trivial<T>::value ||
-std::is_arithmetic<T>::value ||
-traits::is_tensorT<T> ||
-traits::is_string<T>;
+  static constexpr bool value = std::is_trivial<T>::value ||
+                                std::is_arithmetic<T>::value ||
+                                traits::is_tensorT<T> ||
+                                traits::is_string<T>;
 };
 template< typename T >
 constexpr bool is_noncontainer_type_packable<T>::value;
@@ -103,7 +107,7 @@ struct is_packable_set : std::false_type {};
 template< typename T >
 struct is_packable_set< set<T> >
 {
-static constexpr bool value = is_packable<T>::value;
+  static constexpr bool value = is_packable<T>::value;
 };
 template< typename T>
 constexpr bool is_packable_set< set<T> >::value;
@@ -115,8 +119,8 @@ struct is_packable_map : std::false_type {};
 template<typename T_KEY, typename T_VAL, typename SORTED>
 struct is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >
 {
-static constexpr bool value = is_packable<T_KEY>::value &&
-is_packable<T_VAL>::value;
+  static constexpr bool value = is_packable<T_KEY>::value &&
+                                is_packable<T_VAL>::value;
 };
 template< typename T_KEY, typename T_VAL, typename SORTED>
 constexpr bool is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >::value;
@@ -125,10 +129,10 @@ constexpr bool is_packable_map< mapBase<T_KEY, T_VAL, SORTED> >::value;
 template< typename T >
 struct is_packable
 {
-static constexpr bool value = is_noncontainer_type_packable<T>::value ||
-is_packable_array<T>::value ||
-is_packable_map<T>::value ||
-is_packable_set<T>::value ;
+  static constexpr bool value = is_noncontainer_type_packable<T>::value ||
+                                is_packable_array<T>::value ||
+                                is_packable_map<T>::value ||
+                                is_packable_set<T>::value ;
 
 };
 template< typename T >
@@ -138,7 +142,7 @@ constexpr bool is_packable<T>::value;
 template< typename T >
 struct is_packable_by_index
 {
-static constexpr bool value = is_packable_array<T>::value  ;
+  static constexpr bool value = is_packable_array<T>::value  ;
 
 };
 template< typename T >
@@ -149,7 +153,7 @@ constexpr bool is_packable_by_index<T>::value;
 template<typename T, bool COND>
 struct add_const_if
 {
-using type = typename std::conditional<COND, typename std::add_const<T>::type, T>::type;
+  using type = typename std::conditional<COND, typename std::add_const<T>::type, T>::type;
 };
 
 template<typename T, bool COND>

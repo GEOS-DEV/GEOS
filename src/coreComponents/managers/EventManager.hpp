@@ -1,16 +1,20 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 
 #ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
@@ -31,70 +35,70 @@ string const Events("Events");
 }
 
 /**
-* @class EventManager
-*
-* A class for managing code events.
-*/
+ * @class EventManager
+ *
+ * A class for managing code events.
+ */
 class EventManager : public dataRepository::Group
 {
 public:
-/// Main constructor
-EventManager( std::string const & name,
-Group * const parent );
+  /// Main constructor
+  EventManager( std::string const & name,
+                Group * const parent );
 
-/// Destructor
-virtual ~EventManager() override;
+  /// Destructor
+  virtual ~EventManager() override;
 
-/// A method to add child events
-virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  /// A method to add child events
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-/// This function is used to expand any catalogs in the data structure
-virtual void ExpandObjectCatalogs() override;
+  /// This function is used to expand any catalogs in the data structure
+  virtual void ExpandObjectCatalogs() override;
 
-/**
-* The main execution loop for the code.  During each cycle, it will:
-*   - Calculate the event forecast (number of cycles until its expected execution)
-*   - Signal an event to prepare (forecast == 1)
-*   - Execute an event (forecast == 0)
-*   - Determine dt for the next cycle
-*   - Advance time, cycle, etc.
-*/
-void Run(dataRepository::Group * domain);
+  /**
+   * The main execution loop for the code.  During each cycle, it will:
+   *   - Calculate the event forecast (number of cycles until its expected execution)
+   *   - Signal an event to prepare (forecast == 1)
+   *   - Execute an event (forecast == 0)
+   *   - Determine dt for the next cycle
+   *   - Advance time, cycle, etc.
+   */
+  void Run(dataRepository::Group * domain);
 
-struct viewKeyStruct
-{
-static constexpr auto maxTimeString = "maxTime";
-static constexpr auto maxCycleString = "maxCycle";
-static constexpr auto verbosityString = "verbosity";
+  struct viewKeyStruct
+  {
+    static constexpr auto maxTimeString = "maxTime";
+    static constexpr auto maxCycleString = "maxCycle";
+    static constexpr auto verbosityString = "verbosity";
 
-static constexpr auto timeString = "time";
-static constexpr auto dtString = "dt";
-static constexpr auto cycleString = "cycle";
-static constexpr auto currentSubEventString = "currentSubEvent";
+    static constexpr auto timeString = "time";
+    static constexpr auto dtString = "dt";
+    static constexpr auto cycleString = "cycle";
+    static constexpr auto currentSubEventString = "currentSubEvent";
 
-dataRepository::ViewKey time = { "time" };
-dataRepository::ViewKey dt = { "dt" };
-dataRepository::ViewKey cycle = { "cycle" };
-dataRepository::ViewKey maxTime = { "maxTime" };
-dataRepository::ViewKey maxCycle = { "maxCycle" };
-dataRepository::ViewKey verbosity = { "verbosity" };
-dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
-} viewKeys;
+    dataRepository::ViewKey time = { "time" };
+    dataRepository::ViewKey dt = { "dt" };
+    dataRepository::ViewKey cycle = { "cycle" };
+    dataRepository::ViewKey maxTime = { "maxTime" };
+    dataRepository::ViewKey maxCycle = { "maxCycle" };
+    dataRepository::ViewKey verbosity = { "verbosity" };
+    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+  } viewKeys;
 
-/// Catalog interface
-using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
-static CatalogInterface::CatalogType& GetCatalog();
+  /// Catalog interface
+  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
+  static CatalogInterface::CatalogType& GetCatalog();
 
 private:
 
-real64 m_maxTime;
-integer m_maxCycle;
-integer m_verbosity;
+  real64 m_maxTime;
+  integer m_maxCycle;
+  integer m_verbosity;
 
-real64 m_time;
-real64 m_dt;
-integer m_cycle;
-integer m_currentSubEvent;
+  real64 m_time;
+  real64 m_dt;
+  integer m_cycle;
+  integer m_currentSubEvent;
 };
 
 

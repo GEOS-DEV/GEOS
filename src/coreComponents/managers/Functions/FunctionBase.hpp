@@ -1,20 +1,24 @@
 /*
-* ------------------------------------------------------------------------------------------------------------
-* SPDX-License-Identifier: LGPL-2.1-only
-*
-* Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
-* Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
-* Copyright (c) 2018-2019 Total, S.A
-* Copyright (c) 2019-     GEOSX Contributors
-* All right reserved
-*
-* See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
-* ------------------------------------------------------------------------------------------------------------
-*/
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ *
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
 
 /**
-* @file FunctionBase.hpp
-*/
+ * @file FunctionBase.hpp
+ */
 
 #ifndef FUNCTIONBASE_HPP_
 #define FUNCTIONBASE_HPP_
@@ -35,139 +39,139 @@ string const inputVarNames("inputVarNames");
 }
 
 /**
-* @class FunctionBase
-*
-* An object for interfacing with arbitrary N-dimensional functions.
-*/
+ * @class FunctionBase
+ *
+ * An object for interfacing with arbitrary N-dimensional functions.
+ */
 class FunctionBase : public dataRepository::Group
 {
 public:
-/// Main constructor
-FunctionBase( const std::string& name,
-dataRepository::Group * const parent );
+  /// Main constructor
+  FunctionBase( const std::string& name,
+                dataRepository::Group * const parent );
 
-/// Destructor
-virtual ~FunctionBase() override;
+  /// Destructor
+  virtual ~FunctionBase() override;
 
-/// Catalog name interface
-static string CatalogName() { return "FunctionBase"; }
+  /// Catalog name interface
+  static string CatalogName() { return "FunctionBase"; }
 
-/// Function initialization
-virtual void InitializeFunction(){}
+  /// Function initialization
+  virtual void InitializeFunction(){}
 
-/// Test to see if the function is a 1D function of time
-integer isFunctionOfTime() const;
+  /// Test to see if the function is a 1D function of time
+  integer isFunctionOfTime() const;
 
-/**
-* @brief Method to evaluate a function on a target object
-* @param group a pointer to the object holding the function arguments
-* @param time current time
-* @param set the subset of nodes to apply the function to
-* @param result an array to hold the results of the function
-*/
-virtual void Evaluate( dataRepository::Group const * const group,
-real64 const time,
-SortedArrayView< localIndex const > const & set,
-real64_array & result ) const = 0;
+  /**
+   * @brief Method to evaluate a function on a target object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @param result an array to hold the results of the function
+   */
+  virtual void Evaluate( dataRepository::Group const * const group,
+                         real64 const time,
+                         SortedArrayView< localIndex const > const & set,
+                         real64_array & result ) const = 0;
 
-/**
-* @brief Method to evaluate a function
-* @param input a scalar input
-*/
-virtual real64 Evaluate( real64 const * const input ) const = 0;
+  /**
+   * @brief Method to evaluate a function
+   * @param input a scalar input
+   */
+  virtual real64 Evaluate( real64 const * const input ) const = 0;
 
-// Setup catalog
-using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, Group * const >;
-static CatalogInterface::CatalogType& GetCatalog()
-{
-static CatalogInterface::CatalogType catalog;
-return catalog;
-}
+  // Setup catalog
+  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, Group * const >;
+  static CatalogInterface::CatalogType& GetCatalog()
+  {
+    static CatalogInterface::CatalogType catalog;
+    return catalog;
+  }
 
-/*
-* @brief This generates statistics by applying a function to an object
-* @param group a pointer to the object holding the function arguments
-* @param time current time
-* @param set the subset of nodes to apply the function to
-* @return An array holding the min, average, max values of the results
-*/
-real64_array EvaluateStats( dataRepository::Group const * const group,
-real64 const time,
-set<localIndex> const & set) const;
+  /*
+   * @brief This generates statistics by applying a function to an object
+   * @param group a pointer to the object holding the function arguments
+   * @param time current time
+   * @param set the subset of nodes to apply the function to
+   * @return An array holding the min, average, max values of the results
+   */
+  real64_array EvaluateStats( dataRepository::Group const * const group,
+                              real64 const time,
+                              set<localIndex> const & set) const;
 
 protected:
-string_array m_inputVarNames;
+  string_array m_inputVarNames;
 
-template< typename LEAF >
-void EvaluateT( dataRepository::Group const * const group,
-real64 const time,
-SortedArrayView<localIndex const> const & set,
-real64_array & result ) const;
+  template< typename LEAF >
+  void EvaluateT( dataRepository::Group const * const group,
+                  real64 const time,
+                  SortedArrayView<localIndex const> const & set,
+                  real64_array & result ) const;
 
-virtual void PostProcessInput() override { InitializeFunction(); }
+  virtual void PostProcessInput() override { InitializeFunction(); }
 
 };
 
 /// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::Group const * const group,
-real64 const time,
-SortedArrayView<localIndex const> const & set,
-real64_array & result ) const
+                              real64 const time,
+                              SortedArrayView<localIndex const> const & set,
+                              real64_array & result ) const
 {
-real64 const * input_ptrs[4];
+  real64 const * input_ptrs[4];
 
-string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
+  string_array const & inputVarNames = this->getReference<string_array>( dataRepository::keys::inputVarNames );
+  
+  localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
+  GEOS_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
 
-localIndex const numVars = integer_conversion<localIndex>(inputVarNames.size());
-GEOS_ERROR_IF(numVars > 4, "Number of variables is: " << numVars);
+  localIndex varSize[4];
+  for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
+  {
+    string const & varName = inputVarNames[varIndex];
 
-localIndex varSize[4];
-for( auto varIndex=0 ; varIndex<numVars ; ++varIndex )
-{
-string const & varName = inputVarNames[varIndex];
+    if( varName=="time")
+    {
+      input_ptrs[varIndex] = &time;
+      varSize[varIndex] = 1;
+    }
+    else
+    {
+      dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
+      std::type_index typeIndex = std::type_index(wrapperb.get_typeid());
+      rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
+        {
+          using containerType = decltype(container_type);
+          using varType = decltype(var_type);
+          dataRepository::Wrapper<containerType> const & view =
+            dynamic_cast< dataRepository::Wrapper<containerType> const & >(wrapperb);
 
-if( varName=="time")
-{
-input_ptrs[varIndex] = &time;
-varSize[varIndex] = 1;
-}
-else
-{
-dataRepository::WrapperBase const & wrapperb = *(group->getWrapperBase( varName ));
-std::type_index typeIndex = std::type_index(wrapperb.get_typeid());
-rtTypes::ApplyTypeLambda2( rtTypes::typeID(typeIndex), [&]( auto container_type, auto var_type ) -> void
-{
-using containerType = decltype(container_type);
-using varType = decltype(var_type);
-dataRepository::Wrapper<containerType> const & view =
-dynamic_cast< dataRepository::Wrapper<containerType> const & >(wrapperb);
+          input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
+          varSize[varIndex] = sizeof(varType) / sizeof(double);
+        });
+    }
+  }
 
-input_ptrs[varIndex] = reinterpret_cast<double const*>(view.dataPtr());
-varSize[varIndex] = sizeof(varType) / sizeof(double);
-});
-}
-}
+  integer count=0;
+  forall_in_range<serialPolicy>( 0, set.size(), [&, set]( localIndex const i )
+  {
+    localIndex const index = set[ i ];
+    double input[4];
+    int c = 0;
+    for( int a=0 ; a<numVars ; ++a )
+    {
+      for( int b=0 ; b<varSize[a] ; ++b )
+      {
+        input[c] = input_ptrs[a][index*varSize[a]+b];
+        ++c;
+      }
+    }
 
-integer count=0;
-forall_in_range<serialPolicy>( 0, set.size(), [&, set]( localIndex const i )
-{
-localIndex const index = set[ i ];
-double input[4];
-int c = 0;
-for( int a=0 ; a<numVars ; ++a )
-{
-for( int b=0 ; b<varSize[a] ; ++b )
-{
-input[c] = input_ptrs[a][index*varSize[a]+b];
-++c;
-}
-}
-
-// TODO: Check this line to make sure it is correct
-result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
-++count;
-});
+    // TODO: Check this line to make sure it is correct
+    result[count] = static_cast<LEAF const *>(this)->Evaluate(input);
+    ++count;
+  });
 
 }
 } /* namespace geosx */
