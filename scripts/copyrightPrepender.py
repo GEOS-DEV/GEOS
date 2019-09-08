@@ -156,9 +156,9 @@ def process_file(file_name, test_only):
     process_code = -1
 
     with open(file_name, 'r') as f:
-        unstripped_content = f.read().splitlines()
+        indented_content = f.read().splitlines()
 
-    file_content = striplist(unstripped_content)
+    file_content = striplist(indented_content)
     old_copyright = striplist(old_copyright_str_arr)
     new_copyright = striplist(new_copyright_str_arr)
 
@@ -211,7 +211,7 @@ def process_file(file_name, test_only):
                 if process_code in [0, 2, 4]:  # prepending copyrights
                     f_out.write(new_copyright_str)
                 for i in lines_to_keep:
-                    f_out.write(file_content[i] + '\n')
+                    f_out.write(indented_content[i] + '\n')
 
     return process_code
 
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     process_codes = []  # Integer value that reflects the changes proposed or done to the file
     file_names = []  # File name
 
-    for file_name in file_list:
+    for file_name in file_list[10:11]:
         process_code = process_file(file_name, args.test)
         process_codes.append(process_code)
         file_names.append(file_name)
