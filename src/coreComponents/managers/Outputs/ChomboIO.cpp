@@ -12,23 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
 
 /**
  * @file ChomboIO.cpp
@@ -67,7 +50,7 @@ ChomboIO::ChomboIO(std::string const & name, Group * const parent):
   registerWrapper(viewKeyStruct::inputPathString, &m_inputPath, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue("/INVALID_INPUT_PATH")->
-    setDescription("Path at which the chombo to geosx file will be written.");  
+    setDescription("Path at which the chombo to geosx file will be written.");
 
   registerWrapper(viewKeyStruct::waitForInputString, &m_waitForInput, false)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -106,7 +89,7 @@ void ChomboIO::Execute( real64 const time_n,
   {
     return;
   }
-  
+
   m_coupler->write(dt);
 
   if (m_waitForInput)
