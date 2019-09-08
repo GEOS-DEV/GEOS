@@ -155,27 +155,27 @@ void PetscVector::set( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  VecSetValues( _vec, size, globalIndices, values, INSERT_VALUES );
+  VecSetValues( _vec, size, toPetscInt(globalIndices), values, INSERT_VALUES );
 }
 
 void PetscVector::add( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  VecSetValues( _vec, size, globalIndices, values, ADD_VALUES );
+  VecSetValues( _vec, size, toPetscInt(globalIndices), values, ADD_VALUES );
 }
 
 // n-element, array1d options
 void PetscVector::set( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  VecSetValues( _vec, values.size(), globalIndices.data(), values.data(), INSERT_VALUES );
+  VecSetValues( _vec, values.size(), toPetscInt(globalIndices.data()), values.data(), INSERT_VALUES );
 }
 
 void PetscVector::add( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  VecSetValues( _vec, values.size(), globalIndices.data(), values.data(), ADD_VALUES );
+  VecSetValues( _vec, values.size(), toPetscInt(globalIndices.data()), values.data(), ADD_VALUES );
 }
 
 // additional convenience options

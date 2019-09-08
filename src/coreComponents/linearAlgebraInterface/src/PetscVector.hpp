@@ -30,6 +30,16 @@
 namespace geosx
 {
 
+inline PetscInt * toPetscInt( globalIndex * const index )
+{
+  return reinterpret_cast<PetscInt*>(index);
+}
+
+inline PetscInt const * toPetscInt( globalIndex const * const index )
+{
+  return reinterpret_cast<PetscInt const*>(index);
+}
+
 /**
  * \class PetscVector
  * \brief This class creates and provides basic support for Vec 
@@ -37,7 +47,7 @@ namespace geosx
  */
 class PetscVector
 {
-
+  static_assert( sizeof(PetscInt)==sizeof(globalIndex), "sizeof(PetscInt)!=sizeof(localIndex)");
  public:
   //! @name Constructor/Destructor Methods
   //@{
