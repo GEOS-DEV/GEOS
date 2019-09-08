@@ -109,7 +109,7 @@ void setupPetsc( int argc, char * argv[] )
 {
   char help[] = "Setup PETSc.\n";
   PetscOptionsSetValue( nullptr, "-log_view", "" );
-  PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ); 
+  PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr );
   PetscInitialize( &argc, &argv, nullptr, help );
 }
 
