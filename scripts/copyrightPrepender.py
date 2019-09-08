@@ -276,7 +276,7 @@ if __name__ == "__main__":
     process_codes = []  # Integer value that reflects the changes proposed or done to the file
     file_names = []  # File name
 
-    for file_name in file_list[10:11]:
+    for file_name in file_list:
         process_code = process_file(file_name, args.test)
         process_codes.append(process_code)
         file_names.append(file_name)
