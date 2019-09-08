@@ -23,6 +23,10 @@
 #ifndef LAI_PETSCSPARSEMATRIX_HPP_
 #define LAI_PETSCSPARSEMATRIX_HPP_
 
+#if !defined(PETSC_USE_64BIT_INDICES)
+#define PETSC_USE_64BIT_INDICES
+#endif
+
 #include <petscvec.h>
 #include <petscmat.h>
 
