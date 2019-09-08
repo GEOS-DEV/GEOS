@@ -48,28 +48,6 @@ new_copyright_str = \
 old_copyright_str = \
     """/*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
- *
- * Produced at the Lawrence Livermore National Laboratory
- *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-
-"""
-
-
-old_copyright_str = \
-    """/*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
  * Produced at the Lawrence Livermore National Laboratory
@@ -87,6 +65,28 @@ old_copyright_str = \
  */
 
 """
+
+
+# old_copyright_str = \
+#     """/*
+#  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+#  *
+#  * Produced at the Lawrence Livermore National Laboratory
+#  *
+#  * LLNL-CODE-746361
+#  *
+#  * All rights reserved. See COPYRIGHT for details.
+#  *
+#  * This file is part of the GEOSX Simulation Framework.
+#  *
+#  * GEOSX is a free software; you can redistribute it and/or modify it under
+#  * the terms of the GNU Lesser General Public License (as published by the
+#  * Free Software Foundation) version 2.1 dated February 1999.
+#  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  */
+#
+# """
 
 new_copyright_str_arr = new_copyright_str.split("\n")[:-1]
 
@@ -207,7 +207,7 @@ def process_file(file_name):
         if process_code in [3, 5, 6]:
             pass
         else:
-            with open('/Users/j0529096/Documents/code/tmp.out', 'w') as f_out:
+            with open(file_name, 'w') as f_out:
                 f_out.seek(0)
                 if process_code in [0, 2, 4]:  # prepending copyrights
                     f_out.write(new_copyright_str)
