@@ -335,7 +335,6 @@ void function3( array1d<R1TensorT<3> >& Disp,
 }
 
 /**
- * @author Randy Settgast
  * @return cpu usage
  *
  * This function uses the rusage structure to query elapsed system time and user

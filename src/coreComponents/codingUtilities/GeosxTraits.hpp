@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * GeosxTraits.hpp
- *
- *  Created on: Feb 22, 2018
- *      Author: settgast
+/**
+ * @file GeosxTraits.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_

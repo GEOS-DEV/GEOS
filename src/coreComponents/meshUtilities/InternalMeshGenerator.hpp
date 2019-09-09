@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * InternalMeshGenerator.h
- *
- *  Created on: Nov 19, 2012
- *      Author: settgast1
+/**
+ * @file InternalMeshGenerator.h
  */
 
 #ifndef INTERNALMESHGENERATOR_H_

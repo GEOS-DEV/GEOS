@@ -16,12 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SidreWrapper.cpp
- *
- *  Created on: Jul 22, 2016
- *      Author: rrsettgast
+/**
+ * @file SidreWrapper.cpp
  */
+
 #include "SidreWrapper.hpp"
 #include "common/TimingMacros.hpp"
 

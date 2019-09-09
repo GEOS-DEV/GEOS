@@ -18,9 +18,6 @@
 
 /**
  * @file PetscSolver.hpp
- *
- *  Created on: Feb. 8, 2019
- *      Author: Hannah Morgan
  */
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_PETSCSOLVER_HPP_

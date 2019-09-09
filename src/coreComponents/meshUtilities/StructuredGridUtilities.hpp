@@ -20,11 +20,9 @@
 #define STRUCTURED_GRID_UTILITIES_H
 
 /**
- * @file StructuredGridUtilities.h
- * @author white230
+ * @file StructuredGridUtilities.hpp
  */
 
-//#include "legacy/Common/Common.h"
 #include <cassert>
 
 namespace StructuredGrid

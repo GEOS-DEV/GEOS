@@ -18,8 +18,6 @@
 
 /**
  * @file Kinematics.cpp
- * @author settgast1
- * @date Dec 20, 2010
  */
 
 

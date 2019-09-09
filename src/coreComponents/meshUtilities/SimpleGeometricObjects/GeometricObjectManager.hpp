@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * GeometricObjectManager.hpp
- *
- *  Created on: Sep 7, 2016
- *      Author: rrsettgast
+/**
+ * @file GeometricObjectManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_GEOMETRICOBJECTMANAGER_HPP_

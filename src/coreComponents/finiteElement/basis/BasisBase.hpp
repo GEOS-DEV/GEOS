@@ -17,8 +17,7 @@
  */
 
 /**
- * @file Basis.h
- * @author white230
+ * @file BasisBase.hpp
  */
 
 #ifndef BASIS_H

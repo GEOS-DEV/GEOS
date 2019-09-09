@@ -18,7 +18,6 @@
 
 /**
  * @file SchemaUtilities.cpp
- * @author sherman
  */
 
 #include "SchemaUtilities.hpp"
