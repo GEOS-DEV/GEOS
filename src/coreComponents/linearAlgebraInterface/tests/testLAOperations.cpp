@@ -979,16 +979,16 @@ void testRectangularMatrixOperations()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
-// TEST(testLAOperations,testEpetraLAOperations)
-// {
-  //   MPI_Init( nullptr, nullptr );
-  //   testInterfaceSolvers<TrilinosInterface>();
-  //   testGEOSXSolvers<TrilinosInterface>();
-  //   testGEOSXBlockSolvers<TrilinosInterface>();
-  //   testMatrixMatrixOperations<TrilinosInterface>();
-  //   testRectangularMatrixOperations<TrilinosInterface>();
-  //   MPI_Finalize();
-// }
+ TEST(testLAOperations,testEpetraLAOperations)
+ {
+     MPI_Init( nullptr, nullptr );
+     testInterfaceSolvers<TrilinosInterface>();
+     testGEOSXSolvers<TrilinosInterface>();
+     testGEOSXBlockSolvers<TrilinosInterface>();
+     testMatrixMatrixOperations<TrilinosInterface>();
+     testRectangularMatrixOperations<TrilinosInterface>();
+     MPI_Finalize();
+ }
 
 /*! @function testHypreLAOperations.
  * @brief Runs all tests using the Hypre interface.
