@@ -33,7 +33,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -48,12 +48,12 @@ class ProppantTransport : public FlowSolverBase
 {
 public:
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   ProppantTransport( const std::string& name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
 
   /// deleted default constructor
@@ -82,9 +82,9 @@ public:
    */
   static string CatalogName() { return "ProppantTransport"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -98,31 +98,45 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
+  virtual void ImplicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
                                   DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
-
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt ) override;
-
-  virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
-
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
+                                  DofManager & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
+
+  virtual void AssembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
+
+  virtual void ApplyBoundaryConditions( real64 const time,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs ) override;
+
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+
+  virtual void SolveSystem( DofManager const & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
 
@@ -140,11 +154,10 @@ public:
    * @param dt time step
    */
 
-  void AssembleAccumulationTerms( DomainPartition * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
+  void AssembleAccumulationTerms( DomainPartition const * const domain,
+                                  DofManager const * const dofManager,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -153,11 +166,12 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
+  void AssembleFluxTerms( real64 const time_n,
+                          real64 const dt,
+                          DomainPartition const * const domain,
+                          DofManager const * const dofManager,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs );
 
   /**@}*/
 
@@ -231,12 +245,9 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
-
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
 
   /**
    * @brief set the sparsity pattern for the linear system
@@ -271,17 +282,17 @@ private:
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateFluidModel( ManagedGroup * const dataGroup );
+  void UpdateFluidModel( Group * const dataGroup );
 
-  void UpdateProppantModel( ManagedGroup * const dataGroup );
+  void UpdateProppantModel( Group * const dataGroup );
 
-  void UpdateProppantModelStep( ManagedGroup * const dataGroup );    
+  void UpdateProppantModelStep( Group * const dataGroup );
 
-  void UpdateState( ManagedGroup * dataGroup );
+  void UpdateState( Group * dataGroup );
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
+//  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;

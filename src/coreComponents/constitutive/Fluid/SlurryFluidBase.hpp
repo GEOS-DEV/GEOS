@@ -35,17 +35,17 @@ class SlurryFluidBase : public ConstitutiveBase
 {
 public:
 
-  SlurryFluidBase( std::string const & name, ManagedGroup * const parent );
+  SlurryFluidBase( std::string const & name, Group * const parent );
 
   virtual ~SlurryFluidBase() override;
 
   // *** ConstitutiveBase interface
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SlurryFluidBase-specific interface

@@ -170,7 +170,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
-  RegisterViewWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
+  registerWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Line search option");  

@@ -30,29 +30,29 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SlurryFluidBase::SlurryFluidBase( std::string const & name, ManagedGroup * const parent )
+SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Default value for density.");
 
-  RegisterViewWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
+  registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Default value for viscosity.");
 
-  RegisterViewWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
 
-  RegisterViewWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
 
-  RegisterViewWrapper( viewKeyStruct::dDens_dPresString, &m_dDens_dPres, false );
-  RegisterViewWrapper( viewKeyStruct::dDens_dConcString, &m_dDens_dConc, false );
-  RegisterViewWrapper( viewKeyStruct::dFluidDens_dPresString, &m_dFluidDens_dPres, false );  
+  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDens_dPres, false );
+  registerWrapper( viewKeyStruct::dDens_dConcString, &m_dDens_dConc, false );
+  registerWrapper( viewKeyStruct::dFluidDens_dPresString, &m_dFluidDens_dPres, false );  
 
-  RegisterViewWrapper( viewKeyStruct::viscosityString, &m_viscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  RegisterViewWrapper( viewKeyStruct::dVisc_dPresString, &m_dVisc_dPres, false );
-  RegisterViewWrapper( viewKeyStruct::dVisc_dConcString, &m_dVisc_dConc, false );
+  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dVisc_dPresString, &m_dVisc_dPres, false );
+  registerWrapper( viewKeyStruct::dVisc_dConcString, &m_dVisc_dConc, false );
   
 }
 
@@ -66,7 +66,7 @@ void SlurryFluidBase::PostProcessInput()
 
 }
 
-void SlurryFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
+void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -89,7 +89,7 @@ void SlurryFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
 
 void
 SlurryFluidBase::DeliverClone( string const & name,
-                               ManagedGroup * const parent,
+                               Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   GEOS_ERROR_IF( !clone, "clone not allocated" );

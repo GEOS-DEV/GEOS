@@ -31,45 +31,45 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, ManagedGroup * const parent ):
+ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * const parent ):
   SlurryFluidBase( name, parent )
 {
-  RegisterViewWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
+  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid compressibility");
 
-  RegisterViewWrapper( viewKeyStruct::referenceProppantDensityString, &m_referenceProppantDensity, false )->
+  registerWrapper( viewKeyStruct::referenceProppantDensityString, &m_referenceProppantDensity, false )->
     setApplyDefaultValue(1400.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference proppant density");
 
-    RegisterViewWrapper( viewKeyStruct::referenceFluidDensityString, &m_referenceFluidDensity, false )->
+    registerWrapper( viewKeyStruct::referenceFluidDensityString, &m_referenceFluidDensity, false )->
     setApplyDefaultValue(1000.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid density");
 
-  RegisterViewWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
+  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
     setApplyDefaultValue(1e5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference pressure");
 
-  RegisterViewWrapper( viewKeyStruct::referenceProppantVolumeFractionString, &m_referenceProppantVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::referenceProppantVolumeFractionString, &m_referenceProppantVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference proppant volume fraction");  
 
-  RegisterViewWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
+  registerWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
     setApplyDefaultValue(1000.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid density");
 
-  RegisterViewWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
+  registerWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
     setApplyDefaultValue(0.001)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid viscosity");
 
-  RegisterViewWrapper( viewKeyStruct::maxProppantVolumeFractionString, &m_maxProppantVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::maxProppantVolumeFractionString, &m_maxProppantVolumeFraction, false )->
     setApplyDefaultValue(0.6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum proppant volume fraction");  
@@ -78,7 +78,7 @@ ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, ManagedGroup
 
 ProppantSlurryFluid::~ProppantSlurryFluid() = default;
 
-void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SlurryFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
@@ -90,7 +90,7 @@ void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::ManagedGroup
 
 void
 ProppantSlurryFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -179,7 +179,7 @@ void ProppantSlurryFluid::Compute( real64 const & pressure,
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, Group * const )
 
 } /* namespace constitutive */
 

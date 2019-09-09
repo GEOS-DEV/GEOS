@@ -52,70 +52,57 @@ using namespace constitutive;
 using namespace systemSolverInterface;
 
 ProppantTransport::ProppantTransport( const std::string& name,
-                                  ManagedGroup * const parent ):
+                                  Group * const parent ):
   FlowSolverBase(name, parent)
 {
    m_numDofPerCell = 2;
 
-  this->RegisterViewWrapper( viewKeyStruct::proppantNameString,  &m_proppantName,  false )->setInputFlag(InputFlags::REQUIRED)->
+  this->registerWrapper( viewKeyStruct::proppantNameString,  &m_proppantName,  false )->setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of proppant constitutive object to use for this solver.");
 
-  this->RegisterViewWrapper( viewKeyStruct::proppantIndexString, &m_proppantIndex, false );
+  this->registerWrapper( viewKeyStruct::proppantIndexString, &m_proppantIndex, false );
 
-  RegisterViewWrapper( viewKeyStruct::updatePermeabilityString, &m_updatePermeability, false )->setApplyDefaultValue(0)->
+  registerWrapper( viewKeyStruct::updatePermeabilityString, &m_updatePermeability, false )->setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Flag that enables/disables real-time fracture permeability update");
 
-  RegisterViewWrapper( viewKeyStruct::updateProppantMobilityString, &m_updateProppantMobility, false )->setApplyDefaultValue(0)->
+  registerWrapper( viewKeyStruct::updateProppantMobilityString, &m_updateProppantMobility, false )->setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Flag that enables/disables real-time proppant mobility update");
   
 }
 
-void ProppantTransport::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
+void ProppantTransport::RegisterDataOnMesh(Group * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
-
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::proppantConcentrationString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaProppantConcentrationString );      
-
-      
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::densityString );
-
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldProppantConcentrationString );
-
-      /*
-      subRegion->RegisterViewWrapper< array1d<R1Tensor> >( viewKeyStruct::slipVelocityString );            
-      */
-      
-      subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
-
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
-
-
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->
+        setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::proppantConcentrationString )->
+        setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaProppantConcentrationString );      
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaVolumeString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::oldProppantConcentrationString );
+      subRegion->registerWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->
+        setPlotLevel(PlotLevel::LEVEL_1);
     } );
 
   }
 }
 
-void ProppantTransport::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void ProppantTransport::InitializePreSubGroups(Group * const rootGroup)
 {
   FlowSolverBase::InitializePreSubGroups(rootGroup);
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::proppantTransportBlock, this->getName() );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   
@@ -127,7 +114,7 @@ void ProppantTransport::InitializePreSubGroups(ManagedGroup * const rootGroup)
   
 }
 
-void ProppantTransport::UpdateFluidModel(ManagedGroup * const dataGroup)
+void ProppantTransport::UpdateFluidModel(Group * const dataGroup)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -148,7 +135,7 @@ void ProppantTransport::UpdateFluidModel(ManagedGroup * const dataGroup)
   //fluid->BatchUpdate( pres, temp, compFrac );
 }
 
-void ProppantTransport::UpdateProppantModel(ManagedGroup * const dataGroup)
+void ProppantTransport::UpdateProppantModel(Group * const dataGroup)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -166,7 +153,7 @@ void ProppantTransport::UpdateProppantModel(ManagedGroup * const dataGroup)
 
 }
 
-void ProppantTransport::UpdateProppantModelStep(ManagedGroup * const dataGroup)
+void ProppantTransport::UpdateProppantModelStep(Group * const dataGroup)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -184,7 +171,7 @@ void ProppantTransport::UpdateProppantModelStep(ManagedGroup * const dataGroup)
 
 }
 
-void ProppantTransport::UpdateState( ManagedGroup * dataGroup )
+void ProppantTransport::UpdateState( Group * dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -194,7 +181,7 @@ void ProppantTransport::UpdateState( ManagedGroup * dataGroup )
 
 }
 
-void ProppantTransport::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -218,7 +205,7 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( ManagedGro
   // We have to redo the below loop after fractures are generated
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     UpdateState( subRegion );
@@ -229,8 +216,8 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( ManagedGro
     arrayView1d<real64> const & conc = m_proppantConcentration[er][esr];
     arrayView1d<real64> const & concOld = m_proppantConcentrationOld[er][esr];    
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {				 
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    {
         densOld[ei] = dens[ei][0];
         concOld[ei] = conc[ei];
     });
@@ -254,7 +241,13 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
   
   real64 dt_return = dt;
 
-  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  ImplicitStepSetup( time_n,
+                     dt,
+                     domain,
+                     m_dofManager,
+                     m_matrix,
+                     m_rhs,
+                     m_solution );
 
   if(cycleNumber == 1) {
 
@@ -266,12 +259,11 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
     /* Below must be called after ImplicitStepSetup */
 
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
     {
 
       arrayView1d<real64> const & dVol    = m_deltaVolume[er][esr];
-
       arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
       arrayView1d<real64> const & dConc   = m_deltaProppantConcentration[er][esr];        
 
@@ -282,35 +274,28 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
       arrayView1d<real64> const & concOld = m_proppantConcentrationOld[er][esr];
 
       subRegion->CalculateElementGeometricQuantities( *nodeManager,
-						      *faceManager );
+                                                      *faceManager );
       
-      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
-	dPres[ei] = 0.0;
-	dConc[ei] = 0.0;    
-	dVol[ei] = 0.0;
-	concOld[ei] = conc[ei];
-
+        dPres[ei] = 0.0;
+        dConc[ei] = 0.0;
+        dVol[ei] = 0.0;
+        concOld[ei] = conc[ei];
       } );
 
-    
       UpdateState( subRegion );
 
-      forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
       {
-
-	densOld[ei] = dens[ei][0];
-
+        densOld[ei] = dens[ei][0];
       } );
-
     });
-
   }
 
 
   if(m_updateProppantMobility)
     {
-
       applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
      {
        UpdateProppantModelStep( subRegion );
@@ -323,7 +308,10 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
                                           dt,
                                           cycleNumber,
                                           domain,
-                                          getLinearSystemRepository() );
+                                          m_dofManager,
+                                          m_matrix,
+                                          m_rhs,
+                                          m_solution );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -333,10 +321,13 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
 }
 
 
-void ProppantTransport::ImplicitStepSetup( real64 const& time_n,
-                                         real64 const& dt,
-                                         DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem )
+void ProppantTransport::ImplicitStepSetup( real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition * const domain,
+                                           DofManager & dofManager,
+                                           ParallelMatrix & matrix,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution )
 {
   ResetViews( domain );
 
@@ -345,12 +336,11 @@ void ProppantTransport::ImplicitStepSetup( real64 const& time_n,
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
 
     arrayView1d<real64> const & dVol    = m_deltaVolume[er][esr];
-
     arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
     arrayView1d<real64> const & dConc   = m_deltaProppantConcentration[er][esr];        
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
@@ -359,7 +349,7 @@ void ProppantTransport::ImplicitStepSetup( real64 const& time_n,
     arrayView1d<real64> const & conc = m_proppantConcentration[er][esr];
     arrayView1d<real64> const & concOld = m_proppantConcentrationOld[er][esr];        
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       dConc[ei] = 0.0;      
@@ -367,12 +357,15 @@ void ProppantTransport::ImplicitStepSetup( real64 const& time_n,
 
       densOld[ei] = dens[ei][0];
       concOld[ei] = conc[ei];      
-
     } );
   } );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  SetupSystem( domain,
+               m_dofManager,
+               m_matrix,
+               m_rhs,
+               m_solution  );
 
 }
 
@@ -385,7 +378,7 @@ void ProppantTransport::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -397,338 +390,78 @@ void ProppantTransport::ImplicitStepComplete( real64 const & time_n,
     arrayView1d<real64 const> const & dConc = m_deltaProppantConcentration[er][esr];    
     arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-
       pres[ei] += dPres[ei];
       conc[ei] += dConc[ei];      
       vol[ei] += dVol[ei];
-
     } );
 
   } );
 
 }
 
-void ProppantTransport::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                    localIndex & numLocalRows,
-                                                    globalIndex & numGlobalRows,
-                                                    localIndex offset )
+void ProppantTransport::SetupDofs( DomainPartition const * const domain,
+                                   DofManager & dofManager ) const
 {
-  int numMpiProcesses;
-  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
-
-  int thisMpiProcess = 0;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
-
-  localIndex numLocalRowsToSend = numLocalRows;
-  array1d<localIndex> gather( numMpiProcesses );
-
-  // communicate the number of local rows to each process
-  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
-                                                &gather.front(),
-                                                1 );
-
-  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
-
-  // find the first local row on this partition, and find the number of total global rows.
-  localIndex firstLocalRow = 0;
-  numGlobalRows = 0;
-
-  for( integer p=0 ; p<numMpiProcesses ; ++p )
-  {
-    numGlobalRows += gather[p];
-    if( p < thisMpiProcess )
-    {
-      firstLocalRow += gather[p];
-    }
-  }
-
-  // loop over all elements and set the dof number if the element is not a ghost
-  localIndex localCount = 0;
-
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion * const region,
-                                      ElementSubRegionBase * const subRegion )
-  {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex> const & dofNumber = m_dofNumber[er][esr];
-
-    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), [&] ( localIndex const a )
-    {
-      if( elemGhostRank[a] < 0 )
-      {
-        dofNumber[a] = firstLocalRow + localCount + offset;
-        localCount += 1;
-      }
-      else
-      {
-        dofNumber[a] = -1;
-      }
-    } );
-  } );
-
-  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+  dofManager.addField( viewKeyStruct::pressureString,
+                       DofManager::Location::Elem,
+                       DofManager::Connectivity::Face,
+                       m_numDofPerCell,
+                       m_targetRegions );
 }
 
-void ProppantTransport::SetupSystem ( DomainPartition * const domain,
-                                    EpetraBlockSystem * const blockSystem )
-{
-  // assume that there is only a single MeshLevel for now
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  // for this solver, the dof are on the cell center, and the row corrosponds to an element
-
-  localIndex numLocalRows  = 0;
-  globalIndex numGlobalRows = 0;
-
-  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
-  {
-    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
-
-    numLocalRows += subRegion->size() - subRegionGhosts;
-
-  } );
-
-  SetNumRowsAndTrilinosIndices( mesh,
-                                numLocalRows,
-                                numGlobalRows,
-                                0 );
-
-  std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::blockLocalDofNumberString );
-
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  // construct row map, and set a pointer to the row map
-  Epetra_Map * const
-  rowMap = blockSystem->
-           SetRowMap( BlockIDs::proppantTransportBlock,
-                      std::make_unique<Epetra_Map>( numGlobalRows * m_numDofPerCell,
-                                                    numLocalRows * m_numDofPerCell,
-                                                    0,
-                                                    m_linearSolverWrapper.m_epetraComm ) );
-
-  // construct sparisty matrix, set a pointer to the sparsity pattern matrix
-  Epetra_FECrsGraph * const
-  sparsity = blockSystem->SetSparsity( BlockIDs::proppantTransportBlock,
-                                       BlockIDs::proppantTransportBlock,
-                                       std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
-
-
-  // set the sparsity patter
-  SetSparsityPattern( domain, sparsity );
-
-  // assemble the global sparsity matrix
-  sparsity->GlobalAssemble();
-  sparsity->OptimizeStorage();
-
-  // construct system matrix
-  blockSystem->SetMatrix( BlockIDs::proppantTransportBlock,
-                          BlockIDs::proppantTransportBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
-
-  // construct solution vector
-  blockSystem->SetSolutionVector( BlockIDs::proppantTransportBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-  // construct residual vector
-  blockSystem->SetResidualVector( BlockIDs::proppantTransportBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-}
-
-void ProppantTransport::SetSparsityPattern( DomainPartition const * const domain,
-                                          Epetra_FECrsGraph * const sparsity )
-{
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
-
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
-
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
-
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
-
-  //**** loop over all faces. Fill in sparsity for all pairs of DOF/elem that are connected by face
-  localIndex constexpr numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
-  localIndex constexpr maxStencil = FluxApproximationBase::CellStencil::MAX_STENCIL_SIZE;
-
-  localIndex const maxDOFNum = numElems * MAX_NUM_COMPONENTS;
-
-  localIndex DOF = numElems * m_numDofPerCell;
-  
-  fluxApprox->forCellStencils( [&]( FluxApproximationBase::CellStencil const & stencil )
-  {
-    ArrayOfArraysView<FluxApproximationBase::CellStencil::Entry const, true> const & connections = stencil.getConnections();
-
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
-    {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
-
-      stackArray1d<globalIndex, maxDOFNum> dofIndexRow( DOF );
-      stackArray1d<globalIndex, maxDOFNum> dofIndexCol( DOF );
-
-      for (localIndex i = 0; i < numElems; ++i)
-      {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-	
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-        {
-
-	  dofIndexRow[i * m_numDofPerCell + idof] = offset + idof;
-
-	}
-      }
-
-      for (localIndex i = 0; i < numElems; ++i)
-      {
-        CellDescriptor const & cell = connections( iconn, i ).index;
-        globalIndex const offset = m_numDofPerCell * dofNumber[cell.region][cell.subRegion][cell.index];
-
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-        {	
-	  dofIndexCol[i * m_numDofPerCell + idof] = offset + idof;
-	}
-      }
-
-      sparsity->InsertGlobalIndices(integer_conversion<int>(DOF),
-                                    dofIndexRow.data(),
-                                    integer_conversion<int>(DOF),
-                                    dofIndexRow.data());
-
-    } );
-  } );
-
-
-  // add isolated elements not captured in the flux stencil
-  /*
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion const * const region,
-                                      ElementSubRegionBase const * const subRegion )
-  {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumberSub = m_dofNumber[er][esr];
-
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const a )
-    {
-      if (elemGhostRank[a] < 0)
-      {
-
-	stackArray1d<globalIndex, MAX_NUM_COMPONENTS> dofIndex( m_numDofPerCell );
-	globalIndex const offset =  m_numDofPerCell * dofNumberSub[a];
-
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-	  {
-	    dofIndex[idof] = offset + idof;
-	  }
-	
-        sparsity->InsertGlobalIndices(integer_conversion<int>(m_numDofPerCell), dofIndex.data(), integer_conversion<int>(m_numDofPerCell), dofIndex.data() );
-      }
-    } );
-  } );
-  */
-  // add additional connectivity resulting from boundary stencils
-  /*
-  fluxApprox->forBoundaryStencils( [&] ( FluxApproximationBase::BoundaryStencil const & stencil )
-  {
-    ArrayOfArraysView<FluxApproximationBase::BoundaryStencil::Entry const, true> const & connections = stencil.getConnections();
-
-    forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
-    {
-      localIndex const stencilSize = connections.sizeOfArray( iconn );
-      stackArray1d<globalIndex, MAX_NUM_COMPONENTS> dofIndexRow( m_numDofPerCell );
-      stackArray1d<globalIndex, maxStencil * MAX_NUM_COMPONENTS> dofIndexCol( stencilSize * m_numDofPerCell );
-
-      for (localIndex i = 0; i < numElems; ++i)
-      {
-        PointDescriptor const & point = connections( iconn, i ).index;
-
-        if (point.tag == PointDescriptor::Tag::CELL)
-        {
-          CellDescriptor const & c = point.cellIndex;
-          globalIndex const offset = m_numDofPerCell * dofNumber[c.region][c.subRegion][c.index];
-          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-          {	  
-	    dofIndexRow[idof] = offset + idof;
-	  }
-        }
-      }
-
-      integer counter = 0;
-      for (localIndex i = 0; i < stencilSize; ++i)
-      {
-        PointDescriptor const & point = connections( iconn, i ).index;
-
-        if (point.tag == PointDescriptor::Tag::CELL)
-        {
-          CellDescriptor const & c = point.cellIndex;
-          globalIndex const offset = m_numDofPerCell * dofNumber[c.region][c.subRegion][c.index];
-          for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-          {	  
-	    dofIndexCol[counter * m_numDofPerCell + idof] = offset + idof;
-	  }
-          ++counter;	  
-	}
-      }
-
-      sparsity->InsertGlobalIndices(integer_conversion<int>(m_numDofPerCell),
-                                    dofIndexRow.data(),
-                                    integer_conversion<int>(counter * m_numDofPerCell),
-                                    dofIndexCol.data());
-    });
-  });
-  */
-}
-
-void ProppantTransport::AssembleSystem( DomainPartition * const domain,
-                                      EpetraBlockSystem * const blockSystem,
-                                      real64 const time_n,
-                                      real64 const dt )
+void ProppantTransport::AssembleSystem( real64 const time,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::proppantTransportBlock, BlockIDs::proppantTransportBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::proppantTransportBlock );
+  matrix.zero();
+  rhs.zero();
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
+  matrix.open();
+  rhs.open();
 
-  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  AssembleAccumulationTerms( domain, &dofManager, &matrix, &rhs );
 
   if( verboseLevel() >= 2 )
   {
-    GEOS_LOG_RANK("After ProppantTransport::AssembleAccumulationTerms");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    GEOS_LOG_RANK_0("After ProppantTransport::AssembleAccumulationTerms");
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    matrix.print(std::cout);
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    rhs.print(std::cout);
   }
 
-  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+  AssembleFluxTerms( time,
+                     dt,
+                     domain,
+                     &dofManager,
+                     &matrix,
+                     &rhs);
 
-  jacobian->GlobalAssemble(true);
-  residual->GlobalAssemble();
+  matrix.close();
+  rhs.close();
 
   if( verboseLevel() >= 2 )
   {
-    GEOS_LOG_RANK("After ProppantTransport::AssembleSystem");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    GEOS_LOG_RANK_0("After ProppantTransport::AssembleSystem");
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    matrix.print(std::cout);
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    rhs.print(std::cout);
   }
 }
 
-void ProppantTransport::AssembleAccumulationTerms( DomainPartition * const domain,
-                                                 Epetra_FECrsMatrix * const jacobian,
-                                                 Epetra_FEVector * const residual,
-                                                 real64 const time_n,
-                                                 real64 const dt )
+void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const domain,
+                                                   DofManager const * const dofManager,
+                                                   ParallelMatrix * const matrix,
+                                                   ParallelVector * const rhs)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -740,11 +473,13 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition * const domai
 
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion const * const region,
+                                 ElementRegionBase const * const region,
                                  ElementSubRegionBase const * const subRegion )
   {
+    string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
 
     arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
 
@@ -763,55 +498,57 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition * const domai
 
     arrayView1d<real64 const> const & dPres         = m_deltaPressure[er][esr];
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
-	stackArray1d<globalIndex, MAX_NUM_COMPONENTS> dofIndex(m_numDofPerCell);
-        stackArray1d<real64, MAX_NUM_COMPONENTS>  resid(m_numDofPerCell);
-        stackArray2d<real64, MAX_NUM_COMPONENTS * MAX_NUM_COMPONENTS> matrix(m_numDofPerCell, m_numDofPerCell);
-	
-        globalIndex const elemDOF = dofNumber[ei];
-	globalIndex const offset = m_numDofPerCell * elemDOF;	
+        stackArray1d<globalIndex, MAX_NUM_COMPONENTS>         localAccumDOF( m_numDofPerCell );
+        stackArray1d<real64, MAX_NUM_COMPONENTS>             localAccum( m_numDofPerCell );
+        stackArray2d<real64, MAX_NUM_COMPONENTS * MAX_NUM_COMPONENTS> localAccumJacobian( m_numDofPerCell, m_numDofPerCell );
+
         real64 const densNew = dens[ei][0];
         real64 const concNew = conc[ei] + dConc[ei];
 
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-	  {
-	
-	    dofIndex[idof] = offset + idof;
 
-	  }
+        // fluid-mixture mass conservation
+        localAccum[0] = (densNew  - densOld[ei]) * volume[ei];
 
-	// fluid-mixture mass conservation
-        resid[0] = (densNew  - densOld[ei]) * volume[ei];
-
-	// proppant mass conservation
-        resid[1] = (concNew - concOld[ei]) * volume[ei];	
+        // proppant mass conservation
+        localAccum[1] = (concNew - concOld[ei]) * volume[ei];
 
         // Derivative of residual wrt to pressure and concentration in the cell
-        matrix[0][0] = dDens_dPres[ei][0] * volume[ei];
-        matrix[0][1] = dDens_dConc[ei][0] * volume[ei];	
+        localAccumJacobian[0][0] = dDens_dPres[ei][0] * volume[ei];
+        localAccumJacobian[0][1] = dDens_dConc[ei][0] * volume[ei];
 
-	matrix[1][0] = 0.0; 
-	matrix[1][1] = volume[ei]; 	
+        localAccumJacobian[1][0] = 0.0;
+        localAccumJacobian[1][1] = volume[ei];
 
-        // add contribution to global residual and jacobian
-        residual->SumIntoGlobalValues(integer_conversion<int>(m_numDofPerCell), dofIndex.data(), resid.data());
+        globalIndex const elemDOF = dofNumber[ei];
+        for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+        {
+          localAccumDOF[idof] = elemDOF + idof;
+        }
+        // add contribution to global residual and dRdP
+        rhs->add( localAccumDOF.data(),
+                  localAccum.data(),
+                  m_numDofPerCell );
 
-        jacobian->SumIntoGlobalValues(integer_conversion<int>(m_numDofPerCell), dofIndex.data(), integer_conversion<int>(m_numDofPerCell), dofIndex.data(), matrix.data(),Epetra_FECrsMatrix::ROW_MAJOR);
-
+        matrix->add( localAccumDOF.data(),
+                     localAccumDOF.data(),
+                     localAccumJacobian.data(),
+                     m_numDofPerCell, m_numDofPerCell );
       }
     } );
   } );
 }
 
 
-void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
-                                         Epetra_FECrsMatrix * const jacobian,
-                                         Epetra_FEVector * const residual,
-                                         real64 const time_n,
-                                         real64 const dt )
+void ProppantTransport::AssembleFluxTerms( real64 const time_n,
+                                           real64 const dt,
+                                           DomainPartition const * const domain,
+                                           DofManager const * const dofManager,
+                                           ParallelMatrix * const matrix,
+                                           ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -819,6 +556,13 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
   R1Tensor unitGravityVector = m_gravityVector;  
   unitGravityVector.Normalize();
   
+  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  EdgeManager const * const edgeManager = mesh->getEdgeManager();
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+
+
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -827,7 +571,9 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> const & dofNumber = m_dofNumber;
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & pres        = m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dPres       = m_deltaPressure;
@@ -864,13 +610,6 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> const & proppantPackPermeability = m_proppantPackPermeability;      
   
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  EdgeManager const * const edgeManager = mesh->getEdgeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
   arrayView1d<R1Tensor const> const & X = nodeManager->referencePosition();
   
   constexpr localIndex numElems = FluxApproximationBase::CellStencil::NUM_POINT_IN_FLUX;
@@ -887,7 +626,7 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
 
   const localIndex_array & fconnectorIndices = fractureStencil.getConnectorMeshIndices();
 
-  FaceElementRegion * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(m_targetRegions[0]);
+  FaceElementRegionBase * const fractureRegion = elemManager->GetRegion<FaceElementRegion>(m_targetRegions[0]);
   
   array1d<localIndex> const & fractureConnectorsToEdges = fractureRegion->getReference< array1d<localIndex > >( FaceElementRegion::viewKeyStruct::fractureConnectorsToEdgesString );
 
@@ -901,427 +640,427 @@ void ProppantTransport::AssembleFluxTerms(DomainPartition * const domain,
 
   
   forall_in_range<stencilPolicy>( 0, connections.size(), GEOSX_LAMBDA ( localIndex iconn )
+  {
+    localIndex const stencilSize = connections.sizeOfArray(iconn);
+    localIndex const edgeIndex = fractureConnectorsToEdges[fconnectorIndices[iconn] ];
+
+    R1Tensor edgeCenter, edgeToFaceVec;
+    edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
+    edgeManager->calculateLength( edgeIndex, X, edgeToFaceVec );
+
+    real64 edgeLength = edgeToFaceVec.L2_Norm();
+
+
+    // working arrays
+    stackArray1d<globalIndex, DOF1> eqnRowIndices(DOF);
+    stackArray1d<globalIndex, DOF2> dofColIndices(DOF);
+
+    stackArray1d<double, DOF1> localFlux(DOF);
+    stackArray2d<double, DOF1*DOF2> localFluxJacobian(DOF, DOF);
+
+    // Need to update weight
+    stackArray1d<real64, numElems> weight(numElems);
+
+    // mixture density and fluid density in each face
+    stackArray1d<real64, numElems> mixDens(numElems);
+    stackArray1d<real64, numElems> dMixDens_dP(numElems);
+    stackArray1d<real64, numElems> dMixDens_dC(numElems);
+
+    stackArray1d<real64, numElems> fluidDens(numElems);
+    stackArray1d<real64, numElems> dFluidDens_dP(numElems);
+
+
+    // realted to slip velocity calculation
+    stackArray1d<real64, numElems> settlingFac(numElems);
+    stackArray1d<real64, numElems> dSettlingFac_dC(numElems);
+
+    stackArray1d<real64, numElems> collisionFac(numElems);
+    stackArray1d<real64, numElems> dCollisionFac_dC(numElems);
+
+    stackArray1d<real64, numElems> transT(numElems);
+    stackArray1d<real64, numElems> coefs(numElems);
+    stackArray1d<bool, numElems> isProppantMob(numElems);
+
+    real64 edgeDensity, edgeViscosity;
+    stackArray1d<real64, numElems> dEdgeDens_dP(numElems);
+    stackArray1d<real64, numElems> dEdgeDens_dC(numElems);
+
+    stackArray1d<real64, numElems> dEdgeVisc_dP(numElems);
+    stackArray1d<real64, numElems> dEdgeVisc_dC(numElems);
+
+    stackArray1d<real64, numElems> dPe_dP(numElems);
+    stackArray1d<real64, numElems> dPe_dC(numElems);
+    stackArray1d<R1Tensor, numElems> Up(numElems);
+
+    stackArray1d<real64, numElems> dCe_dP(numElems);
+    stackArray1d<real64, numElems> dCe_dC(numElems);
+
+    stackArray1d<real64, numElems> edgeToFaceFlux(numElems);
+    stackArray2d<real64, numElems * numElems> dEdgeToFaceFlux_dP(numElems,numElems);
+    stackArray2d<real64, numElems * numElems> dEdgeToFaceFlux_dC(numElems,numElems);
+
+    stackArray1d<real64, numElems> edgeToFaceProppantFlux(numElems);
+    stackArray2d<real64, numElems * numElems> dEdgeToFaceProppantFlux_dP(numElems,numElems);
+    stackArray2d<real64, numElems * numElems> dEdgeToFaceProppantFlux_dC(numElems,numElems);
+
+    stackArray1d<real64, numElems> P(numElems);
+    stackArray1d<real64, numElems> C(numElems);
+
+    // clear working arrays
+    eqnRowIndices = -1;
+
+    edgeDensity = 0.0;
+    edgeViscosity = 0.0;
+
+    dEdgeDens_dP = 0.0;
+    dEdgeDens_dC = 0.0;
+
+    dEdgeVisc_dP = 0.0;
+    dEdgeVisc_dC = 0.0;
+
+    dEdgeToFaceProppantFlux_dP = 0.0;
+    dEdgeToFaceProppantFlux_dC = 0.0;
+
+    // TODO: Need to calculate weight from FractureStencil
+    weight = 0.5;
+
+    //numElems == stencilSize;
+
+    //get averaged edgeDensity and edgeViscosity
+
+    for (localIndex i = 0; i < numElems; ++i) {
+
+      FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+      localIndex const er  = entry.index.region;
+      localIndex const esr = entry.index.subRegion;
+      localIndex const ei  = entry.index.index;
+
+
+      for (localIndex j = 0; j < m_numDofPerCell; ++j)
+      {
+
+        eqnRowIndices[i * m_numDofPerCell + j] = dofNumber[er][esr][ei] * m_numDofPerCell + j;
+        dofColIndices[i * m_numDofPerCell + j] = dofNumber[er][esr][ei] * m_numDofPerCell + j;
+
+      }
+
+      edgeDensity += weight[i] * dens[er][esr][m_fluidIndex][ei][0];
+      dEdgeDens_dP[i] = weight[i] * dDens_dPres[er][esr][m_fluidIndex][ei][0];
+      dEdgeDens_dC[i] = weight[i] * dDens_dConc[er][esr][m_fluidIndex][ei][0];
+
+      edgeViscosity += weight[i] * visc[er][esr][m_fluidIndex][ei][0];
+      dEdgeVisc_dP[i] = weight[i] * dVisc_dPres[er][esr][m_fluidIndex][ei][0];
+      dEdgeVisc_dC[i] = weight[i] * dVisc_dConc[er][esr][m_fluidIndex][ei][0];
+
+      P[i] = pres[er][esr][ei] + dPres[er][esr][ei];
+      C[i] = conc[er][esr][ei] + dConc[er][esr][ei];
+
+      mixDens[i] = dens[er][esr][m_fluidIndex][ei][0];
+      dMixDens_dP[i] = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+      dMixDens_dC[i] = dDens_dConc[er][esr][m_fluidIndex][ei][0];
+
+      fluidDens[i] = fluidDensity[er][esr][m_fluidIndex][ei][0];
+      dFluidDens_dP[i] = dFluidDens_dPres[er][esr][m_fluidIndex][ei][0];
+
+      settlingFac[i] = settlingFactor[er][esr][m_proppantIndex][ei];
+      dSettlingFac_dC[i] = dSettlingFactor_dConc[er][esr][m_proppantIndex][ei];
+
+      collisionFac[i] = collisionFactor[er][esr][m_proppantIndex][ei];
+      dCollisionFac_dC[i] = dCollisionFactor_dConc[er][esr][m_proppantIndex][ei];
+
+      isProppantMob[i] = isProppantMobile[er][esr][m_proppantIndex][ei];
+
+      transT[i] = fabs(entry.weight);
+
+      localIndex const faceIndex = elemsToFaces[ei][0];
+
+      edgeToFaceVec = faceCenters[faceIndex];
+      edgeToFaceVec -= edgeCenter;
+
+      if(proppantPackPermeability[er][esr][m_proppantIndex][ei] > 0.0 && m_updatePermeability)
+      {
+        transT[i] = transT[i] * (1.0 - concOld[er][esr][ei]) + proppantPackPermeability[er][esr][m_proppantIndex][ei]  * edgeLength * aperture[ei] / edgeToFaceVec.L2_Norm() * concOld[er][esr][ei];
+
+      }
+
+      edgeToFaceVec.Normalize();
+
+      coefs[i] = Dot(edgeToFaceVec, unitGravityVector) * edgeLength * aperture[ei];
+
+    }
+
+
+    real64 transTSum = 0.0;
+    real64 Pe = 0.0;
+    dPe_dP = 0.0;
+    dPe_dC = 0.0;
+
+    for (localIndex i = 0; i < numElems; ++i)
     {
-      localIndex const stencilSize = connections.sizeOfArray(iconn);
-      localIndex const edgeIndex = fractureConnectorsToEdges[fconnectorIndices[iconn] ]; 
+      FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
 
-      R1Tensor edgeCenter, edgeToFaceVec;
-      edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
-      edgeManager->calculateLength( edgeIndex, X, edgeToFaceVec );
+      localIndex const er  = entry.index.region;
+      localIndex const esr = entry.index.subRegion;
+      localIndex const ei  = entry.index.index;
 
-      real64 edgeLength = edgeToFaceVec.L2_Norm();
+      real64 const gravD    = gravDepth[er][esr][ei];
+      real64 const gravTerm = edgeDensity * gravD;
 
-      
-      // working arrays
-      stackArray1d<globalIndex, DOF1> eqnRowIndices(DOF);
-      stackArray1d<globalIndex, DOF2> dofColIndices(DOF);
+      Pe += transT[i] * (P[i] - gravTerm);
 
-      stackArray1d<double, DOF1> localFlux(DOF);
-      stackArray2d<double, DOF1*DOF2> localFluxJacobian(DOF, DOF);
+      transTSum += transT[i];
 
-      // Need to update weight 
-      stackArray1d<real64, numElems> weight(numElems);
+      dPe_dP[i] += transT[i];
 
-      // mixture density and fluid density in each face
-      stackArray1d<real64, numElems> mixDens(numElems);      
-      stackArray1d<real64, numElems> dMixDens_dP(numElems);
-      stackArray1d<real64, numElems> dMixDens_dC(numElems);            
-
-      stackArray1d<real64, numElems> fluidDens(numElems);
-      stackArray1d<real64, numElems> dFluidDens_dP(numElems);
-      
-
-      // realted to slip velocity calculation
-      stackArray1d<real64, numElems> settlingFac(numElems);
-      stackArray1d<real64, numElems> dSettlingFac_dC(numElems);
-
-      stackArray1d<real64, numElems> collisionFac(numElems);
-      stackArray1d<real64, numElems> dCollisionFac_dC(numElems);                  
-
-      stackArray1d<real64, numElems> transT(numElems);
-      stackArray1d<real64, numElems> coefs(numElems);      
-      stackArray1d<bool, numElems> isProppantMob(numElems);      
-      
-      real64 edgeDensity, edgeViscosity;
-      stackArray1d<real64, numElems> dEdgeDens_dP(numElems);
-      stackArray1d<real64, numElems> dEdgeDens_dC(numElems);
-      
-      stackArray1d<real64, numElems> dEdgeVisc_dP(numElems);
-      stackArray1d<real64, numElems> dEdgeVisc_dC(numElems);
-
-      stackArray1d<real64, numElems> dPe_dP(numElems);
-      stackArray1d<real64, numElems> dPe_dC(numElems);      
-      stackArray1d<R1Tensor, numElems> Up(numElems);            
-
-      stackArray1d<real64, numElems> dCe_dP(numElems);
-      stackArray1d<real64, numElems> dCe_dC(numElems);      
-      
-      stackArray1d<real64, numElems> edgeToFaceFlux(numElems);
-      stackArray2d<real64, numElems * numElems> dEdgeToFaceFlux_dP(numElems,numElems);
-      stackArray2d<real64, numElems * numElems> dEdgeToFaceFlux_dC(numElems,numElems);            
-      
-      stackArray1d<real64, numElems> edgeToFaceProppantFlux(numElems);
-      stackArray2d<real64, numElems * numElems> dEdgeToFaceProppantFlux_dP(numElems,numElems);
-      stackArray2d<real64, numElems * numElems> dEdgeToFaceProppantFlux_dC(numElems,numElems);                  
-
-      stackArray1d<real64, numElems> P(numElems);
-      stackArray1d<real64, numElems> C(numElems);      
-
-      // clear working arrays
-      eqnRowIndices = -1;
-
-      edgeDensity = 0.0;
-      edgeViscosity = 0.0;      
-      
-      dEdgeDens_dP = 0.0;
-      dEdgeDens_dC = 0.0;
-
-      dEdgeVisc_dP = 0.0;
-      dEdgeVisc_dC = 0.0;            
-
-      dEdgeToFaceProppantFlux_dP = 0.0;
-      dEdgeToFaceProppantFlux_dC = 0.0;      
-      
-      // TODO: Need to calculate weight from FractureStencil 
-      weight = 0.5;
-
-      //numElems == stencilSize;
-
-      //get averaged edgeDensity and edgeViscosity
-
-      for (localIndex i = 0; i < numElems; ++i) {
-
-        FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);	
-        localIndex const er  = entry.index.region;
-        localIndex const esr = entry.index.subRegion;
-        localIndex const ei  = entry.index.index;
-
-
-	for (localIndex j = 0; j < m_numDofPerCell; ++j)
-	  {
-	    
-	    eqnRowIndices[i * m_numDofPerCell + j] = dofNumber[er][esr][ei] * m_numDofPerCell + j;
-	    dofColIndices[i * m_numDofPerCell + j] = dofNumber[er][esr][ei] * m_numDofPerCell + j;	    
-
-	  }
-
-        edgeDensity += weight[i] * dens[er][esr][m_fluidIndex][ei][0];
-	dEdgeDens_dP[i] = weight[i] * dDens_dPres[er][esr][m_fluidIndex][ei][0];
-	dEdgeDens_dC[i] = weight[i] * dDens_dConc[er][esr][m_fluidIndex][ei][0];
-	
-        edgeViscosity += weight[i] * visc[er][esr][m_fluidIndex][ei][0];
-	dEdgeVisc_dP[i] = weight[i] * dVisc_dPres[er][esr][m_fluidIndex][ei][0];
-	dEdgeVisc_dC[i] = weight[i] * dVisc_dConc[er][esr][m_fluidIndex][ei][0];
-
-	P[i] = pres[er][esr][ei] + dPres[er][esr][ei];
-	C[i] = conc[er][esr][ei] + dConc[er][esr][ei];	
-
-	mixDens[i] = dens[er][esr][m_fluidIndex][ei][0];  
-	dMixDens_dP[i] = dDens_dPres[er][esr][m_fluidIndex][ei][0];
-	dMixDens_dC[i] = dDens_dConc[er][esr][m_fluidIndex][ei][0];	
-
-	fluidDens[i] = fluidDensity[er][esr][m_fluidIndex][ei][0];
-	dFluidDens_dP[i] = dFluidDens_dPres[er][esr][m_fluidIndex][ei][0];  	
-
-	settlingFac[i] = settlingFactor[er][esr][m_proppantIndex][ei];
-	dSettlingFac_dC[i] = dSettlingFactor_dConc[er][esr][m_proppantIndex][ei];
-
-	collisionFac[i] = collisionFactor[er][esr][m_proppantIndex][ei];
-	dCollisionFac_dC[i] = dCollisionFactor_dConc[er][esr][m_proppantIndex][ei];		
-
-	isProppantMob[i] = isProppantMobile[er][esr][m_proppantIndex][ei];
-      
-        transT[i] = fabs(entry.weight);
-	
-	localIndex const faceIndex = elemsToFaces[ei][0];
-
-	edgeToFaceVec = faceCenters[faceIndex]; 
-	edgeToFaceVec -= edgeCenter;
-
-	if(proppantPackPermeability[er][esr][m_proppantIndex][ei] > 0.0 && m_updatePermeability)
-	  {
-	    transT[i] = transT[i] * (1.0 - concOld[er][esr][ei]) + proppantPackPermeability[er][esr][m_proppantIndex][ei]  * edgeLength * aperture[ei] / edgeToFaceVec.L2_Norm() * concOld[er][esr][ei];
-
-	  } 
-
-	edgeToFaceVec.Normalize();
-
-	coefs[i] = Dot(edgeToFaceVec, unitGravityVector) * edgeLength * aperture[ei];
-	
+      for (localIndex j = 0; j < numElems; ++j) {
+        dPe_dP[j] += -transT[i] * gravD * dEdgeDens_dP[j];
+        dPe_dC[j] += -transT[i] * gravD * dEdgeDens_dC[j];
       }
-	
 
-      real64 transTSum = 0.0;
-      real64 Pe = 0.0;
-      dPe_dP = 0.0;
-      dPe_dC = 0.0;      
-      
-      for (localIndex i = 0; i < numElems; ++i)
+    }
+
+    for (localIndex i = 0; i < numElems; ++i)
+    {
+
+      dPe_dP[i] /= transTSum;
+      dPe_dC[i] /= transTSum;
+
+    }
+
+    Pe /= transTSum;
+
+    for (localIndex i = 0; i < numElems; ++i)
+    {
+
+      FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+
+      localIndex const er  = entry.index.region;
+      localIndex const esr = entry.index.subRegion;
+      localIndex const ei  = entry.index.index;
+
+      real64 const gravD    = gravDepth[er][esr][ei];
+      real64 const gravTerm = edgeDensity * gravD;
+
+      real64 const fluxTerm = Pe - (P[i] - gravTerm);
+
+      edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
+
+      dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity;
+
+      for (localIndex j = 0; j < numElems; ++j)
       {
-        FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
 
-        localIndex const er  = entry.index.region;
-        localIndex const esr = entry.index.subRegion;
-        localIndex const ei  = entry.index.index;
+        dEdgeToFaceFlux_dP[i][j] += -transT[i] * fluxTerm * dEdgeVisc_dP[j] / (edgeViscosity * edgeViscosity) + transT[i] * (dPe_dP[j] + dEdgeDens_dP[j] * gravD) / edgeViscosity;
 
-        real64 const gravD    = gravDepth[er][esr][ei];
-        real64 const gravTerm = edgeDensity * gravD;
-	
-	Pe += transT[i] * (P[i] - gravTerm);
+        dEdgeToFaceFlux_dC[i][j] += -transT[i] * fluxTerm * dEdgeVisc_dC[j] / (edgeViscosity * edgeViscosity) + transT[i] * (dPe_dC[j] + dEdgeDens_dC[j] * gravD) / edgeViscosity;
 
-	transTSum += transT[i];
 
-	dPe_dP[i] += transT[i];
-
-	for (localIndex j = 0; j < numElems; ++j) {
-	  dPe_dP[j] += -transT[i] * gravD * dEdgeDens_dP[j];
-	  dPe_dC[j] += -transT[i] * gravD * dEdgeDens_dC[j]; 	  
-	}
-	  
       }
 
-      for (localIndex i = 0; i < numElems; ++i)
+      //contribution from paricle slipping
+
+      edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  edgeToFaceFlux[i] + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * settlingFac[i] * coefs[i];
+
+      dEdgeToFaceProppantFlux_dP[i][i] = (dFluidDens_dP[i] / mixDens[i] - fluidDens[i] * dMixDens_dP[i] / (mixDens[i] * mixDens[i])) * (1.0 - C[i]) * (collisionFac[i] * edgeToFaceFlux[i] + settlingFac[i] * coefs[i]);
+
+      dEdgeToFaceProppantFlux_dC[i][i] = -fluidDens[i] / mixDens[i] * (1.0 + dMixDens_dC[i] / mixDens[i] * (1.0 - C[i])) * (collisionFac[i] *  edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * (dCollisionFac_dC[i] *  edgeToFaceFlux[i] + dSettlingFac_dC[i] * coefs[i]);
+
+      for (localIndex j = 0; j < numElems; ++j)
       {
-      
-	dPe_dP[i] /= transTSum;
-	dPe_dC[i] /= transTSum;
 
+        dEdgeToFaceProppantFlux_dP[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dP[i][j];
+
+        dEdgeToFaceProppantFlux_dC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dC[i][j];
       }
 
-      Pe /= transTSum;
+    }
 
-      for (localIndex i = 0; i < numElems; ++i)
-	{
 
-	  FluxApproximationBase::CellStencil::Entry const & entry = connections(iconn, i);
+    // get Ce
 
-	  localIndex const er  = entry.index.region;
-	  localIndex const esr = entry.index.subRegion;
-	  localIndex const ei  = entry.index.index;
+    real64 Ce = 0.0;
+    dCe_dP = 0.0;
+    dCe_dC = 0.0;
 
-	  real64 const gravD    = gravDepth[er][esr][ei];
-	  real64 const gravTerm = edgeDensity * gravD;
+    real64 downStreamFlux = 0.0;
+    stackArray1d<real64, numElems> dDownStreamFlux_dP(numElems);
+    stackArray1d<real64, numElems> dDownStreamFlux_dC(numElems);
 
-	  real64 const fluxTerm = Pe - (P[i] - gravTerm);
-	  
-	  edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
-      
-	  dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity; 
-	  
-	  for (localIndex j = 0; j < numElems; ++j)
-	    {
+    dDownStreamFlux_dP = 0.0;
+    dDownStreamFlux_dC = 0.0;
 
-	      dEdgeToFaceFlux_dP[i][j] += -transT[i] * fluxTerm * dEdgeVisc_dP[j] / (edgeViscosity * edgeViscosity) + transT[i] * (dPe_dP[j] + dEdgeDens_dP[j] * gravD) / edgeViscosity;
+    for (localIndex i = 0; i < numElems; ++i)
+    {
 
-	      dEdgeToFaceFlux_dC[i][j] += -transT[i] * fluxTerm * dEdgeVisc_dC[j] / (edgeViscosity * edgeViscosity) + transT[i] * (dPe_dC[j] + dEdgeDens_dC[j] * gravD) / edgeViscosity;
+      if(!isProppantMob[i] && m_updateProppantMobility)
+        continue;
 
-	      
-	    }
-	      
-	  //contribution from paricle slipping
-	
-	  edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  edgeToFaceFlux[i] + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * settlingFac[i] * coefs[i];
+      if(edgeToFaceProppantFlux[i] >= 0.0)
+      {
+        // downstream
+        downStreamFlux += edgeToFaceProppantFlux[i];
 
-	  dEdgeToFaceProppantFlux_dP[i][i] = (dFluidDens_dP[i] / mixDens[i] - fluidDens[i] * dMixDens_dP[i] / (mixDens[i] * mixDens[i])) * (1.0 - C[i]) * (collisionFac[i] * edgeToFaceFlux[i] + settlingFac[i] * coefs[i]);
+        for(localIndex j = 0; j < numElems; ++j)
+        {
 
-	  dEdgeToFaceProppantFlux_dC[i][i] = -fluidDens[i] / mixDens[i] * (1.0 + dMixDens_dC[i] / mixDens[i] * (1.0 - C[i])) * (collisionFac[i] *  edgeToFaceFlux[i] + settlingFac[i] * coefs[i]) + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * (dCollisionFac_dC[i] *  edgeToFaceFlux[i] + dSettlingFac_dC[i] * coefs[i]);         
-    	  
-	  for (localIndex j = 0; j < numElems; ++j)
-	    {
+          dDownStreamFlux_dP[j] += dEdgeToFaceProppantFlux_dP[i][j];
+          dDownStreamFlux_dC[j] += dEdgeToFaceProppantFlux_dC[i][j];
 
-	      dEdgeToFaceProppantFlux_dP[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dP[i][j];
-	      
-	      dEdgeToFaceProppantFlux_dC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - C[i]) * collisionFac[i]) *  dEdgeToFaceFlux_dC[i][j];	  	      	      
-	    }
-	  
-	}
-     
+        }
 
-      // get Ce
-      
-      real64 Ce = 0.0;
-      dCe_dP = 0.0;
-      dCe_dC = 0.0;
-
-      real64 downStreamFlux = 0.0;
-      stackArray1d<real64, numElems> dDownStreamFlux_dP(numElems);
-      stackArray1d<real64, numElems> dDownStreamFlux_dC(numElems);      
-
-      dDownStreamFlux_dP = 0.0;
-      dDownStreamFlux_dC = 0.0;      
-
-      for (localIndex i = 0; i < numElems; ++i)
-	{
-
-	  if(!isProppantMob[i] && m_updateProppantMobility)
-	    continue;
-	  
-	  if(edgeToFaceProppantFlux[i] >= 0.0)
-	    {
-	      // downstream 
-	      downStreamFlux += edgeToFaceProppantFlux[i]; 
-
-	      for(localIndex j = 0; j < numElems; ++j)
-		{
-
-		  dDownStreamFlux_dP[j] += dEdgeToFaceProppantFlux_dP[i][j];
-		  dDownStreamFlux_dC[j] += dEdgeToFaceProppantFlux_dC[i][j];
-
-		}
-	      
-	    }
-	  else
-	    {
-
-	      // upstream
-	      Ce += -edgeToFaceProppantFlux[i] * C[i]; 
-
-	      dCe_dC[i] += -edgeToFaceProppantFlux[i]; 
-	      
-	      for(localIndex j = 0; j < numElems; ++j)
-		{
-
-		  dCe_dP[j] += -dEdgeToFaceProppantFlux_dP[i][j] * C[i];
-		  dCe_dC[j] += -dEdgeToFaceProppantFlux_dC[i][j] * C[i];
-
-		}
-	      
-	    }
-
-	}
-    
-
-      if(downStreamFlux > 0.0) 
-	{
-	  
-	  for (localIndex i = 0; i < numElems; ++i)
-	    {
-
-	      if(!isProppantMob[i] && m_updateProppantMobility)
-		continue;
-	      
-	      dCe_dP[i] =  dCe_dP[i] / downStreamFlux - Ce * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
-	      dCe_dC[i] =  dCe_dC[i] / downStreamFlux - Ce * dDownStreamFlux_dC[i] / (downStreamFlux * downStreamFlux);;	  
-
-	    }
-	  
-	  Ce = Ce / downStreamFlux;
-
-	}
+      }
       else
-	{
+      {
 
-	  Ce = 0.0;
-	  for (localIndex i = 0; i < numElems; ++i)
-	    {
+        // upstream
+        Ce += -edgeToFaceProppantFlux[i] * C[i];
 
-	      if(!isProppantMob[i] && m_updateProppantMobility)
-		continue;
-	      
-	      dCe_dP[i] =  0.0;
-	      dCe_dC[i] =  weight[i];
-              Ce += C[i] * weight[i];
+        dCe_dC[i] += -edgeToFaceProppantFlux[i];
 
-	    }
+        for(localIndex j = 0; j < numElems; ++j)
+        {
 
-	}
-    
+          dCe_dP[j] += -dEdgeToFaceProppantFlux_dP[i][j] * C[i];
+          dCe_dC[j] += -dEdgeToFaceProppantFlux_dC[i][j] * C[i];
+
+        }
+
+      }
+
+    }
+
+
+    if(downStreamFlux > 0.0)
+    {
+
       for (localIndex i = 0; i < numElems; ++i)
-	{
+      {
 
-	  localIndex idx1 = i * m_numDofPerCell;
+        if(!isProppantMob[i] && m_updateProppantMobility)
+          continue;
 
-	  localFlux[idx1] = -edgeDensity * edgeToFaceFlux[i] * dt;
+        dCe_dP[i] =  dCe_dP[i] / downStreamFlux - Ce * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
+        dCe_dC[i] =  dCe_dC[i] / downStreamFlux - Ce * dDownStreamFlux_dC[i] / (downStreamFlux * downStreamFlux);;
 
-	  for (localIndex j = 0; j < numElems; ++j)
-	    {	  
+      }
 
-	      localIndex idx2 = j * m_numDofPerCell;	      
+      Ce = Ce / downStreamFlux;
 
-	      //dP 
+    }
+    else
+    {
 
-	      localFluxJacobian[idx1][idx2]  = -(dEdgeDens_dP[j] * edgeToFaceFlux[i] + edgeDensity * dEdgeToFaceFlux_dP[i][j]) * dt;
+      Ce = 0.0;
+      for (localIndex i = 0; i < numElems; ++i)
+      {
 
-	      //dC
+        if(!isProppantMob[i] && m_updateProppantMobility)
+          continue;
 
-	      localFluxJacobian[idx1][idx2 + 1]  = -(dEdgeDens_dC[j] * edgeToFaceFlux[i] + edgeDensity * dEdgeToFaceFlux_dC[i][j]) * dt;
+        dCe_dP[i] =  0.0;
+        dCe_dC[i] =  weight[i];
+        Ce += C[i] * weight[i];
 
-	    }
+      }
 
-	  
-	  if(isProppantMob[i] || !m_updateProppantMobility)
-	    {
+    }
 
-	      if(edgeToFaceProppantFlux[i] >= 0.0)
-		{
+    for (localIndex i = 0; i < numElems; ++i)
+    {
 
+      localIndex idx1 = i * m_numDofPerCell;
 
-		  localFlux[idx1 + 1] = -Ce * edgeToFaceProppantFlux[i] * dt;
-		}
-	      else 
-		{
+      localFlux[idx1] = -edgeDensity * edgeToFaceFlux[i] * dt;
 
-		  localFlux[idx1 + 1] = -C[i] * edgeToFaceProppantFlux[i] * dt;
-	      
-		}
-	      
-	      for (localIndex j = 0; j < numElems; ++j)
-		{	  
+      for (localIndex j = 0; j < numElems; ++j)
+      {
 
-		  localIndex idx2 = j * m_numDofPerCell;	      
+        localIndex idx2 = j * m_numDofPerCell;
 
-	      
-		  if(edgeToFaceProppantFlux[i] >= 0.0)
-		    {
+        //dP
 
+        localFluxJacobian[idx1][idx2]  = -(dEdgeDens_dP[j] * edgeToFaceFlux[i] + edgeDensity * dEdgeToFaceFlux_dP[i][j]) * dt;
 
-		      localFluxJacobian[idx1 + 1][idx2] = -(dCe_dP[j] * edgeToFaceProppantFlux[i] + Ce * dEdgeToFaceProppantFlux_dP[i][j]) * dt;
-		  
-		      localFluxJacobian[idx1 + 1][idx2 + 1] = -(dCe_dC[j] * edgeToFaceProppantFlux[i] + Ce * dEdgeToFaceProppantFlux_dC[i][j]) * dt;
+        //dC
 
-		    }
-		  else 
-		    {
+        localFluxJacobian[idx1][idx2 + 1]  = -(dEdgeDens_dC[j] * edgeToFaceFlux[i] + edgeDensity * dEdgeToFaceFlux_dC[i][j]) * dt;
+
+      }
 
 
-		      localFluxJacobian[idx1 + 1][idx2] = -C[i] * dEdgeToFaceProppantFlux_dP[i][j] * dt;
-		      localFluxJacobian[idx1 + 1][idx2 + 1] = -C[i] * dEdgeToFaceProppantFlux_dC[i][j] * dt;		  
+      if(isProppantMob[i] || !m_updateProppantMobility)
+      {
 
-		      if(i == j)
-			localFluxJacobian[idx1 + 1][idx2 + 1] += -edgeToFaceProppantFlux[i] * dt;
-
-		    }
-		      
-		}
-
-	    }
-	  else
-	    {
-
-	      localFlux[idx1 + 1] = 0.0;
-	      for (localIndex j = 0; j < numElems; ++j)
-		{	  
-
-		  localIndex idx2 = j * m_numDofPerCell;	      
-		  localFluxJacobian[idx1 + 1][idx2] = 0.0;
-		  localFluxJacobian[idx1 + 1][idx2 + 1] = 0.0;
-		}
-	    }
-	}
-        
-      // Add to global residual/jacobian
-
-      jacobian->SumIntoGlobalValues( integer_conversion<int>(DOF),
-                                     eqnRowIndices.data(),
-                                     integer_conversion<int>(DOF),
-                                     eqnRowIndices.data(),
-                                     localFluxJacobian.data(),
-				     Epetra_FECrsMatrix::ROW_MAJOR);
+        if(edgeToFaceProppantFlux[i] >= 0.0)
+        {
 
 
-      residual->SumIntoGlobalValues( integer_conversion<int>(DOF), eqnRowIndices.data(), localFlux.data() );
+          localFlux[idx1 + 1] = -Ce * edgeToFaceProppantFlux[i] * dt;
+        }
+        else
+        {
+
+          localFlux[idx1 + 1] = -C[i] * edgeToFaceProppantFlux[i] * dt;
+
+        }
+
+        for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          localIndex idx2 = j * m_numDofPerCell;
+
+
+          if(edgeToFaceProppantFlux[i] >= 0.0)
+          {
+
+
+            localFluxJacobian[idx1 + 1][idx2] = -(dCe_dP[j] * edgeToFaceProppantFlux[i] + Ce * dEdgeToFaceProppantFlux_dP[i][j]) * dt;
+
+            localFluxJacobian[idx1 + 1][idx2 + 1] = -(dCe_dC[j] * edgeToFaceProppantFlux[i] + Ce * dEdgeToFaceProppantFlux_dC[i][j]) * dt;
+
+          }
+          else
+          {
+
+
+            localFluxJacobian[idx1 + 1][idx2] = -C[i] * dEdgeToFaceProppantFlux_dP[i][j] * dt;
+            localFluxJacobian[idx1 + 1][idx2 + 1] = -C[i] * dEdgeToFaceProppantFlux_dC[i][j] * dt;
+
+            if(i == j)
+              localFluxJacobian[idx1 + 1][idx2 + 1] += -edgeToFaceProppantFlux[i] * dt;
+
+          }
+
+        }
+
+      }
+      else
+      {
+
+        localFlux[idx1 + 1] = 0.0;
+        for (localIndex j = 0; j < numElems; ++j)
+        {
+
+          localIndex idx2 = j * m_numDofPerCell;
+          localFluxJacobian[idx1 + 1][idx2] = 0.0;
+          localFluxJacobian[idx1 + 1][idx2 + 1] = 0.0;
+        }
+      }
+    }
+
+    // Add to global residual/jacobian
+
+    jacobian->SumIntoGlobalValues( integer_conversion<int>(DOF),
+                                   eqnRowIndices.data(),
+                                   integer_conversion<int>(DOF),
+                                   eqnRowIndices.data(),
+                                   localFluxJacobian.data(),
+                                   Epetra_FECrsMatrix::ROW_MAJOR);
+
+
+    residual->SumIntoGlobalValues( integer_conversion<int>(DOF), eqnRowIndices.data(), localFlux.data() );
     
-    });
+  });
 }
 
 void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
@@ -1340,7 +1079,7 @@ void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
-                    ManagedGroup * subRegion,
+                    Group * subRegion,
                     string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
@@ -1359,14 +1098,13 @@ void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
     {
       return 0;
     });
-
   });
 
   fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
-                    ManagedGroup * subRegion,
+                    Group * subRegion,
                     string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
@@ -1400,7 +1138,7 @@ void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
-                    ManagedGroup * subRegion,
+                    Group * subRegion,
                     string const & ) -> void
   {
     arrayView1d<globalIndex const> const &
@@ -1446,8 +1184,9 @@ void ProppantTransport::ApplyBoundaryConditions( DomainPartition * const domain,
 
 real64
 ProppantTransport::
-CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
-                       DomainPartition * const domain )
+CalculateResidualNorm( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & rhs )
 {
   Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::proppantTransportBlock );
   Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::proppantTransportBlock );
@@ -1480,9 +1219,9 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
           int const lid = rowMap->LID(integer_conversion<int>(offset + idof));
-	  real64 const val = localResidual[lid] / volume[a];
-	  cell_norm += val * val;
-	}
+          real64 const val = localResidual[lid] / volume[a];
+          cell_norm += val * val;
+        }
         return cell_norm;
       }
       return 0.0;
@@ -1496,9 +1235,10 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
   return sqrt(globalResidualNorm);
 }
 
-void ProppantTransport::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
-                                           real64 const scalingFactor,
-                                           DomainPartition * const domain )
+void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
+                                             ParallelVector const & solution,
+                                             real64 const scalingFactor,
+                                             DomainPartition * const domain )
 {
   
   Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::proppantTransportBlock );
@@ -1511,7 +1251,7 @@ void ProppantTransport::ApplySystemSolution( EpetraBlockSystem const * const blo
   solution->ExtractView( &local_solution, &dummy );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
@@ -1519,17 +1259,16 @@ void ProppantTransport::ApplySystemSolution( EpetraBlockSystem const * const blo
 
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
     arrayView1d<real64> const & dConc = m_deltaProppantConcentration[er][esr];    
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
-	int lid;
+        int lid;
         lid = rowMap->LID( integer_conversion<int>( dofNumber[ei] * m_numDofPerCell) );
         dPres[ei] += scalingFactor * local_solution[lid];
-	
+
         lid = rowMap->LID( integer_conversion<int>( dofNumber[ei] * m_numDofPerCell + 1) );
         dConc[ei] += scalingFactor * local_solution[lid];
-
       }
     } );
   } );
@@ -1538,8 +1277,8 @@ void ProppantTransport::ApplySystemSolution( EpetraBlockSystem const * const blo
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  array1d<NeighborCommunicator> &
+  comms = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 
@@ -1550,8 +1289,10 @@ void ProppantTransport::ApplySystemSolution( EpetraBlockSystem const * const blo
 
 }
 
-void ProppantTransport::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                   SystemSolverParameters const * const params )
+void ProppantTransport::SolveSystem( DofManager const & dofManager,
+                                     ParallelMatrix & matrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1582,13 +1323,13 @@ void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const dom
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
     arrayView1d<real64> const & dConc = m_deltaProppantConcentration[er][esr];    
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       dConc[ei] = 0.0;      
@@ -1688,5 +1429,5 @@ void ProppantTransport::ResetViews(DomainPartition * const domain)
 
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, std::string const &, Group * const )
 } /* namespace geosx */

@@ -568,9 +568,8 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const time_n,
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> >
+  dofNumberAccessor = elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
 
   FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 

@@ -31,56 +31,56 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-ParticleFluid::ParticleFluid( std::string const & name, ManagedGroup * const parent ):
+ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->
+  registerWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->
     setApplyDefaultValue(1000.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid density");
 
-  RegisterViewWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->
+  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->
     setApplyDefaultValue(1400.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Proppant density");
 
-    RegisterViewWrapper( viewKeyStruct::fluidViscosityString, &m_fluidViscosity, false )->
+    registerWrapper( viewKeyStruct::fluidViscosityString, &m_fluidViscosity, false )->
     setApplyDefaultValue(0.001)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid viscosity");
 
-  RegisterViewWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter, false )->
+  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter, false )->
     setApplyDefaultValue(200e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Proppant diameter");
 
-  RegisterViewWrapper( viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient, false )->
+  registerWrapper( viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient, false )->
     setApplyDefaultValue(5.9)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Hindered settling coefficient");
 
-  RegisterViewWrapper( viewKeyStruct::collisionAlphaString, &m_collisionAlpha, false )->
+  registerWrapper( viewKeyStruct::collisionAlphaString, &m_collisionAlpha, false )->
     setApplyDefaultValue(1.27)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Collision alpha coefficient");
 
-  RegisterViewWrapper( viewKeyStruct::slipConcentrationString, &m_slipConcentration, false )->
+  registerWrapper( viewKeyStruct::slipConcentrationString, &m_slipConcentration, false )->
     setApplyDefaultValue(0.1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Slip concentration");      
 
-  RegisterViewWrapper( viewKeyStruct::collisionBetaString, &m_collisionBeta, false )->
+  registerWrapper( viewKeyStruct::collisionBetaString, &m_collisionBeta, false )->
     setApplyDefaultValue(1.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Collision beta coefficient");
 
-  RegisterViewWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->
+  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->
     setApplyDefaultValue(3.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Bridging factor");
 
-  RegisterViewWrapper( viewKeyStruct::sphericityString, &m_sphericity, false )->
+  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity, false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Sphericity");        
@@ -89,7 +89,7 @@ ParticleFluid::ParticleFluid( std::string const & name, ManagedGroup * const par
 
 ParticleFluid::~ParticleFluid() = default;
 
-void ParticleFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void ParticleFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   ParticleFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
@@ -98,7 +98,7 @@ void ParticleFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * con
 
 void
 ParticleFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -239,7 +239,7 @@ void ParticleFluid::ComputeMob( real64 const & concentration,
   
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, Group * const )
 
 } /* namespace constitutive */
 

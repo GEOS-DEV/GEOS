@@ -30,29 +30,29 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluidBase::ParticleFluidBase( std::string const & name, ManagedGroup * const parent )
+ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::settlingFactorString, &m_settlingFactor, false );
-  RegisterViewWrapper( viewKeyStruct::dSettlingFactor_dConcString, &m_dSettlingFactor_dConc, false );
+  registerWrapper( viewKeyStruct::settlingFactorString, &m_settlingFactor, false );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dConcString, &m_dSettlingFactor_dConc, false );
 
-  RegisterViewWrapper( viewKeyStruct::collisionFactorString, &m_collisionFactor, false );
-  RegisterViewWrapper( viewKeyStruct::dCollisionFactor_dConcString, &m_dCollisionFactor_dConc, false );
+  registerWrapper( viewKeyStruct::collisionFactorString, &m_collisionFactor, false );
+  registerWrapper( viewKeyStruct::dCollisionFactor_dConcString, &m_dCollisionFactor_dConc, false );
 
-  RegisterViewWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
     setApplyDefaultValue(0.6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Max proppant concentration");    
 
-  RegisterViewWrapper( viewKeyStruct::isProppantMobileString, &m_isProppantMobile, false );
+  registerWrapper( viewKeyStruct::isProppantMobileString, &m_isProppantMobile, false );
 
-  RegisterViewWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip, false )->
+  registerWrapper( viewKeyStruct::isCollisionalSlipString, &m_isCollisionalSlip, false )->
       setApplyDefaultValue(0)->
       setInputFlag(InputFlags::OPTIONAL)->
       setDescription("Whether the collisional component of the slip velocity is considered");
 
-  RegisterViewWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability, false );  
+  registerWrapper( viewKeyStruct::proppantPackPermeabilityString, &m_proppantPackPermeability, false );  
   
 }
 
@@ -63,7 +63,7 @@ void ParticleFluidBase::PostProcessInput()
   ConstitutiveBase::PostProcessInput();
 }
 
-void ParticleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
+void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -84,7 +84,7 @@ void ParticleFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
 
 void
 ParticleFluidBase::DeliverClone( string const & name,
-                               ManagedGroup * const parent,
+                               Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   GEOS_ERROR_IF( !clone, "clone not allocated" );
