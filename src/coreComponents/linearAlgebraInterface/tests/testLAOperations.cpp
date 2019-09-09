@@ -981,13 +981,11 @@ void testRectangularMatrixOperations()
  */
  TEST(testLAOperations,testEpetraLAOperations)
  {
-     MPI_Init( nullptr, nullptr );
      testInterfaceSolvers<TrilinosInterface>();
      testGEOSXSolvers<TrilinosInterface>();
      testGEOSXBlockSolvers<TrilinosInterface>();
      testMatrixMatrixOperations<TrilinosInterface>();
      testRectangularMatrixOperations<TrilinosInterface>();
-     MPI_Finalize();
  }
 
 /*! @function testHypreLAOperations.
@@ -1007,7 +1005,6 @@ void testRectangularMatrixOperations()
  */
 TEST(testLAOperations,testPETScLAOperations)
 {
-  MPI_Init( nullptr, nullptr );
   PetscInterface();
   PetscInitializeNoArguments(); // set up PETSc directly in tests
   testVectorFunctions<PetscInterface>(); 
@@ -1018,7 +1015,19 @@ TEST(testLAOperations,testPETScLAOperations)
   testMatrixMatrixOperations<PetscInterface>(); 
   testRectangularMatrixOperations<PetscInterface>(); 
   PetscFinalize();
-  MPI_Finalize();
 }
-
 //@}
+
+int main( int argc, char ** argv )
+ {
+   ::testing::InitGoogleTest( &argc, argv );
+   setupMPI( argc, argv );
+   setupOpenMP();
+   setupMKL();
+   logger::InitializeLogger( MPI_COMM_GEOSX );
+
+   int const result = RUN_ALL_TESTS();
+
+   geosx::basicCleanup();
+   return result;
+ }
