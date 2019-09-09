@@ -143,6 +143,8 @@ public:
 
   virtual localIndex NumFluidComponents() const override { return 1; }
 
+  virtual localIndex NumFluidPhases() const override { return 1; }
+
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
@@ -165,23 +167,6 @@ public:
                           ParallelMatrix * const matrix,
                           ParallelVector * const rhs ) override;
 
-
-  /**
-   * @Brief assembles the perforation rate terms 
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void AssemblePerforationTerms( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const matrix,
-                                         ParallelVector * const rhs ) override;
-  
   /**
    * @brief assembles the volume balance terms for all well elements
    * @param time_n previous time value
@@ -280,12 +265,6 @@ private:
   void CheckWellControlSwitch( DomainPartition * const domain ) override;
 
   /**
-   * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void ComputeAllPerforationRates( WellElementSubRegion const * const subRegion );
-
-  /**
    * @brief Save all the rates and pressures in the well for reporting purposes
    * @param well the well with its perforations
    */
@@ -294,15 +273,11 @@ private:
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
 
   /// views into reservoir material fields
 
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resDensity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResDens_dPres;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resViscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dResVisc_dPres;
 
 };
 

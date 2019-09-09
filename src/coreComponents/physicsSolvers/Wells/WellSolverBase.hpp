@@ -133,6 +133,12 @@ public:
   virtual localIndex NumFluidComponents() const = 0;
 
   /**
+   * @brief Get the number of fluid phases
+   * @return the number of phases
+   */
+  virtual localIndex NumFluidPhases() const = 0;
+
+  /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a pointer to the controls
@@ -201,21 +207,6 @@ public:
                                   DofManager const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs ) = 0;
-
-  /**
-   * @brief assembles the perforation rate terms 
-   * @param domain the physical domain object
-   * @param jacobian the entire jacobian matrix of the system
-   * @param residual the entire residual of the system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  virtual void AssemblePerforationTerms( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const matrix,
-                                         ParallelVector * const rhs ) = 0;
 
   /**
    * @brief assembles the volume balance terms for all well elements

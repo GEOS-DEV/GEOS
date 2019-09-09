@@ -17,12 +17,12 @@
  */
 
 /**
- * @file ReservoirSolver.hpp
+ * @file ReservoirSolverBase.hpp
  *
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVERBASE_HPP_
+#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -32,7 +32,7 @@ namespace geosx
 class FlowSolverBase;
 class WellSolverBase;
 
-class ReservoirSolver : public SolverBase
+class ReservoirSolverBase : public SolverBase
 {
 public:
 
@@ -41,25 +41,25 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  ReservoirSolver( const std::string& name,
-                   Group * const parent );
+  ReservoirSolverBase( const std::string& name,
+                       Group * const parent );
 
   /**
    * @brief default destructor
    */
-  virtual ~ReservoirSolver() override;
+  virtual ~ReservoirSolverBase() override;
 
   /// deleted copy constructor
-  ReservoirSolver( ReservoirSolver const & ) = delete;
+  ReservoirSolverBase( ReservoirSolverBase const & ) = delete;
 
   /// default move constructor
-  ReservoirSolver( ReservoirSolver && ) = default;
+  ReservoirSolverBase( ReservoirSolverBase && ) = default;
 
   /// deleted assignment operator
-  ReservoirSolver & operator=( ReservoirSolver const & ) = delete;
+  ReservoirSolverBase & operator=( ReservoirSolverBase const & ) = delete;
 
   /// deleted move operator
-  ReservoirSolver & operator=( ReservoirSolver && ) = delete;
+  ReservoirSolverBase & operator=( ReservoirSolverBase && ) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -159,7 +159,28 @@ protected:
 
   virtual void PostProcessInput() override;
 
-private:
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
+
+  /**
+   * @Brief assembles the perforation rate terms 
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void AssembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const * const domain,
+                                      DofManager const * const dofManager,
+                                      ParallelMatrix * const matrix,
+                                      ParallelVector * const rhs );
+
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
 
   // solver that assembles the reservoir equations
   string m_flowSolverName;
@@ -177,4 +198,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVER_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COUPLEDSOLVERS_RESERVOIRSOLVERBASE_HPP_ */

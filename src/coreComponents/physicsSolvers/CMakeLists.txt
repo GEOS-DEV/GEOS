@@ -9,7 +9,9 @@ set( physicsSolvers_headers
      SystemSolverParameters.hpp
      CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
-     CoupledSolvers/ReservoirSolver.hpp
+     CoupledSolvers/ReservoirSolverBase.hpp
+     CoupledSolvers/SinglePhaseReservoir.hpp
+     CoupledSolvers/CompositionalMultiphaseReservoir.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
      FiniteVolume/SinglePhaseFlow.hpp
@@ -36,7 +38,9 @@ set( physicsSolvers_sources
      SystemSolverParameters.cpp
      CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
-     CoupledSolvers/ReservoirSolver.cpp
+     CoupledSolvers/ReservoirSolverBase.cpp
+     CoupledSolvers/SinglePhaseReservoir.cpp
+     CoupledSolvers/CompositionalMultiphaseReservoir.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
      FiniteVolume/SinglePhaseFlow.cpp

@@ -26,7 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "wells/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/CoupledSolvers/ReservoirSolver.hpp"
+#include "physicsSolvers/CoupledSolvers/CompositionalMultiphaseReservoir.hpp"
 #include "physicsSolvers/Wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
 
@@ -164,7 +164,7 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
 
 
 template<typename LAMBDA>
-void testNumericalJacobian( ReservoirSolver * solver,
+void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
                             DomainPartition * domain,
                             double perturbParameter,
                             double relTol,
@@ -498,7 +498,7 @@ protected:
 
     problemManager->ProblemSetup();
 
-    solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
+    solver = problemManager->GetPhysicsSolverManager().GetGroup<CompositionalMultiphaseReservoir>( "reservoirSystem" );
 
     GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
@@ -512,12 +512,12 @@ protected:
   }
 
   static ProblemManager * problemManager;
-  static ReservoirSolver * solver;
+  static CompositionalMultiphaseReservoir * solver;
 
 };
 
 ProblemManager * ReservoirSolverTest::problemManager = nullptr;
-ReservoirSolver * ReservoirSolverTest::solver = nullptr;
+CompositionalMultiphaseReservoir * ReservoirSolverTest::solver = nullptr;
 
 TEST_F(ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity)
 {

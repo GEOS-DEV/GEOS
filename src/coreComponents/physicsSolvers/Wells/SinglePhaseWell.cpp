@@ -393,114 +393,108 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const time_n,
 }
 
 
-void SinglePhaseWell::AssemblePerforationTerms( real64 const time_n,
-                                                real64 const dt,
-                                                DomainPartition const * const domain,
-                                                DofManager const * const dofManager,
-                                                ParallelMatrix * const matrix,
-                                                ParallelVector * const rhs )
+void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
+                                           DofManager const * const dofManager,
+                                           ParallelMatrix * const matrix,
+                                           ParallelVector * const rhs )
 {
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
 
   string const wellDofKey = dofManager->getKey( WellElementDofName() );
-  string const resDofKey  = dofManager->getKey( ResElementDofName() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > resDofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( resDofKey );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex const> >::ViewTypeConst resDofNumber =
-    resDofNumberAccessor.toViewConst();
-
-  // loop over the wells
-  elemManager->forElementSubRegions<WellElementSubRegion>( [&]( WellElementSubRegion const * const subRegion )
+  elemManager->forElementSubRegions<WellElementSubRegion>([&]( WellElementSubRegion const * const subRegion )
   {
-    PerforationData const * const perforationData = subRegion->GetPerforationData();
 
-    // compute the local rates for this well
-    ComputeAllPerforationRates( subRegion );
+    if (! subRegion->IsLocallyOwned())
+    {
+      return;
+    }
+
+    WellControls const * const wellControls = GetWellControls( subRegion );
 
     // get the degrees of freedom
     arrayView1d<globalIndex const> const & wellElemDofNumber =
       subRegion->getReference<array1d<globalIndex>>( wellDofKey );
 
-    // get well variables on perforations
-    arrayView1d<real64 const> const & perfRate =
-      perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
+    // get the index of the well element at which the control is enforced
+    localIndex const iwelemControl = wellControls->GetReferenceWellElementIndex();
 
-    arrayView2d<real64 const> const & dPerfRate_dPres =
-      perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
+    // get well control
+    WellControls::Control const control = wellControls->GetControl();
 
-    arrayView1d<localIndex const> const & perfWellElemIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
-
-    // get the element region, subregion, index
-    arrayView1d<localIndex const> const & resElementRegion =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
-
-    arrayView1d<localIndex const> const & resElementSubRegion =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
-
-    arrayView1d<localIndex const> const & resElementIndex =
-      perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
-
-    // local working variables and arrays
-    stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
-    stackArray1d<globalIndex, 2> dofColIndices( 2 );
-
-    stackArray1d<real64, 2> localPerf( 2 );
-    stackArray2d<real64, 4> localPerfJacobian(2, 2);
-
-    // loop over the perforations and add the rates to the residual and jacobian
-    for (localIndex iperf = 0; iperf < perforationData->size(); ++iperf)
+    // BHP control
+    if (control == WellControls::Control::BHP)
     {
-      eqnRowIndices = -1;
-      dofColIndices = -1;
+      // get primary variables on well elements
+      arrayView1d<real64 const> const & wellElemPressure =
+        subRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
 
-      localPerf = 0;
-      localPerfJacobian = 0;
+      arrayView1d<real64 const> const & dWellElemPressure =
+        subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
 
-      // get the reservoir (sub)region and element indices
-      localIndex const er  = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei  = resElementIndex[iperf];
+      // get pressures and compute normalizer
+      real64 const currentBHP = wellElemPressure[iwelemControl] + dWellElemPressure[iwelemControl];
+      real64 const & targetBHP = wellControls->GetTargetBHP();
+      real64 const normalizer = targetBHP > std::numeric_limits<real64>::epsilon()
+                              ? 1.0 / targetBHP
+                              : 1.0;
 
-      // get the well element index for this perforation
-      localIndex const iwelem      = perfWellElemIndex[iperf];
-      globalIndex const elemOffset = wellElemDofNumber[iwelem];
+      // control equation is a normalized difference between current pressure and target pressure
+      real64 const controlEqn = ( currentBHP - targetBHP ) * normalizer;
+      real64 const dControlEqn_dPres = normalizer;
 
-      // row index on reservoir side
-      eqnRowIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
+      globalIndex const elemOffset  = wellElemDofNumber[iwelemControl];
+      globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
+      globalIndex const dofColIndex = elemOffset + ColOffset::DPRES;
 
-      // column index on reservoir side
-      dofColIndices[SubRegionTag::RES] = resDofNumber[er][esr][ei];
+      rhs->add( &eqnRowIndex,
+                &controlEqn,
+                1 );
 
-      // row index on well side
-      eqnRowIndices[SubRegionTag::WELL] = elemOffset + RowOffset::MASSBAL;
+      matrix->add( &eqnRowIndex,
+                   &dofColIndex,
+                   &dControlEqn_dPres,
+                   1, 1 );
 
-      // column index on well side
-      dofColIndices[SubRegionTag::WELL] = elemOffset + ColOffset::DPRES;
-
-      // populate local flux vector and derivatives
-      localPerf[SubRegionTag::RES]  =  dt * perfRate[iperf];
-      localPerf[SubRegionTag::WELL] = -localPerf[SubRegionTag::RES];
-
-      for (localIndex ke = 0; ke < 2; ++ke)
-      {
-        localPerfJacobian[SubRegionTag::RES][ke]  = dt * dPerfRate_dPres[iperf][ke];
-        localPerfJacobian[SubRegionTag::WELL][ke] = - localPerfJacobian[SubRegionTag::RES][ke];
-      }
-
-      rhs->add( eqnRowIndices.data(),
-                localPerf.data(),
-                2 );
-
-      matrix->add( eqnRowIndices.data(),
-                   dofColIndices.data(),
-                   localPerfJacobian.data(),
-                   2, 2 );
     }
+    // rate control
+    else
+    {
 
+      // get a reference to the primary variables on well element
+      arrayView1d<real64 const> const & connRate  =
+        subRegion->getReference<array1d<real64>>( viewKeyStruct::connRateString );
+
+      arrayView1d<real64 const> const & dConnRate =
+        subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
+
+      // get rates and compute normalizer
+      real64 const currentConnRate = connRate[iwelemControl] + dConnRate[iwelemControl];
+      real64 const & targetConnRate = wellControls->GetTargetRate();
+      real64 const normalizer = fabs(targetConnRate) > std::numeric_limits<real64>::min()
+                              ? 1.0 / ( 1e-2 * fabs(targetConnRate) ) // hard-coded value comes from AD-GPRS
+                              : 1.0;
+
+      // for a producer, the actual (target) rate is negative
+
+      // control equation is a normalized difference between current rate and target rate
+      real64 const controlEqn = ( currentConnRate - targetConnRate ) * normalizer;
+      real64 const dControlEqn_dRate = normalizer;
+
+      globalIndex const elemOffset  = wellElemDofNumber[iwelemControl];
+      globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
+      globalIndex const dofColIndex = elemOffset + ColOffset::DRATE;
+
+      rhs->add( &eqnRowIndex,
+                &controlEqn,
+                1 );
+
+      matrix->add( &eqnRowIndex,
+                   &dofColIndex,
+                   &dControlEqn_dRate,
+                   1, 1 );
+    }
   });
 }
 
@@ -912,303 +906,10 @@ void SinglePhaseWell::ResetViews(DomainPartition * const domain)
   m_resPressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::pressureString );
 
-  m_deltaResPressure =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( SinglePhaseFlow::viewKeyStruct::deltaPressureString );
-
   m_resDensity =
     elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::densityString,
                                                                                           constitutiveManager );
-  m_dResDens_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                          constitutiveManager );
-  m_resViscosity =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString,
-                                                                                          constitutiveManager );
-  m_dResVisc_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                          constitutiveManager );
 }
-
-void SinglePhaseWell::ComputeAllPerforationRates( WellElementSubRegion const * const subRegion )
-{
-
-  // get the reservoir data
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & resPressure         = m_resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  const & dResPressure        = m_deltaResPressure;
-
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resDensity          = m_resDensity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResDensity_dPres   = m_dResDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & resViscosity        = m_resViscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> const & dResViscosity_dPres = m_dResVisc_dPres;
-
-  // get the well data
-  PerforationData const * const perforationData = subRegion->GetPerforationData();
-
-  // get the degrees of freedom and depth
-  arrayView1d<real64 const> const & wellElemGravDepth =
-    subRegion->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
-
-  // get well primary variables on well elements
-  arrayView1d<real64 const> const & wellElemPressure =
-    subRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-
-  arrayView1d<real64 const> const & dWellElemPressure =
-    subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-
-  // get well constitutive data
-  SingleFluidBase const * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-
-  arrayView2d<real64 const> const & wellElemDensity =
-    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::densityString );
-
-  arrayView2d<real64 const> const & dWellElemDensity_dPres =
-    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dDens_dPresString );
-
-  arrayView2d<real64 const> const & wellElemViscosity =
-    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::viscosityString );
-
-  arrayView2d<real64 const> const & dWellElemViscosity_dPres =
-    fluid->getReference<array2d<real64>>( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
-
-  // get well variables on perforations
-  arrayView1d<real64 const> const & perfGravDepth =
-    perforationData->getReference<array1d<real64>>( viewKeyStruct::gravityDepthString );
-
-  arrayView1d<localIndex const> const & perfWellElemIndex =
-    perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::wellElementIndexString );
-
-  arrayView1d<real64 const> const & perfTransmissibility =
-    perforationData->getReference<array1d<real64>>( PerforationData::viewKeyStruct::transmissibilityString );
-
-  arrayView1d<real64> const & perfRate =
-    perforationData->getReference<array1d<real64>>( viewKeyStruct::perforationRateString );
-
-  arrayView2d<real64> const & dPerfRate_dPres =
-    perforationData->getReference<array2d<real64>>( viewKeyStruct::dPerforationRate_dPresString );
-
-  // get the element region, subregion, index
-  arrayView1d<localIndex const> const & resElementRegion =
-    perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementRegionString );
-
-  arrayView1d<localIndex const> const & resElementSubRegion =
-    perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementSubregionString );
-
-  arrayView1d<localIndex const> const & resElementIndex =
-    perforationData->getReference<array1d<localIndex>>( PerforationData::viewKeyStruct::reservoirElementIndexString );
-
-  // local working variables and arrays
-  stackArray1d<globalIndex, 2> eqnRowIndices( 2 );
-  stackArray1d<globalIndex, 2> dofColIndices( 2 );
-
-  stackArray1d<real64, 2> pressure( 2 );
-  stackArray1d<real64, 2> dPressure_dP( 2 );
-
-  stackArray1d<localIndex, 2> multiplier( 2 );
-
-  // loop over the perforations to compute the perforation rates
-  for (localIndex iperf = 0; iperf < perforationData->size(); ++iperf)
-  {
-    eqnRowIndices = -1;
-    dofColIndices = -1;
-
-    pressure = 0;
-    dPressure_dP = 0;
-
-    multiplier = 0;
-
-    // 1) Reservoir side
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er  = resElementRegion[iperf];
-    localIndex const esr = resElementSubRegion[iperf];
-    localIndex const ei  = resElementIndex[iperf];
-
-    // get reservoir variables
-    pressure[SubRegionTag::RES] = resPressure[er][esr][ei] + dResPressure[er][esr][ei];
-    dPressure_dP[SubRegionTag::RES] = 1;
-
-    // TODO: add a buoyancy term for the reservoir side here
-
-    // multiplier for reservoir side in the flux
-    multiplier[SubRegionTag::RES] = 1;
-
-    // 2) Well side
-
-    // get the local index of the well element
-    localIndex const iwelem = perfWellElemIndex[iperf];
-
-    // get well variables
-    pressure[SubRegionTag::WELL] = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
-    dPressure_dP[SubRegionTag::WELL] = 1.0;
-
-    if (m_gravityFlag)
-    {
-      real64 const gravD = ( perfGravDepth[iperf] - wellElemGravDepth[iwelem] );
-      pressure[SubRegionTag::WELL]     += wellElemDensity[iwelem][0] * gravD;
-      dPressure_dP[SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
-    }
-
-    // multiplier for well side in the flux
-    multiplier[SubRegionTag::WELL] = -1;
-
-    // get transmissibility at the interface
-    real64 const trans = perfTransmissibility[iperf];
-
-    // compute potential difference
-    real64 potDif = 0.0;
-    for (localIndex i = 0; i < 2; ++i)
-    {
-      potDif += multiplier[i] * trans * pressure[i];
-      dPerfRate_dPres[iperf][i] = multiplier[i] * trans * dPressure_dP[i];
-    }
-
-    // choose upstream cell based on potential difference
-    localIndex const k_up = (potDif >= 0) ? SubRegionTag::RES : SubRegionTag::WELL;
-
-    // compute upstream density, viscosity, and mobility
-    real64 densityUp       = 0.0;
-    real64 dDensityUp_dP   = 0.0;
-    real64 viscosityUp     = 0.0;
-    real64 dViscosityUp_dP = 0.0;
-
-    // upwinding the variables
-    if (k_up == SubRegionTag::RES) // use reservoir vars
-    {
-      densityUp     = resDensity[er][esr][m_resFluidIndex][ei][0];
-      dDensityUp_dP = dResDensity_dPres[er][esr][m_resFluidIndex][ei][0];
-
-      viscosityUp     = resViscosity[er][esr][m_resFluidIndex][ei][0];
-      dViscosityUp_dP = dResViscosity_dPres[er][esr][m_resFluidIndex][ei][0];
-    }
-    else // use well vars
-    {
-      densityUp = wellElemDensity[iwelem][0];
-      dDensityUp_dP = dWellElemDensity_dPres[iwelem][0];
-
-      viscosityUp = wellElemViscosity[iwelem][0];
-      dViscosityUp_dP = dWellElemViscosity_dPres[iwelem][0];
-    }
-
-    // compute mobility
-    real64 const mobilityUp     = densityUp / viscosityUp;
-    real64 const dMobilityUp_dP = dDensityUp_dP / viscosityUp
-                                - mobilityUp / viscosityUp * dViscosityUp_dP;
-
-    perfRate[iperf] = mobilityUp * potDif;
-    for (localIndex ke = 0; ke < 2; ++ke)
-    {
-      dPerfRate_dPres[iperf][ke] *= mobilityUp;
-    }
-    dPerfRate_dPres[iperf][k_up] += dMobilityUp_dP * potDif;
-  }
-}
-
-
-void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
-                                           ParallelMatrix * const matrix,
-                                           ParallelVector * const rhs )
-{
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
-
-  string const wellDofKey = dofManager->getKey( WellElementDofName() );
-
-  elemManager->forElementSubRegions<WellElementSubRegion>([&]( WellElementSubRegion const * const subRegion )
-  {
-
-    if (! subRegion->IsLocallyOwned())
-    {
-      return;
-    }
-
-    WellControls const * const wellControls = GetWellControls( subRegion );
-
-    // get the degrees of freedom
-    arrayView1d<globalIndex const> const & wellElemDofNumber =
-      subRegion->getReference<array1d<globalIndex>>( wellDofKey );
-
-    // get the index of the well element at which the control is enforced
-    localIndex const iwelemControl = wellControls->GetReferenceWellElementIndex();
-
-    // get well control
-    WellControls::Control const control = wellControls->GetControl();
-
-    // BHP control
-    if (control == WellControls::Control::BHP)
-    {
-      // get primary variables on well elements
-      arrayView1d<real64 const> const & wellElemPressure =
-        subRegion->getReference<array1d<real64>>( viewKeyStruct::pressureString );
-
-      arrayView1d<real64 const> const & dWellElemPressure =
-        subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
-
-      // get pressures and compute normalizer
-      real64 const currentBHP = wellElemPressure[iwelemControl] + dWellElemPressure[iwelemControl];
-      real64 const & targetBHP = wellControls->GetTargetBHP();
-      real64 const normalizer = targetBHP > std::numeric_limits<real64>::epsilon()
-                              ? 1.0 / targetBHP
-                              : 1.0;
-
-      // control equation is a normalized difference between current pressure and target pressure
-      real64 const controlEqn = ( currentBHP - targetBHP ) * normalizer;
-      real64 const dControlEqn_dPres = normalizer;
-
-      globalIndex const elemOffset  = wellElemDofNumber[iwelemControl];
-      globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
-      globalIndex const dofColIndex = elemOffset + ColOffset::DPRES;
-
-      rhs->add( &eqnRowIndex,
-                &controlEqn,
-                1 );
-
-      matrix->add( &eqnRowIndex,
-                   &dofColIndex,
-                   &dControlEqn_dPres,
-                   1, 1 );
-
-    }
-    // rate control
-    else
-    {
-
-      // get a reference to the primary variables on well element
-      arrayView1d<real64 const> const & connRate  =
-        subRegion->getReference<array1d<real64>>( viewKeyStruct::connRateString );
-
-      arrayView1d<real64 const> const & dConnRate =
-        subRegion->getReference<array1d<real64>>( viewKeyStruct::deltaConnRateString );
-
-      // get rates and compute normalizer
-      real64 const currentConnRate = connRate[iwelemControl] + dConnRate[iwelemControl];
-      real64 const & targetConnRate = wellControls->GetTargetRate();
-      real64 const normalizer = fabs(targetConnRate) > std::numeric_limits<real64>::min()
-                              ? 1.0 / ( 1e-2 * fabs(targetConnRate) ) // hard-coded value comes from AD-GPRS
-                              : 1.0;
-
-      // for a producer, the actual (target) rate is negative
-
-      // control equation is a normalized difference between current rate and target rate
-      real64 const controlEqn = ( currentConnRate - targetConnRate ) * normalizer;
-      real64 const dControlEqn_dRate = normalizer;
-
-      globalIndex const elemOffset  = wellElemDofNumber[iwelemControl];
-      globalIndex const eqnRowIndex = elemOffset + RowOffset::CONTROL;
-      globalIndex const dofColIndex = elemOffset + ColOffset::DRATE;
-
-      rhs->add( &eqnRowIndex,
-                &controlEqn,
-                1 );
-
-      matrix->add( &eqnRowIndex,
-                   &dofColIndex,
-                   &dControlEqn_dRate,
-                   1, 1 );
-    }
-  });
-}
-
 
 void SinglePhaseWell::ImplicitStepComplete( real64 const & time,
                                             real64 const & dt,
