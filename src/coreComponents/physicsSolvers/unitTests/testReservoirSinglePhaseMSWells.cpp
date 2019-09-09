@@ -339,7 +339,7 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                              solver->getSystemMatrix(),
                              solver->getSystemRhs(),
                              solver->getSystemSolution() );
-/*
+
   testNumericalJacobian( solver, domain, eps, tol,
                          [&] ( SinglePhaseWell * const targetSolver,
                                DomainPartition * const targetDomain,
@@ -347,9 +347,8 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                                ParallelVector * targetResidual,
                                DofManager const * targetDofManager ) -> void
   {
-    targetSolver->AssemblePerforationTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
+    solver->AssembleCouplingTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
-*/
 }
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)

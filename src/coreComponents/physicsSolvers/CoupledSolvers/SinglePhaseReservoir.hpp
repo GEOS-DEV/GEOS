@@ -80,7 +80,7 @@ public:
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
 
-protected:
+  /**@}*/
 
   virtual void AssembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
@@ -88,6 +88,8 @@ protected:
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) override;
+
+protected:
 
   virtual void ResetViews( DomainPartition * const domain ) override;
 

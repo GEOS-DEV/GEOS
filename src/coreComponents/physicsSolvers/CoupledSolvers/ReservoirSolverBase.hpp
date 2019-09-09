@@ -139,6 +139,24 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
+  /**@}*/
+
+  /**
+   * @Brief assembles the perforation rate terms 
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void AssembleCouplingTerms( real64 const time_n,
+                                      real64 const dt,
+                                      DomainPartition const * const domain,
+                                      DofManager const * const dofManager,
+                                      ParallelMatrix * const matrix,
+                                      ParallelVector * const rhs );
+
   FlowSolverBase * GetFlowSolver() const { return m_flowSolver; }
 
   WellSolverBase * GetWellSolver() const { return m_wellSolver; }
@@ -160,22 +178,6 @@ protected:
   virtual void PostProcessInput() override;
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
-
-  /**
-   * @Brief assembles the perforation rate terms 
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void AssembleCouplingTerms( real64 const time_n,
-                                      real64 const dt,
-                                      DomainPartition const * const domain,
-                                      DofManager const * const dofManager,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs );
 
   /**
    * @brief Setup stored views into domain data for the current step

@@ -536,8 +536,8 @@ TEST_F(ReservoirSolverTest, derivativeNumericalCheck_mixtureDensity)
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
 {
-  //real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
-  //real64 const tol = 1e-1; // 10% error margin
+  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const tol = 1e-1; // 10% error margin
 
   real64 const time = 0.0;
   real64 const dt = 1e4;
@@ -553,15 +553,16 @@ TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Perforation)
                              solver->getSystemSolution() );
 
 /*
-  testNumericalJacobian( solver, domain, system, eps, tol,
+  testNumericalJacobian( solver, domain, eps, tol,
                          [&] ( CompositionalMultiphaseWell * const targetSolver,
                                DomainPartition * const targetDomain,
-                               Epetra_FECrsMatrix * const targetJacobian,
-                               Epetra_FEVector * const targetResidual ) -> void
+                               ParallelMatrix * targetJacobian,
+                               ParallelVector * targetResidual,
+                               DofManager const * targetDofManager  ) -> void
   {
-    targetSolver->AssemblePerforationTerms( targetDomain, targetJacobian, targetResidual, time, dt );
+    solver->AssembleCouplingTerms( time, dt, targetDomain, targetDofManager, targetJacobian, targetResidual );
   });
-  */
+*/
 }
 
 TEST_F(ReservoirSolverTest, jacobianNumericalCheck_Flux)

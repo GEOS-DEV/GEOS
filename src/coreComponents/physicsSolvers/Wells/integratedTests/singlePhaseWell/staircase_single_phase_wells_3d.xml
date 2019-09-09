@@ -6,15 +6,15 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <Reservoir name="reservoirSystem"
-               flowSolverName="SinglePhaseFlow"
-               wellSolverName="SinglePhaseWell"
-               verboseLevel="1"
-               targetRegions="{Channel,wellRegion1,wellRegion2}">
+    <SinglePhaseReservoir name="reservoirSystem"
+                          flowSolverName="SinglePhaseFlow"
+                          wellSolverName="SinglePhaseWell"
+                          verboseLevel="1"
+                          targetRegions="{Channel,wellRegion1,wellRegion2}">
       <SystemSolverParameters maxIterNewton="40"
                               useDirectSolver="1"
                               verbosityFlag="0"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
     <SinglePhaseFlow name="SinglePhaseFlow"
                      verboseLevel="0"

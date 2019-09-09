@@ -6,15 +6,15 @@
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
 
-    <Reservoir name="reservoirSystem"
-               flowSolverName="compositionalMultiphaseFlow"
-               wellSolverName="compositionalMultiphaseWell"
-               verboseLevel="1"
-               targetRegions="{Region1,wellRegion1,wellRegion2}">
+    <CompositionalMultiphaseReservoir name="reservoirSystem"
+                                      flowSolverName="compositionalMultiphaseFlow"
+                                      wellSolverName="compositionalMultiphaseWell"
+                                      verboseLevel="1"
+                                      targetRegions="{Region1,wellRegion1,wellRegion2}">
       <SystemSolverParameters maxIterNewton="40"
                               useDirectSolver="1"
                               verbosityFlag="0"/>
-    </Reservoir>
+    </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  verboseLevel="1"
