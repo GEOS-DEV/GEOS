@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * PetscSolver.cpp
- *
- *  Created on: Feb. 8, 2019
- *  Author: Hannah Morgan
+/**
+ * @file PetscSolver.cpp
  */
 
 // BEGIN_RST_NARRATIVE PetscSolver.rst

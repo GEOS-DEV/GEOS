@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewComponent.cpp
- *
- *  Created on: Jun 8, 2016
- *      Author: settgast
+/**
+ * @file NewComponent.cpp
  */
 
 #include "NewComponent.hpp"

@@ -17,8 +17,7 @@
  */
 
 /**
- * @file Polynomial.h
- * @author white230
+ * @file Polynomial.hpp
  */
 
 #ifndef POLYNOMIAL_H

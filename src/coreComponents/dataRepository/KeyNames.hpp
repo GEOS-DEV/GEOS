@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * KeyNames.hpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file KeyNames.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYNAMES_HPP_

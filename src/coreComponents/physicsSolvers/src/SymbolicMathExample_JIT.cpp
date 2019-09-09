@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SymbolicMathExample_JIT.cpp
- *
- *  Created on: June 9, 2017
- *      Author: sherman
+/**
+ * @file SymbolicMathExample_JIT.cpp
  */
 
 #include "SymbolicMathExample_JIT.hpp"

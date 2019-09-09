@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ComputationalGeometry.hpp
- *
- *  Created on: Jun 26, 2018
- *      Author: settgast
+/**
+ * @file ComputationalGeometry.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_
@@ -34,7 +31,6 @@ namespace computationalGeometry
 {
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
@@ -50,7 +46,6 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            real64 areaTolerance = 0.0 );
 
 /**
- * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop

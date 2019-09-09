@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ToElementRelation.hpp
- *
- *  Created on: Jun 6, 2018
- *      Author: settgast
+/**
+ * @file ToElementRelation.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_

@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshUtilities.h
+/**
+ * @file MeshUtilities.h
  *
- *  Created on: Dec 5, 2012
- *      Author: settgast1
  */
 
 #ifndef MESHUTILITIES_H_

@@ -21,7 +21,6 @@
 
 /**
  * @file FiniteElement.h
- * @author white230
  */
 
 #include "finiteElement/basis/BasisBase.hpp"

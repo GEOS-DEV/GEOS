@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * InternalMeshGenerator.cpp
- *
- *  Created on: Nov 19, 2012
- *      Author: settgast1
+/**
+ * @file InternalMeshGenerator.cpp
  */
 
 #include "InternalMeshGenerator.hpp"
@@ -137,7 +134,6 @@ InternalMeshGenerator::~InternalMeshGenerator()
 
 
 /**
- * @author settgast
  * @param domain
  */
 void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
@@ -310,7 +306,6 @@ Group * InternalMeshGenerator::CreateChild( string const & childKey, string cons
 
 
 /**
- * @author settgast, fu, sherman
  * @param partition
  * @param domain
  */
@@ -922,7 +917,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 }
 
 /**
- * @author fu
  * @param elementType
  * @param index
  * @param iEle

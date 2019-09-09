@@ -20,8 +20,8 @@
  * @file CellBlock.hpp
  */
 
-#ifndef ELEMENTOBJECTT_H_
-#define ELEMENTOBJECTT_H_
+#ifndef CELLBLOCK_HPP_
+#define CELLBLOCK_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"

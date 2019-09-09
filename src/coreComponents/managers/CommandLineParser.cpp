@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CommandLineParser.cpp
- *
- *  Created on: Jul 30, 2016
- *      Author: rrsettgast
+/**
+ * @file CommandLineParser.cpp
  */
 
 #include <stdlib.h>

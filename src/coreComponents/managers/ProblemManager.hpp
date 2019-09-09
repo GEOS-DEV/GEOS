@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ProblemManager.hpp
- *
- *  Created on: Jul 21, 2016
- *      Author: rrsettgast
+/**
+ * @file ProblemManager.hpp
  */
 
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_

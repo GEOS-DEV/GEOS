@@ -18,9 +18,6 @@
 
 /**
  * @file EpetraVector.cpp
- *
- *  Created on: Jul 24, 2018
- *  Author: Matthias Cremon
  */
 
 // BEGIN_RST_NARRATIVE EpetraSparseVector.rst

@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * VTMMeshGenerator.h
+/**
+ * @file VTMMeshGenerator.h
  *
- *  Created on: Aug 16, 2018
- *      Author: Antoine Mazuyer
  */
 
 #ifndef VTMMESHGENERATOR_H_

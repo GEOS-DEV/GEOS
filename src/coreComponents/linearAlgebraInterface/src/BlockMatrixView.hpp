@@ -18,9 +18,6 @@
 
 /**
  * @file BlockMatrixView.hpp
- *
- *  Created on: Aug 24, 2018
- *      Author: Matthias Cremon
  */
 
 #ifndef SRC_COMPONENTS_LINEARALGEBRAINTERFACE_SRC_BLOCKMATRIXVIEW_HPP_

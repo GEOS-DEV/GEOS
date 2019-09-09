@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshUtilities.cpp
+/**
+ * @file MeshUtilities.cpp
  *
- *  Created on: Dec 5, 2012
- *      Author: settgast1
  */
 
 #include "MeshUtilities.hpp"
