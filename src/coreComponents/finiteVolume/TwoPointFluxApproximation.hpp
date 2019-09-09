@@ -29,29 +29,6 @@
 namespace geosx
 {
 
-namespace
-{
-  void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
-  {
-    result = 0.0;
-    R1Tensor axis;
-    R2SymTensor temp;
-
-    // assemble full tensor from eigen-decomposition
-    for (unsigned icoord = 0; icoord < 3; ++icoord)
-    {
-      // assume principal axis aligned with global coordinate system
-      axis = 0.0;
-      axis(icoord) = 1.0;
-
-      // XXX: is there a more elegant way to do this?
-      temp.dyadic_aa(axis);
-      temp *= values(icoord);
-      result += temp;
-    }
-  }
-}
-
 class TwoPointFluxApproximation : public FluxApproximationBase
 {
 public:

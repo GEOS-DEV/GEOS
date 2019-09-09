@@ -43,6 +43,29 @@ TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
 
 }
 
+namespace
+{
+void makeFullTensor(R1Tensor const & values, R2SymTensor & result)
+{
+  result = 0.0;
+  R1Tensor axis;
+  R2SymTensor temp;
+
+  // assemble full tensor from eigen-decomposition
+  for (unsigned icoord = 0; icoord < 3; ++icoord)
+  {
+    // assume principal axis aligned with global coordinate system
+    axis = 0.0;
+    axis(icoord) = 1.0;
+
+    // XXX: is there a more elegant way to do this?
+    temp.dyadic_aa(axis);
+    temp *= values(icoord);
+    result += temp;
+  }
+}
+}
+
 void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain  )
 {
   MeshBody const * const meshBody = domain.getMeshBody(0);
@@ -150,7 +173,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
           halfWeight = Dot(cellToFaceVec, faceConormal);
         }
 
-        stencilWeightedElementCenterToConnectorCenterSquare[ke] = 2.0 * c2fDistance * c2fDistance / halfWeight;
+        stencilWeightedElementCenterToConnectorCenterSquare[ke] = 2.0 * Dot(cellToFaceVec, cellToFaceVec) / halfWeight;
 
         halfWeight *= faceArea / c2fDistance;
         halfWeight = std::max( halfWeight, weightTolerance );
@@ -278,7 +301,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsIndex[kfe] = fractureElementIndex;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
-        stencilWeightedElementCenterToConnectorCenterSquare[kfe] = 24.0 * cellCenterToEdgeCenter.L2_Norm() * cellCenterToEdgeCenter.L2_Norm();
+        stencilWeightedElementCenterToConnectorCenterSquare[kfe] = 24.0 * Dot(cellCenterToEdgeCenter, cellCenterToEdgeCenter);
       }
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,

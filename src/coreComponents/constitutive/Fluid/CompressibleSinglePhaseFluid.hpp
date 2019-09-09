@@ -171,9 +171,6 @@ private:
 
   /// type of viscosity model (linear, quadratic, exponential)
   ExponentApproximationType m_viscosityModelType;
-
-  /// reference pressure parameter
-  real64 m_pressureCap;
 };
 
 

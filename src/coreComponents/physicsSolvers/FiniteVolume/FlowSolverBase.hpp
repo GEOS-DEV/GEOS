@@ -205,12 +205,6 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
-  /// maximum aperture (for permeability cap) used in explicit solver
-  real64 m_maximumAperture;
-
-  /// pressure cap used in explicit solver
-  real64 m_pressureCap;
-
   /// option for time integration
   string m_timeIntegrationOptionString;
   timeIntegrationOption m_timeIntegrationOption;

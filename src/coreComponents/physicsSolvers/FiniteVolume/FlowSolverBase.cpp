@@ -44,8 +44,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_solidIndex(),
     m_poroElasticFlag(0),
     m_numDofPerCell(0),
-    m_maximumAperture(0.05),
-    m_pressureCap(1e7),
     m_timeIntegrationOptionString(),
     m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
     m_elemGhostRank(),
@@ -77,9 +75,6 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n SteadyState \n ImplicitTransient \n ExplicitTransient \n InertialTransient");
 
-  this->RegisterViewWrapper( viewKeyStruct::maximumApertureString, &m_maximumAperture, false )->
-      setInputFlag(InputFlags::OPTIONAL)->
-      setDescription("Maximum aperture for updating the fracture permeability in explicit flow solver");
 }
 
 void FlowSolverBase::PostProcessInput()
