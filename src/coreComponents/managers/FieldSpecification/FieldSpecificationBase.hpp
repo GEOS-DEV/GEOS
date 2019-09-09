@@ -309,7 +309,7 @@ struct FieldSpecificationAdd
                      int const component,
                      real64 const value )
   {
-    field[index][component] += value;
+    field[index].Data()[component] += value;
   }
 
   /**
@@ -357,9 +357,66 @@ struct FieldSpecificationAdd
   {
     for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
     {
-      field[index][a] += value;
+      field[index][a].Data()[component] += value;
     }
   }
+
+  /**
+   * @brief Pointwise application of a value to a field variable.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component not used.
+   * @param[in] value The value to apply to @p field.
+   *
+   * This function performs field[index] += value for all values of field[index].
+   */
+  template< typename T >
+  GEOSX_HOST_DEVICE
+  static inline typename std::enable_if< !traits::is_tensorT<T>, void>::type
+  SpecifyFieldValue( arrayView3d<T> const & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const value )
+  {
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+    {
+      for( localIndex b=0 ; b<field.size( 2 ) ; ++b )
+      {
+        field[index][a][b] += static_cast<T>(value);
+      }
+    }
+  }
+
+  /**
+   * @brief Pointwise application of a value to a field variable.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
+   *                      this will not be used.
+   * @param[in] value The value to apply to @p field.
+   *
+   * This function performs field[index][component] += value for all values of field[index].
+   */
+  template< typename T >
+  GEOSX_HOST_DEVICE
+  static inline typename std::enable_if< traits::is_tensorT<T>, void>::type
+  SpecifyFieldValue( arrayView3d<T> const & field,
+                     localIndex const index,
+                     int const component,
+                     real64 const value )
+  {
+    for( localIndex a=0 ; a<field.size( 1 ) ; ++a )
+    {
+      for( localIndex b=0 ; b<field.size( 2 ) ; ++b )
+      {
+        field[index][a][b].Data()[component] += value;
+      }
+    }
+  }
+
+
 
   /**
    * @brief Function to apply a value to a vector field for a single dof.

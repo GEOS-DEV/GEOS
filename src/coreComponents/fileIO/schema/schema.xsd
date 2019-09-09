@@ -722,8 +722,6 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maximumAperture => Maximum aperture for updating the fracture permeability in explicit flow solver-->
-		<xsd:attribute name="maximumAperture" type="real64" default="0" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
@@ -839,8 +837,6 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maximumAperture => Maximum aperture for updating the fracture permeability in explicit flow solver-->
-		<xsd:attribute name="maximumAperture" type="real64" default="0" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1056,8 +1052,6 @@
 		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
 		<!--densityModel => Type of density model (linear, quadratic, exponential)-->
 		<xsd:attribute name="densityModel" type="string" default="linear" />
-		<!--pressureCap => Pressure cap needed by the modified pressure-density relationship in explicit flow solver-->
-		<xsd:attribute name="pressureCap" type="real64" default="1e+99" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
