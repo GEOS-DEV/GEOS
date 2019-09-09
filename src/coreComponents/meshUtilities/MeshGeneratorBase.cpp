@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshGeneratorBase.cpp
+/**
+ * @file MeshGeneratorBase.cpp
  *
- *  Created on: Oct 17, 2017
- *      Author: sherman
  */
 
 #include "MeshGeneratorBase.hpp"

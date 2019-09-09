@@ -3,9 +3,11 @@
 # Specify all headers
 #
 set( codingUtilities_headers
+     GeosxTraits.hpp
      StringUtilities.hpp
-     IOUtilities.hpp
      UnitTestUtilities.hpp
+     Utilities.hpp
+     static_if.hpp
    )
 
 #

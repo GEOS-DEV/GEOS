@@ -19,7 +19,6 @@
 /**
  * @brief This file contains the definition of the TensorBaseT class
  * @file TensorBaseT.h
- * @author Randolph Settgast
  */
 
 #ifndef TENSOR_BASE_T_H_
@@ -36,7 +35,6 @@
 
 /**
  * @brief TensorBaseT is the base class for the tensor library.
- * @author Randolph Settgast
  * @tparam T_length length
  *
  * TensorBaseT defines basic operations on the data for use by the derived
@@ -253,7 +251,6 @@ protected:
   //***** MEMBER ACCESS *******************************************************
 public:
   /**
-   * @author Randolph R. Settgast
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
@@ -264,7 +261,6 @@ public:
   }
 
   /**
-   * @author Randolph R. Settgast
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
@@ -275,7 +271,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
@@ -285,7 +280,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
@@ -295,7 +289,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a non-const realT* which points to the past-the-end element
    * of t_data
    * @brief returns a non-const realT* which points to the past-the-end element
@@ -307,7 +300,6 @@ public:
   }
 
   /**
-   * @author walsh24
    * @return gives a const realT* which points to the past-the-end element of
    * t_data
    * @brief gives a const realT* which points to the past-the-end element of
@@ -321,7 +313,6 @@ public:
 
 
   /**
-   * @author Randolph R. Settgast
    * @return the number of data entries (Length) for the tensor
    * @brief gives the number of data entries (Length) for the tensor
    */
@@ -332,7 +323,6 @@ public:
   }
 
   /**
-   * @author Randolph R. Settgast
    * @return the maximum single value in the t_data
    * @brief gives the maximum single value in the t_data
    */
@@ -346,7 +336,6 @@ public:
   }
 
   /**
-   * @author Scott Johnson
    * @return the minimum single value in the t_data
    * @brief gives the minimum single value in the t_data
    */
@@ -399,7 +388,6 @@ private:
 //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
 
 /**
- * @author Randolph Settgast
  * @return none
  */
 template<int T_length>
@@ -410,7 +398,6 @@ TensorBaseT< T_length >::TensorBaseT( void )//:
 
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs reference to TensorBaseT object to use in initialization
  * @return none
  */
@@ -422,7 +409,6 @@ TensorBaseT< T_length >::TensorBaseT( const TensorBaseT< T_length >& rhs )
 
 
 /**
- * @author Randolph Settgast
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -434,7 +420,6 @@ TensorBaseT< T_length >::TensorBaseT( const realT data )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
@@ -446,7 +431,6 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
 }
 
 /**
- * @author Randolph Settgast
  * @return none
  */
 template<int T_length>
@@ -456,7 +440,6 @@ TensorBaseT< T_length >::~TensorBaseT( void )
 //***** ASSIGNMENT OPERATORS **************************************************
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
@@ -470,7 +453,6 @@ TensorBaseT< T_length >::operator=( const int& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
@@ -485,7 +467,6 @@ TensorBaseT< T_length >::operator=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to copy
  * @return none
  */
@@ -516,7 +497,6 @@ TensorBaseT<3>::operator=( const TensorBaseT< 3 >& rhs )
 
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to add to t_data
  * @return none
  */
@@ -540,7 +520,6 @@ TensorBaseT<3>::operator+=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to subtract from t_data
  * @return none
  */
@@ -554,7 +533,6 @@ TensorBaseT< T_length >::operator-=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to multiply t_data with
  * @return none
  */
@@ -578,7 +556,6 @@ TensorBaseT<3>::operator*=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to divide t_data with
  * @return none
  */
@@ -592,7 +569,6 @@ TensorBaseT< T_length >::operator/=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to add
  * @return none
  */
@@ -617,7 +593,6 @@ TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to subract
  * @return none
  */
@@ -631,7 +606,6 @@ TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to multiply by
  * @return none
  */
@@ -645,7 +619,6 @@ TensorBaseT< T_length >::operator*=( const TensorBaseT< T_length >& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to divide by
  * @return none
  */

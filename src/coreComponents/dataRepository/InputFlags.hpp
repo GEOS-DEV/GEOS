@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * InputFlags.hpp
- *
- *  Created on: Dec 17, 2018
- *      Author: settgast
+/**
+ * @file InputFlags.hpp
  */
 
 #ifndef CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_

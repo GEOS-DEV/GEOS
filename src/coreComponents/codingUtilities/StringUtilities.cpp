@@ -18,7 +18,6 @@
 
 /**
  * @file StringUtilities.cpp
- * @author walsh24
  */
 
 #include "math/TensorT/TensorT.h"

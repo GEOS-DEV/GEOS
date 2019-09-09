@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SystemSolverParameters.hpp
- *
- *  Created on: Sep 12, 2017
- *      Author: settgast
+/**
+ * @file SystemSolverParameters.hpp
  */
 
 #ifndef GEOSX_SYSTEMSOLVERPARAMETERS_HPP_

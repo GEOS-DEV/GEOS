@@ -18,8 +18,6 @@
 
 /**
  * @file EdgeManager.cpp
- * @author settgast1
- * @date Jun 22, 2011
  */
 
 #include "EdgeManager.hpp"

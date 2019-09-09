@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * PAMELAMeshGenerator.cpp
- *
- *  Created on: Oct 08, 2018
- *      Author: Antoine Mazuyer
+/**
+ * @file PAMELAMeshGenerator.cpp
  */
 
 #include "PAMELAMeshGenerator.hpp"

@@ -17,9 +17,7 @@
  */
 
 /**
- * @file PartitionBase.h
- * @author settgast1
- * @date Mar 16, 2011
+ * @file PartitionBase.hpp
  */
 
 #ifndef PARTITIONBASE_H_

@@ -18,8 +18,6 @@
 
 /**
  * @file IntegrationPointsT.cpp
- * @author settgast1
- * @date Dec 6, 2010
  */
 
 #include "IntegrationRuleT.h"

@@ -46,6 +46,10 @@ public:
   /// Catalog name interface
   static string CatalogName() { return "TableFunction"; }
   
+
+  template< typename T >
+  void parse_file( array1d<T> & target, string const & filename, char delimiter );
+
   /// Initialize the function
   virtual void InitializeFunction() override;
 

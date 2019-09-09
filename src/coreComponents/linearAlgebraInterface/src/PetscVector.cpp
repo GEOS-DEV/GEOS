@@ -18,9 +18,6 @@
 
 /**
  * @file PetscVector.cpp
- *
- *  Created on: Jan 28, 2019
- *  Author: Hannah Morgan
  */
 
 // BEGIN_RST_NARRATIVE PetscVector.rst

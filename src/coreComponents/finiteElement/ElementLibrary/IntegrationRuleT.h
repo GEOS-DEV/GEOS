@@ -18,8 +18,6 @@
 
 /**
  * @file IntegrationRuleT.h
- * @author settgast1
- * @date Dec 6, 2010
  */
 
 #ifndef INTEGRATIONRULET_H_
