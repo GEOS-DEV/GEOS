@@ -17,9 +17,7 @@
  */
 
 /**
- * @file TableManager.h
- * @author settgast1
- * @date Mar 4, 2011
+ * @file TableManager.hpp
  */
 
 #ifndef TABLEMANAGER_H_

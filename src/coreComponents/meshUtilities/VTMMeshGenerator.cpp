@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * VTMMeshGenerator.cpp
- *
- *  Created on: Aug 16, 2018
- *      Author: Antoine Mazuyer
+/**
+ * @file VTMMeshGenerator.cpp
  */
 
 #include "VTMMeshGenerator.hpp"

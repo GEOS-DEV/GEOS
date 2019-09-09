@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * R4minSymTensorT.h
- *
- *  Created on: Aug 26, 2013
- *      Author: xu11
+/**
+ * @file R4minSymTensorT.h
  */
 
 #ifndef R4MINSYMTENSORT_H_

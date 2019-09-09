@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewFunctionManager.cpp
- *
- *  Created on: June 16, 2017
- *      Author: sherman
+/**
+ * @file NewFunctionManager.cpp
  */
 
 #include "NewFunctionManager.hpp"

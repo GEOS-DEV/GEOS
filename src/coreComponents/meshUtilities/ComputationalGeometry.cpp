@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ComputationalGeometry.cpp
- *
- *  Created on: Jun 26, 2018
- *      Author: settgast
+/**
+ * @file ComputationalGeometry.cpp
  */
 
 #include "ComputationalGeometry.hpp"

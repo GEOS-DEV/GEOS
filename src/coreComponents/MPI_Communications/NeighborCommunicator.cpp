@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NeighborCommunicator.cpp
+/**
+ * @file NeighborCommunicator.cpp
  *
- *  Created on: Jan 2, 2018
- *      Author: settgast
  */
 
 #include "common/TimingMacros.hpp"

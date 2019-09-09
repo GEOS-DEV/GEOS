@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ToElementRelation.cpp
- *
- *  Created on: Jun 6, 2018
- *      Author: settgast
+/**
+ * @file ToElementRelation.cpp
  */
 
 #include "ToElementRelation.hpp"

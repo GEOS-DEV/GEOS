@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementSpaceManager.cpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
+/**
+ * @file FiniteElementSpaceManager.cpp
  */
 
 #include "FiniteElementDiscretizationManager.hpp"

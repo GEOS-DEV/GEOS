@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * ElementManagerT.cpp
- *
- *  Created on: Sep 14, 2010
- *      Author: settgast1
+/**
+ * @file ElementManagerT.cpp
  */
 
 #include "CellBlockManager.hpp"

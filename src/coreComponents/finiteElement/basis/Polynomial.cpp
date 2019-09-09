@@ -18,8 +18,6 @@
 
 /**
  * @file Polynomial.cpp
- * @author white203
- * @date Apr 11, 2010
  */
 
 #include "Polynomial.hpp"

@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * GeometricObjectManager.cpp
- *
- *  Created on: Oct 18, 2017
- *      Author: sherman
+/**
+ * @file GeometricObjectManager.cpp
  */
 
 #include "GeometricObjectManager.hpp"

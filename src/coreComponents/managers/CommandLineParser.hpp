@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CommandLineParser.hpp
- *
- *  Created on: Jul 30, 2016
- *      Author: rrsettgast
+/**
+ * @file CommandLineParser.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_COMMANDLINEPARSER_HPP_

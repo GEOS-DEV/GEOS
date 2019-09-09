@@ -556,7 +556,6 @@ inline bool isGTE0( const int i )
 
 
 /**
- * @author Randy Settgast
  * @param val1
  * @param val2
  * @param tolfac
@@ -596,7 +595,6 @@ inline realT Power(const realT val, const realT exponent)
 }
 
 /**
- * @author Randy Settgast
  * @return cpu usage
  *
  * This function uses the rusage structure to query elapsed system time and user
