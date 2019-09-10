@@ -16,7 +16,19 @@ set(common_sources
     DataTypes.cpp
    )
 
-set( dependencyList cxx-utilities ${thirdPartyLibs} )
+set( dependencyList cxx-utilities managers mpi pugixml trilinos )
+
+if( ATK_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper )
+endif()
+
+if( ENABLE_RAJA )
+  set( dependencyList ${dependencyList} RAJA )
+endif()
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -38,7 +50,7 @@ blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
 #                 SHARED TRUE
                )
                

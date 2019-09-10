@@ -41,7 +41,7 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(dependencyList managers wells)
+set(dependencyList managers metis)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -55,7 +55,7 @@ blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
