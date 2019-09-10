@@ -1,7 +1,6 @@
 #
 # Specify list of tests
 #
-
 set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
@@ -12,11 +11,10 @@ set( nranks 2 )
 #
 # Add gtest C++ based tests
 #
+set( dependencyList gtest geosx_core )
 
-set( dependencyList gtest linearAlgebraInterface geosx_core )
-
-if( ENABLE_MPI )
-    set( dependencyList ${dependencyList} mpi )
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
 endif()
 
 if( ENABLE_OPENMP )

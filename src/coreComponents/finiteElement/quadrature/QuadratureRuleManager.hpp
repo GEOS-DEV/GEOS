@@ -20,7 +20,7 @@
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_QUADRATURERULEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 namespace geosx
 {

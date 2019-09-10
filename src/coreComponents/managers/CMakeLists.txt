@@ -27,7 +27,9 @@ set(managers_headers
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
-    FieldSpecification/SourceFluxBoundaryCondition.hpp)    
+    FieldSpecification/SourceFluxBoundaryCondition.hpp
+    initialization.hpp
+   )
 
 
 #
@@ -58,7 +60,9 @@ set(managers_sources
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp
-    FieldSpecification/SourceFluxBoundaryCondition.cpp)
+    FieldSpecification/SourceFluxBoundaryCondition.cpp
+    initialization.cpp
+   )
 
 set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebraInterface )
 
@@ -78,6 +82,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
+                 #OBJECT                TRUE
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

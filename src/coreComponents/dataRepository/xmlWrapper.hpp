@@ -73,7 +73,7 @@ public:
   static constexpr auto filePathString = "filePath";
 
   /**
-  * @name FUNCTION GROUP for rule of five functions...which are all deleted in this case.
+   * @name FUNCTION GROUP for rule of five functions...which are all deleted in this case.
    */
   ///@{
   xmlWrapper() = delete;
@@ -108,12 +108,12 @@ public:
    */
   ///@{
   template< typename T >
-  static void StringToInputVariable( T& target, string value );
+  static void StringToInputVariable( T & target, string value );
 
   static void StringToInputVariable( R1Tensor & target, string value );
 
   template< typename T, int NDIM >
-  static void StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string value );
+  static void StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string value );
   ///@}
 
 
@@ -140,27 +140,27 @@ public:
   template< typename T, typename T_DEF = T >
   static void ReadAttributeAsType( T & rval,
                                    string const & name,
-                                   xmlNode const & targetNode ,
+                                   xmlNode const & targetNode,
                                    T_DEF const & defVal );
 
   template< typename T >
-  static typename std::enable_if_t<!dataRepository::DefaultValue<T>::has_default_value>
+  static typename std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value >
   ReadAttributeAsType( T & rval,
                        string const & name,
-                       xmlNode const & targetNode ,
-                       dataRepository::DefaultValue<T> const & defVal )
+                       xmlNode const & targetNode,
+                       dataRepository::DefaultValue< T > const & defVal )
   {
-    ReadAttributeAsType(rval, name, targetNode, false );
+    ReadAttributeAsType( rval, name, targetNode, false );
   }
 
   template< typename T >
-  static typename std::enable_if_t<dataRepository::DefaultValue<T>::has_default_value>
+  static typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value >
   ReadAttributeAsType( T & rval,
                        string const & name,
-                       xmlNode const & targetNode ,
-                       dataRepository::DefaultValue<T> const & defVal )
+                       xmlNode const & targetNode,
+                       dataRepository::DefaultValue< T > const & defVal )
   {
-    ReadAttributeAsType(rval, name, targetNode, defVal.value );
+    ReadAttributeAsType( rval, name, targetNode, defVal.value );
   }
   ///@}
 
@@ -175,7 +175,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 }
 
 template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable(  LvArray::Array<T,NDIM,localIndex> & array, string valueString )
+void xmlWrapper::StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string valueString )
 {
   cxx_utilities::stringToArray( array, valueString );
 }
@@ -184,11 +184,11 @@ template< typename T >
 void xmlWrapper::ReadAttributeAsType( T & rval,
                                       string const & name,
                                       xmlNode const & targetNode,
-                                      bool const required  )
+                                      bool const required )
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty() && required , "Input variable " + name + " is required in " + targetNode.path() );
+  GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
 
   // parse the string/attribute into a value
   StringToInputVariable( rval, xmlatt.value() );
@@ -213,7 +213,6 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
     rval = defVal;
   }
 }
-
 
 
 

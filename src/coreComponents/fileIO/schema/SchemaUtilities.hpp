@@ -23,7 +23,7 @@
 #ifndef SCHEMAUTILITIES_HPP_
 #define SCHEMAUTILITIES_HPP_
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
 #include <iostream>

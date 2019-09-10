@@ -24,7 +24,6 @@
 #define GEOSX_FIELDSPECIFICATIONOPS_HPP
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
 
 namespace geosx
 {

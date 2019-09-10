@@ -17,7 +17,7 @@
  */
 #include "gtest/gtest.h"
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 #include "tests/meshFileNames.hpp"
 

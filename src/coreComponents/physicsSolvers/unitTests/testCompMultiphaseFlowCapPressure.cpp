@@ -19,7 +19,7 @@
 #include "testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
