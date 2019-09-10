@@ -17,7 +17,7 @@ if(ENABLE_PVTPackage)
        )
 endif()
 
-set( dependencyList gtest physicsSolvers )
+set( dependencyList geosx_core gtest  )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

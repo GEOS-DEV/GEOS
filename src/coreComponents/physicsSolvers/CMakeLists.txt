@@ -72,7 +72,7 @@ blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

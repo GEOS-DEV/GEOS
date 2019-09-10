@@ -10,8 +10,7 @@ set( dataRepository_tests
      testXmlWrapper.cpp
    )
 
-set( dependencyList gtest dataRepository )
-
+set( dependencyList dataRepository gtest cxx-utilities )
 #
 # Add gtest C++ based tests
 #
