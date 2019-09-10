@@ -160,11 +160,17 @@ void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIn
 void CompressibleSinglePhaseFluid::PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q)
 {
   pressure = m_density[k][q] < m_referenceDensity ? 0 : (1 - m_referenceDensity / m_density[k][q]) / m_compressibility;
+//  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
+//  {
+//    //TODO
+//    Inverse( pressure, density, dDensity_dPressure, relation );
+//  } );
 }
 
 void CompressibleSinglePhaseFluid::PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q )
 {
   m_density[k][q] = m_referenceDensity / (1 - pressure * m_compressibility);
+  m_dDensity_dPressure [k][q] = m_density[k][q] * m_compressibility;
 
   makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {

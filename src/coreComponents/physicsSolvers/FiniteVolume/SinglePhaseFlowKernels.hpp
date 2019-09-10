@@ -368,7 +368,7 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & dPres,
           ElementView < arrayView1d<real64 const> > const & gravDepth,
           MaterialView< arrayView2d<real64 const> > const & dens,
-          MaterialView< arrayView2d<real64 const> > const & visc,
+          MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
@@ -591,7 +591,7 @@ struct FluxKernel
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
            MaterialView<arrayView2d<real64 const>> const & dens,
-           MaterialView<arrayView2d<real64 const>> const & visc,
+           MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
            ElementView <arrayView1d<real64 const>> const & mob,
            localIndex const fluidIndex,
            integer const gravityFlag,
@@ -651,7 +651,8 @@ struct FluxKernel
     localIndex esr_down = sesri[k_down];
     localIndex ei_down  = sei[k_down];
 
-    *maxStableDt = std::min(visc[er_up][esr_up][fluidIndex][ei_up][0] / 2.0 * weightedSum, *maxStableDt);
+    // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
+    *maxStableDt = std::min(dDens_dPres[er_up][esr_up][fluidIndex][ei_up][0] / mob[er_up][esr_up][ei_up] / 2.0 * weightedSum, *maxStableDt);
 
     // populate local flux
     (*mass)[er_up][esr_up][ei_up] -= dt * mob[er_up][esr_up][ei_up] * potDif;
@@ -677,7 +678,7 @@ struct FluxKernel
            arrayView1d<real64 const> const & dPres,
            arrayView1d<real64 const> const & gravDepth,
            arrayView2d<real64 const> const & dens,
-           arrayView2d<real64 const> const & visc,
+           arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            localIndex const,
            integer const gravityFlag,
@@ -731,7 +732,7 @@ struct FluxKernel
 
     localIndex ei_down  = stencilElementIndices[k_down];
 
-    *maxStableDt = std::min(visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt);
+    *maxStableDt = std::min( dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 
     // populate local flux
     (*mass)[ei_up] -= dt * mob[ei_up] * potDif;
@@ -858,7 +859,7 @@ struct FluxKernel
                    arrayView1d<real64 const> const & dPres,
                    arrayView1d<real64 const> const & gravDepth,
                    arrayView2d<real64 const> const & dens,
-                   arrayView2d<real64 const> const & visc,
+                   arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
@@ -915,7 +916,7 @@ struct FluxKernel
         real64 weightedSum = ( stencilWeightedElementCenterToConnectorCenterSquare[k[0]] / aperture[stencilElementIndices[k[0]]]  / aperture[stencilElementIndices[k[0]]]
                              + stencilWeightedElementCenterToConnectorCenterSquare[k[1]] / aperture[stencilElementIndices[k[1]]]  / aperture[stencilElementIndices[k[1]]] );
 
-        *maxStableDt = std::min(visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt);
+        *maxStableDt = std::min(dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 
       }
     }

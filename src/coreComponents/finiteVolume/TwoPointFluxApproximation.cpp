@@ -105,7 +105,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor coefTensor;
-  real64 faceArea, faceWeight, faceWeightInv, faceWeightedElementCenterToConnectorCenterSquare;
+  real64 faceArea, faceWeight, faceWeightInv;
 
   stackArray1d<localIndex, numElems> stencilCellsRegionIndex(numElems);
   stackArray1d<localIndex, numElems> stencilCellsSubRegionIndex(numElems);
@@ -134,7 +134,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
       continue;
 
     faceWeightInv = 0.0;
-    faceWeightedElementCenterToConnectorCenterSquare = 0.0;
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {

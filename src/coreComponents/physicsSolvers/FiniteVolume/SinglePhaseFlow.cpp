@@ -394,32 +394,18 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-//  // apply pressure boundary condition in the explicit solver
-//  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-//  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-//                    [&]( FieldSpecificationBase const * const fs,
-//                         string const &,
-//                         set<localIndex> const & lset,
-//                         ManagedGroup * subRegion,
-//                         string const & ) -> void
-//  {
-//    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-//                                                  time_n + dt,
-//                                                  subRegion,
-//                                                  viewKeyStruct::pressureString );
-//  });
-
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegion * const region,
                                  ElementSubRegionBase * const subRegion )
   {
-//    UpdateState( subRegion );
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
     arrayView1d<real64> const & mass = m_mass[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
+      real64 test1 = dens[ei][0];
+      real64 test2 = vol[ei];
       mass[ei] = dens[ei][0] * vol[ei];
     } );
   } );
@@ -438,7 +424,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
     {
       aper0[ei] = aper[ei];
     } );
-
     UpdateMobility( subRegion );
   } );
 }
@@ -964,7 +949,7 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
   FluxKernel::MaterialView< arrayView2d<real64 const> > const & dens        = m_density.toViewConst();
-  FluxKernel::MaterialView< arrayView2d<real64 const> > const & visc        = m_viscosity.toViewConst();
+  FluxKernel::MaterialView< arrayView2d<real64 const> > const & dDens_dPres = m_dDens_dPres.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & mob         = m_mobility.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0  = m_elementAperture0.toViewConst();
@@ -985,7 +970,7 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
                         dPres,
                         gravDepth,
                         dens,
-                        visc,
+                        dDens_dPres,
                         mob,
                         aperture0,
                         aperture ,
@@ -993,15 +978,7 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
                         &m_maxStableDt);
   });
 
-  real64 minCompressibility = std::numeric_limits<real64>::max();
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
-  {
-    SingleFluidBase * fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
-    CompressibleSinglePhaseFluid * compressibleFluid = dynamic_cast<CompressibleSinglePhaseFluid*>(fluid);
-    minCompressibility = std::min(minCompressibility, compressibleFluid->Compressibility());
-  } );
-  m_maxStableDt *= minCompressibility * m_cflFactor;
+  m_maxStableDt *= m_cflFactor;
 
 }
 

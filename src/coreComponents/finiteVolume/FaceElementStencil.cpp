@@ -40,9 +40,6 @@ void FaceElementStencil::add( localIndex const numPts,
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
-  stackArray1d<localIndex, 1> connectorIndexArray;
-  connectorIndexArray[0] = connectorIndex;
-
   typename decltype( m_stencilIndices )::iterator iter = m_stencilIndices.find(connectorIndex);
   if( iter==m_stencilIndices.end() )
   {
