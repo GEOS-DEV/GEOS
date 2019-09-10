@@ -29,13 +29,30 @@ set(dataRepository_sources
     xmlWrapper.cpp
     )
 
-set( dependencyList common codingUtilities pugixml )
+set( extraComponentsLinkList "")
+
+if( ENABLE_MPI )
+  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
+endif()
+
+
+
+set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
+
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit )
+endif()
+
+if( ATK_FOUND )
+  set( dependencyList ${dependencyList} sidre )
+endif()
+
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

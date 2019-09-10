@@ -64,7 +64,11 @@ set(managers_sources
     initialization.cpp
    )
 
-set( dependencyList dataRepository fileIO mesh meshUtilities finiteElement finiteVolume physicsSolvers optionparser )
+set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebraInterface )
+
+if( ENABLE_MATHPRESSO )
+   set( dependencyList ${dependencyList} mathpresso )
+endif()
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -78,7 +82,7 @@ blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -27,7 +27,7 @@ blt_add_library( NAME                  wells
                  SOURCES               ${wells_sources}
                  HEADERS               ${wells_headers}
                  DEPENDS_ON            dataRepository ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
                
 target_include_directories( wells PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
