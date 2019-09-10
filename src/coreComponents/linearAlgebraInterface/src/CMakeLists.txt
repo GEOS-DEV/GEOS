@@ -42,16 +42,12 @@ if( ENABLE_TRILINOS )
         EpetraVector.cpp
         TrilinosSolver.cpp )
 
-  list( APPEND dependencyList trilinos )
-
 endif()
 
 if( ENABLE_HYPRE )
 
   list( APPEND linearAlgebraInterface_headers
         HypreInterface.hpp )
-
-  list( APPEND dependencyList hypre )
 
 endif()
 
@@ -72,8 +68,8 @@ if( ENABLE_PETSC )
 
 endif()
 
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
+if (CONDUIT_FOUND)
+  set (dependencyList ${dependencyList} conduit)
 endif()
 
 if( ENABLE_OPENMP )
@@ -88,6 +84,7 @@ blt_add_library( NAME                  linearAlgebraInterface
                  SOURCES               ${linearAlgebraInterface_sources}
                  HEADERS               ${linearAlgebraInterface_headers}
                  DEPENDS_ON            ${dependencyList}
+                 #OBJECT                TRUE
                )
                
 target_include_directories( linearAlgebraInterface PUBLIC ${CMAKE_CURRENT_LIST_DIR})

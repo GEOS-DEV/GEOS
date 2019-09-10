@@ -26,7 +26,6 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
-//#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
