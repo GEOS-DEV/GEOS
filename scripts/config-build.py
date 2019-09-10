@@ -61,6 +61,10 @@ parser.add_argument("-ip",
                     type=str, default="",
                     help="specify path for installation directory.  If not specified, will create in current directory.")
 
+parser.add_argument("--noinstall",
+                    action="store_true",
+                    help="Do not create an install directory.")
+
 parser.add_argument("-bt",
                     "--buildtype",
                     type=str,
@@ -144,24 +148,25 @@ setup_ats(scriptsdir, buildpath)
 # Setup Install Dir
 #####################
 # For install directory, we will clean up old ones, but we don't need to create it, cmake will do that.
-if args.installpath != "":
-    installpath = os.path.abspath(args.installpath)
-else:
-    # use platform info & build type
-    if args.thirdpartylib:
-        installpath = "-".join(["../thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
+if not args.noinstall:
+    if args.installpath != "":
+        installpath = os.path.abspath(args.installpath)
     else:
-        installpath = "-".join(["install",platform_info,args.buildtype.lower()])
+        # use platform info & build type
+        if args.thirdpartylib:
+            installpath = "-".join(["../thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
+        else:
+            installpath = "-".join(["install",platform_info,args.buildtype.lower()])
 
-installpath = os.path.abspath(installpath)
+    installpath = os.path.abspath(installpath)
 
-if os.path.exists(installpath):
-#    sys.exit("Install directory '%s' already exists, exiting...")
-     print "Install directory '%s' already exists, deleting..." % installpath
-     shutil.rmtree(installpath)
+    if os.path.exists(installpath):
+    #    sys.exit("Install directory '%s' already exists, exiting...")
+        print "Install directory '%s' already exists, deleting..." % installpath
+        shutil.rmtree(installpath)
 
-print "Creating install path '%s'..." % installpath
-os.makedirs(installpath)
+    print "Creating install path '%s'..." % installpath
+    os.makedirs(installpath)
 
 
 ############################
@@ -177,7 +182,9 @@ cmakeline += " -C %s" % cachefile
 # Add build type (opt or debug)
 cmakeline += " -DCMAKE_BUILD_TYPE=" + args.buildtype
 # Set install dir
-cmakeline += " -DCMAKE_INSTALL_PREFIX=%s" % installpath
+
+if not args.noinstall:
+    cmakeline += " -DCMAKE_INSTALL_PREFIX=%s" % installpath
 
 if args.exportcompilercommands:
     cmakeline += " -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
