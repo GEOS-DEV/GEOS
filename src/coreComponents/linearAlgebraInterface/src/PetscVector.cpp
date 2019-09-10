@@ -47,6 +47,7 @@ namespace geosx
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Create an empty vector
 PetscVector::PetscVector()
+: m_vec()
 {}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -55,15 +56,24 @@ PetscVector::PetscVector()
 // Create a unique PetscVector from PetscVector.  
 // The data from the input vector is copied to a new memory location. 
 PetscVector::PetscVector( PetscVector const & vec )
+: m_vec()
 {
-  VecDuplicate( vec._vec, &_vec ); 
-  VecCopy( vec._vec, _vec ); 
+  VecDuplicate( vec.m_vec, &m_vec );
+  VecCopy( vec.m_vec, m_vec );
 }
 
 // Create a unique PetscVector from a PETSc Vec.  
 PetscVector::PetscVector( Vec vec )
 {
-  _vec = vec;
+  m_vec = vec;
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Destructor
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+PetscVector::~PetscVector()
+{
+  VecDestroy( &m_vec );
 }
 
 // ----------------------------
@@ -76,8 +86,9 @@ PetscVector::PetscVector( Vec vec )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 void PetscVector::create( PetscVector const & src )
 {
-  VecDuplicate( src._vec, &_vec ); 
-  VecCopy( src._vec, _vec );  
+  VecDestroy( &m_vec );
+  VecDuplicate( src.m_vec, &m_vec );
+  VecCopy( src.m_vec, m_vec );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -90,20 +101,22 @@ void PetscVector::create( PetscVector const & src )
 // get the same number of elements, except proc 0 which gets any remainder
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.
-// 
+//
 // NOTE: creates a CPU MPI vector
 void PetscVector::createWithLocalSize( localIndex const localSize, MPI_Comm const & comm )
 {
-  VecCreate( comm, &_vec );
-  VecSetType( _vec, VECMPI );
-  VecSetSizes( _vec, localSize, PETSC_DETERMINE);
+  VecDestroy( &m_vec );
+  VecCreate( comm, &m_vec );
+  VecSetType( m_vec, VECMPI );
+  VecSetSizes( m_vec, localSize, PETSC_DETERMINE);
 }
 
 void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm )
 {
-  VecCreate( comm, &_vec );
-  VecSetType( _vec, VECMPI );
-  VecSetSizes( _vec, PETSC_DECIDE, globalSize);
+  VecDestroy( &m_vec );
+  VecCreate( comm, &m_vec );
+  VecSetType( m_vec, VECMPI );
+  VecSetSizes( m_vec, PETSC_DECIDE, globalSize);
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -115,13 +128,14 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
 // NOTE: creates a CPU MPI vector, must assemble vector after use
 void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & comm )
 {
-  PetscInt size = localValues.size(); 
+  PetscInt size = localValues.size();
   PetscScalar *values;
 
-  VecCreate( comm, &_vec );
-  VecSetType( _vec, VECMPI );
-  VecSetSizes( _vec, size, PETSC_DETERMINE);
-  VecGetArray( _vec, &values );
+  VecDestroy( &m_vec );
+  VecCreate( comm, &m_vec );
+  VecSetType( m_vec, VECMPI );
+  VecSetSizes( m_vec, size, PETSC_DETERMINE);
+  VecGetArray( m_vec, &values );
 
   // set vector values
   for (int i = 0; i < size; i++)
@@ -129,25 +143,25 @@ void PetscVector::create( array1d<real64> const & localValues, MPI_Comm const & 
     values[i] = localValues[i];
   }
 
-  VecRestoreArray( _vec, &values );
+  VecRestoreArray( m_vec, &values );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Add/Set value(s)
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-// Add/set entries in the vector.  
+// Add/set entries in the vector.
 
-// single element 
+// single element
 void PetscVector::set( globalIndex const globalRow,
                        real64 const value )
 {
-  VecSetValue( _vec, globalRow, value, INSERT_VALUES );
+  VecSetValue( m_vec, globalRow, value, INSERT_VALUES );
 }
 
 void PetscVector::add( globalIndex const globalRow,
                        real64 const value )
 {
-  VecSetValue( _vec, globalRow, value, ADD_VALUES );
+  VecSetValue( m_vec, globalRow, value, ADD_VALUES );
 }
 
 // n-element, c-style options
@@ -155,38 +169,38 @@ void PetscVector::set( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  VecSetValues( _vec, size, toPetscInt(globalIndices), values, INSERT_VALUES );
+  VecSetValues( m_vec, size, toPetscInt( globalIndices), values, INSERT_VALUES );
 }
 
 void PetscVector::add( globalIndex const * globalIndices,
                        real64 const * values,
                        localIndex size )
 {
-  VecSetValues( _vec, size, toPetscInt(globalIndices), values, ADD_VALUES );
+  VecSetValues( m_vec, size, toPetscInt( globalIndices), values, ADD_VALUES );
 }
 
 // n-element, array1d options
 void PetscVector::set( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  VecSetValues( _vec, values.size(), toPetscInt(globalIndices.data()), values.data(), INSERT_VALUES );
+  VecSetValues( m_vec, values.size(), toPetscInt( globalIndices.data()), values.data(), INSERT_VALUES );
 }
 
 void PetscVector::add( array1d<globalIndex> const & globalIndices,
                        array1d<real64> const & values )
 {
-  VecSetValues( _vec, values.size(), toPetscInt(globalIndices.data()), values.data(), ADD_VALUES );
+  VecSetValues( m_vec, values.size(), toPetscInt( globalIndices.data()), values.data(), ADD_VALUES );
 }
 
 // additional convenience options
 void PetscVector::set( real64 value )
 {
-  VecSet( _vec, value );
+  VecSet( m_vec, value );
 }
 
 void PetscVector::zero()
 {
-  VecZeroEntries( _vec );
+  set( 0.0 );
 }
 
 void PetscVector::rand( unsigned long seed )
@@ -196,11 +210,11 @@ void PetscVector::rand( unsigned long seed )
   PetscRandomCreate( PETSC_COMM_WORLD, &ran );
 
   // set random seed
-  PetscRandomSetSeed( ran, seed );    
+  PetscRandomSetSeed( ran, seed );
   PetscRandomSeed( ran );
 
   // create random vector
-  VecSetRandom( _vec, ran );
+  VecSetRandom( m_vec, ran );
   PetscRandomDestroy( &ran );
 }
 
@@ -213,8 +227,8 @@ void PetscVector::open()
 void PetscVector::close()
 {
   // assemble the vector after setting values
-  VecAssemblyBegin( _vec );
-  VecAssemblyEnd( _vec ); 
+  VecAssemblyBegin( m_vec );
+  VecAssemblyEnd( m_vec );
 }
 
 // ----------------------------
@@ -228,7 +242,7 @@ void PetscVector::close()
 // Multiply all elements by scalingFactor.
 void PetscVector::scale( real64 const scalingFactor )
 {
-  VecScale( _vec, scalingFactor );
+  VecScale( m_vec, scalingFactor );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -238,7 +252,7 @@ void PetscVector::scale( real64 const scalingFactor )
 real64 PetscVector::dot( PetscVector const &vec )
 {
   real64 dot;
-  VecDot( _vec, vec._vec, &dot );
+  VecDot( m_vec, vec.m_vec, &dot );
   return dot;
 }
 
@@ -248,8 +262,8 @@ real64 PetscVector::dot( PetscVector const &vec )
 // Update vector as this = x.
 void PetscVector::copy( PetscVector const &x )
 {
-  VecSet( _vec, 0 );
-  VecAXPY( _vec, 1.0, x._vec );
+  VecSet( m_vec, 0 );
+  VecAXPY( m_vec, 1.0, x.m_vec );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -258,19 +272,19 @@ void PetscVector::copy( PetscVector const &x )
 // Update vector as this = alpha*x + this.
 void PetscVector::axpy( real64 const alpha, PetscVector const &x )
 {
-  VecAXPY( _vec, alpha, x._vec );
+  VecAXPY( m_vec, alpha, x.m_vec );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Axpby
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Update vector as this = alpha*x + beta*this.
-void PetscVector::axpby( real64 const alpha, 
-                         PetscVector &x, 
+void PetscVector::axpby( real64 const alpha,
+                         PetscVector &x,
                          real64 const beta )
 {
-  VecScale( _vec, beta );
-  VecAXPY( _vec, alpha, x._vec );
+  VecScale( m_vec, beta );
+  VecAXPY( m_vec, alpha, x.m_vec );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -280,7 +294,7 @@ void PetscVector::axpby( real64 const alpha,
 real64 PetscVector::norm1() const
 {
   real64 result;
-  VecNorm( _vec, NORM_1, &result );
+  VecNorm( m_vec, NORM_1, &result );
   return result;
 }
 
@@ -291,7 +305,7 @@ real64 PetscVector::norm1() const
 real64 PetscVector::norm2() const
 {
   real64 result;
-  VecNorm( _vec, NORM_2, &result );
+  VecNorm( m_vec, NORM_2, &result );
   return result;
 }
 
@@ -302,7 +316,7 @@ real64 PetscVector::norm2() const
 real64 PetscVector::normInf() const
 {
   real64 result;
-  VecNorm( _vec, NORM_INFINITY, &result );
+  VecNorm( m_vec, NORM_INFINITY, &result );
   return result;
 }
 
@@ -312,7 +326,7 @@ real64 PetscVector::normInf() const
 // Print vector to the terminal in PETSc format.
 void PetscVector::print() const
 {
-  VecView( _vec, PETSC_VIEWER_STDOUT_WORLD );
+  VecView( m_vec, PETSC_VIEWER_STDOUT_WORLD );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -332,12 +346,12 @@ void PetscVector::write( string const & filename,
     }
     PetscViewerASCIIOpen( getComm(), name.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATRIXMARKET );
-  } else 
+  } else
   {
     PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer);
     PetscViewerPushFormat( viewer, PETSC_VIEWER_ASCII_MATLAB );
   }
-  VecView( _vec, viewer );
+  VecView( m_vec, viewer );
 }
 
 // ----------------------------
@@ -350,16 +364,16 @@ void PetscVector::write( string const & filename,
 // Get element globalRow
 real64 PetscVector::get( globalIndex globalRow ) const
 {
-  real64 value[1];
-  PetscInt index[1] = {globalRow};
-  VecGetValues( _vec, 1, index, value );
-  return value[0];
+  real64 value;
+  VecGetValues( m_vec, 1, toPetscInt( &globalRow ), &value );
+  return value;
 }
 
 void PetscVector::get( array1d<globalIndex> const & globalIndices,
                        array1d<real64> & values ) const
 {
-  GEOS_ERROR( "not yet implemented" );
+  values.resize( globalIndices.size() );
+  VecGetValues( m_vec, globalIndices.size(), toPetscInt( globalIndices.data() ), values.data() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -368,32 +382,32 @@ void PetscVector::get( array1d<globalIndex> const & globalIndices,
 // Get const pointer
 const Vec* PetscVector::unwrappedPointer() const
 {
-  return &( _vec );
+  return &( m_vec );
 }
 
 // Get non-const pointer
 Vec* PetscVector::unwrappedPointer()
 {
-  return &( _vec );
+  return &( m_vec );
 }
 
 // Get const PETSc object
 Vec PetscVector::getConstVec() const
 {
-  return _vec;
+  return m_vec;
 }
 
 // Get PETSc object
 Vec PetscVector::getVec()
 {
-  return _vec;
+  return m_vec;
 }
 
 // Accessor for the MPI communicator
 MPI_Comm PetscVector::getComm() const
 {
   MPI_Comm comm;
-  PetscObjectGetComm( reinterpret_cast<PetscObject>( _vec ), &comm );
+  PetscObjectGetComm( reinterpret_cast<PetscObject>( m_vec ), &comm );
   return comm;
 }
 
@@ -404,7 +418,7 @@ MPI_Comm PetscVector::getComm() const
 globalIndex PetscVector::globalSize() const
 {
   PetscInt size;
-  VecGetSize( _vec, &size );
+  VecGetSize( m_vec, &size );
   return size;
 }
 
@@ -415,7 +429,7 @@ globalIndex PetscVector::globalSize() const
 localIndex PetscVector::localSize() const
 {
   PetscInt size;
-  VecGetLocalSize( _vec, &size );
+  VecGetLocalSize( m_vec, &size );
   return size;
 }
 
@@ -428,13 +442,13 @@ localIndex PetscVector::localSize() const
 localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 {
   PetscInt low, high;
-  VecGetOwnershipRange( _vec, &low, &high );
-  if ( index < low || high <= index ) 
+  VecGetOwnershipRange( m_vec, &low, &high );
+  if ( index < low || high <= index )
   {
     GEOS_ERROR( "getLocalRowID: processor does not own global row index" );
-  } 
-  return index - low; 
-} 
+  }
+  return index - low;
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // extractLocalVector
@@ -443,21 +457,25 @@ localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 // User allocates memory for localVector
 void PetscVector::extractLocalVector( real64 ** localVector ) const
 {
-  PetscScalar *avec;
-  localIndex size = localSize();
+  PetscScalar * avec;
+  VecGetArray( m_vec, &avec );
+  *localVector =  avec;
+  VecRestoreArray( m_vec, &avec );
+}
 
-  // get the vector
-  VecGetArray( _vec, &avec );
+globalIndex PetscVector::ilower() const
+{
+  PetscInt low, high;
+  VecGetOwnershipRange( m_vec, &low, &high );
+  return low;
+}
 
-  // copy
-  for( int i = 0; i < size; i++ )
-  {
-    ( *localVector )[i] = avec[i];
-  }
-
-  // return local vector
-  VecRestoreArray( _vec, &avec );
-} 
+globalIndex PetscVector::iupper() const
+{
+  PetscInt low, high;
+  VecGetOwnershipRange( m_vec, &low, &high );
+  return high;
+}
 
 } // end geosx
 
