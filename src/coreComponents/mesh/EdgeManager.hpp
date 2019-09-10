@@ -17,9 +17,7 @@
  */
 
 /**
- * @file EdgeManagerT.h
- * @author settgast1
- * @date Jun 22, 2011
+ * @file EdgeManager.hpp
  */
 
 #ifndef EDGEMANAGERT_H_

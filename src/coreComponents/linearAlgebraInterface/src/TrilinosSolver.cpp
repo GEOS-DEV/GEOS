@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * TrilinosSolver.cpp
- *
- *  Created on: Aug 9, 2018
- *  Author: Matthias Cremon
+/**
+ * @file TrilinosSolver.cpp
  */
 
 // BEGIN_RST_NARRATIVE TrilinosSolver.rst

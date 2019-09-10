@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * MeshGeneratorBase.h
- *
- *  Created on: Oct 18, 2017
- *      Author: sherman
+/**
+ * @file MeshGeneratorBase.h
  */
 
 #ifndef MESHGENERATORBASE_H_

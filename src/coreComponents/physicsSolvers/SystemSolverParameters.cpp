@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SystemSolverParameters.cpp
+/**
+ * @file SystemSolverParameters.cpp
  *
- *  Created on: Sep 12, 2017
- *      Author: settgast
  */
 
 #include "SystemSolverParameters.hpp"

@@ -17,20 +17,13 @@
  */
 
 /**
- * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
+ * @file CellBlockManager.hpp
  */
 
-#ifndef ELEMENTMANAGERT_H_
-#define ELEMENTMANAGERT_H_
+#ifndef CELLBLOCKMANAGER_H_
+#define CELLBLOCKMANAGER_H_
 
-//#include "Common.h"
-//#include "DataStructures/VectorFields/ObjectDataStructureBaseT.h"
 #include "CellBlock.hpp"
-#include "managers/ObjectManagerBase.hpp"
-
-//#include "legacy/ArrayT/bufvector.h"
 
 namespace geosx
 {

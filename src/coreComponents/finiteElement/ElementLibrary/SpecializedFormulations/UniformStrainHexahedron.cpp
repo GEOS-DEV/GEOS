@@ -18,8 +18,6 @@
 
 /**
  * @file UniformStrainHexahedron.cpp
- * @author settgast1
- * @date Jun 6, 2011
  */
 
 #include "UniformStrainHexahedron.h"

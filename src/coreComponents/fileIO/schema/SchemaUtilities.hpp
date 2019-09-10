@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SchemaUtilities.hpp
- *
- *  Created on: Sep 15, 2016
- *      Author: sherman
+/**
+ * @file SchemaUtilities.hpp
  */
 
 #ifndef SCHEMAUTILITIES_HPP_

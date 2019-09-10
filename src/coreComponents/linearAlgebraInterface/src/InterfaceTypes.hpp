@@ -18,9 +18,6 @@
 
 /**
  * @file InterfaceTypes.hpp
- *
- *  Created on: Sep 14, 2018
- *      Author: settgast1
  */
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_INTERFACETYPES_HPP_

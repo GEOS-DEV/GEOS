@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NumericalMethodsManager.hpp
- *
- *  Created on: Apr 18, 2017
- *      Author: rrsettgast
+/**
+ * @file NumericalMethodsManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_NUMERICALMETHODSMANAGER_HPP_

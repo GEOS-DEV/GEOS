@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SidreWrapper.hpp
- *
- *  Created on: Jul 22, 2016
- *      Author: rrsettgast
+/**
+ * @file SidreWrapper.hpp
  */
 
 #ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_

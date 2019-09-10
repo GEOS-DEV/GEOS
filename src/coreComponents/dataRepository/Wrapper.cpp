@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DataObject.cpp
- *
- *  Created on: Jun 8, 2016
- *      Author: settgast
+/**
+ * @file Wrapper.cpp
  */
 
 #include "Wrapper.hpp"

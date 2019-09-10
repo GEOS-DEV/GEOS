@@ -39,7 +39,6 @@ using namespace dataRepository;
 
 // *********************************************************************************************************************
 /**
- * @author R.R. Settgast
  * @return
  */
 NodeManager::NodeManager( std::string const & name,
@@ -74,7 +73,6 @@ NodeManager::NodeManager( std::string const & name,
 
 // *********************************************************************************************************************
 /**
- * @author R.R. Settgast
  * @return
  */
 NodeManager::~NodeManager()

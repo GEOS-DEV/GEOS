@@ -22,7 +22,6 @@
 
 #include "TableFunction.hpp"
 #include "common/DataTypes.hpp"
-#include "codingUtilities/IOUtilities.hpp"
 #include <algorithm>
 
 namespace geosx
@@ -42,6 +41,9 @@ std::string const valueType = "valueType";
 }
 
 using namespace dataRepository;
+
+
+
 
 
 TableFunction::TableFunction( const std::string& name,
@@ -79,6 +81,42 @@ TableFunction::TableFunction( const std::string& name,
 TableFunction::~TableFunction()
 {}
 
+
+template< typename T >
+void TableFunction::parse_file( array1d<T> & target, string const & filename, char delimiter )
+{
+  std::ifstream inputStream(filename.c_str());
+  std::string lineString;
+  T value;
+
+  if (inputStream)
+  {
+    while (!inputStream.eof())
+    {
+      std::getline(inputStream, lineString);
+      std::istringstream ss( lineString );
+
+      while(ss.peek() == delimiter || ss.peek() == ' ')
+      {
+        ss.ignore();
+      }
+      while( ss>>value )
+      {
+        target.push_back( value );
+        while(ss.peek() == delimiter || ss.peek() == ' ')
+        {
+          ss.ignore();
+        }
+      }
+    }
+
+    inputStream.close();
+  }
+  else
+  {
+    GEOS_ERROR("Could not read input file!");
+  }
+}
 void TableFunction::InitializeFunction()
 {
   // Read in data
@@ -108,10 +146,10 @@ void TableFunction::InitializeFunction()
 
     // TODO: Read these files on rank 0, then broadcast
     string const& voxelFile = getReference<string>(keys::voxelFile);
-    IOUtilities::parse_file( m_values, voxelFile, ',' );
+    parse_file( m_values, voxelFile, ',' );
     for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
     {
-      IOUtilities::parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
+      parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
       m_size.push_back(m_coordinates[ii].size());
     }
   }
