@@ -32,7 +32,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 
@@ -54,7 +54,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   SinglePhaseFlow( const std::string & name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
 
   /// deleted default constructor
@@ -84,7 +84,7 @@ public:
   static string CatalogName()
   { return "SinglePhaseFlow"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,
@@ -119,6 +119,9 @@ public:
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
 
+  virtual void
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -165,6 +168,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            CellElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -172,6 +176,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            FaceElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -224,18 +229,22 @@ public:
 
   /**@}*/
 
+  /**
+   * @brief Function to update all constitutive state and dependent variables
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateState( Group * dataGroup ) const;
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateFluidModel( Group * const dataGroup ) const;
+
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    // dof numbering
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_SinglePhaseFlow" ;
-
-    // primary solution field
-    static constexpr auto pressureString = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto facePressureString = "facePressure";
-
-    static constexpr auto deltaVolumeString = "deltaVolume";
 
     // intermediate fields
     static constexpr auto mobilityString = "mobility";
@@ -271,39 +280,9 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
-private:
-
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix ) const;
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) const;
-
 protected:
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -332,25 +311,14 @@ private:
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  void UpdateFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateSolidModel( ManagedGroup * const dataGroup ) const;
+  void UpdateSolidModel( Group * const dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void UpdateMobility( ManagedGroup * const dataGroup ) const;
+  void UpdateMobility( Group * const dataGroup ) const;
 
-  /**
-   * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateState( ManagedGroup * dataGroup ) const;
 
   /**
    * @brief Function to explicitly update all constitutive state and dependent variables
@@ -359,8 +327,6 @@ private:
   void UpdateStateExplicit( ManagedGroup * dataGroup ) const;
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;

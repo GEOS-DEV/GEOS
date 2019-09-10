@@ -40,6 +40,9 @@ class EdgeManager : public ObjectManagerBase
 {
 public:
 
+  using NodeMapType = FixedOneToManyRelation;
+  using FaceMapType = UnorderedVariableOneToManyRelation;
+
   /**
     * @name Static Factory Catalog Functions
     */
@@ -56,7 +59,7 @@ public:
 
 
   EdgeManager( std::string const & name,
-               ManagedGroup * const parent );
+               Group * const parent );
   ~EdgeManager() override;
 
 //  void Initialize() {}
@@ -150,6 +153,7 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  constexpr int maxEdgesPerNode() const { return 100; }
 
   FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
   FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
@@ -177,8 +181,9 @@ public:
 
 
 private:
-  FixedOneToManyRelation m_toNodesRelation;
-  UnorderedVariableOneToManyRelation m_toFacesRelation;
+
+  NodeMapType m_toNodesRelation;
+  FaceMapType m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;

@@ -35,7 +35,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -56,7 +56,7 @@ public:
    * @param parent the parent group of the solver
    */
   SolidMechanicsLagrangianFEM( const std::string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
 
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
@@ -75,9 +75,9 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -107,6 +107,10 @@ public:
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
+
+  virtual void
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -148,37 +152,6 @@ public:
 
   /**@}*/
 
-  /**
-   * Function to setup/allocate the linear system blocks
-   * @param domain The DomainPartition object.
-   * @param blockSystem the block system object to that holds the blocks that will be constructed
-   */
-  void SetupSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    ParallelMatrix & matrix,
-                    ParallelVector & rhs,
-                    ParallelVector & solution );
-
-  /**
-   * Function to set the sparsity pattern
-   * @param domain The DomainPartition object
-   * @param sparsity Pointer to the the sparsity graph
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           ParallelMatrix * const matrix );
-
-  /**
-   * Function to set the global DOF numbers  for this solver.
-   * @param domain The DomainPartition object
-   * @param numLocalRows The number of local rows on this process
-   * @param numGlobalRows The number of global rows in the system
-   * @param localIndices The local indices associated with a local row??
-   * @param offset The offset for the row/globalDOF
-   */
-  void SetNumRowsAndTrilinosIndices( ManagedGroup * const domain,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset ) const;
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -392,7 +365,6 @@ public:
     dataRepository::ViewKey massDamping = { massDampingString };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
     dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
-    dataRepository::ViewKey globalDofNumber = { globalDofNumberString };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
   } solidMechanicsViewKeys;
 
@@ -404,7 +376,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -432,6 +404,7 @@ protected:
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
+
 
 } /* namespace geosx */
 

@@ -19,9 +19,10 @@
 #include "common/GeosxConfig.hpp"
 
 #include "Blueprint.hpp"
+
 #include "common/DataTypes.hpp"
-#include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 #ifdef GEOSX_USE_ATK
 #include "axom/sidre/core/sidre.hpp"
@@ -153,9 +154,9 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
   z_view->setExternalDataPtr( const_cast< R1Tensor* >( position.data() ) );
   z_view->apply( axom::sidre::TypeID::DOUBLE_ID, n_nodes, 2, 3 );
 
-  for ( const std::pair< const std::string, const dataRepository::ViewWrapperBase* >& pair : m_node_manager.wrappers() )
+  for ( const std::pair< const std::string, const dataRepository::WrapperBase* >& pair : m_node_manager.wrappers() )
   {
-    const dataRepository::ViewWrapperBase* view = pair.second;
+    const dataRepository::WrapperBase* view = pair.second;
     // if ( view->sizedFromParent() == 1 &&
     //      view->size() > 0 &&
     //      view->shouldRegisterDataPtr() &&
@@ -182,7 +183,7 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
     GEOS_ERROR( "Blueprint IO currently only works in problems with one cell block." );
   }
 
-  const ElementRegion* elem_region = m_elem_reg_manager.GetRegion(0);
+  const ElementRegionBase* elem_region = m_elem_reg_manager.GetRegion(0);
   const CellElementSubRegion* cell_block = elem_region->GetSubRegion<CellElementSubRegion>(0);
   const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
   const localIndex n_cells = connectivity.size(0);
@@ -198,9 +199,9 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
   connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
 
-  // for ( const std::pair< const std::string, const ViewWrapperBase* >& pair : cell_block->wrappers() )
+  // for ( const std::pair< const std::string, const WrapperBase* >& pair : cell_block->wrappers() )
   // {
-  //   const ViewWrapperBase* view = pair.second;
+  //   const WrapperBase* view = pair.second;
   //   if ( view->sizedFromParent() == 1 &&
   //        view->size() > 0 &&
   //        view->shouldRegisterDataPtr() &&

@@ -22,8 +22,10 @@
         <SurfaceGenerator
             name="SurfaceGen"
             verboseLevel="0"
+            solidMaterialName="rock"
             fractureRegion="Fracture"
-            targetRegions="{Fracture}">
+            targetRegions="{Fracture}"
+            rockToughness="1e6">
         </SurfaceGenerator>
     </Solvers>
 
@@ -90,7 +92,7 @@
             name="outputs"
             cycleFrequency="1"
             targetExactTimestep="1"
-            target="/Outputs/siloOutput" /-->
+            target="/Outputs/siloOutput" / -->
 
         <PeriodicEvent
             name="restarts"
@@ -109,7 +111,7 @@
     </NumericalMethods>
 
     <ElementRegions>
-        <ElementRegion
+        <CellElementRegion
             name="Region2"
             cellBlocks="{cb1}"
             materialList="{water, rock}" />

@@ -25,8 +25,8 @@
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
-#include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/ViewWrapper.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/Wrapper.hpp"
 
 namespace geosx
 {
@@ -44,6 +44,7 @@ string const basis = "basis";
 string const quadrature = "quadrature";
 string const dNdX = "dNdX";
 string const detJ = "detJ";
+string const parentSpace="parentSpace";
 }
 }
 
@@ -51,13 +52,13 @@ class BasisBase;
 class QuadratureBase;
 class FiniteElementBase;
 
-class FiniteElementDiscretization : public dataRepository::ManagedGroup
+class FiniteElementDiscretization : public dataRepository::Group
 {
 public:
 
   FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent );
+  explicit FiniteElementDiscretization( std::string const & name, Group * const parent );
 
   ~FiniteElementDiscretization() override;
 
@@ -86,6 +87,7 @@ public:
 
   string m_basisName;
   string m_quadratureName;
+  string m_parentSpace;
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;

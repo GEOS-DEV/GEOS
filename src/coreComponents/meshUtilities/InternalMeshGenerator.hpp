@@ -29,7 +29,7 @@
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "MeshGeneratorBase.hpp"
 
@@ -62,7 +62,7 @@ class InternalMeshGenerator : public MeshGeneratorBase
 {
 public:
   InternalMeshGenerator( const std::string& name,
-                         ManagedGroup * const parent );
+                         Group * const parent );
 
   virtual ~InternalMeshGenerator() override;
 
@@ -74,7 +74,7 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition& domain ) override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
@@ -87,7 +87,7 @@ public:
                                              int nodeIDInBox[],
                                              const int size) override;
 
-  virtual void RemapMesh ( dataRepository::ManagedGroup * const domain ) override;
+  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
 
 //  int m_delayMeshDeformation;
 

@@ -101,7 +101,7 @@
     </QuadratureRules>
 
     <FiniteElements>
-      <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
     
     <FiniteVolume>
@@ -112,7 +112,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale, water}" />
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale, water}" />
   </ElementRegions>
 
   <Constitutive>

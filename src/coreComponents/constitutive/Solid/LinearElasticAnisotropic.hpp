@@ -40,16 +40,16 @@ namespace constitutive
 class LinearElasticAnisotropic : public SolidBase
 {
 public:
-  LinearElasticAnisotropic( string const & name, ManagedGroup * const parent );
+  LinearElasticAnisotropic( string const & name, Group * const parent );
 
   virtual ~LinearElasticAnisotropic() override;
 
   virtual void
   DeliverClone( string const & name,
-                ManagedGroup * const parent,
+                Group * const parent,
                 std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr auto m_catalogNameString = "LinearElasticAnisotropic";

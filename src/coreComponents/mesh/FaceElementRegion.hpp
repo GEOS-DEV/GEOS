@@ -24,7 +24,7 @@
 #ifndef CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
 #define CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
 
-#include "ElementRegion.hpp"
+#include "ElementRegionBase.hpp"
 
 namespace geosx
 {
@@ -39,7 +39,7 @@ class EdgeManager;
  *
  *
  */
-class FaceElementRegion : public ElementRegion
+class FaceElementRegion : public ElementRegionBase
 {
 public:
   /**
@@ -47,7 +47,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  FaceElementRegion( string const & name, ManagedGroup * const parent );
+  FaceElementRegion( string const & name, Group * const parent );
 
   FaceElementRegion() = delete;
   virtual ~FaceElementRegion() override;
@@ -64,7 +64,7 @@ public:
 
 
 
-  virtual void GenerateMesh( ManagedGroup const * ) override {}
+  virtual void GenerateMesh( Group const * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh
@@ -80,7 +80,7 @@ public:
                                 localIndex const faceIndices[2] );
 
 
-  struct viewKeyStruct : public ElementRegion::viewKeyStruct
+  struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
   };

@@ -24,7 +24,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
@@ -78,12 +78,12 @@ struct PointDescriptor
  * Main stencil is the one for cell-to-cell fluxes.
  * Boundary stencils are for Dirichlet boundary conditions
  */
-class FluxApproximationBase : public dataRepository::ManagedGroup
+class FluxApproximationBase : public dataRepository::Group
 {
 public:
 
   // necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
@@ -91,7 +91,7 @@ public:
 
   FluxApproximationBase() = delete;
 
-  FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
+  FluxApproximationBase(string const & name, dataRepository::Group * const parent);
 
   /// return a boundary stencil by face set name
   BoundaryStencil const & getBoundaryStencil(string const & setName) const;
@@ -139,7 +139,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
@@ -170,18 +170,18 @@ template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
 //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  this->forViewWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const vw) -> void
+  this->forWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const wrapper) -> void
   {
-    lambda(vw->reference());
+    lambda(wrapper->reference());
   });
 }
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappers<BoundaryStencil>([&] (auto const * const vw) -> void
+  this->forWrappers<BoundaryStencil>([&] (auto const * const wrapper) -> void
   {
-    lambda(vw->reference());
+    lambda(wrapper->reference());
   });
 }
 

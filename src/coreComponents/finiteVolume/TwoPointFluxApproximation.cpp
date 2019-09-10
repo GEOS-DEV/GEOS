@@ -21,10 +21,11 @@
  *
  */
 #include "TwoPointFluxApproximation.hpp"
+
+#include "mesh/FaceElementRegion.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "mesh/FaceElementRegion.hpp"
 
 namespace geosx
 {
@@ -32,13 +33,13 @@ namespace geosx
 using namespace dataRepository;
 
 TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
-                                                     ManagedGroup *const parent)
+                                                     Group *const parent)
   : FluxApproximationBase(name, parent)
 {
-  RegisterViewWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
+  registerWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
-  RegisterViewWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
+  registerWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
 }
@@ -504,6 +505,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 }
 
 
-REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, Group * const)
 
 }

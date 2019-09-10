@@ -30,7 +30,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -51,7 +51,7 @@ public:
    * @param parent the parent group of this instantiation of ManagedGroup
    */
   FlowSolverBase( const std::string& name,
-                  ManagedGroup * const parent );
+                  Group * const parent );
 
 
   /// deleted default constructor
@@ -74,9 +74,11 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
-
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
+
+  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
@@ -132,6 +134,10 @@ public:
     static constexpr auto fluidIndexString     = "fluidIndex";
     static constexpr auto solidIndexString     = "solidIndex";
 
+    static constexpr auto pressureString = "pressure";
+    static constexpr auto deltaPressureString = "deltaPressure";
+    static constexpr auto deltaVolumeString = "deltaVolume";
+
     static constexpr auto aperture0String  = "aperture_n";
 
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
@@ -172,12 +178,9 @@ private:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
-
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
-
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -202,6 +205,9 @@ protected:
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
+  /// flag to determine whether or not coupled with wells
+  integer m_coupledWellsFlag;
+  
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
