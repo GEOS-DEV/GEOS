@@ -17,31 +17,40 @@
  */
 
 /**
- * @file EpetraVector.hpp
+ * @file PetscVector.hpp
  */
 
-#ifndef LAI_EPETRAVECTOR_HPP_
-#define LAI_EPETRAVECTOR_HPP_
-
-#include <Epetra_FEVector.h>
-#include <Epetra_Map.h>
-#include <Epetra_MpiComm.h>
-#include <EpetraExt_MultiVectorOut.h>
+#ifndef LAI_PETSCVECTOR_HPP_
+#define LAI_PETSCVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
+
+#include <petscvec.h>
 
 namespace geosx
 {
 
-/**
- * \class EpetraVector
- * \brief This class creates and provides basic support for the Epetra_FEVector
- *        vector object type used in Trilinos.  We use the FE version because
- *        Epetra_Vector support for long globalIDs is haphazard.
- */
-class EpetraVector
+inline PetscInt * toPetscInt( globalIndex * const index )
 {
-public:
+  return reinterpret_cast<PetscInt*>(index);
+}
+
+inline PetscInt const * toPetscInt( globalIndex const * const index )
+{
+  return reinterpret_cast<PetscInt const*>(index);
+}
+
+/**
+ * \class PetscVector
+ * \brief This class creates and provides basic support for Vec 
+ *        vector object type used in PETSc.
+ */
+class PetscVector
+{
+  static_assert( sizeof(PetscInt)==sizeof(globalIndex), "sizeof(PetscInt) != sizeof(localIndex)");
+  static_assert( std::is_same<PetscScalar, real64>::value, "PetscScalar != real64" );
+
+ public:
   //! @name Constructor/Destructor Methods
   //@{
 
@@ -49,23 +58,26 @@ public:
    * @brief Empty vector constructor.
    *
    * Create an empty (distributed) vector.
+   * 
    */
-  EpetraVector();
+  PetscVector();
 
   /**
    * @brief Copy constructor.
    *
-   * \param src EpetraVector to be copied.
+   * \param vec Vector to be copied.
    *
    */
-  EpetraVector( EpetraVector const & src );
+  PetscVector( PetscVector const & vec );
+
+  /* Construct from Petsc vector */
+  explicit PetscVector( Vec vec );
 
   /**
-   * @brief Destructor.
+   * @brief Virtual destructor.
    */
-  ~EpetraVector() = default;
+  ~PetscVector();
   //@}
-
 
   //! @name Create Methods
   //@{
@@ -73,13 +85,13 @@ public:
   /**
    * @brief Create a vector based on a previous vector.
    *
-   * \param vector an already formed EpetraVector.
+   * \param vector an already formed PetscVector.
    *
    */
-  void create( EpetraVector const & src );
+  void create( PetscVector const & src );
 
   /**
-   * @brief Create a vector based on local number of elements.
+   * @brief Create a vector based on local number of elements. Creates a CPU MPI vector.
    *
    * Create a vector based on local number of elements.  Global size is
    * the sum across processors.  For specifying a global size and having
@@ -91,7 +103,7 @@ public:
   void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Create a vector based on global number of elements.
+   * @brief Create a vector based on global number of elements. Creates a CPU MPI vector.
    *
    * Create a vector based on global number of elements. Every processors
    * gets the same number of local elements except proc 0, which gets any
@@ -103,9 +115,9 @@ public:
   void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
 
   /**
-   * @brief Construct parallel vector from a local array.
+   * @brief Construct parallel vector from a local array. Creates a CPU MPI vector.
    *
-   * Create a vector from local data
+   * Create a vector from local data, must assemble vector after use.
    *
    * \param localValues local data to put into vector
    *
@@ -117,7 +129,7 @@ public:
   //@{
 
   /**
-   * @brief Empty function for Trilinos implementation. May be required by other libraries.
+   * @brief Empty function for PETSc implementation. May be required by other libraries.
    *
    */
   void open();
@@ -125,13 +137,12 @@ public:
   /**
    * @brief Assemble vector
    *
-   * Performs parallel communication to scatter assembled entries to appropriate locations
    */
   void close();
 
   //@}
   //! @name Add/Set Methods
-  //@{
+  //@
 
   /**
    * @brief Set vector value.
@@ -141,6 +152,8 @@ public:
    * \param globalRow global row index
    * \param value Value to add at given row.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const globalRow,
             real64 const value );
@@ -148,10 +161,12 @@ public:
   /**
    * @brief Add into vector value.
    *
-   * Add into vector value at given row.
+   * Add into vector value at given element.
    *
    * \param globalRow global row.
    * \param value Values to add in given row.
+   * 
+   * NOTE: set() and add() can't be interchanged without assembly.
    *
    */
   void add( globalIndex const globalRow,
@@ -166,6 +181,8 @@ public:
    * \param values Values to add in given rows.
    * \param size Number of elements
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( globalIndex const * globalIndices,
             real64 const * values,
@@ -180,6 +197,8 @@ public:
    * \param values Values to add in given rows.
    * \param size Number of elements
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void add( globalIndex const * globalIndices,
             real64 const * values,
@@ -193,6 +212,8 @@ public:
    * \param globalIndices global row indices.
    * \param values Values to add in given rows.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
@@ -206,6 +227,8 @@ public:
    * \param globalIndices global rows indices
    * \param values Values to add in given rows.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void add( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
@@ -215,6 +238,8 @@ public:
    *
    * \param value Values to set vector elements to.
    *
+   * NOTE: set() and add() can't be interchanged without assembly.
+   * 
    */
   void set( real64 const value );
 
@@ -228,7 +253,7 @@ public:
    * @brief Set vector elements to random entries.
    *
    */
-  void rand();
+  void rand( unsigned long seed = 1984 );
 
   //@}
 
@@ -249,17 +274,17 @@ public:
    * \param vec EpetraVector to dot-product with.
    *
    */
-  real64 dot( EpetraVector const &vec );
+  real64 dot( PetscVector const &vec );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x EpetraVector to copy.
+   * \param x PetscVector to copy.
    *
    */
-  void copy( EpetraVector const &x );
+  void copy(PetscVector const &x);
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
@@ -267,11 +292,11 @@ public:
    * @note The naming convention follows the logic of the BLAS library.
    *
    * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
+   * \param x Vector to add.
    *
    */
   void axpy( real64 const alpha,
-             EpetraVector const &x );
+             PetscVector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -279,13 +304,13 @@ public:
    * @note The naming convention follows the logic of the BLAS library.
    *
    * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
+   * \param x Vector to add.
    * \param beta Scaling factor for self vector.
    *
    */
-  void axpby( real64 const alpha,
-              EpetraVector const &x,
-              real64 const beta );
+  void axpby( real64 const alpha, 
+              PetscVector &x, 
+              real64 const beta);
 
   /**
    * @brief 1-norm of the vector.
@@ -332,26 +357,48 @@ public:
    */
   globalIndex iupper() const;
 
-  /**
-   * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
+   /**
+   * @brief Returns a single element. 
+   * 
+   * \param globalRow Global location of element to return
    */
-  real64 get( globalIndex globalRow ) const;
+  real64 get(globalIndex globalRow) const;
 
   /**
-   * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
+   * @brief Returns array of values at globalIndices of the vector.
+   * 
+   * \param globalIndices Global index array of local portion of the vector
+   * \param values Array of values of local portion of the vector
+   * 
+   * NOTE: not yet implemented
    */
   void get( array1d<globalIndex> const & globalIndices,
             array1d<real64> & values ) const;
 
   /**
-   * @brief Returns a const pointer to the underlying Epetra object.
+   * @brief Returns a const pointer to the underlying Vec.
    */
-  Epetra_FEVector const * unwrappedPointer() const;
+  const Vec* unwrappedPointer() const;
 
   /**
-   * @brief Returns a non-const pointer to the underlying Epetra object.
+   * @brief Returns a non-const pointer to the underlying Vec.
    */
-  Epetra_FEVector* unwrappedPointer();
+  Vec* unwrappedPointer();
+
+  /**
+   * @brief Returns underlying constant PETSc vector.
+   */
+  Vec getConstVec() const;
+
+  /**
+   * @brief Returns underying PETSc vector.
+   */
+  Vec getVec();
+
+  /**
+   * @brief Returns the matrix MPI communicator.
+   */
+  MPI_Comm getComm() const;
 
   //@}
 
@@ -359,59 +406,42 @@ public:
   //@{
 
   /**
-   * @brief Print the vector in Trilinos format to the terminal.
+   * @brief Print the vector in PETSc format to the terminal.
    */
-  void print( std::ostream & os = std::cout ) const;
+  void print() const;
 
   /**
    * @brief Write the vector to a matlab-compatible file
+   * 
+   * \param filename Name of output file
+   * \param mtxFormat True if Matrix Market file format, false for Matlab
    */
   void write( string const & filename,
               bool const mtxFormat = true ) const;
 
   /**
-   * Map a global row index to local row index
+   * Map a global row index to local row index. 
+   * Error if requesting processor does not own row index. 
+   * 
+   * \param index Global index of row
    */
   localIndex getLocalRowID( globalIndex const index ) const;
 
   /**
-   * Map a local row index to global row index
-   */
-  localIndex getGlobalRowID( localIndex const index ) const;
-
-  /**
-   * Extract a view of the local portion of the array
+   * Extract a view of the local portion of the array.
+   * 
+   * \param localVector Pointer to array of local values. Caller allocates memory. 
    */
   void extractLocalVector( real64 ** localVector ) const;
 
   //@}
 
-private:
-
-  /**
-   * Unique pointer to underlying Epetra_FEVector type.
-   */
-  std::unique_ptr<Epetra_FEVector> m_vector = nullptr;
-
-  /**
-   * @brief Create a vector from an Epetra_Map.
-   *
-   * Create a vector from an Epetra_Map.  Allows for maximum flexibility
-   * for advanced users.
-   *
-   * \param map Input Epetra Map.
-   */
-  void create( Epetra_Map const &map );
+ protected:
+  
+  // Underlying Petsc Vec
+  Vec m_vec;
 };
-
-/**
- * @brief Stream insertion operator for EpetraVector
- * @param os the output stream
- * @param vec the vector to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
 
 } // end geosx namespace
 
-#endif /* LAI_EPETRAVECTOR_HPP_ */
+#endif /* LAI_PETSCVECTOR_HPP_ */
