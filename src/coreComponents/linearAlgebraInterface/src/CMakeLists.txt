@@ -10,7 +10,13 @@ set( linearAlgebraInterface_headers
      InterfaceTypes.hpp
      LinearSolverParameters.hpp
      NativeCG.hpp
-     NativeBICGSTAB.hpp )
+     NativeBICGSTAB.hpp
+     TrilinosSolver.hpp
+     TrilinosInterface.hpp
+     PetscVector.hpp
+     PetscSparseMatrix.hpp
+     PetscSolver.hpp
+     PetscInterface.hpp ) 
 
 #
 # Specify all sources
@@ -52,7 +58,15 @@ endif()
 if( ENABLE_PETSC )
 
   list( APPEND linearAlgebraInterface_headers
+        PetscVector.hpp
+        PetscSparseMatrix.hpp
+        PetscSolver.hpp
         PetscInterface.hpp )
+      
+  list( APPEND linearAlgebraInterface_sources 
+        PetscVector.cpp
+        PetscSparseMatrix.cpp
+        PetscSolver.cpp )
 
   list( APPEND dependencyList petsc )
 

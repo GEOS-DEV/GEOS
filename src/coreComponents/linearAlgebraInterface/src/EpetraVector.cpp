@@ -330,17 +330,27 @@ void EpetraVector::write( string const & filename,
 // Get value
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get element globalRow
-// TODO: implementation not straightforward
 real64 EpetraVector::get( globalIndex globalRow ) const
 {
-  GEOS_ERROR( "not yet implemented" );
-  return std::numeric_limits<double>::quiet_NaN();
+  GEOS_ASSERT( globalRow >= ilower() && globalRow < iupper() );
+  real64 * localVector;
+  extractLocalVector( &localVector );
+  return localVector[getLocalRowID( globalRow )];
 }
 
 void EpetraVector::get( array1d<globalIndex> const & globalIndices,
                         array1d<real64> & values ) const
 {
-  GEOS_ERROR( "not yet implemented" );
+  real64 * localVector;
+  extractLocalVector( &localVector );
+
+  values.resize( globalIndices.size() );
+  for( localIndex i = 0; i < globalIndices.size(); ++i )
+  {
+    globalIndex const globalRow = globalIndices[i];
+    GEOS_ASSERT( globalRow >= ilower() && globalRow < iupper() );
+    values[i] = localVector[getLocalRowID( globalRow )];
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -401,6 +411,16 @@ void EpetraVector::extractLocalVector( real64 ** localVector ) const
 {
   int dummy;
   m_vector->ExtractView( localVector, &dummy );
+}
+
+globalIndex EpetraVector::ilower() const
+{
+  return m_vector->Map().MinMyGID64();
+}
+
+globalIndex EpetraVector::iupper() const
+{
+  return m_vector->Map().MaxMyGID64() + 1;
 }
 
 std::ostream & operator<<( std::ostream & os, EpetraVector const & vec )
