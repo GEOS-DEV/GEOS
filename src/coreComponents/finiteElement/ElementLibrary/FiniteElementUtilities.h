@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementUtilities.h
- *
- *  Created on: Nov 8, 2012
- *      Author: settgast1
+/**
+ * @file FiniteElementUtilities.h
  */
 
 #ifndef FINITEELEMENTUTILITIES_H_

@@ -16,15 +16,10 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * SimpleGeometricObjects.cpp
- *
- *  Created on: Dec 4, 2012
- *      Author: settgast1
+/**
+ * @file SimpleGeometricObjectBase.cpp
  */
 
-//#include "codingUtilities/Functions.hpp"
-//#include "managers/FunctionManager.h"
 #include "SimpleGeometricObjectBase.hpp"
 
 namespace geosx

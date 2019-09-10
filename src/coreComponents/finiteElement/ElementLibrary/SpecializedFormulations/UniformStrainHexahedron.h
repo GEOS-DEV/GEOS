@@ -18,8 +18,6 @@
 
 /**
  * @file UniformStrainHexahedron.h
- * @author settgast1
- * @date Jun 6, 2011
  */
 
 #include "legacy/ElementLibrary/FiniteElement.h"

@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementUtilities.cpp
- *
- *  Created on: Nov 8, 2012
- *      Author: settgast1
+/**
+ * @file FiniteElementUtilities.cpp
  */
 
 #include "FiniteElementUtilities.h"

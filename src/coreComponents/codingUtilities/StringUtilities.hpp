@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * StringUtilities.hpp
- *
- *  Created on: Nov 12, 2014
- *      Author: rrsettgast
+/**
+ * @file StringUtilities.hpp
  */
 
 #ifndef STRINGUTILITIES_HPP_

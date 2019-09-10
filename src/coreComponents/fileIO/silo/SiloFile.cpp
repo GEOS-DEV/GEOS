@@ -379,7 +379,6 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
 
 // *********************************************************************************************************************
 /**
- * @author settgast
  *
  */
 void SiloFile::Finish()

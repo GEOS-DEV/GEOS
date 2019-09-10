@@ -17,8 +17,7 @@
  */
 
 /**
- * @file MesquireRelaxer.cpp
- * @author herbold, settgast
+ * @file MesquiteRelaxer.cpp
  */
 #include "MesquiteRelaxer.h"
 #include <iostream>
@@ -40,7 +39,6 @@ using std::auto_ptr;
 #include <algorithm>
 #include <vector>
 #include <utility>
-//#include <iostream>
 
 using namespace MESQUITE_NS;
 

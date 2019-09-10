@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewFunctionManager.hpp
- *
- *  Created on: July 6, 2017
- *      Author: sherman
+/**
+ * @file NewFunctionManager.hpp
  */
 
 #ifndef NEWFUNCTIONMANAGER_HPP_
