@@ -24,7 +24,10 @@ set(fileIO_sources
   blueprint/Blueprint.cpp
   coupling/ChomboCoupler.cpp )
 
-set( dependencyList common hdf5_interface )
+set( dependencyList common silo hdf5 mpi pugixml RAJA hdf5_interface )
+if( CONDUIT_FOUND )
+  set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
+endif()
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -38,7 +41,7 @@ blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                TRUE
+                 #OBJECT                TRUE
                )
                
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

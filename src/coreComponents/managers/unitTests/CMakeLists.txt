@@ -7,7 +7,7 @@ set( gtest_geosx_tests
      testMeshGeneration.cpp
    )
 
-set( dependencyList gtest managers )
+set( dependencyList geosx_core gtest  )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
