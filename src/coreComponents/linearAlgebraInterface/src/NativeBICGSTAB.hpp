@@ -163,6 +163,7 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
   z.scale( 0. );
   ParallelVector t( rk );
   t.scale( 0. );
+  ParallelVector t_( rk );
 
   // Declare scalar for convergence check
   real64 convCheck;
@@ -209,7 +210,8 @@ void BiCGSTABsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
     A.multiply( z, t );
 
     // Compute t = Mt
-    M.multiply( t, t );
+    t_.copy( t );
+    M.multiply( t_, t );
 
     // Update omega
     temp1 = t.dot( z );
