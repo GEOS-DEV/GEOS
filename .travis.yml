@@ -86,8 +86,8 @@ before_script:
       cd thirdPartyLibs;
       wget https://www.dropbox.com/s/ycapqe5k0t7pirj/tpl-osx-clang10-20190908.tar.gz;
       tar -xf tpl-osx-clang10-20190908.tar.gz;
-      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
+      sudo mkdir -p /Users/settgast1/Codes/geosx/;
+      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
       cd /Users/travis/build/GEOSX/GEOSX ;
     fi
 script: 
