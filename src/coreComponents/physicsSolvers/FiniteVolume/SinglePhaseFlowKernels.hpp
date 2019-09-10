@@ -353,6 +353,7 @@ struct FluxKernel
    * @param[in] dPres The change in pressure for each element
    * @param[in] gravDepth The factor for gravity calculations (g*H)
    * @param[in] dens The material density in each element
+   * @param[in] dDens_dPres The change in material density for each element
    * @param[in] mob The fluid mobility in each element
    * @param[out] mass The fluid mass in each element
    * @param[out] maxStableDt The maximum stable time for explicit solver in each element

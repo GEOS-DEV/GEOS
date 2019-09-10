@@ -401,8 +401,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      real64 test1 = dens[ei][0];
-      real64 test2 = vol[ei];
       mass[ei] = dens[ei][0] * vol[ei];
     } );
   } );
