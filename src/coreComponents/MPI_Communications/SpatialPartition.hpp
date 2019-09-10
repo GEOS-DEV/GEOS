@@ -17,9 +17,7 @@
  */
 
 /**
- * @file SpatialPartition.h
- * @author settgast1
- * @date Mar 16, 2011
+ * @file SpatialPartition.hpp
  */
 
 #ifndef SPATIALPARTITION_H_
@@ -32,71 +30,6 @@
 constexpr int nsdof = 3;
 namespace geosx
 {
-//// Planar Sorter
-//// Sorts pairs of local and global indexes by the positions of their
-// corresponding node points in a plane.
-//class PlanarSorter {
-//
-//public:
-//	PlanarSorter(const array1d<R1Tensor>& refPos, int dim) :
-//			dimension(dim), refPositions(refPos) {
-//	}
-//	;
-//
-//	// sort operator for pairs containing local indexes (sort based on 1st
-// element in pair)
-//	bool operator()(const std::pair<localIndex, localIndex>& lhs,
-//	const std::pair<localIndex, localIndex>& rhs) {
-//		bool rv = false;
-//		int a = 0;
-//		int b = 2;
-//		if (dimension == 0)
-//			a = 1;
-//		if (dimension == 2)
-//			b = 1;
-//
-//		const R1Tensor& lhsVect = refPositions[lhs.first];
-//		const R1Tensor& rhsVect = refPositions[rhs.first];
-//
-//		if (lhsVect[a] < rhsVect[a]) {
-//			rv = true;
-//		} else if (isEqual(lhsVect[a], rhsVect[a])
-//				&& (lhsVect[b] < rhsVect[b])) {
-//			rv = true;
-//		};
-//
-//		return rv;
-//	}
-//	;
-//
-//	// sort operator for local indexes
-//	bool operator()(const localIndex& lhs, const localIndex& rhs) {
-//		bool rv = false;
-//		int a = 0;
-//		int b = 2;
-//		if (dimension == 0)
-//			a = 1;
-//		if (dimension == 2)
-//			b = 1;
-//
-//		const R1Tensor& lhsVect = refPositions[lhs];
-//		const R1Tensor& rhsVect = refPositions[rhs];
-//
-//		if (lhsVect[a] < rhsVect[a]) {
-//			rv = true;
-//		} else if (isEqual(lhsVect[a], rhsVect[a])
-//				&& (lhsVect[b] < rhsVect[b])) {
-//			rv = true;
-//		};
-//
-//		return rv;
-//	}
-//	;
-//
-//private:
-//	int dimension;
-//	const array1d<R1Tensor>& refPositions;
-//};
 
 class SpatialPartition : public PartitionBase
 {
@@ -216,24 +149,9 @@ public:
   R1Tensor m_gridMax; // Maximum extent of problem dimensions (excluding ghost
                       // objects)
 
-//	struct PeriodicSet {
-//		int m_dimension;
-//		string_array m_setNames;
-//		void ReadXML(TICPP::HierarchicalDataNode& hdn) {
-//			m_dimension = hdn.GetAttributeValue<int>("dimension");
-//			m_setNames = hdn.GetStringVector("setnames");
-//		}
-//	};
-//	std::vector<PeriodicSet> m_periodicSets;
 
   void AddNeighbors( const unsigned int idim, MPI_Comm& cartcomm,
                      int* ncoords );
-
-//	std::map<array1d<int>, unsigned int> neighborCommPtrIndx;
-
-//	virtual void WriteSiloDerived(SiloFile& siloFile);
-//
-//	virtual void ReadSiloDerived(const SiloFile& siloFile);
 
 };
 }

@@ -156,7 +156,6 @@ void function2( R2TensorT<3>& A, R2TensorT<3>& B, R2TensorT<3>& C, R2TensorT<3>&
 
 
 /**
- * @author Randy Settgast
  * @return cpu usage
  *
  * This function uses the rusage structure to query elapsed system time and user

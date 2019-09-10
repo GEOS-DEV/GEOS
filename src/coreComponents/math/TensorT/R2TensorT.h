@@ -19,7 +19,6 @@
 /**
  * @brief This file contains the definition of the R2TensorT class
  * @file R2TensorT.h
- * @author Randolph Settgast
  */
 
 #ifndef R2_TENSOR_T_H_
@@ -35,7 +34,6 @@ template< int T_dim > class R6minSymTensorT;
 
 /**
  * @brief R2TensorT is a rank-2 tensor object type
- * @author Randolph Settgast
  * @tparam T_dim length of tensor index
  *
  * R2TensorT derives from TensorBaseT, and defines basic operations that can be
@@ -51,8 +49,7 @@ public:
   R2TensorT(void);
 
   /**
-   * @author Randolph Settgast
-   * @param[in] data use for initialization of t_data
+     * @param[in] data use for initialization of t_data
    */
   explicit R2TensorT( const realT data ): TensorBaseT< T_dim*T_dim >(data) {}
 
@@ -241,7 +238,6 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
 
 //**** CONSTRUCTORS AND DESTRUCTORS *******************************************
 /**
- * @author Randolph Settgast
  * @return none
  */
 template< int T_dim >
@@ -250,7 +246,6 @@ R2TensorT<T_dim>::R2TensorT(void):
 {}
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs reference to R2TensorT object to use in initialization
  * @return none
  */
@@ -299,7 +294,6 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
 }
 
 /**
- * @author Randolph Settgast
  * @return none
  */
 template< int T_dim >
@@ -308,7 +302,6 @@ R2TensorT<T_dim>::~R2TensorT(void)
 
 //***** ACCESS OPERATORS ******************************************************
 /**
- * @author Randolph Settgast
  * @param[in] i first index of the data to be returned
  * @param[in] j second index of the data to be returned
  * @return non-modifiable reference to the tensor data at index (i,j)
@@ -320,7 +313,6 @@ inline const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) con
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] i first index of the data to be returned
  * @param[in] j second index of the data to be returned
  * @return modifiable reference to the tensor data at index (i,j)
@@ -335,7 +327,6 @@ inline realT& R2TensorT<T_dim>::operator()( const int i, const int j )
 //***** ASSIGNMENT OPERATORS **************************************************
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return reference to this
  */
@@ -347,7 +338,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return reference to *this
  */
@@ -361,7 +351,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const realT& rhs )
 
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to copy
  * @return reference to *this
  */
@@ -373,7 +362,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2TensorT<T_dim>& rh
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs symmetic tensor to copy
  * @return reference to *this
  */
@@ -424,7 +412,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2TensorT<T_dim>& r
 
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs symmetic tensor to add
  * @return reference to *this
  */
@@ -440,7 +427,6 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>
 
 //***** MULTIPLICATION OPERATORS **********************************************
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -496,7 +482,6 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -550,7 +535,6 @@ inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -605,7 +589,6 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -661,7 +644,6 @@ inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT
 
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -702,7 +684,6 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank-2 tensor
  * @param[in] B rank-2 tensor
  * @return none
@@ -746,7 +727,6 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
  * @return none
@@ -787,7 +767,6 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank-2 tensor
  * @param[in] B symmetric rank-2 tensor
  * @return none
@@ -828,7 +807,6 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
  * @return none
@@ -869,7 +847,6 @@ inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1Tens
 
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @return none
  *
@@ -909,7 +886,6 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank-1 tensor
  * @param[in] b rank-1 tensor
  * @return none
@@ -949,7 +925,6 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
 }
 
 /**
- * @author Randolph Settgast
  * @return trace of (*this)
  *
  * This function returns the trace of the tensor that it is called from.
@@ -983,7 +958,6 @@ inline realT R2TensorT<T_dim>::Trace(void) const
 
 
 /**
- * @author Randolph Settgast
  * @return determinant of (*this)
  *
  * This function returns the determinate of the tensor that it is called from.
@@ -1007,7 +981,6 @@ inline realT R2TensorT<T_dim>::Det(void) const
 }
 
 /**
- * @author Randolph Settgast
  * @return inner product of (*this) with itself
  *
  * This function returns the inner product of the tensor that it is called from
@@ -1036,7 +1009,6 @@ inline realT R2TensorT<T_dim>::Inner(void) const
 
 
 /**
- * @author Randolph Settgast
  * @return 1-Det(*this)
  *
  * This function returns 1 - det(F) assuming that (*this) = F-I where I is the
@@ -1069,7 +1041,6 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
 
 
 /**
- * @author Randolph Settgast
  * @return Det(a)
  *
  * This function inverts a
@@ -1110,7 +1081,6 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
 
 
 /**
- * @author Randolph Settgast
  * @return *this
  *
  * This function assumes that "a" refers to a Tensor that is close to

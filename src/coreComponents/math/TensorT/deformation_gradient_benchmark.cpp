@@ -157,7 +157,6 @@ void CalculateGradient( R2TensorT<nsdof>& Gradient,
 
 
 /**
- * @author Randy Settgast
  * @return cpu usage
  *
  * This function uses the rusage structure to query elapsed system time and user

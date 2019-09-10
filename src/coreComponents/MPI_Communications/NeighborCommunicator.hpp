@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NeighborCommunicator.hpp
- *
- *  Created on: Jan 2, 2018
- *      Author: settgast
+/**
+ * @file NeighborCommunicator.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_

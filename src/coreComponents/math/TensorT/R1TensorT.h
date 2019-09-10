@@ -19,7 +19,6 @@
 /**
  * @brief This file contains the definition of the R1TensorT class
  * @file R1TensorT.h
- * @author Randolph Settgast
  */
 
 #ifndef R1_TENSOR_T_H_
@@ -35,7 +34,6 @@ template<int T_dim> class R2TensorT;
 
 /**
  * @brief R1TensorT is a rank-1 tensor object type
- * @author Randolph Settgast
  * @tparam T_dim length of tensor index
  *
  * R1TensorT derives from TensorBaseT, and defines basic operations that can be
@@ -67,24 +65,20 @@ public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
   /**
-   * @author Randolph Settgast
    */
   R1TensorT( void ): TensorBaseT< T_dim > () {}
 
   /**
-   * @author Randolph Settgast
    * @param[in] data use for initialization of t_data
    */
   explicit R1TensorT( const realT data ): TensorBaseT< T_dim >(data) {}
 
   /**
-   * @author Randolph Settgast
    * @param[in] data naked array used for initialization of t_data
    */
   explicit R1TensorT( realT* const data ): TensorBaseT< T_dim >(data) {}
 
   /**
-   * @author walsh24
    * @param[in] data use for initialization of t_data
    */
   explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT(data) ) {}
@@ -93,7 +87,6 @@ public:
   // *******************************************
 
   /**
-   * @author Randolph Settgast
    * @param[in] rhs reference to R1TensorT object to use in initialization
    */
   R1TensorT( const R1TensorT< T_dim >& rhs ): TensorBaseT< T_dim > ()
@@ -103,8 +96,6 @@ public:
   { TensorBaseT< T_dim >::operator=( rhs ); }
 
   /**
-   * @author Stuart Walsh
-   *
    * Explicit constructors - will throw compile-time errors if not called with
    * the correct dimension
    */
@@ -263,7 +254,6 @@ void R1TensorT< T_dim >::print( std::ostream& os ) const
 //***** ASSIGNMENT OPERATORS **************************************************
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return reference to *this
  */
@@ -275,7 +265,6 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const int& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs value to set each member of t_data to
  * @return reference to *this
  */
@@ -288,7 +277,6 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const realT& rhs )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] rhs tensor to copy
  * @return reference to *this
  */
@@ -302,7 +290,6 @@ inline R1TensorT< T_dim >& R1TensorT< T_dim >::operator=( const R1TensorT< T_dim
 //***** TENSOR OPERATORS ******************************************************
 
 /**
- * @author Randolph Settgast
  * @return L2 norm of tensor
  */
 template<int T_dim>
@@ -319,7 +306,6 @@ inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 
 
 /**
- * @author Randolph Settgast
  * @return sum of the tensor components
  */
 template<int T_dim>
@@ -335,7 +321,6 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
 
 //***** MULTIPLICATION OPERATORS **********************************************
 /**
- * @author Randolph Settgast
  * @param[in] A rank2 tensor
  * @param[in] B rank1 tensor
  * @return none
@@ -366,12 +351,9 @@ inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim >& A, const R1Tens
 }
 
 /**
- * @author Scott Johnson
  * @param[in] A rank2 tensor
  * @param[in] B rank1 tensor
  * @return none
- *
- * Hadamard product
  */
 template<int T_dim>
 inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim >& A, const R1TensorT< T_dim >& B )
@@ -380,39 +362,9 @@ inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim >& A, const R1Tenso
     this->t_data[i] = A.t_data[i] * B.t_data[i];
 }
 
-/**
- * @author Scott Johnson
- * @return Product of squares
- */
-template<int T_dim>
-inline realT R1TensorT< T_dim >::ProductOfSquares() const
-{
-  if (T_dim == 1)
-  {
-    return this->t_data[0]*this->t_data[0];
-  }
-  if (T_dim == 2)
-  {
-    return (this->t_data[0]*this->t_data[0]) *
-           (this->t_data[1]*this->t_data[1]);
-  }
-  else if (T_dim == 3)
-  {
-    return (this->t_data[0]*this->t_data[0]) *
-           (this->t_data[1]*this->t_data[1]) *
-           (this->t_data[2]*this->t_data[2]);
-  }
-  else
-  {
-    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-    exit(1);
-  }
 
-  return 0.0; // never get here
-}
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank2 tensor
  * @param[in] B rank1 tensor
  * @return none
@@ -467,7 +419,6 @@ inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim >& A, cons
 
 }
 /**
- * @author Randolph Settgast
  * @param[in] A rank2 tensor
  * @param[in] B rank1 tensor
  * @return none
@@ -494,7 +445,6 @@ inline void R1TensorT< T_dim >::AijBi( const R2TensorT< T_dim >& A, const R1Tens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank2 tensor
  * @param[in] B rank1 tensor
  * @return none
@@ -528,7 +478,6 @@ inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim >& A, const R1T
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A rank2 tensor
  * @return none
  *
@@ -550,7 +499,6 @@ inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim >& A )
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] a rank1 tensor
  * @param[in] b rank1 tensor
  * @return none
@@ -573,7 +521,6 @@ inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim >& a, const R1Tens
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank2 tensor
  * @param[in] row row number to extract
  * @return none
@@ -610,7 +557,6 @@ inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim >& A, const in
 }
 
 /**
- * @author Randolph Settgast
  * @param[in] A symmetric rank2 tensor
  * @param[in] col col number to extract
  * @return none

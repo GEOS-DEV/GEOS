@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * InterObjectRelationship.h
- *
- *  Created on: May 4, 2012
- *      Author: settgast1
+/**
+ * @file InterObjectRelationship.hpp
  */
 
 #ifndef INTEROBJECTRELATION_H_

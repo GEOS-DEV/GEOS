@@ -21,7 +21,6 @@
 
 /**
  * @file Quadrature.h
- * @author white230
  */
 
 #include "common/DataTypes.hpp"

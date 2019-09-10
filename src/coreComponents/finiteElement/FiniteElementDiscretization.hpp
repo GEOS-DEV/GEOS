@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementSpace.hpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file FiniteElementSpace.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_

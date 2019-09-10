@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * static_if.hpp
- *
- *  Created on: Feb 6, 2018
- *      Author: settgast1
+/**
+ * @file static_if.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_STATIC_IF_HPP_

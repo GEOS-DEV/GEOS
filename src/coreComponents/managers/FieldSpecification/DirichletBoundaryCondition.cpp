@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DirichletBoundaryCondition.cpp
- *
- *  Created on: Jun 2, 2017
- *      Author: rrsettgast
+/**
+ * @file DirichletBoundaryCondition.cpp
  */
 
 #include "DirichletBoundaryCondition.hpp"

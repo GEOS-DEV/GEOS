@@ -17,10 +17,7 @@
  */
 
 /*
- * SimpleGeometricObjects.h
- *
- *  Created on: Dec 4, 2012
- *      Author: settgast1
+ * @file SimpleGeometricObjectBase.hpp
  */
 
 #ifndef SIMPLEGEOMETRICOBJECTS_H_

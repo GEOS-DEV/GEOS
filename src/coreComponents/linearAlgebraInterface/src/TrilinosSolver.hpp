@@ -18,9 +18,6 @@
 
 /**
  * @file TrilinosSolver.hpp
- *
- *  Created on: Aug 9, 2018
- *      Author: Matthias Cremon
  */
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_TRILINOSSOLVER_HPP_

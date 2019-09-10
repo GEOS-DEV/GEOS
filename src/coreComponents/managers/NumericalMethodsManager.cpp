@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NumericalMethodsManager.cpp
- *
- *  Created on: Apr 18, 2017
- *      Author: rrsettgast
+/**
+ * @file NumericalMethodsManager.cpp
  */
 
 #include "NumericalMethodsManager.hpp"

@@ -16,11 +16,9 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * CommunicationTools.cpp
+/**
+ * @file CommunicationTools.cpp
  *
- *  Created on: Jan 6, 2018
- *      Author: settgast
  */
 
 #include "CommunicationTools.hpp"

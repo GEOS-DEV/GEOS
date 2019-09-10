@@ -18,9 +18,6 @@
 
 /**
  * @file CGsolver.hpp
- *
- *  Created on: Sep 12, 2018
- *      Author: Matthias Cremon
  */
 
 #ifndef SRC_CORECOMPONENTS_LINEARALGEBRAINTERFACE_SRC_SOLVER_CG_HPP_
