@@ -47,7 +47,9 @@ inline PetscInt const * toPetscInt( globalIndex const * const index )
  */
 class PetscVector
 {
-  static_assert( sizeof(PetscInt)==sizeof(globalIndex), "sizeof(PetscInt)!=sizeof(localIndex)");
+  static_assert( sizeof(PetscInt)==sizeof(globalIndex), "sizeof(PetscInt) != sizeof(localIndex)");
+  static_assert( std::is_same<PetscScalar, real64>::value, "PetscScalar != real64" );
+
  public:
   //! @name Constructor/Destructor Methods
   //@{
@@ -69,12 +71,12 @@ class PetscVector
   PetscVector( PetscVector const & vec );
 
   /* Construct from Petsc vector */
-  PetscVector(Vec vec); 
+  explicit PetscVector( Vec vec );
 
   /**
    * @brief Virtual destructor.
    */
-  virtual ~PetscVector() = default;
+  ~PetscVector();
   //@}
 
   //! @name Create Methods
@@ -343,6 +345,18 @@ class PetscVector
    */
   localIndex localSize() const;
 
+  /**
+   * @brief Returns the index of the first global row owned by that processor.
+   */
+  globalIndex ilower() const;
+
+  /**
+   * @brief Returns the next index after last global row owned by that processor.
+   *
+   * @note The intention is for [ilower; iupper) to be used as a half-open index range
+   */
+  globalIndex iupper() const;
+
    /**
    * @brief Returns a single element. 
    * 
@@ -425,7 +439,7 @@ class PetscVector
  protected:
   
   // Underlying Petsc Vec
-  Vec _vec;
+  Vec m_vec;
 };
 
 } // end geosx namespace

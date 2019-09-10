@@ -64,9 +64,9 @@ public:
   PetscSparseMatrix( PetscSparseMatrix const &src );
 
   /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
-  virtual ~PetscSparseMatrix() = default;
+  ~PetscSparseMatrix();
   //@}
 
   //! @name Create Methods
@@ -599,12 +599,12 @@ private:
    /**
    * Boolean value, true if the matrix had been finalized, false if not.
    */
-  bool assembled = false;
+  bool m_assembled = false;
 
   /**
    * Underlying Petsc object.
    */
-  Mat _mat;
+  Mat m_mat;
 
 };
 
