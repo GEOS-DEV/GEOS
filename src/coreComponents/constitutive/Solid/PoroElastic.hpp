@@ -1,8 +1,5 @@
-/*
- * PoroElastic.hpp
- *
- *  Created on: Mar 28, 2019
- *      Author: rrsettgast
+/**
+ * @file PoroElastic.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_

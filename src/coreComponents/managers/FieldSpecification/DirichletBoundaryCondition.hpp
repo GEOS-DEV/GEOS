@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * DirichletBoundaryCondition.hpp
- *
- *  Created on: Jun 2, 2017
- *      Author: rrsettgast
+/**
+ * @file DirichletBoundaryCondition.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_BOUNDARYCONDITIONS_DIRICHLETBOUNDARYCONDITION_HPP_

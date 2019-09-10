@@ -17,8 +17,7 @@
  */
 
 /**
- * @file MesquireRelaxer.h
- * @author herbold, settgast
+ * @file MesquiteRelaxer.h
  */
 #ifndef MESQUITE_RELAXER_H_
 #define MESQUITE_RELAXER_H_

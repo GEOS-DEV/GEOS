@@ -18,7 +18,6 @@
 
 /**
  * @file Wrapper.hpp
- * @authors settgast
  */
 
 #ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_

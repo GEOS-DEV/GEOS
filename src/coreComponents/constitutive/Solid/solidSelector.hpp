@@ -1,8 +1,5 @@
-/*
- * solidSelector.hpp
- *
- *  Created on: Mar 22, 2019
- *      Author: settgast1
+/**
+ * @file solidSelector.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_

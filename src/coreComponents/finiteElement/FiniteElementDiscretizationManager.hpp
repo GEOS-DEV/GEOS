@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * FiniteElementSpaceManager.hpp
- *
- *  Created on: Dec 5, 2017
- *      Author: sherman
+/**
+ * @file FiniteElementSpaceManager.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
