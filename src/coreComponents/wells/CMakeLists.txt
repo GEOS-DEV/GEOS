@@ -3,6 +3,7 @@
 #
 set( wells_headers
      InternalWellGenerator.hpp
+     LASWellGenerator.hpp
      WellControls.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
@@ -14,6 +15,7 @@ set( wells_headers
 #
 set( wells_sources
      InternalWellGenerator.cpp
+     LASWellGenerator.cpp
      WellControls.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
