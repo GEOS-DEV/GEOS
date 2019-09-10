@@ -24,7 +24,7 @@
 #include <numeric>
 
 #include "common/DataTypes.hpp"
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 
 #include <BlasLapackLA.hpp>
 

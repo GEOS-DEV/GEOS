@@ -89,8 +89,8 @@ public:
                          array1d< array1d< localIndex > > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                      const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                      const std::map<globalIndex,localIndex>& faceGlobalToLocal );
+                                      const map<globalIndex,localIndex>& nodeGlobalToLocal,
+                                      const map<globalIndex,localIndex>& faceGlobalToLocal );
 
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const set<localIndex>& newEdgeIndices,
