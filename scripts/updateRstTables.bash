@@ -1,8 +1,12 @@
 #!bin/bash
 
+SRC_PATH=$1
+#SRC_PATH=`dirname $0`/../src
+#echo $SRC_PATH
+
 # Generate an updated schema
-bin/geosx -s ../src/coreComponents/fileIO/schema/schema.xsd
+bin/geosx -s ${SRC_PATH}/coreComponents/fileIO/schema/schema.xsd
 
 # Build the documentation tables
-cd ../src/coreComponents/fileIO/schema/
+cd ${SRC_PATH}/coreComponents/fileIO/schema/
 python SchemaToRSTDocumentation.py
