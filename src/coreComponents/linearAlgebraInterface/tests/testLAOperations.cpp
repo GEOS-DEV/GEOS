@@ -198,158 +198,190 @@ void testVectorFunctions()
   using ParallelVector = typename LAI::ParallelVector;
 
   // Get the MPI rank
-  int rank;
-  int numranks;
+  int rank, numRanks;
   MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  MPI_Comm_size( MPI_COMM_WORLD, &numranks );
+  MPI_Comm_size( MPI_COMM_WORLD, &numRanks );
 
-  // Testing createWithLocalSize, set
-  ParallelVector x, z;
-  int size = 3;
-  x.createWithLocalSize(size, MPI_COMM_WORLD);
-  for ( int i = 0; i < size; i++ ) {
-    x.set(i, 2*i);
+  ParallelVector x;
+  localIndex const localSize = 3;
+  globalIndex const globalSize = localSize * numRanks;
+  globalIndex const offset = rank * localSize;
+
+  // Testing createWithLocalSize
+  x.createWithLocalSize( localSize, MPI_COMM_WORLD );
+  EXPECT_EQ( x.localSize(), localSize );
+  EXPECT_EQ( x.globalSize(), globalSize );
+
+  // Testing iupper/ilower
+  EXPECT_EQ( x.ilower(), offset );
+  EXPECT_EQ( x.iupper(), offset + localSize );
+
+  // Testing setting/getting values locally
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    x.set( i, 2 * i );
   }
   x.close();
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    EXPECT_DOUBLE_EQ( x.get( i ), 2 * i );
+  }
+
+  // Testing createWithGlobalSize
+  x.createWithGlobalSize( globalSize, MPI_COMM_WORLD );
+  EXPECT_EQ( x.localSize(), localSize );
+  EXPECT_EQ( x.globalSize(), globalSize );
+
+  // Testing setting global values on rank 0 and getting locally
+  if( rank == 0 )
+  {
+    for( globalIndex i = 0; i < x.globalSize(); ++i )
+    {
+      x.set( i, 2 * i );
+    }
+  }
+  x.close();
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    EXPECT_EQ( x.get( i ), 2 * i );
+  }
+
+  // Testing getLocalRowID
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    EXPECT_EQ( x.getLocalRowID( i ), i % localSize );
+  }
 
   // Testing create with array1d
-  array1d<real64> vals3( 3 );
+  array1d< real64 > localVals( localSize );
+  for( localIndex i = 0; i < localSize; ++i )
+  {
+    localVals[i] = real64( i + rank * localSize );
+  }
+
   ParallelVector v;
-  vals3[0] = 1;
-  vals3[1] = .5;
-  vals3[2] = -3;
-  v.create( vals3, MPI_COMM_WORLD );
-  EXPECT_DOUBLE_EQ( v.get(1), vals3[1] );
+  v.create( localVals, MPI_COMM_WORLD );
+  for( globalIndex i = v.ilower(); i < v.iupper(); ++i )
+  {
+    EXPECT_EQ( v.get( i ), localVals[v.getLocalRowID( i )] );
+  }
 
   // Testing copy constructor, create with ParallelVector, 
   // get element
   ParallelVector y( x );
+  ParallelVector z;
   z.create( x );
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( x.get(i), y.get(i) );
-    EXPECT_DOUBLE_EQ( x.get(i), z.get(i) );
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    EXPECT_EQ( x.get( i ), y.get( i ) );
+    EXPECT_EQ( x.get( i ), z.get( i ) );
   }
-
-  // Testing add/set single element
-  x.set(0, -1);
-  x.close(); // set/add can't be interchanged
-  x.add(1, 10);
-  x.close();
-  EXPECT_DOUBLE_EQ( x.get(0), -1 );
-  EXPECT_DOUBLE_EQ( x.get(1), 12 );
-
-  // Testing add/set c-style
-  globalIndex inds[2] = {0, 1};
-  real64 vals[2] = {-5, -6};
-  localIndex nums = 2;
-  y.set(inds, vals, nums); 
-  y.close(); 
-  z.add(inds, vals, nums);
-  z.close(); 
-  EXPECT_DOUBLE_EQ( y.get(0), -5 );
-  EXPECT_DOUBLE_EQ( y.get(1), -6 );
-  EXPECT_DOUBLE_EQ( y.get(2), 4 );
-  EXPECT_DOUBLE_EQ( z.get(0), -5 );
-  EXPECT_DOUBLE_EQ( z.get(1), -4 );
-  EXPECT_DOUBLE_EQ( z.get(2), 4 );
-
-  // Testing add/set array1d-style
-  ParallelVector w;
-  w.createWithGlobalSize( 4, MPI_COMM_WORLD );
-  array1d<real64> vals4( 3 );
-  array1d<globalIndex> inds4( 3 );
-  vals4[0] = 1;
-  vals4[1] = .5;
-  vals4[2] = -3;
-  inds4[0] = 0;
-  inds4[1] = 1;
-  inds4[2] = 3;
-  w.set( inds4, vals4 );
-  w.close();
-  EXPECT_DOUBLE_EQ( w.get(0), 1 );
-  EXPECT_DOUBLE_EQ( w.get(1), .5 );
-  EXPECT_DOUBLE_EQ( w.get(2), 0 );
-  EXPECT_DOUBLE_EQ( w.get(3), -3 );
-  inds4[2] = 2;
-  vals4[0] = 1;
-  vals4[1] = 1;
-  vals4[2] = 1;
-  w.add( inds4, vals4 );
-  w.close();
-  EXPECT_DOUBLE_EQ( w.get(0), 2 );
-  EXPECT_DOUBLE_EQ( w.get(1), 1.5 );
-  EXPECT_DOUBLE_EQ( w.get(2), 1 );
-  EXPECT_DOUBLE_EQ( w.get(3), -3 );
 
   // Testing zero
   z.zero();
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( z.get(i), 0 );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
+  {
+    EXPECT_EQ( z.get( i ), 0 );
   }
 
   // Testing copy
   z.copy( x );
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( x.get(i), z.get(i) );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
+  {
+    EXPECT_EQ( x.get( i ), z.get( i ) );
   }
 
   // Testing scale, z = x
-  z.scale( 4 );
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( 4*x.get(i), z.get(i) );
+  z.scale( 4.0 );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
+  {
+    EXPECT_EQ( 4.0 * x.get( i ), z.get( i ) );
+  }
+
+  // Testing add/set single element
+  x.set( offset, -1 );
+  x.close(); // set/add can't be interchanged
+  x.add( offset + 1, 10 );
+  x.close();
+  EXPECT_DOUBLE_EQ( x.get( offset ), -1 );
+  EXPECT_DOUBLE_EQ( x.get( offset + 1 ), offset * 2 + 12 );
+
+  // Testing add/set c-style
+  {
+    globalIndex const inds[3] = { offset, offset + 1, offset + 2 };
+    real64 const vals[3] = { -5.0, -6.0, 0.0 };
+    y.zero();
+    y.set( inds, vals, 2 );
+    y.close();
+    z.set( 1.0 );
+    z.add( inds, vals, 2 );
+    z.close();
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      EXPECT_DOUBLE_EQ( y.get( inds[i] ), vals[i] );
+      EXPECT_DOUBLE_EQ( z.get( inds[i] ), vals[i] + 1.0 );
+    }
+  }
+
+  // Testing add/set array1d-style
+  {
+    array1d< globalIndex > inds( 3 );
+    inds[0] = offset; inds[1] = offset + 1; inds[2] = offset + 2;
+    array1d< real64 > vals( 3 );
+    vals[0] = -5.0; vals[1] = -6.0; vals[2] = 0.0;
+    y.zero();
+    y.set( inds, vals );
+    y.close();
+    z.set( 1.0 );
+    z.add( inds, vals );
+    z.close();
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      EXPECT_DOUBLE_EQ( y.get( inds[i] ), vals[i] );
+      EXPECT_DOUBLE_EQ( z.get( inds[i] ), vals[i] + 1.0 );
+    }
   }
 
   // Testing dot, axpy, axpby
-  x.set( 1 );
-  x.close();
-  y.set( 2 );
-  y.close();
-  z.set( 3 );
-  z.close();
-  real64 dotprod = x.dot( y );
-  y.axpy(2, x);
-  EXPECT_DOUBLE_EQ( dotprod, 2*size ); // sum_size 2
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( y.get(i), 4 ); // 2*1 + 2
+  x.set( 1.0 );
+  y.set( 2.0 );
+  z.set( 3.0 );
+
+  real64 const dotprod = x.dot( y );
+  EXPECT_EQ( dotprod, 2 * y.globalSize() ); // sum_size 2
+
+  y.axpy( 2.0, x );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
+  {
+    EXPECT_EQ( y.get( i ), 4.0 ); // 2*1 + 2
   }
-  z.axpby( 2, x, 3 );
-  for ( int i = 0; i < size; i++ ) {
-    EXPECT_DOUBLE_EQ( z.get(i), 11 ); // 2*1 + 3*3
+
+  z.axpby( 2.0, x, 3.0 );
+  for( globalIndex i = z.ilower(); i < z.iupper(); ++i )
+  {
+    EXPECT_EQ( z.get( i ), 11.0 ); // 2*1 + 3*3
   }
 
   // Testing norms
   x.zero();
-  globalIndex inds2[2] = {0, 1};
-  real64 vals2[2] = {3, -4};
-  x.set(inds2, vals2, nums); // 3, -4, 0
+  if( rank == 0 )
+  {
+    globalIndex const inds2[2] = { 0, 1 };
+    real64 const vals2[2] = { 3.0, -4.0 };
+    x.set( inds2, vals2, 2 ); // 3, -4, 0
+  }
   x.close();
-  EXPECT_DOUBLE_EQ( x.norm1(), 7 );
-  EXPECT_DOUBLE_EQ( x.norm2(), 5 ); 
-  EXPECT_DOUBLE_EQ( x.normInf(), 4 );
-
-  // Testing print, write
-  // x.print();
-  // y.print();
-  // z.print();
-  // x.write("vecout.mtx", true);
-  // x.write("vecout.m", false);
-
-  // Testing globalSize, localSize
-  EXPECT_EQ( x.globalSize(), size );
-  EXPECT_EQ( x.localSize(), size*numranks );
-
-  // Testing getLocalRowID
-  EXPECT_EQ( x.getLocalRowID( 0 ), 0 );
-  EXPECT_EQ( x.getLocalRowID( 1 ), 1 );
-  EXPECT_EQ( x.getLocalRowID( 2 ), 2 );
+  EXPECT_EQ( x.norm1(), 7.0 );
+  EXPECT_EQ( x.norm2(), 5.0 );
+  EXPECT_EQ( x.normInf(), 4.0 );
 
   // Testing extractLocalVector
-  real64 *localVec = new real64[x.localSize()];
-  x.extractLocalVector(&localVec);
-  EXPECT_DOUBLE_EQ( localVec[0], x.get( 0 ) );
-  EXPECT_DOUBLE_EQ( localVec[1], x.get( 1 ) );
-  EXPECT_DOUBLE_EQ( localVec[2], x.get( 2 ) );
-
+  real64 * localVec;
+  x.extractLocalVector( &localVec );
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+  {
+    EXPECT_EQ( localVec[x.getLocalRowID( i )], x.get( i ) );
+  }
 }
 /**
  * @function testMatrixFunctions
@@ -939,15 +971,15 @@ void testRectangularMatrixOperations()
   MPI_Comm_size( MPI_COMM_WORLD, &mpiSize );
 
   // Set a size that allows to run with arbitrary number of processes
-  globalIndex nRows = std::max( 100, mpiSize );
-  globalIndex nCols = 2 * nRows;
+  globalIndex const nRows = std::max( 100, mpiSize );
+  globalIndex const nCols = 2 * nRows;
 
   ParallelMatrix A;
   A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_WORLD );
 
   for( globalIndex i = A.ilower() ; i < A.iupper() ; ++i )
   {
-    real64 entry = static_cast<double>( i + 1 );
+    real64 const entry = static_cast<real64>( i + 1 );
     A.insert( i, 2 * i, entry );
     A.insert( i, 2 * i + 1, -entry );
   }
@@ -958,13 +990,13 @@ void testRectangularMatrixOperations()
   EXPECT_EQ( A.globalCols(), nCols );
 
   // Check on norms
-  real64 a = A.norm1();
-  real64 b = A.normInf();
-  real64 c = A.normFrobenius();
+  real64 const a = A.norm1();
+  real64 const b = A.normInf();
+  real64 const c = A.normFrobenius();
 
-  EXPECT_DOUBLE_EQ( a, static_cast<double>( nRows ) );
-  EXPECT_DOUBLE_EQ( b, static_cast<double>( nCols ) );
-  EXPECT_DOUBLE_EQ( c, sqrt( static_cast<double>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3 ) );
+  EXPECT_DOUBLE_EQ( a, static_cast<real64>( nRows ) );
+  EXPECT_DOUBLE_EQ( b, static_cast<real64>( nCols ) );
+  EXPECT_DOUBLE_EQ( c, sqrt( static_cast<real64>( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3 ) );
 }
 
 // END_RST_NARRATIVE
@@ -979,41 +1011,43 @@ void testRectangularMatrixOperations()
 /*! @function testEpetraLAOperations.
  * @brief Runs all tests using the Trilinos interface.
  */
- TEST(testLAOperations,testEpetraLAOperations)
- {
-     testInterfaceSolvers<TrilinosInterface>();
-     testGEOSXSolvers<TrilinosInterface>();
-     testGEOSXBlockSolvers<TrilinosInterface>();
-     testMatrixMatrixOperations<TrilinosInterface>();
-     testRectangularMatrixOperations<TrilinosInterface>();
- }
+TEST( testLAOperations, testEpetraLAOperations )
+{
+  testVectorFunctions< TrilinosInterface >();
+  // testMatrixFunctions<TrilinosInterface>();
+  testInterfaceSolvers< TrilinosInterface >();
+  testGEOSXSolvers< TrilinosInterface >();
+  testGEOSXBlockSolvers< TrilinosInterface >();
+  testMatrixMatrixOperations< TrilinosInterface >();
+  testRectangularMatrixOperations< TrilinosInterface >();
+}
 
 /*! @function testHypreLAOperations.
  * @brief Runs all tests using the Hypre interface.
  */
 //TEST(testLAOperations,testHypreLAOperations)
 //{
-  //MPI_Init( nullptr, nullptr );
+  //testVectorFunctions<HypreInterface>();
+  //testMatrixFunctions<HypreInterface>();
   //testInterfaceSolvers<HypreInterface>();
   //testGEOSXSolvers<HypreInterface>();
   //testGEOSXBlockSolvers<HypreInterface>();
-  //MPI_Finalize();
 //}
 
 /*! @function testPETScLAOperations.
  * @brief Runs all tests using the PETSc interface.
  */
-TEST(testLAOperations,testPETScLAOperations)
+TEST( testLAOperations, testPETScLAOperations )
 {
   PetscInterface();
   PetscInitializeNoArguments(); // set up PETSc directly in tests
-  testVectorFunctions<PetscInterface>(); 
-  testMatrixFunctions<PetscInterface>();
-  testInterfaceSolvers<PetscInterface>();
-  testGEOSXSolvers<PetscInterface>(); 
+  testVectorFunctions< PetscInterface >();
+  // testMatrixFunctions<PetscInterface>();
+  testInterfaceSolvers< PetscInterface >();
+  testGEOSXSolvers< PetscInterface >();
   // testGEOSXBlockSolvers<PetscInterface>(); // doesn't build
-  testMatrixMatrixOperations<PetscInterface>(); 
-  testRectangularMatrixOperations<PetscInterface>(); 
+  testMatrixMatrixOperations< PetscInterface >();
+  testRectangularMatrixOperations< PetscInterface >();
   PetscFinalize();
 }
 //@}
