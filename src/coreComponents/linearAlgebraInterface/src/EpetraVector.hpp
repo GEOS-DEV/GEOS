@@ -61,9 +61,9 @@ public:
   EpetraVector( EpetraVector const & src );
 
   /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
-  virtual ~EpetraVector() = default;
+  ~EpetraVector() = default;
   //@}
 
 
@@ -319,6 +319,18 @@ public:
    * @brief Returns the local size of the vector.
    */
   localIndex localSize() const;
+
+  /**
+   * @brief Returns the index of the first global row owned by that processor.
+   */
+  globalIndex ilower() const;
+
+  /**
+   * @brief Returns the next index after last global row owned by that processor.
+   *
+   * @note The intention is for [ilower; iupper) to be used as a half-open index range
+   */
+  globalIndex iupper() const;
 
   /**
    * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
