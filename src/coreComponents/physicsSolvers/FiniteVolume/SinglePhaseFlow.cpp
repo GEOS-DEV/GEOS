@@ -74,7 +74,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::massString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
     });
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
@@ -89,7 +89,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString )->
         setDefaultValue(1.0);
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::massString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
         setDefaultValue(0.0);
 
@@ -324,7 +324,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
-                         ManagedGroup * subRegion,
+                         Group * subRegion,
                          string const & ) -> void
   {
     fs->ApplyFieldValue<FieldSpecificationAdd>( lset,
@@ -346,7 +346,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
 
   // update density from mass and then pressure
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
@@ -367,7 +367,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
-                         ManagedGroup * subRegion,
+                         Group * subRegion,
                          string const & ) -> void
   {
     fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
@@ -392,7 +392,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const region,
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
@@ -409,7 +409,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
       forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
                                                           [&] ( localIndex const er,
                                                                 localIndex const esr,
-                                                                ElementRegion *,
+                                                                ElementRegionBase *,
                                                                 FaceElementSubRegion * subRegion )
   {
     arrayView1d<real64> const & aper0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::aperture0String );
@@ -782,6 +782,9 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const * const elemManager=  mesh->getElemManager();
+
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
 
@@ -790,7 +793,12 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber = m_dofNumber.toViewConst();
+  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
+    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
+
+  FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
 
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();

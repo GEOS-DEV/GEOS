@@ -319,13 +319,6 @@ private:
    */
   void UpdateMobility( Group * const dataGroup ) const;
 
-
-  /**
-   * @brief Function to explicitly update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateStateExplicit( ManagedGroup * dataGroup ) const;
-
   /// views into primary variable fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;

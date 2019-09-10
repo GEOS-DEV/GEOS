@@ -69,35 +69,16 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of solid constitutive object to use for this solver");
 
-<<<<<<< HEAD
-  this->RegisterViewWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
-  this->RegisterViewWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
+  this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
+  this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOptionString, false )->
+  this->registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOptionString, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n SteadyState \n ImplicitTransient \n ExplicitTransient \n InertialTransient");
 
 }
 
-void FlowSolverBase::PostProcessInput()
-{
-  SolverBase::PostProcessInput();
-
-  if( !m_timeIntegrationOptionString.empty() )
-  {
-    SetTimeIntegrationOption( m_timeIntegrationOptionString );
-  }
-}
-
-void FlowSolverBase::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
-=======
-  this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
-  this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
-  
-}
-
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
->>>>>>> develop
 {
   SolverBase::RegisterDataOnMesh( MeshBodies );
 
