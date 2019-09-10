@@ -882,7 +882,7 @@
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
 		<xsd:attribute name="edgesToFractureConnectors" type="geosx::mapBase&lt;long, long, std::integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
 		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
@@ -914,7 +914,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="localIndex_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -948,7 +948,7 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt;, 1, long, LvArray::ChaiVector&lt;LvArray::Array&lt;long, 1, long, LvArray::ChaiVector&lt;long&gt; &gt; &gt; &gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--parentIndex => Parent index of the face.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryCandidateFace => The face that has the highest score for splitability-->
@@ -982,7 +982,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemRegionList => (no description available)-->
@@ -992,7 +992,7 @@
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::SortedArray&lt;long, long&gt;, 1, long, LvArray::ChaiVector&lt;LvArray::SortedArray&lt;long, long&gt; &gt; &gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
