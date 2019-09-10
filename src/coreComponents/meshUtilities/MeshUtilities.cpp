@@ -23,7 +23,7 @@
 
 #include "MeshUtilities.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 #include "SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "common/TimingMacros.hpp"
 

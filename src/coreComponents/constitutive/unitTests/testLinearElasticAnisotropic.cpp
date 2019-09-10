@@ -20,7 +20,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Solid/LinearElasticAnisotropic.hpp"
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
