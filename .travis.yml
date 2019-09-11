@@ -17,7 +17,7 @@ matrix:
     - MPICXX=mpicxx
     - MPIFC=mpifort
     - MPIEXEC=/usr/local/bin/mpirun
-    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/Users/travis/build/GEOSX/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang6-LC-toss3
     sudo: required
@@ -25,7 +25,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang6-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang7-LC-toss3
     sudo: required
@@ -33,7 +33,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: clang7-LC-toss3-debug
     sudo: required
@@ -41,7 +41,7 @@ matrix:
     dist: trusty
     env:
     - IMG=clang7-LC-toss3
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Debug
   - compiler: gcc7-ubuntu18
     sudo: required
@@ -49,7 +49,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc7-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18
     sudo: required
@@ -57,7 +57,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Release
   - compiler: gcc8-ubuntu18-debug
     sudo: required
@@ -65,7 +65,7 @@ matrix:
     dist: trusty
     env:
     - IMG=gcc8-ubuntu18
-    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-default-release
+    - GEOSX_TPL_DIR=/home/geosx/thirdPartyLibs/install-environment-release
     - CMAKE_BUILD_TYPE=Debug
 git:
   submodules: false
