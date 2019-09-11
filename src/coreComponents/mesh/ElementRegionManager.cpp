@@ -46,8 +46,8 @@ ElementRegionManager::~ElementRegionManager()
 localIndex ElementRegionManager::numCellBlocks() const
 {
   localIndex numCellBlocks = 0;
-  this->forElementSubRegions([&]( Group const * cellBlock ) -> void
-  {
+  this->forElementSubRegions([&]( Group const * GEOSX_UNUSED_ARG( cellBlock ) )
+    {
     numCellBlocks += 1;
   });
   return numCellBlocks;
@@ -55,10 +55,10 @@ localIndex ElementRegionManager::numCellBlocks() const
 
 void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
-                                   string_array const & elementTypes )
+                                   string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
 {
   localIndex const n_regions = integer_conversion<localIndex>(regionNames.size());
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<n_regions ; ++reg )
   {
     ElementRegionBase * elemRegion = this->GetRegion( regionNames[reg] );
@@ -204,7 +204,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 {
   int packedSize = 0;
 
-//  packedSize += ManagedGroup::Pack( buffer, wrapperNames, {}, 0, 0);
+//  packedSize += Group::Pack( buffer, wrapperNames, {}, 0, 0);
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
   packedSize += bufferOps::Pack<DOPACK>( buffer, numRegions() );

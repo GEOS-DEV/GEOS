@@ -65,7 +65,7 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
 {}
 
 void PAMELAMeshGenerator::PostProcessInput()
@@ -82,12 +82,12 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
-void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const domain )
+void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
 {
   return;
 }
 
-Group * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
@@ -347,11 +347,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                       const int index[],
-                                                       const int& iEle,
-                                                       int nodeIDInBox[],
-                                                       const int node_size )
+void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
+                                                       const int GEOSX_UNUSED_ARG( index )[],
+                                                       const int& GEOSX_UNUSED_ARG( iEle ),
+                                                       int GEOSX_UNUSED_ARG( nodeIDInBox )[],
+                                                       const int GEOSX_UNUSED_ARG( node_size ) )
 {}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, Group * const )

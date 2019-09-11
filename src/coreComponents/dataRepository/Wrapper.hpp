@@ -454,7 +454,7 @@ public:
                                       has_memberfunction_v3_size< U >::value ||
                                       has_memberfunction_v4_size< U >::value ||
                                       has_memberfunction_v5_size< U >::value), localIndex >::type
-    size( Wrapper< T > const * parent )
+    size( Wrapper< T > const * GEOSX_UNUSED_ARG( parent ) )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual localIndex size() const override final
@@ -475,7 +475,7 @@ public:
 
     template< class U = T >
     static typename std::enable_if< !has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( Wrapper< T > const * parent )
+    numDimensions( Wrapper< T > const * GEOSX_UNUSED_ARG( parent ) )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual int numDimensions() const override final
@@ -698,7 +698,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !has_alias_isArray< U >::value, void >::type
-    copy( T * const data, localIndex const sourceIndex, localIndex const destIndex )
+    copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
     {}
 
   };/// @endcond DO_NOT_DOCUMENT

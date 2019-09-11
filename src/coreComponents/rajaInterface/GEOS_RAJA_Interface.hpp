@@ -24,14 +24,17 @@
 
 
 using serialPolicy = RAJA::loop_exec;
+using serialReduce = RAJA::seq_reduce;
 
 #if defined(GEOSX_USE_OPENMP)
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
+using parallelHostReduce = RAJA::omp_reduce;
 
 #else
 
-using parallelHostPolicy = RAJA::loop_exec;
+using parallelHostPolicy = serialPolicy;
+using parallelHostReduce = serialReduce;
 
 #endif
 
@@ -39,16 +42,13 @@ using parallelHostPolicy = RAJA::loop_exec;
 
 template< int BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
-
-#elif defined(GEOSX_USE_OPENMP)
-
-template< int BLOCK_SIZE = 0 >
-using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
+using parallelDeviceReduce = RAJA::cuda_reduce;
 
 #else
 
 template< int BLOCK_SIZE = 0 >
-using parallelDevicePolicy = RAJA::loop_exec;
+using parallelDevicePolicy = parallelHostPolicy;
+using parallelDeviceReduce = parallelHostReduce;
 
 #endif
 

@@ -113,8 +113,8 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
 
-  virtual void addToFractureStencil( DomainPartition const & domain,
-                                     string const & faceElementRegionName ) {}
+  virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_ARG( domain ),
+                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ) ) {}
 
 
   struct viewKeyStruct

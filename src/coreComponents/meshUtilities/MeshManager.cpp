@@ -59,13 +59,10 @@ void MeshManager::ExpandObjectCatalogs()
 
 void MeshManager::GenerateMeshes( DomainPartition * const domain )
 {
-  GEOSX_MARK_FUNCTION;
-
   forSubGroups<MeshGeneratorBase>([&]( MeshGeneratorBase * meshGen ) -> void
   {
     meshGen->GenerateMesh( domain );
   });
-
 }
 
 

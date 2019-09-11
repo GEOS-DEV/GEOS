@@ -63,9 +63,9 @@ public:
   };
 
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   WellSolverBase( const std::string& name,
                   Group * const parent );
@@ -163,9 +163,9 @@ public:
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override;
 
-  virtual void ImplicitStepComplete( real64 const & time,
-                                     real64 const & dt,
-                                     DomainPartition * const domain ) override {}
+  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
+                                     real64 const & GEOSX_UNUSED_ARG( dt ),
+                                     DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override {}
 
 
   /**@}*/

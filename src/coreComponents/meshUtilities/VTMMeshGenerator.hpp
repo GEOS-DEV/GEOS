@@ -83,7 +83,7 @@ private:
 
   VtmFile m_vtmFile;
 
-  inline globalIndex NodeGlobalIndex( const int index[3] )
+  inline globalIndex NodeGlobalIndex( const int GEOSX_UNUSED_ARG( index )[3] )
   {
     globalIndex rval = 0;
       /*
@@ -93,7 +93,7 @@ private:
     return rval;
   }
 
-  inline globalIndex ElemGlobalIndex( const int index[3] )
+  inline globalIndex ElemGlobalIndex( const int GEOSX_UNUSED_ARG( index )[3] )
   {
     globalIndex rval = 0;
       /*
@@ -103,7 +103,7 @@ private:
     return rval;
   }
 
-  inline R1Tensor NodePosition( const int a[3], int trianglePattern )
+  inline R1Tensor NodePosition( const int GEOSX_UNUSED_ARG( a )[3], int GEOSX_UNUSED_ARG( trianglePattern ) )
   {
     R1Tensor X;
       /*
@@ -169,7 +169,7 @@ private:
     return X;
   }
 
-  inline R1Tensor ElemCenterPosition( const int k[3] )
+  inline R1Tensor ElemCenterPosition( const int GEOSX_UNUSED_ARG( k )[3] )
   {
     R1Tensor X;
 

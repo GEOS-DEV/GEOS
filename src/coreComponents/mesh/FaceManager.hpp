@@ -37,8 +37,8 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
-  using NodeMapType = OrderedVariableOneToManyRelation;
-  using EdgeMapType = OrderedVariableOneToManyRelation;
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
   using ElemMapType = FixedToManyElementRelation;
 
   /**
@@ -73,7 +73,7 @@ public:
 
   void SortFaceNodes( arrayView1d<R1Tensor const> const & X,
                       R1Tensor const & elemCenter,
-                      arrayView1d<localIndex> const & faceNodes,
+                      localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
@@ -137,11 +137,11 @@ public:
   array1d<R1Tensor> const & faceNormal() const { return m_faceNormal; }
 
 
-  OrderedVariableOneToManyRelation & nodeList()                    { return m_nodeList; }
-  OrderedVariableOneToManyRelation const & nodeList() const        { return m_nodeList; }
+  NodeMapType & nodeList()                    { return m_nodeList; }
+  NodeMapType const & nodeList() const        { return m_nodeList; }
 
-  OrderedVariableOneToManyRelation       & edgeList()       { return m_edgeList; }
-  OrderedVariableOneToManyRelation const & edgeList() const { return m_edgeList; }
+  EdgeMapType       & edgeList()       { return m_edgeList; }
+  EdgeMapType const & edgeList() const { return m_edgeList; }
 
   array2d<localIndex>       & elementRegionList()       { return m_toElements.m_toElementRegion; }
   array2d<localIndex> const & elementRegionList() const { return m_toElements.m_toElementRegion; }
