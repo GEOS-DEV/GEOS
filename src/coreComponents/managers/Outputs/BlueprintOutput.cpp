@@ -41,11 +41,11 @@ BlueprintOutput::~BlueprintOutput()
 {}
 
 
-void BlueprintOutput::Execute(real64 const time_n,
-                              real64 const dt,
+void BlueprintOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
+                              real64 const GEOSX_UNUSED_ARG( dt ),
                               integer const cycleNumber,
                               integer const eventCounter,
-                              real64 const eventProgress,
+                              real64 const GEOSX_UNUSED_ARG( eventProgress ),
                               Group * domain)
 {
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);

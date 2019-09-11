@@ -34,6 +34,24 @@ namespace computationalGeometry
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop
+ * @param [in] numPoints the number of points in the polygon
+ * @param[in] points 3D point list
+ * @param[out] center 3D center of the given ordered polygon point list
+ * @param[out] normal Normal to the face
+ * @return area of the convex 3D polygon
+ */
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance = 0.0 );
+
+/**
+ * @author settgast
+ * Calculates the centroid of a convex 3D polygon as well as the normal
+ * @param[in] pointIndices list of index references for the points array in
+ * order (CW or CCW) about the polygon loop
  * @param[in] points 3D point list
  * @param[out] center 3D center of the given ordered polygon point list
  * @param[out] normal Normal to the face
@@ -46,6 +64,25 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
                            real64 areaTolerance = 0.0 );
 
 /**
+ * Calculates the centroid of a convex 3D polygon as well as the normal
+ * @param[in] pointIndices list of index references for the points array in
+ * order (CW or CCW) about the polygon loop
+ * @param[in] numPoints the numberof points in the polygon
+ * @param[in] pointReferences 3D reference point list
+ * @param[in] pointDisplacements 3D displacement list
+ * @param[out] center 3D center of the given ordered polygon point list
+ * @param[out] normal Normal to the face
+ * @return area of the convex 3D polygon
+ */
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal );
+
+/**
+ * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop

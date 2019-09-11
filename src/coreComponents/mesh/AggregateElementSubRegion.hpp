@@ -71,19 +71,19 @@ public:
   }
   
   virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   NodeManager const & nodeManager,
-                                                   const bool useReferencePos = true) const override
+                                                   NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
   {
     return m_elementCenter[k];
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) override
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override
   {
       //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_ARG( mesh ) ) override
   {
     //TODO ?
   }

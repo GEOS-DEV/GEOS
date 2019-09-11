@@ -148,7 +148,7 @@ public:
   ReadAttributeAsType( T & rval,
                        string const & name,
                        xmlNode const & targetNode,
-                       dataRepository::DefaultValue< T > const & defVal )
+                       dataRepository::DefaultValue< T > const & GEOSX_UNUSED_ARG( defVal ) )
   {
     ReadAttributeAsType( rval, name, targetNode, false );
   }

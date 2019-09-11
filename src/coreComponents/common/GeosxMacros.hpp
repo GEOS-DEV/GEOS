@@ -28,6 +28,15 @@
 
 #define GEOSX_LAMBDA [=]
 
+// Use this to mark an unused argument and silence compiler warnings
+#define GEOSX_UNUSED_ARG( X )
+
+// Use this to mark an unused variable and silence compiler warnings.
+#define GEOSX_UNUSED_VAR( X ) ( ( void ) X )
+
+// Use this to mark a debug variable and silence compiler warnings.
+#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+
 // This will interpret A as a string
 #define STRINGIZE_NX( A ) #A
 

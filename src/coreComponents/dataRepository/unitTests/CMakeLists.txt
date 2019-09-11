@@ -10,7 +10,7 @@ set( dataRepository_tests
      testXmlWrapper.cpp
    )
 
-set( dependencyList dataRepository gtest cxx-utilities )
+set( dependencyList dataRepository gtest cxx-utilities managers MPI_Communications mesh wells constitutive meshUtilities )
 #
 # Add gtest C++ based tests
 #

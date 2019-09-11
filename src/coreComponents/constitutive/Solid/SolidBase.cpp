@@ -46,8 +46,8 @@ SolidBase::~SolidBase()
 {}
 
 void
-SolidBase::DeliverClone( string const & name,
-                         Group * const parent,
+SolidBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
+                         Group * const GEOSX_UNUSED_ARG( parent ),
                          std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast<SolidBase*>(clone.get());

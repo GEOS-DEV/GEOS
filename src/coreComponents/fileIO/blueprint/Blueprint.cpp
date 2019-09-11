@@ -52,8 +52,11 @@ const std::unordered_map< localIndex, const std::string > Blueprint::numNodesToE
 
 
 
-Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
-                      const std::string& output_path, MPI_Comm comm, const std::string& coord_name,
+Blueprint::Blueprint( const NodeManager& node_manager,
+                      const ElementRegionManager& elem_reg_manager,
+                      const std::string& output_path,
+                      MPI_Comm GEOSX_UNUSED_ARG( comm ),
+                      const std::string& coord_name,
                       const std::string& topo_name):
 #ifdef GEOSX_USE_ATK
   m_node_manager( node_manager ),
@@ -175,7 +178,7 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
 }
 
 
-void Blueprint::addCells( Group* topo, Group* fields ) const
+void Blueprint::addCells( Group* topo, Group* GEOSX_UNUSED_ARG( fields ) ) const
 {
 #ifdef GEOSX_USE_ATK
   if ( m_elem_reg_manager.numCellBlocks() != 1 )
