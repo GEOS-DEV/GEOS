@@ -113,7 +113,7 @@ public:
                        DomainPartition * const domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override
+  ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override
   {}
 
   virtual void

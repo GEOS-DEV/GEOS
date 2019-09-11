@@ -23,6 +23,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
+#include "common/GeosxMacros.hpp"
 #include "IntegerConversion.hpp"
 #include "Logger.hpp"
 #include "KeyIndexT.hpp"
@@ -471,7 +472,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE index )
+  deleteValue( INDEX_TYPE GEOSX_UNUSED_ARG( index ) )
   {}
 
   /// random access container that holds the values

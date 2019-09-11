@@ -75,7 +75,7 @@ public:
    */
   localIndex AddToFractureMesh( EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
-                                array1d< array1d<localIndex> > const & originalFaceToEdges,
+                                ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 

@@ -46,7 +46,7 @@ void setupCXXUtils();
 void finalizeCXXUtils();
 
 /**
- * @brief We link to MKL with the single dynamic library approach, so this sets some MKL parameters.
+ * @brief Setup MKL if in use.
  */
 void setupMKL();
 

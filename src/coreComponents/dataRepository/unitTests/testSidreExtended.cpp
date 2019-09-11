@@ -265,7 +265,7 @@ TEST( testSidreExtended, testSidreExtended )
   int sfp = 55;
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
-  /* Create a new ManagedGroup directly below the sidre::DataStore root. */
+  /* Create a new Group directly below the sidre::DataStore root. */
   Group * root = new Group( std::string( "data" ), nullptr );
   root->resize( group_size );
 
@@ -459,7 +459,7 @@ TEST( testSidreExtended, testSidreExtended )
   SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_WORLD );
   root = new Group( std::string( "data" ), nullptr );
 
-  /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
+  /* Create dual GEOS tree. Groups automatically register with the associated sidre::View. */
   Wrapper< globalIndex_array > * view_globalIndex_new = root->registerWrapper< globalIndex_array >( view_globalIndex_name );
   Wrapper< string > * view_hope_new = root->registerWrapper< string >( view_hope_name );
   Wrapper< string_array > * view_restart_new = root->registerWrapper< string_array >( view_restart_name );

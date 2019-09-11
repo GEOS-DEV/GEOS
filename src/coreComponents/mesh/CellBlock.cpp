@@ -35,11 +35,9 @@ using namespace dataRepository;
 CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
-  m_toEdgesRelation(),
   m_toFacesRelation()
 {
   registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
-  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
@@ -48,18 +46,41 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   registerWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
 }
 
-
 CellBlock::~CellBlock()
 {}
 
-void CellBlock::GetFaceNodes( const localIndex elementIndex,
-                              const localIndex localFaceIndex,
-                              localIndex_array& nodeIndicies) const
+localIndex CellBlock::GetNumFaceNodes( localIndex const GEOSX_UNUSED_ARG( elementIndex ),
+                                       localIndex const localFaceIndex ) const
+{
+  if (!m_elementTypeString.compare(0, 4, "C3D8")) return 4;
+  if (!m_elementTypeString.compare(0, 4, "C3D6"))
+  {
+    if (localFaceIndex == 0) return 4;
+    if (localFaceIndex == 1) return 4;
+    if (localFaceIndex == 2) return 3;
+    if (localFaceIndex == 3) return 3;
+    if (localFaceIndex == 4) return 4;
+  }
+  if (!m_elementTypeString.compare(0, 4, "C3D4")) return 3;
+  if (!m_elementTypeString.compare(0, 4, "C3D5"))
+  {
+    if (localFaceIndex == 0) return 4;
+    if (localFaceIndex == 1) return 3;
+    if (localFaceIndex == 2) return 3;
+    if (localFaceIndex == 3) return 3;
+    if (localFaceIndex == 4) return 3;
+  }
+
+  GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
+  return -1;
+}
+
+localIndex CellBlock::GetFaceNodes( localIndex const elementIndex,
+                                    localIndex const localFaceIndex,
+                                    localIndex * const nodeIndicies) const
 {
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
-    nodeIndicies.resize(4);
-
     if (localFaceIndex == 0)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
@@ -102,53 +123,51 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[2] = m_toNodesRelation[elementIndex][7];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][6];
     }
-
+    return 4;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     if (localFaceIndex == 0)
     {
-      nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+      return 4;
     }
     else if (localFaceIndex == 1)
     {
-      nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][1];
+      return 4;
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
+      return 3;
     }
     else if (localFaceIndex == 4)
     {
-      nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][5];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][4];
+      return 4;
     }
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
-    nodeIndicies.resize(3);
-
     if (localFaceIndex == 0)
     {
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
@@ -173,154 +192,61 @@ void CellBlock::GetFaceNodes( const localIndex elementIndex,
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][3];
     }
+
+    return 3;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     if (localFaceIndex == 0)
     {
-      nodeIndicies.resize(4);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
+      return 4;
     }
     else if (localFaceIndex == 1)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
     }
     else if (localFaceIndex == 2)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
     }
     else if (localFaceIndex == 3)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
     }
     else if (localFaceIndex == 4)
     {
-      nodeIndicies.resize(3);
       nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
       nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
       nodeIndicies[2] = m_toNodesRelation[elementIndex][4];
+      return 3;
     }
   }
 
-//  else if ( !m_elementGeometryID.compare(0,4,"CPE2") )
-//  {
-//    if( localFaceIndex == 0 )
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//    }
-//  }
-//
-//  else if ( !m_elementGeometryID.compare(0,4,"CPE3") )
-//  {
-//    if( localFaceIndex == 0 )
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//    }
-//    else if( localFaceIndex == 1 )
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-//    }
-//    else if( localFaceIndex == 2 )
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
-//    }
-//  }
-//
-//  else if (!m_elementGeometryID.compare(0, 4, "CPE4"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//    }
-//    else if (localFaceIndex == 1)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][3];
-//    }
-//    else if (localFaceIndex == 2)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][3];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-//    }
-//    else if (localFaceIndex == 3)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
-//    }
-//  }
-//
-//  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//    }
-//    else if (localFaceIndex == 1)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][2];
-//    }
-//    else if (localFaceIndex == 2)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][0];
-//    }
-//  }
-//
-//  else if (!m_elementGeometryID.compare(0, 3, "S4R"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
-//      nodeIndicies[3] = m_toNodesRelation[elementIndex][3];
-//    }
-//  }
-//
-//  else if (!m_elementGeometryID.compare(0, 4, "TRSH"))
-//  {
-//    if (localFaceIndex == 0)
-//    {
-//      nodeIndicies[0] = m_toNodesRelation[elementIndex][0];
-//      nodeIndicies[1] = m_toNodesRelation[elementIndex][1];
-//      nodeIndicies[2] = m_toNodesRelation[elementIndex][2];
-//    }
-//  }
-//
-  else
-  {
-    GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
-  }
+  GEOS_ERROR("Error. Don't know what kind of element this is and cannot build faces.");
+  return -1;
 }
 
-localIndex CellBlock::GetMaxNumFaceNodes() const
+void CellBlock::GetFaceNodes( localIndex const elementIndex,
+                              localIndex const localFaceIndex,
+                              localIndex_array & nodeIndicies) const
 {
-  if ( !m_elementTypeString.compare( 0, 4, "C3D8" ) ) return 4;
-  if ( !m_elementTypeString.compare( 0, 4, "C3D6" ) ) return 4;
-  if ( !m_elementTypeString.compare( 0, 4, "C3D4" ) ) return 3;
-  if ( !m_elementTypeString.compare( 0, 4, "C3D5" ) ) return 4;
-  
-  GEOS_ERROR("Error. Don't know what kind of element this is.");
-  return -1;
+  nodeIndicies.resize( GetNumFaceNodes( elementIndex, localFaceIndex ) );
+  localIndex const numNodes = GetFaceNodes( elementIndex, localFaceIndex, nodeIndicies.data() );
+  GEOSX_DEBUG_VAR( numNodes);
+  GEOS_ASSERT_EQ( numNodes, nodeIndicies.size() );
 }
 
 R1Tensor const & CellBlock::calculateElementCenter( localIndex k,
@@ -354,25 +280,21 @@ void CellBlock::SetElementType( string const & elementType)
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
     m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,12);
     m_toFacesRelation.resize(0,6);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     m_toNodesRelation.resize(0,4);
-    m_toEdgesRelation.resize(0,6);
     m_toFacesRelation.resize(0,4);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     m_toNodesRelation.resize(0,8);
-    m_toEdgesRelation.resize(0,9);
     m_toFacesRelation.resize(0,5);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     m_toNodesRelation.resize(0,5);
-    m_toEdgesRelation.resize(0,8);
     m_toFacesRelation.resize(0,5);
   }
   else
@@ -406,12 +328,11 @@ void CellBlock::SetElementType( string const & elementType)
 void CellBlock::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-  this->m_toEdgesRelation.SetRelatedObject( mesh->getEdgeManager() );
   this->m_toFacesRelation.SetRelatedObject( mesh->getFaceManager() );
 }
 
 void CellBlock::CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                     FaceManager const & facemanager )
+                                                     FaceManager const & GEOSX_UNUSED_ARG( facemanager ) )
 {
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
 

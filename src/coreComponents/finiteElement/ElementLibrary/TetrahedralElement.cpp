@@ -28,9 +28,9 @@
 namespace geosx
 {
 
-TetrahedralElement::TetrahedralElement( BasisBase const & basis,
-                                        QuadratureBase const & quadrature,
-                                        const int num_zero_energy_modes ):
+TetrahedralElement::TetrahedralElement( BasisBase const & GEOSX_UNUSED_ARG( basis ),
+                                        QuadratureBase const & GEOSX_UNUSED_ARG( quadrature ),
+                                        const int GEOSX_UNUSED_ARG( num_zero_energy_modes ) ):
 //  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
   FiniteElementBase( 3, 1, 4, 0)
 {

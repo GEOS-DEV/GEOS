@@ -52,10 +52,10 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::EstimateEventTiming(real64 const time,
-                                     real64 const dt, 
-                                     integer const cycle,
-                                     Group * domain)
+void HaltEvent::EstimateEventTiming(real64 const GEOSX_UNUSED_ARG( time ),
+                                    real64 const GEOSX_UNUSED_ARG( dt ),
+                                    integer const GEOSX_UNUSED_ARG( cycle ),
+                                    Group * GEOSX_UNUSED_ARG( domain ))
 {
   // Check run time
   timeval tim;

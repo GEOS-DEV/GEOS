@@ -520,7 +520,7 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     // 1. Assume global component fractions have been prescribed.
@@ -626,7 +626,7 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
 
   // backup some fields used in time derivative approximation
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -665,8 +665,8 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
 }
 
 void
-CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n,
-                                                real64 const & dt,
+CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                                real64 const & GEOSX_UNUSED_ARG( dt ),
                                                 DomainPartition * const domain,
                                                 DofManager & dofManager,
                                                 ParallelMatrix & matrix,
@@ -689,7 +689,7 @@ CompositionalMultiphaseFlow::ImplicitStepSetup( real64 const & time_n,
   }
 }
 
-void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domain,
+void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                                              DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::dofFieldString,
@@ -752,8 +752,8 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
   }
 }
 
-void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n,
-                                                             real64 const dt,
+void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                                             real64 const GEOSX_UNUSED_ARG( dt ),
                                                              DomainPartition const * const domain,
                                                              DofManager const * const dofManager,
                                                              ParallelMatrix * const matrix,
@@ -773,7 +773,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -854,7 +854,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const time_n
   });
 }
 
-void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const time_n,
+void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
                                                      DofManager const * const dofManager,
@@ -1005,8 +1005,8 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const time_n,
   } );
 }
 
-void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const time_n,
-                                                              real64 const dt,
+void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                                              real64 const GEOSX_UNUSED_ARG( dt ),
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
@@ -1026,7 +1026,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( real64 const time_
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1215,8 +1215,8 @@ CompositionalMultiphaseFlow::ApplyDirichletBC_implicit( real64 const time,
                     domain,
                     "ElementRegions",
                     viewKeyStruct::pressureString,
-                    [&] ( FieldSpecificationBase const * const bc,
-                          string const & setName,
+                    [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_ARG( bc ),
+                          string const & GEOSX_UNUSED_ARG( setName ),
                           set<localIndex> const & targetSet,
                           Group * subRegion,
                           string const & )
@@ -1294,7 +1294,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
   real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1363,7 +1363,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
   bool result = true;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1419,8 +1419,9 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   real64 * localSolution = nullptr;
   solution.extractLocalVector( &localSolution );
 
-  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const,
+  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                 localIndex const GEOSX_UNUSED_ARG( esr ),
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     dofManager.addVectorToField( solution,
@@ -1476,14 +1477,14 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
   } );
 }
 
-void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & time,
-                                                        real64 const & dt,
+void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
+                                                        real64 const & GEOSX_UNUSED_ARG( dt ),
                                                         DomainPartition * const domain )
 {
   MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase * const,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64 const> const & dPres     = m_deltaPressure[er][esr];

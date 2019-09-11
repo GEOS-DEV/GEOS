@@ -217,7 +217,6 @@ void EventBase::Execute(real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
   
-  GEOSX_MARK_BEGIN("EventBase::Execute() 1");
   // If m_targetExecFlag is set, then the code has resumed at a point
   // after the target has executed. 
   if ((m_target != nullptr) && (m_targetExecFlag == 0))
@@ -225,10 +224,7 @@ void EventBase::Execute(real64 const time_n,
     m_targetExecFlag = 1;
     m_target->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
   }
-  GEOSX_MARK_END("EventBase::Execute() 1");
   
-
-  GEOSX_MARK_BEGIN("EventBase::Execute() 2");
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
   // This allows for  restart runs to pick up where they left off.
   for ( ; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent)
@@ -246,7 +242,6 @@ void EventBase::Execute(real64 const time_n,
       subEvent->Execute(time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain);
     }
   }
-  GEOSX_MARK_END("EventBase::Execute() 2");
 
   // Update the event status
   m_targetExecFlag = 0;
@@ -315,8 +310,8 @@ real64 EventBase::GetTimestepRequest(real64 const time)
 
 void EventBase::Cleanup(real64 const time_n,
                         integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
+                        integer const GEOSX_UNUSED_ARG( eventCounter ),
+                        real64 const GEOSX_UNUSED_ARG( eventProgress ),
                         Group * domain)
 {
   if (m_target != nullptr)

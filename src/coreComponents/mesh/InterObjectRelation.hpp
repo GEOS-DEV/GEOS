@@ -51,7 +51,7 @@ public:
   void SetRelatedObject( ObjectManagerBase const * const relatedObject )
   { m_relatedObject = relatedObject; }
 
-  const ObjectDataStructureBaseT* RelatedObject() const
+  const ObjectManagerBase * RelatedObject() const
   { return m_relatedObject; }
 
   globalIndex_array const & RelatedObjectLocalToGlobal() const
@@ -61,21 +61,10 @@ public:
   { return this->m_relatedObject->m_globalToLocalMap; }
 
 private:
-  ObjectDataStructureBaseT const * m_relatedObject = nullptr;
+  ObjectManagerBase const * m_relatedObject = nullptr;
 };
 
-typedef InterObjectRelation<array1d<localIndex>>                OneToOneRelation;
-typedef InterObjectRelation<array1d<localIndex const>>          OneToOneConstRelation;
-
 typedef InterObjectRelation<array2d<localIndex>>                FixedOneToManyRelation;
-typedef InterObjectRelation<array2d<localIndex const>>          FixedOneToManyConstRelation;
-
-typedef InterObjectRelation<array1d<array1d<localIndex>>>       OrderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<array1d<localIndex const>>> OrderedVariableOneToManyConstRelation;
-
-typedef InterObjectRelation<array1d<set<localIndex>>>           UnorderedVariableOneToManyRelation;
-typedef InterObjectRelation<array1d<set<localIndex const>>>     UnorderedVariableOneToManyConstRelation;
-
 }
 
 #endif /* INTEROBJECTRELATION_H_ */

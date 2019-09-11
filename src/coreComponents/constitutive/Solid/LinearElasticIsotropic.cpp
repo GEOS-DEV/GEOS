@@ -191,7 +191,7 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                localIndex const q,
                                                R2SymTensor const & D,
                                                R2Tensor const & Rot,
-                                               integer const updateStiffnessFlag )
+                                               integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
   real64 volumeStrain = D.Trace();
   m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];

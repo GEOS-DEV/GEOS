@@ -85,30 +85,38 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   GEOSX_MARK_FUNCTION;
 
   arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager->nodeList();
-  localIndex const totalNumEdges = edgeToNodeMap.size( 0 );
-  localIndex const totalNumNodes = size();
+  localIndex const numEdges = edgeToNodeMap.size( 0 );
+  localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toEdgesTemp( totalNumNodes, edgeManager->maxEdgesPerNode() );
+  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, totalNumEdges, [&]( localIndex const edgeID )
+  forall_in_range< parallelHostPolicy >( 0, numEdges, [&]( localIndex const edgeID )
   {
     toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
     toEdgesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
   } );
 
-  GEOSX_MARK_BEGIN("Reserving space in m_toEdgesRelation");
-  for ( localIndex i = 0; i < totalNumNodes; ++i )
-  {
-    m_toEdgesRelation[ i ].reserve( toEdgesTemp.sizeOfArray( i ) );
-  }
-  GEOSX_MARK_END("Reserving space in m_toEdgesRelation");
+  RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeEdges( 0 );
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  { 
+    totalNodeEdges += toEdgesTemp.sizeOfArray( nodeID ); 
+  } );
 
-  forall_in_range< parallelHostPolicy >( 0, totalNumNodes, [&]( localIndex const nodeID )
+  m_toEdgesRelation.resize(0);
+  m_toEdgesRelation.reserve( numNodes );
+  m_toEdgesRelation.reserve( totalNodeEdges.get() );
+  for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) );
+  }
+
+  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
-    localIndex const numEdges = toEdgesTemp.sizeOfArray( nodeID );
-    std::sort( edges, edges + numEdges );
-    m_toEdgesRelation[ nodeID ].insertSorted( edges, numEdges );
+    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
+    std::sort( edges, edges + numNodeEdges );
+    toEdgesView.insertSortedIntoSet( nodeID, edges, numNodeEdges );
   } );
 
   m_toEdgesRelation.SetRelatedObject( edgeManager );
@@ -119,34 +127,41 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< arrayView1d< localIndex const > const > const & faceToNodes = faceManager->nodeList().toViewConst();
-  localIndex const totalNumFaces = faceToNodes.size();
-  localIndex const totalNumNodes = size();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  localIndex const numFaces = faceToNodes.size();
+  localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toFacesTemp( totalNumNodes, faceManager->maxFacesPerNode() );
+  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, totalNumFaces, [&]( localIndex const faceID )
+  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID )
   {
-    localIndex const numFaceNodes = faceToNodes[ faceID ].size();
+    localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
     for ( localIndex a = 0; a < numFaceNodes; ++a )
     {
-      toFacesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, faceToNodes[ faceID ][ a ], faceID );
+      toFacesTemp.atomicAppendToArray( RAJA::atomic::auto_atomic{}, faceToNodes( faceID, a ), faceID );
     }
   } );
 
-  GEOSX_MARK_BEGIN("Reserving space in m_toFacesRelation");
-  for ( localIndex i = 0; i < totalNumNodes; ++i )
-  {
-    m_toFacesRelation[ i ].reserve( toFacesTemp.sizeOfArray( i ) );
-  }
-  GEOSX_MARK_END("Reserving space in m_toFacesRelation");
+  RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeFaces( 0 );
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  { 
+    totalNodeFaces += toFacesTemp.sizeOfArray( nodeID ); 
+  } );
 
-  forall_in_range< parallelHostPolicy >( 0, totalNumNodes, [&]( localIndex const nodeID )
+  m_toFacesRelation.resize(0);
+  m_toFacesRelation.reserve( numNodes );
+  m_toFacesRelation.reserve( totalNodeFaces.get() );
+  for ( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) );
+  }
+
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const faces = toFacesTemp[ nodeID ];
-    localIndex const numFaces = toFacesTemp.sizeOfArray( nodeID );
-    std::sort( faces, faces + numFaces );
-    m_toFacesRelation[ nodeID ].insertSorted( faces, numFaces );
+    localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );
+    std::sort( faces, faces + numNodeFaces );
+    m_toFacesRelation.insertSortedIntoSet( nodeID, faces, numNodeFaces );
   } );
 
   m_toFacesRelation.SetRelatedObject( faceManager );
@@ -244,19 +259,19 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toEdgesRelation,
-                                       m_unmappedGlobalIndicesInToEdges,
-                                       packList,
-                                       this->m_localToGlobalMap,
-                                       m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toEdgesRelation.toArrayOfArraysView(),
+                                         m_unmappedGlobalIndicesInToEdges,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                       m_toFacesRelation,
-                                       m_unmappedGlobalIndicesInToFaces,
-                                       packList,
-                                       this->m_localToGlobalMap,
-                                       m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                         m_toFacesRelation.toArrayOfArraysView(),
+                                         m_unmappedGlobalIndicesInToFaces,
+                                         packList,
+                                         this->m_localToGlobalMap,
+                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::elementListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
@@ -278,30 +293,30 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toEdgesRelation,
-                                   packList,
-                                   m_unmappedGlobalIndicesInToEdges,
-                                   this->m_globalToLocalMap,
-                                   m_toEdgesRelation.RelatedObjectGlobalToLocal(),
-                                   overwriteUpMaps );
+                                     m_toEdgesRelation,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToEdges,
+                                     this->m_globalToLocalMap,
+                                     m_toEdgesRelation.RelatedObjectGlobalToLocal(),
+                                     overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::faceListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
-                                   m_toFacesRelation,
-                                   packList,
-                                   m_unmappedGlobalIndicesInToFaces,
-                                   this->m_globalToLocalMap,
-                                   m_toFacesRelation.RelatedObjectGlobalToLocal(),
-                                   overwriteUpMaps );
+                                     m_toFacesRelation,
+                                     packList,
+                                     m_unmappedGlobalIndicesInToFaces,
+                                     this->m_globalToLocalMap,
+                                     m_toFacesRelation.RelatedObjectGlobalToLocal(),
+                                     overwriteUpMaps );
 
   unPackedSize += bufferOps::Unpack( buffer, temp );
   GEOS_ERROR_IF( temp != viewKeyStruct::elementListString, "");
   unPackedSize += bufferOps::Unpack( buffer,
-                                   this->m_toElements,
-                                   packList,
-                                   m_toElements.getElementRegionManager(),
-                                   overwriteUpMaps );
+                                     this->m_toElements,
+                                     packList,
+                                     m_toElements.getElementRegionManager(),
+                                     overwriteUpMaps );
 
   return unPackedSize;
 }
@@ -309,10 +324,12 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
+                                    m_toEdgesRelation.RelatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
 
   ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
+                                    m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
 
@@ -320,7 +337,7 @@ void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
 
 void NodeManager::depopulateUpMaps( std::set<localIndex> const & receivedNodes,
                                     array2d< localIndex > const & edgesToNodes,
-                                    array1d< array1d< localIndex > > const & facesToNodes,
+                                    ArrayOfArraysView< localIndex const > const & facesToNodes,
                                     ElementRegionManager const & elemRegionManager )
 {
 
