@@ -72,8 +72,8 @@ struct AccessorHelper<false>
   static ElementAccessor<NDIM, T>
   makeElementAccessor( T const * const data,
                        localIndex const stencilSize,
-                       arraySlice1d<localIndex const> const & stencilRegIndices,
-                       arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                       arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilRegIndices ),
+                       arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilSubRegIndices ),
                        arraySlice1d<localIndex const> const & stencilElemIndices,
                        DIMS... otherDims )
   {
@@ -97,10 +97,11 @@ struct AccessorHelper<false>
   static MaterialAccessor<NDIM, T>
   makeMaterialAccessor( T const * const data,
                         localIndex const stencilSize,
-                        arraySlice1d<localIndex const> const & stencilRegIndices,
-                        arraySlice1d<localIndex const> const & stencilSubRegIndices,
+                        arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilRegIndices ),
+                        arraySlice1d<localIndex const> const & GEOSX_UNUSED_ARG( stencilSubRegIndices ),
                         arraySlice1d<localIndex const> const & stencilElemIndices,
-                        localIndex matIndex, DIMS... otherDims )
+                        localIndex GEOSX_UNUSED_ARG( matIndex ),
+                        DIMS... otherDims )
   {
     localIndex numElems = 0;
     for (int i = 0; i < stencilSize; ++i)

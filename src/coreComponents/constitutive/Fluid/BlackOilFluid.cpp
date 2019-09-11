@@ -173,6 +173,8 @@ void BlackOilFluid::createFluid()
     case FluidType::DeadOil:
       m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
       break;
+    default:
+      GEOS_ERROR("Unknown fluid type");
   }
 }
 

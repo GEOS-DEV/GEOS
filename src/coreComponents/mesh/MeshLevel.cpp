@@ -86,7 +86,7 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
 
   FaceManager * const faceManager = this->getFaceManager();
-  array1d< array1d< localIndex > > const & faceToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList();
 
   ElementRegionManager * const elemManager = this->getElemManager();
 
@@ -127,7 +127,6 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
 
         array2d<localIndex> const & elemsToNodes = subRegion->nodeList();
         array2d<localIndex> const & elemsToFaces = subRegion->faceList();
-        array2d<localIndex> const & elemsToEdges = subRegion->edgeList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           for( localIndex a=0 ; a<elemsToNodes.size(1) ; ++a )
@@ -139,10 +138,11 @@ void MeshLevel::GenerateAdjacencyLists( localIndex_array & seedNodeList,
           {
             faceAdjacencySet.insert(elemsToFaces[elementIndex][a]);
 
-            array1d<localIndex> const & edgeList = faceToEdges[elemsToFaces[elementIndex][a]];
-            for( localIndex b=0 ; b<edgeList.size() ; ++b )
+            localIndex const faceID = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            for( localIndex b=0 ; b<numEdges ; ++b )
             {
-              edgeAdjacencySet.insert(edgeList[b]);
+              edgeAdjacencySet.insert(faceToEdges(faceID, b));
             }
 
           }

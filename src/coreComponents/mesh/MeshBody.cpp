@@ -42,7 +42,7 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel * MeshBody::CreateMeshLevel( localIndex const newLevel )
+MeshLevel * MeshBody::CreateMeshLevel( localIndex const GEOSX_UNUSED_ARG( newLevel ) )
 {
   return this->RegisterGroup<MeshLevel>( "Level0" );
 }

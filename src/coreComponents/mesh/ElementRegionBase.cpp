@@ -57,6 +57,6 @@ ElementRegionBase::~ElementRegionBase()
 {}
 
 
-//REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionBase, std::string const &, ManagedGroup * const )
+//REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionBase, std::string const &, Group * const )
 
 }

@@ -59,7 +59,7 @@ void CellElementRegion::GenerateMesh( Group const * const cellBlocks )
 }
 
 void CellElementRegion::GenerateAggregates( FaceManager const * const faceManager,
-                                            NodeManager const * const nodeManager )
+                                            NodeManager const * const GEOSX_UNUSED_ARG( nodeManager ) )
 {
   GEOSX_MARK_FUNCTION;
 

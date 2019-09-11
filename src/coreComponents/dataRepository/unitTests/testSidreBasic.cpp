@@ -17,14 +17,13 @@
  */
 
 #include <gtest/gtest.h>
-
 #include <mpi.h>
 
-#include "dataRepository/Group.hpp"
-#include "dataRepository/SidreWrapper.hpp"
-#include "dataRepository/Wrapper.hpp"
 #include "common/DataTypes.hpp"
-
+#include "managers/initialization.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/Wrapper.hpp"
+#include "dataRepository/SidreWrapper.hpp"
 
 
 namespace geosx
@@ -35,8 +34,6 @@ namespace dataRepository
 #ifdef GEOSX_USE_ATK
 TEST( testSidreBasic, testSidreBasic )
 {
-  MPI_Init( nullptr, nullptr );
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
   const string path = "test_sidre_basic";
   const string protocol = "sidre_hdf5";
   const int group_size = 44;
@@ -45,7 +42,7 @@ TEST( testSidreBasic, testSidreBasic )
   const uint expected_size = num_items * sizeof(globalIndex);
   axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
-  /* Create a new ManagedGroup directly below the sidre::DataStore root. */
+  /* Create a new Group directly below the sidre::DataStore root. */
   Group * root = new Group( std::string( "data" ), nullptr );
   root->resize( group_size );
 
@@ -90,7 +87,7 @@ TEST( testSidreBasic, testSidreBasic )
   SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_GEOSX );
   root = new Group( std::string( "data" ), nullptr );
 
-  /* Create dual GEOS tree. ManagedGroups automatically register with the associated sidre::View. */
+  /* Create dual GEOS tree. Groups automatically register with the associated sidre::View. */
   Wrapper< globalIndex_array > * data_view_new = root->registerWrapper< globalIndex_array >( "globalIndex_data" );
 
   /* Load the data */
@@ -111,19 +108,22 @@ TEST( testSidreBasic, testSidreBasic )
   EXPECT_EQ( root->size(), group_size );
 
   delete root;
-  MPI_Finalize();
 }
 
 #endif /* GEOSX_USE_ATK */
 
+} /* end namespace dataRepository */
+} /* end namespace geosx */
 
-int main( int argc, char * argv[] ) {
-  int result = 0;
+int main( int argc, char * argv[] )
+{
   testing::InitGoogleTest( &argc, argv );
-  result = RUN_ALL_TESTS();
+
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
   return result;
 }
-
-
-} /* end namespace dataRepository */
-} /* end namespace goesx */

@@ -64,9 +64,9 @@ public:
                              std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
 
 
-  virtual void StateUpdatePointPressure( real64 const & pres,
-                                         localIndex const k,
-                                         localIndex const q ) {}
+  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_ARG( pres ),
+                                         localIndex const GEOSX_UNUSED_ARG( k ),
+                                         localIndex const GEOSX_UNUSED_ARG( q ) ) {}
 
   /**
    * @brief function to resize the fields in this constitutive model

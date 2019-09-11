@@ -525,9 +525,7 @@ FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
 //array1d< array1d<localIndex> > & matchedPartitionBoundaryObjects )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array const & ghostRank = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.ghostRank );
   integer_array & domainBoundaryIndicator = group->getReference<integer_array>( group->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
-  globalIndex_array const & localToGlobal = group->getReference<globalIndex_array>( group->m_ObjectManagerBaseViewKeys.localToGlobalMap );
 
   array1d<globalIndex> globalPartitionBoundaryObjectsIndices;
   group->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );

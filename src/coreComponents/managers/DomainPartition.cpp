@@ -282,10 +282,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
+                                             const int GEOSX_UNUSED_ARG( cycleNum ),
+                                             const realT GEOSX_UNUSED_ARG( problemTime ),
+                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
 {
 
 

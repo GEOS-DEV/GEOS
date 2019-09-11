@@ -273,14 +273,14 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteManagedGroupSilo( dataRepository::Group const * group,
-                              string const & siloDirName,
-                              string const & meshname,
-                              int const centering,
-                              int const cycleNum,
-                              real64 const problemTime,
-                              bool const isRestart,
-                              const localIndex_array& mask );
+  void WriteGroupSilo( dataRepository::Group const * group,
+                       string const & siloDirName,
+                       string const & meshname,
+                       int const centering,
+                       int const cycleNum,
+                       real64 const problemTime,
+                       bool const isRestart,
+                       const localIndex_array& mask );
 
 
 
@@ -640,9 +640,9 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
                                         int const centering,
                                         int const cycleNum,
                                         real64 const problemTime,
-                                        bool const isRestart,
+                                        bool const GEOSX_UNUSED_ARG( isRestart ),
                                         string const & multiRoot,
-                                        const localIndex_array& mask )
+                                        const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
 {
 
   // iterate over all entries in the member map
@@ -934,7 +934,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                                        int const cycleNumber,
                                        real64 const problemTime,
                                        string const & multiRoot,
-                                       string_array const & materialNames )
+                                       string_array const & GEOSX_UNUSED_ARG( materialNames ) )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
   int const meshType = GetMeshType( meshName );

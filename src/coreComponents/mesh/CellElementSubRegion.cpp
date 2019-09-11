@@ -64,7 +64,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
     std::type_index typeIndex = std::type_index( wrapper->get_typeid());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
-                                    [&]( auto type, auto baseType ) -> void
+                                    [&]( auto type, auto GEOSX_UNUSED_ARG( baseType ) ) -> void
     {
       using fieldType = decltype(type);
       const dataRepository::Wrapper<fieldType> & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
@@ -84,10 +84,10 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 
 }
 
-void CellElementSubRegion::MaterialPassThru( string const & matName,
-                                           string const & setName,
-                                           set<localIndex> & materialSet,
-                                           Group * material )
+void CellElementSubRegion::MaterialPassThru( string const & GEOSX_UNUSED_ARG( matName ),
+                                             string const & GEOSX_UNUSED_ARG( setName ),
+                                             set<localIndex> & GEOSX_UNUSED_ARG( materialSet ),
+                                             Group * GEOSX_UNUSED_ARG( material ) )
 {}
 
 
@@ -142,8 +142,8 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
 localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                                  localIndex_array & packList,
-                                                 bool const overwriteUpMaps,
-                                                 bool const overwriteDownMaps )
+                                                 bool const GEOSX_UNUSED_ARG( overwriteUpMaps ),
+                                                 bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 
