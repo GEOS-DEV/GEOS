@@ -25,6 +25,8 @@
 namespace geosx
 {
 
+class LASVersionInformationSection;
+
 /*!
  * @brief This class contains a parsed line of a LAS file
  * @details A LAS line have always this structure
@@ -123,11 +125,13 @@ class LASLine
  * @details a LAS Information Section contains an ensemble of LASLine,
  * referenced by their keywords
  */
-class LASInformationSection
+class LASSection
 {
   public:
-    LASInformationSection();
-    virtual ~LASInformationSection();
+    LASSection() = default;
+    virtual ~LASSection()
+    {
+    }
 
     /*!
      * Check if all the mandatory keywords are registered
@@ -140,8 +144,28 @@ class LASInformationSection
                                                       << GetName() );
       }
     }
+
+    virtual std::streampos ParseSection( std::ifstream & file )
+    {
+      string curLine;
+      std::streampos pos;
+      while ( std::getline(file, curLine) )
+      {
+        stringutilities::TrimLeft( curLine );
+        if( curLine[0] == '#' ) continue;
+        if( curLine[0] == '~' )                // We reach a new section
+        {
+          break;
+        }
+        pos = file.tellg();
+        ParseLine( curLine );
+      }
+      return pos;
+    }
     
     virtual string const GetName() const = 0;
+
+    static std::unique_ptr< LASSection > CreateSection( char const & name );
 
   protected:
     virtual void ParseLine( string const & line )
@@ -164,11 +188,11 @@ class LASInformationSection
 /*!
  * @brief This section identify the LAS format ans whether the wrap format is used
  */
-class LASVersionInformationSection : public LASInformationSection
+class LASVersionInformationSection : public LASSection
 {
   public:
     LASVersionInformationSection() :
-      LASInformationSection()
+      LASSection()
     {
       m_mandatoryKeyword.push_back( "VERS" );
       m_mandatoryKeyword.push_back( "WRAP" );
@@ -189,11 +213,11 @@ class LASVersionInformationSection : public LASInformationSection
 /*!
  * @brief This section identify the well
  */
-class LASWellInformationSection : public LASInformationSection
+class LASWellInformationSection : public LASSection
 {
   public:
     LASWellInformationSection() :
-      LASInformationSection()
+      LASSection()
     {
       m_mandatoryKeyword.push_back( "STRT" );
       m_mandatoryKeyword.push_back( "STOP" );
@@ -227,23 +251,12 @@ class LASWellInformationSection : public LASInformationSection
 /*!
  * @brief This section describes the curves and their units
  */
-class LASCurveInformationSection : public LASInformationSection
+class LASCurveInformationSection : public LASSection
 {
   public:
     LASCurveInformationSection() :
-      LASInformationSection()
+      LASSection()
     {
-    }
-
-    /*!
-     * @brief For this specific section, one keyword must be
-     * DEPTH, DEPT, TIME or INDEX"
-     * */
-    virtual void CheckKeywords() override
-    {
-      GEOS_ERROR_IF( m_lines.count( "DEPTH" ) + m_lines.count( "DEPT" ) +  m_lines.count( "TIME" ) +  m_lines.count( "INDEX ") != 1,
-                     "Invalid " << GetName() << " section. It musts contains at least one those keyword \n"
-                     << "DEPTH DEPT TIME INDEX");
     }
 
     virtual string const GetName() const override
@@ -265,16 +278,27 @@ class LASCurveInformationSection : public LASInformationSection
     {
       return m_lines.size();
     }
+  private:
+    /*!
+     * @brief For this specific section, one keyword must be
+     * DEPTH, DEPT, TIME or INDEX"
+     * */
+    virtual void CheckKeywords() override
+    {
+      GEOS_ERROR_IF( m_lines.count( "DEPTH" ) + m_lines.count( "DEPT" ) +  m_lines.count( "TIME" ) +  m_lines.count( "INDEX ") != 1,
+                     "Invalid " << GetName() << " section. It musts contains at least one those keyword \n"
+                     << "DEPTH DEPT TIME INDEX");
+    }
 };
 
 /*!
  * @brief This optional section describes optional parameters
  */
-class LASParameterInformationSection : public LASInformationSection
+class LASParameterInformationSection : public LASSection
 {
   public:
     LASParameterInformationSection() :
-      LASInformationSection()
+      LASSection()
     {
     }
 
@@ -292,22 +316,14 @@ class LASParameterInformationSection : public LASInformationSection
 /*!
  * @brief This optional section describes some comments
  */
-class LASOtherInformationSection : public LASInformationSection
+class LASOtherInformationSection : public LASSection
 {
   public:
     LASOtherInformationSection() :
-      LASInformationSection()
+      LASSection()
     {
     }
 
-    /*!
-     * @brief For this specific section there is no keyword
-     * */
-    virtual void CheckKeywords() override
-    {
-      GEOS_ERROR_IF( !m_lines.empty(),
-                     "Invalid " << GetName() << " section. No keyword should be defined, only data.");
-    }
 
     virtual string const GetName() const override
     {
@@ -318,17 +334,10 @@ class LASOtherInformationSection : public LASInformationSection
     {
       return "Other Information";
     }
-};
-
-/*!
- * @brief This optional section contains all the log data
- */
-class LASASCIILogDataSection : public LASInformationSection
-{
-  public:
-    LASASCIILogDataSection() :
-      LASInformationSection()
+  private:
+    virtual void ParseLine( string const & line ) override
     {
+      m_comments += line;
     }
 
     /*!
@@ -338,6 +347,25 @@ class LASASCIILogDataSection : public LASInformationSection
     {
       GEOS_ERROR_IF( !m_lines.empty(),
                      "Invalid " << GetName() << " section. No keyword should be defined, only data.");
+    }
+
+  private:
+    /// Content of the section
+    string m_comments;
+
+};
+
+/*!
+ * @brief This optional section contains all the log data
+ */
+class LASASCIILogDataSection : public LASSection
+{
+  public:
+    LASASCIILogDataSection() :
+      LASSection() ,
+      m_logs(),
+      m_curPos(0)
+    {
     }
 
     virtual string const GetName() const override
@@ -350,8 +378,51 @@ class LASASCIILogDataSection : public LASInformationSection
       return "ASCII Log Data";
     }
   private:
+    /*!
+     * @brief For this specific section there is no keyword
+     * */
+    virtual void CheckKeywords() override
+    {
+      GEOS_ERROR_IF( !m_lines.empty(),
+                     "Invalid " << GetName() << " section. No keyword should be defined, only data.");
+    }
+
+    virtual std::streampos ParseSection( std::ifstream & file ) override
+    {
+      string curLine;
+      std::streampos beginPos;
+      // First pass to count the number of value
+      localIndex nbValues = 0;
+      while ( std::getline(file, curLine) )
+      {
+        string_array splitLine = stringutilities::Split( curLine, " " );
+        if( curLine[0] == '#' ) continue;
+        if( curLine[0] == '~' )                // We reach a new section
+        {
+          break;
+        }
+        nbValues++;
+      }
+      m_logs.resize( nbValues );
+
+      file.seekg( beginPos );
+      return LASSection::ParseSection( file );
+    }
+
+    virtual void ParseLine( string const & line ) override
+    {
+      string_array splitLine = stringutilities::Split( line, " " );
+      for( string & linePart : splitLine )
+      {
+        m_logs[m_curPos++] = stringutilities::fromString< real64 >( linePart );
+      }
+    }
+  private:
     /// Contains the well logs
-    array2d< real64 > m_logs;
+    array1d< real64 > m_logs;
+
+    /// Position on m_logs while reading the file
+    localIndex m_curPos;
 };
 
 class LASFile
@@ -374,28 +445,11 @@ class LASFile
 
         if( curLine[0] == '~' )            // Section
         {
-          if( curLine[1] == 'V' )          // Version Information
-          {
-          }
-          else if( curLine[1] == 'W' )     // Well Information
-          {
-          }
-          else if( curLine[1] == 'C' )     // Curve Information
-          {
-          }
-          else if( curLine[1] == 'P' )     // Parameter Information
-          {
-          }
-          else if( curLine[1] == 'O' )     // Other Information
-          {
-          }
-          else if( curLine[1] == 'A' )     // ASCII Log Data
-          {
-          }
-          else
-          {
-            GEOS_ERROR( curLine[1] << " is not a valid section in " << m_fileName );
-          }
+          std::unique_ptr< LASSection > curLASSection = LASSection::CreateSection( curLine[1] );
+          curLASSection->CheckKeywords();
+          std::streampos curPos = curLASSection->ParseSection( file );
+          file.seekg( curPos );
+          m_lasSections[curLASSection->GetName()] = std::move( curLASSection );
         }
       }
     }
@@ -408,23 +462,9 @@ class LASFile
     /// Name of the file to be loaded or save
     string m_fileName;
 
-    ///This section identify the LAS format ans whether the wrap format is used
-    LASVersionInformationSection m_versionInformationSection;
+    /// Map containing all the LAS sections indexed by name
+    std::unordered_map< string, std::unique_ptr< LASSection > >  m_lasSections;
 
-    /// This section identify the well
-    LASWellInformationSection m_wellInfomationSection;
-
-    /// This section describes the curves and their units
-    LASCurveInformationSection m_lasCurveInformationSection;
-
-    /// This optional section describes some comments
-    LASOtherInformationSection m_lasOtherInformationSection;
-
-    /// This optional section describes optional parameters
-    LASParameterInformationSection m_lasParameterInformationSection;
-
-    /// This optional section contains all the log data
-    LASASCIILogDataSection m_lasASCIILogDataSection;
 };
 }
 
