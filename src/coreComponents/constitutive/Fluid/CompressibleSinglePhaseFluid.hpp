@@ -140,7 +140,6 @@ public:
     static constexpr auto referenceViscosityString = "referenceViscosity";
     static constexpr auto densityModelString       = "densityModel";
     static constexpr auto viscosityModelString     = "viscosityModel";
-    static constexpr auto pressureCapString        = "pressureCap";
 
     dataRepository::ViewKey compressibility    = { compressibilityString    };
     dataRepository::ViewKey viscosibility      = { viscosibilityString      };
@@ -149,7 +148,6 @@ public:
     dataRepository::ViewKey referenceViscosity = { referenceViscosityString };
     dataRepository::ViewKey densityModel       = { densityModelString       };
     dataRepository::ViewKey viscosityModel     = { viscosityModelString     };
-    dataRepository::ViewKey pressureCap        = { pressureCapString  };
 
   } viewKeysCompressibleSinglePhaseFluid;
 

@@ -62,7 +62,7 @@ public:
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
   /**
-   * @brief Perform a inverse single point constitutive update.
+   * @brief Perform an inverse single point constitutive update.
    * @param[out] pressure the pressure to be updated
    * @param[in] k first constitutive index (e.g. elem index)
    * @param[in] q second constitutive index (e.g. quadrature index)
