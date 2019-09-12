@@ -28,8 +28,8 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/MeshManager.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 
 #include <numeric>
 

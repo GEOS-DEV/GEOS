@@ -20,12 +20,13 @@
 #define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
 
 #include "common/GeosxConfig.hpp"
-#include <string>
+#include "mpiCommunications/MpiWrapper.hpp"
 
 #ifdef GEOSX_USE_ATK
 #include "axom/sidre/core/sidre.hpp"
 #endif
-#include <mpi.h>
+
+#include <string>
 
 namespace geosx
 {

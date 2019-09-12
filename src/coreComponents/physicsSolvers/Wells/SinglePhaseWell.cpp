@@ -18,6 +18,8 @@
 
 #include "SinglePhaseWell.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -30,8 +32,6 @@
 #include "wells/WellControls.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {

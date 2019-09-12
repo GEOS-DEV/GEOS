@@ -17,9 +17,7 @@
  */
 
 #include <gtest/gtest.h>
-
 #include "testLinearAlgebraUtils.hpp"
-
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"

@@ -16,12 +16,11 @@
  * @file NeighborCommunicator.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#ifndef GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
+#define GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
-#include <set>
-#include <mpi.h>
-#include <vector>
+#include "MpiWrapper.hpp"
+
 #include "common/DataTypes.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "IntegerConversion.hpp"
@@ -262,8 +261,8 @@ void NeighborCommunicator::MPI_iSendReceive( array1d<T> const & sendBuffer,
                     commID,
                     mpiComm );
 
-  MPI_Waitall( 1, &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
-  MPI_Waitall( 1, &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
 
   recvBuffer.resize( m_receiveBufferSize[commID] );
 
@@ -280,4 +279,4 @@ void NeighborCommunicator::MPI_iSendReceive( array1d<T> const & sendBuffer,
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MPI_COMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */
+#endif /* GEOSX_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_ */

@@ -22,6 +22,8 @@
 #include <vector>
 #include <math.h>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -34,8 +36,6 @@
 #include "codingUtilities/Utilities.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 
 namespace geosx
 {

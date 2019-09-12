@@ -18,7 +18,9 @@
 
 #include "DomainPartition.hpp"
 
-#include "MPI_Communications/SpatialPartition.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "fileIO/silo/SiloFile.hpp"
@@ -26,8 +28,6 @@
 #include "common/TimingMacros.hpp"
 
 #include "common/DataTypes.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "managers/ObjectManagerBase.hpp"
 namespace geosx
 {
@@ -142,6 +142,7 @@ void DomainPartition::SetupCommunications()
   GEOSX_MARK_FUNCTION;
   array1d<NeighborCommunicator> & allNeighbors = this->getReference< array1d<NeighborCommunicator> >( viewKeys.neighbors );
 
+#if defined(GEOSX_USE_MPI)
   if( m_metisNeighborList.empty() )
   {
     PartitionBase   & partition1 = getReference<PartitionBase>(keys::partitionManager);
@@ -154,11 +155,9 @@ void DomainPartition::SetupCommunications()
       MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
     }
-    int rank = -1;
+    int const rank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
     int nsdof = 3;
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 
-    MPI_Comm_rank(cartcomm, &rank);
     MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());
 
     int ncoords[3];
@@ -175,6 +174,7 @@ void DomainPartition::SetupCommunications()
       allNeighbors.push_back( std::move(neighbor) );
     }
   }
+#endif
 
   Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
@@ -229,8 +229,7 @@ void DomainPartition::AddNeighbors(const unsigned int idim,
     if (!me)
     {
       allNeighbors.push_back(NeighborCommunicator());
-      int neighborRank;
-      MPI_Cart_rank(cartcomm, ncoords, &neighborRank);
+      int neighborRank = MpiWrapper::Cart_rank(cartcomm, ncoords);
       allNeighbors.back().SetNeighborRank(neighborRank);
     }
   }
