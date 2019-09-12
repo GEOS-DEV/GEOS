@@ -22,7 +22,7 @@ set( finiteVolume_sources
      TwoPointFluxApproximation.cpp
    )
 
-set( dependencyList dataRepository codingUtilities managers )
+set( dependencyList common)
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

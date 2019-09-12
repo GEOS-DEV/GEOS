@@ -41,7 +41,7 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(dependencyList managers metis)
+set(dependencyList common metis)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

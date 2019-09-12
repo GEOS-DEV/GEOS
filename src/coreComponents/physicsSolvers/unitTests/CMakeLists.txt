@@ -17,7 +17,7 @@ if(ENABLE_PVTPackage)
        )
 endif()
 
-set( dependencyList geosx_core gtest axom )
+set( dependencyList geosx_core gtest )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

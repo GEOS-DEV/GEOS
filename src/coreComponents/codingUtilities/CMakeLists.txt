@@ -19,10 +19,6 @@ set( codingUtilities_sources
 
 set( dependencyList common )
 
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
-
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
