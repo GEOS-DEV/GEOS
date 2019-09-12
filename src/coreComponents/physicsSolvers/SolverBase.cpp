@@ -12,11 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <linearAlgebraInterface/src/LinearSolverParameters.hpp>
 #include "SolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
