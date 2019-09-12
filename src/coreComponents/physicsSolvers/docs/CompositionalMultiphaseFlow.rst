@@ -193,7 +193,7 @@ The Newton update, :math:`\delta X`, is then computed as:
 .. math::
   \delta X := - J^{-1} R,
 
-The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebraInterface/docs/LinearSolverParameters`.
+The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolverParameters`.
 The Newton update is then applied to the primary variables:
 
 ..  math::

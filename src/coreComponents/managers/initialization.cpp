@@ -19,8 +19,7 @@
 #include "stackTrace.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
-#include <petscvec.h>
-
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 #ifdef GEOSX_USE_MKL
 #include <mkl.h>
@@ -90,6 +89,7 @@ void basicSetup( int argc, char * argv[] )
   setupOpenMP();
   setupMKL();
   setupCXXUtils();
+  setupLAI( argc, argv );
 }
 
 void basicCleanup()
@@ -97,21 +97,9 @@ void basicCleanup()
   FieldSpecificationManager::finalize();
   NewFunctionManager::finalize();
 
+  finalizeLAI();
   finalizeCXXUtils();
   finalizeMPI();
-}
-
-void setupPetsc( int argc, char * argv[] )
-{
-  char help[] = "Setup PETSc.\n";
-  PetscOptionsSetValue( nullptr, "-log_view", "" );
-  PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr );
-  PetscInitialize( &argc, &argv, nullptr, help );
-}
-
-void finalizePetsc()
-{
-  PetscFinalize();
 }
 
 } // namespace geosx

@@ -722,8 +722,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
                                         ParallelVector const & rhs )
 {
   // get a view into local residual vector
-  real64* localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
 
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -780,8 +779,7 @@ SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
                                       real64 const scalingFactor )
 {
   // get the update
-  real64* localSolution = nullptr;
-  solution.extractLocalVector( &localSolution );
+  real64 const * localSolution = solution.extractLocalVector();
 
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();

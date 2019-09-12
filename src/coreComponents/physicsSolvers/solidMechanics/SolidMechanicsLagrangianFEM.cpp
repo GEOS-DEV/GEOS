@@ -1119,8 +1119,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                        DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                        ParallelVector const & rhs )
 {
-  real64 * localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
 
   real64 localResidualNorm[2] = { 0.0, this->m_maxForce };
 
