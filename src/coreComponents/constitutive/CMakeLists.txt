@@ -46,7 +46,7 @@ set( constitutive_sources
      contactRelations/ContactRelationBase.cpp
    )
 
-set( dependencyList dataRepository )
+set( dependencyList common )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

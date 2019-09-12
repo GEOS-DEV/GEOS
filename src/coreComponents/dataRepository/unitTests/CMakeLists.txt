@@ -12,7 +12,7 @@ set( dataRepository_tests
      testBufferOps.cpp
    )
 
-set( dependencyList dataRepository gtest cxx-utilities managers mpiCommunications mesh wells constitutive meshUtilities )
+set( dependencyList geosx_core gtest)
 #
 # Add gtest C++ based tests
 #

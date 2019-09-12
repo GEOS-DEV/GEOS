@@ -39,16 +39,11 @@ endif()
 
 
 
-set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
+set( dependencyList common )
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()
-
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} axom )
-endif()
-
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
