@@ -65,17 +65,18 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) override;
 
-  virtual void PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q ) override;
-
-  virtual void PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q ) override;
+  virtual void PointUpdate( real64 & pressure, localIndex const k, localIndex const q ) override;
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) override;
-
-  real64 Compressibility() const { return m_compressibility; }
 
   virtual void Compute( real64 const & pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure ) const override;
+
+  virtual void Compute( real64 & pressure,
+                        real64 const & density,
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override;
 
@@ -115,6 +116,18 @@ public:
                               real64 & dViscosity_dPressure,
                               ExponentialRelation<real64, DENS_EAT> const & densityRelation,
                               ExponentialRelation<real64, VISC_EAT> const & viscosityRelation );
+
+  /**
+   * @brief Compute kernel for the partial constitutive update (single property)
+   * @tparam EAT exponential approximation type
+   * @param[in] property
+   * @param[out] pressure
+   * @param[in]  propertyRelation property exponential relation
+   */
+  template<ExponentApproximationType EAT>
+  inline static void Inverse( real64 const & property,
+                              real64 & pressure,
+                              ExponentialRelation<real64, EAT> const & propertyRelation );
 
   // *** Data repository keys
 
@@ -191,6 +204,14 @@ inline void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
 {
   Compute( pressure, density, dDensity_dPressure, densityRelation );
   Compute( pressure, viscosity, dViscosity_dPressure, viscosityRelation );
+}
+
+template<ExponentApproximationType EAT>
+inline void CompressibleSinglePhaseFluid::Inverse( real64 const & property,
+                                                   real64 & pressure,
+                                                   ExponentialRelation<real64, EAT> const & propertyRelation )
+{
+  propertyRelation.Inverse( property, pressure );
 }
 
 } /* namespace constitutive */

@@ -62,25 +62,14 @@ public:
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
   /**
-   * @brief Perform a single point constitutive update.
+   * @brief Perform a inverse single point constitutive update.
+   * @param[out] pressure the pressure to be updated
    * @param[in] k first constitutive index (e.g. elem index)
    * @param[in] q second constitutive index (e.g. quadrature index)
-   * @param[out] pressure the updated pressure value
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q ) = 0;
-
-  /**
-   * @brief Perform a single point constitutive update.
-   * @param[in] mass the target mass value
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
-   * @param[out] pressure the updated pressure value
-   *
-   * @note This function should generally not be called from a kernel, use BatchUpdate instead
-   */
-  virtual void PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointUpdate( real64 & pressure, localIndex const k, localIndex const q ) = 0;
 
   /**
    * @brief Perform a batch constitutive update (all points).
@@ -103,6 +92,11 @@ public:
   virtual void Compute( real64 const & pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure ) const = 0;
+
+  virtual void Compute( real64 & pressure,
+                        real64 const & density,
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const = 0;
 

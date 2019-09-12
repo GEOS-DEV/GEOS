@@ -128,7 +128,7 @@ void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
   {
     forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
     {
-      fluid->PointUpdateExplicit( pres[a], a, 0 );
+      fluid->PointUpdate( pres[a], a, 0 );
     } );
   }
   else
@@ -330,7 +330,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   // apply mass flux boundary condition in the explicit solver
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
 
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+  fsManager->Apply( time_n, domain, "ElementRegions", "FLUX",
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
@@ -339,7 +339,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   {
     fs->ApplyFieldValue<FieldSpecificationSubtract>( lset,
                                                       true,
-                                                      time_n + dt,
+                                                      time_n,
                                                       dt,
                                                       subRegion,
                                                       viewKeyStruct::massString );
@@ -371,7 +371,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dens[ei][0] = mass[ei] / vol[ei];
-      fluid->PointUpdatePressure( pres[ei], ei, 0);
+      fluid->PointUpdate( pres[ei], ei, 0);
     } );
   } );
 

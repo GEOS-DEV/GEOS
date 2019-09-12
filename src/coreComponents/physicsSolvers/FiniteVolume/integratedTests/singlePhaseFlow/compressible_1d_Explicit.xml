@@ -11,8 +11,6 @@
                      verboseLevel="0"
                      gravityFlag="1"
                      discretization="singlePhaseTPFA"
-                     maximumAperture="5e-2"
-                     cflFactor="0.4"
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
@@ -48,13 +46,13 @@
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="0.1"
+                   forceDt="1e2"
                    target="/Solvers/SinglePhaseFlow" />
 
-    <!--PeriodicEvent name="restarts"
+    <PeriodicEvent name="restarts"
                    timeFrequency="1e3"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/-->
+                   target="/Outputs/sidreRestart"/>
 
   </Events>
 
@@ -67,7 +65,7 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <ElementRegion name="Region1"
+    <CellElementRegion name="Region1"
                    cellBlocks="{block1}"
                    materialList="{water, rock}"/>
   </ElementRegions>
@@ -80,8 +78,7 @@
                                   referenceDensity="1000"
                                   compressibility="5e-10"
                                   referenceViscosity="0.001"
-                                  viscosibility="0.0"
-                                  pressureCap="1e8"/>
+                                  viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
@@ -114,15 +111,6 @@
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
-
-    <!--FieldSpecification name="aperture"
-                       component="0"
-                       initialCondition="1"
-                       setNames="{all}"
-                       objectPath="ElementRegions/Fracture/fracture"
-                       fieldName="elementAperture"
-                       scale="1.0e-4"/-->
-
     <FieldSpecification name="referencePorosity"
                         initialCondition="1"
                         setNames="{all}"
@@ -135,29 +123,24 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="pressure"
-                        scale="1e6"/>
+                        scale="0.0"/>
 
-    <SourceFlux name="sourceTerm"
-                objectPath="ElementRegions/Region1/block1"
-                scale="-1.0"
-                setNames="{source}"/>
-
-    <!--FieldSpecification name="sourceTerm"
+    <FieldSpecification name="sourceTerm"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="pressure"
                         scale="5e6"
-                        setNames="{source}"/-->
+                        setNames="{source}"/>
 
     <FieldSpecification name="sinkTerm"
                         objectPath="ElementRegions/Region1/block1"
                         fieldName="pressure"
-                        scale="1e6"
+                        scale="-5e6"
                         setNames="{sink}"/>
   </FieldSpecifications>
 
   <Outputs>
     <Silo name="siloOutput"/>
-    <!--Restart name="sidreRestart"/-->
+    <Restart name="sidreRestart"/>
   </Outputs>
 
 </Problem>

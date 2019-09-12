@@ -157,25 +157,9 @@ void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIn
   Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
 }
 
-void CompressibleSinglePhaseFluid::PointUpdatePressure( real64 & pressure, localIndex const k, localIndex const q)
+void CompressibleSinglePhaseFluid::PointUpdate( real64 & pressure, localIndex const k, localIndex const q )
 {
-  pressure = m_density[k][q] < m_referenceDensity ? 0 : (1 - m_referenceDensity / m_density[k][q]) / m_compressibility;
-//  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
-//  {
-//    //TODO
-//    Inverse( pressure, density, dDensity_dPressure, relation );
-//  } );
-}
-
-void CompressibleSinglePhaseFluid::PointUpdateExplicit( real64 const & pressure, localIndex const k, localIndex const q )
-{
-  m_density[k][q] = m_referenceDensity / (1 - pressure * m_compressibility);
-  m_dDensity_dPressure [k][q] = m_density[k][q] * m_compressibility;
-
-  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
-  {
-    Compute( pressure, m_viscosity[k][q], m_dViscosity_dPressure[k][q], relation );
-  } );
+  Compute( pressure, m_density[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
 }
 
 void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d<double const> const & pressure )
@@ -197,6 +181,20 @@ void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
   makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
   {
     Compute( pressure, density, dDensity_dPressure, relation );
+  } );
+  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
+  {
+    Compute( pressure, viscosity, dViscosity_dPressure, relation );
+  } );
+}
+
+void CompressibleSinglePhaseFluid::Compute( real64 & pressure,
+                                            real64 const & density,
+                                            real64 & viscosity, real64 & dViscosity_dPressure ) const
+{
+  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
+  {
+    Inverse( density, pressure, relation );
   } );
   makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {

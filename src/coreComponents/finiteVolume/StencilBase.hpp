@@ -162,7 +162,6 @@ bool StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::zero( localIndex const connectorInd
     for (localIndex i = 0; i < static_cast<LEAFCLASS *>(this)->stencilSize(connectorIndex); ++i)
     {
       m_weights[connectionListIndex][i] = 0;
-      m_weightedElementCenterToConnectorCenter[connectionListIndex][i] = 0;
     }
   });
 }
