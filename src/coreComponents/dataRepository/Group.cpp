@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "Group.hpp"
@@ -198,7 +194,7 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
       rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
 
       rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto b ) -> void
+                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) ) -> void
           {
 //        using BASE_TYPE = decltype(b);
             using COMPOSITE_TYPE = decltype(a);
@@ -257,8 +253,8 @@ void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
 Group * Group::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ManagedGroup::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ManagedGroup::Catalog." );
+                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
   return RegisterGroup( childName,
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
@@ -459,11 +455,11 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOS_ERROR_IF( groupName != this->getName(), "ManagedGroup::Unpack(): group names do not match" );
+  GEOS_ERROR_IF( groupName != this->getName(), "Group::Unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "ManagedGroup::Unpack(): wrapper label incorrect" );
+  GEOS_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -480,14 +476,15 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match" );
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "ManagedGroup::Unpack(): incorrect number of subGroups" );
+    GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->m_subGroups )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive );
@@ -541,7 +538,6 @@ void Group::finishWriting() const
     return;
   }
 
-  axom::sidre::View * temp = m_sidreGroup->getView( "__size__" );
   m_sidreGroup->destroyView( "__size__" );
 
   for( auto & pair : m_wrappers )

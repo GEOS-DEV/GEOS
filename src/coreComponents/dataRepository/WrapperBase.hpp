@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /** @file */
@@ -63,7 +59,7 @@ public:
   /**
    * @brief constructor
    * @param[in] name name of the object
-   * @param[in] parent pointer to ManagedGroup that holds this WrapperBase
+   * @param[in] parent pointer to Group that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
                         Group * const parent );
@@ -157,7 +153,7 @@ public:
   /**
    * @brief     function to create a clone of *this WrapperBase
    * @param[in] name name of the clone
-   * @param[in] parent parent ManagedGroup that will hold this clone
+   * @param[in] parent parent Group that will hold this clone
    * @return
    *
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
@@ -217,7 +213,7 @@ public:
   virtual void finishReading( axom::sidre::View * view=nullptr ) = 0;
 
   /**
-   * @brief function to call resize( newsize ) where newsize is taken from the parent ManagedGroup
+   * @brief function to call resize( newsize ) where newsize is taken from the parent Group
    */
   void resize();
 
@@ -439,7 +435,7 @@ private:
   /// name of the object that is being wrapped
   string m_name;
 
-  /// pointer to ManagedGroup that holds this WrapperBase
+  /// pointer to Group that holds this WrapperBase
   Group * m_parent;
 
   /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized

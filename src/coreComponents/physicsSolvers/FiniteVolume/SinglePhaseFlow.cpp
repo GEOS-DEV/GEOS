@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -250,7 +246,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     UpdateState( subRegion );
@@ -438,8 +434,8 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
   } );
 }
 
-void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
-                                         real64 const & dt,
+void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                         real64 const & GEOSX_UNUSED_ARG( dt ),
                                          DomainPartition * const domain,
                                          DofManager & dofManager,
                                          ParallelMatrix & matrix,
@@ -451,7 +447,7 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64 const> const & dens = m_density[er][esr][m_fluidIndex];
@@ -497,8 +493,8 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & time_n,
   }
 }
 
-void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
-                                            real64 const & dt,
+void SinglePhaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                            real64 const & GEOSX_UNUSED_ARG( dt ),
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -506,7 +502,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -523,7 +519,7 @@ void SinglePhaseFlow::ImplicitStepComplete( real64 const & time_n,
   } );
 }
 
-void SinglePhaseFlow::SetupDofs( DomainPartition const * const domain,
+void SinglePhaseFlow::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
                                  DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
@@ -715,7 +711,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
                                             FaceElementSubRegion>( this->m_targetRegions,
                                                                    [&] ( localIndex er,
                                                                          localIndex esr,
-                                                                         ElementRegionBase const * const region,
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                                                          auto const * const subRegion )
   {
     AccumulationLaunch<ISPORO>( er, esr, subRegion, dofManager, matrix, rhs );
@@ -723,7 +719,7 @@ void SinglePhaseFlow::AssembleAccumulationTerms( DomainPartition const * const d
 }
 
 
-void SinglePhaseFlow::AssembleFluxTerms( real64 const time_n,
+void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                          real64 const dt,
                                          DomainPartition const * const domain,
                                          DofManager const * const dofManager,
@@ -881,7 +877,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                                                             1,
                                                                             matrix,
                                                                             rhs,
-                                                                            [&]( localIndex const a ) -> real64
+                                                                            [&]( localIndex const GEOSX_UNUSED_ARG( a ) ) -> real64
     {
       return 0;
     } );
@@ -1034,7 +1030,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     domain,
                     "faceManager",
                     viewKeyStruct::facePressureString,
-                    [&] ( FieldSpecificationBase const * bc,
+                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
                           string const &,
                           set<localIndex> const & targetSet,
                           Group * const,
@@ -1075,7 +1071,7 @@ void SinglePhaseFlow::ApplyFaceDirichletBC_implicit( real64 const time_n,
                     domain,
                     "faceManager",
                     viewKeyStruct::facePressureString,
-                    [&] ( FieldSpecificationBase const * bc,
+                    [&] ( FieldSpecificationBase const * GEOSX_UNUSED_ARG( bc ),
                           string const & setName,
                           set<localIndex> const &,
                           Group * const,
@@ -1235,15 +1231,14 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // get a view into local residual vector
-  real64 * localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const region,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
     arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -1281,8 +1276,9 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                 localIndex const GEOSX_UNUSED_ARG( esr ),
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     dofManager.addVectorToField( solution,
@@ -1331,7 +1327,7 @@ void SinglePhaseFlow::ResetStateToBeginningOfStep( DomainPartition * const domai
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];

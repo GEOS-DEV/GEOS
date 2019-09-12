@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef __GEOS_RAJA_POLICY__HPP
@@ -24,14 +20,17 @@
 
 
 using serialPolicy = RAJA::loop_exec;
+using serialReduce = RAJA::seq_reduce;
 
 #if defined(GEOSX_USE_OPENMP)
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
+using parallelHostReduce = RAJA::omp_reduce;
 
 #else
 
-using parallelHostPolicy = RAJA::loop_exec;
+using parallelHostPolicy = serialPolicy;
+using parallelHostReduce = serialReduce;
 
 #endif
 
@@ -39,16 +38,13 @@ using parallelHostPolicy = RAJA::loop_exec;
 
 template< int BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
-
-#elif defined(GEOSX_USE_OPENMP)
-
-template< int BLOCK_SIZE = 0 >
-using parallelDevicePolicy = RAJA::omp_parallel_for_exec;
+using parallelDeviceReduce = RAJA::cuda_reduce;
 
 #else
 
 template< int BLOCK_SIZE = 0 >
-using parallelDevicePolicy = RAJA::loop_exec;
+using parallelDevicePolicy = parallelHostPolicy;
+using parallelDeviceReduce = parallelHostReduce;
 
 #endif
 

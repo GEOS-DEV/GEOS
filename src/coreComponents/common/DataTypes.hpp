@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -44,6 +40,7 @@
 #include "StackArrayWrapper.hpp"
 #include "SortedArray.hpp"
 #include "ArrayOfArrays.hpp"
+#include "ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
@@ -152,6 +149,12 @@ template< typename T >
 using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
 
 template< typename T >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+
+template< typename T >
+using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
+
+template< typename T >
 using array3d = LvArray::Array< T, 3, localIndex >;
 
 template< typename T >
@@ -207,6 +210,19 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
 {};
+
+template< typename K, typename V, typename SORTED >
+inline
+std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
+{
+  stream << "{\n";
+  for( auto const & pair : map )
+  {
+    stream << pair.first << " : " << pair.second << "\n";
+  }
+  stream << "}";
+  return stream;
+}
 
 template< typename TKEY, typename TVAL >
 using map = mapBase< TKEY, TVAL, std::integral_constant< bool, true > >;

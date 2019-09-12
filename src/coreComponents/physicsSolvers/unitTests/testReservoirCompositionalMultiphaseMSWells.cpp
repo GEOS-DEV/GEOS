@@ -1,26 +1,22 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
 #include "testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -180,8 +176,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  double* localResidual = nullptr;
-  residual.extractLocalVector( &localResidual );
+  real64 const * localResidual = residual.extractLocalVector();
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -193,8 +188,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
-  double* localResidualOrig = nullptr;
-  residualOrig.extractLocalVector( &localResidualOrig );
+  real64 const * localResidualOrig = residualOrig.extractLocalVector();
 
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
@@ -212,7 +206,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   for (localIndex er = 0; er < elemManager->numRegions(); ++er)
   {
     ElementRegionBase * const elemRegion = elemManager->GetRegion(er);
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, auto * const subRegion )
+    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ), auto * const subRegion )
     {
       // get the degrees of freedom and ghosting information
       arrayView1d<globalIndex> & dofNumber =

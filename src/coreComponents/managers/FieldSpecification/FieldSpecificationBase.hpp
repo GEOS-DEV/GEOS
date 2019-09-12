@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -23,11 +19,11 @@
 #ifndef BOUNDARYCONDITIONBASE_H
 #define BOUNDARYCONDITIONBASE_H
 
-#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "dataRepository/Group.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -125,7 +121,7 @@ public:
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
-   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
    * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
@@ -142,7 +138,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] fieldName The name of the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
@@ -176,7 +172,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -212,7 +208,7 @@ public:
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -287,7 +283,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT time )
+  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_ARG( time ) )
   {
     return m_direction;
   }
@@ -523,7 +519,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                  false,
-                                 [&]( auto arrayInstance, auto dataTypeInstance )
+                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
@@ -574,7 +570,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -657,7 +653,7 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const dt,
                                 dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
