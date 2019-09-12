@@ -38,7 +38,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
                                   real64 const * const weights,
-                                  real64 const * const weightedElementCenterToConnectorCenterSquare,
+                                  real64 const * const weightedElementCenterToConnectorCenter,
                                   localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts!=2, "number of cells in TPFA stencil should be 2");
@@ -49,7 +49,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_elementSubRegionIndices.resize( newSize, numPts );
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
-  m_weightedElementCenterToConnectorCenterSquare.resize( newSize, numPts );
+  m_weightedElementCenterToConnectorCenter.resize( newSize, numPts );
 
   for( localIndex a=0 ; a<numPts ; ++a )
   {
@@ -57,7 +57,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
     m_elementSubRegionIndices(oldSize,a) = elementSubRegionIndices[a];
     m_elementIndices(oldSize,a) = elementIndices[a];
     m_weights(oldSize,a) = weights[a];
-    m_weightedElementCenterToConnectorCenterSquare(oldSize,a) = weightedElementCenterToConnectorCenterSquare[a];
+    m_weightedElementCenterToConnectorCenter(oldSize,a) = weightedElementCenterToConnectorCenter[a];
   }
   m_stencilIndices[connectorIndex] = oldSize;
 }

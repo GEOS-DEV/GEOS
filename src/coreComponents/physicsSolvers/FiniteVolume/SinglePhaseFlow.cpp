@@ -106,6 +106,16 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
   }
 }
 
+void SinglePhaseFlow::PostProcessInput()
+{
+  FlowSolverBase::PostProcessInput();
+
+  if( !m_timeIntegrationOptionString.empty() )
+  {
+    SetTimeIntegrationOption( m_timeIntegrationOptionString );
+  }
+}
+
 void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
@@ -327,10 +337,13 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
                          Group * subRegion,
                          string const & ) -> void
   {
-    fs->ApplyFieldValue<FieldSpecificationAdd>( lset,
-                                                time_n + dt,
-                                                subRegion,
-                                                viewKeyStruct::massString );
+    fs->ApplyFieldValue<FieldSpecificationSubtract>( lset,
+                                                      true,
+                                                      time_n + dt,
+                                                      dt,
+                                                      subRegion,
+                                                      viewKeyStruct::massString );
+
   } );
 
   // synchronize element fields
@@ -389,6 +402,8 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
                                          real64 const & dt,
                                          DomainPartition * const domain)
 {
+  ResetViews( domain );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
@@ -793,13 +808,6 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d<globalIndex> > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d<globalIndex>, arrayView1d<globalIndex> >( dofKey );
-
-  FluxKernel::ElementView< arrayView1d<globalIndex const> > const & dofNumber = dofNumberAccessor.toViewConst();
-
   FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & pres        = m_pressure.toViewConst();
   FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth   = m_gravDepth.toViewConst();
@@ -820,7 +828,6 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
                         dt,
                         fluidIndex,
                         gravityFlag,
-                        dofNumber,
                         pres,
                         dPres,
                         gravDepth,

@@ -313,7 +313,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 real64 const dt,
                                 localIndex const fluidIndex,
                                 integer const gravityFlag,
-                                FluxKernel::ElementView< arrayView1d<globalIndex> > const & dofNumber,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
@@ -334,7 +333,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
-  typename CellElementStencilTPFA::WeightContainerViewConstType const & weightedElementCenterToConnectorCenterSquare = stencil.getweightedElementCenterToConnectorCenterSquare();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weightedElementCenterToConnectorCenter = stencil.getweightedElementCenterToConnectorCenter();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
@@ -343,7 +342,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                          sesri[iconn],
                          sei[iconn],
                          weights[iconn],
-                         weightedElementCenterToConnectorCenterSquare[iconn],
+                         weightedElementCenterToConnectorCenter[iconn],
                          pres,
                          dPres,
                          gravDepth,
@@ -364,7 +363,6 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             real64 const dt,
                             localIndex const fluidIndex,
                             integer const gravityFlag,
-                            FluxKernel::ElementView < arrayView1d<globalIndex const> > const & dofNumber,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & pres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & dPres,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & gravDepth,
@@ -383,7 +381,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
-  typename FaceElementStencil::WeightContainerViewConstType const & weightedElementCenterToConnectorCenterSquare = stencil.getweightedElementCenterToConnectorCenterSquare();
+  typename FaceElementStencil::WeightContainerViewConstType const & weightedElementCenterToConnectorCenter = stencil.getweightedElementCenterToConnectorCenter();
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
@@ -396,7 +394,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     FluxKernel::ComputeJunction( numFluxElems,
                                  sei[iconn],
                                  weights[iconn],
-                                 weightedElementCenterToConnectorCenterSquare[iconn],
+                                 weightedElementCenterToConnectorCenter[iconn],
                                  pres[er][esr],
                                  dPres[er][esr],
                                  gravDepth[er][esr],

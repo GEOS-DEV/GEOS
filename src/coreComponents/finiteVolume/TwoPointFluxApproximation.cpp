@@ -106,13 +106,13 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor coefTensor;
-  real64 faceArea, faceWeight, faceWeightInv;
+  real64 faceArea, faceWeight, faceWeightInv, sumOfDistance;
 
   stackArray1d<localIndex, numElems> stencilCellsRegionIndex(numElems);
   stackArray1d<localIndex, numElems> stencilCellsSubRegionIndex(numElems);
   stackArray1d<localIndex, numElems> stencilCellsIndex(numElems);
   stackArray1d<real64, numElems> stencilWeights(numElems);
-  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenterSquare(numElems);
+  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenter(numElems);
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve(faceManager->size() );
@@ -135,6 +135,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
       continue;
 
     faceWeightInv = 0.0;
+    sumOfDistance = 0.0;
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
@@ -173,13 +174,13 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
           halfWeight = Dot(cellToFaceVec, faceConormal);
         }
 
-        stencilWeightedElementCenterToConnectorCenterSquare[ke] = 2.0 * Dot(cellToFaceVec, cellToFaceVec) / halfWeight;
-
         halfWeight *= faceArea / c2fDistance;
         halfWeight = std::max( halfWeight, weightTolerance );
 
         faceWeightInv += 1.0 / halfWeight;
+        sumOfDistance += c2fDistance;
 
+        stencilWeightedElementCenterToConnectorCenter[ke] = c2fDistance;
       }
     }
 
@@ -192,13 +193,14 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
       stencilCellsSubRegionIndex[ke] = elemSubRegionList[kf][ke];
       stencilCellsIndex[ke] = elemList[kf][ke];
       stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+      stencilWeightedElementCenterToConnectorCenter[ke] /= sqrt(faceWeight / faceArea * sumOfDistance);
     }
     stencil.add( CellElementStencilTPFA::NUM_POINT_IN_FLUX,
                  stencilCellsRegionIndex,
                  stencilCellsSubRegionIndex,
                  stencilCellsIndex,
                  stencilWeights.data(),
-                 stencilWeightedElementCenterToConnectorCenterSquare.data(),
+                 stencilWeightedElementCenterToConnectorCenter.data(),
                  kf);
   }
 //  stencil.compress();
@@ -259,7 +261,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<localIndex, maxElems> stencilCellsSubRegionIndex;
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
-  stackArray1d<real64, maxElems> stencilWeightedElementCenterToConnectorCenterSquare;
+  stackArray1d<real64, maxElems> stencilWeightedElementCenterToConnectorCenter;
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
   // add new connectors/connections between face elements to the fracture stencil
@@ -277,7 +279,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       stencilCellsSubRegionIndex.resize(numElems);
       stencilCellsIndex.resize(numElems);
       stencilWeights.resize(numElems);
-      stencilWeightedElementCenterToConnectorCenterSquare.resize(numElems);
+      stencilWeightedElementCenterToConnectorCenter.resize(numElems);
 
       // get edge geometry
       R1Tensor edgeCenter, edgeLength;
@@ -292,24 +294,25 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
         // use straight difference between the edge center and face center for gradient length...maybe do something
         // better here?? TODO
-        R1Tensor cellCenterToEdgeCenter = edgeCenter;
-        cellCenterToEdgeCenter -= faceCenter[ faceMap[fractureElementIndex][0] ];
+        R1Tensor faceCenterToEdgeCenter = edgeCenter;
+        faceCenterToEdgeCenter -= faceCenter[ faceMap[fractureElementIndex][0] ];
 
         // form the CellStencil entry
         stencilCellsRegionIndex[kfe] = fractureRegionIndex;
         stencilCellsSubRegionIndex[kfe] = 0;
         stencilCellsIndex[kfe] = fractureElementIndex;
+        stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / faceCenterToEdgeCenter.L2_Norm();
 
-        stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
-        stencilWeightedElementCenterToConnectorCenterSquare[kfe] = 24.0 * Dot(cellCenterToEdgeCenter, cellCenterToEdgeCenter);
+        stencilWeightedElementCenterToConnectorCenter[kfe] = faceCenterToEdgeCenter.L2_Norm();
       }
+
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
                            stencilCellsRegionIndex,
                            stencilCellsSubRegionIndex,
                            stencilCellsIndex,
                            stencilWeights.data(),
-                           stencilWeightedElementCenterToConnectorCenterSquare.data(),
+                           stencilWeightedElementCenterToConnectorCenter.data(),
                            fci );
     }
   }
@@ -331,7 +334,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsSubRegionIndex.resize(numElems);
         stencilCellsIndex.resize(numElems);
         stencilWeights.resize(numElems);
-        stencilWeightedElementCenterToConnectorCenterSquare.resize(numElems);
+        stencilWeightedElementCenterToConnectorCenter.resize(numElems);
 
         R2SymTensor coefTensor;
         R1Tensor cellToFaceVec;
@@ -358,8 +361,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
             faceConormal.AijBj(coefTensor, faceNormal[faceIndex]);
             real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
-            stencilWeightedElementCenterToConnectorCenterSquare[0] = 2.0 * c2fDistance * c2fDistance / Dot( cellToFaceVec, faceConormal ) ;
-            stencilWeightedElementCenterToConnectorCenterSquare[1] = stencilWeightedElementCenterToConnectorCenterSquare[0] ;
+            stencilWeightedElementCenterToConnectorCenter[0] = c2fDistance / sqrt( Dot( cellToFaceVec, faceConormal ) );
+            stencilWeightedElementCenterToConnectorCenter[1] = 0 ;
 
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
             stencilCellsRegionIndex[0] = er;
@@ -377,7 +380,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
                              stencilCellsSubRegionIndex,
                              stencilCellsIndex,
                              stencilWeights.data(),
-                             stencilWeightedElementCenterToConnectorCenterSquare.data(),
+                             stencilWeightedElementCenterToConnectorCenter.data(),
                              faceIndex );
           }
         }
@@ -429,7 +432,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
   stackArray1d<PointDescriptor, numElems> stencilPoints(numElems);
   stackArray1d<real64, numElems> stencilWeights(numElems);
-  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenterSquare(numElems);
+  stackArray1d<real64, numElems> stencilWeightedElementCenterToConnectorCenter(numElems);
 
   real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
@@ -480,8 +483,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
         faceWeight = Dot(cellToFaceVec, faceConormal);
       }
 
-      stencilWeightedElementCenterToConnectorCenterSquare[0] = 2.0 * c2fDistance * c2fDistance /faceWeight ;
-      stencilWeightedElementCenterToConnectorCenterSquare[1] = stencilWeightedElementCenterToConnectorCenterSquare[0] ;
+      stencilWeightedElementCenterToConnectorCenter[0] = c2fDistance / sqrt( faceWeight );
+      stencilWeightedElementCenterToConnectorCenter[1] = 0.0 ;
       
       faceWeight *= faceArea / c2fDistance;
       faceWeight = std::max( faceWeight, weightTolerance );
@@ -497,7 +500,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       stencil.add( 2,
                    stencilPoints.data(),
                    stencilWeights.data(),
-                   stencilWeightedElementCenterToConnectorCenterSquare.data(),
+                   stencilWeightedElementCenterToConnectorCenter.data(),
                    kf );
     }
   }

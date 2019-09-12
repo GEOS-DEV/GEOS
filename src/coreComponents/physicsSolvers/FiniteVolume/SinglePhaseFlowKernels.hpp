@@ -348,7 +348,6 @@ struct FluxKernel
    * @param[in] dt The timestep for the integration step.
    * @param[in] fluidIndex The index of the fluid being fluxed.
    * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
-   * @param[in] dofNumber The dofNumbers for each element
    * @param[in] pres The pressures in each element
    * @param[in] dPres The change in pressure for each element
    * @param[in] gravDepth The factor for gravity calculations (g*H)
@@ -364,7 +363,6 @@ struct FluxKernel
           real64 const dt,
           localIndex const fluidIndex,
           integer const gravityFlag,
-          ElementView < arrayView1d<globalIndex const > > const & dofNumber,
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & dPres,
           ElementView < arrayView1d<real64 const> > const & gravDepth,
@@ -587,7 +585,7 @@ struct FluxKernel
            arraySlice1d<localIndex const> const & sesri,
            arraySlice1d<localIndex const> const & sei,
            arraySlice1d<real64 const> const & stencilWeights,
-           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenterSquare,
+           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
@@ -636,7 +634,7 @@ struct FluxKernel
 
       potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
 
-      weightedSum += stencilWeightedElementCenterToConnectorCenterSquare[ke];
+      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -653,11 +651,11 @@ struct FluxKernel
     localIndex ei_down  = sei[k_down];
 
     // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
-    *maxStableDt = std::min(dDens_dPres[er_up][esr_up][fluidIndex][ei_up][0] / mob[er_up][esr_up][ei_up] / 2.0 * weightedSum, *maxStableDt);
+    *maxStableDt = std::min(dDens_dPres[er_up][esr_up][fluidIndex][ei_up][0] / mob[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
     // populate local flux
-    (*mass)[er_up][esr_up][ei_up] -= dt * mob[er_up][esr_up][ei_up] * potDif;
-    (*mass)[er_down][esr_down][ei_down] += dt * mob[er_up][esr_up][ei_up] * potDif;
+    (*mass)[seri[0]][sesri[0]][sei[0]] -= dt * mob[er_up][esr_up][ei_up] * potDif;
+    (*mass)[seri[1]][sesri[1]][sei[1]] += dt * mob[er_up][esr_up][ei_up] * potDif;
 
   }
 
@@ -674,7 +672,7 @@ struct FluxKernel
            arraySlice1d<localIndex const> const &,
            arraySlice1d<localIndex const> const & stencilElementIndices,
            arraySlice1d<real64 const> const & stencilWeights,
-           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenterSquare,
+           arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & dPres,
            arrayView1d<real64 const> const & gravDepth,
@@ -721,7 +719,7 @@ struct FluxKernel
       sumWeightGrav += weight * gravD * gravityFlag;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
 
-      weightedSum += stencilWeightedElementCenterToConnectorCenterSquare[ke];
+      weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
     }
 
     // upwinding of fluid properties (make this an option?)
@@ -733,11 +731,11 @@ struct FluxKernel
 
     localIndex ei_down  = stencilElementIndices[k_down];
 
-    *maxStableDt = std::min( dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
+    *maxStableDt = std::min( dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
     // populate local flux
-    (*mass)[ei_up] -= dt * mob[ei_up] * potDif;
-    (*mass)[ei_down] += dt * mob[ei_up] * potDif;
+    (*mass)[stencilElementIndices[0]] -= dt * mob[ei_up] * potDif;
+    (*mass)[stencilElementIndices[1]] += dt * mob[ei_up] * potDif;
   }
 
   /**
@@ -855,7 +853,7 @@ struct FluxKernel
   ComputeJunction( localIndex const numFluxElems,
                    arraySlice1d<localIndex const> const & stencilElementIndices,
                    arraySlice1d<real64 const> const & stencilWeights,
-                   arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenterSquare,
+                   arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & dPres,
                    arrayView1d<real64 const> const & gravDepth,
@@ -911,11 +909,11 @@ struct FluxKernel
         localIndex ei_down  = stencilElementIndices[k[k_down]];
 
         // populate local flux
-        (*mass)[ei_up] -= mob[ei_up] * weight * potDif * dt;
-        (*mass)[ei_down] += mob[ei_up] * weight * potDif * dt;
+        (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
+        (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;
 
-        real64 weightedSum = ( stencilWeightedElementCenterToConnectorCenterSquare[k[0]] / aperture[stencilElementIndices[k[0]]]  / aperture[stencilElementIndices[k[0]]]
-                             + stencilWeightedElementCenterToConnectorCenterSquare[k[1]] / aperture[stencilElementIndices[k[1]]]  / aperture[stencilElementIndices[k[1]]] );
+        real64 weightedSum = ( stencilWeightedElementCenterToConnectorCenter[k[0]] * aperture[stencilElementIndices[k[0]]] + stencilWeightedElementCenterToConnectorCenter[k[1]] * aperture[stencilElementIndices[k[1]]])
+                            * ( 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]] ) / weight ;
 
         *maxStableDt = std::min(dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 

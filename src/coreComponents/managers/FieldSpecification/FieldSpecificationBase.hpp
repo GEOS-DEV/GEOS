@@ -90,8 +90,35 @@ public:
   template < typename FIELD_OP, typename POLICY, typename T, int N >
   void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
+                              bool normalizeBySetSize,
+                              real64 const time,
+                              real64 const dt,
+                              Group * dataGroup ) const;
+
+  template < typename FIELD_OP, typename POLICY, typename T, int N >
+  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+                              SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
+
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] fieldname the name of the field to apply the value to.
+   *
+   * This function applies the value to a field variable. This function is typically
+   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
+   */
+  template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
+  void ApplyFieldValue( set<localIndex> const & targetSet,
+                        bool normalizeBySetSize,
+                        real64 const time,
+                        real64 const dt,
+                        dataRepository::Group * dataGroup,
+                        string const & fieldname ) const;
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
@@ -360,6 +387,82 @@ private:
 
 };
 
+
+template < typename FIELD_OP, typename POLICY, typename T, int N >
+void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                    bool normalizeBySetSize,
+                                                    real64 const time,
+                                                    real64 const dt,
+                                                    Group * dataGroup ) const
+{
+  integer const component = GetComponent();
+  string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
+  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+
+  // TODO: not correct in parallel, need to compute global size of a set
+  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+
+  if( functionName.empty() )
+  {
+    forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+    {
+      localIndex const a = targetSet[ i ];
+      FIELD_OP::SpecifyFieldValue( field, a, component, m_scale * dt * setSizeFactor);
+    });
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
+
+    GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+
+    if( function->isFunctionOfTime()==2 )
+    {
+      real64 value = m_scale * function->Evaluate( &time );
+      forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, value );
+      });
+    }
+    else
+    {
+      real64_array result( static_cast<localIndex>( targetSet.size() ) );
+      function->Evaluate( dataGroup, time, targetSet, result );
+      arrayView1d<real64 const> const & resultView = result;
+      forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
+      });
+    }
+  }
+}
+
+
+template< typename FIELD_OP, typename POLICY >
+void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
+                                              bool normalizeBySetSize,
+                                              real64 const time,
+                                              real64 const dt,
+                                              Group * dataGroup,
+                                              string const & fieldName ) const
+{
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                 false,
+                                 [&]( auto arrayInstance, auto dataTypeInstance )
+  {
+    using ArrayType = decltype(arrayInstance);
+    dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
+
+    typename ArrayType::ViewType const & field = view.referenceAsView();
+    ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, normalizeBySetSize, time, dt, dataGroup );
+  });
+}
 
 template < typename FIELD_OP, typename POLICY, typename T, int N >
 void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,

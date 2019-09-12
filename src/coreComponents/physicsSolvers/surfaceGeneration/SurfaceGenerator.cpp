@@ -32,6 +32,7 @@
 #include "MPI_Communications/SpatialPartition.hpp"
 #include "MPI_Communications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 
 #ifdef USE_GEOSX_PTP
@@ -660,7 +661,36 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   }
 
 
+  // apply pressure boundary condition in the explicit solver
+  FaceElementSubRegion const * const faceElementSubRegion = elementManager.GetRegion(m_fractureRegionName)->GetSubRegion<FaceElementSubRegion>(0);
+  set<localIndex> const & newFaceElems = faceElementSubRegion->m_newFaceElements;
 
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+  fsManager->Apply( time, domain, "ElementRegions", FaceElementSubRegion::viewKeyStruct::elementApertureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    set<localIndex> newSet;
+    for( localIndex index : newFaceElems )
+    {
+      if( lset.count(index) > 0 )
+      {
+        newSet.insert(index);
+      }
+    }
+    fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
+                                                  time,
+                                                  subRegion,
+                                                  FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  });
+
+  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
+  {
+    subRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
+  });
 
   return rval;
 }

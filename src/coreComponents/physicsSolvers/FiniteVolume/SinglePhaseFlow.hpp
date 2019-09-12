@@ -282,6 +282,8 @@ public:
 
 protected:
 
+  virtual void PostProcessInput() override;
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:

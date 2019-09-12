@@ -49,6 +49,16 @@ struct OpAdd
   }
 };
 
+struct OpSubtract
+{
+  template< typename T, typename U >
+  GEOSX_HOST_DEVICE static inline
+  void apply( T & lhs, U const & rhs )
+  {
+    lhs -= static_cast<T>( rhs );
+  }
+};
+
 template< typename OP >
 struct FieldSpecificationOp
 {
@@ -436,6 +446,54 @@ struct FieldSpecificationAdd : public FieldSpecificationOp<OpAdd>
                                          globalIndex * const dof,
                                          real64 * const values )
   {
+    rhs.add( dof, values, num );
+  }
+
+};
+
+/**
+ * @struct FieldSpecificationAdd
+ * this struct a collection of static functions which adhere to an assumed interface for adding
+ * a value for a field.
+ */
+struct FieldSpecificationSubtract : public FieldSpecificationOp<OpSubtract>
+{
+  using base_type = FieldSpecificationOp<OpSubtract>;
+  using base_type::SpecifyFieldValue;
+
+  /**
+   * @brief Function to apply a value to a vector field for a single dof.
+   * @param[in] dof The degree of freedom that is to be modified.
+   * @param[in] matrix A ParalleMatrix object: the system matrix.
+   * @param[out] rhs The rhs contribution to be modified
+   * @param[in] bcValue The value to add to rhs
+   * @param[in] fieldValue unused.
+   *
+   */
+  template< typename LAI >
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                        typename LAI::ParallelMatrix & matrix,
+                                        real64 & rhs,
+                                        real64 const & bcValue,
+                                        real64 const fieldValue )
+  {
+    rhs -= bcValue;
+  }
+
+  /**
+   * @brief Function to add some values of a vector.
+   * @param rhs A ParallelVector object.
+   * @param num The number of values in \p rhs to replace
+   * @param dof A pointer to the global DOF to be replaced
+   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
+   */
+  template< typename LAI >
+  static inline void PrescribeRhsValues( typename LAI::ParallelVector & rhs,
+                                         localIndex const num,
+                                         globalIndex * const dof,
+                                         real64 * const values )
+  {
+    (*values) *= -1;
     rhs.add( dof, values, num );
   }
 

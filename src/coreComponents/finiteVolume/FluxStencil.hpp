@@ -70,7 +70,7 @@ public:
   void add( localIndex const numPts,
             INDEX  const * const indices,
             WEIGHT const * const weights,
-            WEIGHT const * const weightedElementCenterToConnectorCenterSquare,
+            WEIGHT const * const weightedElementCenterToConnectorCenter,
             localIndex const connectorIndex );
 
   /// zero out connections
@@ -83,7 +83,7 @@ public:
   {
     INDEX  index;
     WEIGHT weight;
-    WEIGHT weightedElementCenterToConnectorCenterSquare;
+    WEIGHT weightedElementCenterToConnectorCenter;
   };
 
   ArrayOfArraysView<Entry const, true> getConnections() const { return m_connections; }
@@ -128,7 +128,7 @@ template<typename INDEX, typename WEIGHT>
 void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
                                       INDEX  const * const indices,
                                       WEIGHT const * const weights,
-                                      WEIGHT const * const weightedElementCenterToConnectorCenterSquare,
+                                      WEIGHT const * const weightedElementCenterToConnectorCenter,
                                       localIndex const connectorIndex )
 {
   GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -136,7 +136,7 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
   stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
   for (localIndex i = 0; i < numPts; ++i)
   {
-    entries[i] = { indices[i], weights[i], weightedElementCenterToConnectorCenterSquare[i] };
+    entries[i] = { indices[i], weights[i], weightedElementCenterToConnectorCenter[i] };
   }
 
   m_connections.appendArray( entries.data(), numPts );
