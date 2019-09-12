@@ -35,7 +35,7 @@ set( finiteElement_sources
      quadrature/QuadratureRuleManager.cpp
    )
 
-set( dependencyList dataRepository codingUtilities )
+set( dependencyList common)
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

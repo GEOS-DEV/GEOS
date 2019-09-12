@@ -27,7 +27,7 @@ set( linearAlgebra_sources
      DofManager.cpp 
      utilities/LAIHelperFunctions.cpp)
 
-set( dependencyList common blas lapack raja managers )
+set( dependencyList common blas lapack raja )
 
 if( ENABLE_MPI )
     list( APPEND dependencyList mpi )

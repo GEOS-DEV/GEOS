@@ -6,7 +6,7 @@ set( gtest_geosx_tests
      testStencilCollection.cpp
    )
 
-set( dependencyList geosx_core gtest axom )
+set( dependencyList finiteVolume gtest )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

@@ -65,7 +65,7 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+set( dependencyList common fileIO linearAlgebra optionparser RAJA )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )

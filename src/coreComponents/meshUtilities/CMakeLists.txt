@@ -34,7 +34,7 @@ set(meshUtilities_sources
    )
 
 
-set( dependencyList common dataRepository fileIO mesh )
+set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
