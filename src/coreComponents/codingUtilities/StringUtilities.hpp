@@ -86,8 +86,10 @@ inline std::string fromString<std::string>(std::string theVar)
 
 // override the template for string->real64
 // Allows unit manager to convert units
+/*
 template <>
 real64 fromString<real64>(std::string theVar);
+*/
 
 // override the template for FieldType
 //template <>

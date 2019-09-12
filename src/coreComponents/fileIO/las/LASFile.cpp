@@ -21,36 +21,32 @@
 namespace geosx
 {
 
-std::unique_ptr< LASSection > LASSection::CreateSection( char const & name )
+LASInformationSection * LASInformationSection::CreateLASInformationSection( char const & name )
 {
   if( name == 'V' )          // Version Information
   {
-    return std::make_unique< LASVersionInformationSection >();
+    return new LASVersionInformationSection();
   }
   else if( name == 'W' )     // Well Information
   {
-    return std::make_unique< LASWellInformationSection >();
+    return new LASWellInformationSection();
   }
   else if( name == 'C' )     // Curve Information
   {
-    return std::make_unique< LASCurveInformationSection >();
+    return new LASCurveInformationSection();
   }
   else if( name == 'P' )     // Parameter Information
   {
-    return std::make_unique< LASParameterInformationSection >();
+    return new LASParameterInformationSection();
   }
   else if( name == 'O' )     // Other Information
   {
-    return std::make_unique< LASOtherInformationSection >();
-  }
-  else if( name == 'A' )     // ASCII Log Data
-  {
-    return std::make_unique< LASASCIILogDataSection >();
+    return new LASOtherInformationSection();
   }
   else
   {
     GEOS_ERROR( name << " is not a valid section for LAS files" );
-    return std::make_unique< LASASCIILogDataSection >(); // TO avoid error while compiling
+    return nullptr;
   }
 }
 }
