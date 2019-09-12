@@ -19,11 +19,11 @@
 #ifndef BOUNDARYCONDITIONBASE_H
 #define BOUNDARYCONDITIONBASE_H
 
-#include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "dataRepository/Group.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
