@@ -19,7 +19,6 @@
 
 #include <unordered_map>
 #include <string>
-#include <mpi.h>
 
 /* Forward declarations */
 namespace axom

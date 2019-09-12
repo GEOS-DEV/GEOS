@@ -23,12 +23,11 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
 
+#include "mpiCommunications/PartitionBase.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "Mesh/MeshFactory.hpp"
 
 #include "MeshDataWriters/MeshParts.hpp"
-
-#include "MPI_Communications/PartitionBase.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
 

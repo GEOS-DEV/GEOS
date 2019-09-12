@@ -21,7 +21,6 @@
 
 #include <string>
 #include <cstdio>
-#include <mpi.h>
 
 
 namespace geosx

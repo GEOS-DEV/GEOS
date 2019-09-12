@@ -2,7 +2,7 @@
 #
 # Specify all headers
 #
-set(MPI_Communications_headers
+set(mpiCommunications_headers
     CommunicationTools.hpp
     NeighborCommunicator.hpp
     PartitionBase.hpp
@@ -13,7 +13,7 @@ set(MPI_Communications_headers
 #
 # Specify all sources
 #
-set(MPI_Communications_sources
+set(mpiCommunications_sources
     CommunicationTools.cpp
     NeighborCommunicator.cpp
     PartitionBase.cpp
@@ -30,13 +30,13 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-blt_add_library( NAME                  MPI_Communications
-                 SOURCES               ${MPI_Communications_sources}
-                 HEADERS               ${MPI_Communications_headers}
+blt_add_library( NAME                  mpiCommunications
+                 SOURCES               ${mpiCommunications_sources}
+                 HEADERS               ${mpiCommunications_headers}
                  DEPENDS_ON            ${dependencyList}
                  #OBJECT                TRUE
                )
                
-target_include_directories( MPI_Communications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( mpiCommunications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX MPI_Communications )
+geosx_add_code_checks(PREFIX mpiCommunications )

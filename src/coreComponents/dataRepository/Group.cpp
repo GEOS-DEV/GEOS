@@ -17,7 +17,6 @@
 #include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-#include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
