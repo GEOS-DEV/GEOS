@@ -20,22 +20,34 @@
 #define SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "silo.h"
 
-#ifdef GEOSX_USE_MPI
-#include <mpi.h>
-#endif
-
-#include "mpi.h"
-#include "pmpio.h"
-
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/InterObjectRelation.hpp"
 
+#include "silo.h"
 
-typedef struct _PMPIO_baton_t PMPIO_baton_t;
+#if !defined(GEOSX_USE_MPI)
+  int MPI_Comm_size(MPI_Comm , int *) {return 1;}
+  int MPI_Comm_rank(MPI_Comm , int *) {return 1;}
+
+  int MPI_Ssend(const void *, int , MPI_Datatype , int , int ,
+                MPI_Comm )
+  {
+    return 0;
+  }
+
+  int MPI_Recv(void * buf, int , MPI_Datatype , int , int ,
+               MPI_Comm , MPI_Status* )
+  {
+    *reinterpret_cast<int*>(buf) = 0;
+    return 0;
+  }
+
+#include "pmpio.h"
+#endif
 
 
 namespace geosx
@@ -116,8 +128,7 @@ public:
    */
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+    int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
 
     // char dirname[100];
     if( rank == 0 )

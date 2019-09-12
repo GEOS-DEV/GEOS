@@ -17,14 +17,14 @@
  *
  */
 
-#include "CommunicationTools.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
 
 #include <algorithm>
 
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/ObjectManagerBase.hpp"
-#include "NeighborCommunicator.hpp"
 
 namespace geosx
 {
@@ -40,24 +40,6 @@ CommunicationTools::CommunicationTools()
 CommunicationTools::~CommunicationTools()
 {
   // TODO Auto-generated destructor stub
-}
-
-int CommunicationTools::MPI_Size( MPI_Comm const & comm )
-{
-  int size = 1;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_size( comm, &size );
-#endif
-  return size;
-}
-
-int CommunicationTools::MPI_Rank( MPI_Comm const & comm )
-{
-  int rank = 1;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_rank( comm, &rank );
-#endif
-  return rank;
 }
 
 

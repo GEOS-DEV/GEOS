@@ -24,10 +24,9 @@
 #include <math.h>
 #include <algorithm>
 
+#include "mpiCommunications/PartitionBase.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "common/DataTypes.hpp"
-
-#include "MPI_Communications/PartitionBase.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
 

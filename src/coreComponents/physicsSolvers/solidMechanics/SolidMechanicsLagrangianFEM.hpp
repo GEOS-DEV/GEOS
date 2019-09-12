@@ -19,11 +19,11 @@
 #ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 #define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
 
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
 

@@ -39,6 +39,8 @@
 
 #include "mesh/MeshBody.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
 /// forward declaration of NodeManagerT for use as a template argument
 class NodeManager;
 
@@ -339,14 +341,16 @@ void SiloFile::MakeSiloDirectories()
 /**
  *
  */
-void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
+void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const MPI_PARAM(numGroups) )
 {
   MakeSiloDirectories();
 
 #ifdef GEOSX_USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = numGroups;
-
+#else
+  m_numGroups = 1;
+#endif
   MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
 //  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
@@ -358,13 +362,6 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
                         PMPIO_DefaultOpen,
                         PMPIO_DefaultClose,
                         const_cast<int*>(&m_driver));
-#else
-  m_numGroups = 1;
-  // Initialize PMPIO, pass a pointer to the driver type as the user data.
-  m_baton = PMPIO_Init(m_numGroups, PMPIO_WRITE, nullptr, 1, PMPIO_DefaultCreate, PMPIO_DefaultOpen,
-                       PMPIO_DefaultClose, &m_driver);
-#endif
-
 }
 
 // *********************************************************************************************************************
@@ -1554,11 +1551,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                real64 const problemTime,
                                bool const isRestart )
 {
-  int rank = 0;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-#endif
-
   //--------------WRITE FE DATA-----------------
 //  if (m_feElementManager->m_numElems > 0)
 //  {

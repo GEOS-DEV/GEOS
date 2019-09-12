@@ -14,9 +14,10 @@
 
 
 #include "DummySolver.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include <thread>
 #include <chrono>
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
