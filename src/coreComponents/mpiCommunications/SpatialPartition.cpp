@@ -16,7 +16,7 @@
  * @file SpatialPartition.cpp
  */
 
-#include "SpatialPartition.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 

@@ -22,10 +22,10 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
-//#include "SimpleGeometricObjects.hpp"
 
-#include "MPI_Communications/PartitionBase.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
+#include "mpiCommunications/PartitionBase.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
+//#include "SimpleGeometricObjects.hpp"
 
 #include "mesh/MeshBody.hpp"
 

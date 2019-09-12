@@ -22,6 +22,8 @@
 #include <math.h>
 #include <sys/time.h>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "common/TimingMacros.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -34,9 +36,7 @@
 
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 
 
 //#define verbose 0 //Need to move this somewhere else

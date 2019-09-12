@@ -24,9 +24,6 @@
 #include "Logger.hpp"
 #include "mesh/MeshBody.hpp"
 
-#ifdef GEOSX_USE_MPI
-#include <mpi.h>
-#endif
 
 namespace geosx{
 
