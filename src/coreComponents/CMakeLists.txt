@@ -34,7 +34,7 @@ set( subdirs
 #     physicsSolvers
 #     wells
 #     python
-#     linearAlgebraInterface
+#     linearAlgebra
 #     cxx-utilities
 #     )
 

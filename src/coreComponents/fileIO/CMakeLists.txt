@@ -19,7 +19,7 @@ set( fileIO_sources
      vtm/VtmFile.cpp
      schema/SchemaUtilities.cpp )
 
-set( dependencyList common silo hdf5 pugixml RAJA  )
+set( dependencyList common silo pugixml RAJA  )
 
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
@@ -50,5 +50,3 @@ blt_add_library( NAME                  fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )
-
-add_subdirectory( unitTests )

@@ -16,7 +16,7 @@ set(common_sources
     DataTypes.cpp
    )
 
-set( dependencyList cxx-utilities )
+set( dependencyList cxx-utilities pugixml )
 
 if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi )
@@ -29,19 +29,6 @@ endif()
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 endif()
-
-if( ENABLE_RAJA )
-  set( dependencyList ${dependencyList} RAJA )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
 
 #set( dependencyList2 mpi )
 #foreach( lib ${dependencyList} )

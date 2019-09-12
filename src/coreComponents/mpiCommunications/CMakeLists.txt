@@ -22,7 +22,7 @@ set(mpiCommunications_sources
     SpatialPartition.cpp
    )
 
-set( dependencyList fileIO common trilinos )
+set( dependencyList common )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
