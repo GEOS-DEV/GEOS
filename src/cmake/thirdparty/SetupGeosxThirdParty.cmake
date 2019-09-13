@@ -552,9 +552,14 @@ if( ENABLE_HYPRE )
     if (NOT HYPRE_FOUND)
         message(FATAL_ERROR "HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
     endif()
+    
+    set( HYPRE_DEPENDS "blas;lapack" )
+    if( ENABLE_SUPERLU_DIST )
+        list( APPEND HYPRE_DEPENDS "superlu_dist" )
+    endif()
 
     blt_register_library( NAME hypre
-                          DEPENDS_ON superlu_dist blas lapack
+                          DEPENDS_ON ${HYPRE_DEPENDS}
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
                           LIBRARIES ${HYPRE_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )

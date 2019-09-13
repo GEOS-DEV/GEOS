@@ -463,7 +463,6 @@
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="MeshFile" type="MeshFileType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -515,20 +514,6 @@
 	<xsd:complexType name="MeshFileType">
 		<!--file => path to the vtm file-->
 		<xsd:attribute name="file" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshGeneratorType">
-		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
-		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="" />
-		<!--fieldsToImport => Fields to be imported from the external mesh file-->
-		<xsd:attribute name="fieldsToImport" type="string_array" default="" />
-		<!--file => path to the mesh file-->
-		<xsd:attribute name="file" type="string" use="required" />
-		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
-		<xsd:attribute name="reverseZ" type="integer" default="0" />
-		<!--scale => Scale the coordinates of the vertices-->
-		<xsd:attribute name="scale" type="real64" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -672,7 +657,6 @@
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
-			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="VTK" type="VTKType" />
@@ -683,24 +667,6 @@
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ChomboIOType">
-		<!--beginCycle => Cycle at which the coupling will commence.-->
-		<xsd:attribute name="beginCycle" type="real64" use="required" />
-		<!--inputPath => Path at which the chombo to geosx file will be written.-->
-		<xsd:attribute name="inputPath" type="string" default="/INVALID_INPUT_PATH" />
-		<!--outputPath => Path at which the geosx to chombo file will be written.-->
-		<xsd:attribute name="outputPath" type="string" use="required" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
-		<!--useChomboPressures => True iff geosx should use the pressures chombo writes out.-->
-		<xsd:attribute name="useChomboPressures" type="integer" default="0" />
-		<!--waitForInput => True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.-->
-		<xsd:attribute name="waitForInput" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

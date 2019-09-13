@@ -29,26 +29,8 @@
 
 #include "silo.h"
 
-#if !defined(GEOSX_USE_MPI)
-  int MPI_Comm_size(MPI_Comm , int *) {return 1;}
-  int MPI_Comm_rank(MPI_Comm , int *) {return 1;}
-
-  int MPI_Ssend(const void *, int , MPI_Datatype , int , int ,
-                MPI_Comm )
-  {
-    return 0;
-  }
-
-  int MPI_Recv(void * buf, int , MPI_Datatype , int , int ,
-               MPI_Comm , MPI_Status* )
-  {
-    *reinterpret_cast<int*>(buf) = 0;
-    return 0;
-  }
-
-#include "pmpio.h"
-#endif
-
+struct _PMPIO_baton_t;
+typedef _PMPIO_baton_t PMPIO_baton_t;
 
 namespace geosx
 {
@@ -87,12 +69,14 @@ public:
    * @brief Initializes silo for input/output
    * @param readwrite input/output specifier
    */
-  void Initialize( const PMPIO_iomode_t readwrite, int const numGroups=1 );
+  void Initialize( int const numGroups=1 );
 
   /**
    * @brief finishes/closes up the silo interface
    */
   void Finish();
+
+  int groupRank( int const i ) const;
 
   /**
    * @brief Wait for the Baton when writing using PMPIO
@@ -1340,15 +1324,13 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
   for( int i = 0 ; i < size ; ++i )
   {
-    int groupRank = PMPIO_GroupRank(m_baton, i);
-
 
     sprintf( tempBuffer,
              "%s%s%s.%03d:/domain_%05d%s/%s",
              m_siloDataSubDirectory.c_str(),
              "/",
              m_baseFileName.c_str(),
-             groupRank,
+             groupRank(i),
              i,
              multiRootString.c_str(),
              name.c_str());
