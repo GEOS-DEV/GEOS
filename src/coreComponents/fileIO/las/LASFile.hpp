@@ -90,7 +90,7 @@ class LASLine
      */
     string GetLine() const
     {
-      return m_keywordname + "." + m_unit + " " + m_data + ":" + m_description;
+      return m_keywordname + "." + m_unit + "    " + m_data + "    :    " + m_description;
     }
   private:
     void ParseLine( string const & line )
@@ -140,7 +140,7 @@ class LASSection
     virtual std::streampos ParseSection( std::ifstream & file )
     {
       string curLine;
-      std::streampos pos;
+      std::streampos pos = file.tellg();
       while ( std::getline(file, curLine) )
       {
         stringutilities::TrimLeft( curLine );
@@ -179,7 +179,7 @@ class LASInformationSection : public LASSection
     {
       for( string & keyword : m_mandatoryKeyword )
       {
-        GEOS_ERROR_IF( m_lines.count( keyword ) == 0, "Mandatory keyword " << keyword << " not found in "
+        GEOS_ERROR_IF( HasKeyword( keyword ) == 0, "Mandatory keyword " << keyword << " not found in "
                                                       << GetName() );
       }
     }
@@ -191,17 +191,42 @@ class LASInformationSection : public LASSection
       file << "~" << GetName() << " Section\n";
       for( auto & line: m_lines )
       {
-        file << line.second.GetLine() << "\n";
+        file << line.GetLine() << "\n";
       }
+    }
+
+    LASLine const & GetLine( string const & keyword ) const
+    {
+      for( auto & lasLine : m_lines )
+      {
+        if( lasLine.GetKeyword() == keyword )
+        {
+          return lasLine;
+        }
+      }
+      GEOS_ERROR( "Keyword " << keyword << " not found in section " << GetName() );
+      return m_lines[0]; // Should never be reached;
+    }
+
+    bool HasKeyword( string const & keyword ) const
+    {
+      for( auto & lasLine : m_lines )
+      {
+        if( lasLine.GetKeyword() == keyword )
+        {
+          return true;
+        }
+      }
+      return false;
     }
 
   protected:
     virtual void ParseLine( string const & line ) override
     {
       LASLine curLine( line );
-      GEOS_ERROR_IF( m_lines.count( curLine.GetKeyword() ) != 0, "Keyword " << curLine.GetKeyword()
+      GEOS_ERROR_IF( HasKeyword( curLine.GetKeyword() ) != 0, "Keyword " << curLine.GetKeyword()
                      << " was already defined in "<< GetName() );
-      m_lines[curLine.GetKeyword()] = curLine;
+      m_lines.push_back( curLine );
     }
 
 
@@ -210,7 +235,7 @@ class LASInformationSection : public LASSection
     array1d< string > m_mandatoryKeyword;
 
     /// Contains all the lines (A line = keyword + value(s))
-    std::unordered_map< string, LASLine > m_lines;
+    std::vector< LASLine > m_lines;
 };
 
 /*!
@@ -273,9 +298,9 @@ class LASWellInformationSection : public LASInformationSection
 
     localIndex GetNumberOfLogEntries() const
     {
-      real64 start = m_lines.at("STRT").GetDataAsReal64();
-      real64 stop = m_lines.at("STOP").GetDataAsReal64();
-      real64 step = m_lines.at("STEP").GetDataAsReal64();
+      real64 start = GetLine("STRT").GetDataAsReal64();
+      real64 stop = GetLine("STOP").GetDataAsReal64();
+      real64 step = GetLine("STEP").GetDataAsReal64();
 
       real64 length = stop - start;
       return static_cast< localIndex > ( length / step ) + 1;
@@ -319,7 +344,7 @@ class LASCurveInformationSection : public LASInformationSection
      * */
     virtual void CheckKeywords() override
     {
-      GEOS_ERROR_IF( m_lines.count( "DEPTH" ) + m_lines.count( "DEPT" ) +  m_lines.count( "TIME" ) +  m_lines.count( "INDEX ") != 1,
+      GEOS_ERROR_IF( !HasKeyword( "DEPTH" ) && !HasKeyword( "DEPT" ) && !HasKeyword( "TIME" )  && !HasKeyword( "INDEX "),
                      "Invalid " << GetName() << " section. It musts contains at least one those keyword \n"
                      << "DEPTH DEPT TIME INDEX");
     }
@@ -402,7 +427,7 @@ class LASASCIILogDataSection : public LASSection
   public:
     LASASCIILogDataSection( localIndex nbEntries, localIndex nbCurves ) :
       LASSection(),
-      m_logs(nbEntries, nbCurves),
+      m_logs(nbCurves, nbEntries),
       m_nbCurves( nbCurves ),
       m_nbLogEntries( nbEntries ),
       m_count(0)
@@ -426,7 +451,7 @@ class LASASCIILogDataSection : public LASSection
       {
         for( localIndex j = 0; j < m_nbCurves; j++ )
         {
-          file << m_logs[i][j] << " ";
+          file << m_logs[j][i] << " ";
         }
         file << "\n";
       }
@@ -434,11 +459,11 @@ class LASASCIILogDataSection : public LASSection
   private:
     virtual void ParseLine( string const & line ) override
     {
-      string_array splitLine = stringutilities::Tokenize( line, " " );
+      string_array splitLine = stringutilities::Tokenize( line, " \t\n\r" );
       GEOS_ASSERT( splitLine.size() == m_nbCurves );
       for( integer i = 0; i < splitLine.size(); i++ )
       {
-        m_logs[m_count][i] = stringutilities::fromString< real64 >( splitLine[i] );
+        m_logs[i][m_count] = stringutilities::fromString< real64 >( splitLine[i] );
       }
       m_count++;
     }
@@ -489,6 +514,7 @@ class LASFile
           }
           else
           {
+            std:: cout << "AA" << std::endl;
             LASWellInformationSection * lastWellInformationSection = GetLastSection<LASWellInformationSection>();
             LASCurveInformationSection * lastCurveInformationSection = GetLastSection<LASCurveInformationSection>();
             LASASCIILogDataSection curLASASCIISection( lastWellInformationSection->GetNumberOfLogEntries(),
@@ -499,6 +525,7 @@ class LASFile
           }
         }
       }
+      std::cout << m_lasASCIILogDataSection.size() << std::endl;
       file.close();
     }
     
@@ -519,10 +546,15 @@ class LASFile
         informationSection->WriteSection( file );
         sectionsOutputed.insert( informationSection->GetName() );
       }
+      std::cout << "count log " << countLog << std::endl;
       if( countLog == 0 )
       {
         GEOS_ASSERT( m_lasASCIILogDataSection.size() == 1 );
         m_lasASCIILogDataSection[0].WriteSection( file );
+      }
+      else
+      {
+        m_lasASCIILogDataSection[countLog].WriteSection( file );
       }
       file.close();
     }

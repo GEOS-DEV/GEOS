@@ -16,3 +16,32 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+#include "LASWellGenerator.hpp"
+
+namespace geosx
+{
+using namespace dataRepository;
+
+LASWellGenerator::LASWellGenerator( string const & name, Group * const parent ):
+  MeshGeneratorBase( name, parent )
+{
+}
+
+LASWellGenerator::~LASWellGenerator()
+{
+}
+
+void LASWellGenerator::PostProcessInput()
+{
+}
+
+Group * LASWellGenerator::CreateChild( string const & childKey, string const & childName )
+{
+  return nullptr;
+}
+
+void LASWellGenerator::GenerateMesh( DomainPartition * const domain )
+{
+}
+
+} // namespace
