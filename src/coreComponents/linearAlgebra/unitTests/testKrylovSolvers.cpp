@@ -58,9 +58,6 @@ void testGEOSXSolvers()
   using Matrix = typename LAI::ParallelMatrix;
   using Vector = typename LAI::ParallelVector;
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // Use nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
@@ -122,9 +119,6 @@ void testGEOSXBlockSolvers()
   using Matrix = typename LAI::ParallelMatrix;
   using Vector = typename LAI::ParallelVector;
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
   // We are going to assembly the following dummy system
   // [L L] [x_true] = [b_0]

@@ -433,12 +433,12 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
         {
           locallyFractured = 1;
         }
-        MPI_Allreduce( &locallyFractured,
-                       &globallyFractured,
-                       1,
-                       MPI_INT,
-                       MPI_MAX,
-                       MPI_COMM_GEOSX);
+        MpiWrapper::Allreduce( &locallyFractured,
+                               &globallyFractured,
+                               1,
+                               MPI_INT,
+                               MPI_MAX,
+                               MPI_COMM_GEOSX);
       }
       if( globallyFractured == 0 )
       {
@@ -1133,19 +1133,18 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 //  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
 
 
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  MPI_Comm_size(MPI_COMM_GEOSX, &size);
+  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
+  int const size = MpiWrapper::MPI_Size(MPI_COMM_GEOSX);
   array1d<real64> globalValues( size * 2 );
   globalValues = 0;
-  MPI_Gather( localResidualNorm,
-              2,
-              MPI_DOUBLE,
-              globalValues.data(),
-              2,
-              MPI_DOUBLE,
-              0,
-              MPI_COMM_GEOSX );
+  MpiWrapper::Gather( localResidualNorm,
+                      2,
+                      MPI_DOUBLE,
+                      globalValues.data(),
+                      2,
+                      MPI_DOUBLE,
+                      0,
+                      MPI_COMM_GEOSX );
 
   if( rank==0 )
   {
@@ -1160,7 +1159,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
     }
   }
 
-  MPI_Bcast( globalResidualNorm, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX );
+  MpiWrapper::Bcast( globalResidualNorm, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX );
 
 
 

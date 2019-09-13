@@ -18,17 +18,17 @@
 
 #include "DomainPartition.hpp"
 
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "fileIO/silo/SiloFile.hpp"
+#include "managers/ObjectManagerBase.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "mpiCommunications/SpatialPartition.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
-#include "fileIO/silo/SiloFile.hpp"
 
-#include "common/TimingMacros.hpp"
 
-#include "common/DataTypes.hpp"
-#include "managers/ObjectManagerBase.hpp"
 namespace geosx
 {
 using namespace dataRepository;

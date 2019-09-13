@@ -20,6 +20,7 @@
 #define GEOSX_TESTLINEARALGEBRAUTILS_HPP
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 // ==============================

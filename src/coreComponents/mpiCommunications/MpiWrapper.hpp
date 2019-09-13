@@ -18,7 +18,7 @@
   typedef int MPI_Comm;
 
   #define MPI_COMM_NULL      ((MPI_Comm)0x04000000)
-
+  #define MPI_COMM_WORLD ((MPI_Comm)0x44000000)
 
   typedef int MPI_Datatype;
   #define MPI_CHAR           ((MPI_Datatype)0x4c000101)
@@ -66,7 +66,6 @@
   };
 
 
-  void MPI_Barrier( MPI_Comm ) {};
 
 #endif
 
@@ -88,12 +87,28 @@ public:
 
   static MPI_Op getMpiOp( Reduction const op );
 
+  static int Cart_coords( MPI_Comm comm, int rank, int maxdims, int coords[] );
+
+  static int Cart_create( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
+                          int reorder, MPI_Comm *comm_cart );
 
 
-  int Init( int *argc, char ***argv );
+  static int Comm_free( MPI_Comm *comm );
 
-  int Finalize( void );
+  static int Init( int *argc, char ***argv );
 
+  static int Finalize( void );
+
+
+  static int Allreduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                       MPI_Op op, MPI_Comm comm);
+
+  static int Allgather( const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                        int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+
+  static void Barrier( MPI_Comm ) {};
+
+  static int Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
   static int MPI_Size( MPI_Comm const & comm );
   static int MPI_Rank( MPI_Comm const & comm );
@@ -101,6 +116,19 @@ public:
 
   template<typename T>
   static void allGather( T const myValue, array1d<T> & allValues );
+
+  static int Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                 int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+
+  static int Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                  const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root,
+                  MPI_Comm comm);
+
+
+  static int Isend( const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+                        MPI_Comm comm, MPI_Request *request);
+  static int Irecv( void *buf, int count, MPI_Datatype datatype, int source, int tag,
+                        MPI_Comm comm, MPI_Request *request);
 
   /**
    * @brief Compute exclusive prefix sum and full sum
@@ -130,6 +158,8 @@ public:
   static int Wait(MPI_Request *request, MPI_Status *status);
   static int Waitany(int count, MPI_Request array_of_requests[], int *indx, MPI_Status *status);
   static int Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[]);
+
+  static double Wtime(void);
 
 };
 

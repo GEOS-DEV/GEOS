@@ -19,11 +19,6 @@
 #ifndef GEOSX_LINEARALGEBRA_EPETRAMATRIX_HPP_
 #define GEOSX_LINEARALGEBRA_EPETRAMATRIX_HPP_
 
-#include <Epetra_Comm.h>
-#if defined(GEOSX_USE_MPI)
-#include <Epetra_MpiComm.h>
-#endif
-
 #include "common/DataTypes.hpp"
 #include "EpetraVector.hpp"
 
