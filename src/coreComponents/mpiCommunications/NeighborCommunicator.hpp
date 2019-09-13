@@ -261,8 +261,8 @@ void NeighborCommunicator::MPI_iSendReceive( array1d<T> const & sendBuffer,
                     commID,
                     mpiComm );
 
-  MpiWrapper::Waitall( 1, &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::Waitall( 1, &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Wait( &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::Wait( &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
 
   recvBuffer.resize( m_receiveBufferSize[commID] );
 

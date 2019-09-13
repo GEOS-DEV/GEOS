@@ -641,7 +641,7 @@ VTKFile::VTKFile( string const & name ):
   m_baseName( name ),
   m_binary( false )
 {
-  int const mpiRank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
+  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   if( mpiRank == 0 )
   {
     // Declaration of XML version
@@ -669,8 +669,8 @@ VTKFile::VTKFile( string const & name ):
 void VTKFile::Write( double const timeStep,
                      DomainPartition const & domain )
 {
-  int const mpiRank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
-  int const mpiSize = MpiWrapper::MPI_Size(MPI_COMM_GEOSX);
+  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
   NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
   string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );

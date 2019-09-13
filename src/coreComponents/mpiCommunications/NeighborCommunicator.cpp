@@ -56,9 +56,8 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MpiWrapper::Isend( const_cast<char*>(sendBuffer),
+  MpiWrapper::iSend( const_cast<char*>(sendBuffer),
              sendSize,
-             MPI_CHAR,
              m_neighborRank,
              sendTag,
              mpiComm,
@@ -66,9 +65,8 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 
   int const receiveTag = CommTag( m_neighborRank, Rank(), commID );
   //m_neighborRank * m_size + m_rank + m_size*m_size*commID;
-  MpiWrapper::Irecv( receiveBuffer,
+  MpiWrapper::iRecv( receiveBuffer,
              receiveSize,
-             MPI_CHAR,
              m_neighborRank,
              receiveTag,
              mpiComm,
@@ -203,12 +201,12 @@ void NeighborCommunicator::MPI_WaitAll( int const commID )
 
 int NeighborCommunicator::Rank()
 {
-  return MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  return MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 }
 
 int NeighborCommunicator::MPISize()
 {
-  return MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  return MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 }
 
 void NeighborCommunicator::Clear()

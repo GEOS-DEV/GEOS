@@ -2093,7 +2093,7 @@ void DofManager::printConnectivityLocationPattern( string const & fieldName, str
 // Print the coupling table on screen
 void DofManager::printConnectivityMatrix( std::ostream & os ) const
 {
-  if( MpiWrapper::MPI_Rank(MPI_COMM_GEOSX) == 0 )
+  if( MpiWrapper::Comm_rank(MPI_COMM_GEOSX) == 0 )
   {
     localIndex numFields = m_fields.size();
 

@@ -1033,7 +1033,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
 
   // compute global residual norm
   real64 globalResidualNorm;
-  MpiWrapper::Allreduce(&localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::allReduce(&localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }
