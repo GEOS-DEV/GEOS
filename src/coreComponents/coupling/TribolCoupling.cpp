@@ -280,7 +280,7 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    // used in tribol penalty.
    tribol::setPenaltyStiffness(1.0);
    // disable vtk plots
-   tribol::setPlotCycleIncrement(-1.0);
+   tribol::setPlotCycleIncrement(1000000000);
 
    // register the current configuration mesh
    const int slaveMesh = 0 ;
