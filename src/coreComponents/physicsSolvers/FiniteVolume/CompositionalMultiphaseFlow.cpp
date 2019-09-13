@@ -1314,7 +1314,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
   // compute global residual norm
   realT globalResidualNorm;
-  MPI_Allreduce( &localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
+  MpiWrapper::Allreduce( &localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
 
   return sqrt( globalResidualNorm );
 }

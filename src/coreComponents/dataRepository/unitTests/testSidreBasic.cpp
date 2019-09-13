@@ -12,15 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
-#include <mpi.h>
-
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/SidreWrapper.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
+#include <gtest/gtest.h>
 
 namespace geosx
 {

@@ -4,6 +4,7 @@
 #
 set(mpiCommunications_headers
     CommunicationTools.hpp
+    MpiWrapper.hpp
     NeighborCommunicator.hpp
     PartitionBase.hpp
     SpatialPartition.hpp
@@ -15,6 +16,7 @@ set(mpiCommunications_headers
 #
 set(mpiCommunications_sources
     CommunicationTools.cpp
+    MpiWrapper.cpp
     NeighborCommunicator.cpp
     PartitionBase.cpp
     SpatialPartition.cpp
@@ -24,6 +26,10 @@ set( dependencyList fileIO common trilinos )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
+endif()
+
+if( ENABLE_MPI )
+    set( dependencyList ${dependencyList} mpi )
 endif()
 
 if ( ENABLE_CUDA )

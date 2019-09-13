@@ -384,7 +384,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
     }
-    MPI_Allreduce( elemCenterCoordsLocal.data(),
+    MpiWrapper::Allreduce( elemCenterCoordsLocal.data(),
                    elemCenterCoords[i].data(),
                    m_numElemsTotal[i],
                    MPI_DOUBLE,
