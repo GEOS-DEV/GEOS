@@ -279,6 +279,8 @@ void TribolCoupling::ApplyTribolForces(dataRepository::ManagedGroup * domain,
    // contact nodal forces. This should be corrected in the normal that is
    // used in tribol penalty.
    tribol::setPenaltyStiffness(1.0);
+   // disable vtk plots
+   tribol::setPlotCycleIncrement(-1.0);
 
    // register the current configuration mesh
    const int slaveMesh = 0 ;
