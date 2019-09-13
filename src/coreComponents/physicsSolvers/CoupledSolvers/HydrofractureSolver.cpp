@@ -914,7 +914,7 @@ void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
                   Epetra_FEVector * m_rhs[2],
                   std::string nametag )
 {
-   int const rank = MpiWrapper::MPI_Rank(MPI_COMM_WORLD );
+   int const rank = MpiWrapper::Comm_rank(MPI_COMM_WORLD );
 
    double matnorm[2][2];
    double rhsnorm[2];

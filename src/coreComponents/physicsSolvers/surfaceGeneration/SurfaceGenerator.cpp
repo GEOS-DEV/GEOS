@@ -1513,7 +1513,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         const map<localIndex, int>& faceLocations,
                                         const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
-  int const rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
   arrayView1d<R1Tensor> const & X = nodeManager.referencePosition();
   ArrayOfSets< localIndex > & nodeToEdgeMap = nodeManager.edgeList();
@@ -3362,7 +3362,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
       if( trailingEdge > edgeManager.size())
       {
-        int const rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
+        int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
         std::cout << "Cannot find trailing edge (edge=" << edgeID << ", rank=" << rank <<   "  )" << std::endl;
         return 0.0;
       }

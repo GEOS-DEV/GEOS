@@ -767,7 +767,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
 
   // compute global residual norm
   real64 globalResidualNorm;
-  MpiWrapper::Allreduce(&residualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::allReduce(&residualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }
@@ -824,7 +824,7 @@ SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
   });
 
   int isInvalidGlobal;
-  MpiWrapper::Allreduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_INT, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::allReduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_SUM, MPI_COMM_GEOSX);
  
   bool isValid = (isInvalidGlobal == 0);
   return isValid;
@@ -1235,7 +1235,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
 
     // TODO: improve well data output
     /*
-    int mpiSize = CommunicationTools::MPI_Size(MPI_COMM_GEOSX) ;
+    int mpiSize = CommunicationTools::Comm_size(MPI_COMM_GEOSX) ;
     if (mpiSize == 1)
     {
       RecordWellData( subRegion );

@@ -155,7 +155,7 @@ void DomainPartition::SetupCommunications()
       MPI_Cart_create(MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm);
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications");
     }
-    int const rank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     int nsdof = 3;
 
     MPI_Cart_coords(cartcomm, rank, nsdof, partition.m_coords.data());

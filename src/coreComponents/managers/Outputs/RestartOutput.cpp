@@ -60,7 +60,7 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
   problemManager->prepareToWrite();
   NewFunctionManager::Instance()->prepareToWrite();
   FieldSpecificationManager::get()->prepareToWrite();
-  int const numFiles = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  int const numFiles = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   problemManager->finishWriting();
   NewFunctionManager::Instance()->finishWriting();

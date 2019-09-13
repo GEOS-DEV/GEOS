@@ -66,7 +66,7 @@ void OutputBase::SetupDirectoryStructure()
 {
   string slaveDirectory = m_slaveDirectory;
 
-  int const rank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX);
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX);
   if (rank  == 0)
   {
     if (!slaveDirectory.empty())

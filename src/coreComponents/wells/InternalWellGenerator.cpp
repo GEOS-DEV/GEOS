@@ -181,7 +181,7 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the perforation
-  int const mpiSize = MpiWrapper::MPI_Size(MPI_COMM_GEOSX) ;
+  int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX) ;
   if (mpiSize > 1)
   {
     MergePerforations();
@@ -512,7 +512,7 @@ void InternalWellGenerator::MergePerforations()
 
 void InternalWellGenerator::DebugWellGeometry() const 
 {
-  if (MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != 0)
+  if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 0)
   {
     return;
   } 
@@ -520,7 +520,7 @@ void InternalWellGenerator::DebugWellGeometry() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of well elements = " << m_numElems << std::endl;
   
   for (globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem)

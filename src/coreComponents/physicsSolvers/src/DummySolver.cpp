@@ -56,7 +56,7 @@ void DummySolver::InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( proble
 {
   if (m_randSeed > 0)
   {
-    integer const rank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+    integer const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     std::srand((1 + rank) * m_randSeed);
   }
 }

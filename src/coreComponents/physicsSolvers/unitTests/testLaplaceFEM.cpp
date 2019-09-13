@@ -290,8 +290,8 @@ int main(int argc, char** argv)
 
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
 
-  mpiRank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
-  mpiSize = CommunicationTools::MPI_Size( MPI_COMM_GEOSX );
+  mpiRank = CommunicationTools::Comm_rank( MPI_COMM_GEOSX );
+  mpiSize = CommunicationTools::Comm_size( MPI_COMM_GEOSX );
 
   logger::InitializeLogger(MPI_COMM_GEOSX);
 #else

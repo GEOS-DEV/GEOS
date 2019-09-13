@@ -79,8 +79,8 @@ void testVectorFunctions()
   using Vector = typename LAI::ParallelVector;
 
   // Get the MPI rank
-  int const rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
-  int const numRanks = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
 
   Vector x;
   localIndex const localSize = 3;
@@ -279,7 +279,7 @@ void testMatrixFunctions()
   using Matrix = typename LAI::ParallelMatrix;
 
   // Get the MPI rank
-  int numranks = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
+  int numranks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
 
   // Define some vectors, matrices
   Vector vec1, vec2, vec3;
@@ -497,7 +497,7 @@ void testInterfaceSolvers()
   using Vector = typename LAI::ParallelVector;
   using Solver = typename LAI::LinearSolver;
 
-  int rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
+  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
@@ -649,7 +649,7 @@ void testRectangularMatrixOperations()
 {
   using Matrix = typename LAI::ParallelMatrix;
 
-  int mpiSize = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
+  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_WORLD );
 
   // Set a size that allows to run with arbitrary number of processes
   globalIndex const nRows = std::max( 100, mpiSize );

@@ -684,7 +684,7 @@ void ProblemManager::PostProcessInput()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int const mpiSize = MpiWrapper::MPI_Size(MPI_COMM_GEOSX) ;
+    int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX) ;
     // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1)
     {

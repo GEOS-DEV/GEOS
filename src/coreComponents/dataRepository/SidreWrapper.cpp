@@ -48,10 +48,10 @@ DataStore & SidreWrapper::dataStore()
 
 
 /* Write out a restart file. */
-void SidreWrapper::writeTree( int MPI_PARAM(num_files),
-                              const std::string & MPI_PARAM(path),
-                              const std::string & MPI_PARAM(protocol),
-                              MPI_Comm MPI_PARAM(comm) )
+void SidreWrapper::writeTree( int MPI_PARAM( num_files ),
+                              const std::string & MPI_PARAM( path ),
+                              const std::string & MPI_PARAM( protocol ),
+                              MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
@@ -63,9 +63,9 @@ void SidreWrapper::writeTree( int MPI_PARAM(num_files),
 }
 
 
-void SidreWrapper::reconstructTree( const std::string & MPI_PARAM(root_path),
-                                    const std::string & MPI_PARAM(protocol),
-                                    MPI_Comm MPI_PARAM(comm) )
+void SidreWrapper::reconstructTree( const std::string & MPI_PARAM( root_path ),
+                                    const std::string & MPI_PARAM( protocol ),
+                                    MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
@@ -84,8 +84,8 @@ void SidreWrapper::reconstructTree( const std::string & MPI_PARAM(root_path),
 
 
 /* Load sidre external data. */
-void SidreWrapper::loadExternalData( const std::string & MPI_PARAM(root_path),
-                                     MPI_Comm MPI_PARAM(comm) )
+void SidreWrapper::loadExternalData( const std::string & MPI_PARAM( root_path ),
+                                     MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
