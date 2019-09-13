@@ -90,19 +90,13 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   integer_array & ghostRank = object.getReference<integer_array>( object.m_ObjectManagerBaseViewKeys.ghostRank );
   ghostRank = -2;
 
-  int const commSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   localIndex numberOfObjectsHere = object.size();
   localIndex_array numberOfObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
-  MpiWrapper::Allgather( reinterpret_cast<char*>( &numberOfObjectsHere ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 reinterpret_cast<char*>( numberOfObjects.data() ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allGather( numberOfObjectsHere, numberOfObjects );
 
-  int const commRank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  int const commRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
   glocalIndexOffset[0] = 0;
   for( int rank = 1 ; rank < commSize ; ++rank )
@@ -367,30 +361,23 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MpiWrapper::Allreduce( &maxGlobalIndex,
-                 &(object.m_maxGlobalIndex),
-                 1,
-                 MPI_LONG_LONG_INT,
-                 MPI_MAX,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( &maxGlobalIndex,
+                         &(object.m_maxGlobalIndex),
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
 
 }
 
 void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
                                                  std::set<localIndex> const & indexList )
 {
-  int const thisRank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
-  int const commSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   localIndex numberOfNewObjectsHere = indexList.size();
   localIndex_array numberOfNewObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
-  MpiWrapper::Allgather( reinterpret_cast<char*>( &numberOfNewObjectsHere ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 reinterpret_cast<char*>( numberOfNewObjects.data() ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allGather( numberOfNewObjectsHere , numberOfNewObjects );
 
 
   glocalIndexOffset[0] = 0;
@@ -418,12 +405,11 @@ void CommunicationTools::AssignNewGlobalIndices( ObjectManagerBase & object,
     maxGlobalIndex = std::max( maxGlobalIndex, object.m_localToGlobalMap[a] );
   }
 
-  MpiWrapper::Allreduce( &maxGlobalIndex,
-                 &(object.m_maxGlobalIndex),
-                 1,
-                 MPI_LONG_LONG_INT,
-                 MPI_MAX,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( &maxGlobalIndex,
+                         &(object.m_maxGlobalIndex),
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
 }
 
 void
@@ -431,8 +417,8 @@ CommunicationTools::
 AssignNewGlobalIndices( ElementRegionManager & elementManager,
                         std::map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & newElems )
 {
-  int const thisRank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
-  int const commSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  int const thisRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const commSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   localIndex numberOfNewObjectsHere = 0;
 
@@ -444,13 +430,7 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
 
   localIndex_array numberOfNewObjects( commSize );
   localIndex_array glocalIndexOffset( commSize );
-  MpiWrapper::Allgather( reinterpret_cast<char*>( &numberOfNewObjectsHere ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 reinterpret_cast<char*>( numberOfNewObjects.data() ),
-                 sizeof(localIndex),
-                 MPI_CHAR,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allGather( numberOfNewObjectsHere, numberOfNewObjects );
 
 
   glocalIndexOffset[0] = 0;
@@ -488,12 +468,11 @@ AssignNewGlobalIndices( ElementRegionManager & elementManager,
   }
 
 
-  MpiWrapper::Allreduce( &maxGlobalIndex,
-                 &(elementManager.m_maxGlobalIndex),
-                 1,
-                 MPI_LONG_LONG_INT,
-                 MPI_MAX,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( &maxGlobalIndex,
+                         &(elementManager.m_maxGlobalIndex),
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
 }
 
 void

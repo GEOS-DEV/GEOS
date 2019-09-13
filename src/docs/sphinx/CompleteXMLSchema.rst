@@ -63,6 +63,13 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/fileIO/schema/docs/CellElementRegion.rst
 
 
+.. _XML_ChomboIO:
+
+Element: ChomboIO
+=================
+.. include:: ../../coreComponents/fileIO/schema/docs/ChomboIO.rst
+
+
 .. _XML_CompositeFunction:
 
 Element: CompositeFunction
@@ -336,6 +343,13 @@ Element: Outputs
 .. include:: ../../coreComponents/fileIO/schema/docs/Outputs.rst
 
 
+.. _XML_PAMELAMeshGenerator:
+
+Element: PAMELAMeshGenerator
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -597,6 +611,13 @@ Datastructure: BrooksCoreyRelativePermeability
 Datastructure: CellElementRegion
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CellElementRegion_other.rst
+
+
+.. _DATASTRUCTURE_ChomboIO:
+
+Datastructure: ChomboIO
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/ChomboIO_other.rst
 
 
 .. _DATASTRUCTURE_CompositeFunction:
@@ -898,6 +919,13 @@ Datastructure: NumericalMethods
 Datastructure: Outputs
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Outputs_other.rst
+
+
+.. _DATASTRUCTURE_PAMELAMeshGenerator:
+
+Datastructure: PAMELAMeshGenerator
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Parameter:

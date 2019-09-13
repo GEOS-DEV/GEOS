@@ -29,6 +29,7 @@
 
 #include "silo.h"
 
+// forward declaration for structure internal to silo/pmpio.h
 struct _PMPIO_baton_t;
 typedef _PMPIO_baton_t PMPIO_baton_t;
 
@@ -112,7 +113,7 @@ public:
    */
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
-    int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
+    int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
 
     // char dirname[100];
     if( rank == 0 )

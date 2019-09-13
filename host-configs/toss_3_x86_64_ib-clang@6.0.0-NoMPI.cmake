@@ -11,13 +11,6 @@ set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI OFF CACHE BOOL "")
 
-#set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-clang-6.0.0 CACHE PATH "")
-#set(MPI_C_COMPILER       ${MPI_HOME}/bin/mpicc   CACHE PATH "")
-#set(MPI_CXX_COMPILER     ${MPI_HOME}/bin/mpicxx  CACHE PATH "")
-#set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
-#set(MPIEXEC              /usr/bin/srun CACHE PATH "")
-#set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
-
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOS/geosx/thirdPartyLibs/ CACHE PATH "")
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
 

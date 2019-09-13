@@ -271,7 +271,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
 
       for (globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL])
       {
-        if (MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != iownerRank)
+        if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != iownerRank)
         {
           elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
         }
@@ -290,7 +290,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
         if (rankCount == 0)
         {
           // update the elemStatusGlobal array for all ranks
-          if (MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != iownerRank)
+          if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != iownerRank)
           {
             elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
           }
@@ -298,7 +298,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
         else // (rankCount > 0)
         {
           // remove the duplicate elements
-          if (MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) == iownerRank)
+          if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == iownerRank)
           {
             localElems.erase(iwelemGlobal);
           }
@@ -545,7 +545,7 @@ void WellElementSubRegion::ReconstructLocalConnectivity()
 
 bool WellElementSubRegion::IsLocallyOwned() const
 {
-  return m_topRank == MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  return m_topRank == MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 }
 
 void WellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
@@ -610,7 +610,7 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
 {
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
-  if ( MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -618,7 +618,7 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "Node manager from = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local node elements = " << nodeManager->size() << std::endl;
 
   if (nodeManager->size() > 0)
@@ -640,7 +640,7 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d<integer const
     return;
   } 
 
-  if ( MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) < 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) < 1)
   {
     return;
   } 
@@ -648,7 +648,7 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d<integer const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local well elements = " << size() << std::endl;
   
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem) 
@@ -686,7 +686,7 @@ void WellElementSubRegion::DebugWellElementSubRegionsAfterSetupCommunications() 
     return;
   } 
 
-  if ( MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -694,7 +694,7 @@ void WellElementSubRegion::DebugWellElementSubRegionsAfterSetupCommunications() 
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local well elements = " << size() << std::endl;
   std::cout << "Number of ghost well elements = " << this->GetNumberOfGhosts() << std::endl;
   

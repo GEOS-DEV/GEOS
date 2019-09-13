@@ -85,7 +85,7 @@ SpatialPartition::~SpatialPartition()
 void SpatialPartition::InitializePostSubGroups( Group * const )
 {
   //get size of problem and decomposition
-  m_size = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   //check to make sure our dimensions agree
   {
@@ -103,7 +103,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     int reorder = 0;
     MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
   }
-  m_rank = MpiWrapper::MPI_Rank( cartcomm );
+  m_rank = MpiWrapper::Comm_rank( cartcomm );
   MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
 
 
@@ -126,8 +126,8 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
 void SpatialPartition::InitializeMetis()
 {
   //get size of problem and decomposition
-  m_size = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
-  m_rank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   //check to make sure our dimensions agree
   {
     assert( m_sizeMetis == m_size );
@@ -249,7 +249,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 
   {
     //get size of problem and decomposition
-    m_size = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+    m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
     //check to make sure our dimensions agree
     {
@@ -267,7 +267,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
       int reorder = 0;
       MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
-    m_rank = MpiWrapper::MPI_Rank( cartcomm );
+    m_rank = MpiWrapper::Comm_rank( cartcomm );
     MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
 
 

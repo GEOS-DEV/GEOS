@@ -64,7 +64,7 @@ void SiloOutput::Execute(real64 const time_n,
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
-  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
   integer numFiles = this->parallelThreads();

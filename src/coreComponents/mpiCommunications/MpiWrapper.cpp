@@ -1,8 +1,22 @@
 /*
- * MpiWrapper.cpp
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
  *
- *  Created on: Sep 11, 2019
- *      Author: settgast
+ * Produced at the Lawrence Livermore National Laboratory
+ *
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ */
+/**
+ * @file MpiWrapper.cpp
  */
 
 #include "MpiWrapper.hpp"
@@ -19,156 +33,53 @@
 namespace geosx
 {
 
-
-MpiWrapper::MpiWrapper()
-{
-  // TODO Auto-generated constructor stub
-
-}
-
-MpiWrapper::~MpiWrapper()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-int MpiWrapper::Allgather( const void * sendbuf,
-                           int sendcout,
-                           MPI_Datatype sendtype,
-                           void * recvbuf,
-                           int recvcount,
-                           MPI_Datatype recvtype,
-                           MPI_Comm comm )
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Allgather( sendbuf, sendcount, sendtype, recvbuf,
-                        recvcount, recvtype, comm);
-#else
-  return 0;
-#endif
-}
-
-
-int MpiWrapper::Allreduce( const void * sendbuf,
-                           void *recvbuf,
-                           int count,
-                           MPI_Datatype datatype,
-                           MPI_Op op,
-                           MPI_Comm comm )
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Allreduce( sendbuf,
-                        recvbuf,
-                        count,
-                        datatype,
-                        op,
-                        comm );
-#else
-  return 0;
-#endif
-}
-
-
-
-
-int MpiWrapper::Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Bcast( buffer, count, datatype, root, comm)
-#else
-  return 0;
-#endif
-
-}
+//int MpiWrapper::Bcast( void * buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm )
+//{
+//#ifdef GEOSX_USE_MPI
+//  return MPI_Bcast( buffer, count, datatype, root, comm );
+//#else
+//  return 0;
+//#endif
+//
+//}
 
 
 
 int MpiWrapper::Cart_coords( MPI_Comm comm, int rank, int maxdims, int coords[] )
 {
 #ifdef GEOSX_USE_MPI
-  MPI_Cart_coords( comm, rank, maxdims, coords );
+  return MPI_Cart_coords( comm, rank, maxdims, coords );
 #else
   return 0;
 #endif
 }
 
 int MpiWrapper::Cart_create( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
-                        int reorder, MPI_Comm *comm_cart )
+                             int reorder, MPI_Comm * comm_cart )
 {
 #ifdef GEOSX_USE_MPI
-  MPI_Cart_create( comm_old, ndims, dims, periods, reorder, comm_cart );
+  return MPI_Cart_create( comm_old, ndims, dims, periods, reorder, comm_cart );
 #else
   return 0;
 #endif
 }
 
-
-int MpiWrapper::Comm_free( MPI_Comm *comm )
+int MpiWrapper::Cart_rank( MPI_Comm comm, const int coords[] )
 {
+  int rank = 0;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_free( comm );
-#else
-  return 0;
+  MPI_Cart_rank( comm, coords, &rank );
 #endif
+  return rank;
 }
 
-int MpiWrapper::Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
-                       int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+int MpiWrapper::Comm_free( MPI_Comm * comm )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Gather( sendbuf, sendcount, sendtype, recvbuf,
-                     recvcount,  recvtype,  root,  comm );
+  return MPI_Comm_free( comm );
 #else
   return 0;
 #endif
-
-}
-
-int MpiWrapper::Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
-                const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root,
-                MPI_Comm comm)
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Gatherv( sendbuf, sendcount, sendtype, recvbuf,
-                      recvcounts, displs, recvtype, root,
-                      comm);
-#else
-  return 0;
-#endif
-
-}
-
-
-int MpiWrapper::Init( int *argc, char ***argv )
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Init( argc, argv );
-#else
-  return 0;
-#endif
-
-}
-
-int MpiWrapper::Isend( const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-                       MPI_Comm comm, MPI_Request *request)
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Isend( buf, count, datatype, dest, tag, comm, request)
-#else
-  return 0;
-#endif
-
-}
-
-int MpiWrapper::Irecv( void *buf, int count, MPI_Datatype datatype, int source, int tag,
-                       MPI_Comm comm, MPI_Request *request)
-{
-#ifdef GEOSX_USE_MPI
-  return MPI_Irecv( buf, count, datatype, source, tag, comm, request)
-#else
-  return 0;
-#endif
-
 }
 
 
@@ -181,59 +92,74 @@ int MpiWrapper::Finalize()
 #endif
 }
 
-
-int MpiWrapper::MPI_Size( MPI_Comm const & comm )
+std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
 {
-  int size = 1;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_size( comm, &size );
-#endif
-  return size;
+  if( type == MPI_CHAR )
+  {
+    return sizeof(char);
+  }
+  else if( type == MPI_FLOAT )
+  {
+    return sizeof(float);
+  }
+  else if( type == MPI_DOUBLE )
+  {
+    return sizeof(double);
+  }
+  else if( type == MPI_INT )
+  {
+    return sizeof(int);
+  }
+  else if( type == MPI_LONG )
+  {
+    return sizeof(long int);
+  }
+  else if( type == MPI_LONG_LONG )
+  {
+    return sizeof(long long int);
+  }
+  else
+  {
+      GEOS_ERROR("No conversion implemented for MPI_Datatype "<<type);
+  }
+  return 0;
 }
 
-int MpiWrapper::MPI_Rank( MPI_Comm const & comm )
+
+int MpiWrapper::Init( int * argc, char * * * argv )
 {
-  int rank = 0;
 #ifdef GEOSX_USE_MPI
-  MPI_Comm_rank( comm, &rank );
+  return MPI_Init( argc, argv );
+#else
+  return 0;
 #endif
-  return rank;
 }
 
-int MpiWrapper::Cart_rank( MPI_Comm comm, const int coords[] )
-{
-  int rank = 0;
-#ifdef GEOSX_USE_MPI
-  MPI_Cart_rank( comm, coords, &rank );
-#endif
-  return rank;
-}
-
-int MpiWrapper::Wait(MPI_Request *request, MPI_Status *status)
+int MpiWrapper::Wait( MPI_Request * request, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Wait(request, status);
+  return MPI_Wait( request, status );
 #endif
   return 0;
 }
 
-int MpiWrapper::Waitany(int count, MPI_Request array_of_requests[], int *indx, MPI_Status *status)
+int MpiWrapper::Waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitany( count,  array_of_requests, indx, status);
+  return MPI_Waitany( count, array_of_requests, indx, status );
 #endif
   return 0;
 }
 
-int MpiWrapper::Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
+int MpiWrapper::Waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitall( count,  array_of_requests, array_of_statuses );
+  return MPI_Waitall( count, array_of_requests, array_of_statuses );
 #endif
   return 0;
 }
 
-double MpiWrapper::Wtime(void)
+double MpiWrapper::Wtime( void )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Wtime( );
@@ -244,8 +170,6 @@ double MpiWrapper::Wtime(void)
 }
 
 
-
-
 } /* namespace geosx */
 
 #if defined(__clang__)
@@ -253,5 +177,3 @@ double MpiWrapper::Wtime(void)
 #elif defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-

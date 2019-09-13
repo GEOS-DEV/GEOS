@@ -235,7 +235,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
-  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
@@ -531,7 +531,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   // this doesn't link without the string()...no idea why.
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
 
-  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -596,7 +596,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
   GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
 
-  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -861,12 +861,11 @@ void ObjectManagerBase::SetMaxGlobalIndex()
   {
     maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
   }
-  MpiWrapper::Allreduce( &maxGlobalIndexLocally,
-                 &m_maxGlobalIndex,
-                 1,
-                 MPI_LONG_LONG_INT,
-                 MPI_MAX,
-                 MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( &maxGlobalIndexLocally,
+                         &m_maxGlobalIndex,
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
 }
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,

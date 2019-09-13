@@ -166,7 +166,7 @@ void PerforationData::DebugLocalPerforations() const
     return;
   } 
 
-  if ( MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -174,7 +174,7 @@ void PerforationData::DebugLocalPerforations() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "PerforationData = " << getName() << " of " << getParent()->getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local perforations = " << size() << std::endl;
 
   for (localIndex iperf = 0; iperf < size(); ++iperf) 
