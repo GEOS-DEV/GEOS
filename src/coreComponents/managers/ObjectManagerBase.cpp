@@ -235,8 +235,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
 
-  int rank=0;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
+  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
 
@@ -320,8 +319,6 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   unpackedSize += bufferOps::Unpack( buffer, groupName );
   GEOS_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
 
-  int rank=0;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -534,8 +531,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   // this doesn't link without the string()...no idea why.
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
 
-  int rank=0;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
+  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -600,8 +596,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
   GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
 
-  int rank=0;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank );
+  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -866,7 +861,7 @@ void ObjectManagerBase::SetMaxGlobalIndex()
   {
     maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
   }
-  MPI_Allreduce( &maxGlobalIndexLocally,
+  MpiWrapper::Allreduce( &maxGlobalIndexLocally,
                  &m_maxGlobalIndex,
                  1,
                  MPI_LONG_LONG_INT,

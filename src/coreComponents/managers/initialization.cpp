@@ -48,10 +48,10 @@ void setupOpenMP()
 #endif
 }
 
-void setupMPI( int MPI_PARAM(argc), char * MPI_PARAM(argv[]) )
+void setupMPI( int argc, char * argv[] )
 {
+  MpiWrapper::Init( &argc, &argv );
 #ifdef GEOSX_USE_MPI
-  MPI_Init( &argc, &argv );
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
 #endif
 }

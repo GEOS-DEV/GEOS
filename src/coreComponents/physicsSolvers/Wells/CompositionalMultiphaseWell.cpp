@@ -393,18 +393,18 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     // this will be used to initialize the pressure, starting by the owner rank
     if ( wellControls->GetType() == WellControls::Type::PRODUCER )
     { 
-      resPres = CommunicationTools::Min( resPres );
+      resPres = MpiWrapper::Min( resPres );
     }
     else if ( wellControls->GetType() == WellControls::Type::INJECTOR )
     { 
-      resPres = CommunicationTools::Max( resPres );
+      resPres = MpiWrapper::Max( resPres );
     }
 
     // compute average densities
     globalIndex const numPerforationsGlobal = perforationData->GetNumPerforationsGlobal();
 
-    avgMixtureDensity = CommunicationTools::Sum( avgMixtureDensity );
-    avgTotalDensity   = CommunicationTools::Sum( avgTotalDensity );
+    avgMixtureDensity = MpiWrapper::Sum( avgMixtureDensity );
+    avgTotalDensity   = MpiWrapper::Sum( avgTotalDensity );
 
     avgMixtureDensity /= numPerforationsGlobal;
     avgTotalDensity   /= numPerforationsGlobal;
@@ -417,7 +417,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
       real64 const tol = 1e-7;
       for (localIndex ic = 0; ic < NC; ++ic)
       {
-        avgCompFrac[ic] = CommunicationTools::Sum( avgCompFrac[ic] );
+        avgCompFrac[ic] = MpiWrapper::Sum( avgCompFrac[ic] );
         avgCompFrac[ic] /= numPerforationsGlobal; 
         compFracSum += avgCompFrac[ic];
       } 
@@ -472,8 +472,8 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     }
 
     // TODO optimize
-    CommunicationTools::Broadcast( pressureControl, subRegion->GetTopRank() );
-    CommunicationTools::Broadcast( gravDepthControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
 
     GEOS_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
@@ -1112,7 +1112,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * cons
   });
 
   real64 globalResidualNorm;
-  MPI_Allreduce(&residualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::Allreduce(&residualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }
@@ -1186,7 +1186,7 @@ CompositionalMultiphaseWell::CheckSystemSolution(  DomainPartition const * const
   });  
 
   int isInvalidGlobal;
-  MPI_Allreduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_INT, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::Allreduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_INT, MPI_SUM, MPI_COMM_GEOSX);
  
   bool isValid = (isInvalidGlobal == 0);
   return isValid;

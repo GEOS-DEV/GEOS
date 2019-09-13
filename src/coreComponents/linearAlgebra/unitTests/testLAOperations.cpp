@@ -79,9 +79,8 @@ void testVectorFunctions()
   using Vector = typename LAI::ParallelVector;
 
   // Get the MPI rank
-  int rank, numRanks;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  MPI_Comm_size( MPI_COMM_WORLD, &numRanks );
+  int const rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
+  int const numRanks = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
 
   Vector x;
   localIndex const localSize = 3;
@@ -280,10 +279,7 @@ void testMatrixFunctions()
   using Matrix = typename LAI::ParallelMatrix;
 
   // Get the MPI rank
-  int rank;
-  int numranks;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  MPI_Comm_size( MPI_COMM_WORLD, &numranks );
+  int numranks = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
 
   // Define some vectors, matrices
   Vector vec1, vec2, vec3;
@@ -501,9 +497,7 @@ void testInterfaceSolvers()
   using Vector = typename LAI::ParallelVector;
   using Solver = typename LAI::LinearSolver;
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  int rank = MpiWrapper::MPI_Rank( MPI_COMM_WORLD );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
@@ -655,8 +649,7 @@ void testRectangularMatrixOperations()
 {
   using Matrix = typename LAI::ParallelMatrix;
 
-  int mpiSize;
-  MPI_Comm_size( MPI_COMM_WORLD, &mpiSize );
+  int mpiSize = MpiWrapper::MPI_Size( MPI_COMM_WORLD );
 
   // Set a size that allows to run with arbitrary number of processes
   globalIndex const nRows = std::max( 100, mpiSize );
@@ -744,8 +737,11 @@ int main( int argc, char ** argv )
   setupMPI( argc, argv );
   setupOpenMP();
   setupMKL();
+#ifdef GEOSX_USE_MPI
   logger::InitializeLogger( MPI_COMM_GEOSX );
-
+#else
+  logger::InitializeLogger( );
+#endif
   // Don't pass real cmd parameters from ctest, PETSc goes crazy otherwise
   int dummy_argc = 0;
   char ** dummy_argv = nullptr;
