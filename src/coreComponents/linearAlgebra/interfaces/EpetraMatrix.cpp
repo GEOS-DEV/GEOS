@@ -39,7 +39,7 @@
 #include <Epetra_MpiComm.h>
 #else
 #include<Epetra_SerialComm.h>
-typedef Epetra_SerialComm Epetra_MpiComm;
+using Epetra_MpiComm =  Epetra_SerialComm;
 #endif
 
 // Put everything under the geosx namespace.

@@ -54,7 +54,7 @@ do \
 #define SKIP_TEST_IN_SERIAL( REASON ) \
 do \
 { \
-  int const mpiSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX ); \
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
   SKIP_TEST_IF( mpiSize == 1, REASON ); \
 } while(0)
 
@@ -129,7 +129,7 @@ protected:
       GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
     }
 
-    int mpiSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+    int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
     dataRepository::Group * commandLine =
       problemManager->GetGroup<dataRepository::Group>( problemManager->groupKeys.commandLine );
     commandLine->registerWrapper<integer>( problemManager->viewKeys.xPartitionsOverride.Key() )->
@@ -634,7 +634,7 @@ TEST_F(DofManagerTest, TestMassMatrix)
  */
 TEST_F(DofManagerTest, TestIndices)
 {
-  int const mpiSize = MpiWrapper::MPI_Size( MPI_COMM_GEOSX );
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   SKIP_TEST_IF( mpiSize > 2, "Test not designed for more than 2 ranks" );
 
   DomainPartition * const domain = problemManager->getDomainPartition();
@@ -652,7 +652,7 @@ TEST_F(DofManagerTest, TestIndices)
   std::vector<globalIndex> indicesDispExpected;
   std::vector<globalIndex> indicesPresExpected;
 
-  int const mpiRank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   if( mpiRank == 0 )
   {
     er = 0; esr = 0; ei = 10;
@@ -831,7 +831,7 @@ TEST_F(DofManagerTest, TestWithTimes)
 
   getElapsedTime( timeGetGlobalSparsityPattern );
 
-  int mpiRank = MpiWrapper::MPI_Rank( MPI_COMM_GEOSX );
+  int mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
   GEOS_LOG_RANK( "numGlobalDofs = " << dofManager.numGlobalDofs() );
   GEOS_LOG_RANK( "numGlobalDofs(displacement) = " << dofManager.numGlobalDofs( "displacement" ) );
@@ -849,7 +849,7 @@ TEST_F(DofManagerTest, TestWithTimes)
   timesLocal[2] = timeGetSingleSparsityPattern;
   timesLocal[3] = timeGetGlobalSparsityPattern;
 
-  MpiWrapper::Allreduce( timesLocal.data(), timesSum.data(), 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( timesLocal.data(), timesSum.data(), 4, MPI_SUM, MPI_COMM_GEOSX );
 
   timeAddField = timesSum[0];
   timeAddCoupling = timesSum[1];

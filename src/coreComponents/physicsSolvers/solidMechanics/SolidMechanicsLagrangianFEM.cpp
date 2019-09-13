@@ -433,10 +433,9 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
         {
           locallyFractured = 1;
         }
-        MpiWrapper::Allreduce( &locallyFractured,
+        MpiWrapper::allReduce( &locallyFractured,
                                &globallyFractured,
                                1,
-                               MPI_INT,
                                MPI_MAX,
                                MPI_COMM_GEOSX);
       }
@@ -1133,16 +1132,14 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
 //  MPI_Allreduce (&localResidual,&globalResidualNorm,1,MPI_DOUBLE,MPI_SUM ,MPI_COMM_GEOSX);
 
 
-  int const rank = MpiWrapper::MPI_Rank(MPI_COMM_GEOSX);
-  int const size = MpiWrapper::MPI_Size(MPI_COMM_GEOSX);
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
   array1d<real64> globalValues( size * 2 );
   globalValues = 0;
-  MpiWrapper::Gather( localResidualNorm,
+  MpiWrapper::gather( localResidualNorm,
                       2,
-                      MPI_DOUBLE,
                       globalValues.data(),
                       2,
-                      MPI_DOUBLE,
                       0,
                       MPI_COMM_GEOSX );
 
@@ -1159,7 +1156,7 @@ CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
     }
   }
 
-  MpiWrapper::Bcast( globalResidualNorm, 2, MPI_DOUBLE, 0, MPI_COMM_GEOSX );
+  MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
 
 

@@ -371,7 +371,7 @@ void SiloFile::Initialize( int const MPI_PARAM(numGroups) )
 #else
   m_numGroups = 1;
 #endif
-  MpiWrapper::Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::bcast(&m_numGroups, 1, 0, MPI_COMM_GEOSX);
 //  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
@@ -1146,7 +1146,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   integer_array rcounts(size);
   integer_array displs(size);
-  MpiWrapper::Gather( &sizeOfSendBufferVars, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::gather( &sizeOfSendBufferVars, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBuffer = 0;
   displs[0] = 0;
@@ -1157,12 +1157,16 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
   }
   string receiveBufferVars(sizeOfReceiveBuffer,'\0');
 
-  MpiWrapper::Gatherv ( &sendbufferVars[0], sizeOfSendBufferVars, MPI_CHAR,
-                &receiveBufferVars[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gatherv ( &sendbufferVars[0],
+                        sizeOfSendBufferVars,
+                        &receiveBufferVars[0],
+                        rcounts.data(),
+                        displs.data(),
+                        0,
+                        MPI_COMM_GEOSX );
 
 
-  MpiWrapper::Gather( &sizeOfSendBufferMesh, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::gather( &sizeOfSendBufferMesh, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBufferMesh = 0;
   displs[0] = 0;
@@ -1173,9 +1177,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
   }
   string receiveBufferMesh(sizeOfReceiveBufferMesh,'\0');
 
-  MpiWrapper::Gatherv ( &sendbufferMesh[0], sizeOfSendBufferMesh, MPI_CHAR,
-                &receiveBufferMesh[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gatherv ( &sendbufferMesh[0],
+                        sizeOfSendBufferMesh,
+                        &receiveBufferMesh[0],
+                        rcounts.data(),
+                        displs.data(),
+                        0,
+                        MPI_COMM_GEOSX );
 
 
 
