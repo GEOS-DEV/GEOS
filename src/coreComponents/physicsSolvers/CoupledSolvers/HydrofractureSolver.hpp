@@ -157,6 +157,7 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
+    static constexpr auto maxNumResolvesString = "maxNumResolves";
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -179,6 +180,8 @@ private:
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
+
+  integer m_maxNumResolves;
 
 };
 

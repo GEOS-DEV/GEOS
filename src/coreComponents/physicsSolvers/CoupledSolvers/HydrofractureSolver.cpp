@@ -52,7 +52,8 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_couplingTypeOptionString("FixedStress"),
   m_couplingTypeOption(),
   m_solidSolver(nullptr),
-  m_flowSolver(nullptr)
+  m_flowSolver(nullptr),
+  m_maxNumResolves(10)
 {
   registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -69,6 +70,11 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of contact relation to enforce constraints on fracture boundary.");
+
+  registerWrapper(viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, 0)->
+    setApplyDefaultValue(10)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
 
 }
 
@@ -176,29 +182,56 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                         DomainPartition * const domain )
 {
   real64 dtReturn = dt;
+
+  SolverBase * const surfaceGenerator =  this->getParent()->GetGroup<SolverBase>("SurfaceGen");
+
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    ImplicitStepSetup( time_n,
-                       dt,
-                       domain,
-                       m_dofManager,
-                       m_matrix,
-                       m_rhs,
-                       m_solution );
+    int const maxNumResolves = m_maxNumResolves;
+    int locallyFractured = 0;
+    int globallyFractured = 0;
+    for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
+    {
+      ImplicitStepSetup( time_n,
+                         dt,
+                         domain,
+                         m_dofManager,
+                         m_matrix,
+                         m_rhs,
+                         m_solution );
 
-    // currently the only method is implicit time integration
-    dtReturn = this->NonlinearImplicitStep( time_n,
-                                            dt,
-                                            cycleNumber,
-                                            domain,
-                                            m_dofManager,
-                                            m_matrix,
-                                            m_rhs,
-                                            m_solution );
+      // currently the only method is implicit time integration
+      dtReturn = this->NonlinearImplicitStep( time_n,
+                                              dt,
+                                              cycleNumber,
+                                              domain,
+                                              m_dofManager,
+                                              m_matrix,
+                                              m_rhs,
+                                              m_solution );
+
+      if( surfaceGenerator!=nullptr )
+      {
+        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        {
+          locallyFractured = 1;
+        }
+        MPI_Allreduce( &locallyFractured,
+                       &globallyFractured,
+                       1,
+                       MPI_INT,
+                       MPI_MAX,
+                       MPI_COMM_GEOSX);
+      }
+      if( globallyFractured == 0 )
+      {
+        break;
+      }
+    }
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     ImplicitStepComplete( time_n, dtReturn, domain );
