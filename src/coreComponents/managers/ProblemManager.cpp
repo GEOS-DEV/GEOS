@@ -40,7 +40,6 @@
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "mesh/MeshBody.hpp"
-#include "wells/InternalWellGenerator.hpp"
 #include "wells/WellElementRegion.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
 #include "common/TimingMacros.hpp"

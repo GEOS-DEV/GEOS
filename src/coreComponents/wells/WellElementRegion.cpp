@@ -48,7 +48,7 @@ WellElementRegion::~WellElementRegion()
 
 
 void WellElementRegion::GenerateWell( MeshLevel & mesh, 
-                                      InternalWellGenerator const & wellGeometry,
+                                      WellGeneratorBase const & wellGeometry,
                                       globalIndex nodeOffsetGlobal,
                                       globalIndex elemOffsetGlobal )
 {

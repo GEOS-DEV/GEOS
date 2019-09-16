@@ -64,7 +64,7 @@ void WellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const * con
 }
 
 void WellElementSubRegion::Generate( MeshLevel                        & mesh, 
-                                     InternalWellGenerator      const & wellGeometry,
+                                     WellGeneratorBase          const & wellGeometry,
                                      arrayView1d<integer>             & elemStatusGlobal, 
                                      globalIndex                        nodeOffsetGlobal,
                                      globalIndex                        elemOffsetGlobal )
@@ -85,7 +85,7 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
   set<globalIndex> & unownedElems = elemSetsByStatus[WellElemStatus::UNOWNED];
 
   // here we make sure that there are no shared elements
-  // this is enforced in the InternalWellGenerator that currently merges two perforations 
+  // this is enforced in the WellGeneratorBase that currently merges two perforations 
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOS_ERROR_IF( sharedElems.size() > 0,
@@ -162,7 +162,7 @@ void WellElementSubRegion::Generate( MeshLevel                        & mesh,
 
 
 void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel                   & mesh,
-                                                             InternalWellGenerator const & wellGeometry,
+                                                             WellGeneratorBase const & wellGeometry,
                                                              set<globalIndex>      const & unownedElems,
                                                              set<globalIndex>            & localElems,
                                                              arrayView1d<integer>        & elemStatusGlobal ) const
@@ -222,7 +222,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel          
 }
 
 
-void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
+void WellElementSubRegion::CheckPartitioningValidity( WellGeneratorBase const & wellGeometry,
                                                       set<globalIndex>            & localElems,
                                                       arrayView1d<integer>        & elemStatusGlobal ) const
 {
@@ -316,7 +316,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
 }
 
 
-void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
+void WellElementSubRegion::CollectLocalAndBoundaryNodes( WellGeneratorBase const & wellGeometry, 
                                                          set<globalIndex>      const & localElems,
                                                          set<globalIndex>            & localNodes,
                                                          set<globalIndex>            & boundaryNodes ) const
@@ -331,8 +331,8 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
   {
 
     // if the element is local, its two nodes are also local
-    globalIndex const inodeTopGlobal    = elemToNodesGlobal[currGlobal][InternalWellGenerator::NodeLocation::TOP];
-    globalIndex const inodeBottomGlobal = elemToNodesGlobal[currGlobal][InternalWellGenerator::NodeLocation::BOTTOM];
+    globalIndex const inodeTopGlobal    = elemToNodesGlobal[currGlobal][WellGeneratorBase::NodeLocation::TOP];
+    globalIndex const inodeBottomGlobal = elemToNodesGlobal[currGlobal][WellGeneratorBase::NodeLocation::BOTTOM];
     localNodes.insert( inodeTopGlobal );
     localNodes.insert( inodeBottomGlobal );
 
@@ -358,7 +358,7 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
 }
 
 void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & mesh,
-                                                  InternalWellGenerator const & wellGeometry,
+                                                  WellGeneratorBase const & wellGeometry,
                                                   set<globalIndex>      const & localNodes,
                                                   set<globalIndex>      const & boundaryNodes, 
                                                   globalIndex                   nodeOffsetGlobal )
@@ -409,7 +409,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel                   & 
 }
 
 void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh,
-                                                               InternalWellGenerator const & wellGeometry,
+                                                               WellGeneratorBase const & wellGeometry,
                                                                set<globalIndex>      const & localElems, 
                                                                set<globalIndex>      const & localNodes,
                                                                globalIndex                   nodeOffsetGlobal,
@@ -470,15 +470,15 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel        
     // update local well elem to node map (note: nodes are in nodeManager ordering)
 
     // first get the global node indices in nodeManager ordering
-    globalIndex const inodeTopGlobal    = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][InternalWellGenerator::NodeLocation::TOP];
-    globalIndex const inodeBottomGlobal = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][InternalWellGenerator::NodeLocation::BOTTOM];
+    globalIndex const inodeTopGlobal    = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][WellGeneratorBase::NodeLocation::TOP];
+    globalIndex const inodeBottomGlobal = nodeOffsetGlobal + elemToNodesGlobal[iwelemGlobal][WellGeneratorBase::NodeLocation::BOTTOM];
 
     // then get the local node indices in nodeManager ordering
     localIndex const inodeTopLocal    = nodeManager->m_globalToLocalMap.at( inodeTopGlobal );
     localIndex const inodeBottomLocal = nodeManager->m_globalToLocalMap.at( inodeBottomGlobal );
 
-    m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::TOP]    = inodeTopLocal;
-    m_toNodesRelation[iwelemLocal][InternalWellGenerator::NodeLocation::BOTTOM] = inodeBottomLocal;
+    m_toNodesRelation[iwelemLocal][WellGeneratorBase::NodeLocation::TOP]    = inodeTopLocal;
+    m_toNodesRelation[iwelemLocal][WellGeneratorBase::NodeLocation::BOTTOM] = inodeBottomLocal;
   }
 
 }

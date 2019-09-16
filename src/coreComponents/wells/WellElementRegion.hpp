@@ -25,7 +25,7 @@
 #define CORECOMPONENTS_WELLS_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "InternalWellGenerator.hpp"
+#include "WellGeneratorBase.hpp"
 
 namespace geosx
 {
@@ -65,14 +65,14 @@ public:
   { return WellElementRegion::CatalogName(); }
 
   /**
-   * @brief Setter for the name of the InternalWellGenerator object of this well
-   * @param name the name of the InternalWellGenerator object
+   * @brief Setter for the name of the WellGenerator object of this well
+   * @param name the name of the WellGenerator object
    */
   void SetWellGeneratorName( string const & name ) { m_wellGeneratorName = name; }
 
   /**
-   * @brief Getter for the name of the InternalWellGenerator object of this well
-   * @param the name of the InternalWellGenerator object
+   * @brief Getter for the name of the WellGenerator object of this well
+   * @param the name of the WellGenerator object
    */
   string const & GetWellGeneratorName() const { return m_wellGeneratorName; }
 
@@ -95,12 +95,12 @@ public:
  /**
   * @brief Build the local well elements and perforations from global well geometry
   * @param[in] meshLevel the mesh object (single level only)
-  * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+  * @param[in] wellGeometry the WellGenerator containing the global well topology
   * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
   * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
   */
   void GenerateWell( MeshLevel & mesh, 
-                     InternalWellGenerator const & wellGeometry,
+                     WellGeneratorBase const & wellGeometry,
                      globalIndex nodeOffsetGlobal,
                      globalIndex elemOffsetGlobal );
 

@@ -22,6 +22,7 @@
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
 #include "PerforationData.hpp"
+#include "WellGeneratorBase.hpp"
 
 namespace geosx
 {
@@ -225,7 +226,7 @@ public:
   /**
    * @brief Build the local well elements from global well element data
    * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] wellElemStatus list of well element status, as determined by perforations connected 
    *                           to local or remote mesh partitions. Status values are defined in
    *                           enum SegmentStatus. They are used to partition well elements.  
@@ -233,7 +234,7 @@ public:
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void Generate( MeshLevel                        & mesh, 
-                 InternalWellGenerator      const & wellGeometry,
+                 WellGeneratorBase          const & wellGeometry,
                  arrayView1d<integer>             & elemStatus,
                  globalIndex                        nodeOffsetGlobal,
                  globalIndex                        elemOffsetGlobal );
@@ -292,7 +293,7 @@ private:
    * @brief Assign the unowned well elements ( = well elem without perforation ) that are 
             in the reservoir (and that can therefore be matched with a reservoir element) to an MPI rank
    * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] unownedElems set of unowned well elems. 
    * @param[inout] localElems set of local well elems. It contains the perforated well elements
                               connected to local mesh elements before the call, and is filled 
@@ -301,7 +302,7 @@ private:
    *                           enum SegmentStatus. They are used to partition well elements.  
    */
   void AssignUnownedElementsInReservoir( MeshLevel                        & mesh,
-                                         InternalWellGenerator      const & wellGeometry,
+                                         WellGeneratorBase          const & wellGeometry,
                                          set<globalIndex>           const & unownedElems,
                                          set<globalIndex>                 & localElems,
                                          arrayView1d<integer>             & elemStatusGlobal ) const;
@@ -309,25 +310,25 @@ private:
   /**
    * @brief Check that all the well elements have been assigned to a single rank
    *        Also check that if two ranks are neighbors in the well, they are also neighbors in the mesh
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[inout] localElems set of local well elems. 
    * @param[inout] wellElemStatus list of current well element status. Status values are defined in
    *                           enum SegmentStatus. They are used to partition well elements.  
    */
-  void CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
+  void CheckPartitioningValidity( WellGeneratorBase     const & wellGeometry,
                                   set<globalIndex>            & localElems,
                                   arrayView1d<integer>        & elemStatusGlobal ) const;
 
   /**
    * @brief Now that the well elements are assigned, collect the nodes and tag the boundary nodes between ranks
             The function WellElementSubRegion::AssignUnownedElements must have been called before this function
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
    * @param[out] localNodes set of local well nodes (includes boundary nodes)
    * @param[out] boundaryNodes set of local well nodes that are at the boundary between this rank 
                                and another rank
    */ 
-  void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry, 
+  void CollectLocalAndBoundaryNodes( WellGeneratorBase     const & wellGeometry, 
                                      set<globalIndex>      const & localElems,
                                      set<globalIndex>            & localNodes,
                                      set<globalIndex>            & boundaryNodes ) const;
@@ -336,14 +337,14 @@ private:
    * @brief Add the well nodes to the nodeManager (properly resized)
             The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function
    * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] localNodes set of local well nodes (includes boundary nodes). At this point all the nodes have been collected
    * @param[in] boundaryNodes set of local well nodes that are at the boundary between this rank 
                                and another rank
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    */ 
   void UpdateNodeManagerSize( MeshLevel                    & mesh, 
-                              InternalWellGenerator  const & wellGeometry,
+                              WellGeneratorBase      const & wellGeometry,
                               set<globalIndex>       const & localNodes,
                               set<globalIndex>       const & boundaryNodes,
                               globalIndex                    nodeOffsetGlobal );
@@ -352,14 +353,14 @@ private:
    * @brief Construct the subregion's local to global maps, as well as other local maps (toNodes, nextWellElemId, volume, etc)
             The function WellElementSubRegion::UpdateNodeManagerSize must have been called before this function
    * @param[in] meshLevel the mesh object (single level only)
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
    * @param[in] localNodes set of local well nodes (includes boundary nodes)
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */ 
   void ConstructSubRegionLocalElementMaps( MeshLevel                   & mesh, 
-                                           InternalWellGenerator const & wellGeometry,
+                                           WellGeneratorBase     const & wellGeometry,
                                            set<globalIndex>      const & localElems,
                                            set<globalIndex>      const & localNodes,
                                            globalIndex                   nodeOffsetGlobal,

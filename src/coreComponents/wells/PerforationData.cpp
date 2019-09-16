@@ -54,7 +54,7 @@ PerforationData::~PerforationData()
 }
 
 void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
-                                             InternalWellGenerator const & wellGeometry )
+                                             WellGeneratorBase const & wellGeometry )
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager = mesh.getNodeManager();
@@ -132,7 +132,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
 
 }  
  
-void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::ConnectToWellElements( WellGeneratorBase const & wellGeometry,
                                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 
                                              globalIndex elemOffsetGlobal )
 {

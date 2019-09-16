@@ -148,14 +148,14 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion->GetWellGeneratorName();
-    InternalWellGenerator const * const wellGeometry =
-    meshManager->GetGroup<InternalWellGenerator>( generatorName );
+    WellGeneratorBase const * const wellGeometry =
+    meshManager->GetGroup<WellGeneratorBase>( generatorName );
 
     GEOS_ERROR_IF( wellGeometry == nullptr,
-                  "InternalWellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
+                  "WellGenerator " << generatorName << " not found in well " << wellRegion->getName() );
 
     // generate the local data (well elements, nodes, perforations) on this well
-    // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
+    // note: each MPI rank knows the global info on the entire well (constructed earlier in WellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
     wellRegion->GenerateWell( *meshLevel, *wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
 

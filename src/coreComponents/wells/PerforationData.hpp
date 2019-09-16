@@ -27,7 +27,7 @@
 #include "dataRepository/Group.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
-#include "InternalWellGenerator.hpp"
+#include "WellGeneratorBase.hpp"
 
 namespace geosx
 {
@@ -79,7 +79,7 @@ public:
 
   /**
    * @brief Setter for the global number of perforations (used for well initialization)
-   * @param nPerfs the global number of perforations (obtained for InternalWellGenerator)
+   * @param nPerfs the global number of perforations (obtained for WellGenerator)
    */
   void SetNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
 
@@ -141,18 +141,18 @@ public:
   /**
    * @brief Locates connected local mesh elements and resizes current object appropriately
    * @param[in] mesh the target mesh level
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    */
   void ConnectToMeshElements( MeshLevel const & mesh,
-                              InternalWellGenerator const & wellGeometry );
+                              WellGeneratorBase const & wellGeometry );
 
   /**
    * @brief Connect each perforation to a local wellbore element
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @param[in] wellGeometry the WellGenerator containing the global well topology
    * @param[in] wellElementGlobalToLocalMap the global to local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void ConnectToWellElements( InternalWellGenerator                 const & wellGeometry,
+  void ConnectToWellElements( WellGeneratorBase                     const & wellGeometry,
                               unordered_map<globalIndex,localIndex> const & globalToLocalWellElementMap,
                               globalIndex                                   elemOffsetGlobal );
 

@@ -7,6 +7,7 @@ set( wells_headers
      WellControls.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
+     WellGeneratorBase.hpp
      PerforationData.hpp
      Perforation.hpp
    )
@@ -19,6 +20,7 @@ set( wells_sources
      WellControls.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
+     WellGeneratorBase.cpp
      PerforationData.cpp
      Perforation.cpp
    )
