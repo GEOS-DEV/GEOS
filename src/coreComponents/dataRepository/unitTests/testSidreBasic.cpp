@@ -79,7 +79,12 @@ TEST( testSidreBasic, testSidreBasic )
   ds.getRoot()->destroyGroups();
 
   /* Restore the sidre tree */
-  SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_GEOSX );
+#ifdef GEOSX_USE_MPI
+  string const fileName = path + ".root";
+#else
+  string const fileName = path;
+#endif
+  SidreWrapper::reconstructTree( fileName, protocol, MPI_COMM_GEOSX );
   root = new Group( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. Groups automatically register with the associated sidre::View. */
@@ -87,7 +92,7 @@ TEST( testSidreBasic, testSidreBasic )
 
   /* Load the data */
   root->prepareToRead();
-  SidreWrapper::loadExternalData( path + ".root", MPI_COMM_GEOSX );
+  SidreWrapper::loadExternalData( fileName, MPI_COMM_GEOSX );
   root->finishReading();
 
   /* Should be the same as stored. */
