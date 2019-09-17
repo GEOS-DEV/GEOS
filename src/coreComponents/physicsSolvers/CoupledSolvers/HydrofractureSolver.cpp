@@ -111,28 +111,8 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
                                                 real64 const& dt,
                                                 DomainPartition * const domain)
 {
-  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
-  {
-    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
-    {
-      arrayView1d<real64> const & volume = subRegion->getElementVolume();
-      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
-
-      for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
-      {
-        volume[kfe] += deltaVolume[kfe];
-      }
-
-    });
-  });
-
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-
-
 }
 
 void HydrofractureSolver::PostProcessInput()
@@ -922,7 +902,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
           real64 const Ja = area[kfe] / numNodesPerFace;
 
-          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
+//          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
           real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
           R1Tensor nodalForce(Nbar);
           nodalForce *= nodalForceMag;
