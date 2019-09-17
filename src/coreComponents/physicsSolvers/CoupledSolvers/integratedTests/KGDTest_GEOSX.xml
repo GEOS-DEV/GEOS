@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="2"
+      verboseLevel="0"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -89,7 +89,7 @@
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  2.01, 1.01"/>
+         xMax=" 0.01,  1.01, 1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  1.01, 1.01"/>
@@ -99,7 +99,7 @@
   </Geometry>
 
 
-  <Events maxTime="3.0">
+  <Events maxTime="1.0">
   
     <SoloEvent 
       name="initialPlot"
@@ -166,6 +166,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
+                       defaultAperture="1.0e-4"
                        materialList="{water, rock}"/>
   </ElementRegions>
 

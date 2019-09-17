@@ -857,7 +857,7 @@ public:
    * @return reference to const T
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, T const & >::type
+  typename std::enable_if< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >::type
   getDefaultValue() const
   {
     return m_default.value;

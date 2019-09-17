@@ -1436,6 +1436,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="FaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--defaultAperture => The default aperture of for new faceElements.-->
+		<xsd:attribute name="defaultAperture" type="real64" use="required" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

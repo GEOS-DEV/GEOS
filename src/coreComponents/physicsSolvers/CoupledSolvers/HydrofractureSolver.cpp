@@ -105,13 +105,6 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                    m_flowSolver->getSystemMatrix(),
                                    m_flowSolver->getSystemRhs(),
                                    m_flowSolver->getSystemSolution() );
-
-  SetupSystem( domain,
-               dofManager,
-               matrix,
-               rhs,
-               solution );
-
 }
 
 void HydrofractureSolver::ImplicitStepComplete( real64 const& time_n,
@@ -191,18 +184,26 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
+
+    ImplicitStepSetup( time_n,
+                       dt,
+                       domain,
+                       m_dofManager,
+                       m_matrix,
+                       m_rhs,
+                       m_solution );
+
     int const maxNumResolves = m_maxNumResolves;
-    int locallyFractured = 0;
-    int globallyFractured = 0;
     for( int solveIter=0 ; solveIter<maxNumResolves ; ++solveIter )
     {
-      ImplicitStepSetup( time_n,
-                         dt,
-                         domain,
-                         m_dofManager,
-                         m_matrix,
-                         m_rhs,
-                         m_solution );
+      int locallyFractured = 0;
+      int globallyFractured = 0;
+
+      SetupSystem( domain,
+                   m_dofManager,
+                   m_matrix,
+                   m_rhs,
+                   m_solution  );
 
       // currently the only method is implicit time integration
       dtReturn = this->NonlinearImplicitStep( time_n,
@@ -602,11 +603,20 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                        ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
+  m_flowSolver->ResetViews( domain );
 
-//  dofManager.setMesh( domain, 0, 0 );
-//  SetupDofs( domain, dofManager );
-//  dofManager.close();
-//
+  m_solidSolver->SetupSystem( domain,
+                           m_solidSolver->getDofManager(),
+                           m_solidSolver->getSystemMatrix(),
+                           m_solidSolver->getSystemRhs(),
+                           m_solidSolver->getSystemSolution() );
+
+  m_flowSolver->SetupSystem( domain,
+                           m_flowSolver->getDofManager(),
+                           m_flowSolver->getSystemMatrix(),
+                           m_flowSolver->getSystemRhs(),
+                           m_flowSolver->getSystemSolution() );
+
 
   // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
 
@@ -912,6 +922,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
           real64 const Ja = area[kfe] / numNodesPerFace;
 
+          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
           real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
           R1Tensor nodalForce(Nbar);
           nodalForce *= nodalForceMag;
@@ -921,6 +932,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           {
             localIndex const faceIndex = elemsToFaces[kfe][kf];
             localIndex const * const faceToNodes = facesToNodes[faceIndex];
+
 
             for( localIndex a=0 ; a<numNodesPerFace ; ++a )
             {
