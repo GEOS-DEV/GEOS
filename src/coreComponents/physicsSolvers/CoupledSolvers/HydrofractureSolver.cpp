@@ -568,6 +568,7 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
                                      DofManager & dofManager ) const
 {
+  GEOSX_MARK_FUNCTION;
   m_solidSolver->SetupDofs( domain, dofManager );
   m_flowSolver->SetupDofs( domain, dofManager );
 
