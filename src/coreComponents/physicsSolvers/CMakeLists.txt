@@ -12,6 +12,8 @@ set( physicsSolvers_headers
      CoupledSolvers/ReservoirSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
      FiniteVolume/FlowSolverBase.hpp
+     FiniteVolume/ProppantTransport.hpp
+     FiniteVolume/ProppantTransportKernels.hpp          
      FiniteVolume/SinglePhaseFlow.hpp
      FiniteVolume/SinglePhaseFlowKernels.hpp
      FiniteVolume/CompositionalMultiphaseFlow.hpp
@@ -39,6 +41,8 @@ set( physicsSolvers_sources
      CoupledSolvers/ReservoirSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
      FiniteVolume/FlowSolverBase.cpp
+     FiniteVolume/ProppantTransport.cpp
+     FiniteVolume/ProppantTransportKernels.cpp               
      FiniteVolume/SinglePhaseFlow.cpp
      FiniteVolume/SinglePhaseFlowKernels.cpp
      FiniteVolume/CompositionalMultiphaseFlow.cpp

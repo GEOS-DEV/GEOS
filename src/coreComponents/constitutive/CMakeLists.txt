@@ -8,6 +8,10 @@ set( constitutive_headers
      Fluid/SingleFluidBase.hpp
      Fluid/MultiFluidBase.hpp
      Fluid/CompressibleSinglePhaseFluid.hpp
+     Fluid/SlurryFluidBase.hpp
+     Fluid/ProppantSlurryFluid.hpp
+     Fluid/ParticleFluidBase.hpp
+     Fluid/ParticleFluid.hpp          
      Solid/LinearElasticAnisotropic.hpp
      Solid/LinearElasticIsotropic.hpp
      Solid/PoroElastic.hpp
@@ -31,6 +35,10 @@ set( constitutive_sources
      Fluid/SingleFluidBase.cpp
      Fluid/MultiFluidBase.cpp
      Fluid/CompressibleSinglePhaseFluid.cpp
+     Fluid/SlurryFluidBase.cpp
+     Fluid/ProppantSlurryFluid.cpp
+     Fluid/ParticleFluidBase.cpp
+     Fluid/ParticleFluid.cpp               
      Solid/LinearElasticAnisotropic.cpp
      Solid/LinearElasticIsotropic.cpp
      Solid/PoroElastic.cpp

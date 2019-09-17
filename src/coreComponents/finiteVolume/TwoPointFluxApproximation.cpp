@@ -23,6 +23,10 @@
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
+#include "managers/DomainPartition.hpp"
+#include "managers/ProblemManager.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+
 namespace geosx
 {
 
@@ -201,6 +205,12 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & domain,
                                                       string const & faceElementRegionName )
 {
+
+  const ProblemManager* problemManager = Group::group_cast<const ProblemManager*>(domain.getParent());
+
+  R1Tensor unitGravityVector = problemManager->GetPhysicsSolverManager().gravityVector();
+  unitGravityVector.Normalize();
+  
   MeshLevel const * const mesh = domain.getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager const * const nodeManager = mesh->getNodeManager();
   EdgeManager const * const edgeManager = mesh->getEdgeManager();
@@ -250,6 +260,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
 
+  stackArray1d<real64, maxElems> stencilEdgeToFaceDownDistances;  
+  
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
   // add new connectors/connections between face elements to the fracture stencil
@@ -267,7 +279,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       stencilCellsSubRegionIndex.resize(numElems);
       stencilCellsIndex.resize(numElems);
       stencilWeights.resize(numElems);
-
+      stencilEdgeToFaceDownDistances.resize(numElems);
+      
       // get edge geometry
       R1Tensor edgeCenter, edgeLength;
       edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
@@ -290,6 +303,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
         stencilCellsIndex[kfe] = fractureElementIndex;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+
+        stencilEdgeToFaceDownDistances[kfe] =  -Dot(cellCenterToEdgeCenter, unitGravityVector) * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
+
       }
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
@@ -298,6 +314,11 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
                            stencilCellsIndex,
                            stencilWeights.data(),
                            fci );
+
+      fractureStencil.add( numElems,
+                           stencilEdgeToFaceDownDistances.data(),
+                           fci );      
+      
     }
   }
 

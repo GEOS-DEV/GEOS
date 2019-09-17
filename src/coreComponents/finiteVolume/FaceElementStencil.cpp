@@ -1,15 +1,19 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2.1-only
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Produced at the Lawrence Livermore National Laboratory
  *
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
- * ------------------------------------------------------------------------------------------------------------
+ * LLNL-CODE-746361
+ *
+ * All rights reserved. See COPYRIGHT for details.
+ *
+ * This file is part of the GEOSX Simulation Framework.
+ *
+ * GEOSX is a free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License (as published by the
+ * Free Software Foundation) version 2.1 dated February 1999.
+ *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
 /**
@@ -59,6 +63,32 @@ void FaceElementStencil::add( localIndex const numPts,
     m_weights.appendToArray( stencilIndex, weights, numPts );
   }
 }
+
+void FaceElementStencil::add( localIndex const numPts,
+                              real64 const * const  edgeToFaceDownDistances,
+                              localIndex const connectorIndex )
+{
+  GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+
+  typename decltype( m_connectorIndices )::iterator iter = m_connectorIndices.find(connectorIndex);
+  if( iter==m_connectorIndices.end() )
+  {
+    GEOS_ERROR("Wrong connectorIndex");
+  }
+  else
+  {
+    localIndex const stencilIndex = iter->second;
+    if(stencilIndex < m_edgeToFaceDownDistances.size())
+      {
+	m_edgeToFaceDownDistances.clearArray( stencilIndex );
+	m_edgeToFaceDownDistances.appendToArray( stencilIndex, edgeToFaceDownDistances, numPts );
+      }
+    else
+      {
+	m_edgeToFaceDownDistances.appendArray( edgeToFaceDownDistances, numPts );
+      }
+  }
+}  
 
 
 } /* namespace geosx */

@@ -133,10 +133,11 @@ private:
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
-  void PrecomputeData(DomainPartition *const domain);
 
 protected:
 
+  void PrecomputeData(DomainPartition *const domain);
+  
   virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
