@@ -741,7 +741,7 @@ std::ostream & operator<<( std::ostream & os,
    //  #endif
    //  #endif
    //          RowValues[Loc] += srcValues[j];
-        RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+        RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
       else
         ierr = 2;   // Value Excluded
     }
@@ -768,7 +768,7 @@ std::ostream & operator<<( std::ostream & os,
    //  #endif
    //  #endif
    //            RowValues[Loc] += srcValues[j];
-          RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+          RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
         else
         {
           Loc = Epetra_Util_binary_search( Index, ColIndices, NumColIndices, insertPoint );
@@ -779,7 +779,7 @@ std::ostream & operator<<( std::ostream & os,
    //  #endif
    //  #endif
    //              RowValues[Loc] += srcValues[j];
-            RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+            RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
           else
             ierr = 2;   // Value Excluded
         }
@@ -797,7 +797,7 @@ std::ostream & operator<<( std::ostream & os,
    //  #endif
    //  #endif
    //            RowValues[Loc] += srcValues[j];
-          RAJA::atomic::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
+          RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
         else
           ierr = 2;   // Value Excluded
       }
