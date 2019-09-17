@@ -209,7 +209,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
             subRegion->GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
             findSmallestThreeValues( tempNodeList, lowestNodes );
 
-            facesByLowestNode.atomicAppendToArray( RAJA::atomic::auto_atomic{}, lowestNodes[0], FaceBuilder( lowestNodes[1], lowestNodes[2], er, esr, k, elementLocalFaceIndex ) );
+            facesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, lowestNodes[0], FaceBuilder( lowestNodes[1], lowestNodes[2], er, esr, k, elementLocalFaceIndex ) );
           }
         }
       }

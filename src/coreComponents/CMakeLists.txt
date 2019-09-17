@@ -68,7 +68,7 @@ if( ENABLE_MPI )
 endif()
 
 if( GEOSX_USE_ATK )
-  set( extraComponentsLinkList ${extraComponentsLinkList} )
+  set( extraComponentsLinkList ${extraComponentsLinkList} axom )
 endif()
 
 
