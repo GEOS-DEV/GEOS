@@ -148,7 +148,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
       if( node0 > node1 ) std::swap( node0, node1 );
 
       // And append the edge to edgesByLowestNode.
-      edgesByLowestNode.atomicAppendToArray( RAJA::atomic::auto_atomic{}, node0, EdgeBuilder( node1, faceID, a ) );
+      edgesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, node0, EdgeBuilder( node1, faceID, a ) );
     }
   } );
 

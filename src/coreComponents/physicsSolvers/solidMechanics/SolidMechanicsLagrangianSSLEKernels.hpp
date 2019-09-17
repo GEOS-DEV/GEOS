@@ -221,7 +221,7 @@ struct ExplicitKernel
       {
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
+          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
         }
       }
     });
