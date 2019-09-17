@@ -21,6 +21,8 @@
  */
 
 #include "SiloOutput.hpp"
+
+#include "common/TimingMacros.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
@@ -66,6 +68,8 @@ void SiloOutput::Execute(real64 const time_n,
                          real64 const eventProgress,
                          Group * domain)
 {
+  GEOSX_MARK_FUNCTION;
+
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
