@@ -131,6 +131,11 @@ public:
   {
   } groupKeysFlowSolverBase;
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
+
 private:
 
   /**
@@ -139,16 +144,13 @@ private:
    */
   void PrecomputeData(DomainPartition *const domain);
 
+
 protected:
 
   virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void ResetViews( DomainPartition * const domain );
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;

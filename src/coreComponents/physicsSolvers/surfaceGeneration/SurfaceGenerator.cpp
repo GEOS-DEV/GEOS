@@ -3690,9 +3690,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                 fNode += temp;
 
                 //wu40: for debug purpose
-                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
-                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
-                std::cout << "Add to total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Add to total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
               else
               {
@@ -3700,9 +3700,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                 fNode -= temp;
 
                 //wu40: for debug purpose
-                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
-                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
-                std::cout << "Minus from total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Minus from total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
             }
             else
@@ -3710,9 +3710,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
               fNode += temp;
 
               //wu40: for debug purpose
-              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
-              std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
-              std::cout << "Add to total nodal force (fext): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
+//              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//              std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//              std::cout << "Add to total nodal force (fext): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
             }
           }
         }
