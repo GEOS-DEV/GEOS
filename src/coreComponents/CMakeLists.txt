@@ -1,23 +1,42 @@
-
 set( subdirs
-     codingUtilities
+     math
+     cxx-utilities
      common
-     constitutive
-     dataRepository
+     linearAlgebra
+     codingUtilities
      fileIO
+     dataRepository
+     managers
+     constitutive
      finiteElement
      finiteVolume
-     math
      mesh
-     managers
      meshUtilities
      MPI_Communications
      physicsSolvers
      wells
      python
-     linearAlgebraInterface
-     cxx-utilities
      )
+
+#set( subdirs
+#     codingUtilities
+#     common
+#     constitutive
+#     dataRepository
+#     fileIO
+#     finiteElement
+#     finiteVolume
+#     math
+#     mesh
+#     managers
+#     meshUtilities
+#     MPI_Communications
+#     physicsSolvers
+#     wells
+#     python
+#     linearAlgebraInterface
+#     cxx-utilities
+#     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
@@ -25,8 +44,8 @@ set( geosx_core_defines "" )
 
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
-      list( APPEND coreLibs ${lib} )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
+      list( APPEND coreLibs ${lib})
     endif()
 endforeach()
 
@@ -49,8 +68,9 @@ if( ENABLE_MPI )
 endif()
 
 if( GEOSX_USE_ATK )
-  set( extraComponentsLinkList ${extraComponentsLinkList} )
+  set( extraComponentsLinkList ${extraComponentsLinkList} axom )
 endif()
+
 
 blt_combine_static_libraries( NAME          geosx_core
                               SOURCE_LIBS   ${coreLibs}
@@ -59,16 +79,30 @@ blt_combine_static_libraries( NAME          geosx_core
                               LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                             )
 
-#set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
+#blt_add_library ( NAME geosx_core
+#                  SOURCES dummy.cpp
+#                  DEPENDS_ON  ${coreLibs}
+#                  SHARED TRUE
+#                )
+
+#set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
-geosx_add_code_checks(PREFIX core )
+geosx_add_code_checks( PREFIX core )
 
-add_test( NAME testUncrustifyCheck
-          COMMAND ${CMAKE_MAKE_PROGRAM} common_uncrustify_check dataRepository_uncrustify_check
+set( enforceUncrustifyLibs
+     common
+     dataRepository )
+
+foreach( lib ${enforceUncrustifyLibs} )
+
+add_test( NAME testUncrustifyCheck_${lib}
+          COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-          )
+        )
+
+endforeach()
 
 add_subdirectory( unitTests )

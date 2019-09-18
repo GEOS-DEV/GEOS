@@ -92,7 +92,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core sidre
+                   DEPENDS_ON geosx_core axom
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
@@ -103,7 +103,7 @@ target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 add_custom_target( geosx_update_rst_tables
                    ALL
-                   COMMAND bash ../scripts/updateRstTables.bash > updateRstTables.log
+                   COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    DEPENDS geosx
                  )

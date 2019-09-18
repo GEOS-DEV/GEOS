@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -233,6 +229,16 @@ localIndex
 Unpack( char const * & buffer,
         LvArray::ArrayOfArrays< T, INDEX_TYPE > & var );
 
+template< bool DO_PACKING, typename T, typename INDEX_TYPE >
+localIndex
+Pack( char * & buffer,
+      LvArray::ArrayOfSets< T, INDEX_TYPE > const & var );
+
+template< typename T, typename INDEX_TYPE >
+localIndex
+Unpack( char const * & buffer,
+        LvArray::ArrayOfSets< T, INDEX_TYPE > & var );
+
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
 localIndex
@@ -251,7 +257,7 @@ template< bool DO_PACKING >
 localIndex
 Pack( char * & buffer,
       arraySlice1d< localIndex const > const & var,
-      arraySlice1d< globalIndex const > const & unmappedGlobalIndices,
+      globalIndex const * const unmappedGlobalIndices,
       localIndex const length,
       arraySlice1d< globalIndex const > const & localToGlobalMap );
 
@@ -427,7 +433,7 @@ Unpack( char const * & buffer, InterObjectRelation< T > & var )
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 typename std::enable_if< !bufferOps::is_packable< T >::value, localIndex >::type
-Pack( char * & buffer, T const & var )
+Pack( char * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ) )
 {
   GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -436,7 +442,7 @@ Pack( char * & buffer, T const & var )
 //------------------------------------------------------------------------------
 template< typename T >
 typename std::enable_if< !bufferOps::is_packable< T >::value, localIndex >::type
-Unpack( char const * & buffer, T & var )
+Unpack( char const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ) )
 {
   GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
@@ -445,7 +451,7 @@ Unpack( char const * & buffer, T & var )
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >
 typename std::enable_if< !bufferOps::is_packable_by_index< T >::value, localIndex >::type
-Pack( char * & buffer, T const & var, T_INDICES const & )
+Pack( char * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
   GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
@@ -454,7 +460,7 @@ Pack( char * & buffer, T const & var, T_INDICES const & )
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
 typename std::enable_if< !bufferOps::is_packable_by_index< T >::value, localIndex >::type
-Unpack( char const * & buffer, T & var, T_INDICES const & )
+Unpack( char const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
   GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;

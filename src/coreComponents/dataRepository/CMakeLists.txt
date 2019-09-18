@@ -15,6 +15,7 @@ set(dataRepository_headers
     SidreWrapper.hpp
     Wrapper.hpp
     WrapperBase.hpp
+    xmlWrapper.hpp
     )
 
 #
@@ -25,11 +26,10 @@ set(dataRepository_sources
     SidreWrapper.cpp
     Wrapper.cpp
     WrapperBase.cpp
+    xmlWrapper.cpp
     )
 
-
 set( extraComponentsLinkList "")
-
 
 if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
@@ -37,20 +37,22 @@ endif()
 
 
 
-
 set( dependencyList common cxx-utilities codingUtilities pugixml fileIO )
+
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
 endif()
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} sidre )
+  set( dependencyList ${dependencyList} axom )
 endif()
+
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
+                 #OBJECT                TRUE
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -65,14 +65,15 @@ in adding new capabilities to the code.
 
 Release
 -------
-Copyright (c) 2018, Lawrence Livermore National Security, LLC.
-
-Produced at the Lawrence Livermore National Laboratory.
-
-All rights reserved.
-
-Unlimited Open Source - LGPL 2.1 License
 
 For release details and restrictions, please read the [LICENSE](./LICENSE) file.
+
+For copyrights, please read the [COPYRIGHT](./COPYRIGHT ) file.
+
+For contributors, please read the [CONTRIBUTORS](./CONTRIBUTORS ) file.
+
+For acknowledgements, please read the [ACKNOWLEDGEMENTS](./ACKNOWLEDGEMENTS ) file.
+
+For notice, please read the [NOTICE](./NOTICE ) file.
 
 `LLNL-Code-746361`  `OCEC-18-021`
