@@ -26,3 +26,6 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
                    CACHE PATH "")
 
 set(PETSC_OMP_DIR /usr/gapps/GEOS/geosx/thirdPartyLibs/omp-links-for-petsc CACHE STRING "")
+
+# PETSc doesn't seem to work correctly with clang.
+set(ENABLE_PETSC OFF CACHE BOOL "")
