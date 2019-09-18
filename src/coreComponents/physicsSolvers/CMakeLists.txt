@@ -52,12 +52,12 @@ set( physicsSolvers_sources
      src/DummySolver.cpp
      )
 
-set( dependencyList common constitutive dataRepository linearAlgebraInterface )
+set( dependencyList common constitutive dataRepository linearAlgebra )
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
   message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
-  list( APPEND externalComponentDeps GEOSX_PTP )  
+  list( APPEND externalComponentDeps GEOSX_PTP )
 endif()
 
 if ( ENABLE_OPENMP )
@@ -72,6 +72,7 @@ blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
+                 #OBJECT                TRUE
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

@@ -1,25 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file EdgeManagerT.h
- * @author settgast1
- * @date Jun 22, 2011
+ * @file EdgeManager.hpp
  */
 
 #ifndef EDGEMANAGERT_H_
@@ -41,7 +35,7 @@ class EdgeManager : public ObjectManagerBase
 public:
 
   using NodeMapType = FixedOneToManyRelation;
-  using FaceMapType = UnorderedVariableOneToManyRelation;
+  using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
 
   /**
     * @name Static Factory Catalog Functions
@@ -88,18 +82,18 @@ public:
   void FixUpDownMaps( bool const clearIfUnmapped );
 
   void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
-                         array1d< array1d< localIndex > > const & facesToEdges );
+                         ArrayOfArraysView< localIndex const > const & facesToEdges );
 
   void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                      const std::map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                      const std::map<globalIndex,localIndex>& faceGlobalToLocal );
+                                      const map<globalIndex,localIndex>& nodeGlobalToLocal,
+                                      const map<globalIndex,localIndex>& faceGlobalToLocal );
 
 //  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
 //                                     const set<localIndex>& newEdgeIndices,
 //                                     const set<localIndex>& modifiedEdgeIndices );
 
-  void AddToEdgeToFaceMap( const FaceManager * faceManager,
-                           const localIndex_array& newFaceIndices );
+  void AddToEdgeToFaceMap( FaceManager const * const faceManager,
+                           arrayView1d< localIndex const > const & newFaceIndices );
 
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
@@ -155,8 +149,8 @@ public:
 
   constexpr int maxEdgesPerNode() const { return 100; }
 
-  FixedOneToManyRelation       & nodeList()       { return m_toNodesRelation; }
-  FixedOneToManyRelation const & nodeList() const { return m_toNodesRelation; }
+  NodeMapType       & nodeList()       { return m_toNodesRelation; }
+  NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
   {
@@ -168,8 +162,8 @@ public:
   }
 
 
-  UnorderedVariableOneToManyRelation       & faceList()       { return m_toFacesRelation; }
-  UnorderedVariableOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+  FaceMapType       & faceList()       { return m_toFacesRelation; }
+  FaceMapType const & faceList() const { return m_toFacesRelation; }
 
 
   // TODO These should be in their own subset of edges when we add that capability.
@@ -181,14 +175,11 @@ public:
 
 
 private:
-
   NodeMapType m_toNodesRelation;
   FaceMapType m_toFacesRelation;
 
   map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
-  map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
-
-
+  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
 
   template<bool DOPACK>

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -171,7 +167,7 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
 }
 
 /**
- * @brief Populate the facesByLowestNode map. Return the maximum number of nodes associated with any face.
+ * @brief Populate the facesByLowestNode map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [in/out] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
  *        *enough* space.
@@ -179,13 +175,12 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
  * an EdgeBuilder associated with the face from n1 and n2 and then appends the EdgeBuilder to facesByLowestNode[ n0 ].
  * Finally it sorts the contents of each sub-array of facesByLowestNode from least to greatest.
  */
-localIndex createFacesByLowestNode( ElementRegionManager const & elementManager,
-                                    ArrayOfArraysView< FaceBuilder > const & facesByLowestNode )
+void createFacesByLowestNode( ElementRegionManager const & elementManager,
+                              ArrayOfArraysView< FaceBuilder > const & facesByLowestNode )
 {
   GEOSX_MARK_FUNCTION;
 
   localIndex const numNodes = facesByLowestNode.size();
-  localIndex maxFaceNodes = 0;
 
   // loop over all the regions
   for( typename dataRepository::indexType er = 0; er < elementManager.numRegions(); ++er )
@@ -198,10 +193,7 @@ localIndex createFacesByLowestNode( ElementRegionManager const & elementManager,
     {
       localIndex const numFacesPerElement = subRegion->numFacesPerElement();
       localIndex const numElements = subRegion->size();
-      array2d<localIndex const> const & elemsToFaces = subRegion->faceList();
 
-      maxFaceNodes = std::max( maxFaceNodes, subRegion->GetMaxNumFaceNodes() );
-      
       // Begin the parallel region so that tempNodeList and lowestNodes are thread private.
       PRAGMA_OMP( omp parallel )
       {
@@ -217,7 +209,7 @@ localIndex createFacesByLowestNode( ElementRegionManager const & elementManager,
             subRegion->GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
             findSmallestThreeValues( tempNodeList, lowestNodes );
 
-            facesByLowestNode.atomicAppendToArray( RAJA::atomic::auto_atomic{}, lowestNodes[0], FaceBuilder( lowestNodes[1], lowestNodes[2], er, esr, k, elementLocalFaceIndex ) );
+            facesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, lowestNodes[0], FaceBuilder( lowestNodes[1], lowestNodes[2], er, esr, k, elementLocalFaceIndex ) );
           }
         }
       }
@@ -230,15 +222,13 @@ localIndex createFacesByLowestNode( ElementRegionManager const & elementManager,
     FaceBuilder * const faces = facesByLowestNode[ nodeID ];
     std::sort( faces, faces + facesByLowestNode.sizeOfArray( nodeID ) );
   } );
-
-  return maxFaceNodes;
 }
 
 /**
  * @brief Return the total number of unique faces and fill in the uniqueFaceOffsets array.
- * @param [in] facesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
+ * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
  * @param [out] uniqueFaceOffsets an array of size numNodes + 1. After this function returns node i contains
- * faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
+ *              faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
  */
 localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
                                         arrayView1d< localIndex > const & uniqueFaceOffsets )
@@ -279,6 +269,81 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
 }
 
 /**
+ * @brief Resize the face to node map.
+ * @param [in] elementManager the ElementRegionManager.
+ * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
+ * @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in facesByLowestNode.
+ * param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
+ */
+void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
+                          ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
+                          arrayView1d< localIndex const > const & uniqueFaceOffsets,
+                          ArrayOfArrays< localIndex > & faceToNodeMap )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex const numNodes = facesByLowestNode.size();
+  localIndex const numUniqueFaces = uniqueFaceOffsets.back();
+  array1d< localIndex > numNodesPerFace( numUniqueFaces );
+
+  // loop over all the nodes.
+  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  {
+    localIndex curFaceID = uniqueFaceOffsets[ nodeID ];
+    localIndex const numFaces = facesByLowestNode.sizeOfArray( nodeID );
+
+    // If there are no faces associated with this node we can skip it.
+    if ( numFaces == 0 ) return;
+    
+    // loop over all the FaceBuilders associated with the node
+    localIndex j = 0;
+    for ( ; j < numFaces - 1; ++j )
+    {
+      localIndex const er = facesByLowestNode( nodeID, j ).er;
+      localIndex const esr = facesByLowestNode( nodeID, j ).esr;
+      localIndex const k = facesByLowestNode( nodeID, j ).k;
+      localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
+
+      // Get the number of face nodes from the subregion.
+      CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+      numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+
+      j += facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 );
+      ++curFaceID;
+    }
+
+    if ( j == numFaces - 1 )
+    {
+      localIndex const er = facesByLowestNode( nodeID, j ).er;
+      localIndex const esr = facesByLowestNode( nodeID, j ).esr;
+      localIndex const k = facesByLowestNode( nodeID, j ).k;
+      localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
+
+      // Get the number of face nodes from the subregion.
+      CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+      numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+    }
+  } );
+
+  // Calculate the total number of nodes in the face to node map.
+  RAJA::ReduceSum<parallelHostReduce, localIndex> totalFaceNodes(0.0);
+  forall_in_range< parallelHostPolicy >( 0, numUniqueFaces, [&]( localIndex const faceID )
+  { 
+    totalFaceNodes += numNodesPerFace[ faceID ]; 
+  } );
+
+  // Resize the face to node map
+  faceToNodeMap.resize(0);
+  faceToNodeMap.reserve( numUniqueFaces );
+  faceToNodeMap.reserve( totalFaceNodes.get() );
+  for ( localIndex faceID = 0; faceID < numUniqueFaces; ++faceID )
+  {
+    faceToNodeMap.appendArray( numNodesPerFace[ faceID ] );
+  }
+
+}
+
+/**
  * @brief Add an interior face to the element lists, the face to node map, and the element to face map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [in] faceID the ID of the face to add.
@@ -296,7 +361,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
                       arrayView2d< localIndex > const & elemRegionList,
                       arrayView2d< localIndex > const & elemSubRegionList,
                       arrayView2d< localIndex > const & elemList,
-                      array1d< array1d< localIndex > > const & nodeList )
+                      ArrayOfArrays< localIndex > & nodeList )
 {
   // Handle the first element.
   {
@@ -309,7 +374,9 @@ void addInteriorFace( ElementRegionManager & elementManager,
     CellElementSubRegion & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
     
     // The first element defines the node ordering for the face.
-    subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+    localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+    GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+    GEOSX_DEBUG_VAR( numFaceNodes );
     
     // Add the face to the element to face map.
     subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
@@ -352,7 +419,7 @@ void addBoundaryFace( ElementRegionManager & elementManager,
                       arrayView2d< localIndex > const & elemRegionList,
                       arrayView2d< localIndex > const & elemSubRegionList,
                       arrayView2d< localIndex > const & elemList,
-                      array1d< array1d< localIndex > > const & nodeList )
+                      ArrayOfArrays< localIndex > & nodeList )
 {
   localIndex const er = fb.er;
   localIndex const esr = fb.esr;
@@ -363,7 +430,9 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   CellElementSubRegion & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
   
   // Get the nodes associated with the face.
-  subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+  localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+  GEOS_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
+  GEOSX_DEBUG_VAR( numFaceNodes );
 
   // Add the face to the element to face map.
   subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
@@ -395,8 +464,7 @@ void populateMaps( ElementRegionManager & elementManager,
                    arrayView2d< localIndex > const & elemRegionList,
                    arrayView2d< localIndex > const & elemSubRegionList,
                    arrayView2d< localIndex > const & elemList,
-                   array1d< array1d< localIndex > > const & nodeList,
-                   localIndex const maxFaceNodes )
+                   ArrayOfArrays< localIndex > & nodeList )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -406,16 +474,7 @@ void populateMaps( ElementRegionManager & elementManager,
   GEOS_ERROR_IF_NE( numUniqueFaces, elemRegionList.size( 0 ) );
   GEOS_ERROR_IF_NE( numUniqueFaces, elemSubRegionList.size( 0 ) );
   GEOS_ERROR_IF_NE( numUniqueFaces, elemList.size( 0 ) );
-  GEOS_ERROR_IF_NE( numUniqueFaces, nodeList.size( 0 ) );
-
-  // Need to be smarter about this. Should precalculate the number of nodes associated with each face
-  // and store it in an array which would be used here.
-  GEOSX_MARK_BEGIN("Reserving space in nodeList");
-  for ( localIndex faceID = 0; faceID < numUniqueFaces; ++faceID )
-  {
-    nodeList[ faceID ].reserve( maxFaceNodes );
-  }
-  GEOSX_MARK_END("Reserving space in nodeList");
+  GEOS_ERROR_IF_NE( numUniqueFaces, nodeList.size() );
 
   // loop over all the nodes.
   forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
@@ -459,15 +518,18 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
   localIndex const numNodes = nodeManager->size();
   
-  ArrayOfArrays< FaceBuilder > facesByLowestNode( numNodes, 2 * maxFacesPerNode() );
-  localIndex const maxFaceNodes = createFacesByLowestNode( *elementManager, facesByLowestNode );
+  ArrayOfArrays<FaceBuilder> facesByLowestNode( numNodes, 2 * maxFacesPerNode() );
+  createFacesByLowestNode( *elementManager, facesByLowestNode );
   
   array1d< localIndex > uniqueFaceOffsets( numNodes + 1 );
   localIndex const numFaces = calculateTotalNumberOfFaces( facesByLowestNode, uniqueFaceOffsets );
+
+  resizeFaceToNodeMap( *elementManager,
+                       facesByLowestNode,
+                       uniqueFaceOffsets,
+                       nodeList() );
   
-  GEOSX_MARK_BEGIN("FaceManager::resize");
   resize( numFaces );
-  GEOSX_MARK_END("FaceManager::resize");
 
   populateMaps( *elementManager,
                 facesByLowestNode,
@@ -475,8 +537,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
                 elementRegionList(),
                 elementSubRegionList(),
                 elementList(),
-                nodeList(),
-                maxFaceNodes );
+                nodeList() );
 
   // First create the sets
   auto const & nodeSets = nodeManager->sets()->wrappers();
@@ -488,7 +549,6 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   }
 
   // Then loop over them in parallel and fill them in.
-  GEOSX_MARK_BEGIN("Set construction");
   forall_in_range<parallelHostPolicy>( 0, nodeSets.size(), [&]( localIndex const i ) -> void
   {
     auto const & setWrapper = nodeSets[i];
@@ -496,7 +556,6 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     const set<localIndex>& targetSet = nodeManager->sets()->getReference<set<localIndex>>( setName );
     ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
   } );
-  GEOSX_MARK_END("Set construction");
 
   SetDomainBoundaryObjects( nodeManager );
 
@@ -515,6 +574,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   forall_in_range< parallelHostPolicy >( 0, this->size(), [&]( localIndex const faceID )
   {
     faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
+                                                                    m_nodeList.sizeOfArray( faceID ),
                                                                     X,
                                                                     faceCenter[ faceID ],
                                                                     faceNormal[ faceID ] );
@@ -528,9 +588,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & faceDomainBoundaryIndicator = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
   faceDomainBoundaryIndicator = 0;
 
-  array2d<localIndex> const & elemRegionList = this->elementRegionList();
-  array2d<localIndex> const & elemSubRegionList = this->elementSubRegionList();
-  array2d<localIndex> const & elemList = this->elementList();
+  arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
 
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf )
   {
@@ -543,16 +601,16 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference<integer_array>(nodeManager->viewKeys.domainBoundaryIndicator);
   nodeDomainBoundaryIndicator = 0;
 
-  OrderedVariableOneToManyRelation const & faceToNodesMap = this->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList();
 
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const k )
   {
     if( faceDomainBoundaryIndicator[k] == 1 )
     {
-      arrayView1d<localIndex> const& nodelist = faceToNodesMap[k];
-      for( localIndex a=0 ; a< nodelist.size() ; ++a )
+      localIndex const numNodes = faceToNodesMap.sizeOfArray( k );
+      for( localIndex a=0 ; a< numNodes ; ++a )
       {
-        nodeDomainBoundaryIndicator[nodelist[a]] = 1;
+        nodeDomainBoundaryIndicator[faceToNodesMap(k, a)] = 1;
       }
     }
   } );
@@ -602,18 +660,14 @@ void FaceManager::SetIsExternal()
 
 localIndex FaceManager::getMaxFaceNodes() const
 {
-  localIndex max_size = 0;
-  OrderedVariableOneToManyRelation const & faces_to_nodes = nodeList();
+  localIndex maxSize = 0;
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = nodeList();
   for(localIndex kf =0 ; kf < size() ; ++kf )
   {
-    const localIndex size = faces_to_nodes[kf].size();
-    if ( size > max_size )
-    {
-      max_size = size;
-    }
+    maxSize = std::max( maxSize, faceToNodeMap.sizeOfArray( kf ) );
   }
 
-  return max_size;
+  return maxSize;
 }
 
 void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
@@ -631,21 +685,22 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 
   elemManager->forElementSubRegions<CellElementSubRegion>([X] (CellElementSubRegion const * const subRegion)
   { subRegion->calculateElementCenters(X); });
+
+  ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList();
   
   forall_in_range<parallelHostPolicy>( 0, size(), [&]( localIndex const kf ) -> void
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>( elemSubRegionList[kf][0] );
     R1Tensor const elementCenter = subRegion->getElementCenter()( elemList[kf][0] );
-    const localIndex numFaceNodes = nodeList()[kf].size();
-    arrayView1d<localIndex> & faceNodes = nodeList()[kf];
-    SortFaceNodes( X, elementCenter, faceNodes, numFaceNodes );
+    const localIndex numFaceNodes = faceToNodeMap.sizeOfArray( kf );
+    SortFaceNodes( X, elementCenter, faceToNodeMap[kf], numFaceNodes );
   } );
 }
 
 void FaceManager::SortFaceNodes( arrayView1d<R1Tensor const> const & X,
                                  R1Tensor const & elementCenter,
-                                 arrayView1d<localIndex> const & faceNodes,
+                                 localIndex * const faceNodes,
                                  localIndex const numFaceNodes )
 {
   localIndex const firstNodeIndex = faceNodes[0];
@@ -740,7 +795,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numFaces = size();
 
-  arrayView1d< arrayView1d< localIndex const > const > const & faceNodes = this->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = this->nodeList();
   arrayView1d< integer const > const & isDomainBoundary = this->getReference<integer_array>(viewKeys.domainBoundaryIndicator);
 
   globalFaceNodes.resize( numFaces );
@@ -751,12 +806,12 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
     if( isDomainBoundary( faceID ) )
     {
-      localIndex const numNodes = faceNodes[faceID].size();
+      localIndex const numNodes = faceToNodeMap.sizeOfArray( faceID );
       curFaceGlobalNodes.resize( numNodes );
 
       for ( localIndex a = 0; a < numNodes ; ++a )
       {
-        curFaceGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( faceNodes[ faceID ][ a ] );
+        curFaceGlobalNodes[ a ]= nodeManager->m_localToGlobalMap( faceToNodeMap( faceID, a ) );
       }
 
       std::sort( curFaceGlobalNodes.begin(), curFaceGlobalNodes.end() );
@@ -831,7 +886,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const overwriteDownMaps )
+                                          bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
 

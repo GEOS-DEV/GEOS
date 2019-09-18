@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -551,7 +547,7 @@ void CompositionalMultiphaseWell::SetupDofs( DomainPartition const * const domai
                        regions );
 }
 
-void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const time_n,
+void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                      real64 const dt,
                                                      DomainPartition const * const domain,
                                                      DofManager const * const dofManager,
@@ -831,8 +827,8 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const time_n,
   });
 }
 
-void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const time_n,
-                                                              real64 const dt,
+void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
+                                                              real64 const GEOSX_UNUSED_ARG( dt ),
                                                               DomainPartition const * const domain,
                                                               DofManager const * const dofManager,
                                                               ParallelMatrix * const matrix,
@@ -931,7 +927,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const time_
 }
 
 
-void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const time_n,
+void CompositionalMultiphaseWell::AssemblePerforationTerms( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                             real64 const dt,
                                                             DomainPartition const * const domain, 
                                                             DofManager const * const dofManager,
@@ -1070,8 +1066,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * cons
                                                     ParallelVector const & rhs )
 {
   // get a view into local residual vector
-  double* localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
  
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -1129,8 +1124,7 @@ CompositionalMultiphaseWell::CheckSystemSolution(  DomainPartition const * const
                                                    real64 const scalingFactor )
 {
   // get the update
-  double* localSolution = nullptr;
-  solution.extractLocalVector( &localSolution );
+  real64 const * localSolution = solution.extractLocalVector();
 
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -1632,8 +1626,8 @@ void CompositionalMultiphaseWell::FormControlEquation( DomainPartition const * c
 }
 
 
-void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & time,
-                                                        real64 const & dt,
+void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
+                                                        real64 const & GEOSX_UNUSED_ARG( dt ),
                                                         DomainPartition * const domain )
 {
 
