@@ -60,7 +60,7 @@ public:
    * @brief main function of this class: processes the well input and creates the globla well topology
    * @param domain the physical domain object
    */  
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
   /// not implemented 
   virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
@@ -108,13 +108,6 @@ private:
    */  
   globalIndex GetNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
-
-  void DebugWellGeometry() const;
-
-
-  private:
-  // Auxiliary data
-
 
 };
 }

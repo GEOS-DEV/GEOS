@@ -54,25 +54,6 @@ registerWrapper(keys::crossSectionArea, &m_crossSectionArea, false )->
     setSizedFromParent(0)->
     setDescription("cross section area of the well");
 
-  registerWrapper(keys::nElems, &m_numElemsPerSegment, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("number of well elements per polyline segment");
-
-  registerWrapper(keys::wellRegionName, &m_wellRegionName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("name of the well element region");
-
-  registerWrapper(keys::wellControlsName, &m_wellControlsName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("name of the set of constraints associated with this well");
-
-  registerWrapper(keys::meshBodyName, &m_meshBodyName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("name of the reservoir mesh associated with this well");
 }
 
 InternalWellGenerator::~InternalWellGenerator()
@@ -485,58 +466,6 @@ void InternalWellGenerator::MergePerforations()
   }
 }
 
-
-void InternalWellGenerator::DebugWellGeometry() const 
-{
-  if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 0)
-  {
-    return;
-  } 
-
-  std::cout << std::endl;
-  std::cout << "++++++++++++++++++++++++++" << std::endl;
-  std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
-  std::cout << "Number of well elements = " << m_numElems << std::endl;
-  
-  for (globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem)
-  {
-    std::cout << "m_elemCenterCoords[" << iwelem << "] = " << m_elemCenterCoords[iwelem] 
-              << std::endl;
-    std::cout << "m_nextElemId[" << iwelem << "] = " << m_nextElemId[iwelem] 
-              << std::endl;
-    std::cout << "m_prevElemId[" << iwelem << "] = " << m_prevElemId[iwelem][0] 
-              << std::endl;
-    for (globalIndex inode = 0; inode < m_numNodesPerElem; ++inode)
-    {
-      std::cout << "m_elemToNodesMap[" << iwelem << "][" << inode << "] = " << m_elemToNodesMap[iwelem][inode]
-                << std::endl;
-    }
-  }
-
-  std::cout << "Number of well nodes = " << m_numNodes << std::endl;
-  
-  for (globalIndex inode = 0; inode < m_numNodes; ++inode)
-  {
-    std::cout << "m_nodeCoords[" << inode << "] = " << m_nodeCoords[inode] 
-              << std::endl;
-    std::cout << "m_nodeDistFromHead[" << inode << "] = " << m_nodeDistFromHead[inode]
-              << std::endl;
-  }
-
-  std::cout << "Number of perforations = " << m_numPerforations << std::endl;
-
-  for (globalIndex iperf = 0; iperf < m_numPerforations; ++iperf) 
-  {
-    std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf] 
-              << std::endl;
-    std::cout << "m_perfTrans[" << iperf << "] = " << m_perfTrans[iperf] 
-              << std::endl;
-    std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf] 
-              << std::endl;
-  }
-
-}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellGenerator, std::string const &, Group * const )
 }

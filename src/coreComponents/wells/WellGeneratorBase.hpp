@@ -161,6 +161,8 @@ class WellGeneratorBase : public MeshGeneratorBase
    */
   globalIndex GetNumNodes() const { return m_numNodes; }
 
+  void DebugWellGeometry() const;
+
   protected:
   void PostProcessInput() override;
 

@@ -23,12 +23,21 @@
 
 #include "dataRepository/Group.hpp"
 
-#include "meshUtilities/MeshGeneratorBase.hpp"
+#include "WellGeneratorBase.hpp"
 
 namespace geosx
 {
 
-class LASWellGenerator : public MeshGeneratorBase
+namespace dataRepository
+{
+namespace keys
+{
+string const fileName                     = "fileName";
+string const geometryLogIndexInFile       = "geometryLogIndexInFile";
+}
+}
+
+class LASWellGenerator : public WellGeneratorBase
 {
   public:
   LASWellGenerator( const std::string& name,
@@ -55,7 +64,7 @@ class LASWellGenerator : public MeshGeneratorBase
    * @brief main function of this class: processes the well input and creates the globla well topology
    * @param domain the physical domain object
    */  
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
   /// not implemented 
   virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
@@ -69,6 +78,19 @@ class LASWellGenerator : public MeshGeneratorBase
 
   protected:
   void PostProcessInput() override final;
+
+  private:
+  void GeneratePolyLineFromXYZ( LASFile const & lasFile );
+
+  void GeneratePolyLineFromDepth( LASFile const & lasFile );
+  private:
+
+  /// Path to the LAS file
+  string m_fileName;
+
+  /// Index of the log to take to write the well geometry if
+  /// the LAS file has several time the same sections
+  localIndex m_logIndexToTakeForGeometry;
 
 };
 
