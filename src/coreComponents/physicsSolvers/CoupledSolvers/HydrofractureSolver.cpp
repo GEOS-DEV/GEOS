@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -78,7 +74,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
 
 }
 
-void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( MeshBodies ) )
 {
 
 }
@@ -86,10 +82,10 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
                                              DomainPartition * const domain,
-                                             DofManager & dofManager,
-                                             ParallelMatrix & matrix,
-                                             ParallelVector & rhs,
-                                             ParallelVector & solution )
+                                             DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                             ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                             ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                             ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   m_solidSolver = this->getParent()->GetGroup<SolidMechanicsLagrangianFEM>(m_solidSolverName);
   m_flowSolver = this->getParent()->GetGroup<FlowSolverBase>(m_flowSolverName);
@@ -134,7 +130,7 @@ void HydrofractureSolver::PostProcessInput()
 
 }
 
-void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
+void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * const GEOSX_UNUSED_ARG( problemManager ) )
 {
 
 }
@@ -144,7 +140,7 @@ HydrofractureSolver::~HydrofractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 
 }
@@ -230,7 +226,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
   arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
-  array1d< array1d<localIndex> > const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
   constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
@@ -253,14 +249,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       {
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
-        localIndex const numNodesPerFace=facesToNodes[kf0].size();
-        localIndex const * const nodelist0 = facesToNodes[kf0];
-        localIndex const * const nodelist1 = facesToNodes[kf1];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
         R1Tensor temp;
         for( localIndex a=0 ; a<numNodesPerFace ; ++a )
         {
-          temp += u[nodelist0[a]];
-          temp -= u[nodelist1[a]];
+          temp += u[faceToNodeMap(kf0, a)];
+          temp -= u[faceToNodeMap(kf1, a)];
         }
         area[kfe] = faceArea[kfe];
 
@@ -437,10 +431,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 //}
 
 
-real64 HydrofractureSolver::SplitOperatorStep( real64 const & time_n,
+real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                                real64 const & dt,
-                                               integer const cycleNumber,
-                                               DomainPartition * const domain )
+                                               integer const GEOSX_UNUSED_ARG( cycleNumber ),
+                                               DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
   real64 dtReturn = dt;
 //  real64 dtReturnTemporary = dtReturn;
@@ -578,10 +572,10 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
-                                       DofManager & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                       ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                       ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                       ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -684,9 +678,9 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 void HydrofractureSolver::AssembleSystem( real64 const time,
                                           real64 const dt,
                                           DomainPartition * const domain,
-                                          DofManager const & dofManager,
-                                          ParallelMatrix & matrix,
-                                          ParallelVector & rhs )
+                                          DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                          ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                          ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->AssembleSystem( time,
@@ -712,9 +706,9 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                    real64 const dt,
                                                    DomainPartition * const domain,
-                                                   DofManager const & dofManager,
-                                                   ParallelMatrix & matrix,
-                                                   ParallelVector & rhs )
+                                                   DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                   ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                                   ParallelVector & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplyBoundaryConditions( time,
@@ -816,8 +810,8 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 real64
 HydrofractureSolver::
 CalculateResidualNorm( DomainPartition const * const domain,
-                       DofManager const & dofManager,
-                       ParallelVector const & rhs )
+                       DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                       ParallelVector const & GEOSX_UNUSED_ARG( rhs ) )
 {
   GEOSX_MARK_FUNCTION;
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
@@ -847,9 +841,10 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
+//  arrayView1d<real64 const>   const & faceArea   = faceManager->faceArea();
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
   arrayView1d<R1Tensor> const &
   fext = nodeManager->getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext = {0,0,0};
@@ -878,7 +873,6 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
       arrayView1d<real64> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
-
       forall_in_range<serialPolicy>( 0,
                                    subRegion->size(),
                                    GEOSX_LAMBDA ( localIndex const kfe )
@@ -890,10 +884,8 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           Nbar.Normalize();
 
           localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const kf1 = elemsToFaces[kfe][1];
-          localIndex const numNodesPerFace=facesToNodes[kf0].size();
-          localIndex const * const nodelist0 = facesToNodes[kf0];
-          localIndex const * const nodelist1 = facesToNodes[kf1];
+//          localIndex const kf1 = elemsToFaces[kfe][1];
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
 
           globalIndex rowDOF[24];
           real64 nodeRHS[24];
@@ -912,16 +904,15 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           for( localIndex kf=0 ; kf<2 ; ++kf )
           {
             localIndex const faceIndex = elemsToFaces[kfe][kf];
-            localIndex const * const faceToNodes = facesToNodes[faceIndex];
 
 
             for( localIndex a=0 ; a<numNodesPerFace ; ++a )
             {
               for( int i=0 ; i<3 ; ++i )
               {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodes[a]] + i;
+                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
                 nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
-                fext[faceToNodes[a]][i] += - nodalForce[i] * pow(-1,kf);
+                fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
 
                 dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
               }
@@ -951,7 +942,7 @@ void
 HydrofractureSolver::
 AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                     ParallelMatrix * const matrix10,
-                                                    ParallelVector * const rhs0 )
+                                                    ParallelVector * const GEOSX_UNUSED_ARG( rhs0 ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -972,9 +963,9 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   matrix10->zero();
 
   elemManager->forElementSubRegionsComplete<FaceElementSubRegion>( this->m_targetRegions,
-                                                                   [&] ( localIndex er,
-                                                                         localIndex esr,
-                                                                         ElementRegionBase const * const region,
+                                                                   [&] ( localIndex GEOSX_UNUSED_ARG( er ),
+                                                                         localIndex GEOSX_UNUSED_ARG( esr ),
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                                                          FaceElementSubRegion const * const subRegion )
   {
 
@@ -993,7 +984,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
     arrayView1d<real64 const> const & area      = subRegion->getElementArea();
 
     arrayView2d<localIndex const> const & elemsToFaces = subRegion->faceList();
-    array1d<array1d<localIndex > > const & facesToNodes = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
     arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
 
@@ -1004,7 +995,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
       {
         globalIndex const elemDOF = presDofNumber[ei];
 
-        localIndex const numNodesPerFace = facesToNodes[elemsToFaces[ei][0]].size();
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(elemsToFaces[ei][0]);
 
         real64 const dRdAper = dens[ei][0] * area[ei];
 
@@ -1023,7 +1014,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
           {
             for( int i=0 ; i<3 ; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[facesToNodes[elemsToFaces[ei][kf]][a]] + i;
+              nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = 3*dispDofNumber[faceToNodeMap(elemsToFaces[ei][kf],a)] +i;
               real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
               real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
               dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
@@ -1043,8 +1034,8 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 }
 void
 HydrofractureSolver::
-ApplySystemSolution( DofManager const & dofManager,
-                     ParallelVector const & solution,
+ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                     ParallelVector const & GEOSX_UNUSED_ARG( solution ),
                      real64 const scalingFactor,
                      DomainPartition * const domain )
 {
@@ -1308,7 +1299,7 @@ void scale2x2System( int const use_scaling,
   }
 }
 
-void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
+void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                        ParallelMatrix & ,
                                        ParallelVector & ,
                                        ParallelVector &  )
@@ -1790,8 +1781,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & dofManager,
 
 real64
 HydrofractureSolver::ScalingForSystemSolution( DomainPartition const * const domain,
-                                                 DofManager const & dofManager,
-                                                 ParallelVector const & solution )
+                                                 DofManager const & GEOSX_UNUSED_ARG( dofManager ),
+                                                 ParallelVector const & GEOSX_UNUSED_ARG( solution ) )
 {
   return m_solidSolver->ScalingForSystemSolution( domain,
                                                   m_solidSolver->getDofManager(),

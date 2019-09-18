@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * PAMELAMeshGenerator.cpp
- *
- *  Created on: Oct 08, 2018
- *      Author: Antoine Mazuyer
+/**
+ * @file PAMELAMeshGenerator.cpp
  */
 
 #include "PAMELAMeshGenerator.hpp"
@@ -68,7 +61,7 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
 {}
 
 void PAMELAMeshGenerator::PostProcessInput()
@@ -85,12 +78,12 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
-void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const domain )
+void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
 {
   return;
 }
 
-Group * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
@@ -350,11 +343,11 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                       const int index[],
-                                                       const int& iEle,
-                                                       int nodeIDInBox[],
-                                                       const int node_size )
+void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
+                                                       const int GEOSX_UNUSED_ARG( index )[],
+                                                       const int& GEOSX_UNUSED_ARG( iEle ),
+                                                       int GEOSX_UNUSED_ARG( nodeIDInBox )[],
+                                                       const int GEOSX_UNUSED_ARG( node_size ) )
 {}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, Group * const )

@@ -5,7 +5,6 @@ add_subdirectory(coupling/hdf5_interface)
 # Specify all headers
 #
 set(fileIO_headers
-  xmlWrapper.hpp
   silo/SiloFile.hpp
   vtk/VTKFile.hpp
   vtm/VtmFile.hpp
@@ -18,7 +17,6 @@ set(fileIO_headers
 # Specify all sources
 #
 set(fileIO_sources
-  xmlWrapper.cpp
   silo/SiloFile.cpp
   vtk/VTKFile.cpp
   vtm/VtmFile.cpp
@@ -32,7 +30,7 @@ if( CONDUIT_FOUND )
 endif()
 
 if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )
@@ -43,6 +41,7 @@ blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
                  DEPENDS_ON            ${dependencyList}
+                 #OBJECT                TRUE
                )
                
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
