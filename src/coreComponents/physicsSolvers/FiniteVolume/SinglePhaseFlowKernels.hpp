@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -26,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geosx
 {
@@ -95,9 +91,9 @@ struct AssembleAccumulationTermsHelper<true>
                   real64 const totalMeanStress,
                   real64 const oldTotalMeanStress,
                   real64 const dPres,
-                  real64 const poroRef,
-                  real64 const pvmult,
-                  real64 const dPVMult_dPres )
+                  real64 const GEOSX_UNUSED_ARG( poroRef ),
+                  real64 const GEOSX_UNUSED_ARG( pvmult ),
+                  real64 const GEOSX_UNUSED_ARG( dPVMult_dPres ) )
   {
     dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
     poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
@@ -110,12 +106,12 @@ struct AssembleAccumulationTermsHelper<false>
   inline static constexpr void
   porosityUpdate( real64 & poro,
                   real64 & dPoro_dPres,
-                  real64 const biotCoefficient,
-                  real64 const poroOld,
-                  real64 const bulkModulus,
-                  real64 const totalMeanStress,
-                  real64 const oldTotalMeanStress,
-                  real64 const dPres,
+                  real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
+                  real64 const GEOSX_UNUSED_ARG( poroOld ),
+                  real64 const GEOSX_UNUSED_ARG( bulkModulus ),
+                  real64 const GEOSX_UNUSED_ARG( totalMeanStress ),
+                  real64 const GEOSX_UNUSED_ARG( oldTotalMeanStress ),
+                  real64 const GEOSX_UNUSED_ARG( dPres ),
                   real64 const poroRef,
                   real64 const pvmult,
                   real64 const dPVMult_dPres )
@@ -462,7 +458,7 @@ struct FluxKernel
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
            arrayView1d<real64 const> const & dMob_dPres,
-           localIndex const fluidIndex,
+           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
            integer const gravityFlag,
            real64 const dt,
            arraySlice1d<real64> const & flux,
@@ -560,8 +556,8 @@ struct FluxKernel
                    arrayView1d<real64 const> const & dMob_dPres,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
-                   localIndex const fluidIndex,
-                   integer const gravityFlag,
+                   localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+                   integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
                    arraySlice1d<real64> const & flux,
                    arraySlice2d<real64> const & fluxJacobian,

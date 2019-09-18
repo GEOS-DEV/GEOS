@@ -1,24 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
  * @file Wrapper.hpp
- * @authors settgast
  */
 
 #ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
@@ -455,7 +450,7 @@ public:
                                       has_memberfunction_v3_size< U >::value ||
                                       has_memberfunction_v4_size< U >::value ||
                                       has_memberfunction_v5_size< U >::value), localIndex >::type
-    size( Wrapper< T > const * parent )
+    size( Wrapper< T > const * GEOSX_UNUSED_ARG( parent ) )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual localIndex size() const override final
@@ -476,7 +471,7 @@ public:
 
     template< class U = T >
     static typename std::enable_if< !has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( Wrapper< T > const * parent )
+    numDimensions( Wrapper< T > const * GEOSX_UNUSED_ARG( parent ) )
     { return 1; }
   };/// @endcond DO_NOT_DOCUMENT
   virtual int numDimensions() const override final
@@ -699,7 +694,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !has_alias_isArray< U >::value, void >::type
-    copy( T * const data, localIndex const sourceIndex, localIndex const destIndex )
+    copy( T * const GEOSX_UNUSED_ARG( data ), localIndex const GEOSX_UNUSED_ARG( sourceIndex ), localIndex const GEOSX_UNUSED_ARG( destIndex ) )
     {}
 
   };/// @endcond DO_NOT_DOCUMENT

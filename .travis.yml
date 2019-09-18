@@ -84,15 +84,11 @@ before_script:
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/3mlzvaw5g6cm4va/tpl-osx-clang10-20190625.tar.gz;
-      tar -xf tpl-osx-clang10-20190625.tar.gz;
-      cd install-darwin-clang-release/chai/include/chai;
-      wget https://www.dropbox.com/s/mdetuztgiovgpux/ManagedArray.hpp;
-      mv ManagedArray.hpp.1 ManagedArray.hpp;
-      sudo mkdir -p /Users/rrsettgast/Codes/geosx/;
-      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/rrsettgast/Codes/geosx/thirdPartyLibs;
-      cd ../../../..;
-      cd ../GEOSX;  
+      wget https://www.dropbox.com/s/ycapqe5k0t7pirj/tpl-osx-clang10-20190908.tar.gz;
+      tar -xf tpl-osx-clang10-20190908.tar.gz;
+      sudo mkdir -p /Users/settgast1/Codes/geosx/;
+      sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
+      cd /Users/travis/build/GEOSX/GEOSX ;
     fi
 script: 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -101,5 +97,5 @@ script:
       make -j2 VERBOSE=1;
       ctest -V;
     else
-      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;    
+      docker run --rm -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo  -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS -e PATHMOD  -e GEOSX_TPL_DIR -e CMAKE_BUILD_TYPE geosx/compiler:$IMG  /home/geosx/geosx_repo/scripts/travis_build_and_test.sh;
     fi

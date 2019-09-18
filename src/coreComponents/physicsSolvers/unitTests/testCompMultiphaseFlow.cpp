@@ -1,25 +1,21 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/initialization.hpp"
+#include "managers/initialization.hpp"
 #include "constitutive/Fluid/MultiFluidBase.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
@@ -60,8 +56,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   DofManager const & dofManager = solver->getDofManager();
 
   // get a view into local residual vector
-  real64 * localResidual = nullptr;
-  residual.extractLocalVector( &localResidual );
+  real64 const * localResidual = residual.extractLocalVector();
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
@@ -72,9 +67,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   // copy the analytical residual
   ParallelVector residualOrig( residual );
-
-  real64 * localResidualOrig = nullptr;
-  residualOrig.extractLocalVector( &localResidualOrig );
+  real64 const * localResidualOrig = residualOrig.extractLocalVector();
 
   // create the numerical jacobian
   ParallelMatrix jacobianFD( jacobian );
@@ -82,8 +75,9 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase * const region,
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                         localIndex const GEOSX_UNUSED_ARG( esr ),
+                                         ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                          ElementSubRegionBase * const subRegion )
   {
     arrayView1d<integer> & elemGhostRank =
@@ -203,7 +197,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                         localIndex const GEOSX_UNUSED_ARG( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
@@ -283,7 +278,8 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                         localIndex const GEOSX_UNUSED_ARG( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {
@@ -393,7 +389,8 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
   auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
   auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
-  solver->applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
+  solver->applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
+                                         localIndex const GEOSX_UNUSED_ARG( esr ),
                                          ElementRegionBase * const region,
                                          ElementSubRegionBase * const subRegion )
   {

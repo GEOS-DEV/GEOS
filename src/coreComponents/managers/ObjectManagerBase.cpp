@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -71,7 +67,7 @@ void ObjectManagerBase::CreateSet( const std::string& newSetName )
   m_sets.registerWrapper<set<localIndex>>(newSetName);
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                                    const array2d<localIndex>& map,
                                                    const std::string& setName )
 {
@@ -103,7 +99,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputSet,
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
                                                    const array1d<localIndex_array>& map,
                                                    const std::string& setName )
 {
@@ -127,6 +123,39 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( const set<localIndex>& inputS
     for( localIndex ka=0 ; ka<numObjects ; ++ka )
     {
       if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      {
+        newset.insert( ka );
+      }
+    }
+  }
+}
+
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
+                                                   ArrayOfArraysView< localIndex const > const & map,
+                                                   const std::string& setName )
+{
+  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
+  newset.clear();
+
+  localIndex const numObjects = size();
+  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+
+  if ( setName == "all" )
+  {
+    newset.reserve( numObjects );
+
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    {
+      newset.insert( ka );
+    }
+  }
+  else
+  {
+    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    {
+      localIndex const * const values = map[ka];
+      localIndex const numValues = map.sizeOfArray(ka);
+      if ( std::all_of( values, values + numValues, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
         newset.insert( ka );
       }
@@ -323,14 +352,15 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive);
@@ -662,14 +692,15 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOS_ERROR_IF( subGroups != "SubGroups", "ManagedGroup::Unpack(): group names do not match");
+    GEOS_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "ManagedGroup::Unpack(): incorrect number of subGroups");
+    GEOS_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
 
     for( auto const & index : this->GetSubGroups() )
     {
+      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
       unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->
@@ -748,7 +779,7 @@ void ObjectManagerBase::SetReceiveLists(  )
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
-                                        int const rank,
+                                        int const GEOSX_UNUSED_ARG( rank ),
                                         localIndex & newIndex )
 {
 
@@ -874,6 +905,40 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 }
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
+                                    ArrayOfSetsView< localIndex > const & upmap,
+                                    array2d< localIndex const > const & downmap )
+{
+  for( localIndex const targetIndex : targetIndices )
+  {
+    // We sort from largest to smallest so when we erase from the upmap subsequent
+    // indices are valid.
+    SortedArray< localIndex > eraseList;
+    localIndex pos = 0;
+    for( auto const & compositeIndex : upmap.getIterableSet(targetIndex) )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(pos);
+      }
+
+      ++pos;
+    }
+
+    upmap.removeSortedFromSet( targetIndex, eraseList.begin(), eraseList.size() );
+  }
+}
+
+void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
                                     array1d< array1d<localIndex> > const & downmap )
 {
@@ -900,6 +965,66 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
     {
       upmap[targetIndex].erase(val);
     }
+  }
+}
+
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    ArrayOfSetsView< localIndex > const & upmap,
+                                    array1d< array1d< localIndex > > const & downmap )
+{
+  for( localIndex const targetIndex : targetIndices )
+  {
+    SortedArray< localIndex > eraseList;
+    localIndex pos = 0;
+    for( localIndex const compositeIndex : upmap.getIterableSet(targetIndex) )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex a=0 ; a<downmap[compositeIndex].size() ; ++a )
+      {
+        localIndex const compositeLocalIndex = downmap[compositeIndex][a];
+        if( compositeLocalIndex==targetIndex )
+        {
+          hasTargetIndex=true;
+        }
+      }
+
+      if( !hasTargetIndex )
+      {
+        eraseList.insert(pos);
+      }
+
+      ++pos;
+    }
+
+    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
+  }
+}
+
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    ArrayOfSetsView< localIndex > const & upmap,
+                                    ArrayOfArraysView< localIndex const > const & downmap )
+{
+  for( localIndex const targetIndex : targetIndices )
+  {
+    SortedArray< localIndex > eraseList;
+    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
+    {
+      bool hasTargetIndex = false;
+      for( localIndex const compositeLocalIndex : downmap.getIterableArray( compositeIndex ) )
+      {
+        if( compositeLocalIndex == targetIndex )
+        {
+          hasTargetIndex = true;
+        }
+      }
+
+      if( !hasTargetIndex )
+      {
+        eraseList.insert( compositeIndex );
+      }
+    }
+
+    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
   }
 }
 

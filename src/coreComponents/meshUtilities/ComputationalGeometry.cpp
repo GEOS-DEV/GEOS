@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * ComputationalGeometry.cpp
- *
- *  Created on: Jun 26, 2018
- *      Author: settgast
+/**
+ * @file ComputationalGeometry.cpp
  */
 
 #include "ComputationalGeometry.hpp"
@@ -39,22 +32,22 @@ namespace computationalGeometry
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
                            arrayView1d<R1Tensor const> const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
                            real64 areaTolerance )
 {
   R1Tensor v1,v2,vc;
-  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
   normal=0.;
 
-  if( n>2 )
+  if( numPoints > 2 )
   {
     const R1Tensor& x0 = points[pointsIndices[0]];
-    for( localIndex a=0 ; a<(n-2) ; ++a )
+    for( localIndex a=0 ; a<(numPoints-2) ; ++a )
     {
       v1  = points[pointsIndices[a+1]];
       v2  = points[pointsIndices[a+2]];
@@ -83,23 +76,26 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
     }
     else if( area < -areaTolerance )
     {
-      for( localIndex a=0 ; a<n ; ++a )
+      for( localIndex a=0 ; a<numPoints ; ++a )
+      {
         GEOS_LOG_RANK("Points: " << points[pointsIndices[a]](0) << " "
                       << points[pointsIndices[a]](1) << " "
                       << points[pointsIndices[a]](2) << " "
                       << pointsIndices[a]);
-      GEOS_ERROR("Negative area found : " + std::to_string( area ) );
+      }
+
+      GEOS_ERROR("Negative area found : " << area );
     }
     else
     {
       return 0.;
     }
   }
-  else if( n==1 )
+  else if( numPoints == 1 )
   {
     center = points[pointsIndices[0]];
   }
-  else if( n==2 )
+  else if( numPoints == 2 )
   {
     center  = points[pointsIndices[0]];
 
@@ -118,6 +114,13 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
   return area;
 }
 
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           real64 areaTolerance )
+{ return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), points, center, normal, areaTolerance ); }
+
 /**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
@@ -128,18 +131,18 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
-real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
                            arrayView1d<R1Tensor const> const & pointReferences,
                            arrayView1d<R1Tensor const> const & pointDisplacements,
                            R1Tensor & center,
                            R1Tensor & normal )
 {
   R1Tensor v1,v2,vc;
-  const localIndex n = pointsIndices.size();
   real64 area = 0.0;
   center = 0.0;
 
-  if( n==3 )
+  if( numPoints==3 )
   {
     const localIndex a0 = pointsIndices[0];
     const localIndex a1 = pointsIndices[1];
@@ -167,7 +170,7 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
     vc /= 3.0;
     center += vc;
   }
-  else if( n==4 )
+  else if( numPoints==4 )
   {
     v1  = pointReferences[pointsIndices[3]];
     v1 += pointDisplacements[pointsIndices[3]];
@@ -194,10 +197,10 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
     area = 0.5 * normal.Normalize();
     center *= 0.25;
   }
-  else if( n>4 )
+  else if( numPoints>4 )
   {
     const localIndex a0 = pointsIndices[0];
-    for( localIndex a=0 ; a<(n-2) ; ++a )
+    for( localIndex a=0 ; a<(numPoints-2) ; ++a )
     {
       const localIndex a1 = pointsIndices[a+1];
       const localIndex a2 = pointsIndices[a+2];
@@ -230,15 +233,15 @@ real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
     }
     else
     {
-      GEOS_ERROR("GeometryUtilities.cpp::Centroid_3DPolygon(): zero area calculated!!\n");
+      GEOS_ERROR("Zero area calculated!");
     }
   }
-  else if( n==1 )
+  else if( numPoints==1 )
   {
     center = pointReferences[0];
     center += pointDisplacements[0];
   }
-  else if( n==2 )
+  else if( numPoints==2 )
   {
     center  = pointReferences[pointsIndices[0]];
     center += pointDisplacements[pointsIndices[0]];
@@ -299,6 +302,13 @@ bool IsPointInsidePolyhedron( arrayView1d<R1Tensor const> const & nodeCoordinate
 
   return true;
 }
+
+real64 Centroid_3DPolygon( arrayView1d<localIndex const> const & pointsIndices,
+                           arrayView1d<R1Tensor const> const & pointReferences,
+                           arrayView1d<R1Tensor const> const & pointDisplacements,
+                           R1Tensor & center,
+                           R1Tensor & normal )
+{ return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), pointReferences, pointDisplacements, center, normal ); }
 
 real64 HexVolume( R1Tensor const * const X )
 {
