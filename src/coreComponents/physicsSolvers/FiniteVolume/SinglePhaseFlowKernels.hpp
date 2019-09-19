@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geosx
 {
