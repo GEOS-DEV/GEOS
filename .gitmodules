@@ -16,6 +16,6 @@
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
 	url = ../hdf5_interface.git
-[submodule "src/externalComponents/GEOSX_PTP"]
-	path = src/externalComponents/GEOSX_PTP
+[submodule "src/coreComponents/physicsSolvers/GEOSX_PTP"]
+	path = src/coreComponents/physicsSolvers/GEOSX_PTP
 	url = ../GEOSX_PTP.git

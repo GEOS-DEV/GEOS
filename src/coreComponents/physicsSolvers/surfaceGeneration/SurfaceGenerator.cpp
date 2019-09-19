@@ -32,7 +32,7 @@
 
 
 #ifdef USE_GEOSX_PTP
-#include "GEOSX_PTP/ParallelTopologyChange.hpp"
+#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
 
 #include <set>
