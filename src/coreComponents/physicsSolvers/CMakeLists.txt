@@ -1,5 +1,7 @@
 message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 
+add_subdirectory (GEOSX_PTP)
+
 #
 # Specify solver headers
 #
