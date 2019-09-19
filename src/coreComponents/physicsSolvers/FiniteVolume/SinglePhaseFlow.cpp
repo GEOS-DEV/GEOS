@@ -1001,8 +1001,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // get a view into local residual vector
-  real64 * localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
