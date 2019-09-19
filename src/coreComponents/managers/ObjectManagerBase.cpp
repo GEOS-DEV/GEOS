@@ -868,9 +868,9 @@ void ObjectManagerBase::SetMaxGlobalIndex()
                          MPI_COMM_GEOSX );
 }
 
-void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
-                                    array1d<set<localIndex> > & upmap,
-                                    array2d<localIndex> const & downmap )
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    array1d< set< localIndex > > & upmap,
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -900,7 +900,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array2d< localIndex const > const & downmap )
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {
@@ -934,7 +934,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
-                                    array1d< array1d<localIndex> > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -964,7 +964,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array1d< array1d< localIndex > > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {

@@ -29,21 +29,16 @@ namespace geosx
 namespace testing
 {
 
-template< typename T >
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol )
+constexpr real64 DEFAULT_ABS_TOL = 1E-13;
+
+::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
+                                                     real64 const v1, real64 const v2, real64 const relTol, real64 const absTol )
 {
-  T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs( v1 ), std::abs( v2 ));
-
-  if( delta < 1E-13 )
+  real64 const delta = std::abs( v1 - v2 );
+  real64 const value = std::max( std::abs(v1), std::abs(v2) );
+  if (delta > absTol && delta > relTol * value)
   {
-    return ::testing::AssertionSuccess();
-  }
-
-  if( delta > relTol * value )
-  {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
+    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
                                          << " exceeds " << relTol << std::endl;
@@ -51,17 +46,26 @@ template< typename T >
   return ::testing::AssertionSuccess();
 }
 
-template< typename T >
-void checkRelativeError( T v1, T v2, T relTol )
-{
-  EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
-}
+::testing::AssertionResult checkRelativeErrorFormat( char const * a, char const * b, char const * c,
+                                                     real64 const v1, real64 const v2, real64 const relTol )
+{ return checkRelativeErrorFormat( a, b, c, "DEFAULT_ABS_TOL", v1, v2, relTol, DEFAULT_ABS_TOL ); }
 
-template< typename T >
-void checkRelativeError( T v1, T v2, T relTol, string const & name )
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol )
+{ EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol ); }
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol )
+{ EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol ); }
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, string const & name )
 {
   SCOPED_TRACE( name );
   EXPECT_PRED_FORMAT3( checkRelativeErrorFormat, v1, v2, relTol );
+}
+
+void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, real64 const absTol, string const & name )
+{
+  SCOPED_TRACE(name);
+  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
 void compareMatrixRow( globalIndex rowNumber, real64 relTol,

@@ -173,29 +173,30 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
 }
 
 
-void Blueprint::addCells( Group* topo, Group* GEOSX_UNUSED_ARG( fields ) ) const
+void Blueprint::addCells( Group* GEOSX_UNUSED_ARG( topo ), Group* GEOSX_UNUSED_ARG( fields ) ) const
 {
+  GEOSX_DEBUG_VAR( m_elem_reg_manager );
 #ifdef GEOSX_USE_ATK
-  if ( m_elem_reg_manager.numCellBlocks() != 1 )
-  {
-    GEOS_ERROR( "Blueprint IO currently only works in problems with one cell block." );
-  }
+  // if ( m_elem_reg_manager.numCellBlocks() != 1 )
+  // {
+  //   GEOS_ERROR( "Blueprint IO currently only works in problems with one cell block." );
+  // }
 
-  const ElementRegionBase* elem_region = m_elem_reg_manager.GetRegion(0);
-  const CellElementSubRegion* cell_block = elem_region->GetSubRegion<CellElementSubRegion>(0);
-  const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
-  const localIndex n_cells = connectivity.size(0);
-  const localIndex n_nodes_per_cell = connectivity.size(1);
-  const std::string& elem_name = this->numNodesToElemName.at( n_nodes_per_cell );
+  // const ElementRegionBase* elem_region = m_elem_reg_manager.GetRegion(0);
+  // const CellElementSubRegion* cell_block = elem_region->GetSubRegion<CellElementSubRegion>(0);
+  // const array2d<localIndex>& connectivity = cell_block->nodeList().Base();
+  // const localIndex n_cells = connectivity.size(0);
+  // const localIndex n_nodes_per_cell = connectivity.size(1);
+  // const std::string& elem_name = this->numNodesToElemName.at( n_nodes_per_cell );
 
-  topo->createView( "coordset" )->setString( m_coord_name );
-  topo->createView( "type" )->setString( "unstructured" );
-  Group* elements_group = topo->createGroup( "elements" );
-  elements_group->createView( "shape" )->setString( elem_name );
+  // topo->createView( "coordset" )->setString( m_coord_name );
+  // topo->createView( "type" )->setString( "unstructured" );
+  // Group* elements_group = topo->createGroup( "elements" );
+  // elements_group->createView( "shape" )->setString( elem_name );
   
-  View* connec_view = elements_group->createView( "connectivity" );
-  connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
-  connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
+  // View* connec_view = elements_group->createView( "connectivity" );
+  // connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
+  // connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
 
   // for ( const std::pair< const std::string, const WrapperBase* >& pair : cell_block->wrappers() )
   // {

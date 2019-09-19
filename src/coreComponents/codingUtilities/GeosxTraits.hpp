@@ -47,8 +47,8 @@ constexpr bool is_set = is_instantiation_of_v<LvArray::SortedArray, T>;
 template<typename>
 constexpr bool is_array = false;
 
-template< typename T, int NDIM, typename INDEX_TYPE >
-constexpr bool is_array< LvArray::Array<T,NDIM,INDEX_TYPE> > = true;
+template< typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE >
+constexpr bool is_array< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > > = true;
 
 template <class T>
 constexpr bool is_tensorT = is_instance_of_v<R1Tensor, T> ||
@@ -81,14 +81,14 @@ constexpr bool is_noncontainer_type_packable<T>::value;
 template<typename>
 struct is_packable_array : std::false_type {};
 
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::Array<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+template<typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE>
+struct is_packable_array< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > > : is_packable<T> {};
 
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArrayView<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+template<typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > > : is_packable<T> {};
 
-template<typename T, int NDIM, typename INDEX_TYPE>
-struct is_packable_array< LvArray::ArraySlice<T,NDIM,INDEX_TYPE> > : is_packable<T> {};
+template<typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE>
+struct is_packable_array< LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > > : is_packable<T> {};
 
 template<typename T, typename INDEX_TYPE>
 struct is_packable_array< LvArray::ArrayOfArrays<T,INDEX_TYPE> > : is_packable<T> {};

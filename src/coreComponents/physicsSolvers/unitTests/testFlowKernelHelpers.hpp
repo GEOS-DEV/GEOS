@@ -19,17 +19,11 @@
 
 //using namespace geosx;
 
-template<typename T, int NDIM>
-using Array = LvArray::Array<T, NDIM, localIndex>;
-
-template<typename T, int NDIM>
-using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
-
 namespace detail
 {
 
 template<typename T, int NDIM>
-void setArrayElement( ArrayView<T, NDIM> const & arr,
+void setArrayElement( array_view<T, NDIM> const & arr,
                       localIndex const dstIndex,
                       localIndex const srcIndex,
                       T const * const data )
@@ -59,10 +53,10 @@ template<>
 struct AccessorHelper<false>
 {
   template<int NDIM, typename T>
-  using ElementAccessor = Array<T, NDIM>;
+  using ElementAccessor = array_decl<T, NDIM>;
 
   template<int NDIM, typename T>
-  using MaterialAccessor = Array<T, NDIM>;
+  using MaterialAccessor = array_decl<T, NDIM>;
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>
@@ -120,10 +114,10 @@ template<>
 struct AccessorHelper<true>
 {
   template<int NDIM, typename T>
-  using ElementAccessor = ElementRegionManager::ElementViewAccessor<Array<T, NDIM>>;
+  using ElementAccessor = ElementRegionManager::ElementViewAccessor<array_decl<T, NDIM>>;
 
   template<int NDIM, typename T>
-  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor<Array<T, NDIM>>;
+  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor<array_decl<T, NDIM>>;
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>

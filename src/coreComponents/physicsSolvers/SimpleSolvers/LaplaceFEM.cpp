@@ -210,10 +210,8 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       arrayView2d<real64> const &
       detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
-      localIndex const numNodesPerElement = integer_conversion<int>(elemsToNodes.size(1));
-
-      arrayView2d<localIndex const> const & elemNodes = elementSubRegion->nodeList();
+      localIndex const numNodesPerElement = elementSubRegion->numNodesPerElement();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemNodes = elementSubRegion->nodeList();
 
       globalIndex_array elemDofIndex( numNodesPerElement );
       real64_array element_rhs( numNodesPerElement );
