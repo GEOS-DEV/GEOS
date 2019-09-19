@@ -76,7 +76,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   array1d<integer> elemStatusGlobal( numElemsGlobal );
   elemStatusGlobal = WellElementSubRegion::WellElemStatus::UNOWNED;
 
-  array1d<globalIndex const> const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d<globalIndex const> const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
 
   for (localIndex iperfGlobal = 0; iperfGlobal < numPerforationsGlobal; ++iperfGlobal)
   {

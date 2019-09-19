@@ -996,7 +996,7 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toNodesRelation.Base(),
+                                         m_toNodesRelation.Base().toViewConst(),
                                          m_unmappedGlobalIndicesInToNodes,
                                          packList,
                                          m_localToGlobalMap,

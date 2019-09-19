@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
+// Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/SidreWrapper.hpp"
@@ -21,6 +21,12 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 
 #include <gtest/gtest.h>
+
+// TPL includes
+#include <gtest/gtest.h>
+
+// System includes
+#include <mpi.h>
 
 namespace geosx
 {

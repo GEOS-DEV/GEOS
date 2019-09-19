@@ -187,7 +187,7 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
 
   packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation.Base(),
+                                         m_toFacesRelation.Base().toViewConst(),
                                          m_unmappedGlobalIndicesInToFaces,
                                          packList,
                                          this->m_localToGlobalMap,

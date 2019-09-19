@@ -32,6 +32,7 @@ class DomainPartition;
 class ElementSubRegionBase : public ObjectManagerBase
 {
 public:
+
   ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
   ~ElementSubRegionBase();
 
@@ -63,10 +64,6 @@ public:
   {
     static constexpr auto constitutiveModelsString = "ConstitutiveModels";
   };
-
-
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const = 0;
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) = 0;
 
 
   /**

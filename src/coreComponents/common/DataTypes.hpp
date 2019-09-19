@@ -21,19 +21,7 @@
 #ifndef GEOSX_COMMON_DATATYPES_HPP
 #define GEOSX_COMMON_DATATYPES_HPP
 
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <typeindex>
-#include <typeinfo>
-#include <unordered_map>
-#include <vector>
-
+// Source includes
 #include "common/GeosxConfig.hpp"
 #include "Macros.hpp"
 #include "Logger.hpp"
@@ -44,14 +32,29 @@
 #include "ArrayOfSets.hpp"
 #include "math/TensorT/TensorT.h"
 
+// TPL includes
+#include <camp/camp.hpp>
+
 #ifdef GEOSX_USE_ATK
-#include "axom/sidre/core/SidreTypes.hpp"
+  #include <axom/sidre/core/SidreTypes.hpp>
 #endif
 
+// System includes
 #ifdef GEOSX_USE_MPI
-#include <mpi.h>
+  #include <mpi.h>
 #endif
 
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <memory>
+#include <typeindex>
+#include <typeinfo>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <vector>
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -66,13 +69,7 @@ extern MPI_Comm MPI_COMM_GEOSX;
 constexpr int MPI_COMM_GEOSX = 0;
 #endif
 
-// underlying types not for general use!!
-//using int32 = std::int32_t;
-//using int64 = std::int64_t;
-//using uint32 = std::uint32_t;
-//using uint64 = std::uint64_t;
 
-/// alias for std::size_t
 using size_t      = std::size_t;
 using integer     = std::int32_t;
 using localIndex  = std::ptrdiff_t;
@@ -81,8 +78,6 @@ using string      = std::string;
 
 using real32 = float;
 using real64 = double;
-//using real   = double;
-
 
 template< typename T >
 using ptr = T*;
@@ -109,86 +104,74 @@ using buffer_type = std::vector< buffer_unit_type >;
 
 //***** BEGIN ARRAY TYPEDEFS *****
 
-template< typename T, int NDIM=1 >
-using array_view = LvArray::ArrayView< T, NDIM, localIndex >;
+template< typename T, int NDIM, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+using array_decl = LvArray::Array< T, NDIM, PERMUTATION, localIndex >;
 
-template< typename T, int NDIM=1 >
-using array_slice = LvArray::ArraySlice< T, NDIM, localIndex >;
+template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
+using array_view = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
 
-template< typename T, int NDIM, int MAXSIZE >
-using stack_array = LvArray::Array< T, NDIM, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
+template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
+using array_slice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+
+template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+using stack_array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
 
 template< typename T >
-using array1d = LvArray::Array< T, 1, localIndex >;
+using array1d = array_decl< T, 1 >;
 
 template< typename T >
 using arrayView1d = array_view< T, 1 >;
 
-template< typename T >
-using arraySlice1d = LvArray::ArraySlice1d< T, localIndex >;
-
-template< typename T >
-using arraySlice1dRval = LvArray::ArraySlice1d_rval< T, localIndex >;
+template< typename T, int UNIT_STRIDE_DIM = 0 >
+using arraySlice1d = array_slice< T, 1, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
 using stackArray1d = stack_array< T, 1, MAXSIZE >;
 
-template< typename T >
-using array2d = LvArray::Array< T, 2, localIndex >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
+using array2d = array_decl< T, 2, PERMUTATION >;
 
-template< typename T >
-using arrayView2d = array_view< T, 2 >;
+template< typename T, int UNIT_STRIDE_DIM = 1 >
+using arrayView2d = array_view< T, 2, UNIT_STRIDE_DIM >;
 
-template< typename T >
-using arraySlice2d = LvArray::ArraySlice< T, 2, localIndex >;
+template< typename T, int UNIT_STRIDE_DIM = 1 >
+using arraySlice2d = array_slice< T, 2, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
 using stackArray2d = stack_array< T, 2, MAXSIZE >;
 
-template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
-
 template< typename T >
-using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
-
-template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
-
-template< typename T >
-using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
-
-template< typename T >
-using array3d = LvArray::Array< T, 3, localIndex >;
+using array3d = array_decl< T, 3 >;
 
 template< typename T >
 using arrayView3d = array_view< T, 3 >;
 
 template< typename T >
-using arraySlice3d = LvArray::ArraySlice< T, 3, localIndex >;
+using arraySlice3d = array_slice< T, 3 >;
 
 template< typename T, int MAXSIZE >
 using stackArray3d = stack_array< T, 3, MAXSIZE >;
 
 template< typename T >
-using array4d = LvArray::Array< T, 4, localIndex >;
+using array4d = array_decl< T, 4 >;
 
 template< typename T >
-using arrayView4d = LvArray::ArrayView< T, 4, localIndex >;
+using arrayView4d = array_view< T, 4 >;
 
 template< typename T >
-using arraySlice4d = LvArray::ArrayView< T, 4, localIndex >;
+using arraySlice4d = array_slice< T, 4 >;
 
 template< typename T, int MAXSIZE >
 using stackArray4d = stack_array< T, 4, MAXSIZE >;
 
 template< typename T >
-using array5d = LvArray::Array< T, 5, localIndex >;
+using array5d = array_decl< T, 5 >;
 
 template< typename T >
-using arrayView5d = LvArray::ArrayView< T, 5, localIndex >;
+using arrayView5d = array_view< T, 5 >;
 
 template< typename T >
-using arraySlice5d = LvArray::ArrayView< T, 5, localIndex >;
+using arraySlice5d = array_slice< T, 5 >;
 
 template< typename T, int MAXSIZE >
 using stackArray5d = stack_array< T, 5, MAXSIZE >;
@@ -201,6 +184,18 @@ using SortedArray = LvArray::SortedArray< T, localIndex >;
 
 template< typename T >
 using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
+
+template< typename T, bool CONST_SIZES=std::is_const< T >::value >
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
+
+template< typename T >
+using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
+
+template< typename T >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+
+template< typename T >
+using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
 
 template< typename TKEY, typename TVAL, typename SORTED >
 class mapBase
