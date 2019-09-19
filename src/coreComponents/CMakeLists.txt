@@ -2,7 +2,7 @@ set( subdirs
      math
      cxx-utilities
      common
-     linearAlgebraInterface
+     linearAlgebra
      codingUtilities
      fileIO
      dataRepository
@@ -68,7 +68,7 @@ if( ENABLE_MPI )
 endif()
 
 if( GEOSX_USE_ATK )
-  set( extraComponentsLinkList ${extraComponentsLinkList} )
+  set( extraComponentsLinkList ${extraComponentsLinkList} axom )
 endif()
 
 
@@ -85,16 +85,24 @@ blt_combine_static_libraries( NAME          geosx_core
 #                  SHARED TRUE
 #                )
 
-#set( geosx_core_libs geosx_core CACHE PATH "" FORCE) 
+#set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
-geosx_add_code_checks(PREFIX core )
+geosx_add_code_checks( PREFIX core )
 
-add_test( NAME testUncrustifyCheck
-          COMMAND ${CMAKE_MAKE_PROGRAM} common_uncrustify_check dataRepository_uncrustify_check
+set( enforceUncrustifyLibs
+     common
+     dataRepository )
+
+foreach( lib ${enforceUncrustifyLibs} )
+
+add_test( NAME testUncrustifyCheck_${lib}
+          COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-          )
+        )
+
+endforeach()
 
 add_subdirectory( unitTests )

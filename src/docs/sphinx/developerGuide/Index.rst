@@ -23,7 +23,7 @@ Welcome to the GEOSX developer guide.
    
    /coreComponents/managers/docs/ProblemManager.rst
    
-   /coreComponents/linearAlgebraInterface/docs/DofManager.rst
+   /coreComponents/linearAlgebra/docs/DofManager.rst
 
 
 

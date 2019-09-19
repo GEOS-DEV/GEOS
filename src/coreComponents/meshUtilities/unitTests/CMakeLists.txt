@@ -11,7 +11,7 @@ set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
-set( dependencyList geosx_core gtest )
+set( dependencyList geosx_core gtest axom )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

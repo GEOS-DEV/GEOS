@@ -15,7 +15,7 @@ foreach(component ${componentlist})
   set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
 endforeach()
 
-set( dependencyList geosx_core gtest optionparser )
+set( dependencyList geosx_core gtest optionparser axom )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

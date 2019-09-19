@@ -1066,8 +1066,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const * cons
                                                     ParallelVector const & rhs )
 {
   // get a view into local residual vector
-  double* localResidual = nullptr;
-  rhs.extractLocalVector( &localResidual );
+  real64 const * localResidual = rhs.extractLocalVector();
  
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
@@ -1125,8 +1124,7 @@ CompositionalMultiphaseWell::CheckSystemSolution(  DomainPartition const * const
                                                    real64 const scalingFactor )
 {
   // get the update
-  double* localSolution = nullptr;
-  solution.extractLocalVector( &localSolution );
+  real64 const * localSolution = solution.extractLocalVector();
 
   MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager const * const elemManager = meshLevel->getElemManager();
