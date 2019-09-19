@@ -102,10 +102,17 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
+  std::set<string> names;
   this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+    names.insert( elementRegion->getName() );
   });
+
+  for( string const & name: names )
+  {
+    ElementRegionBase * const elementRegion = GetRegion( name );
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+  }
 }
 
 void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
