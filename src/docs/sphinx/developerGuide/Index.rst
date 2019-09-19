@@ -10,19 +10,21 @@ Welcome to the GEOSX developer guide.
    DeveloperGuidelines
 
    BuildingProcess
-   
+
    GitWorkflow
 
    /coreComponents/fileIO/schema/docs/SchemaGeneration
-   
+
+   ContributingToGEOSX
+
    UnitTests
-   
+
    IntegratedTests
-      
+
    caliper_link
-   
+
    /coreComponents/managers/docs/ProblemManager.rst
-   
+
    /coreComponents/linearAlgebra/docs/DofManager.rst
 
 
