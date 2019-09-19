@@ -12,21 +12,22 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
-
+// Source includes
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/Fluid/CompositionalMultiphaseFluid.hpp"
 #include "constitutive/Fluid/BlackOilFluid.hpp"
+#include "physicsSolvers/unitTests/testCompFlowUtils.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
 
 using namespace geosx;
+using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
-
-template<typename T, int NDIM>
-using Array = LvArray::Array<T,NDIM,localIndex>;
 
 /// Black-oil tables written into temporary files during testing
 
@@ -108,115 +109,6 @@ static const char * pvdo_str = "#P[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
 static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
-template<typename T>
-::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
-                                                     T v1, T v2, T relTol, T absTol )
-{
-  T const delta = std::abs( v1 - v2 );
-  T const value = std::max( std::abs(v1), std::abs(v2) );
-  if (delta > absTol && delta > relTol * value)
-  {
-    return ::testing::AssertionFailure() << std::scientific << std::setprecision(5)
-                                         << " relative error: " << delta / value
-                                         << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
-  }
-  return ::testing::AssertionSuccess();
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol, T absTol )
-{
-  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
-}
-
-template<typename T>
-void checkRelativeError( T v1, T v2, T relTol, T absTol, string const & name )
-{
-  SCOPED_TRACE(name);
-  EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
-}
-
-template<typename T>
-void checkDerivative( T valueEps, T value, T deriv, real64 eps, real64 relTol, T absTol,
-                      string const & name, string const & var )
-{
-  T numDeriv = (valueEps - value) / eps;
-  checkRelativeError( deriv, numDeriv, relTol, absTol, "d(" + name + ")/d(" + var + ")" );
-}
-
-template<typename T, typename ... Args>
-void
-checkDerivative( arraySlice1d<T> const & valueEps,
-                 arraySlice1d<T> const & value,
-                 arraySlice1d<T> const & deriv,
-                 real64 eps, real64 relTol, real64 absTol,
-                 string const & name, string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size(0);
-
-  for (localIndex i = 0; i < size; ++i)
-  {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
-  }
-}
-
-template<typename T, int DIM, typename ... Args>
-typename std::enable_if<(DIM > 1), void>::type
-checkDerivative( array_slice<T,DIM> const & valueEps,
-                 array_slice<T,DIM> const & value,
-                 array_slice<T,DIM> const & deriv,
-                 real64 eps, real64 relTol, real64 absTol,
-                 string const & name, string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size(0);
-
-  for (localIndex i = 0; i < size; ++i)
-  {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
-  }
-}
-
-// invert compositional derivative array layout to move innermost slice on the top
-// (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
-array1d<real64> invertLayout( arraySlice1d<real64 const> const & input, localIndex N )
-{
-  Array<real64,1> output( N );
-  for (int i = 0; i < N; ++i)
-    output[i] = input[i];
-
-  return output;
-}
-
-array2d<real64> invertLayout( arraySlice2d<real64 const> const & input, localIndex N1, localIndex N2 )
-{
-  Array<real64,2> output( N2, N1 );
-
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
-      output[j][i] = input[i][j];
-
-  return output;
-}
-
-array3d<real64> invertLayout( arraySlice3d<real64 const> const & input, localIndex N1, localIndex N2, localIndex N3 )
-{
-  Array<real64,3> output( N3, N1, N2 );
-
-  for (int i = 0; i < N1; ++i)
-    for (int j = 0; j < N2; ++j)
-      for (int k = 0; k < N3; ++k)
-        output[k][i][j] = input[i][j][k];
-
-  return output;
-}
-
 void testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 P,
                                real64 T,
@@ -241,7 +133,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 
   // extract data views from both fluids
 #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-  FLUID->getReference<Array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+  FLUID->getReference<array_decl<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
 
   CompositionalVarContainer<1> phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),
@@ -298,8 +190,16 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
     checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, absTol, "phaseVisc", "Pres", phases );
     checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, absTol, "totalDens", "Pres" );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dPres, dP, relTol, absTol,
-                     "phaseCompFrac", "Pres", phases, components );
+    checkDerivative( phaseCompFracCopy.toSliceConst(),
+                     phaseCompFrac.value.toSliceConst(),
+                     phaseCompFrac.dPres.toSliceConst(),
+                     dP,
+                     relTol,
+                     absTol,
+                     "phaseCompFrac",
+                     "Pres",
+                     phases,
+                     components );
   }
 
   // update temperature and check derivatives
@@ -311,8 +211,16 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
     checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, absTol, "phaseVisc", "Temp", phases );
     checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, absTol, "totalDens", "Temp" );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, phaseCompFrac.dTemp, dT, relTol, absTol,
-                     "phaseCompFrac", "Temp", phases, components );
+    checkDerivative( phaseCompFracCopy.toSliceConst(),
+                     phaseCompFrac.value.toSliceConst(),
+                     phaseCompFrac.dTemp.toSliceConst(),
+                     dT,
+                     relTol,
+                     absTol,
+                     "phaseCompFrac",
+                     "Temp",
+                     phases,
+                     components );
   }
 
   // update composition and check derivatives
@@ -346,7 +254,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
     checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
     checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
     checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, absTol, "totalDens", var );
-    checkDerivative( phaseCompFracCopy, phaseCompFrac.value, dPhaseCompFrac_dC[jc], dC, relTol, absTol,
+    checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(), dC, relTol, absTol,
                      "phaseCompFrac", var, phases, components );
   }
 }

@@ -210,7 +210,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
-  arrayView2d< localIndex const > const & nodeMap = m_subRegion->nodeList();
+  arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & nodeMap = m_subRegion->nodeList();
   GEOS_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;

@@ -23,6 +23,8 @@
 
 #include "common/DataTypes.hpp"
 
+#include <set>
+
 namespace geosx
 {
 

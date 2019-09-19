@@ -61,8 +61,8 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                                                                    viewKeyStruct::
                                                                                                    elementCenterString );
   
-  array1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  array1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  arrayView1d<R1Tensor const> const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d<real64 const>   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
 
   resize( perfCoordsGlobal.size() );
   localIndex iperfLocal = 0;
@@ -133,7 +133,7 @@ void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellG
                                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 
                                              globalIndex elemOffsetGlobal )
 {
-  array1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d<globalIndex const> const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
 
   for (localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal)
   {
