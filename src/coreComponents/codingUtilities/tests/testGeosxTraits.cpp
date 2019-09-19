@@ -43,7 +43,7 @@ TEST(testGeosxTraits,test_is_string)
 
 TEST(testGeosxTraits,test_is_array)
 {
-  static_assert(is_array<LvArray::Array<int,1,int>>, "Should be true");
+  static_assert(is_array< LvArray::Array< int, 1, camp::make_idx_seq< 0 >::type, int > >, "Should be true");
   
   static_assert(!is_array<int>, "Should be false");
   static_assert(!is_array<double>, "Should be false");
@@ -98,10 +98,10 @@ TEST(testGeosxTraits,test_is_noncontainer_type_packable)
 
 TEST(testGeosxTraits,test_is_array_packable)
 {
-  using arrayType = LvArray::Array<double,2,long int>;
+  using arrayType = LvArray::Array<double,2, camp::make_idx_seq<2>::type,long int>;
   EXPECT_TRUE( is_packable_array<arrayType>::value );
 
-  using arrayType0 = LvArray::Array<void,1,int>;
+  using arrayType0 = LvArray::Array<void,1, camp::make_idx_seq<1>::type,int>;
   EXPECT_FALSE( is_packable_array<arrayType0>::value );
 
   EXPECT_FALSE( is_packable_array<int>::value );
@@ -118,7 +118,7 @@ TEST(testGeosxTraits,test_is_packable_map)
   using mapType1 = map<string,std::pair<int,int> >;
   EXPECT_FALSE( is_packable_map< mapType1 >::value );
 
-  using arrayType = LvArray::Array<int,1,int>;
+  using arrayType = LvArray::Array<int,1,camp::make_idx_seq<1>::type,int>;
   using mapType2 = map<string,arrayType>;
   EXPECT_TRUE( is_packable_map< mapType2 >::value );
 

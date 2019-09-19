@@ -119,14 +119,14 @@ localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         nodeList().Base(),
+                                         nodeList().Base().toViewConst(),
                                          m_unmappedGlobalIndicesInNodelist,
                                          packList,
                                          this->m_localToGlobalMap,
                                          nodeList().RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         faceList().Base(),
+                                         faceList().Base().toViewConst(),
                                          m_unmappedGlobalIndicesInFacelist,
                                          packList,
                                          this->m_localToGlobalMap,
@@ -142,11 +142,8 @@ localIndex CellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                                  bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
 {
   localIndex unPackedSize = 0;
-
-
-
   unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base(),
+                                     nodeList().Base().toView(),
                                      packList,
                                      m_unmappedGlobalIndicesInNodelist,
                                      this->m_globalToLocalMap,

@@ -22,73 +22,89 @@
 namespace geosx
 {
 
-template< typename T, int NDIM >
-using Array = LvArray::Array< T, NDIM, localIndex >;
-
 namespace testing
 {
 
-template< typename T >
-void checkDerivative( T valueEps,
-                      T value,
-                      T deriv,
-                      real64 eps,
-                      real64 relTol,
+void checkDerivative( real64 const valueEps,
+                      real64 const value,
+                      real64 const deriv,
+                      real64 const eps,
+                      real64 const relTol,
+                      real64 const absTol,
                       string const & name,
                       string const & var )
 {
-  T const numDeriv = ( valueEps - value ) / eps;
-  checkRelativeError( deriv, numDeriv, relTol, "d(" + name + ")/d(" + var + ")" );
+  real64 const numDeriv = (valueEps - value) / eps;
+  checkRelativeError( deriv, numDeriv, relTol, absTol, "d(" + name + ")/d(" + var + ")" );
 }
 
-template< typename T, typename ... Args >
-void
-checkDerivative( arraySlice1d< T > const & valueEps,
-                 arraySlice1d< T > const & value,
-                 arraySlice1d< T > const & deriv,
-                 real64 eps,
-                 real64 relTol,
-                 string const & name,
-                 string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size( 0 );
+void checkDerivative( real64 const valueEps,
+                      real64 const value,
+                      real64 const deriv,
+                      real64 const eps,
+                      real64 const relTol,
+                      string const & name,
+                      string const & var )
+{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var ); }
 
-  for( localIndex i = 0; i < size; ++i )
+void checkDerivative( arraySlice1d< real64 const > const & valueEps,
+                      arraySlice1d< real64 const > const & value,
+                      arraySlice1d< real64 const > const & deriv,
+                      real64 const eps,
+                      real64 const relTol,
+                      real64 const absTol,
+                      string const & name,
+                      string const & var,
+                      string_array const & labels )
+{
+  localIndex const size = labels.size(0);
+
+  for (localIndex i = 0; i < size; ++i)
   {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
+    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
+                     name + "[" + labels[i] + "]", var );
+  }
+}
+
+template<int DIM, typename ... Args>
+void checkDerivative( array_slice< real64 const, DIM > const & valueEps,
+                      array_slice< real64 const, DIM > const & value,
+                      array_slice< real64 const, DIM > const & deriv,
+                      real64 const eps,
+                      real64 const relTol,
+                      real64 const absTol,
+                      string const & name,
+                      string const & var,
+                      string_array const & labels,
+                      Args ... label_lists )
+{
+  localIndex const size = labels.size(0);
+
+  for (localIndex i = 0; i < size; ++i)
+  {
+    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
                      name + "[" + labels[i] + "]", var, label_lists... );
   }
 }
 
-template< typename T, int DIM, typename ... Args >
-typename std::enable_if< ( DIM > 1 ), void >::type
-checkDerivative( array_slice< T, DIM > const & valueEps,
-                 array_slice< T, DIM > const & value,
-                 array_slice< T, DIM > const & deriv,
-                 real64 eps,
-                 real64 relTol,
-                 string const & name,
-                 string const & var,
-                 string_array const & labels,
-                 Args ... label_lists )
-{
-  localIndex const size = labels.size( 0 );
-
-  for( localIndex i = 0; i < size; ++i )
-  {
-    checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol,
-                     name + "[" + labels[i] + "]", var, label_lists... );
-  }
-}
+template< int DIM, typename ... Args >
+void checkDerivative( array_slice< real64 const, DIM > const & valueEps,
+                      array_slice< real64 const, DIM > const & value,
+                      array_slice< real64 const, DIM > const & deriv,
+                      real64 const eps,
+                      real64 const relTol,
+                      string const & name,
+                      string const & var,
+                      string_array const & labels,
+                      Args ... label_lists )
+{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists... ); }
 
 // invert compositional derivative array layout to move innermost slice on the top
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
 array1d< real64 > invertLayout( arraySlice1d< real64 const > const & input,
                                 localIndex N )
 {
-  Array< real64, 1 > output( N );
+  array1d< real64 > output( N );
   for( int i = 0; i < N; ++i )
   {
     output[i] = input[i];
@@ -101,13 +117,13 @@ array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
                                 localIndex N1,
                                 localIndex N2 )
 {
-  Array< real64, 2 > output( N2, N1 );
+  array2d< real64 > output( N2, N1 );
 
   for( localIndex i = 0; i < N1; ++i )
   {
     for( localIndex j = 0; j < N2; ++j )
     {
-      output[j][i] = input[i][j];
+      output(j, i) = input(i, j);
     }
   }
 
@@ -119,7 +135,7 @@ array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
                                 localIndex N2,
                                 localIndex N3 )
 {
-  Array< real64, 3 > output( N3, N1, N2 );
+  array3d< real64 > output( N3, N1, N2 );
 
   for( localIndex i = 0; i < N1; ++i )
   {
@@ -127,7 +143,7 @@ array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
     {
       for( localIndex k = 0; k < N3; ++k )
       {
-        output[k][i][j] = input[i][j][k];
+        output(k, i, j) = input(i, j, k);
       }
     }
   }

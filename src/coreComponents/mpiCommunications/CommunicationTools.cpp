@@ -119,7 +119,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // is the lowest global index of the composition object that make up this object. The value of the map is a pair, with
   // the array being the remaining composition object global indices, and the second being the global index of the object
   // itself.
-  map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > > indexByFirstCompositionIndex;
+  map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, localIndex> > > indexByFirstCompositionIndex;
 
   localIndex bufferSize = 0;
   for( std::size_t a = 0 ; a < objectToCompositionObject.size() ; ++a )
@@ -133,10 +133,10 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       const globalIndex firstCompositionIndex = nodeList[0];
 
       // create a temporary to hold the pair
-      std::pair<globalIndex_array, globalIndex> tempComp;
+      std::pair<std::vector<globalIndex>, globalIndex> tempComp;
 
       // fill the array with the remaining composition object global indices
-      tempComp.first.insert(0, &nodeList[1], nodeList.size() - 1 );
+      tempComp.first.insert(tempComp.first.begin(), nodeList.begin() + 1, nodeList.end() );
 
       // set the second value of the pair to the localIndex of the object.
       tempComp.second = a;
@@ -236,8 +236,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // object to receive the neighbor data
   // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
   // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
-  array1d<map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > > >
-  neighborCompositionObjects( neighbors.size() );
+    std::vector<map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > > >
+    neighborCompositionObjects( neighbors.size() );
 
 
     for( int count=0 ; count<neighbors.size() ; ++count )
@@ -266,14 +266,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
         const globalIndex firstCompositionIndex = *( recBuffer++ );
 
         // the remaining composition object indices.
-        globalIndex_array temp;
+        std::vector<globalIndex> temp;
         for( localIndex b = 1 ; b < dataSize ; ++b )
         {
           temp.push_back( *( recBuffer++ ) );
         }
 
         // fill neighborCompositionObjects
-        std::pair<globalIndex_array, globalIndex>
+        std::pair<std::vector<globalIndex>, globalIndex>
         tempComp( std::make_pair( std::move(temp), std::move(neighborGlobalIndex) ) );
 //        tempComp( std::make_pair( temp, neighborGlobalIndex ) );
 
@@ -290,9 +290,9 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 
     // Set iterators to the beginning of each indexByFirstCompositionIndex,
     // and neighborCompositionObjects[neighborNum].
-    map<globalIndex, array1d<std::pair<globalIndex_array, localIndex> > >::const_iterator
+    map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, localIndex> > >::const_iterator
     iter_local = indexByFirstCompositionIndex.begin();
-    map<globalIndex, array1d<std::pair<globalIndex_array, globalIndex> > >::const_iterator
+    map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > >::const_iterator
     iter_neighbor = neighborCompositionObjects[neighborIndex].begin();
 
     // now we continue the while loop as long as both of our iterators are in range.
@@ -303,12 +303,12 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       if( iter_local->first == iter_neighbor->first )
       {
         // first we loop over all local composition arrays (objects with the matched key)
-        for( array1d<std::pair<globalIndex_array, localIndex> >::const_iterator
+        for( std::vector<std::pair<std::vector<globalIndex>, localIndex> >::const_iterator
             iter_local2 = iter_local->second.begin() ;
             iter_local2 != iter_local->second.end() ; ++iter_local2 )
         {
           // and loop over all of the neighbor composition arrays (objects with the matched key)
-          for( array1d<std::pair<globalIndex_array, globalIndex> >::const_iterator
+          for( std::vector<std::pair<std::vector<globalIndex>, globalIndex> >::const_iterator
               iter_neighbor2 = iter_neighbor->second.begin() ;
               iter_neighbor2 != iter_neighbor->second.end() ;
               ++iter_neighbor2 )
@@ -580,7 +580,6 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
       subRegion->FixUpDownMaps(false);
     }
   }
-
 
   CommunicationTools::releaseCommID( commID );
 }
