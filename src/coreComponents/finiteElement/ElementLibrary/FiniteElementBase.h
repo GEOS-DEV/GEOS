@@ -110,7 +110,9 @@ public:
       return ElementType::INVALID;
   }
 
-  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) = 0;
+  virtual void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) = 0;
+
 
 
 //  virtual void zero_energy_mode_control( const array1d<R1Tensor>& dNdx,

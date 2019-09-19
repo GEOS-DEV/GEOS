@@ -83,8 +83,8 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
-  template < typename FIELD_OP, typename POLICY, typename T, int N >
-  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+  template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+  void ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
                               Group * dataGroup ) const;
@@ -357,8 +357,8 @@ private:
 };
 
 
-template < typename FIELD_OP, typename POLICY, typename T, int N >
-void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
+template < typename FIELD_OP, typename POLICY, typename T, int N, int UNIT_STRIDE_DIM >
+void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, UNIT_STRIDE_DIM, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     Group * dataGroup ) const

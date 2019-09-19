@@ -1766,8 +1766,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     array1d<integer> shapetype(numElementShapes);
     array1d<integer> shapesize(numElementShapes);
 
-    array1d<FixedOneToManyRelation> elementToNodeMap;
-    elementToNodeMap.resize( numElementShapes );
+    std::vector<FixedOneToManyRelation> elementToNodeMap( numElementShapes );
 
     int count = 0;
     elementManager->forElementSubRegions( [&]( auto const * const elementSubRegion )

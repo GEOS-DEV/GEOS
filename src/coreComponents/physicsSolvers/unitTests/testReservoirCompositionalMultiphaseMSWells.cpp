@@ -315,7 +315,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
   {
     
     // get the degrees of freedom, ghosting info and next well elem index
-    array1d<globalIndex const> const & wellElemDofNumber =
+    arrayView1d<globalIndex const> const & wellElemDofNumber =
       subRegion->getReference<array1d<globalIndex>>( wellDofKey );
 
     arrayView1d<integer const> const & wellElemGhostRank =

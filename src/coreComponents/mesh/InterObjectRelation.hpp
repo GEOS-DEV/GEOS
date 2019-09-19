@@ -34,6 +34,11 @@ public:
 
   using base_type = BASETYPE;
 
+  template< typename ...ARGS >
+  InterObjectRelation( ARGS && ...args ) :
+    BASETYPE( std::forward< ARGS >( args )... )
+  {}
+
   /// equals operator that sets *this to a single value of any type
   template<typename rTYPE> InterObjectRelation& operator=( const rTYPE& rhs )
   {
