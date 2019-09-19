@@ -175,9 +175,9 @@ public:
   ///@}
 
 #if !defined(GEOSX_USE_MPI)
-  static std::map< int, void const * > & getTagToPointersMap()
+  static std::map< int, std::pair< int , void * > > & getTagToPointersMap()
   {
-    static std::map< int, void const* > tagToPointers;
+    static std::map< int, std::pair< int , void * > > tagToPointers;
     return tagToPointers;
   }
 #endif
@@ -577,20 +577,27 @@ int MpiWrapper::iRecv( T * const buf,
 #ifdef GEOSX_USE_MPI
   return MPI_Irecv( buf, count, getMpiType< T >(), source, tag, comm, request );
 #else
-  auto & pointerMap = getTagToPointersMap();
-  std::map<int,void const *>::iterator iPointer = pointerMap.find( tag );
-  GEOS_ERROR_IF( iPointer == pointerMap.end(),
-                 "Tag does not have a pointer assigned to it. "
-                 "There was no call to iSend() with the tag specified in this call to iRecv()." );
-  memcpy( buf, iPointer->second, count*sizeof(T) );
-  pointerMap.erase( iPointer );
+  std::map<int,std::pair< int , void * > > & pointerMap = getTagToPointersMap();
+  std::map<int,std::pair< int , void * > >::iterator iPointer = pointerMap.find( tag );
+
+  if( iPointer==pointerMap.end() )
+  {
+    pointerMap.insert( {tag,{1,buf}} );
+  }
+  else
+  {
+    GEOS_ERROR_IF( iPointer->second.first != 0,
+                   "Tag does is assigned, but pointer was not set by iSend." );
+    memcpy( buf, iPointer->second.second, count*sizeof(T) );
+    pointerMap.erase( iPointer );
+  }
   return 0;
 #endif
 }
 
 template< typename T >
 int MpiWrapper::iSend( T const * const buf,
-                       int MPI_PARAM(count),
+                       int count,
                        int MPI_PARAM(dest),
                        int tag,
                        MPI_Comm MPI_PARAM(comm),
@@ -599,11 +606,20 @@ int MpiWrapper::iSend( T const * const buf,
 #ifdef GEOSX_USE_MPI
   return MPI_Isend( buf, count, getMpiType< T >(), dest, tag, comm, request );
 #else
-  auto & pointerMap = getTagToPointersMap();
-  GEOS_ERROR_IF( pointerMap.count(tag)==0,
-                 "Tag already has a pointer assigned to it. "
-                 "You may be trying to call iSend() twice with the same tag" );
-  pointerMap.insert( {tag,buf} );
+  std::map<int,std::pair< int , void * > > & pointerMap = getTagToPointersMap();
+  std::map<int,std::pair< int , void * > >::iterator iPointer = pointerMap.find( tag );
+
+  if( iPointer==pointerMap.end() )
+  {
+    pointerMap.insert( {tag,{0,const_cast<T *>(buf)}} );
+  }
+  else
+  {
+    GEOS_ERROR_IF( iPointer->second.first != 1,
+                   "Tag does is assigned, but pointer was not set by iRecv." );
+    memcpy( iPointer->second.second, buf, count*sizeof(T) );
+    pointerMap.erase( iPointer );
+  }
   return 0;
 #endif
 }
