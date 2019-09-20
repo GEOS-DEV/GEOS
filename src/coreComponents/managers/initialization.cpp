@@ -13,12 +13,14 @@
  */
 
 #include "initialization.hpp"
+
 #include "common/DataTypes.hpp"
 #include "SetFPE.hpp"
 #include "SetSignalHandling.hpp"
 #include "stackTrace.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 #ifdef GEOSX_USE_MKL
@@ -48,8 +50,8 @@ void setupOpenMP()
 
 void setupMPI( int argc, char * argv[] )
 {
+  MpiWrapper::Init( &argc, &argv );
 #ifdef GEOSX_USE_MPI
-  MPI_Init( &argc, &argv );
   MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
 #endif
 }
@@ -67,7 +69,7 @@ void setupCXXUtils()
 #ifdef GEOSX_USE_MPI
   logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
-  logger::InitializeLogger() :
+  logger::InitializeLogger();
 #endif
 
   cxx_utilities::setSignalHandling( cxx_utilities::handler1 );

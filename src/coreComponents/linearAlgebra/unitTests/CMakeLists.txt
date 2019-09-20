@@ -35,8 +35,12 @@ foreach(test ${LAI_tests})
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
 
+if ( ENABLE_MPI )
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name} -x ${nranks}
                 NUM_MPI_TASKS ${nranks} )
-
+else()
+  blt_add_test( NAME ${test_name}
+                COMMAND ${test_name} )
+endif()
 endforeach()
