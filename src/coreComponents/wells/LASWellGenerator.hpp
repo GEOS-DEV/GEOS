@@ -54,7 +54,7 @@ class LASWellGenerator : public WellGeneratorBase
   static string CatalogName() { return "LASWell"; }
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition& domain ) override {}
+  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) ) override {}
 
   virtual Group * CreateChild( string const & childKey, 
                                string const & childName ) override;
@@ -67,14 +67,14 @@ class LASWellGenerator : public WellGeneratorBase
   virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
   /// not implemented 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
-                                             const int index[],
-                                             const int& iEle,
-                                             int nodeIDInBox[],
-                                             const int size) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
+                                             int const * GEOSX_UNUSED_ARG( index ),
+                                             int const & GEOSX_UNUSED_ARG( iEle ),
+                                             int * GEOSX_UNUSED_ARG( nodeIDInBox ),
+                                             int const GEOSX_UNUSED_ARG( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
 
   protected:
   void PostProcessInput() override final;

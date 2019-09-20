@@ -46,12 +46,12 @@ void LASWellGenerator::PostProcessInput()
 {
 }
 
-Group * LASWellGenerator::CreateChild( string const & childKey, string const & childName )
+Group * LASWellGenerator::CreateChild( string const & GEOSX_UNUSED_ARG ( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
 
-void LASWellGenerator::GenerateMesh( DomainPartition * const domain )
+void LASWellGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_ARG ( domain ) )
 {
   LASFile lasFile;
   lasFile.Load(  m_fileName );
@@ -100,9 +100,11 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
     wellSectionIndex = m_logIndexToTakeForGeometry;
   }
 
+  /*
   real64 topDepth = topDepths[wellSectionIndex]->GetDataAsReal64();
   real64 topX = Xs[wellSectionIndex]->GetDataAsReal64();
   real64 topY = Ys[wellSectionIndex]->GetDataAsReal64();
+  */
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, LASWellGenerator, std::string const &, Group * const )
