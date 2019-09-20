@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -42,7 +38,6 @@ class CellBlock : public ElementSubRegionBase
 public:
 
   using NodeMapType=FixedOneToManyRelation;
-  using EdgeMapType=FixedOneToManyRelation;
   using FaceMapType=FixedOneToManyRelation;
 
   /**
@@ -89,6 +84,12 @@ public:
 
   virtual void SetElementType( string const & elementType ) override;
 
+  localIndex GetNumFaceNodes( localIndex const elementIndex,
+                              localIndex const localFaceIndex) const;
+
+  localIndex GetFaceNodes( localIndex const elementIndex,
+                           localIndex const localFaceIndex,
+                           localIndex * const nodeIndicies) const;
 
   /**
    * @brief function to return the localIndices of the nodes in a face of the element
@@ -99,8 +100,6 @@ public:
   void GetFaceNodes( const localIndex elementIndex,
                      const localIndex localFaceIndex,
                      localIndex_array& nodeIndicies) const;
-
-  localIndex GetMaxNumFaceNodes() const;
 
   /**
    * @brief function to return element center. this should be depricated.
@@ -211,16 +210,6 @@ public:
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation[k][a]; }
 
   /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation       & edgeList()       { return m_toEdgesRelation; }
-
-  /**
-   * @return the element to edge map
-   */
-  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
-
-  /**
    * @return the element to face map
    */
   FixedOneToManyRelation       & faceList()       { return m_toFacesRelation; }
@@ -257,9 +246,6 @@ protected:
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
-
-  /// The elements to edges relation
-  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;

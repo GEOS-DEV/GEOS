@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -46,10 +42,10 @@ CellBlockManager::~CellBlockManager()
 
 void CellBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames,
-                               string_array const & elementTypes )
+                               string_array const & GEOSX_UNUSED_ARG( elementTypes ) )
 {
   localIndex const numRegions = integer_conversion<localIndex>(regionNames.size());
-//  ManagedGroup * elementRegions = this->GetGroup(keys::cellBlocks);
+//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0 ; reg<numRegions ; ++reg )
   {
     CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
@@ -66,7 +62,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-Group * CellBlockManager::CreateChild( string const & childKey, string const & childName )
+Group * CellBlockManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }

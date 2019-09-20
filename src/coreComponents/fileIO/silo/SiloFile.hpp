@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -273,14 +269,14 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteManagedGroupSilo( dataRepository::Group const * group,
-                              string const & siloDirName,
-                              string const & meshname,
-                              int const centering,
-                              int const cycleNum,
-                              real64 const problemTime,
-                              bool const isRestart,
-                              const localIndex_array& mask );
+  void WriteGroupSilo( dataRepository::Group const * group,
+                       string const & siloDirName,
+                       string const & meshname,
+                       int const centering,
+                       int const cycleNum,
+                       real64 const problemTime,
+                       bool const isRestart,
+                       const localIndex_array& mask );
 
 
 
@@ -640,9 +636,9 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
                                         int const centering,
                                         int const cycleNum,
                                         real64 const problemTime,
-                                        bool const isRestart,
+                                        bool const GEOSX_UNUSED_ARG( isRestart ),
                                         string const & multiRoot,
-                                        const localIndex_array& mask )
+                                        const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
 {
 
   // iterate over all entries in the member map
@@ -934,7 +930,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                                        int const cycleNumber,
                                        real64 const problemTime,
                                        string const & multiRoot,
-                                       string_array const & materialNames )
+                                       string_array const & GEOSX_UNUSED_ARG( materialNames ) )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
   int const meshType = GetMeshType( meshName );

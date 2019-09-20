@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -136,7 +132,7 @@ InternalMeshGenerator::~InternalMeshGenerator()
 /**
  * @param domain
  */
-void InternalMeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void InternalMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
 {
   //  lvector numElements;
   //
@@ -299,7 +295,7 @@ void InternalMeshGenerator::PostProcessInput()
 
 
 
-Group * InternalMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
@@ -314,7 +310,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   GEOSX_MARK_FUNCTION;
 
   // This cannot find groupkeys:
-  // ManagedGroup * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
+  // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
@@ -528,10 +524,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     numNodes *= numNodesInDir[i];
   }
 
-  GEOSX_MARK_BEGIN("nodeMangager->resize()");
   nodeManager->resize( numNodes );
   r1_array& X = nodeManager->getReference<r1_array>( keys::referencePositionString );
-  GEOSX_MARK_END("nodeMangager->resize()");
 
   {
     localIndex localNodeIndex = 0;
@@ -710,8 +704,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                   //            0                   1             |/____ x
 
                 }
-                // fix local connectivity for single theta (y) partition (radial
-                // meshes only)
+                // fix local connectivity for single theta (y) partition (radial meshes only)
                 if( isRadialWithOneThetaPartition )
                 {
                   if( j == numElemsInDirForRegion[1] - 1 && jblock == m_nElems[1].size() - 1 )
@@ -737,7 +730,6 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                   for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
                   {
-//                  GEOS_ERROR("not implemented");
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
                   ++localElemIndex;
@@ -1212,7 +1204,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string& elem
   }
 }
 
-void InternalMeshGenerator::RemapMesh( dataRepository::Group * const domain )
+void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
 {
   //  // Node mapping
   //  if (!m_meshDx.empty())

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /** @file */
@@ -30,8 +26,8 @@
 
 #include "MappedVector.hpp"
 
-#include "fileIO/xmlWrapper.hpp"
-#include "dataRepository/InputFlags.hpp"
+#include "xmlWrapper.hpp"
+#include "InputFlags.hpp"
 #include "Wrapper.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
@@ -95,7 +91,7 @@ public:
 
   /**
    * @brief move constructor
-   * @param[in] source source ManagedGroup
+   * @param[in] source source Group
    */
   Group( Group && source );
 
@@ -131,7 +127,7 @@ public:
   }
 
   /**
-   * @brief Check a type_info against the type_info of this ManagedGroup
+   * @brief Check a type_info against the type_info of this Group
    * @param typeToCheck value to check against
    * @return true of types are the same, false if not
    */
@@ -148,8 +144,8 @@ public:
    * @param newObject A unique_ptr to the object that is being registered.
    * @return pointer to the subgroup
    *
-   * This registration function takes an ManagedGroup or class derived from
-   * ManagedGroup and registers it as a subgroup of this ManagedGroup. The
+   * This registration function takes an Group or class derived from
+   * Group and registers it as a subgroup of this Group. The
    * data repository takes ownership of the object that is passed in through
    * a unique_ptr.
    */
@@ -166,9 +162,9 @@ public:
    *                      take ownership of the group.
    * @return pointer to the subgroup
    *
-   * This registration function creates and registers a ManagedGroup or class
-   * derived from ManagedGroup and registers it as a subgroup of this
-   * ManagedGroup. The data repository takes ownership of the new object if
+   * This registration function creates and registers a Group or class
+   * derived from Group and registers it as a subgroup of this
+   * Group. The data repository takes ownership of the new object if
    * \p takeOwnership is true.
    */
   template< typename T = Group >
@@ -182,9 +178,9 @@ public:
    * @param name The repository name of the group
    * @return     pointer to the subgroup
    *
-   * This registration function creates and registers a ManagedGroup or class
-   * derived from ManagedGroup and registers it as a subgroup of this
-   * ManagedGroup. The data repository takes ownership of the new object.
+   * This registration function creates and registers a Group or class
+   * derived from Group and registers it as a subgroup of this
+   * Group. The data repository takes ownership of the new object.
    */
   template< typename T = Group >
   T * RegisterGroup( std::string const & name )
@@ -199,9 +195,9 @@ public:
    *                 the new group.
    * @return         pointer to the subgroup
    *
-   * This registration function creates and registers a ManagedGroup or class
-   * derived from ManagedGroup and registers it as a subgroup of this
-   * ManagedGroup. The data repository takes ownership of the new object.
+   * This registration function creates and registers a Group or class
+   * derived from Group and registers it as a subgroup of this
+   * Group. The data repository takes ownership of the new object.
    */
   template< typename T = Group >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
@@ -220,9 +216,9 @@ public:
    * @param catalogName The catalog name of the type
    * @return            A pointer to the subgroup
    *
-   * This registration function creates and registers a ManagedGroup or class
-   * derived from ManagedGroup and registers it as a subgroup of this
-   * ManagedGroup. The \p TBASE type provide the object catalog that is used
+   * This registration function creates and registers a Group or class
+   * derived from Group and registers it as a subgroup of this
+   * Group. The \p TBASE type provide the object catalog that is used
    * to create the new group. The data repository takes ownership of the new
    * object.
    *
@@ -235,7 +231,7 @@ public:
   }
 
   /**
-   * @brief       Downcast a ManagedGroup *
+   * @brief       Downcast a Group *
    * @tparam T    Pointer to the type to downcast into
    * @param group A pointer the group to be casted
    * @return a    Pointer to \p T that refers to the downcasted group
@@ -251,7 +247,7 @@ public:
   }
 
   /**
-   * @brief       Downcast a ManagedGroup const *
+   * @brief       Downcast a Group const *
    * @tparam T    Pointer to the type to downcast into
    * @param group A pointer the group to be casted
    * @return a    Pointer to \p T that refers to the downcasted group
@@ -267,7 +263,7 @@ public:
   }
 
   /**
-   * @brief       Downcast this ManagedGroup
+   * @brief       Downcast this Group
    * @tparam T    Pointer to the type to downcast into
    * @return a    Pointer to \p T that refers to the this
    */
@@ -282,7 +278,7 @@ public:
   }
 
   /**
-   * @brief       Downcast this ManagedGroup
+   * @brief       Downcast this Group
    * @tparam T    Pointer to the type to downcast into
    * @return a    Pointer to \p T that refers to the this
    */
@@ -298,7 +294,7 @@ public:
 
 
   /**
-   * @brief Get a ManagedGroup from the repository using direct index
+   * @brief Get a Group from the repository using direct index
    * @param index integral index to use for as a lookup
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
@@ -310,7 +306,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using direct index
+   * @brief Get a Group from the repository using direct index
    * @param index integral index to use for as a lookup
    * @return A pointer to const \p T that refers to the group retrieved from the
    *         repository.
@@ -322,7 +318,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using string lookup
+   * @brief Get a Group from the repository using string lookup
    * @param name Name of the group to retrieve
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
@@ -334,7 +330,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using string lookup
+   * @brief Get a Group from the repository using string lookup
    * @param name Name of the group to retrieve
    * @return A pointer to const \p T that refers to the group retrieved from the
    *         repository.
@@ -346,7 +342,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @brief Get a Group from the repository using KeyIndex lookup
    * @param key the KeyIndex to use for the lookup
    * @return A pointer to \p T that refers to the group retrieved from the
    *         repository.
@@ -358,7 +354,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @brief Get a Group from the repository using KeyIndex lookup
    * @param key the KeyIndex to use for the lookup
    * @return A pointer to const \p T that refers to the group retrieved from
    *         the repository.
@@ -370,7 +366,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @brief Get a Group from the repository using KeyIndex lookup
    * @param key the KeyIndex to use for the lookup. Note that
    *            const-correctness may be broken if the key is incorrect.
    * @return A pointer to \p T that refers to the group retrieved from the
@@ -383,7 +379,7 @@ public:
   }
 
   /**
-   * @brief Get a ManagedGroup from the repository using KeyIndex lookup
+   * @brief Get a Group from the repository using KeyIndex lookup
    * @param key the KeyIndex to use for the lookup. Note that
    *            const-correctness may be broken if the key is incorrect.
    * @return A pointer to const \p T that refers to the group retrieved from
@@ -481,8 +477,8 @@ public:
   }
 
   /**
-   * @brief return the number of sub groups in this ManagedGroup
-   * @return number of sub groups in this ManagedGroup
+   * @brief return the number of sub groups in this Group
+   * @return number of sub groups in this Group
    */
   localIndex numSubGroups() const { return m_subGroups.size(); }
 
@@ -508,11 +504,11 @@ public:
 
   /** \cond SKIPME */
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const group, LAMBDA && lambda )
+  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
   { return false; }
 
   template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const group, LAMBDA && lambda )
+  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_ARG( group ), LAMBDA && GEOSX_UNUSED_ARG( lambda ) )
   { return false; }
   /** \endcond */
 
@@ -707,7 +703,7 @@ public:
                                   bool takeOwnership );
 
   /**
-   * @brief Register a Wrapper into this ManagedGroup
+   * @brief Register a Wrapper into this Group
    * @param[in] name the key name to use for this new wrapper
    * @param[in] wrapper a pointer to the new wrapper
    * @return a WrapperBase pointer that holds the address of the new wrapper
@@ -759,13 +755,13 @@ public:
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent,
-                                    integer documentationType ) {}
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaRoot ),
+                                    xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
+                                    integer GEOSX_UNUSED_ARG( documentationType ) ) {}
 
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) {}
+  virtual void RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) ) {}
 
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;
@@ -1024,15 +1020,15 @@ protected:
    */
   virtual void PostProcessInput() {}
 
-  virtual void InitializePreSubGroups( Group * const group ) {}
+  virtual void InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
 
-  virtual void InitializePostSubGroups( Group * const group ) {}
+  virtual void InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group ) {}
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
 
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group ) {}
+  virtual void InitializePostInitialConditions_PostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
 
-  virtual void postRestartInitialization( Group * const domain ) {}
+  virtual void postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain ) ) {}
 
 private:
   /**
@@ -1167,6 +1163,6 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 } /* end namespace geosx */
 
 
-//typedef geosx::dataRepository::ManagedGroup ObjectDataStructureBaseT;
+//typedef geosx::dataRepository::Group ObjectDataStructureBaseT;
 
 #endif /* MANAGEDGROUP_H_ */

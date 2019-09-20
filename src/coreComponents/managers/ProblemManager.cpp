@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 
@@ -178,7 +174,7 @@ ProblemManager::~ProblemManager()
 {}
 
 
-Group * ProblemManager::CreateChild( string const & childKey, string const & childName )
+Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 { return nullptr; }
 
 
@@ -797,13 +793,8 @@ void ProblemManager::ApplyNumericalMethods()
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
   DomainPartition * domain  = getDomainPartition();
-
-  Group const * const cellBlockManager = domain->GetGroup(keys::cellManager);
   ConstitutiveManager const * constitutiveManager = domain->GetGroup<ConstitutiveManager>(keys::ConstitutiveManager);
-
-
   Group * const meshBodies = domain->getMeshBodies();
-
 
   map<string,localIndex> regionQuadrature;
   for( localIndex solverIndex=0 ; solverIndex<m_physicsSolverManager->numSubGroups() ; ++solverIndex )
@@ -856,9 +847,7 @@ void ProblemManager::ApplyNumericalMethods()
     for( localIndex b=0 ; b<meshBody->numSubGroups() ; ++b )
     {
       MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(b);
-      NodeManager * const nodeManager = meshLevel->getNodeManager();
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
-      arrayView1d<R1Tensor> const & X = nodeManager->referencePosition();
 
       for( map<string,localIndex>::iterator iter=regionQuadrature.begin() ; iter!=regionQuadrature.end() ; ++iter )
       {
@@ -883,7 +872,7 @@ void ProblemManager::ApplyNumericalMethods()
 }
 
 
-void ProblemManager::InitializePostSubGroups( Group * const group )
+void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
 {
 
 //  ObjectManagerBase::InitializePostSubGroups(nullptr);
@@ -894,14 +883,12 @@ void ProblemManager::InitializePostSubGroups( Group * const group )
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * edgeManager = meshLevel->getEdgeManager();
 
   domain->SetupCommunications();
   faceManager->SetIsExternal();
   edgeManager->SetIsExternal( faceManager );
-
 }
 
 void ProblemManager::RunSimulation()
@@ -922,7 +909,6 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 
 void ProblemManager::ApplyInitialConditions()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain = GetGroup<DomainPartition>(keys::domain);
 
   FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();

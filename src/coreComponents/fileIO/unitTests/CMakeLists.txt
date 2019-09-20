@@ -3,7 +3,6 @@
 #
 
 set(testSources
-    testXmlWrapper.cpp
     testLASIO.cpp
    )
 
