@@ -17,6 +17,7 @@
  */
 
 #include "OutputBase.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 
 namespace geosx
@@ -65,8 +66,7 @@ void OutputBase::SetupDirectoryStructure()
 {
   string slaveDirectory = m_slaveDirectory;
 
-  int rank;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX);
   if (rank  == 0)
   {
     if (!slaveDirectory.empty())

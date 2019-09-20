@@ -181,7 +181,11 @@ if( ENABLE_CALIPER )
             NO_SYSTEM_ENVIRONMENT_PATH
             NO_CMAKE_SYSTEM_PATH)
 
-    set( caliper_lib_list caliper-mpi caliper )
+    if( ENABLE_MPI )
+      set( caliper_lib_list caliper-mpi caliper )
+    else()
+      set( caliper_lib_list caliper )
+    endif()
 
     message(STATUS "looking for libs in ${CALIPER_DIR}")
     blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
@@ -548,9 +552,14 @@ if( ENABLE_HYPRE )
     if (NOT HYPRE_FOUND)
         message(FATAL_ERROR "HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
     endif()
+    
+    set( HYPRE_DEPENDS "blas;lapack" )
+    if( ENABLE_SUPERLU_DIST )
+        list( APPEND HYPRE_DEPENDS "superlu_dist" )
+    endif()
 
     blt_register_library( NAME hypre
-                          DEPENDS_ON superlu_dist blas lapack
+                          DEPENDS_ON ${HYPRE_DEPENDS}
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
                           LIBRARIES ${HYPRE_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )

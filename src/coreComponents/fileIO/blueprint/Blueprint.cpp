@@ -29,7 +29,6 @@
 #include <cstring>
 #include <unordered_map>
 #include <utility>
-#include <mpi.h>
 #include <iostream>
 
 using namespace axom::sidre;

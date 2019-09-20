@@ -20,7 +20,8 @@
 #define SPATIALPARTITION_H_
 
 #include <map>
-#include "PartitionBase.hpp"
+
+#include "mpiCommunications/PartitionBase.hpp"
 
 
 constexpr int nsdof = 3;

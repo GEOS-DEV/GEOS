@@ -24,10 +24,9 @@
 #include <math.h>
 #include <algorithm>
 
+#include "mpiCommunications/PartitionBase.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "common/DataTypes.hpp"
-
-#include "MPI_Communications/PartitionBase.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
 
 #include "mesh/MeshBody.hpp"
 
@@ -385,12 +384,11 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       elemCenterCoordsLocal[k] = m_min[i] + ( m_max[i] - m_min[i] ) * ( k + 0.5 ) / m_numElemsTotal[i];
     }
-    MPI_Allreduce( elemCenterCoordsLocal.data(),
-                   elemCenterCoords[i].data(),
-                   m_numElemsTotal[i],
-                   MPI_DOUBLE,
-                   MPI_MAX,
-                   MPI_COMM_GEOSX );
+    MpiWrapper::allReduce( elemCenterCoordsLocal.data(),
+                           elemCenterCoords[i].data(),
+                           m_numElemsTotal[i],
+                           MPI_MAX,
+                           MPI_COMM_GEOSX );
   }
 
   // find starting/ending index
