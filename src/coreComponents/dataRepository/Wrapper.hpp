@@ -19,7 +19,6 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 
-#include <type_traits>
 
 #include "KeyNames.hpp"
 #include "IntegerConversion.hpp"
@@ -42,6 +41,7 @@
 #endif
 
 #include <cstdlib>
+#include <type_traits>
 
 
 namespace geosx
