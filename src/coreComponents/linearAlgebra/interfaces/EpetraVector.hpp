@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 class Epetra_FEVector;
 class Epetra_Map;

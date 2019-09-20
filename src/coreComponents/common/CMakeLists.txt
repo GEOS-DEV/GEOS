@@ -16,7 +16,11 @@ set(common_sources
     DataTypes.cpp
    )
 
-set( dependencyList cxx-utilities managers mpi pugixml trilinos )
+set( dependencyList cxx-utilities )
+
+if( ENABLE_MPI )
+  set( dependencyList ${dependencyList} mpi )
+endif()
 
 if( ATK_FOUND )
   set( dependencyList ${dependencyList} conduit )

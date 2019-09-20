@@ -27,6 +27,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
@@ -61,6 +62,8 @@ namespace geosx
 
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
+#else
+constexpr int MPI_COMM_GEOSX = 0;
 #endif
 
 // underlying types not for general use!!

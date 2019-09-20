@@ -150,8 +150,12 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
+#ifdef GEOSX_USE_MPI
     PCSetType( prec, PCHYPRE );
     PCHYPRESetType( prec, "pilut" );
+#else
+    GEOS_ERROR("Can't use HYPRE through PETSc in serial");
+#endif
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
@@ -172,9 +176,12 @@ void PetscSolver::solve_krylov( PetscSparseMatrix &mat,
     translate.insert( std::make_pair( "fcfJacobi", "FCF-Jacobi" ));
     translate.insert( std::make_pair( "l1scaledJacobi", "l1scaled-Jacobi" ));
 
+#ifdef GEOSX_USE_MPI
     PCSetType( prec, PCHYPRE );
     PCHYPRESetType( prec, "boomeramg" );
-  
+#else
+    GEOS_ERROR("Can't use HYPRE through PETSc in serial");
+#endif
     // PETSc needs char[]
     char max_levels[10], cycle_type[10], num_sweeps[10], smoother_type[30], coarse_type[30];
     sprintf( max_levels, "%d", m_parameters.amg.maxLevels );

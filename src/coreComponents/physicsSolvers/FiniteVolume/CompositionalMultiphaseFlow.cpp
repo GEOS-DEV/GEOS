@@ -18,6 +18,8 @@
 
 #include "CompositionalMultiphaseFlow.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "dataRepository/Group.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "common/DataTypes.hpp"
@@ -31,9 +33,6 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-
 #include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlowKernels.hpp"
 
 namespace geosx
@@ -1315,7 +1314,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
   // compute global residual norm
   realT globalResidualNorm;
-  MPI_Allreduce( &localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( &localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX );
 
   return sqrt( globalResidualNorm );
 }
