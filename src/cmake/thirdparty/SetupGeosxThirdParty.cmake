@@ -341,7 +341,7 @@ if (ENABLE_MKL)
                           LIBRARIES ${MKL_LIBRARIES}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
-    set( TRILINOS_DEPENDS mkl )
+#    set( TRILINOS_DEPENDS mkl )
     set( thirdPartyLibs ${thirdPartyLibs} mkl )
 
 ################################
@@ -355,10 +355,10 @@ elseif (ENABLE_ESSL)
                           LIBRARIES ${ESSL_LIBRARIES}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
-    set( TRILINOS_DEPENDS essl )
+#    set( TRILINOS_DEPENDS essl )
     set( thirdPartyLibs ${thirdPartyLibs} essl )
 else()
-    set( TRILINOS_DEPENDS blas lapack )
+#    set( TRILINOS_DEPENDS blas lapack )
     set( thirdPartyLibs ${thirdPartyLibs} blas lapack )
 endif()
 

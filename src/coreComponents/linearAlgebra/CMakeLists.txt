@@ -79,6 +79,12 @@ if ( ENABLE_CUDA )
     set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_MKL )
+    set( dependencyList ${dependencyList} mkl )
+elseif (ENABLE_ESSL)
+    set( dependencyList ${dependencyList} essl )
+endif()
+
 blt_add_library( NAME                  linearAlgebra
                  SOURCES               ${linearAlgebra_sources}
                  HEADERS               ${linearAlgebra_headers}
