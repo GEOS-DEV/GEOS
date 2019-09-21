@@ -25,7 +25,11 @@ set( linearAlgebra_sources
      utilities/BlockMatrixView.cpp
      DofManager.cpp )
 
-set( dependencyList common blas lapack raja mpi axom )
+set( dependencyList common blas lapack raja managers )
+
+if( ENABLE_MPI )
+    list( APPEND dependencyList mpi )
+endif()
 
 if( ENABLE_TRILINOS )
 

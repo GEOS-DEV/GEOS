@@ -16,9 +16,9 @@
  * @file WellElementRegion.cpp
  */
 
-#include "MPI_Communications/CommunicationTools.hpp"
-
 #include "WellElementRegion.hpp"
+
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "WellElementSubRegion.hpp"
 
 namespace geosx
@@ -67,7 +67,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   // 1) select the local perforations based on connectivity to the local reservoir elements
   perforationData->ConnectToMeshElements( mesh, wellGeometry );
 
-  globalIndex const matchedPerforations = CommunicationTools::Sum( perforationData->size() );
+  globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
   GEOS_ERROR_IF( matchedPerforations != numPerforationsGlobal, 
                  "Invalid mapping perforation-to-element in well " << this->getName() );
 
@@ -105,7 +105,7 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   localIndex const refElemIdLocal = subRegion->GetTopWellElementIndex();
 
   array1d<localIndex> allRankTopElem;
-  CommunicationTools::allGather( refElemIdLocal, allRankTopElem );
+  MpiWrapper::allGather( refElemIdLocal, allRankTopElem );
   int topRank = -1;
   for (int irank = 0; irank < allRankTopElem.size(); ++irank)
   {
