@@ -434,7 +434,7 @@ int MpiWrapper::Allgather( T_SEND const * const sendbuf,
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::Allgather() for serial run requires send and receive buffers are of the same type" );
-  GEOS_ASSERT( sendcount==recvcount );
+  GEOS_ERROR_IF( sendcount==recvcount, "sendcount is not equal to recvcount." );
   *recvbuf = *sendbuf;
   return 0;
 #endif
@@ -538,7 +538,7 @@ int MpiWrapper::gather( TS const * const sendbuf,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcount * sizeof(TR);
-  GEOS_ASSERT( sendBufferSize == recvBufferSize );
+  GEOS_ERROR_IF( sendBufferSize == recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
@@ -560,7 +560,7 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
                  "MpiWrapper::gather() for serial run requires send and receive buffers are of the same type" );
   std::size_t const sendBufferSize = sendcount * sizeof(TS);
   std::size_t const recvBufferSize = recvcounts[0] * sizeof(TR);
-  GEOS_ASSERT( sendBufferSize == recvBufferSize );
+  GEOS_ERROR_IF( sendBufferSize == recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );
   return 0;
 #endif
