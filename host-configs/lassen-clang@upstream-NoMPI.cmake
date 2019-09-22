@@ -1,5 +1,10 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../host-configs/lassen-clang@upstream.cmake)
 
+set(CONFIG_NAME "lassen-clang@upstream-NoMPI" CACHE PATH "" FORCE) 
+set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs/ CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
+
+
 set(ENABLE_MPI OFF CACHE BOOL "" FORCE)
 unset(MPI_ROOT CACHE )
 unset(MPI_C_COMPILER     CACHE )
