@@ -1,17 +1,27 @@
+<?xml version="1.0" ?>
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
+  <Solvers>
+    <SolidMechanicsLagrangianSSLE name="lagsolve" 
+                                  cflFactor="0.25"
+                                  discretization="FE1"
+                                  targetRegions="{Region2}"
+                                  solidMaterialName="shale"/>
+  </Solvers>
+
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
-                  nx="{10}"
-                  ny="{10}"
-                  nz="{10}"
+                  xCoords="{ 0, 100 }"
+                  yCoords="{ 0, 100 }"
+                  zCoords="{ 0, 100 }"
+                  nx="{100}"
+                  ny="{100}"
+                  nz="{100}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
 
-  <Events maxTime="1.0e-3">
+  <Events maxTime="1.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -26,7 +36,7 @@
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" /-->
 
-    <PeriodicEvent name="restarts"
+    <!-- PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"/>
@@ -34,7 +44,7 @@
     <SoloEvent 
       name="siloPlot"
       target="/Outputs/siloOutput"
-      />
+      /-->
 
                    
   </Events>
@@ -121,3 +131,5 @@
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
+</Problem>
+  
