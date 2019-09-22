@@ -345,7 +345,7 @@ if (ENABLE_MKL)
                           LIBRARIES ${MKL_LIBRARIES}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
-#    set( TRILINOS_DEPENDS mkl )
+    set( GEOSX_BLASLAPACK_DEPENDS mkl )
     set( thirdPartyLibs ${thirdPartyLibs} mkl )
 
 ################################
@@ -359,10 +359,10 @@ elseif (ENABLE_ESSL)
                           LIBRARIES ${ESSL_LIBRARIES}
                           TREAT_INCLUDES_AS_SYSTEM ON )
     
-#    set( TRILINOS_DEPENDS essl )
+    set( GEOSX_BLASLAPACK_DEPENDS essl )
     set( thirdPartyLibs ${thirdPartyLibs} essl )
 else()
-#    set( TRILINOS_DEPENDS blas lapack )
+    set( GEOSX_BLASLAPACK_DEPENDS blas lapack )
     set( thirdPartyLibs ${thirdPartyLibs} blas lapack )
 endif()
 
@@ -386,7 +386,7 @@ if( ENABLE_TRILINOS )
   message(STATUS "Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
   
   blt_register_library( NAME trilinos
-                        DEPENDS_ON ${TRILINOS_DEPENDS}
+                        DEPENDS_ON ${GEOSX_BLASLAPACK_DEPENDS}
                         INCLUDES ${Trilinos_INCLUDE_DIRS} 
                         LIBRARIES ${Trilinos_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
@@ -511,7 +511,7 @@ if( ENABLE_SUPERLU_DIST)
     endif()
 
     blt_register_library( NAME superlu_dist
-                          DEPENDS_ON lapack blas
+                          DEPENDS_ON ${GEOSX_BLASLAPACK_DEPENDS}
                           INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
                           LIBRARIES ${SUPERLU_DIST_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
@@ -553,13 +553,13 @@ if( ENABLE_HYPRE )
         message(FATAL_ERROR "HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
     endif()
     
-    set( HYPRE_DEPENDS "blas;lapack" )
+    set( HYPRE_DEPENDS ${GEOSX_BLASLAPACK_DEPENDS} )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS "superlu_dist" )
     endif()
 
     blt_register_library( NAME hypre
-                          DEPENDS_ON ${HYPRE_DEPENDS}
+                          DEPENDS_ON ${HYPRE_DEPENDS} 
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
                           LIBRARIES ${HYPRE_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
@@ -620,6 +620,7 @@ if( ENABLE_PETSC )
   
   
     blt_register_library( NAME petsc
+                          DEPENDS_ON ${GEOSX_BLASLAPACK_DEPENDS}
                           INCLUDES ${Petsc_INCLUDE_DIRS} 
                           LIBRARIES ${Petsc_LIBRARIES}
                           TREAT_INCLUDES_AS_SYSTEM ON )
