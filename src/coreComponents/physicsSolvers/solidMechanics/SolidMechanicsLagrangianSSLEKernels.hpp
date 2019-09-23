@@ -249,7 +249,7 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 64 >;
+    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
 #elif defined(GEOSX_USE_OPENMP)
     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
@@ -286,28 +286,49 @@ struct ExplicitKernel
                                                             X,
                                                             dNdX_data );
 
+//#define ULOCAL
+#ifdef ULOCAL
+        real64 uLocal[3][8];
+        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+        {
+          localIndex const nib = elemsToNodes(k, a);
+          for( int i=0 ; i<3 ; ++i )
+          {
+            uLocal[i][a] = u[nib][i];
+          }
+        }
+
+#define U(i,b) uLocal[i][b]
+#else
+#define U(i,b) u[nib][i]
+#endif
+
         #pragma unroll
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
           for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
           {
+#if !defined(ULOCAL)
             localIndex const nib = elemsToNodes(k, b);
+#endif
+//            real64 const unib[3] = { u[nib][0], u[nib][1], u[nib][2] };
             real64 const dNdXa0_dNdXb0 = DNDX(k,q,a,0)*DNDX(k,q,b,0);
             real64 const dNdXa1_dNdXb1 = DNDX(k,q,a,1)*DNDX(k,q,b,1);
             real64 const dNdXa2_dNdXb2 = DNDX(k,q,a,2)*DNDX(k,q,b,2);
-            f_local[a][0] -= ( u[nib][1]*( DNDX(k,q,a,1)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,1)*Lame ) +
-                               u[nib][2]*( DNDX(k,q,a,2)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,2)*Lame ) +
-                               u[nib][0]*( dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*G + dNdXa0_dNdXb0*(Lame2G))
+
+            f_local[a][0] -= ( U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,1)*Lame ) +
+                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,2)*Lame ) +
+                               U(0,b)*( dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*G + dNdXa0_dNdXb0*(Lame2G))
                              ) * detJ_k_q;
 
-            f_local[a][1] -= ( u[nib][0]*( DNDX(k,q,a,0)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,0)*Lame ) +
-                               u[nib][2]*( DNDX(k,q,a,2)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,2)*Lame ) +
-                               u[nib][1]*( dNdXa0_dNdXb0*G + dNdXa2_dNdXb2*G + dNdXa1_dNdXb1*(Lame2G))
+            f_local[a][1] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,0)*Lame ) +
+                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,2)*Lame ) +
+                               U(1,b)*( dNdXa0_dNdXb0*G + dNdXa2_dNdXb2*G + dNdXa1_dNdXb1*(Lame2G))
                              ) * detJ_k_q;
 
-            f_local[a][2] -= ( u[nib][0]*( DNDX(k,q,a,0)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,0)*Lame ) +
-                               u[nib][1]*( DNDX(k,q,a,1)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,1)*Lame ) +
-                               u[nib][2]*( dNdXa0_dNdXb0*G + dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*(Lame2G))
+            f_local[a][2] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,0)*Lame ) +
+                               U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,1)*Lame ) +
+                               U(2,b)*( dNdXa0_dNdXb0*G + dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*(Lame2G))
                              ) * detJ_k_q;
           }
         }

@@ -24,8 +24,8 @@ public:
   constexpr static real64 parentCoords( localIndex const i, localIndex const a )
   {
     constexpr  real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
-                                               { -1, -1,  1,  1, -1, -1,  1,  1 },
-                                               { -1, -1, -1, -1,  1,  1,  1,  1 } };
+                                        { -1, -1,  1,  1, -1, -1,  1,  1 },
+                                        { -1, -1, -1, -1,  1,  1,  1,  1 } };
     return pCoords[i][a];
   }
 
@@ -57,50 +57,32 @@ public:
     dNdXi[2] = 0.125 * ( 1 + xi0*pC_0_a ) * ( 1 + xi1*pC_1_a ) * pC_2_a ;
   }
 
-  template< int q, int a >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi0()
+  constexpr static real64 dNdXi0( localIndex const q, localIndex const a )
   {
-    constexpr real64 xi1 = quadratureFactor*parentCoords(1,q);
-    constexpr real64 xi2 = quadratureFactor*parentCoords(2,q);
-
-    real64 const pC_0_a = parentCoords(0,a);
-    real64 const pC_1_a = parentCoords(1,a);
-    real64 const pC_2_a = parentCoords(2,a);
-
-    return 0.125 * pC_0_a * ( 1 + xi1*pC_1_a ) * ( 1 + xi2*pC_2_a ) ;
+    return 0.125 * parentCoords(0,a) *
+                   ( 1 + quadratureFactor*parentCoords(1,q)*parentCoords(1,a)) *
+                   ( 1 + quadratureFactor*parentCoords(2,q)*parentCoords(2,a) ) ;
   }
 
-  template< int q, int a >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi1()
+  constexpr static real64 dNdXi1( localIndex const q, localIndex const a )
   {
-    constexpr real64 xi0 = quadratureFactor*parentCoords(0,q);
-    constexpr real64 xi2 = quadratureFactor*parentCoords(2,q);
-
-    real64 const pC_0_a = parentCoords(0,a);
-    real64 const pC_1_a = parentCoords(1,a);
-    real64 const pC_2_a = parentCoords(2,a);
-
-    return 0.125 * ( 1 + xi0*pC_0_a ) * pC_1_a * ( 1 + xi2*pC_2_a ) ;
+    return 0.125 * ( 1 + quadratureFactor*parentCoords(0,q)*parentCoords(0,a) ) *
+                   parentCoords(1,a) *
+                   ( 1 + quadratureFactor*parentCoords(2,q)*parentCoords(2,a) ) ;
   }
 
 
-  template< int q, int a >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi2()
+  constexpr static real64 dNdXi2( localIndex const q, localIndex const a )
   {
-    constexpr real64 xi0 = quadratureFactor*parentCoords(0,q);
-    constexpr real64 xi1 = quadratureFactor*parentCoords(1,q);
-
-    real64 const pC_0_a = parentCoords(0,a);
-    real64 const pC_1_a = parentCoords(1,a);
-    real64 const pC_2_a = parentCoords(2,a);
-
-    return 0.125 * ( 1 + xi0*pC_0_a ) * ( 1 + xi1*pC_1_a ) * pC_2_a ;
+    return 0.125 * ( 1 + quadratureFactor*parentCoords(0,q)*parentCoords(0,a) ) *
+                   ( 1 + quadratureFactor*parentCoords(1,q)*parentCoords(1,a) ) *
+                   parentCoords(2,a) ;
   }
 
 
@@ -118,77 +100,77 @@ public:
                                           real64 (&dNdX)[3][numNodes] )
   {
     real64 J[3][3] = {{0}};
-    constexpr static real64 dNdXi[8][8][3] = { { { dNdXi0<0,0>(), dNdXi1<0,0>(), dNdXi2<0,0>() },
-                                          { dNdXi0<0,1>(), dNdXi1<0,1>(), dNdXi2<0,1>() },
-                                          { dNdXi0<0,2>(), dNdXi1<0,2>(), dNdXi2<0,2>() },
-                                          { dNdXi0<0,3>(), dNdXi1<0,3>(), dNdXi2<0,3>() },
-                                          { dNdXi0<0,4>(), dNdXi1<0,4>(), dNdXi2<0,4>() },
-                                          { dNdXi0<0,5>(), dNdXi1<0,5>(), dNdXi2<0,5>() },
-                                          { dNdXi0<0,6>(), dNdXi1<0,6>(), dNdXi2<0,6>() },
-                                          { dNdXi0<0,7>(), dNdXi1<0,7>(), dNdXi2<0,7>() }
+    constexpr static real64 dNdXi[8][8][3] = { { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
+                                          { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
+                                          { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
+                                          { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
+                                          { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
+                                          { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
+                                          { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
+                                          { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) }
                                         },
-                                        { { dNdXi0<1,0>(), dNdXi1<1,0>(), dNdXi2<1,0>() },
-                                          { dNdXi0<1,1>(), dNdXi1<1,1>(), dNdXi2<1,1>() },
-                                          { dNdXi0<1,2>(), dNdXi1<1,2>(), dNdXi2<1,2>() },
-                                          { dNdXi0<1,3>(), dNdXi1<1,3>(), dNdXi2<1,3>() },
-                                          { dNdXi0<1,4>(), dNdXi1<1,4>(), dNdXi2<1,4>() },
-                                          { dNdXi0<1,5>(), dNdXi1<1,5>(), dNdXi2<1,5>() },
-                                          { dNdXi0<1,6>(), dNdXi1<1,6>(), dNdXi2<1,6>() },
-                                          { dNdXi0<1,7>(), dNdXi1<1,7>(), dNdXi2<1,7>() }
+                                        { { dNdXi0(1,0), dNdXi1(1,0), dNdXi2(1,0) },
+                                          { dNdXi0(1,1), dNdXi1(1,1), dNdXi2(1,1) },
+                                          { dNdXi0(1,2), dNdXi1(1,2), dNdXi2(1,2) },
+                                          { dNdXi0(1,3), dNdXi1(1,3), dNdXi2(1,3) },
+                                          { dNdXi0(1,4), dNdXi1(1,4), dNdXi2(1,4) },
+                                          { dNdXi0(1,5), dNdXi1(1,5), dNdXi2(1,5) },
+                                          { dNdXi0(1,6), dNdXi1(1,6), dNdXi2(1,6) },
+                                          { dNdXi0(1,7), dNdXi1(1,7), dNdXi2(1,7) }
                                         },
-                                        { { dNdXi0<2,0>(), dNdXi1<2,0>(), dNdXi2<2,0>() },
-                                          { dNdXi0<2,1>(), dNdXi1<2,1>(), dNdXi2<2,1>() },
-                                          { dNdXi0<2,2>(), dNdXi1<2,2>(), dNdXi2<2,2>() },
-                                          { dNdXi0<2,3>(), dNdXi1<2,3>(), dNdXi2<2,3>() },
-                                          { dNdXi0<2,4>(), dNdXi1<2,4>(), dNdXi2<2,4>() },
-                                          { dNdXi0<2,5>(), dNdXi1<2,5>(), dNdXi2<2,5>() },
-                                          { dNdXi0<2,6>(), dNdXi1<2,6>(), dNdXi2<2,6>() },
-                                          { dNdXi0<2,7>(), dNdXi1<2,7>(), dNdXi2<2,7>() }
+                                        { { dNdXi0(2,0), dNdXi1(2,0), dNdXi2(2,0) },
+                                          { dNdXi0(2,1), dNdXi1(2,1), dNdXi2(2,1) },
+                                          { dNdXi0(2,2), dNdXi1(2,2), dNdXi2(2,2) },
+                                          { dNdXi0(2,3), dNdXi1(2,3), dNdXi2(2,3) },
+                                          { dNdXi0(2,4), dNdXi1(2,4), dNdXi2(2,4) },
+                                          { dNdXi0(2,5), dNdXi1(2,5), dNdXi2(2,5) },
+                                          { dNdXi0(2,6), dNdXi1(2,6), dNdXi2(2,6) },
+                                          { dNdXi0(2,7), dNdXi1(2,7), dNdXi2(2,7) }
                                         },
-                                        { { dNdXi0<3,0>(), dNdXi1<3,0>(), dNdXi2<3,0>() },
-                                          { dNdXi0<3,1>(), dNdXi1<3,1>(), dNdXi2<3,1>() },
-                                          { dNdXi0<3,2>(), dNdXi1<3,2>(), dNdXi2<3,2>() },
-                                          { dNdXi0<3,3>(), dNdXi1<3,3>(), dNdXi2<3,3>() },
-                                          { dNdXi0<3,4>(), dNdXi1<3,4>(), dNdXi2<3,4>() },
-                                          { dNdXi0<3,5>(), dNdXi1<3,5>(), dNdXi2<3,5>() },
-                                          { dNdXi0<3,6>(), dNdXi1<3,6>(), dNdXi2<3,6>() },
-                                          { dNdXi0<3,7>(), dNdXi1<3,7>(), dNdXi2<3,7>() }
+                                        { { dNdXi0(3,0), dNdXi1(3,0), dNdXi2(3,0) },
+                                          { dNdXi0(3,1), dNdXi1(3,1), dNdXi2(3,1) },
+                                          { dNdXi0(3,2), dNdXi1(3,2), dNdXi2(3,2) },
+                                          { dNdXi0(3,3), dNdXi1(3,3), dNdXi2(3,3) },
+                                          { dNdXi0(3,4), dNdXi1(3,4), dNdXi2(3,4) },
+                                          { dNdXi0(3,5), dNdXi1(3,5), dNdXi2(3,5) },
+                                          { dNdXi0(3,6), dNdXi1(3,6), dNdXi2(3,6) },
+                                          { dNdXi0(3,7), dNdXi1(3,7), dNdXi2(3,7) }
                                         },
-                                        { { dNdXi0<4,0>(), dNdXi1<4,0>(), dNdXi2<4,0>() },
-                                          { dNdXi0<4,1>(), dNdXi1<4,1>(), dNdXi2<4,1>() },
-                                          { dNdXi0<4,2>(), dNdXi1<4,2>(), dNdXi2<4,2>() },
-                                          { dNdXi0<4,3>(), dNdXi1<4,3>(), dNdXi2<4,3>() },
-                                          { dNdXi0<4,4>(), dNdXi1<4,4>(), dNdXi2<4,4>() },
-                                          { dNdXi0<4,5>(), dNdXi1<4,5>(), dNdXi2<4,5>() },
-                                          { dNdXi0<4,6>(), dNdXi1<4,6>(), dNdXi2<4,6>() },
-                                          { dNdXi0<4,7>(), dNdXi1<4,7>(), dNdXi2<4,7>() }
+                                        { { dNdXi0(4,0), dNdXi1(4,0), dNdXi2(4,0) },
+                                          { dNdXi0(4,1), dNdXi1(4,1), dNdXi2(4,1) },
+                                          { dNdXi0(4,2), dNdXi1(4,2), dNdXi2(4,2) },
+                                          { dNdXi0(4,3), dNdXi1(4,3), dNdXi2(4,3) },
+                                          { dNdXi0(4,4), dNdXi1(4,4), dNdXi2(4,4) },
+                                          { dNdXi0(4,5), dNdXi1(4,5), dNdXi2(4,5) },
+                                          { dNdXi0(4,6), dNdXi1(4,6), dNdXi2(4,6) },
+                                          { dNdXi0(4,7), dNdXi1(4,7), dNdXi2(4,7) }
                                         },
-                                        { { dNdXi0<5,0>(), dNdXi1<5,0>(), dNdXi2<5,0>() },
-                                          { dNdXi0<5,1>(), dNdXi1<5,1>(), dNdXi2<5,1>() },
-                                          { dNdXi0<5,2>(), dNdXi1<5,2>(), dNdXi2<5,2>() },
-                                          { dNdXi0<5,3>(), dNdXi1<5,3>(), dNdXi2<5,3>() },
-                                          { dNdXi0<5,4>(), dNdXi1<5,4>(), dNdXi2<5,4>() },
-                                          { dNdXi0<5,5>(), dNdXi1<5,5>(), dNdXi2<5,5>() },
-                                          { dNdXi0<5,6>(), dNdXi1<5,6>(), dNdXi2<5,6>() },
-                                          { dNdXi0<5,7>(), dNdXi1<5,7>(), dNdXi2<5,7>() }
+                                        { { dNdXi0(5,0), dNdXi1(5,0), dNdXi2(5,0) },
+                                          { dNdXi0(5,1), dNdXi1(5,1), dNdXi2(5,1) },
+                                          { dNdXi0(5,2), dNdXi1(5,2), dNdXi2(5,2) },
+                                          { dNdXi0(5,3), dNdXi1(5,3), dNdXi2(5,3) },
+                                          { dNdXi0(5,4), dNdXi1(5,4), dNdXi2(5,4) },
+                                          { dNdXi0(5,5), dNdXi1(5,5), dNdXi2(5,5) },
+                                          { dNdXi0(5,6), dNdXi1(5,6), dNdXi2(5,6) },
+                                          { dNdXi0(5,7), dNdXi1(5,7), dNdXi2(5,7) }
                                         },
-                                        { { dNdXi0<6,0>(), dNdXi1<6,0>(), dNdXi2<6,0>() },
-                                          { dNdXi0<6,1>(), dNdXi1<6,1>(), dNdXi2<6,1>() },
-                                          { dNdXi0<6,2>(), dNdXi1<6,2>(), dNdXi2<6,2>() },
-                                          { dNdXi0<6,3>(), dNdXi1<6,3>(), dNdXi2<6,3>() },
-                                          { dNdXi0<6,4>(), dNdXi1<6,4>(), dNdXi2<6,4>() },
-                                          { dNdXi0<6,5>(), dNdXi1<6,5>(), dNdXi2<6,5>() },
-                                          { dNdXi0<6,6>(), dNdXi1<6,6>(), dNdXi2<6,6>() },
-                                          { dNdXi0<6,7>(), dNdXi1<6,7>(), dNdXi2<6,7>() }
+                                        { { dNdXi0(6,0), dNdXi1(6,0), dNdXi2(6,0) },
+                                          { dNdXi0(6,1), dNdXi1(6,1), dNdXi2(6,1) },
+                                          { dNdXi0(6,2), dNdXi1(6,2), dNdXi2(6,2) },
+                                          { dNdXi0(6,3), dNdXi1(6,3), dNdXi2(6,3) },
+                                          { dNdXi0(6,4), dNdXi1(6,4), dNdXi2(6,4) },
+                                          { dNdXi0(6,5), dNdXi1(6,5), dNdXi2(6,5) },
+                                          { dNdXi0(6,6), dNdXi1(6,6), dNdXi2(6,6) },
+                                          { dNdXi0(6,7), dNdXi1(6,7), dNdXi2(6,7) }
                                         },
-                                        { { dNdXi0<7,0>(), dNdXi1<7,0>(), dNdXi2<7,0>() },
-                                          { dNdXi0<7,1>(), dNdXi1<7,1>(), dNdXi2<7,1>() },
-                                          { dNdXi0<7,2>(), dNdXi1<7,2>(), dNdXi2<7,2>() },
-                                          { dNdXi0<7,3>(), dNdXi1<7,3>(), dNdXi2<7,3>() },
-                                          { dNdXi0<7,4>(), dNdXi1<7,4>(), dNdXi2<7,4>() },
-                                          { dNdXi0<7,5>(), dNdXi1<7,5>(), dNdXi2<7,5>() },
-                                          { dNdXi0<7,6>(), dNdXi1<7,6>(), dNdXi2<7,6>() },
-                                          { dNdXi0<7,7>(), dNdXi1<7,7>(), dNdXi2<7,7>() }
+                                        { { dNdXi0(7,0), dNdXi1(7,0), dNdXi2(7,0) },
+                                          { dNdXi0(7,1), dNdXi1(7,1), dNdXi2(7,1) },
+                                          { dNdXi0(7,2), dNdXi1(7,2), dNdXi2(7,2) },
+                                          { dNdXi0(7,3), dNdXi1(7,3), dNdXi2(7,3) },
+                                          { dNdXi0(7,4), dNdXi1(7,4), dNdXi2(7,4) },
+                                          { dNdXi0(7,5), dNdXi1(7,5), dNdXi2(7,5) },
+                                          { dNdXi0(7,6), dNdXi1(7,6), dNdXi2(7,6) },
+                                          { dNdXi0(7,7), dNdXi1(7,7), dNdXi2(7,7) }
                                         } };
 
 
