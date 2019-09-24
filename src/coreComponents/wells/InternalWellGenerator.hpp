@@ -25,6 +25,14 @@
 
 namespace geosx
 {
+namespace dataRepository
+{
+namespace keys
+{
+string const nodeCoords       = "polylineNodeCoords";
+string const segmentConn      = "polylineSegmentConn";
+}
+}
 
 
 /**
@@ -52,12 +60,6 @@ public:
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}
 
-  /**
-   * @brief main function of this class: processes the well input and creates the globla well topology
-   * @param domain the physical domain object
-   */  
-  virtual void GenerateMesh( DomainPartition * const domain ) override final;
-
   /// not implemented 
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
                                              int const * GEOSX_UNUSED_ARG( index ),
@@ -69,41 +71,11 @@ public:
   virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
 
 protected:
-
   void PostProcessInput() override final;
 
+
 private:
-
-  /**
-   * @brief Map each polyline node to the polyline segment(s) it is connected to
-   */
-  void ConstructPolylineNodeToSegmentMap();
-
-  /**
-   * @brief Find the head node of the well (i.e., top node of the polyline)
-   */
-  void FindPolylineHeadNodeIndex();
-
-  /**
-   * @brief Discretize the polyline by placing well elements
-   */  
-  void DiscretizePolyline();
-
-  /**
-   * @brief Map each perforation to a well element
-   */  
-  void ConnectPerforationsToWellElements();
- 
-  /**
-   * @brief Merge perforations on the elements with multiple perforations
-   */
-  void MergePerforations();
-
-  /**
-   * @brief At a given node, find the next segment going in the direction of the bottom of the well
-   */  
-  globalIndex GetNextSegmentIndex( globalIndex topSegId,
-                                   globalIndex currentNodeId ) const;
+  void GeneratePolyLine() override final;
 
 };
 }

@@ -462,6 +462,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="LASWell" type="LASWellType" />
 			<xsd:element name="MeshFile" type="MeshFileType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
@@ -505,6 +506,24 @@
 		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
 		<!--polylineSegmentConn => connectivity of the polyline segments-->
 		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
+		<!--wellControlsName => name of the set of constraints associated with this well-->
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<!--wellRegionName => name of the well element region-->
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LASWellType">
+		<!--crossSectionArea => cross section area of the well-->
+		<xsd:attribute name="crossSectionArea" type="real64" use="required" />
+		<!--fileName => Path to the las file-->
+		<xsd:attribute name="fileName" type="string" use="required" />
+		<!--geometryLogIndexInFile => Position of the log to take if there are several log sections defined in the LAS file -->
+		<xsd:attribute name="geometryLogIndexInFile" type="integer" default="-1" />
+		<!--meshName => name of the reservoir mesh associated with this well-->
+		<xsd:attribute name="meshName" type="string" use="required" />
+		<!--numElementsPerSegment => number of well elements per polyline segment-->
+		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
 		<!--wellControlsName => name of the set of constraints associated with this well-->
 		<xsd:attribute name="wellControlsName" type="string" use="required" />
 		<!--wellRegionName => name of the well element region-->

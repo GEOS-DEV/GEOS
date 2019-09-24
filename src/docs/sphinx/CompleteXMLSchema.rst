@@ -273,6 +273,13 @@ Element: InternalWell
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell.rst
 
 
+.. _XML_LASWell:
+
+Element: LASWell
+================
+.. include:: ../../coreComponents/fileIO/schema/docs/LASWell.rst
+
+
 .. _XML_LagrangeBasis1:
 
 Element: LagrangeBasis1
@@ -835,6 +842,13 @@ Datastructure: InternalMesh
 Datastructure: InternalWell
 ===========================
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell_other.rst
+
+
+.. _DATASTRUCTURE_LASWell:
+
+Datastructure: LASWell
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/LASWell_other.rst
 
 
 .. _DATASTRUCTURE_LagrangeBasis1:

@@ -303,7 +303,7 @@ class LASWellInformationSection : public LASInformationSection
       real64 step = GetLine("STEP").GetDataAsReal64();
 
       real64 length = stop - start;
-      return static_cast< localIndex > ( length / step ) + 1;
+      return std::round( length / step ) +1;
     }
 };
 
@@ -445,7 +445,7 @@ class LASASCIILogDataSection : public LASSection
   public:
     LASASCIILogDataSection( localIndex nbEntries, localIndex nbCurves ) :
       LASSection(),
-      m_logs(nbCurves, nbEntries),
+      m_logs(nbCurves, nbEntries ),
       m_nbCurves( nbCurves ),
       m_nbLogEntries( nbEntries ),
       m_count(0)
@@ -647,6 +647,7 @@ class LASFile
       }
       return 0; // should never be reached
     }
+
     /*!
      * @brief Tells wether or not the LAS file contains a log.
      * @param[in] logName the name the log
@@ -658,6 +659,26 @@ class LASFile
         if( (*itr)->GetName() == LASCurveInformationSection::GetNameStatic() )
         {
           if ( (*itr)->HasKeyword( logName ) )
+          {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /*!
+     * @brief Tells wether or not the LAS section contains a line
+     * @param[in] keyword the keyword of the line
+     */
+    template< typename T >
+    bool HasLine( string const & keyword ) const
+    {
+      for( auto itr = m_lasInformationSections.begin(); itr != m_lasInformationSections.end(); itr++)
+      {
+        if( (*itr)->GetName() == T::GetNameStatic() )
+        {
+          if( (*itr)->HasKeyword( keyword ) )
           {
             return true;
           }

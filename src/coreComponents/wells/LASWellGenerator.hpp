@@ -56,15 +56,7 @@ class LASWellGenerator : public WellGeneratorBase
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) ) override {}
 
-  virtual Group * CreateChild( string const & childKey, 
-                               string const & childName ) override;
-
-
-  /**
-   * @brief main function of this class: processes the well input and creates the globla well topology
-   * @param domain the physical domain object
-   */  
-  virtual void GenerateMesh( DomainPartition * const domain ) override final;
+  virtual void GeneratePolyLine() override final;
 
   /// not implemented 
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
@@ -83,6 +75,11 @@ class LASWellGenerator : public WellGeneratorBase
   void GeneratePolyLineFromXYZ( LASFile const & lasFile );
 
   void GeneratePolyLineFromDepth( LASFile const & lasFile );
+
+  /*!
+   * @brief Get the factor to conver input unit into meters
+   */
+  double GetFactor( LASLine const & lasLine );
   private:
 
   /// Path to the LAS file
@@ -90,7 +87,7 @@ class LASWellGenerator : public WellGeneratorBase
 
   /// Index of the log to take to write the well geometry if
   /// the LAS file has several time the same sections
-  localIndex m_logIndexToTakeForGeometry;
+  integer m_logIndexToTakeForGeometry;
 
 };
 
