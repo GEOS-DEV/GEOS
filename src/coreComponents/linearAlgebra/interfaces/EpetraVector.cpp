@@ -406,7 +406,7 @@ localIndex EpetraVector::getLocalRowID( globalIndex const index ) const
 // getGlobalRowID
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Map a local row index to global row index
-localIndex EpetraVector::getGlobalRowID( localIndex const index ) const
+globalIndex EpetraVector::getGlobalRowID( localIndex const index ) const
 {
   return m_vector->Map().GID64( integer_conversion< int >( index ) );
 }

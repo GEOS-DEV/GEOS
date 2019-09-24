@@ -19,9 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_HYPREINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_HYPREINTERFACE_HPP_
 
-//#include "HypreSparseMatrix.hpp"
-//#include "HypreVector.hpp"
 //#include "HypreSolver.hpp"
+//#include "HypreSparseMatrix.hpp"
+#include "HypreVector.hpp"
 
 namespace geosx
 {
@@ -36,6 +36,11 @@ struct HypreInterface
   static void initialize( int & GEOSX_UNUSED_ARG( argc ), char ** & GEOSX_UNUSED_ARG( argv ) ) {}
 
   static void finalize() {}
+
+//  using ParallelMatrix = HypreMatrix;
+  using ParallelVector = HypreVector;
+//  using LinearSolver   = HypreSolver;
+
 };
 
 } /* namespace geosx */

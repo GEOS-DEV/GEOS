@@ -13,28 +13,30 @@
  */
 
 /**
- * @file EpetraVector.hpp
+ * @file HypreVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_
+#ifndef GEOSX_LINEARALGEBRA_HYPREVECTOR_HPP_
+#define GEOSX_LINEARALGEBRA_HYPREVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
-class Epetra_FEVector;
-class Epetra_Map;
+#include "HYPRE.h"
+#include "_hypre_IJ_mv.h"
+#include "_hypre_IJ_mv.h"
+#include "_hypre_parcsr_mv.h"
 
 namespace geosx
 {
 
 /**
- * \class EpetraVector
- * \brief This class creates and provides basic support for the Epetra_FEVector
- *        vector object type used in Trilinos.  We use the FE version because
- *        Epetra_Vector support for long globalIDs is haphazard.
+ * \class HypreVector
+ * \brief This class creates and provides basic support for the HYPRE_ParVector
+ *        vector object type used in Hypre using the linear-algebraic system
+ *        interface (IJ interface).
  */
-class EpetraVector
+class HypreVector
 {
 public:
   //! @name Constructor/Destructor Methods
@@ -45,22 +47,21 @@ public:
    *
    * Create an empty (distributed) vector.
    */
-  EpetraVector();
+  HypreVector();
 
   /**
    * @brief Copy constructor.
    *
-   * \param src EpetraVector to be copied.
+   * \param src HypreVector to be copied.
    *
    */
-  EpetraVector( EpetraVector const & src );
+  HypreVector( HypreVector const &src );
 
   /**
    * @brief Destructor.
    */
-  ~EpetraVector();
+  ~HypreVector();
   //@}
-
 
   //! @name Create Methods
   //@{
@@ -71,7 +72,7 @@ public:
    * \param vector an already formed EpetraVector.
    *
    */
-  void create( EpetraVector const & src );
+  void create( HypreVector const & src );
 
   /**
    * @brief Create a vector based on local number of elements.
@@ -83,7 +84,8 @@ public:
    * \param localSize local number of elements.
    *
    */
-  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void createWithLocalSize( localIndex const localSize,
+                            MPI_Comm const &comm = MPI_COMM_WORLD );
 
   /**
    * @brief Create a vector based on global number of elements.
@@ -95,7 +97,8 @@ public:
    * \param globalSize Global number of elements.
    *
    */
-  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void createWithGlobalSize( globalIndex const globalSize,
+                             MPI_Comm const &comm = MPI_COMM_WORLD );
 
   /**
    * @brief Construct parallel vector from a local array.
@@ -105,14 +108,15 @@ public:
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void create( array1d<real64> const &localValues,
+               MPI_Comm const &comm = MPI_COMM_WORLD );
 
   //@}
   //! @name Open / close
   //@{
 
   /**
-   * @brief Empty function for Trilinos implementation. May be required by other libraries.
+   * @brief Re-enable coefficient set/add
    *
    */
   void open();
@@ -125,6 +129,7 @@ public:
   void close();
 
   //@}
+
   //! @name Add/Set Methods
   //@{
 
@@ -192,7 +197,6 @@ public:
   void set( array1d<globalIndex> const & globalIndices,
             array1d<real64> const & values );
 
-
   /**
    * @brief Add into vector values using array1d
    *
@@ -241,20 +245,20 @@ public:
   /**
    * @brief Dot product with the vector vec.
    *
-   * \param vec EpetraVector to dot-product with.
+   * \param vec HypreVector to dot-product with.
    *
    */
-  real64 dot( EpetraVector const &vec );
+  real64 dot( HypreVector const &vec );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    *
    * @note The naming convention follows the BLAS library.
    *
-   * \param x EpetraVector to copy.
+   * \param x HypreVector to copy.
    *
    */
-  void copy( EpetraVector const &x );
+  void copy( HypreVector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
@@ -262,11 +266,11 @@ public:
    * @note The naming convention follows the logic of the BLAS library.
    *
    * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
+   * \param x HypreVector to add.
    *
    */
   void axpy( real64 const alpha,
-             EpetraVector const &x );
+             HypreVector const &x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -274,12 +278,12 @@ public:
    * @note The naming convention follows the logic of the BLAS library.
    *
    * \param alpha Scaling factor for added vector.
-   * \param x EpetraVector to add.
+   * \param x HypreVector to add.
    * \param beta Scaling factor for self vector.
    *
    */
   void axpby( real64 const alpha,
-              EpetraVector const &x,
+              HypreVector const &x,
               real64 const beta );
 
   /**
@@ -330,7 +334,7 @@ public:
   /**
    * @brief Returns value globalRow of the vector. TODO: Not yet implemented, since not built-in
    */
-  real64 get( globalIndex globalRow ) const;
+  real64 get(globalIndex globalRow) const;
 
   /**
    * @brief Returns array of values at globalIndices of the vector. TODO: Not yet implemented, since not built-in
@@ -339,30 +343,34 @@ public:
             array1d<real64> & values ) const;
 
   /**
-   * @brief Returns a const pointer to the underlying Epetra object.
+   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
    */
-  Epetra_FEVector const * unwrappedPointer() const;
+  HYPRE_IJVector const * unwrappedPointer() const;
 
   /**
-   * @brief Returns a non-const pointer to the underlying Epetra object.
+   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
    */
-  Epetra_FEVector * unwrappedPointer();
-
-  //@}
-
-  //! @name I/O Methods
-  //@{
+  HYPRE_IJVector* unwrappedPointer();
 
   /**
-   * @brief Print the vector in Trilinos format to the terminal.
+   * @brief Returns a const pointer to the underlying HYPRE_IJVector object.
    */
-  void print( std::ostream & os = std::cout ) const;
+  HYPRE_ParVector const * getHypreParVectorPointer() const;
 
   /**
-   * @brief Write the vector to a matlab-compatible file
+   * @brief Returns a non-const pointer to the underlying HYPRE_IJVector object.
    */
-  void write( string const & filename,
-              bool const mtxFormat = true ) const;
+  HYPRE_ParVector* getHypreParVectorPointer();
+
+//  operator HYPRE_IJVector()
+//  {
+//    return (HYPRE_IJVector) m_ij_vector;
+//  }
+//
+//  operator HYPRE_ParVector()
+//  {
+//    return (HYPRE_ParVector) m_par_vector;
+//  }
 
   /**
    * Map a global row index to local row index
@@ -379,39 +387,49 @@ public:
    */
   real64 const * extractLocalVector() const;
 
-  /**
-   * Extract a view of the local portion of the array
-   */
+//  /**
+//   * Extract a view of the local portion of the array
+//   */
   real64 * extractLocalVector();
+
+  //@}
+
+  //! @name I/O Methods
+  //@{
+
+  /**
+   * @brief Print the vector in Trilinos format to the terminal.
+   */
+  void print() const;
+
+  /**
+   * @brief Write the vector to file in HYPRE format
+   */
+  void write(string const & filename) const;
 
   //@}
 
 private:
 
   /**
-   * Unique pointer to underlying Epetra_FEVector type.
+   * Pointer to underlying HYPRE_IJVector type.
    */
-  std::unique_ptr<Epetra_FEVector> m_vector;
+  HYPRE_IJVector m_ij_vector = nullptr;
 
   /**
-   * @brief Create a vector from an Epetra_Map.
-   *
-   * Create a vector from an Epetra_Map.  Allows for maximum flexibility
-   * for advanced users.
-   *
-   * \param map Input Epetra Map.
+   * Pointer to underlying HYPRE_ParVector type.
    */
-  void create( Epetra_Map const & map );
+  HYPRE_ParVector m_par_vector = nullptr;
 };
 
-/**
- * @brief Stream insertion operator for EpetraVector
- * @param os the output stream
- * @param vec the vector to be printed
- * @return reference to the output stream
- */
-std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
+///**
+// * @brief Stream insertion operator for EpetraVector
+// * @param os the output stream
+// * @param vec the vector to be printed
+// * @return reference to the output stream
+// */
+//std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
 
-} // end geosx namespace
+}// end geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_HYPREVECTOR_HPP_*/

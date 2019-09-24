@@ -112,12 +112,14 @@ void testVectorFunctions()
   EXPECT_EQ( x.localSize(), localSize );
   EXPECT_EQ( x.globalSize(), globalSize );
 
-  // Testing setting global values on rank 0 and getting locally
+  // Testing adding (off-processor setting not allowed in hypre)
+  // global values on rank 0 and getting locally
+  x.zero();
   if( rank == 0 )
   {
     for( globalIndex i = 0; i < x.globalSize(); ++i )
     {
-      x.set( i, 2 * i );
+      x.add( i, 2 * i );
     }
   }
   x.close();
@@ -705,14 +707,14 @@ TEST( testLAOperations, testEpetraLAOperations )
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-//TEST( testLAOperations, testHypreLAOperations )
-//{
-//  testVectorFunctions< HypreInterface >();
+TEST( testLAOperations, testHypreLAOperations )
+{
+  testVectorFunctions< HypreInterface >();
 //  testMatrixFunctions< HypreInterface >();
 //  testInterfaceSolvers< HypreInterface >();
 //  testMatrixMatrixOperations< HypreInterface >();
 //  testRectangularMatrixOperations< HypreInterface >();
-//}
+}
 #endif
 
 #ifdef GEOSX_USE_PETSC
