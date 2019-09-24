@@ -44,7 +44,7 @@ if( CONDUIT_FOUND )
 endif()
 
 if( ATK_FOUND )
-  set( dependencyList ${dependencyList} sidre )
+  set( dependencyList ${dependencyList} axom )
 endif()
 
 

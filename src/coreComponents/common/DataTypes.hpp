@@ -27,6 +27,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <typeindex>
 #include <typeinfo>
@@ -61,6 +62,8 @@ namespace geosx
 
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
+#else
+constexpr int MPI_COMM_GEOSX = 0;
 #endif
 
 // underlying types not for general use!!
@@ -554,7 +557,7 @@ public:
 
     /* We can't use SidreTT<globalIndex>::id here because that returns NO_TYPE_ID.
      * This is due to a mismatch between globalIndex (long long int) and std::int64_t */
-    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT< axom::common::int64 >::id;
+    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT< axom::int64 >::id;
 
     const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT< real32 >::id;
     const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT< real64 >::id;

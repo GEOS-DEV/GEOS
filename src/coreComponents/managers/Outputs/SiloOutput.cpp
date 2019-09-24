@@ -64,15 +64,14 @@ void SiloOutput::Execute(real64 const time_n,
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
-  integer rank;
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  MPI_Barrier( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
   integer numFiles = this->parallelThreads();
 
   silo.setPlotLevel( m_plotLevel );
   silo.setPlotFileRoot( m_plotFileRoot );
-  silo.Initialize( PMPIO_WRITE , numFiles );
+  silo.Initialize( numFiles );
   silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
   silo.WriteDomainPartition( *domainPartition, cycleNumber,  time_n + dt * eventProgress, 0 );
   silo.HandOffBaton();

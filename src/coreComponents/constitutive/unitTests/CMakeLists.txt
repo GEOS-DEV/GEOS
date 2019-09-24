@@ -9,7 +9,7 @@ set( gtest_geosx_tests
      testCapillaryPressure.cpp 
    )
 
-set( dependencyList geosx_core gtest )
+set( dependencyList geosx_core gtest axom )
 
 if( ENABLE_MPI )
     set( dependencyList ${dependencyList} mpi )
@@ -42,7 +42,6 @@ foreach(test ${gtest_geosx_tests})
 
     blt_add_test( NAME ${test_name}
                   COMMAND ${test_name}
-                  NUM_MPI_TASKS 1
                 )
 
 endforeach()

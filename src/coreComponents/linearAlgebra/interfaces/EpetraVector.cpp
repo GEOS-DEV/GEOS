@@ -30,8 +30,14 @@
 // Include required Epetra headers
 #include <Epetra_FEVector.h>
 #include <Epetra_Map.h>
-#include <Epetra_MpiComm.h>
 #include <EpetraExt_MultiVectorOut.h>
+
+#ifdef GEOSX_USE_MPI
+#include <Epetra_MpiComm.h>
+#else
+#include<Epetra_SerialComm.h>
+typedef Epetra_SerialComm Epetra_MpiComm;
+#endif
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -97,19 +103,19 @@ void EpetraVector::create( Epetra_Map const & map )
 // elements necessary when the number of processors does not divide evenly
 // into the vector length.
 void EpetraVector::createWithLocalSize( localIndex const localSize,
-                                        MPI_Comm const & comm )
+                                        MPI_Comm const & MPI_PARAM(comm) )
 {
   Epetra_Map map = Epetra_Map( integer_conversion< globalIndex >( -1 ),
                                integer_conversion< int >( localSize ),
                                0,
-                               Epetra_MpiComm( comm ) );
+                               Epetra_MpiComm( MPI_PARAM(comm) ) );
   create( map );
 }
 
 void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
-                                         MPI_Comm const & comm )
+                                         MPI_Comm const & MPI_PARAM(comm) )
 {
-  Epetra_Map map = Epetra_Map( globalSize, 0, Epetra_MpiComm( comm ) );
+  Epetra_Map map = Epetra_Map( globalSize, 0, Epetra_MpiComm( MPI_PARAM(comm) ) );
   create( map );
 }
 
@@ -119,10 +125,10 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
 // Create a vector from local array data.  The global vector contains
 // local arrays stitched together.
 void EpetraVector::create( array1d< real64 > const & localValues,
-                           MPI_Comm const & comm )
+                           MPI_Comm const & MPI_PARAM(comm) )
 {
   int const localSize = integer_conversion< int >( localValues.size() );
-  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( comm ) );
+  Epetra_Map map = Epetra_Map( -1, localSize, 0, Epetra_MpiComm( MPI_PARAM(comm) ) );
   m_vector = std::make_unique< Epetra_FEVector >( View, map, localValues.data(), localSize, 1 );
 }
 
