@@ -421,7 +421,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor coefTensor;
-  real64 faceArea, faceWeight, faceCritialTimeWeight;
+  real64 faceArea, faceWeight;
 
   stackArray1d<PointDescriptor, numElems> stencilPoints(numElems);
   stackArray1d<real64, numElems> stencilWeights(numElems);

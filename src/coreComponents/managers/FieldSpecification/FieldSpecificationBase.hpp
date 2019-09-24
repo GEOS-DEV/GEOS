@@ -450,7 +450,7 @@ void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                  false,
-                                 [&]( auto arrayInstance, auto dataTypeInstance )
+                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
     dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );

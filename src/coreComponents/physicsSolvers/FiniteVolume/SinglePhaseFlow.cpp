@@ -315,7 +315,7 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
 real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
                                       real64 const& dt,
-                                      const int cycleNumber,
+                                      const int GEOSX_UNUSED_ARG( cycleNumber ),
                                       DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -354,7 +354,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
 
   // update density from mass and then pressure
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName );
@@ -393,8 +393,8 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   return m_maxStableDt;
 }
 
-void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
-                                         real64 const & dt,
+void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                         real64 const & GEOSX_UNUSED_ARG( dt ),
                                          DomainPartition * const domain)
 {
   ResetViews( domain );
@@ -402,7 +402,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
@@ -785,15 +785,12 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
 
 }
 
-void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const time_n,
+void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( time_n ),
                                                  real64 const dt,
                                                  DomainPartition * const domain,
-                                                 DofManager const * const dofManager)
+                                                 DofManager const * const GEOSX_UNUSED_ARG( dofManager ))
 {
   GEOSX_MARK_FUNCTION;
-
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager=  mesh->getElemManager();
 
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );

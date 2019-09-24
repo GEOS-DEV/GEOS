@@ -466,11 +466,11 @@ struct FieldSpecificationSubtract : public FieldSpecificationOp<OpSubtract>
    *
    */
   template< typename LAI >
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
+  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_ARG( dof ),
+                                        typename LAI::ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
                                         real64 & rhs,
                                         real64 const & bcValue,
-                                        real64 const fieldValue )
+                                        real64 const GEOSX_UNUSED_ARG( fieldValue ) )
   {
     rhs -= bcValue;
   }

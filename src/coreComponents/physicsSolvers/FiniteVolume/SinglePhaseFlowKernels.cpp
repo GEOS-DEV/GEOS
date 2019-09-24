@@ -320,9 +320,6 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
                                 real64 * const maxStableDt)
 {
-  constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-  constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = CellElementStencilTPFA::MAX_STENCIL_SIZE;
   constexpr localIndex stencilSize  = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
   typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -370,9 +367,6 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
                             real64 * const maxStableDt)
 {
-  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
-
   typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
   typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
@@ -382,7 +376,6 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
-    localIndex const stencilSize  = numFluxElems;
 
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];

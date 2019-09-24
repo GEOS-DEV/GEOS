@@ -596,7 +596,6 @@ struct FluxKernel
            real64 * const maxStableDt)
   {
     localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
     stackArray1d<real64, numElems>   densWeight(numElems);
 
@@ -641,12 +640,6 @@ struct FluxKernel
     localIndex esr_up = sesri[k_up];
     localIndex ei_up  = sei[k_up];
 
-    localIndex const k_down = (potDif < 0) ? 0 : 1;
-
-    localIndex er_down  = seri[k_down];
-    localIndex esr_down = sesri[k_down];
-    localIndex ei_down  = sei[k_down];
-
     // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
     *maxStableDt = std::min(dDens_dPres[er_up][esr_up][fluidIndex][ei_up][0] / mob[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
@@ -676,14 +669,13 @@ struct FluxKernel
            arrayView2d<real64 const> const & dens,
            arrayView2d<real64 const> const & dDens_dPres,
            arrayView1d<real64 const> const & mob,
-           localIndex const,
+           localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
            integer const gravityFlag,
            real64 const dt,
            arrayView1d<real64> * const mass,
            real64 * const maxStableDt)
   {
     localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-    localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
     stackArray1d<real64, numElems> densWeight(numElems);
 
@@ -703,7 +695,6 @@ struct FluxKernel
 
     // compute potential difference MPFA-style
     real64 potDif = 0.0, weightedSum = 0.0;
-    real64 sumWeightGrav = 0.0, faceWeightInv = 0.0, c2cDistance = 0.0;
     R1Tensor faceConormal, cellToFaceVec;
     R2SymTensor coefTensor;
     for (localIndex ke = 0; ke < stencilSize; ++ke)
@@ -713,7 +704,6 @@ struct FluxKernel
 
       real64 const gravD = gravDepth[ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      sumWeightGrav += weight * gravD * gravityFlag;
       potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
@@ -722,11 +712,7 @@ struct FluxKernel
     // upwinding of fluid properties (make this an option?)
     localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
-    localIndex const k_down = (potDif < 0) ? 0 : 1;
-
     localIndex ei_up  = stencilElementIndices[k_up];
-
-    localIndex ei_down  = stencilElementIndices[k_down];
 
     *maxStableDt = std::min( dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
@@ -761,7 +747,6 @@ struct FluxKernel
                    arraySlice2d<real64> const & fluxJacobian,
                    arraySlice2d<real64> const & dFlux_dAperture )
   {
-    real64 temp;
     real64 sumOfWeights = 0;
     real64 aperTerm[10];
     real64 dAperTerm_dAper[10];
@@ -859,8 +844,8 @@ struct FluxKernel
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
-                   localIndex const,
-                   integer const gravityFlag,
+                   localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
+                   integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
                    arrayView1d<real64> * const mass,
                    real64 * const maxStableDt)
@@ -899,11 +884,7 @@ struct FluxKernel
         // upwinding of fluid properties (make this an option?)
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
-        localIndex const k_down = (potDif < 0) ? 0 : 1;
-
         localIndex ei_up  = stencilElementIndices[k[k_up]];
-
-        localIndex ei_down  = stencilElementIndices[k[k_down]];
 
         // populate local flux
         (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;

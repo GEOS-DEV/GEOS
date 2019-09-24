@@ -481,7 +481,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
-                                        real64 const GEOSX_UNUSED_ARG( time ) )
+                                        real64 const time )
 {
 
   NodeManager & nodeManager = *(mesh->getNodeManager());
@@ -646,7 +646,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
                          set<localIndex> const & lset,
-                         Group * subRegion,
+                         Group * const targetGroup,
                          string const & ) -> void
   {
     set<localIndex> newSet;
@@ -659,7 +659,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
     }
     fs->ApplyFieldValue<FieldSpecificationEqual>( newSet,
                                                   time,
-                                                  subRegion,
+                                                  targetGroup,
                                                   FaceElementSubRegion::viewKeyStruct::elementApertureString );
   });
 
