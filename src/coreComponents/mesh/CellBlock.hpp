@@ -24,6 +24,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
 
 class StableTimeStep;
 
@@ -241,6 +242,26 @@ public:
     }
   }
 
+#if USE_ELEM_PATCHES
+  NodeMapType & patchNodeList()
+  { return m_patchToNodesRelation; }
+
+  NodeMapType const & patchNodeList() const
+  { return m_patchToNodesRelation; }
+
+  LvArray::ArrayOfArrays< localIndex, localIndex > & patchNodes()
+  { return m_patchNodes; }
+
+  LvArray::ArrayOfArrays< localIndex, localIndex > const & patchNodes() const
+  { return m_patchNodes; }
+
+  array1d< localIndex > & patchOffsets()
+  { return m_patchOffsets; }
+
+  array1d< localIndex > const & patchOffsets() const
+  { return m_patchOffsets; }
+#endif
+
 protected:
 
 
@@ -249,6 +270,25 @@ protected:
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;
+
+#if USE_ELEM_PATCHES
+  /// Offset of each patch (index of first element)
+  array1d<localIndex> m_patchOffsets;
+
+  /// List of nodes in each patch
+  LvArray::ArrayOfArrays<localIndex, localIndex> m_patchNodes;
+
+  /// Elem-to-node map with patch-local node indices
+  NodeMapType m_patchToNodesRelation;
+
+#if ELEM_PATCH_VIZ
+  /// Patch index for each element (for visualization/debugging)
+  array1d<localIndex> m_patchIndex;
+
+  /// Patch-local index of each element (for visualization/debugging)
+  array1d<localIndex> m_elemIndex;
+#endif
+#endif
 
 private:
   /// Name of the properties register from an external mesh

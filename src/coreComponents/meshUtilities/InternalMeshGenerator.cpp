@@ -32,6 +32,8 @@
 
 #include "common/TimingMacros.hpp"
 
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -904,6 +906,241 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   {
     RemapMesh( domain );
   }
+
+
+#if USE_ELEM_PATCHES
+  /// Patch generation
+  {
+    localIndex const root = static_cast<localIndex>( std::cbrt( ELEM_PATCH_MAX_ELEM ) );
+    localIndex patchSize[3] = { root, root, root };
+
+    GEOS_ASSERT( patchSize[0] * patchSize[1] * patchSize[2] <= ELEM_PATCH_MAX_ELEM );
+    GEOS_ASSERT( (patchSize[0]+1) * (patchSize[1]+1) * (patchSize[2]+1) <= ELEM_PATCH_MAX_NODE );
+
+    localIndex numElemsInDirForRegion[3];
+
+    // TODO this nested looping is insane
+    localIndex iR = 0;
+    iterRegion = m_regionNames.begin();
+    for( localIndex iblock = 0 ; iblock < m_nElems[0].size() ; ++iblock )
+    {
+      numElemsInDirForRegion[0] = lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1;
+
+      for( localIndex jblock = 0 ; jblock < m_nElems[1].size() ; ++jblock )
+      {
+        numElemsInDirForRegion[1] = lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1;
+
+        for( localIndex kblock = 0 ; kblock < m_nElems[2].size() ; ++kblock, ++iterRegion, ++iR )
+        {
+          numElemsInDirForRegion[2] = lastElemIndexForBlockInPartition[2][kblock] - firstElemIndexForBlockInPartition[2][kblock] + 1;
+
+          GEOS_LOG_RANK_0( "Generating element patch information for region " << *iterRegion );
+
+          // Element renumbering
+          CellBlock * elemRegion = elementManager->GetRegion(*iterRegion);
+          localIndex const numNodesPerElem = elemRegion->numNodesPerElement();
+
+          FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
+          FixedOneToManyRelation elemsToNodesOld = elemsToNodes;
+          FixedOneToManyRelation & elemsToNodesPatch = elemRegion->patchNodeList();
+          elemsToNodesPatch.resize( elemsToNodes.size(0), elemsToNodes.size(1) );
+
+          array1d<globalIndex> & localToGlobalMap = elemRegion->m_localToGlobalMap;
+          array1d<globalIndex> localToGlobalMapOld = localToGlobalMap;
+
+          localIndex numPatchesInBlock[3];
+          localIndex numPatches = 1;
+
+          for( localIndex dir = 0 ; dir < 3 ; ++dir )
+          {
+            numPatchesInBlock[dir] = (numElemsInDirForRegion[dir] + patchSize[dir] - 1) / patchSize[dir];
+            numPatches *= numPatchesInBlock[dir];
+          }
+
+          elemRegion->patchOffsets().push_back( 0 );
+
+          localIndex patchIndex = 0;
+          localIndex patchOffset[3]{};
+
+          // build lists of patch elements and nodes
+          std::set<localIndex> patchNodes;
+          array1d<localIndex> patchElems;
+
+          patchOffset[0] = 0;
+          for( localIndex ipatch = 0; ipatch < numPatchesInBlock[0]; ++ipatch, patchOffset[0] += patchSize[0] )
+          {
+            patchOffset[1] = 0;
+            for( localIndex jpatch = 0; jpatch < numPatchesInBlock[1]; ++jpatch, patchOffset[1] += patchSize[1] )
+            {
+              patchOffset[2] = 0;
+              for( localIndex kpatch = 0; kpatch < numPatchesInBlock[2]; ++kpatch, patchOffset[2] += patchSize[2], ++patchIndex )
+              {
+                patchNodes.clear();
+                patchElems.clear();
+
+                // Then loop within patch
+                for( localIndex i = 0; i < std::min(patchSize[0], numElemsInDirForRegion[0] - patchOffset[0]); ++i )
+                {
+                  for( localIndex j = 0; j < std::min(patchSize[1], numElemsInDirForRegion[1] - patchOffset[1]); ++j )
+                  {
+                    for( localIndex k = 0; k < std::min(patchSize[2], numElemsInDirForRegion[2] - patchOffset[2]); ++k )
+                    {
+                      // k is fastest-cycling index, see above
+                      localIndex oldElemIndex = ( (patchOffset[0] + i) * numElemsInDirForRegion[1] * numElemsInDirForRegion[2]
+                                                  + (patchOffset[1] + j) * numElemsInDirForRegion[2]
+                                                  + (patchOffset[2] + k) ) * m_numElePerBox[iR];
+                      for( int iEle = 0 ; iEle < m_numElePerBox[iR] ; ++iEle, ++oldElemIndex )
+                      {
+                        patchElems.push_back( oldElemIndex );
+                        for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
+                        {
+                          patchNodes.insert( elemsToNodesOld[oldElemIndex][iN] );
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // create a local (within patch) numbering of nodes
+                std::vector<localIndex> patchNodesList( patchNodes.begin(), patchNodes.end() );
+                elemRegion->patchNodes().appendArray( patchNodesList.data(), patchNodesList.size() );
+
+                // create the inverse lookup (global node index -> local index in patch)
+                std::map<localIndex, localIndex> nodeGlobalToPatchIndexMap;
+                for( std::vector<localIndex>::size_type i = 0; i < patchNodesList.size(); ++i )
+                {
+                  nodeGlobalToPatchIndexMap.emplace( patchNodesList[i], i );
+                }
+
+                for( localIndex localElemIndex = 0; localElemIndex < patchElems.size(); ++localElemIndex )
+                {
+                  localIndex const newElemIndex = elemRegion->patchOffsets()[patchIndex] + localElemIndex;
+                  localIndex const oldElemIndex = patchElems[localElemIndex];
+
+                  localToGlobalMap[newElemIndex] = localToGlobalMapOld[oldElemIndex];
+
+                  for( localIndex iN = 0 ; iN < numNodesPerElem ; ++iN )
+                  {
+                    localIndex const nodeIndex = elemsToNodesOld[oldElemIndex][iN];
+                    elemsToNodes( newElemIndex, iN ) = nodeIndex;
+                    elemsToNodesPatch( newElemIndex, iN ) = nodeGlobalToPatchIndexMap[ nodeIndex ];
+                  }
+
+#if ELEM_PATCH_VIZ
+                  elemRegion->m_elemIndex[newElemIndex] = newElemIndex;
+                  elemRegion->m_patchIndex[newElemIndex] = patchIndex;
+#endif
+                }
+
+                elemRegion->patchOffsets().push_back( elemRegion->patchOffsets().back() + patchElems.size() );
+              }
+            }
+          }
+        }
+
+        GEOS_LOG_RANK_0( "Done!" );
+      }
+    }
+
+#if ELEM_PATCH_REORDER_NODES
+
+    array1d<localIndex> nodeReorder( nodeManager->size() );
+    nodeReorder = -1;
+
+    // build the reordering
+    localIndex newNodeIndex = 0;
+    for( string const & cellBlockName : m_regionNames )
+    {
+      CellBlock * elemRegion = elementManager->GetRegion( cellBlockName );
+      LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & nodes = elemRegion->patchNodes();
+
+      for( localIndex patch = 0; patch < nodes.size(); ++patch )
+      {
+        for( localIndex inode = 0; inode < nodes.sizeOfArray(patch); ++inode )
+        {
+          localIndex const node = nodes[patch][inode];
+          if( nodeReorder[node] < 0 ) // node yet not assigned a new index
+          {
+            nodeReorder[node] = newNodeIndex++;
+          }
+        }
+      }
+    }
+
+    // apply the reordering
+    array1d<R1Tensor> & referencePosition = nodeManager->referencePosition();
+    array1d<R1Tensor> referencePositionOld = referencePosition;
+
+    for( localIndex node = 0; node < nodeReorder.size(); ++node )
+    {
+      referencePosition[nodeReorder[node]] = referencePositionOld[node];
+    }
+
+    for( string const & cellBlockName : m_regionNames )
+    {
+      CellBlock * elemRegion = elementManager->GetRegion( cellBlockName );
+
+      FixedOneToManyRelation & elemsToNodes = elemRegion->nodeList();
+      FixedOneToManyRelation & elemsToNodesPatch = elemRegion->patchNodeList();
+      LvArray::ArrayOfArrays<localIndex, localIndex> & patchNodes = elemRegion->patchNodes();
+
+
+      for( localIndex ei = 0; ei < elemsToNodes.size(0); ++ei )
+      {
+        for( localIndex iN = 0; iN < elemsToNodes.size(1); ++iN )
+        {
+          elemsToNodes[ei][iN] = nodeReorder[elemsToNodes[ei][iN]];
+        }
+      }
+
+      LvArray::ArrayOfArrays<localIndex, localIndex> patchNodesOld = patchNodes;
+      std::map<localIndex, localIndex> newNodePatchMap;
+
+      for( localIndex patch = 0; patch < patchNodes.size(); ++patch )
+      {
+        newNodePatchMap.clear();
+
+        for( localIndex node = 0; node < patchNodes.sizeOfArray(patch); ++node )
+        {
+          //patchNodes[patch][node] = nodeReorder[patchNodes[patch][node]];
+          newNodePatchMap.emplace( nodeReorder[patchNodes[patch][node]], 0 );
+        }
+
+        localIndex inode = 0;
+        for( auto & pair : newNodePatchMap )
+        {
+          patchNodes[patch][inode] = pair.first;
+          pair.second = inode++;
+        }
+
+        for( localIndex ei = elemRegion->patchOffsets()[patch]; ei < elemRegion->patchOffsets()[patch+1]; ++ei )
+        {
+          for( localIndex iN = 0; iN < elemsToNodesPatch.size(1); ++iN )
+          {
+            localIndex const nodeIndexOld = patchNodesOld[patch][elemsToNodesPatch[ei][iN]];
+            localIndex const nodeIndexNew = nodeReorder[nodeIndexOld];
+            elemsToNodesPatch[ei][iN] = newNodePatchMap[nodeIndexNew];
+          }
+        }
+      }
+    }
+
+    nodeSets->forWrappers<localIndex_set>( [&]( Wrapper<localIndex_set> * vw )
+    {
+      localIndex_set & set = vw->reference();
+      localIndex_set setOld = set;
+      set.clear();
+      for( localIndex & node : setOld )
+      {
+        set.insert( nodeReorder[node] );
+      }
+
+    } );
+
+#endif
+  }
+#endif // USE_ELEM_PATCHES
+
 }
 
 /**

@@ -40,6 +40,16 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   registerWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
   registerWrapper(viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
   registerWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
+
+#if USE_ELEM_PATCHES && ELEM_PATCH_VIZ
+  RegisterViewWrapper( "patchIndex", &m_patchIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
+    setDefaultValue( -1 )->
+    setDescription( "Index of element patch" );
+
+  RegisterViewWrapper( "elemIndex", &m_elemIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
+    setDefaultValue( -1 )->
+    setDescription( "Local index of element" );
+#endif
 }
 
 CellBlock::~CellBlock()
