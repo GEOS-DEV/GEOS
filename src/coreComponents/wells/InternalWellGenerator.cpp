@@ -19,10 +19,9 @@
 
 #include "InternalWellGenerator.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-
 #include "WellElementRegion.hpp"
 #include "WellElementSubRegion.hpp"
 #include "PerforationData.hpp"

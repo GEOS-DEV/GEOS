@@ -15,10 +15,11 @@
 #include "WellElementSubRegion.hpp"
 #include "WellElementRegion.hpp"
 
+
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -231,7 +232,7 @@ void WellElementSubRegion::CheckPartitioningValidity( WellGeneratorBase const & 
 
     // communicate the status of this element
     array1d<integer> thisElemStatusGlobal;
-    CommunicationTools::allGather( elemStatusGlobal[iwelemGlobal], 
+    MpiWrapper::allGather( elemStatusGlobal[iwelemGlobal],
                                    thisElemStatusGlobal );
     // group the ranks by well element status
     map< integer, set<globalIndex> > rankSetsByStatus;
@@ -270,7 +271,7 @@ void WellElementSubRegion::CheckPartitioningValidity( WellGeneratorBase const & 
 
       for (globalIndex iownerRank : rankSetsByStatus[WellElemStatus::LOCAL])
       {
-        if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != iownerRank)
+        if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != iownerRank)
         {
           elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
         }
@@ -289,7 +290,7 @@ void WellElementSubRegion::CheckPartitioningValidity( WellGeneratorBase const & 
         if (rankCount == 0)
         {
           // update the elemStatusGlobal array for all ranks
-          if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != iownerRank)
+          if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != iownerRank)
           {
             elemStatusGlobal[iwelemGlobal] = WellElemStatus::REMOTE;
           }
@@ -297,7 +298,7 @@ void WellElementSubRegion::CheckPartitioningValidity( WellGeneratorBase const & 
         else // (rankCount > 0)
         {
           // remove the duplicate elements
-          if (CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) == iownerRank)
+          if (MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == iownerRank)
           {
             localElems.erase(iwelemGlobal);
           }
@@ -544,7 +545,7 @@ void WellElementSubRegion::ReconstructLocalConnectivity()
 
 bool WellElementSubRegion::IsLocallyOwned() const
 {
-  return m_topRank == CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+  return m_topRank == MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 }
 
 void WellElementSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
@@ -609,7 +610,7 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
 {
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
-  if ( CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -617,7 +618,7 @@ void WellElementSubRegion::DebugNodeManager( MeshLevel const & mesh ) const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "Node manager from = " << getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local node elements = " << nodeManager->size() << std::endl;
 
   if (nodeManager->size() > 0)
@@ -639,7 +640,7 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d<integer const
     return;
   } 
 
-  if ( CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) < 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) < 1)
   {
     return;
   } 
@@ -647,7 +648,7 @@ void WellElementSubRegion::DebugWellElementSubRegions( arrayView1d<integer const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local well elements = " << size() << std::endl;
   
   for (localIndex iwelem = 0; iwelem < size(); ++iwelem) 
@@ -685,7 +686,7 @@ void WellElementSubRegion::DebugWellElementSubRegionsAfterSetupCommunications() 
     return;
   } 
 
-  if ( CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) != 1)
+  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) != 1)
   {
     return;
   } 
@@ -693,7 +694,7 @@ void WellElementSubRegion::DebugWellElementSubRegionsAfterSetupCommunications() 
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "WellElementSubRegion = " << getName() << std::endl;
-  std::cout << "MPI rank = " << CommunicationTools::MPI_Rank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) << std::endl;
   std::cout << "Number of local well elements = " << size() << std::endl;
   std::cout << "Number of ghost well elements = " << this->GetNumberOfGhosts() << std::endl;
   

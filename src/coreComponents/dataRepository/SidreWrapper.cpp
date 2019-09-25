@@ -21,7 +21,6 @@
 
 #include <string>
 #include <cstdio>
-#include <mpi.h>
 
 
 namespace geosx
@@ -42,8 +41,6 @@ SidreWrapper::~SidreWrapper()
 #ifdef GEOSX_USE_ATK
 DataStore & SidreWrapper::dataStore()
 {
-//  static DataStore * datastore = new DataStore();
-//  return *datastore;
   static DataStore datastore;
   return datastore;
 }
@@ -51,40 +48,57 @@ DataStore & SidreWrapper::dataStore()
 
 
 /* Write out a restart file. */
-void SidreWrapper::writeTree( int num_files, const std::string & path, const std::string & protocol, MPI_Comm comm )
+void SidreWrapper::writeTree( int MPI_PARAM( num_files ),
+                              const std::string & path,
+                              const std::string & protocol,
+                              MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
+#ifdef GEOSX_USE_MPI
   axom::sidre::IOManager ioManager( comm );
   ioManager.write( SidreWrapper::dataStore().getRoot(), num_files, path, protocol );
+#else
+  SidreWrapper::dataStore().getRoot()->save( path, protocol );
+#endif
 #endif
 }
 
 
-void SidreWrapper::reconstructTree( const std::string & root_path, const std::string & protocol, MPI_Comm comm )
+void SidreWrapper::reconstructTree( const std::string & root_path,
+                                    const std::string & protocol,
+                                    MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
-
   if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ))
   {
     SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
   }
 
+#ifdef GEOSX_USE_MPI
   axom::sidre::IOManager ioManager( comm );
   ioManager.read( SidreWrapper::dataStore().getRoot(), root_path, protocol );
+#else
+  SidreWrapper::dataStore().getRoot()->load( root_path, protocol );
+#endif
 #endif
 }
 
 
 /* Load sidre external data. */
-void SidreWrapper::loadExternalData( const std::string & root_path, MPI_Comm comm )
+void SidreWrapper::loadExternalData( const std::string & root_path,
+                                     MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
+#ifdef GEOSX_USE_MPI
 
   axom::sidre::IOManager ioManager( comm );
   ioManager.loadExternalData( SidreWrapper::dataStore().getRoot(), root_path );
+#else
+  SidreWrapper::dataStore().getRoot()->loadExternalData( root_path );
+#endif
 #endif
 }
 

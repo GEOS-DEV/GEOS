@@ -18,7 +18,7 @@
 #ifndef SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 #define SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 

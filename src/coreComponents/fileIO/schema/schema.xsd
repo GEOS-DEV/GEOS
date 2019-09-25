@@ -1435,13 +1435,17 @@
 	</xsd:complexType>
 	<xsd:complexType name="ElementRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
-			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
 			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
+			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
+			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionType">
+	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--cellBlocks => (no description available)-->
+		<xsd:attribute name="cellBlocks" type="string_array" default="" />
+		<!--coarseningRatio => (no description available)-->
+		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1454,12 +1458,8 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CellElementRegionType">
+	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
-		<!--cellBlocks => (no description available)-->
-		<xsd:attribute name="cellBlocks" type="string_array" default="" />
-		<!--coarseningRatio => (no description available)-->
-		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
