@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_SRC_CORECOMPONENTS_FILEIO_LAS_LASFILE_
@@ -186,13 +182,31 @@ class LASInformationSection : public LASSection
 
     static LASInformationSection * CreateLASInformationSection( char const & name );
 
+    template< typename LAMBDA >
+    void forLines( LAMBDA&& lambda )
+    {
+      for( auto & line: m_lines )
+      {
+        lambda( line );
+      }
+    }
+
+    template< typename LAMBDA >
+    void forLines( LAMBDA&& lambda ) const
+    {
+      for( auto & line: m_lines )
+      {
+        lambda( line );
+      }
+    }
+
     virtual void WriteSection( std::ofstream & file ) const override
     {
       file << "~" << GetName() << " Section\n";
-      for( auto & line: m_lines )
+      this->forLines([&]( auto & line )
       {
         file << line.GetLine() << "\n";
-      }
+      });
     }
 
     LASLine const & GetLine( string const & keyword ) const
@@ -476,12 +490,21 @@ class LASASCIILogDataSection : public LASSection
     }
 
     /*!
-     * @brief retuns the size of the stored logs
+     * @brief returns the size of the stored logs
      */
     localIndex LogSize() const
     {
       return m_nbLogEntries;
     }
+
+    /*!
+     * @brief returns the number of logs
+     */
+    localIndex NbLogs() const
+    {
+      return m_nbCurves;
+    }
+
     /*!
      * @brief returns the ith log
      * @param[in] i  index of the log
@@ -568,7 +591,8 @@ class LASFile
       file << "# LAS Log file written by GEOSX" << "\n";
       localIndex countLog = 0;
       set< string > sectionsOutputed;
-      for( auto informationSection : m_lasInformationSections )
+
+      this->forInformationSections( [&]( auto & informationSection )
       {
         if( sectionsOutputed.count( informationSection->GetName() ) )
         {
@@ -577,7 +601,7 @@ class LASFile
         }
         informationSection->WriteSection( file );
         sectionsOutputed.insert( informationSection->GetName() );
-      }
+      });
       if( countLog == 0 )
       {
         GEOS_ASSERT( m_lasASCIILogDataSection.size() == 1 );
@@ -615,6 +639,52 @@ class LASFile
         }
       }
       return m_lasASCIILogDataSection[0].GetLog(0); // should never be reached
+    }
+
+    template< typename LAMBDA >
+    void forInformationSections( LAMBDA&& lambda )
+    {
+      for( auto& informationSection : m_lasInformationSections )
+      {
+        lambda( informationSection );
+      }
+    }
+
+    template< typename LAMBDA >
+    void forInformationSections( LAMBDA&& lambda ) const
+    {
+      for( auto& informationSection : m_lasInformationSections )
+      {
+        lambda( informationSection );
+      }
+    }
+
+    template< typename LAMBDA >
+    void forLogSections( LAMBDA&& lambda )
+    {
+      for( auto& logSection : m_lasASCIILogDataSection )
+      {
+        lambda( logSection );
+      }
+    }
+
+    template< typename LAMBDA >
+    void forLogSections( LAMBDA&& lambda ) const
+    {
+      for( auto& logSection : m_lasASCIILogDataSection )
+      {
+        lambda( logSection );
+      }
+    }
+
+    LASInformationSection const & GetInformationSection( integer i ) const
+    {
+      return *m_lasInformationSections[i];
+    }
+
+    LASASCIILogDataSection const &GetLogSection( integer i ) const
+    {
+      return m_lasASCIILogDataSection[i];
     }
 
     /*!
