@@ -291,7 +291,7 @@ struct ExplicitKernel
 #if defined(__CUDACC__)
 
     using KERNEL_POLICY =
-      RAJA::KernelPolicy<
+    RAJA::KernelPolicy<
       RAJA::statement::CudaKernel<
         RAJA::statement::For<0, RAJA::cuda_block_x_loop,
           RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
@@ -300,8 +300,8 @@ struct ExplicitKernel
             RAJA::statement::For<1, RAJA::cuda_thread_x_direct, RAJA::statement::Lambda<1>>
 #if SSLE_PATCH_KERNEL_SHARED_FVEC
             ,
-            RAJA::statement::CudaSyncThreads
-            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>,
+            RAJA::statement::CudaSyncThreads,
+            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>
 #endif
           >
         >
@@ -317,7 +317,7 @@ struct ExplicitKernel
           RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<0>>,
           RAJA::statement::For<1, RAJA::loop_exec, RAJA::statement::Lambda<1>>
 #if SSLE_PATCH_KERNEL_SHARED_FVEC
-        ,
+          ,
           RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<2>>
 #endif
         >

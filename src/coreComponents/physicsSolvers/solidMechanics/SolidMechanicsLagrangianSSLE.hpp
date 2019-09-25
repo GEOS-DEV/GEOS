@@ -75,9 +75,11 @@ public:
                                                         constitutiveRelation,
                                                         elementList,
                                                         elemsToNodes,
+#if USE_ELEM_PATCHES
                                                         elemPatchOffsets,
                                                         elemPatchNodes,
                                                         elemPatchElemsToNodes,
+#endif
                                                         dNdX,
                                                         detJ,
                                                         X,

@@ -1042,6 +1042,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 #if ELEM_PATCH_REORDER_NODES
 
+    GEOS_LOG_RANK_0( "Reordering nodes in patches" );
+
     array1d<localIndex> nodeReorder( nodeManager->size() );
     nodeReorder = -1;
 
@@ -1125,17 +1127,23 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
     nodeSets->forWrappers<localIndex_set>( [&]( Wrapper<localIndex_set> * vw )
     {
-      localIndex_set & set = vw->reference();
-      localIndex_set setOld = set;
-      set.clear();
+      if( vw->getName() == "all" )
+      {
+        return;
+      }
+      localIndex_set & setNew = vw->reference();
+      localIndex_set setOld = setNew;
+      setNew.clear();
       for( localIndex & node : setOld )
       {
-        set.insert( nodeReorder[node] );
+        setNew.insert( nodeReorder[node] );
       }
 
     } );
 
-#endif
+    GEOS_LOG_RANK_0( "Done!" );
+
+#endif // ELEM_PATCH_REORDER_NODES
   }
 #endif // USE_ELEM_PATCHES
 
