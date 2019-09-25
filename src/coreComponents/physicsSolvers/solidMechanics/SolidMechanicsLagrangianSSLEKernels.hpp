@@ -22,6 +22,7 @@
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 
@@ -46,7 +47,7 @@ struct StressCalculationKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView3d< R1Tensor const> const & DNDX,
           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( detJ ),
           arrayView1d<R1Tensor const> const & u )
   {
@@ -82,16 +83,16 @@ struct StressCalculationKernel
         real64 * const restrict p_stress = devStress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
+          real64 const v0_x_dNdXa0 = u_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 0 ];
+          real64 const v1_x_dNdXa1 = u_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 1 ];
+          real64 const v2_x_dNdXa2 = u_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 2 ];
 
           p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
           p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
           p_stress[ 5 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
-          p_stress[ 4 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
-          p_stress[ 3 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
-          p_stress[ 1 ] += ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+          p_stress[ 4 ] += ( u_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          p_stress[ 3 ] += ( u_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          p_stress[ 1 ] += ( u_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
 
         real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 2 ] + p_stress[ 5 ] ) / 3.0;
@@ -114,6 +115,7 @@ struct StressCalculationKernel
  */
 struct ExplicitKernel
 {
+#if 0
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -137,7 +139,7 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView3d< R1Tensor const> const & DNDX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
@@ -176,16 +178,16 @@ struct ExplicitKernel
         real64 p_stress[ 6 ] = { 0 };
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
+          real64 const v0_x_dNdXa0 = v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 0 ];
+          real64 const v1_x_dNdXa1 = v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 1 ];
+          real64 const v2_x_dNdXa2 = v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 2 ];
 
           p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) * dt;
           p_stress[ 1 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) * dt;
           p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) * dt;
-          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] * dt;
-          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] * dt;
-          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
+          p_stress[ 3 ] += ( v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 1 ] + v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] * dt;
+          p_stress[ 4 ] += ( v_local[ a ][ 2 ] * DNDX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] * dt;
+          p_stress[ 5 ] += ( v_local[ a ][ 1 ] * DNDX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * DNDX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
         }
 
         real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
@@ -205,15 +207,15 @@ struct ExplicitKernel
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                          + p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                          + dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                        + p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                        + dNdX[ k ][ q ][ a ][ 1 ] * (p_devStress[ 2 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                        + p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                        + dNdX[ k ][ q ][ a ][ 2 ] * (p_devStress[ 5 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
+          f_local[ a ][ 0 ] -= ( p_devStress[ 1 ] * DNDX[ k ][ q ][ a ][ 1 ]
+                          + p_devStress[ 3 ] * DNDX[ k ][ q ][ a ][ 2 ]
+                          + DNDX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( p_devStress[ 1 ] * DNDX[ k ][ q ][ a ][ 0 ]
+                        + p_devStress[ 4 ] * DNDX[ k ][ q ][ a ][ 2 ]
+                        + DNDX[ k ][ q ][ a ][ 1 ] * (p_devStress[ 2 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( p_devStress[ 3 ] * DNDX[ k ][ q ][ a ][ 0 ]
+                        + p_devStress[ 4 ] * DNDX[ k ][ q ][ a ][ 1 ]
+                        + DNDX[ k ][ q ][ a ][ 2 ] * (p_devStress[ 5 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
         }
       }//quadrature loop
 
@@ -228,6 +230,124 @@ struct ExplicitKernel
 
     return dt;
   }
+#else
+
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
+  static inline real64
+  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+          LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
+          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView3d< R1Tensor const> const &,
+          arrayView2d<real64 const> const &,
+          arrayView1d<R1Tensor const> const & X,
+          arrayView1d<R1Tensor const> const & u,
+          arrayView1d<R1Tensor> const & acc,
+          arrayView2d<real64> const & ,
+          arrayView2d<R2SymTensor> const & ,
+          real64 const dt )
+  {
+   GEOSX_MARK_FUNCTION;
+
+#if defined(__CUDACC__)
+    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+#elif defined(GEOSX_USE_OPENMP)
+    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+#else
+    using KERNEL_POLICY = RAJA::loop_exec;
+#endif
+
+//    localIndex const numElems = elemsToNodes.size(0);
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
+//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
+//                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
+//    {
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+    {
+      localIndex const k = elementList[ i ];
+
+      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
+
+      real64 const G = constitutive.m_shearModulus[k];
+      real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
+      real64 const Lame2G = 2*G + Lame;
+      //Compute Quadrature
+      for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+      {
+        real64 dNdX_data[3][8];
+#define DNDX(k,q,a,i) dNdX_data[i][a]
+
+        real64 const detJ_k_q =
+        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                            q,
+                                                            elemsToNodes,
+                                                            X,
+                                                            dNdX_data );
+
+//#define ULOCAL
+#ifdef ULOCAL
+        real64 uLocal[3][8];
+        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+        {
+          localIndex const nib = elemsToNodes(k, a);
+          for( int i=0 ; i<3 ; ++i )
+          {
+            uLocal[i][a] = u[nib][i];
+          }
+        }
+
+#define U(i,b) uLocal[i][b]
+#else
+#define U(i,b) u[nib][i]
+#endif
+
+        #pragma unroll
+        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+        {
+          for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
+          {
+#if !defined(ULOCAL)
+            localIndex const nib = elemsToNodes(k, b);
+#endif
+//            real64 const unib[3] = { u[nib][0], u[nib][1], u[nib][2] };
+            real64 const dNdXa0_dNdXb0 = DNDX(k,q,a,0)*DNDX(k,q,b,0);
+            real64 const dNdXa1_dNdXb1 = DNDX(k,q,a,1)*DNDX(k,q,b,1);
+            real64 const dNdXa2_dNdXb2 = DNDX(k,q,a,2)*DNDX(k,q,b,2);
+
+            f_local[a][0] -= ( U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,1)*Lame ) +
+                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,2)*Lame ) +
+                               U(0,b)*( dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*G + dNdXa0_dNdXb0*(Lame2G))
+                             ) * detJ_k_q;
+
+            f_local[a][1] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,0)*Lame ) +
+                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,2)*Lame ) +
+                               U(1,b)*( dNdXa0_dNdXb0*G + dNdXa2_dNdXb2*G + dNdXa1_dNdXb1*(Lame2G))
+                             ) * detJ_k_q;
+
+            f_local[a][2] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,0)*Lame ) +
+                               U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,1)*Lame ) +
+                               U(2,b)*( dNdXa0_dNdXb0*G + dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*(Lame2G))
+                             ) * detJ_k_q;
+          }
+        }
+      }//quadrature loop
+
+      #pragma unroll
+      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        #pragma unroll
+        for ( int b = 0; b < 3; ++b )
+        {
+          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes(k, a) ][ b ], f_local[ a ][ b ] );
+        }
+      }
+    });
+
+    return dt;
+  }
+#endif
 };
 
 /**
@@ -272,7 +392,7 @@ struct ImplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
           real64 const dt,
-          arrayView3d<R1Tensor const> const & dNdX,
+          arrayView3d<R1Tensor const> const & DNDX,
           arrayView2d<real64 const > const& detJ,
           FiniteElementBase const * const fe,
           arrayView1d< integer const > const & elemGhostRank,
@@ -377,12 +497,12 @@ struct ImplicitKernel
           for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
           {
       //      realT const * const dNdXa = dNdX(q,a).Data();
-            dNdXa = dNdX[k][q][a];
+            dNdXa = DNDX[k][q][a];
 
             for( integer b=0 ; b<NUM_NODES_PER_ELEM ; ++b )
             {
       //        realT const * const dNdXb = dNdX(q,b).Data();
-              dNdXb = dNdX[k][q][b];
+              dNdXb = DNDX[k][q][b];
 
               dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
               dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
@@ -425,7 +545,7 @@ struct ImplicitKernel
             stress0 *= detJq;
             for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
             {
-              dNdXa = dNdX[k][q][a];
+              dNdXa = DNDX[k][q][a];
 
               temp.AijBj(stress0,dNdXa);
               realT maxF = temp.MaxVal();

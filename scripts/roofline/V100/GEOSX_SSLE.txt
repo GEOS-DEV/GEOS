@@ -1,0 +1,11 @@
+memroofs 14336 2996.77 828.758
+mem_roof_names 'L1' 'L2' 'HBM'
+comproofs 7068.86 3535.79
+comp_roof_names 'FMA' 'No-FMA'
+
+# omit the following if only plotting roofs
+AI_HBM 135
+AI_L2 18.4
+AI_L1 20.9
+FLOPS 4390
+labels 'elem-krnl'

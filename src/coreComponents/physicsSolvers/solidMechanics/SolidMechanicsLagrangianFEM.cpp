@@ -472,6 +472,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
   arrayView1d<R1Tensor> const & vel = velocityArray;
 
+  arrayView1d<R1Tensor> const & X = nodes->referencePosition();
   arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
   arrayView1d<R1Tensor> const & uhat = nodes->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
   arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
@@ -492,31 +493,31 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
-  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
-    {
-      integer const component = bc->GetComponent();
-      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
-        GEOSX_DEVICE_LAMBDA( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          vel[a][component] = u[a][component];
-        }
-      );
-    },
-    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
-    {
-      integer const component = bc->GetComponent();
-      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
-        GEOSX_DEVICE_LAMBDA( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          uhat[a][component] = u[a][component] - vel[a][component];
-          vel[a][component]  = uhat[a][component] / dt;
-        }
-      );
-    }
-  );
+//  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
+//    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+//    {
+//      integer const component = bc->GetComponent();
+//      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+//        GEOSX_DEVICE_LAMBDA( localIndex const i )
+//        {
+//          localIndex const a = targetSet[ i ];
+//          vel[a][component] = u[a][component];
+//        }
+//      );
+//    },
+//    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+//    {
+//      integer const component = bc->GetComponent();
+//      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+//        GEOSX_DEVICE_LAMBDA( localIndex const i )
+//        {
+//          localIndex const a = targetSet[ i ];
+//          uhat[a][component] = u[a][component] - vel[a][component];
+//          vel[a][component]  = uhat[a][component] / dt;
+//        }
+//      );
+//    }
+//  );
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
   meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
@@ -557,6 +558,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    elemsToNodes,
                                    dNdX,
                                    detJ,
+                                   X,
                                    u,
                                    vel,
                                    acc,
@@ -602,6 +604,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    elemsToNodes,
                                    dNdX,
                                    detJ,
+                                   X,
                                    u,
                                    vel,
                                    acc,
