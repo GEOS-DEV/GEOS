@@ -68,6 +68,20 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
       this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
     });
   });
+
+#if USE_ELEM_PATCHES
+  this->m_patchOffsets = source->patchOffsets();
+  this->m_patchNodes = source->patchNodes();
+  this->m_patchToNodesRelation = source->patchNodeList();
+
+  this->m_patchOffsets.setUserCallBack( "CellElementSubRegion::patchOffsets" );
+  this->m_patchNodes.setUserCallBack("CellElementSubRegion::patchNodes");
+  this->m_patchToNodesRelation.setUserCallBack( "CellElementSubRegion::patchToNodesRelation" );
+#if ELEM_PATCH_VIZ
+  this->m_elemIndex = source->m_elemIndex;
+  this->m_patchIndex = source->m_patchIndex;
+#endif
+#endif
 }
 
 void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,

@@ -42,11 +42,10 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   registerWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
 
 #if USE_ELEM_PATCHES && ELEM_PATCH_VIZ
-  RegisterViewWrapper( "patchIndex", &m_patchIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
+  registerWrapper( "patchIndex", &m_patchIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
     setDefaultValue( -1 )->
     setDescription( "Index of element patch" );
-
-  RegisterViewWrapper( "elemIndex", &m_elemIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
+  registerWrapper( "elemIndex", &m_elemIndex, false )->setPlotLevel( PlotLevel::LEVEL_0 )->
     setDefaultValue( -1 )->
     setDescription( "Local index of element" );
 #endif

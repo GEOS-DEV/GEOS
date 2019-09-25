@@ -24,7 +24,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-#define USE_ELEM_PATCHES 0
+#define USE_ELEM_PATCHES 1
 
 #if USE_ELEM_PATCHES
   #define ELEM_PATCH_MAX_ELEM 64

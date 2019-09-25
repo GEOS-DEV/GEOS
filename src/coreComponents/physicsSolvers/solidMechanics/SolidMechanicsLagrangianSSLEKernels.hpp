@@ -24,7 +24,7 @@
 #if USE_ELEM_PATCHES
   #define SSLE_USE_PATCH_KERNEL 1
   #if SSLE_USE_PATCH_KERNEL
-    #define SSLE_PATCH_KERNEL_SHARED_FVEC 1
+    #define SSLE_PATCH_KERNEL_SHARED_FVEC 0
   #endif
 #endif
 
@@ -325,6 +325,8 @@ struct ExplicitKernel
     >;
 
 #endif
+
+    GEOS_LOG_RANK( "Launching element kernel on " << elemPatchOffsets.size()-1 << " patches" );
 
     RAJA::kernel_param<KERNEL_POLICY>
       ( RAJA::make_tuple(
