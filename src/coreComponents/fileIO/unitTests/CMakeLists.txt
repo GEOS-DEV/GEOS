@@ -6,7 +6,7 @@ set(testSources
     testLASIO.cpp
    )
 
-set(dependencyList gtest fileIO )
+set(dependencyList gtest fileIO geosx_core )
 
 set( LAS_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/las_example.las )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/wellFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/wellFileNames.hpp )

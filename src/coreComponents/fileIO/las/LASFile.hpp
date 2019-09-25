@@ -509,7 +509,7 @@ class LASASCIILogDataSection : public LASSection
      * @brief returns the ith log
      * @param[in] i  index of the log
      */
-    LvArray::ArraySlice1d_rval<real64, localIndex> const GetLog( localIndex i ) const
+    LvArray::ArraySlice1d_rval<real64, localIndex> GetLog( localIndex i ) const
     {
       return m_logs[i];
     }
@@ -614,7 +614,7 @@ class LASFile
       file.close();
     }
 
-    LvArray::ArraySlice1d_rval<real64, localIndex> const GetLog( string const & logName ) const
+    LvArray::ArraySlice1d_rval<real64, localIndex> GetLog( string const & logName ) const
     {
       if( !HasLog( logName ) )
       {
@@ -705,8 +705,7 @@ class LASFile
           LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( *itr );
           if( lasCurve->HasKeyword( logName ) )
           {
-            localIndex logIndex = lasCurve->FindLogIndex( logName );
-            GEOS_ASSERT( logIndex > -1 );
+            GEOS_ASSERT( lasCurve->FindLogIndex( logName ) > -1 );
             return m_lasASCIILogDataSection[logSectionIndex].LogSize();
           }
           else

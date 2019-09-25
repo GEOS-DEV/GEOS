@@ -31,7 +31,6 @@ using namespace geosx::dataRepository;
  */
 TEST( PAMELAImport, testXML )
 {
-  std::cout << "allo" << std::endl;
   // Load and save the LAS file
   LASFile lasFile;
   lasFile.Load(lasFilePath);
@@ -64,8 +63,8 @@ TEST( PAMELAImport, testXML )
   {
     for( integer logIndex = 0; logIndex < logSection.NbLogs() ; logIndex++ )
     {
-      auto & log1 = logSection.GetLog( logIndex );
-      auto & log2 = lasFile.GetLogSection(logSectionIndex).GetLog( logIndex );
+      auto log1 = logSection.GetLog( logIndex );
+      auto log2 = lasFile.GetLogSection(logSectionIndex).GetLog( logIndex );
       for( integer entryIndex = 0; entryIndex < logSection.LogSize(); entryIndex++ )
       {
         GEOS_ERROR_IF( ( log1[entryIndex] - log2[entryIndex] ) / log2[entryIndex] > tolerance,
