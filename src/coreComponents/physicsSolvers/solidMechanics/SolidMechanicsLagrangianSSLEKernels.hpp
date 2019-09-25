@@ -18,6 +18,20 @@
 
 #pragma once
 
+#include "mesh/CellBlock.hpp"
+#include "RAJA/RAJA.hpp"
+
+#if USE_ELEM_PATCHES
+  #define SSLE_USE_PATCH_KERNEL 1
+  #if SSLE_USE_PATCH_KERNEL
+    #define SSLE_PATCH_KERNEL_SHARED_FVEC 1
+  #endif
+#endif
+
+#if SSLE_USE_PATCH_KERNEL
+using PATCH_NODAL_DATA = RAJA::LocalArray< geosx::real64, RAJA::Perm< 0, 1 >, RAJA::SizeList< ELEM_PATCH_MAX_NODE, 3>>;
+#endif
+
 #include "common/DataTypes.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -25,8 +39,6 @@
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
-
-#include "RAJA/RAJA.hpp"
 
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"
@@ -237,6 +249,11 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
+#if USE_ELEM_PATCHES
+          arrayView1d<localIndex const> const & elemPatchOffsets,
+          LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
+          arrayView2d<localIndex const> const & elemPatchElemsToNodes,
+#endif
           arrayView3d< R1Tensor const> const &,
           arrayView2d<real64 const> const &,
           arrayView1d<R1Tensor const> const & X,
@@ -246,7 +263,225 @@ struct ExplicitKernel
           arrayView2d<R2SymTensor> const & ,
           real64 const dt )
   {
-   GEOSX_MARK_FUNCTION;
+    GEOSX_MARK_FUNCTION;
+
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
+#if SSLE_USE_PATCH_KERNEL
+
+    GEOSX_UNUSED_VAR( elemsToNodes );
+
+    if( elementList.empty() )
+    {
+      return dt;
+    }
+
+
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+    using InitMemParamList = RAJA::ParamList<0, 1, 2>;
+    PATCH_NODAL_DATA ext_f_patch;
+#else
+    using InitMemParamList = RAJA::ParamList<0, 1>;
+#endif
+    PATCH_NODAL_DATA ext_X_patch;
+    PATCH_NODAL_DATA ext_u_patch;
+
+
+#if defined(__CUDACC__)
+
+    using KERNEL_POLICY =
+      RAJA::KernelPolicy<
+      RAJA::statement::CudaKernel<
+        RAJA::statement::For<0, RAJA::cuda_block_x_loop,
+          RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
+            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<0>>,
+            RAJA::statement::CudaSyncThreads,
+            RAJA::statement::For<1, RAJA::cuda_thread_x_direct, RAJA::statement::Lambda<1>>
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+            ,
+            RAJA::statement::CudaSyncThreads
+            RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<2>>,
+#endif
+          >
+        >
+      >
+    >;
+
+#else
+
+    using KERNEL_POLICY =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<0, RAJA::loop_exec,
+        RAJA::statement::InitLocalMem<RAJA::cpu_tile_mem, InitMemParamList,
+          RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<0>>,
+          RAJA::statement::For<1, RAJA::loop_exec, RAJA::statement::Lambda<1>>
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+        ,
+          RAJA::statement::For<2, RAJA::loop_exec, RAJA::statement::Lambda<2>>
+#endif
+        >
+      >
+    >;
+
+#endif
+
+    RAJA::kernel_param<KERNEL_POLICY>
+      ( RAJA::make_tuple(
+          RAJA::TypedRangeSegment<localIndex>( 0, elemPatchOffsets.size() - 1 ),
+          RAJA::TypedRangeSegment<localIndex>( 0, ELEM_PATCH_MAX_ELEM ),
+          RAJA::TypedRangeSegment<localIndex>( 0, ELEM_PATCH_MAX_NODE )
+        ),
+        RAJA::make_tuple(
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+          ext_f_patch,
+#endif
+          ext_X_patch,
+          ext_u_patch
+        ),
+
+        /*
+         * The first lambda loads nodal data from global memory into shared memory arrays
+         */
+        GEOSX_DEVICE_LAMBDA( localIndex const patch,
+                             localIndex const GEOSX_UNUSED_ARG(),
+                             localIndex const node,
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+                             PATCH_NODAL_DATA & f_patch,
+#endif
+                             PATCH_NODAL_DATA & X_patch,
+                             PATCH_NODAL_DATA & u_patch )
+        {
+          if( node < elemPatchNodes.sizeOfArray( patch ) )
+          {
+            localIndex const nodeIndex = elemPatchNodes[patch][node];
+            //GEOS_LOG( "Prefetching node " << nodeIndex );
+            #pragma unroll
+            for( int b = 0 ; b < 3 ; ++b )
+            {
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+              f_patch( node, b ) = 0.0;
+#endif
+              X_patch( node, b ) = X[ nodeIndex ][b];
+              u_patch( node, b ) = u[ nodeIndex ][b];
+            }
+          }
+        },
+
+        /*
+         * The second lambda performs update of local force vector
+         */
+        GEOSX_DEVICE_LAMBDA( localIndex const patch,
+                             localIndex const elem,
+                             localIndex const GEOSX_UNUSED_ARG(),
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+                             PATCH_NODAL_DATA & f_patch,
+#endif
+                             PATCH_NODAL_DATA & X_patch,
+                             PATCH_NODAL_DATA & u_patch )
+        {
+          localIndex const patchSize = elemPatchOffsets[patch+1] - elemPatchOffsets[patch];
+
+          // The check is needed since we are launching on non-uniformly sized patches
+          if( elem >= patchSize )
+          {
+            return;
+          }
+
+          localIndex const k = elemPatchOffsets[patch] + elem;
+
+          real64 const G = constitutive.m_shearModulus[k];
+          real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
+          real64 const Lame2G = 2*G + Lame;
+
+#if SSLE_PATCH_KERNEL_SHARED_FVEC
+#define FORCE_SUB(k, a, b, expr) RAJA::atomicSub<RAJA::auto_atomic>( &f_patch( elemPatchElemsToNodes(k, a), b ), (expr) )
+#else
+          real64 f_local[NUM_NODES_PER_ELEM][3]{};
+#define FORCE_SUB(k, a, b, expr) f_local[ a ][ b ] -= (expr)
+#endif
+
+          //Compute Quadrature
+          for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+          {
+            real64 dNdX_data[3][8];
+#define DNDX(k,q,a,i) dNdX_data[i][a]
+
+            real64 const detJ_k_q =
+              FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                                  q,
+                                                                  elemPatchElemsToNodes,
+                                                                  X_patch,
+                                                                  dNdX_data );
+
+            #pragma unroll
+            for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+            {
+              for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
+              {
+                localIndex const nib = elemPatchElemsToNodes(k, b);
+
+                real64 const dNdXa0_dNdXb0 = DNDX(k,q,a,0)*DNDX(k,q,b,0);
+                real64 const dNdXa1_dNdXb1 = DNDX(k,q,a,1)*DNDX(k,q,b,1);
+                real64 const dNdXa2_dNdXb2 = DNDX(k,q,a,2)*DNDX(k,q,b,2);
+
+                FORCE_SUB(k, a, 0,
+                                 ( u_patch(nib,1)*( DNDX(k,q,a,1)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,1)*Lame ) +
+                                   u_patch(nib,2)*( DNDX(k,q,a,2)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,2)*Lame ) +
+                                   u_patch(nib,0)*( dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*G + dNdXa0_dNdXb0*(Lame2G))
+                                 ) * detJ_k_q );
+
+                FORCE_SUB(k, a, 1,
+                                 ( u_patch(nib,0)*( DNDX(k,q,a,0)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,0)*Lame ) +
+                                   u_patch(nib,2)*( DNDX(k,q,a,2)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,2)*Lame ) +
+                                   u_patch(nib,1)*( dNdXa0_dNdXb0*G + dNdXa2_dNdXb2*G + dNdXa1_dNdXb1*(Lame2G))
+                                 ) * detJ_k_q );
+
+                FORCE_SUB(k, a, 2,
+                                 ( u_patch(nib,0)*( DNDX(k,q,a,0)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,0)*Lame ) +
+                                   u_patch(nib,1)*( DNDX(k,q,a,1)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,1)*Lame ) +
+                                   u_patch(nib,2)*( dNdXa0_dNdXb0*G + dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*(Lame2G))
+                                 ) * detJ_k_q );
+              }
+            }
+          }//quadrature loop
+
+#if ! SSLE_PATCH_KERNEL_SHARED_FVEC
+          #pragma unroll
+          for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+          {
+            #pragma unroll
+            for ( int b = 0; b < 3; ++b )
+            {
+              RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes( k, a ) ][ b ], f_local[ a ][ b ] );
+            }
+          }
+#else
+        },
+        /*
+         * The third lambda pushes nodal updates from shared memory arrays into global memory
+         */
+        GEOSX_DEVICE_LAMBDA( localIndex const patch,
+                             localIndex const GEOSX_UNUSED_ARG(),
+                             localIndex const node,
+                             PATCH_NODAL_DATA & f_patch,
+                             PATCH_NODAL_DATA & GEOSX_UNUSED_ARG(),
+                             PATCH_NODAL_DATA & GEOSX_UNUSED_ARG() )
+        {
+          if( node < elemPatchNodes.sizeOfArray( patch ) )
+          {
+            for( int b = 0 ; b < 3 ; ++b )
+            {
+              RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemPatchNodes( patch, node ) ][ b ], f_patch( node , b ) );
+            }
+          }
+#endif
+        }
+    );
+
+
+
+#else
 
 #if defined(__CUDACC__)
     using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
@@ -256,11 +491,7 @@ struct ExplicitKernel
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
-//    localIndex const numElems = elemsToNodes.size(0);
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
-
-//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
+//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elemsToNodes.size(0) ),
 //                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
 //    {
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -344,6 +575,7 @@ struct ExplicitKernel
         }
       }
     });
+#endif
 
     return dt;
   }

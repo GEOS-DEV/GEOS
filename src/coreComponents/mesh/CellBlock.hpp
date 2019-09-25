@@ -24,7 +24,14 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
+#define USE_ELEM_PATCHES 1
+
+#if USE_ELEM_PATCHES
+  #define ELEM_PATCH_MAX_ELEM 64
+  #define ELEM_PATCH_MAX_NODE 128
+  #define ELEM_PATCH_VIZ 0
+  #define ELEM_PATCH_REORDER_NODES 1
+#endif
 
 class StableTimeStep;
 

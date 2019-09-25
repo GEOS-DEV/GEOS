@@ -32,8 +32,6 @@
 
 #include "common/TimingMacros.hpp"
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernelConfig.hpp"
-
 namespace geosx
 {
 using namespace dataRepository;

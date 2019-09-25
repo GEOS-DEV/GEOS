@@ -172,6 +172,11 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                set<localIndex> const & elementList,
                                arrayView2d<localIndex const> const & elemsToNodes,
+#if USE_ELEM_PATCHES
+                               arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( elemPatchOffsets ),
+                               LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & GEOSX_UNUSED_ARG( elemPatchNodes ),
+                               arrayView2d<localIndex const> const & GEOSX_UNUSED_ARG( elemPatchElemsToNodes ),
+#endif
                                arrayView3d< R1Tensor const> const & dNdX,
                                arrayView2d<real64 const> const & detJ,
                                arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( X ),

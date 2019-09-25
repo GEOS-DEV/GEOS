@@ -556,6 +556,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
+#if USE_ELEM_PATCHES
+                                   elementSubRegion->patchOffsets(),
+                                   elementSubRegion->patchNodes(),
+                                   elementSubRegion->patchNodeList(),
+#endif
                                    dNdX,
                                    detJ,
                                    X,
@@ -602,6 +607,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    constitutiveRelations[er][esr][m_solidMaterialFullIndex],
                                    this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
                                    elemsToNodes,
+#if USE_ELEM_PATCHES
+                                   elementSubRegion->patchOffsets(),
+                                   elementSubRegion->patchNodes(),
+                                   elementSubRegion->patchNodeList(),
+#endif
                                    dNdX,
                                    detJ,
                                    X,

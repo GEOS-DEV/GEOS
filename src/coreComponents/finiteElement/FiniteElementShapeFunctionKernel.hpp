@@ -35,7 +35,7 @@ public:
   constexpr static bool isOdd( T const a )
   {
     return a % 2;
-  };
+  }
 
   template< typename T >
   GEOSX_HOST_DEVICE
@@ -43,7 +43,7 @@ public:
   constexpr static bool isEven( T const a )
   {
     return !(a % 2);
-  };
+  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -131,7 +131,13 @@ public:
   static real64 shapeFunctionDerivatives( localIndex const k,
                                           localIndex const q,
                                           arrayView2d<localIndex const> const & elemsToNodes,
+#if SSLE_USE_PATCH_KERNEL
+                                          PATCH_NODAL_DATA & X,
+#define XX( k, a, i ) X( elemsToNodes(k, a), i )
+#else
                                           arrayView1d<R1Tensor const> const & X,
+#define XX( k, a, i ) X[elemsToNodes(k, a)][i]
+#endif
                                           real64 (&dNdX)[3][numNodes] )
   {
     real64 J[3][3] = {{0}};
@@ -140,9 +146,9 @@ public:
     {
       for ( int i = 0; i < 3; ++i )
       {
-        J[i][0] += X[elemsToNodes(k, a)][i] * dNdXi0(q,a);
-        J[i][1] += X[elemsToNodes(k, a)][i] * dNdXi1(q,a);
-        J[i][2] += X[elemsToNodes(k, a)][i] * dNdXi2(q,a);
+        J[i][0] += XX(k, a, i) * dNdXi0(q,a);
+        J[i][1] += XX(k, a, i) * dNdXi1(q,a);
+        J[i][2] += XX(k, a, i) * dNdXi2(q,a);
 //        #pragma unroll
 //        for ( int j = 0; j < 3; ++j )
 //        {
