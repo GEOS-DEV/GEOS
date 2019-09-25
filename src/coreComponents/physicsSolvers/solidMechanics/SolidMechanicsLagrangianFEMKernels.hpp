@@ -49,7 +49,7 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 #if defined(__CUDACC__)
-  using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+  using KERNEL_POLICY = RAJA::cuda_exec< 1024 >;
 #elif defined(GEOSX_USE_OPENMP)
   using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else

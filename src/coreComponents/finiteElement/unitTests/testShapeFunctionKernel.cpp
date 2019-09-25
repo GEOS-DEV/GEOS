@@ -56,7 +56,7 @@ void testKernelDriver()
 
 
   array2d<localIndex> elemsToNodesArray;
-  elemsToNodesArray.resize(numElems,8);
+  elemsToNodesArray.resize(8,numElems);
   arrayView2d<localIndex const> const & elemsToNodes = elemsToNodesArray;
 
   array1d<R1Tensor> xArray;
@@ -64,7 +64,7 @@ void testKernelDriver()
   arrayView1d<R1Tensor const> const & X = xArray;
 
   array2d<real64> resultArray;
-  resultArray.resize(numElems,3);
+  resultArray.resize(3,numElems);
   arrayView2d<real64> const & result = resultArray;
 
   constexpr  real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
@@ -76,7 +76,7 @@ void testKernelDriver()
     for( localIndex a=0 ; a<8 ; ++a )
     {
       localIndex const nodeIndex = a + k*4;
-      elemsToNodesArray[k][a]= nodeIndex;
+      elemsToNodesArray(a,k)= nodeIndex;
       xArray[nodeIndex][0] = pCoords[0][a] * randomOne();
       xArray[nodeIndex][1] = pCoords[1][a] * randomOne();
       xArray[nodeIndex][2] = pCoords[2][a] * randomOne() + k ;
@@ -114,7 +114,7 @@ void testKernelDriver()
         {
           for( localIndex i=0 ; i<3 ; ++i )
           {
-            result(k,i) += dNdX_data[i][a];
+            result(i,k) += dNdX_data[i][a];
           }
         }
       }
@@ -133,7 +133,7 @@ void testKernelDriver()
   {
     for( localIndex i=0 ; i<3 ; ++i )
     {
-      sum += result(k,i);
+      sum += result(i,k);
     }
   });
   std::cout<<sum.get()<<std::endl;
@@ -141,16 +141,17 @@ void testKernelDriver()
 
 }
 
-TEST( FiniteElementShapeFunctions, testKernelHost )
-{
-  testKernelDriver< parallelHostPolicy >();
-}
 
 #ifdef USE_CUDA
 
 CUDA_TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
   testKernelDriver<parallelDevicePolicy<1024> >();
+}
+#else
+TEST( FiniteElementShapeFunctions, testKernelHost )
+{
+  testKernelDriver< parallelHostPolicy >();
 }
 
 #endif
