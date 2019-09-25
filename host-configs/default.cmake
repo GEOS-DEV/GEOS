@@ -11,3 +11,6 @@ set(MPI_CXX_COMPILER "mpic++" CACHE PATH "" FORCE)
 set(MPIEXEC "mpirun" CACHE PATH "" FORCE)
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+
+# PETSc doesn't seem to work correctly with clang.
+set(ENABLE_PETSC OFF CACHE BOOL "")
