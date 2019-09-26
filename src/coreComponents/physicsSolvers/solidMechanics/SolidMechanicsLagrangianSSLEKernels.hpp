@@ -250,9 +250,16 @@ struct ExplicitKernel
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
 #if USE_ELEM_PATCHES
+#if SSLE_USE_PATCH_KERNEL
           arrayView1d<localIndex const> const & elemPatchOffsets,
           LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & elemPatchNodes,
           arrayView2d<localIndex const> const & elemPatchElemsToNodes,
+#else
+          arrayView1d<localIndex const> const & GEOSX_UNUSED_ARG( elemPatchOffsets ),
+          LvArray::ArrayOfArraysView<localIndex const, localIndex const, true> const & GEOSX_UNUSED_ARG( elemPatchNodes ),
+          arrayView2d<localIndex const> const & GEOSX_UNUSED_ARG( elemPatchElemsToNodes ),
+
+#endif
 #endif
           arrayView3d< R1Tensor const> const &,
           arrayView2d<real64 const> const &,
@@ -292,7 +299,7 @@ struct ExplicitKernel
 
     using KERNEL_POLICY =
     RAJA::KernelPolicy<
-      RAJA::statement::CudaKernel<
+      RAJA::statement::CudaKernelFixed<ELEM_PATCH_MAX_ELEM,
         RAJA::statement::For<0, RAJA::cuda_block_x_loop,
           RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
             RAJA::statement::For<2, RAJA::cuda_thread_x_loop, RAJA::statement::Lambda<0>>,

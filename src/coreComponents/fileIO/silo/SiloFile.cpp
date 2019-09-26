@@ -1831,7 +1831,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-//  if ( (isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
+if(0)// ( (isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
   {
 
     // face mesh
@@ -1947,7 +1947,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   }
 
 
-//  if ( isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
+if(0)// ( isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
   {
     // write edges
 
