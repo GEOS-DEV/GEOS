@@ -29,7 +29,7 @@
 #if USE_ELEM_PATCHES
   #define ELEM_PATCH_MAX_ELEM 64
   #define ELEM_PATCH_MAX_NODE 128
-  #define ELEM_PATCH_VIZ 0
+  #define ELEM_PATCH_VIZ 1
   #define ELEM_PATCH_REORDER_NODES 1
 #endif
 
@@ -267,6 +267,21 @@ public:
 
   array1d< localIndex > const & patchOffsets() const
   { return m_patchOffsets; }
+
+#if ELEM_PATCH_VIZ
+  array1d< localIndex > & patchIndex()
+  { return m_patchIndex; }
+
+  array1d< localIndex > const & patchIndex() const
+  { return m_patchIndex; }
+
+  array1d< localIndex > & elemIndex()
+  { return m_elemIndex; }
+
+  array1d< localIndex > const & elemIndex() const
+  { return m_elemIndex; }
+#endif
+
 #endif
 
 protected:

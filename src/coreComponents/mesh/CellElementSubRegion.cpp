@@ -78,8 +78,8 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock const * source )
   this->m_patchNodes.setUserCallBack("CellElementSubRegion::patchNodes");
   this->m_patchToNodesRelation.setUserCallBack( "CellElementSubRegion::patchToNodesRelation" );
 #if ELEM_PATCH_VIZ
-  this->m_elemIndex = source->m_elemIndex;
-  this->m_patchIndex = source->m_patchIndex;
+  this->m_elemIndex = source->elemIndex();
+  this->m_patchIndex = source->patchIndex();
 #endif
 #endif
 }

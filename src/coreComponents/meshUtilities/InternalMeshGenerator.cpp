@@ -1025,8 +1025,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
                   }
 
 #if ELEM_PATCH_VIZ
-                  elemRegion->m_elemIndex[newElemIndex] = newElemIndex;
-                  elemRegion->m_patchIndex[newElemIndex] = patchIndex;
+                  elemRegion->elemIndex()[newElemIndex] = newElemIndex;
+                  elemRegion->patchIndex()[newElemIndex] = patchIndex;
 #endif
                 }
 
