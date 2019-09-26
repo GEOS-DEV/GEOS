@@ -22,10 +22,8 @@
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
-#include "HYPRE.h"
-#include "_hypre_IJ_mv.h"
-#include "_hypre_IJ_mv.h"
-#include "_hypre_parcsr_mv.h"
+#include "HYPRE_IJ_mv.h"
+#include "HYPRE_parcsr_mv.h"
 
 namespace geosx
 {

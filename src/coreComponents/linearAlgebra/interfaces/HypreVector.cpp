@@ -24,6 +24,11 @@
 // Include the corresponding header file.
 #include "HypreVector.hpp"
 
+// Include required Hypre headers
+#include "HYPRE.h"
+#include "_hypre_IJ_mv.h"
+#include "_hypre_parcsr_mv.h"
+
 // Put everything under the geosx namespace.
 namespace geosx
 {

@@ -51,10 +51,12 @@ endif()
 if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
+                 interfaces/HypreMatrix.hpp
                  interfaces/HypreVector.hpp
                  interfaces/HypreInterface.hpp )
 
     list( APPEND linearAlgebra_sources
+                 interfaces/HypreMatrix.cpp
                  interfaces/HypreVector.cpp )
 
     list( APPEND dependencyList hypre )

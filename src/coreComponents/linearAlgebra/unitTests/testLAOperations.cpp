@@ -310,171 +310,171 @@ void testMatrixFunctions()
   EXPECT_EQ( rows4, 3 );
   EXPECT_EQ( cols4, 4 );
 
-  // Testing add/set/insert element
-  mat1.insert( 1, 0, .5 );
-  mat1.close();
-  mat1.set( 1, 0, 5 );
-  mat1.close();
-  mat1.add( 1, 0, 1 );
-  mat1.add( 1, 0, 2 );
-  mat1.close();
-
-  // Testing add/set/insert c-style, getRowCopy
-  globalIndex inds1[2] = {0, 2};
-  globalIndex inds2[1] = {0};
-  globalIndex inds3[3] = {0, 1, 2};
-  real64 vals1[2] = {5, 10};
-  real64 vals2[1] = {1};
-  real64 vals3[3] = {.5, 1, 2};
-  mat4.insert( 1, inds3, vals3, 3 );
-  mat4.close();
-  mat4.set( 1, inds1, vals1, 2 );
-  mat4.close();
-  mat4.add( 1, inds2, vals2, 1 );
-  mat4.close();
-
-  array1d<real64> colvals;
-  array1d<globalIndex> colinds;
-  mat4.getRowCopy( 1, colinds, colvals );
-  EXPECT_EQ( colinds.size(), 3 );
-  EXPECT_DOUBLE_EQ( colvals[0], 6 );
-  EXPECT_DOUBLE_EQ( colvals[1], 1 );
-  EXPECT_DOUBLE_EQ( colvals[2], 10 );
-
-  // Testing add/set/insert array1d
-  Matrix mat6;
-  mat6.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<real64> vals6( 3 );
-  array1d<real64> vals7( 3 );
-  array1d<globalIndex> inds6( 3 );
-  vals6[0] = 1;
-  vals6[1] = .5;
-  vals6[2] = -3;
-  vals7[0] = 1;
-  vals7[1] = 1;
-  vals7[2] = 1;
-  inds6[0] = 0;
-  inds6[1] = 1;
-  inds6[2] = 3;
-  mat6.insert(0, inds6, vals6);
-  mat6.close();
-  mat6.set(0, inds6, vals7);
-  mat6.close();
-  mat6.add(0, inds6, vals6);
-  mat6.close();
-
-  // Testing add/set/insert array2d
-  Matrix mat7;
-  mat7.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
-  array1d<globalIndex> rows( 2 );
-  array1d<globalIndex> cols( 2 );
-  array2d<real64> vals8( 2, 2 );
-  rows[0] = 0;
-  rows[1] = 2;
-  cols[0] = 1;
-  cols[1] = 3;
-  vals8[0][0] = 1;
-  vals8[0][1] = 2;
-  vals8[1][0] = 3;
-  vals8[1][1] = 4;
-  mat7.insert( rows, cols, vals8 );
-  mat7.close();
-  mat7.add( rows, cols, vals8 );
-  mat7.close();
-
-  // Testing set and zero
-  mat7.set( 2 );
-  mat7.close();
-  mat1.zero();
-  mat1.close();
-
-  // Testing vector multiply, matrix multiply, MatrixMatrixMultiply
-  vec1.createWithGlobalSize( 2, MPI_COMM_WORLD );
-  vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
-  vec1.set( 1 );
-  vec1.close();
-  globalIndex inds4[2] = {0, 1};
-  real64 vals4[2] = {1, 3};
-  real64 vals5[2] = {2, 1};
-  mat2.insert( 0, inds4, vals4, 2 );
-  mat2.insert( 1, inds4, vals5, 2 );
-  mat2.close();
-  mat2.multiply(vec1, vec2);
-  EXPECT_DOUBLE_EQ( vec2.get(0), 4 );
-  EXPECT_DOUBLE_EQ( vec2.get(1), 3 );
-  mat2.multiply(mat2, mat1);
-  array1d<real64> colvals2;
-  array1d<globalIndex> colinds2;
-  mat1.getRowCopy( 0, colinds2, colvals2 );
-  EXPECT_DOUBLE_EQ( colvals2[0], 7 );
-  EXPECT_DOUBLE_EQ( colvals2[1], 6 );
-  Matrix mat8;
-  mat8.createWithGlobalSize( 2, 2, MPI_COMM_WORLD );
-  mat1.MatrixMatrixMultiply( false, mat2, false, mat8, false );
-  mat1.MatrixMatrixMultiply( true, mat2, false, mat8, false );
-  mat1.MatrixMatrixMultiply( true, mat2, true, mat8, false );
-
-  // Testing residual, gemv
-  vec3.createWithGlobalSize( 2, MPI_COMM_WORLD );
-  mat2.residual(vec1, vec2, vec3);
-  EXPECT_DOUBLE_EQ( vec3.get(0), 0 ); // mat2*vec1 = vec2
-  EXPECT_DOUBLE_EQ( vec3.get(1), 0 );
-  vec3.copy(vec2);
-  mat2.gemv( 2, vec1, .5, vec2 );
-  EXPECT_DOUBLE_EQ( vec2.get(0), 10 );
-  EXPECT_DOUBLE_EQ( vec2.get(1), 7.5 );
-  mat2.gemv( 2, vec1, .5, vec3, true );
-  EXPECT_DOUBLE_EQ( vec3.get(0), 8 );
-  EXPECT_DOUBLE_EQ( vec3.get(1), 9.5 );
-
-  // Testing scale, left/right scaling
-  mat2.scale( 2 );
-  array1d<real64> colvals4;
-  array1d<globalIndex> colinds4;
-  mat2.getRowCopy( 0, colinds4, colvals4 );
-  EXPECT_DOUBLE_EQ( colvals4[0], 2 );
-  EXPECT_DOUBLE_EQ( colvals4[1], 6 );
-  vec1.set( 0, 2 );
-  vec1.set( 1, 0.5 );
-  vec1.close();
-  vec2.set( 0, .5 );
-  vec2.set( 1, 3 );
-  vec2.close();
-  mat2.leftScale( vec1 );
-  mat2.rightScale( vec2 );
-  mat2.leftRightScale( vec2, vec1 );
-  array1d<real64> colvals5;
-  array1d<globalIndex> colinds5;
-  mat2.getRowCopy( 1, colinds5, colvals5 );
-  EXPECT_DOUBLE_EQ( colvals5[0], 6 );
-  EXPECT_DOUBLE_EQ( colvals5[1], 4.5 );
-
-  // Testing clearRow
-  Matrix mat5 = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, 2 );
-  mat5.clearRow(0, 5);
-  array1d<real64> colvals3;
-  array1d<globalIndex> colinds3;
-  mat5.getRowCopy( 0, colinds3, colvals3 );
-  EXPECT_DOUBLE_EQ( colvals3[0], 5 );
-
-  // Testing print, write, printParallelMatrix
-  // mat5.print();
-  // mat5.write("matout.mtx", true);
-  // mat5.write("matout.m", false);
-  // mat5.printParallelMatrix("matout2.mtx");
-
-  // Testing ilower, iupper, getLocalRowID, getGlobalRowID, numMyCols
-  if (numranks == 1) {
-    EXPECT_EQ( mat5.ilower(), 0 );
-    EXPECT_EQ( mat5.iupper(), 4 );
-  }
-  EXPECT_EQ( mat5.globalRows(), 4 );
-  EXPECT_EQ( mat5.globalCols(), 4 );
-  EXPECT_EQ( mat5.getLocalRowID( 0 ), 0 );
-  EXPECT_EQ( mat5.getLocalRowID( 2 ), 2 );
-  EXPECT_EQ( mat5.getGlobalRowID( 1 ), 1 );
-  EXPECT_EQ( mat5.getGlobalRowID( 3 ), 3 );
-  // EXPECT_EQ( mat5.numMyCols(), 4 );
+//  // Testing add/set/insert element
+//  mat1.insert( 1, 0, .5 );
+//  mat1.close();
+//  mat1.set( 1, 0, 5 );
+//  mat1.close();
+//  mat1.add( 1, 0, 1 );
+//  mat1.add( 1, 0, 2 );
+//  mat1.close();
+//
+//  // Testing add/set/insert c-style, getRowCopy
+//  globalIndex inds1[2] = {0, 2};
+//  globalIndex inds2[1] = {0};
+//  globalIndex inds3[3] = {0, 1, 2};
+//  real64 vals1[2] = {5, 10};
+//  real64 vals2[1] = {1};
+//  real64 vals3[3] = {.5, 1, 2};
+//  mat4.insert( 1, inds3, vals3, 3 );
+//  mat4.close();
+//  mat4.set( 1, inds1, vals1, 2 );
+//  mat4.close();
+//  mat4.add( 1, inds2, vals2, 1 );
+//  mat4.close();
+//
+//  array1d<real64> colvals;
+//  array1d<globalIndex> colinds;
+//  mat4.getRowCopy( 1, colinds, colvals );
+//  EXPECT_EQ( colinds.size(), 3 );
+//  EXPECT_DOUBLE_EQ( colvals[0], 6 );
+//  EXPECT_DOUBLE_EQ( colvals[1], 1 );
+//  EXPECT_DOUBLE_EQ( colvals[2], 10 );
+//
+//  // Testing add/set/insert array1d
+//  Matrix mat6;
+//  mat6.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
+//  array1d<real64> vals6( 3 );
+//  array1d<real64> vals7( 3 );
+//  array1d<globalIndex> inds6( 3 );
+//  vals6[0] = 1;
+//  vals6[1] = .5;
+//  vals6[2] = -3;
+//  vals7[0] = 1;
+//  vals7[1] = 1;
+//  vals7[2] = 1;
+//  inds6[0] = 0;
+//  inds6[1] = 1;
+//  inds6[2] = 3;
+//  mat6.insert(0, inds6, vals6);
+//  mat6.close();
+//  mat6.set(0, inds6, vals7);
+//  mat6.close();
+//  mat6.add(0, inds6, vals6);
+//  mat6.close();
+//
+//  // Testing add/set/insert array2d
+//  Matrix mat7;
+//  mat7.createWithGlobalSize( 4, 4, MPI_COMM_WORLD );
+//  array1d<globalIndex> rows( 2 );
+//  array1d<globalIndex> cols( 2 );
+//  array2d<real64> vals8( 2, 2 );
+//  rows[0] = 0;
+//  rows[1] = 2;
+//  cols[0] = 1;
+//  cols[1] = 3;
+//  vals8[0][0] = 1;
+//  vals8[0][1] = 2;
+//  vals8[1][0] = 3;
+//  vals8[1][1] = 4;
+//  mat7.insert( rows, cols, vals8 );
+//  mat7.close();
+//  mat7.add( rows, cols, vals8 );
+//  mat7.close();
+//
+//  // Testing set and zero
+//  mat7.set( 2 );
+//  mat7.close();
+//  mat1.zero();
+//  mat1.close();
+//
+//  // Testing vector multiply, matrix multiply, MatrixMatrixMultiply
+//  vec1.createWithGlobalSize( 2, MPI_COMM_WORLD );
+//  vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
+//  vec1.set( 1 );
+//  vec1.close();
+//  globalIndex inds4[2] = {0, 1};
+//  real64 vals4[2] = {1, 3};
+//  real64 vals5[2] = {2, 1};
+//  mat2.insert( 0, inds4, vals4, 2 );
+//  mat2.insert( 1, inds4, vals5, 2 );
+//  mat2.close();
+//  mat2.multiply(vec1, vec2);
+//  EXPECT_DOUBLE_EQ( vec2.get(0), 4 );
+//  EXPECT_DOUBLE_EQ( vec2.get(1), 3 );
+//  mat2.multiply(mat2, mat1);
+//  array1d<real64> colvals2;
+//  array1d<globalIndex> colinds2;
+//  mat1.getRowCopy( 0, colinds2, colvals2 );
+//  EXPECT_DOUBLE_EQ( colvals2[0], 7 );
+//  EXPECT_DOUBLE_EQ( colvals2[1], 6 );
+//  Matrix mat8;
+//  mat8.createWithGlobalSize( 2, 2, MPI_COMM_WORLD );
+//  mat1.MatrixMatrixMultiply( false, mat2, false, mat8, false );
+//  mat1.MatrixMatrixMultiply( true, mat2, false, mat8, false );
+//  mat1.MatrixMatrixMultiply( true, mat2, true, mat8, false );
+//
+//  // Testing residual, gemv
+//  vec3.createWithGlobalSize( 2, MPI_COMM_WORLD );
+//  mat2.residual(vec1, vec2, vec3);
+//  EXPECT_DOUBLE_EQ( vec3.get(0), 0 ); // mat2*vec1 = vec2
+//  EXPECT_DOUBLE_EQ( vec3.get(1), 0 );
+//  vec3.copy(vec2);
+//  mat2.gemv( 2, vec1, .5, vec2 );
+//  EXPECT_DOUBLE_EQ( vec2.get(0), 10 );
+//  EXPECT_DOUBLE_EQ( vec2.get(1), 7.5 );
+//  mat2.gemv( 2, vec1, .5, vec3, true );
+//  EXPECT_DOUBLE_EQ( vec3.get(0), 8 );
+//  EXPECT_DOUBLE_EQ( vec3.get(1), 9.5 );
+//
+//  // Testing scale, left/right scaling
+//  mat2.scale( 2 );
+//  array1d<real64> colvals4;
+//  array1d<globalIndex> colinds4;
+//  mat2.getRowCopy( 0, colinds4, colvals4 );
+//  EXPECT_DOUBLE_EQ( colvals4[0], 2 );
+//  EXPECT_DOUBLE_EQ( colvals4[1], 6 );
+//  vec1.set( 0, 2 );
+//  vec1.set( 1, 0.5 );
+//  vec1.close();
+//  vec2.set( 0, .5 );
+//  vec2.set( 1, 3 );
+//  vec2.close();
+//  mat2.leftScale( vec1 );
+//  mat2.rightScale( vec2 );
+//  mat2.leftRightScale( vec2, vec1 );
+//  array1d<real64> colvals5;
+//  array1d<globalIndex> colinds5;
+//  mat2.getRowCopy( 1, colinds5, colvals5 );
+//  EXPECT_DOUBLE_EQ( colvals5[0], 6 );
+//  EXPECT_DOUBLE_EQ( colvals5[1], 4.5 );
+//
+//  // Testing clearRow
+//  Matrix mat5 = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, 2 );
+//  mat5.clearRow(0, 5);
+//  array1d<real64> colvals3;
+//  array1d<globalIndex> colinds3;
+//  mat5.getRowCopy( 0, colinds3, colvals3 );
+//  EXPECT_DOUBLE_EQ( colvals3[0], 5 );
+//
+//  // Testing print, write, printParallelMatrix
+//  // mat5.print();
+//  // mat5.write("matout.mtx", true);
+//  // mat5.write("matout.m", false);
+//  // mat5.printParallelMatrix("matout2.mtx");
+//
+//  // Testing ilower, iupper, getLocalRowID, getGlobalRowID, numMyCols
+//  if (numranks == 1) {
+//    EXPECT_EQ( mat5.ilower(), 0 );
+//    EXPECT_EQ( mat5.iupper(), 4 );
+//  }
+//  EXPECT_EQ( mat5.globalRows(), 4 );
+//  EXPECT_EQ( mat5.globalCols(), 4 );
+//  EXPECT_EQ( mat5.getLocalRowID( 0 ), 0 );
+//  EXPECT_EQ( mat5.getLocalRowID( 2 ), 2 );
+//  EXPECT_EQ( mat5.getGlobalRowID( 1 ), 1 );
+//  EXPECT_EQ( mat5.getGlobalRowID( 3 ), 3 );
+//  // EXPECT_EQ( mat5.numMyCols(), 4 );
 
 }
 
@@ -698,18 +698,18 @@ void testRectangularMatrixOperations()
 #ifdef GEOSX_USE_TRILINOS
 TEST( testLAOperations, testEpetraLAOperations )
 {
-  testVectorFunctions< TrilinosInterface >();
-  // testMatrixFunctions< TrilinosInterface >();
-  testInterfaceSolvers< TrilinosInterface >();
-  testMatrixMatrixOperations< TrilinosInterface >();
-  testRectangularMatrixOperations< TrilinosInterface >();
+//  testVectorFunctions< TrilinosInterface >();
+  testMatrixFunctions< TrilinosInterface >();
+//  testInterfaceSolvers< TrilinosInterface >();
+//  testMatrixMatrixOperations< TrilinosInterface >();
+//  testRectangularMatrixOperations< TrilinosInterface >();
 }
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-TEST( testLAOperations, testHypreLAOperations )
+TEST( testLAOperations, testHypreLAOperations2 )
 {
-  testVectorFunctions< HypreInterface >();
+//  testVectorFunctions< HypreInterface >();
 //  testMatrixFunctions< HypreInterface >();
 //  testInterfaceSolvers< HypreInterface >();
 //  testMatrixMatrixOperations< HypreInterface >();

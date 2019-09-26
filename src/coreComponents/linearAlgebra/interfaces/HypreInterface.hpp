@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_HYPREINTERFACE_HPP_
 
 //#include "HypreSolver.hpp"
-//#include "HypreSparseMatrix.hpp"
+#include "HypreMatrix.hpp"
 #include "HypreVector.hpp"
 
 namespace geosx
@@ -37,7 +37,7 @@ struct HypreInterface
 
   static void finalize() {}
 
-//  using ParallelMatrix = HypreMatrix;
+  using ParallelMatrix = HypreMatrix;
   using ParallelVector = HypreVector;
 //  using LinearSolver   = HypreSolver;
 
