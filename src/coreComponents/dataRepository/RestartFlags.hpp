@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef RESTARTFLAGS_H_
-#define RESTARTFLAGS_H_
+#ifndef GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#define GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
 
 /**
  * @file RestartFlags.hpp
@@ -137,4 +137,4 @@ inline bool operator!=( PlotLevel const left, PlotLevel const right )
 }   /* namespace dataRepository */
 }   /* namespace geosx */
 
-#endif  /* RESTARTFLAGS_H_ */
+#endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

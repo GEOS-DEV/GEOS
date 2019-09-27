@@ -6,26 +6,36 @@ GEOSX Data Repository
 
 The GEOSX dataRepository is intended to provide the building blocks for the code structure within GEOSX. 
 The dataRepository provides a general capability to store arbitrary data and objects in a hierarchical 
-structure, similar to a standard file sytem.
+structure, similar to a standard file system.
 The components/classes of the data structure that a developer will require some knowledge of are:
-* **Group** The building block for the hierachy structure.
-            In the filesystem analog, the Group is similar to the file folder. 
-            As such a Group may contain any number of sub-Groups, and Wrappers which are contained in a
-            MappedVector.
-* **Wrapper/WrapperBase** A "wrapper" class that is intended to encapuslate an object for storage in
-                          a Group.
-                          Wrapper is templated on the type of object it encapsulates to provide  strong 
-                          type safety when retriving the wrapped objects.
-                          As each Wrapper class instatiaiton will be a distinct type, Wrapper derives from
-                          a non-tempalted WrapperBase class that defines common interface. The WrapperBase
-                          type is the specific type that is stored in the MappedVector container within a 
-                          Group.
-* **MappedVector** Defines a container with an interface which is an aggregation of a std::map, and a 
-                   std::vector. 
-                   The types contained in the MappedVector are stored in an std::vector, and are accessible
-                   through an integral index lookup.
-                   In addition, there is a std::map<string,INDEX> that provides a string key lookup
-                   capability to the container.
+* **Group** The inheritable building block for the hierarchy structure.
+            In the filesystem analog, the Group is similar to the file folder.
+            As such a Group may contain any number of sub-Groups, and Wrappers.
+            Each collection of sub-Groups and Wrappers are contained in a MappedVector member of the
+            Group.
+            Group also defines a general capaiblity to create and traverse the dataRepository.
+            For example, Group provides the capabilty to create/insert/get/remove sub-Groups, as well as
+            the ability to create/get/remove Wrappers.
+            In addition Group provides functionality to iterate over sub-Groups and wrappers targeting 
+            only certain derived types, and certain keys/names.
+            
+* **Wrapper/WrapperBase** A class that is intended to encapsulate an object for storage in a Group, as well
+                          as providing an interface for performing common operations on that object.
+                          Wrapper is templated on the type of object it encapsulates, thus providing strong 
+                          type safety when retrieving the objects.
+                          As each Wrapper class instantiation will be a distinct type, Wrapper derives from
+                          a non-templated WrapperBase class that defines a common interface. 
+                          The WrapperBase type is the type of pointer that is stored in the MappedVector 
+                          container within a Group.
+                          
+* **MappedVector** Defines a container that provides an interface which is an aggregation of a
+                   std::unordered_map and a std::vector.
+                   The types contained in the MappedVector are stored in a std::vector, and thus are 
+                   accessible through an integral index lookup.
+                   In addition, there is a std::unordered_map<string,INDEX> member that provides a string 
+                   key lookup capability to the container if that is the preferred interface.
+                   Note that the lookup will have some overhead assocaited with the unordered_map hash 
+                   lookup.
 
 * **InputFlags** A strongly typed enum that defines the relationship with the Wrapper and the XML input.
                  For example, the enum value of OPTIONAL indicates that the data in the Wrapper is to be
@@ -34,15 +44,10 @@ The components/classes of the data structure that a developer will require some 
                  the XML input and an error will be raised if the name is not found in the XML input.
                  Finally, the enum value of NONE indicates that Wrapper is not to be set by the XML input.
 
-* **DefaultValue** A templated class that is used to store the default value of the contents of a Wrapper.
-                   A DefaultValue specification is required if the InputFlag for a Wrapper is set to 
+* **DefaultValue** A templated type that is used to store the default value of a Wrapper.
+                   The application of DefaultValue is 
+                   The specification of a DefaultValue is required if the InputFlag for a Wrapper is set to 
                    OPTIONAL.
 
-* **RestartFlags** A strongly typed enum that specifies if the contents of a Wrapper should be written to/
-                   read from restart files.
-
-dataRepository::Group
-=========================
-The class `dataRepository::Group` is the object that forms the basis of the code structure hierarchy.
-In the file structure analagy, the `Group` class may be thought of a file folder.
-In such, the `Group` contains two 
+* **RestartFlags** A strongly typed enum that specifies if the contents of a Wrapper should be written 
+                   to and/or read from restart files.
