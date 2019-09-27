@@ -16,8 +16,8 @@
  * @file InputFlags.hpp
  */
 
-#ifndef CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_
-#define CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_
+#ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
+#define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 
 namespace geosx
 {
@@ -105,4 +105,4 @@ inline bool operator>=( InputFlags const left, InputFlags const right )
 
 
 
-#endif /* CORECOMPONENTS_DATAREPOSITORY_INPUTFLAGS_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_ */
