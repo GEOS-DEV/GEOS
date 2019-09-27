@@ -16,8 +16,8 @@
  * @file OutputManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_
+#ifndef GEOSX_OUTPUTMANAGER_HPP_
+#define GEOSX_OUTPUTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -62,4 +62,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_OUTPUTMANAGER_HPP_ */
+#endif /* GEOSX_OUTPUTMANAGER_HPP_ */
