@@ -36,6 +36,16 @@
 namespace geosx
 {
 
+inline HYPRE_Int * toHYPRE_Int( globalIndex * const index )
+{
+  return reinterpret_cast<HYPRE_Int*>(index);
+}
+
+inline HYPRE_Int const * toHYPRE_Int( globalIndex const * const index )
+{
+  return reinterpret_cast<HYPRE_Int const*>(index);
+}
+
 // ----------------------------
 // Constructors
 // ----------------------------
@@ -261,17 +271,6 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
                  MPI_INT,
                  comm );
 
-  /////////////////////
-  std::cout << "Rank " << this_mpi_process << " :";
-  for( int i = 0 ; i < (this_mpi_process+1) * 2 ; i += 2 )
-  {
-	  std::cout << localSizeArray(i) << " "
-			    << localSizeArray(i+1) << " ";
-  }
-  std::cout << std::endl;
-
-  /////////////////////
-
   globalIndex ilower, iupper, jlower, jupper;
 
   ilower = 0;
@@ -367,6 +366,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+	             "matrix appears to be empty (not created)" );
   HYPRE_Int ncols = 1;
   HYPRE_IJMatrixAddToValues( m_ij_mat,
                              1,
@@ -380,6 +381,13 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        globalIndex const colIndex,
                        real64 const value )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+	             "matrix appears to be empty (not created)" );
+  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+		           rowIndex < this->iupper(),
+	               "HypreMatrix, it is not possible to set values on other processors");
+
+
   HYPRE_Int ncols = 1;
   HYPRE_IJMatrixSetValues( m_ij_mat,
                            1,
@@ -387,6 +395,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
                            &rowIndex,
                            &colIndex,
                            &value );
+
 }
 
 void HypreMatrix::insert( globalIndex const rowIndex,
@@ -405,6 +414,9 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+				 "matrix appears to be empty (not created)" );
+
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( size );
   HYPRE_IJMatrixAddToValues( m_ij_mat,
                              1,
@@ -419,6 +431,12 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        real64 const * values,
                        localIndex size )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+				 "matrix appears to be empty (not created)" );
+  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+		           rowIndex < this->iupper(),
+	               "HypreMatrix, it is not possible to set values on other processors");
+
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( size );
   HYPRE_IJMatrixSetValues( m_ij_mat,
                            1,
@@ -445,6 +463,8 @@ void HypreMatrix::add( globalIndex const rowIndex,
                        array1d<globalIndex> const &colIndices,
                        array1d<real64> const &values )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+				 "matrix appears to be empty (not created)" );
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( colIndices.size() );
   HYPRE_IJMatrixAddToValues( m_ij_mat,
                              1,
@@ -458,6 +478,13 @@ void HypreMatrix::set( globalIndex const rowIndex,
                        array1d<globalIndex> const &colIndices,
                        array1d<real64> const &values )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+				 "matrix appears to be empty (not created)" );
+  GEOS_ASSERT_MSG( this->ilower() <= rowIndex &&
+		           rowIndex < this->iupper(),
+	               "HypreMatrix, it is not possible to set values on other processors");
+
+
   HYPRE_Int ncols = integer_conversion<HYPRE_Int>( colIndices.size() );
   HYPRE_IJMatrixSetValues( m_ij_mat,
                            1,
@@ -482,6 +509,8 @@ void HypreMatrix::add( array1d<globalIndex> const & rowIndices,
                        array1d<globalIndex> const & colIndices,
                        array2d<real64> const & values )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+	             "vector appears to be empty (not created)" );
   globalIndex nCols = colIndices.size();
   for( globalIndex i = 0 ; i < rowIndices.size() ; ++i )
   {
@@ -496,6 +525,15 @@ void HypreMatrix::set( array1d<globalIndex> const & rowIndices,
                        array1d<globalIndex> const & colIndices,
                        array2d<real64> const & values )
 {
+  GEOS_ERROR_IF( m_ij_mat == nullptr,
+	             "vector appears to be empty (not created)" );
+  GEOS_ASSERT_MSG( this->ilower() <= *std::min_element(rowIndices.data(),
+	                                                   rowIndices.data() + rowIndices.size() ) &&
+	                   *std::max_element(rowIndices.data(),
+	                		             rowIndices.data() + rowIndices.size()) < this->iupper(),
+	                   "HypreVector, it is not possible to set values on other processors");
+
+
   globalIndex nCols = colIndices.size();
   for( globalIndex i = 0 ; i < rowIndices.size() ; ++i )
   {
@@ -651,32 +689,40 @@ void HypreMatrix::leftScale( HypreVector const &vec )
 //  rightScale(vecRight);
 //}
 
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Get global row copy
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// The challenge here is that columns are stored with local, not global,
-//// indices, so we need to do conversions back and forth
-//
-//void EpetraMatrix::getRowCopy( globalIndex globalRow,
-//                               array1d<globalIndex> & colIndices,
-//                               array1d<real64> & values) const
-//{
-//  int n_entries = m_matrix->NumGlobalEntries(globalRow);
-//
-//  localIndex length = integer_conversion<localIndex,int>(n_entries);
-//
-//  values.resize(length);
-//  colIndices.resize(length);
-//
-//  array1d<int> local_indices (length);
-//
-//  int localRow = m_matrix->LRID(globalRow);
-//  int err = m_matrix->ExtractMyRowCopy(localRow,n_entries,n_entries,values.data(),local_indices.data() );
-//  GEOS_ERROR_IF(err!=0, "getRowCopy failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
-//
-//  for(localIndex i=0; i<length; ++i)
-//    colIndices[i] = m_matrix->GCID64(local_indices[i]);
-//}
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get global row copy
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+void HypreMatrix::getRowCopy( globalIndex globalRow,
+                              array1d<globalIndex> & colIndices,
+                              array1d<real64> & values) const
+{
+	GEOS_ASSERT_MSG(  m_is_pattern_fixed == true,
+			          "matrix sparsity pattern not created" );
+    GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+                     globalRow < this->iupper(),
+					 std::string("Row ") +
+					 std::to_string(globalRow) +
+                     std::string(" not on processor ") +
+					 std::to_string( MpiWrapper::Comm_rank( hypre_IJMatrixComm(m_ij_mat) ) ) );
+
+    HYPRE_Int n_entries;
+    HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+			                    1,
+								toHYPRE_Int(&globalRow),
+			                    &n_entries );
+
+//	localIndex length = integer_conversion<localIndex>(n_entries);
+
+	values.resize(n_entries);
+	colIndices.resize(n_entries);
+	hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+	                              -1,
+	    						  &n_entries,
+		                          toHYPRE_Int(&globalRow),
+		         				  toHYPRE_Int(colIndices.data()),
+								  values.data() );
+}
 //
 //
 //// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -770,7 +816,7 @@ globalIndex HypreMatrix::iupper() const
                                &iupper,
                                &jlower,
                                &jupper );
-  return integer_conversion<globalIndex>( iupper );
+  return integer_conversion<globalIndex>( iupper + 1);
 }
 
 //// """""""""""""""""""""""""""""""""""""""""""""""""""""""""

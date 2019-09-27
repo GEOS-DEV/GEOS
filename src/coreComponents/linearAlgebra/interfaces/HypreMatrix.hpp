@@ -403,15 +403,15 @@ public:
 
   //! @name Accessors Methods
   //@{
-//
-//  /**
-//   * @brief Returns a copy of the data in row <tt>globalRow</tt>.
-//   * Note that the input arrays will be resized internally to fit the number of entries.
-//   */
-//  void getRowCopy( globalIndex globalRow,
-//                   array1d<globalIndex> & colIndices,
-//                   array1d<real64> & values) const;
-//
+
+  /**
+   * @brief Returns a copy of the data in row <tt>globalRow</tt>.
+   * Note that the input arrays will be resized internally to fit the number of entries.
+   */
+  void getRowCopy( globalIndex globalRow,
+                   array1d<globalIndex> & colIndices,
+                   array1d<real64> & values) const;
+
   /**
    * @brief Returns a pointer to the underlying HYPRE_IJMatrix object.
    */
