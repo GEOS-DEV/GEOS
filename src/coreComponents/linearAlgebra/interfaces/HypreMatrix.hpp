@@ -126,6 +126,14 @@ public:
                              localIndex const maxEntriesPerRow,
                              MPI_Comm const & comm = MPI_COMM_WORLD );
 
+  /**
+   * @brief Reinitialize the matrix.
+   *
+   * Keeps the parallel partitioning and the sparsity pattern but sets all elements to user-defined value.
+   *
+   */
+  void set( real64 const value );
+
 
   /**
    * @brief Reinitialize the matrix.
@@ -323,6 +331,24 @@ public:
    */
   void multiply( HypreVector const &src,
                  HypreVector &dst ) const;
+
+  /**
+   * @brief Matrix/Matrix multiplication.
+   *
+   * Compute <tt>this * B = C<tt>.
+   *
+   * \param src Input matrix (B).
+   * \param dst Output matrix (C).
+   * \param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
+  void multiply( HypreMatrix const & src,
+		         HypreMatrix & dst,
+                 bool const closeResult = true ) const;
 
   /**
    * @brief Compute residual <tt>r = b - A*x</tt>.

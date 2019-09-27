@@ -586,8 +586,20 @@ real64 HypreVector::get( globalIndex globalRow ) const
                          {
   GEOS_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
+  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+                   globalRow < this->iupper(),
+                   "HypreVector, globalRow not in local range");
+
   real64 value;
-  HYPRE_IJVectorGetValues( m_ij_vector, 1, &globalRow, &value );
+  HYPRE_Int ierr;
+  ierr = HYPRE_IJVectorGetValues( m_ij_vector,
+	                              1,
+	    						  &globalRow,
+								  &value );
+  GEOS_ASSERT_MSG( ierr == 0,
+                   "Error getting IJVector values - error code: " +
+                   std::to_string( ierr ) );
+
   return value;
 }
 
@@ -604,7 +616,7 @@ void HypreVector::get( array1d<globalIndex> const & globalIndices,
                                   globalIndices.size(),
                                   globalIndices.data(),
                                   values.data() );
-  GEOS_ERROR_IF( ierr != 0,
+  GEOS_ASSERT_MSG( ierr == 0,
                  "Error getting IJVector values - error code: " +
                      std::to_string( ierr ) );
 }

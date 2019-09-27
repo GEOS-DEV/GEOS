@@ -319,6 +319,8 @@ void testMatrixFunctions()
   mat1.add( 1, 0, 2 );
   mat1.close();
 
+  mat1.write("mat1");
+
   // Testing add/set/insert c-style, getRowCopy
   globalIndex inds1[2] = {0, 2};
   globalIndex inds2[1] = {0};
@@ -410,27 +412,53 @@ void testMatrixFunctions()
   }
   mat7.close();
 
-//  // Testing set and zero
-//  mat7.set( 2 );
-//  mat7.close();
-//  mat1.zero();
-//  mat1.close();
+  // Testing set and zero
+  mat7.open();
+  mat7.set( 2 );
+  mat7.close();
 
-//  // Testing vector multiply, matrix multiply, MatrixMatrixMultiply
-//  vec1.createWithGlobalSize( 2, MPI_COMM_WORLD );
-//  vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
-//  vec1.set( 1 );
-//  vec1.close();
-//  globalIndex inds4[2] = {0, 1};
-//  real64 vals4[2] = {1, 3};
-//  real64 vals5[2] = {2, 1};
-//  mat2.insert( 0, inds4, vals4, 2 );
-//  mat2.insert( 1, inds4, vals5, 2 );
-//  mat2.close();
-//  mat2.multiply(vec1, vec2);
-//  EXPECT_DOUBLE_EQ( vec2.get(0), 4 );
-//  EXPECT_DOUBLE_EQ( vec2.get(1), 3 );
-//  mat2.multiply(mat2, mat1);
+  mat7.open();
+  mat1.zero();
+  mat1.close();
+
+  // Testing vector multiply, matrix multiply, MatrixMatrixMultiply
+  vec1.createWithGlobalSize( 2, MPI_COMM_WORLD );
+  vec2.createWithGlobalSize( 2, MPI_COMM_WORLD );
+  vec1.set( 1 );
+  vec1.close();
+  globalIndex inds4[2] = {0, 1};
+  real64 vals4[2] = {1, 3};
+  real64 vals5[2] = {2, 1};
+
+  if ( (mat2.ilower() <= 0 ) &&  (0 < mat2.iupper()) )
+  {
+    mat2.insert( 0, inds4, vals4, 2 );
+  }
+  if ( (mat2.ilower() <= 1 ) &&  (1 < mat2.iupper()) )
+  {
+	  mat2.insert( 1, inds4, vals5, 2 );
+  }
+  mat2.close();
+
+  mat2.multiply(vec1, vec2);
+
+  if ( (vec2.ilower() <= 0 ) &&  (0 < vec2.iupper()) )
+  {
+	  EXPECT_DOUBLE_EQ( vec2.get(0), 4 );
+  }
+  if ( (vec2.ilower() <= 1 ) &&  (1 < vec2.iupper()) )
+  {
+	  EXPECT_DOUBLE_EQ( vec2.get(1), 3 );
+  }
+
+  // Matrix-Matrix multiply
+  Matrix mat2mat2;
+  mat2.multiply(mat2, mat2mat2);
+
+  mat2mat2.write("mat2mat2");
+
+
+  //  mat2.multiply(mat2, mat1);
 //  array
 //  array1d<globalIndex> colinds2;
 //  mat1.getRowCopy( 0, colinds2, colvals2 );
