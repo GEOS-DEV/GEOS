@@ -16,8 +16,8 @@
  * @file ConstitutiveBase.hpp
  */
 
-#ifndef CONSTITUTIVEBASE_HPP_
-#define CONSTITUTIVEBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
 #include "ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
