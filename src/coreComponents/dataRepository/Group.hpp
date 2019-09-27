@@ -12,21 +12,21 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/** @file */
+/**
+ * @file Group.hpp
+ */
 
-#ifndef MANAGEDGROUP_H_
-#define MANAGEDGROUP_H_
+#ifndef GEOSX_DATAREPOSITORY_GROUP_HPP_
+#define GEOSX_DATAREPOSITORY_GROUP_HPP_
+
+#include "InputFlags.hpp"
+#include "ObjectCatalog.hpp"
+#include "MappedVector.hpp"
+#include "RestartFlags.hpp"
+#include "Wrapper.hpp"
+#include "xmlWrapper.hpp"
 
 #include <iostream>
-
-#include "ObjectCatalog.hpp"
-#include "RestartFlags.hpp"
-
-#include "MappedVector.hpp"
-
-#include "xmlWrapper.hpp"
-#include "InputFlags.hpp"
-#include "Wrapper.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 /// macro definition to specify whether or not to use dynamic_cast
@@ -48,22 +48,24 @@ class Group;
 }
 
 /**
- * namespace to encapsulate functions in simulation tools
+ * namespace to encapsulate GEOSX
  */
 namespace geosx
 {
 namespace dataRepository
 {
 
-/// the default key type
+/// the default key type for the hierarchy.
 using keyType = string;
 
-/// the default index type
+/// the default index type for the hierarchy.
 using indexType = localIndex;
 
 /**
- * class that encapsulates and manages a collection of DataObjects. Can be
- * considered a "node" in a hierarchy of managers that represent physical groupings of data/
+ * @class Group
+ *
+ * The Group class serves as a "node" in a hierarchy of the dataRepository. The data structure is built as a
+ * hierarchy of Group objects, or objects derived from group objects.
  */
 class Group
 {
@@ -1160,7 +1162,4 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 } /* end namespace dataRepository */
 } /* end namespace geosx */
 
-
-//typedef geosx::dataRepository::Group ObjectDataStructureBaseT;
-
-#endif /* MANAGEDGROUP_H_ */
+#endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */
