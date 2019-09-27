@@ -16,8 +16,8 @@
  * @file ExecutableGroup.hpp
  */
 
-#ifndef EXECUTABLEGROUP_HPP_
-#define EXECUTABLEGROUP_HPP_
+#ifndef GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#define GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
 
 #include "common/DataTypes.hpp"
 #include "Group.hpp"
@@ -87,7 +87,7 @@ private:
 };
 
 
-} /* namespace ANST */
+}
 
 
-#endif /* EXECUTABLEGROUP_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */
