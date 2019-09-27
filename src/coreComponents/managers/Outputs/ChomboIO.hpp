@@ -16,8 +16,8 @@
  * @file ChomboIO.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CHOMBOIO_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CHOMBOIO_HPP_
+#ifndef GEOSX_CHOMBOIO_HPP_
+#define GEOSX_CHOMBOIO_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/coupling/ChomboCoupler.hpp"
@@ -89,4 +89,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CHOMBOIO_HPP_ */
+#endif /* GEOSX_CHOMBOIO_HPP_ */

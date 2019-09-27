@@ -13,8 +13,8 @@
  */
 
 
-#ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
+#ifndef GEOSX_EVENTMANAGER_HPP_
+#define GEOSX_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
@@ -100,4 +100,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_ */
+#endif /* GEOSX_EVENTMANAGER_HPP_ */
