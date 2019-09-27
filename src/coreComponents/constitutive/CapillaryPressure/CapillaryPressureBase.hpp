@@ -16,8 +16,8 @@
   * @file CapillaryPressureBase.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -162,4 +162,4 @@ void CapillaryPressureBase::BatchUpdateKernel( arrayView2d<real64 const> const &
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSUREBASE_HPP

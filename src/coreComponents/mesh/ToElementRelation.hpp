@@ -16,8 +16,8 @@
  * @file ToElementRelation.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_
+#ifndef GEOSX_MESH_TOELEMENTRELATION_HPP_
+#define GEOSX_MESH_TOELEMENTRELATION_HPP_
 
 #include "InterObjectRelation.hpp"
 
@@ -110,4 +110,4 @@ void insert( OrderedVariableToManyElementRelation & relation,
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MESH_TOELEMENTRELATION_HPP_ */
+#endif /* GEOSX_MESH_TOELEMENTRELATION_HPP_ */

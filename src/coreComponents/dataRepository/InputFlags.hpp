@@ -19,6 +19,8 @@
 #ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 #define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 
+#include "Logger.hpp"
+
 namespace geosx
 {
 

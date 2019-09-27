@@ -16,8 +16,8 @@
  * @file static_if.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_STATIC_IF_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_STATIC_IF_HPP_
+#ifndef GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
+#define GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
 
 
 namespace geosx
@@ -47,4 +47,4 @@ struct static_if_wrapper<true>
 
 #define end_static_if );
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_STATIC_IF_HPP_ */
+#endif /* GEOSX_CODINGUTILITIES_STATIC_IF_HPP_ */

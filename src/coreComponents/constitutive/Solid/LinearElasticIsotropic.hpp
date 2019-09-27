@@ -16,8 +16,8 @@
  *  @file LinearElasticIsotropic.hpp
  */
 
-#ifndef LINEARELASTICISOTROPIC_HPP_
-#define LINEARELASTICISOTROPIC_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
@@ -149,4 +149,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_HYPOELASTICLINEAR_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_ */
