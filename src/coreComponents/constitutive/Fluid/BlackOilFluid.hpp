@@ -28,8 +28,6 @@ class BlackOilMultiphaseSystem;
 
 namespace geosx
 {
-namespace dataRepository
-{
 
 namespace constitutive
 {

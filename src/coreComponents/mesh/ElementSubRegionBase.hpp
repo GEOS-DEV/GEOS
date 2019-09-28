@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CellBase.hpp
+ * @file ElementSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_CELLBASE_HPP_
-#define GEOSX_MESH_CELLBASE_HPP_
+#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
@@ -150,4 +150,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_CELLBASE_HPP_ */
+#endif /* GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_ */

@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_EVENTMANAGER_HPP_
-#define GEOSX_EVENTMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_EVENTMANAGER_HPP_
+#define GEOSX_MANAGERS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
@@ -100,4 +100,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_EVENTMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTMANAGER_HPP_ */
