@@ -16,8 +16,8 @@
  * @file MeshBody.hpp
  */
 
-#ifndef GEOSX_MANAGERS_MESHBODY_HPP_
-#define GEOSX_MANAGERS_MESHBODY_HPP_
+#ifndef GEOSX_MESH_MESHBODY_HPP_
+#define GEOSX_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
 
@@ -68,4 +68,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_MESHLEVEL_HPP_ */
+#endif /* GEOSX_MESH_MESHBODY_HPP_ */

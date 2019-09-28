@@ -16,8 +16,8 @@
  * @file MeshLevel.hpp
  */
 
-#ifndef GEOSX_MANAGERS_MESHLEVEL_HPP_
-#define GEOSX_MANAGERS_MESHLEVEL_HPP_
+#ifndef GEOSX_MESH_MESHLEVEL_HPP_
+#define GEOSX_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
 #include "EdgeManager.hpp"
@@ -92,4 +92,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_MESHLEVEL_HPP_ */
+#endif /* GEOSX_MESH_MESHLEVEL_HPP_ */

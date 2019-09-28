@@ -16,8 +16,8 @@
  * @file ElementRegionManager.hpp
  */
 
-#ifndef ELEMENT_REGION_MANAGER_HPP
-#define ELEMENT_REGION_MANAGER_HPP
+#ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
+#define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 
 #include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -757,4 +757,4 @@ ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::Constitut
 }
 
 }
-#endif /* ELEMENT_REGION_MANAGER_HPP */
+#endif /* GEOSX_MESH_ELEMENTREGIONMANAGER_HPP */

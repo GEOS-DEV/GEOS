@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef __GEOS_RAJA_WRAPPER__HPP
-#define __GEOS_RAJA_WRAPPER__HPP
+#ifndef GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
+#define GEOSX_MESH_MESHFORLOOPINTERFACE_HPP
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"

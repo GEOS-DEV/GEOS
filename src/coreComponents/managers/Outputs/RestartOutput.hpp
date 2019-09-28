@@ -16,8 +16,8 @@
  * @file RestartOutput.hpp
  */
 
-#ifndef GEOSX_RESTARTOUTPUT_HPP_
-#define GEOSX_RESTARTOUTPUT_HPP_
+#ifndef GEOSX_MANAGERS_OUTPUTS_RESTARTOUTPUT_HPP_
+#define GEOSX_MANAGERS_OUTPUTS_RESTARTOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 
@@ -72,4 +72,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_RESTARTOUTPUT_HPP_ */
+#endif /* GEOSX_MANAGERS_OUTPUTS_RESTARTOUTPUT_HPP_ */
