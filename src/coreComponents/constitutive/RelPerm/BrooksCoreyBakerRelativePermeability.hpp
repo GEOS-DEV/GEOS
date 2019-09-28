@@ -16,22 +16,13 @@
   * @file BrooksCoreyBakerRelativePermeability.hpp
   */
 
-#ifndef GEOSX_CONSTITUTIVE_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#define GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const brooksCoreyBakerRelativePermeability = "BrooksCoreyBakerRelativePermeability";
-}
-}
-
 namespace constitutive
 {
 
@@ -47,7 +38,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::brooksCoreyBakerRelativePermeability; }
+  static std::string CatalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -396,4 +387,4 @@ BrooksCoreyBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const 
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP

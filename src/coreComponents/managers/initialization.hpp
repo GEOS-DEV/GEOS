@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef _COMMON_INITIALIZATION_HPP_
-#define _COMMON_INITIALIZATION_HPP_
+#ifndef GEOSX_MANAGERS_INITIALIZATION_HPP_
+#define GEOSX_MANAGERS_INITIALIZATION_HPP_
 
 namespace geosx
 {
@@ -77,4 +77,4 @@ void finalizePetsc();
 
 } // namespace geosx
 
-#endif //_COMMON_INITIALIZATION_HPP_
+#endif // GEOSX_MANAGERS_INITIALIZATION_HPP_

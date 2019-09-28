@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
-#define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
+#define GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -159,4 +159,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_ */

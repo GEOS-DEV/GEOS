@@ -16,8 +16,8 @@
  * @file SinglePhaseFlow.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
-#define GEOSX_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
@@ -332,4 +332,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
