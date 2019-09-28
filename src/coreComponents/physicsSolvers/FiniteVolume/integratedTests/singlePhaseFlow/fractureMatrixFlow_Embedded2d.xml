@@ -19,12 +19,6 @@
                 newtonTol="1.0e-8"
                 maxIterNewton="8" />
         </SinglePhaseFlow>
-        <EmbeddedSurfaceGenerator
-            name="SurfaceGen"
-            verboseLevel="0"
-            fractureRegion="Fracture"
-            targetRegions="{Fracture}">
-        </EmbeddedSurfaceGenerator>
     </Solvers>
 
     <Mesh>
@@ -38,6 +32,12 @@
             ny="{10}"
             nz="{1}"
             cellBlockNames="{cb1}" />
+       <InternalEmbeddedSurface
+            name="FracturePlane1"
+            unitNormalVector = "{0,1,0}"
+            planeCenter="{0,0,0}"
+            meshName="mesh1"
+            />
     </Mesh>
 
     <Geometry>
@@ -58,10 +58,6 @@
             xMin="-0.01,  8.99, -0.01"
             xMax="10.01, 10.01, 1.01" />
         <Box
-            name="fracture"
-            xMin="-0.01, -0.01, -0.01"
-            xMax=" 0.01, 10.01, 1.01" />
-        <Box
             name="source"
             xMin="-0.01, -0.01, -0.01"
             xMax=" 0.01,  1.01, 1.01" />
@@ -72,10 +68,6 @@
         <SoloEvent
             name="output0"
             target="/Outputs/siloOutput" />
-
-        <SoloEvent
-            name="preFracture"
-            target="/Solvers/SurfaceGen" />
 
         <SoloEvent
             name="output1"
@@ -180,14 +172,6 @@
             objectPath="ElementRegions/Region2/cb1"
             fieldName="pressure"
             scale="0.0" />
-
-        <FieldSpecification
-            name="frac"
-            initialCondition="1"
-            setNames="{fracture}"
-            objectPath="faceManager"
-            fieldName="ruptureState"
-            scale="1" />
 
         <FieldSpecification
             name="source"

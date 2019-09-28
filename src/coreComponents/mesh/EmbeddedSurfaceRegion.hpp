@@ -47,7 +47,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
-  EmbeddedSurfaceRegion( string const & name, ManagedGroup * const parent );
+  EmbeddedSurfaceRegion( string const & name, Group * const parent );
 
   EmbeddedSurfaceRegion() = delete;
   virtual ~EmbeddedSurfaceRegion() override;
@@ -64,7 +64,7 @@ public:
 
 
 
-  virtual void GenerateMesh( ManagedGroup const * ) override {}
+  virtual void GenerateMesh( Group const * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh
@@ -72,14 +72,14 @@ public:
    * @param subRegionName The name of the EmbeddedSurfaceSubRegion to insert the new entries.
    * @param faceIndices The local indices of the new faces that define the face element.
    * @return The local index of the new EmbeddedSurface entry.
-   */
+
   localIndex AddToFractureMesh( EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
-
+  */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";

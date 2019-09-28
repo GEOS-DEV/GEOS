@@ -28,7 +28,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, ManagedGroup * const parent ):
+EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<EmbeddedSurfaceSubRegion>("default");
@@ -37,7 +37,7 @@ EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, ManagedGroup 
 EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
-
+/*
 localIndex EmbeddedSurfaceRegion::AddToFractureMesh( EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
                                                  array1d< array1d<localIndex> > const & originalFaceToEdges,
@@ -48,8 +48,8 @@ localIndex EmbeddedSurfaceRegion::AddToFractureMesh( EdgeManager * const edgeMan
   // Matteo: has to be filled in
   return rval;
 }
+*/
 
-
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

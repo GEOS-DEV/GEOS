@@ -147,13 +147,6 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
-.. _XML_EmbeddedSurfaceGenerator:
-
-Element: EmbeddedSurfaceGenerator
-=================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
-
-
 .. _XML_Events:
 
 Element: Events
@@ -709,13 +702,6 @@ Datastructure: DummySolver
 Datastructure: ElementRegions
 =============================
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
-
-
-.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
-
-Datastructure: EmbeddedSurfaceGenerator
-=======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_Events:
