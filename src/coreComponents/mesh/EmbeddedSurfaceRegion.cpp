@@ -38,6 +38,7 @@ EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
 /*
+
 localIndex EmbeddedSurfaceRegion::AddToFractureMesh( EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
                                                  array1d< array1d<localIndex> > const & originalFaceToEdges,

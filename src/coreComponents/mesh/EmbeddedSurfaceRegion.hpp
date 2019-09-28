@@ -47,6 +47,7 @@ public:
    * @param name The name of the object in the data hierarchy.
    * @param parent Pointer to the parent group in the data hierarchy.
    */
+
   EmbeddedSurfaceRegion( string const & name, Group * const parent );
 
   EmbeddedSurfaceRegion() = delete;
@@ -62,8 +63,6 @@ public:
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
-
-
   virtual void GenerateMesh( Group const * ) override {}
 
   /**
@@ -78,6 +77,7 @@ public:
                                 array1d< array1d<localIndex> > const & originalFaceToEdges,
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
+
 
   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct

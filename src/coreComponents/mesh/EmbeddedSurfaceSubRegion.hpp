@@ -40,6 +40,7 @@ namespace geosx
 class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
 {
 public:
+
     using NodeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
     using EdgeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
     using FaceMapType = InterObjectRelation<array2d<localIndex>>;
@@ -54,6 +55,7 @@ public:
 
     EmbeddedSurfaceSubRegion( string const & name,
                        dataRepository::Group * const parent );
+
     virtual ~EmbeddedSurfaceSubRegion() override;
 
     virtual R1Tensor const & calculateElementCenter( localIndex k,
@@ -68,6 +70,7 @@ public:
 
     virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
+
     virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                        arrayView1d<localIndex const> const & packList ) const override;
 
@@ -80,7 +83,6 @@ public:
 
     virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
 
-
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
      * @param[in] faceManager The face group.
@@ -91,11 +93,11 @@ public:
     {
       static constexpr auto elementApertureString        = "elementAperture";
       static constexpr auto elementAreaString            = "elementArea";
+
       //
       //static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
       //static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
       //static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
     };
 
     virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -159,6 +161,13 @@ public:
 
     ///
     array1d< localIndex > m_embeddedSurfaceToCell;
+  private:
+    template<bool DOPACK>
+    localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                      arrayView1d<localIndex const> const & packList ) const;
+
+    /// normal vector to the embedded surface element
+    array1d < R1Tensor > m_normalVector;
 
     /// The elements to nodes relation
     NodeMapType  m_toNodesRelation;
@@ -168,6 +177,9 @@ public:
 
     /// The elements to faces relation
     FaceMapType  m_toFacesRelation;
+
+    ///
+    array1d< localIndex > m_embeddedSurfaceToCell;
 
     /// The member level field for the element center
     array1d< real64 > m_elementAperture;
