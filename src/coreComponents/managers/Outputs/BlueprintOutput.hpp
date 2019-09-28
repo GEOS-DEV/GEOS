@@ -16,8 +16,8 @@
  * @file BlueprintOutput.hpp
  */
 
-#ifndef GEOSX_BLUEPRINTOUTPUT_HPP_
-#define GEOSX_BLUEPRINTOUTPUT_HPP_
+#ifndef GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#define GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/blueprint/Blueprint.hpp"
@@ -72,4 +72,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_BLUEPRINTOUTPUT_HPP_ */
+#endif /* GEOSX_MANAGERS_OUTPUTS_BLUEPRINTOUTPUT_HPP_ */

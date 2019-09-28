@@ -23,15 +23,6 @@
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const vanGenuchtenBakerRelativePermeability = "VanGenuchtenBakerRelativePermeability";
-}
-}
-
 namespace constitutive
 {
 
@@ -47,7 +38,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::vanGenuchtenBakerRelativePermeability; }
+  static std::string CatalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 

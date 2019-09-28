@@ -23,13 +23,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-}
-}
-
 
 class FiniteElementDiscretizationManager : public dataRepository::Group
 {

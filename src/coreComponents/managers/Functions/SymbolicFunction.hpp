@@ -16,8 +16,8 @@
  * @file SymbolicFunction.hpp
  */
 
-#ifndef SYMBOLICFUNCTION_HPP_
-#define SYMBOLICFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -89,4 +89,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SYMBOLICFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */

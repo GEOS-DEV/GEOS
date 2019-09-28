@@ -25,14 +25,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const poreVolumeCompressibleSolid = "PoreVolumeCompressibleSolid";
-}
-}
-
 namespace constitutive
 {
 
@@ -52,7 +44,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string CatalogName() { return dataRepository::keys::poreVolumeCompressibleSolid; }
+  static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
