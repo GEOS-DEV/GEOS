@@ -1,3 +1,4 @@
+
 #
 # Specify list of tests
 #
@@ -11,10 +12,12 @@ if(ENABLE_PVTPackage)
          ${gtest_geosx_tests}
          testCompMultiphaseFlow.cpp
          testCompMultiphaseFlowCapPressure.cpp
+         testReservoirSinglePhaseMSWells.cpp
+         testReservoirCompositionalMultiphaseMSWells.cpp
        )
 endif()
 
-set( dependencyList geosx_core gtest )
+set( dependencyList geosx_core gtest axom )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

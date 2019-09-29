@@ -22,8 +22,6 @@
 
 #include "constitutive/Fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
 
-using namespace std;
-
 namespace geosx
 {
 
@@ -35,7 +33,7 @@ namespace PVTProps
 BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara,
                                                   string_array const & componentNames,
                                                   real64_array const & componentMolarWeight):
-  PVTFunctionBase( inputPara[1], componentNames, componentMolarWeight)
+  PVTFunction( inputPara[1], componentNames, componentMolarWeight)
 {
   bool notFound = 1;
 
@@ -75,22 +73,34 @@ BrineCO2DensityFunction::BrineCO2DensityFunction( string_array const & inputPara
 
 void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
 {
-  real64_vector pressures;
-  real64_vector temperatures;
+  real64_array pressures;
+  real64_array temperatures;
 
   real64 PStart, PEnd, dP;
   real64 TStart, TEnd, dT;
   real64 P, T, m;
 
-  PStart = stod(inputPara[2]);
-  PEnd = stod(inputPara[3]);
-  dP = stod(inputPara[4]);
+  GEOS_ERROR_IF(inputPara.size() < 9, "Invalid BrineCO2Density input!");
 
-  TStart = stod(inputPara[5]);
-  TEnd = stod(inputPara[6]);
-  dT = stod(inputPara[7]);
+  try
+    {
+      
+      PStart = stod(inputPara[2]);
+      PEnd = stod(inputPara[3]);
+      dP = stod(inputPara[4]);
 
-  m = stod(inputPara[8]);
+      TStart = stod(inputPara[5]);
+      TEnd = stod(inputPara[6]);
+      dT = stod(inputPara[7]);
+
+      m = stod(inputPara[8]);
+
+    }
+  catch (const std::invalid_argument & e) {
+
+    GEOS_ERROR("Invalid BrineCO2Density argument:" + std::string(e.what()));
+
+  }  
 
   P = PStart;
 
@@ -112,23 +122,18 @@ void BrineCO2DensityFunction::MakeTable(string_array const & inputPara)
 
   }
 
-  unsigned long nP = pressures.size();
-  unsigned long nT = temperatures.size();
+  localIndex const nP = pressures.size();
+  localIndex const nT = temperatures.size();
 
-  array1dT<real64_vector> densities(nP);
-  for(unsigned long i = 0; i < nP; ++i)
-  {
-    densities[i].resize(nT);
-  }
-
+  real64_array2d densities(nP, nT);
 
   CalculateBrineDensity(pressures, temperatures, m, densities);
 
-  m_BrineDensityTable = make_shared<XYTable>("BrineDensityTable", pressures, temperatures, densities);
+  m_BrineDensityTable = std::make_shared<XYTable>("BrineDensityTable", pressures, temperatures, densities);
 }
 
 
-void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
+void BrineCO2DensityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & phaseComposition, EvalVarArgs & value, bool useMass) const
 {
   EvalArgs2D P, T, density;
   P.m_var = pressure.m_var;
@@ -146,10 +151,10 @@ void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const Eval
 
   real64 temp = T.m_var;
 
-  real64 V = (a + b * temp + c * temp * temp + d * temp * temp * temp) * 1e-6;
+  real64 const V = (a + b * temp + c * temp * temp + d * temp * temp * temp) * 1e-6;
 
-  real64 CO2MW = m_componentMolarWeight[m_CO2Index];
-  real64 waterMW = m_componentMolarWeight[m_waterIndex];
+  real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
+  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
 
   EvalVarArgs den, C, X;
 
@@ -170,7 +175,7 @@ void BrineCO2DensityFunction::Evaluation(const EvalVarArgs& pressure, const Eval
   }
 }
 
-void BrineCO2DensityFunction::CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density)
+void BrineCO2DensityFunction::CalculateBrineDensity(real64_const_array const & pressure, real64_const_array const & temperature, real64 const & salinity, real64_array2d const & density)
 {
   constexpr real64 c1 = -9.9595;
   constexpr real64 c2 = 7.0845;  
@@ -187,12 +192,12 @@ void BrineCO2DensityFunction::CalculateBrineDensity(const real64_vector& pressur
 
   real64 P, x;
 
-  for(unsigned long i = 0; i < pressure.size(); ++i)
+  for(localIndex i = 0; i < pressure.size(); ++i)
   {
 
     P = pressure[i] / 1e5;
 
-    for(unsigned long j = 0; j < temperature.size(); ++j)    
+    for(localIndex j = 0; j < temperature.size(); ++j)    
     {
       x = c1 * exp(a1 * salinity) + c2 * exp(a2 * temperature[j]) + c3 * exp(a3 * P);
 
@@ -201,7 +206,7 @@ void BrineCO2DensityFunction::CalculateBrineDensity(const real64_vector& pressur
   }
 }
   
-REGISTER_CATALOG_ENTRY( PVTFunctionBase,
+REGISTER_CATALOG_ENTRY( PVTFunction,
                         BrineCO2DensityFunction,
                         string_array const &, string_array const &, real64_array const & )
 

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -33,13 +29,13 @@ namespace geosx
 using namespace dataRepository;
 
 TwoPointFluxApproximation::TwoPointFluxApproximation(std::string const &name,
-                                                     ManagedGroup *const parent)
+                                                     Group *const parent)
   : FluxApproximationBase(name, parent)
 {
-  RegisterViewWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
+  registerWrapper<CellElementStencilTPFA>(viewKeyStruct::cellStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
-  RegisterViewWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
+  registerWrapper<FaceElementStencil>(viewKeyStruct::fractureStencilString)->
     setRestartFlags(RestartFlags::NO_WRITE);
 
 }
@@ -95,7 +91,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   arrayView1d<integer const> const & faceGhostRank =
     faceManager->getReference<array1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
@@ -130,7 +126,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     if ( !(regionFilter.contains(elemRegionList[kf][0]) && regionFilter.contains(elemRegionList[kf][1])) )
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
       continue;
@@ -211,7 +207,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  //OrderedVariableOneToManyRelation const & facesToEdgesMap = faceManager->edgeList();
   ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> const
   elemCenter = elemManager->ConstructViewAccessor< array1d<R1Tensor>, arrayView1d<R1Tensor> >( CellBlock::
                                                                                                viewKeyStruct::
@@ -247,8 +242,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
   FixedToManyElementRelation const &
   faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
-
-  arrayView1d< real64 const > const & aperture = fractureSubRegion->getElementAperture();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -401,7 +394,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
                                                                                  viewKeyStruct::
                                                                                  ghostRankString);
 
-  array1d<array1d<localIndex>> const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
 
   // make a list of region indices to be included
   set<localIndex> regionFilter;
@@ -430,7 +423,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
     if (faceGhostRank[kf] >= 0)
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
 
     for (localIndex ke = 0; ke < numElems; ++ke)
     {
@@ -489,6 +482,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 }
 
 
-REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, ManagedGroup * const)
+REGISTER_CATALOG_ENTRY(FluxApproximationBase, TwoPointFluxApproximation, std::string const &, Group * const)
 
 }

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -41,7 +37,7 @@ using namespace dataRepository;
 
 
 CompositeFunction::CompositeFunction( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   FunctionBase( name, parent ),
 #ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
@@ -50,15 +46,15 @@ CompositeFunction::CompositeFunction( const std::string& name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  RegisterViewWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( keys::functionNames, &m_functionNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of source functions. The order must match the variableNames argument.");
 
-  RegisterViewWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( keys::variableNames, &m_variableNames, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of variables in expression");
 
-  RegisterViewWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( keys::expression, &m_expression, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Composite math expression");
 }
@@ -96,7 +92,7 @@ void CompositeFunction::InitializeFunction()
 }
 
 
-void CompositeFunction::Evaluate( dataRepository::ManagedGroup const * const group,
+void CompositeFunction::Evaluate( dataRepository::Group const * const group,
                                   real64 const time,
                                   SortedArrayView<localIndex const> const & set,
                                   real64_array & result ) const
@@ -147,6 +143,6 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 }
 
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositeFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

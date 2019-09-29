@@ -1,32 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * FiniteElementSpace.hpp
- *
- *  Created on: Aug 4, 2016
- *      Author: rrsettgast
+/**
+ * @file FiniteElementSpace.hpp
  */
 
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
-#include "dataRepository/ManagedGroup.hpp"
-#include "dataRepository/ViewWrapper.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/Wrapper.hpp"
 
 namespace geosx
 {
@@ -44,6 +37,7 @@ string const basis = "basis";
 string const quadrature = "quadrature";
 string const dNdX = "dNdX";
 string const detJ = "detJ";
+string const parentSpace="parentSpace";
 }
 }
 
@@ -51,13 +45,13 @@ class BasisBase;
 class QuadratureBase;
 class FiniteElementBase;
 
-class FiniteElementDiscretization : public dataRepository::ManagedGroup
+class FiniteElementDiscretization : public dataRepository::Group
 {
 public:
 
   FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementDiscretization( std::string const & name, ManagedGroup * const parent );
+  explicit FiniteElementDiscretization( std::string const & name, Group * const parent );
 
   ~FiniteElementDiscretization() override;
 
@@ -86,6 +80,7 @@ public:
 
   string m_basisName;
   string m_quadratureName;
+  string m_parentSpace;
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;

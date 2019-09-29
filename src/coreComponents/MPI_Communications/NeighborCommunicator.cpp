@@ -1,26 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * NeighborCommunicator.cpp
+/**
+ * @file NeighborCommunicator.cpp
  *
- *  Created on: Jan 2, 2018
- *      Author: settgast
  */
 
 #include "common/TimingMacros.hpp"
@@ -28,7 +22,6 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 #include <sys/time.h>
-
 
 namespace geosx
 {
@@ -190,7 +183,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_WaitAll( int const commID,
+void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_ARG( commID ),
                                         MPI_Request& mpiSendRequest,
                                         MPI_Status& mpiSendStatus,
                                         MPI_Request& mpiRecvRequest,
@@ -232,7 +225,7 @@ void NeighborCommunicator::Clear()
 
 void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) const
 {
-  ManagedGroup * neighborGroups[100];
+  Group * neighborGroups[100];
   localIndex numNeighborGroups = 0;
 
   ObjectManagerBase * const nodeManager = mesh->getNodeManager();
@@ -251,30 +244,29 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
                                         RegisterGroup( std::to_string( this->m_neighborRank ));
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  elemManager->forElementSubRegions( [&]( ManagedGroup * const elementSubRegion ) -> void
-    {
-      neighborGroups[numNeighborGroups++] = elementSubRegion->
-                                            GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
-                                            RegisterGroup( std::to_string( this->m_neighborRank ));
-    } );
-
+  elemManager->forElementSubRegions( [&]( Group * const elementSubRegion ) -> void
+  {
+    neighborGroups[numNeighborGroups++] = elementSubRegion->
+                                          GetGroup( faceManager->m_ObjectManagerBaseGroupKeys.neighborData )->
+                                          RegisterGroup( std::to_string( this->m_neighborRank ));
+  } );
 
   for( localIndex a=0 ; a<numNeighborGroups ; ++a )
   {
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::matchedPartitionBoundaryObjectsString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToSendString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToSendString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString )->
     setSizedFromParent( 0 );
 
     neighborGroups[a]->
-    RegisterViewWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString )->
+    registerWrapper<localIndex_array>( ObjectManagerBase::viewKeyStruct::adjacencyListString )->
     setSizedFromParent( 0 );
 
   }
@@ -283,7 +275,7 @@ void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel * const mesh ) cons
 
 }
 
-void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
+void NeighborCommunicator::FindAndPackGhosts( bool const GEOSX_UNUSED_ARG( contactActive ),
                                               integer const depth,
                                               MeshLevel * const mesh,
                                               int const commID )
@@ -294,15 +286,15 @@ void NeighborCommunicator::FindAndPackGhosts( bool const contactActive,
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
 
-  ManagedGroup * const nodeNeighborData = nodeManager.
+  Group * const nodeNeighborData = nodeManager.
                                           GetGroup( nodeManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const edgeNeighborData = edgeManager.
+  Group * const edgeNeighborData = edgeManager.
                                           GetGroup( edgeManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const faceNeighborData = faceManager.
+  Group * const faceNeighborData = faceManager.
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
@@ -438,13 +430,13 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
 
-  ManagedGroup * const nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
+  Group * const nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
+  Group * const edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const faceNeighborData = faceManager.
+  Group * const faceNeighborData = faceManager.
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
@@ -489,7 +481,8 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
     ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
-    elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
+    elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
+                                                ElementSubRegionBase const * const subRegion )
     {
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
                                            elementGhostToReceive[er][esr],
@@ -606,15 +599,15 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
-  ManagedGroup * const
+  Group * const
   nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const
+  Group * const
   edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const
+  Group * const
   faceNeighborData = faceManager.GetGroup( faceManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
@@ -655,7 +648,8 @@ int NeighborCommunicator::PackCommSizeForSync( std::map<string, string_array > c
     for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
     {
       ElementRegionBase const * const elemRegion = elemManager.GetRegion( er );
-      elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, auto const * const subRegion )
+      elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
+                                                  auto const * const subRegion )
       {
         bufferSize += subRegion->PackSize( fieldNames.at( "elems" ), elementGhostToSend[er][esr], 0 );
       });
@@ -677,15 +671,15 @@ void NeighborCommunicator::PackCommBufferForSync( std::map<string, string_array 
   EdgeManager & edgeManager = *(mesh->getEdgeManager());
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
-  ManagedGroup * const
+  Group * const
   nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const
+  Group * const
   edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const
+  Group * const
   faceNeighborData = faceManager.GetGroup( faceManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
@@ -761,14 +755,14 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
 
-  ManagedGroup * const nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
+  Group * const nodeNeighborData = nodeManager.GetGroup( nodeManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const
+  Group * const
   edgeNeighborData = edgeManager.GetGroup( edgeManager.groupKeys.neighborData )->
                      GetGroup( std::to_string( this->m_neighborRank ) );
 
-  ManagedGroup * const faceNeighborData = faceManager.
+  Group * const faceNeighborData = faceManager.
                                           GetGroup( faceManager.groupKeys.neighborData )->
                                           GetGroup( std::to_string( this->m_neighborRank ) );
 
@@ -809,7 +803,7 @@ void NeighborCommunicator::UnpackBufferForSync( std::map<string, string_array > 
     {
       ElementRegionBase * const elemRegion = elemManager.GetRegion( er );
       elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
-                                          auto * const subRegion )
+                                                 auto * const subRegion )
       {
         unpackedSize += subRegion->Unpack( receiveBufferPtr, elementGhostToReceive[er][esr], 0 );
       });

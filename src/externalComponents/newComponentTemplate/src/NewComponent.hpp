@@ -16,11 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-/*
- * NewComponent.hpp
- *
- *  Created on: Jun 8, 2016
- *      Author: settgast
+/**
+ * @file NewComponent.hpp
  */
 
 #ifndef COMPONENTS_NEWCOMPONENTTEMPLATE_SRC_NEWCOMPONENT_HPP_
@@ -32,7 +29,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class DomainPartition;
 
@@ -40,7 +37,7 @@ class NewComponent : public SolverBase
 {
 public:
   NewComponent( std::string const & name,
-                ManagedGroup * const parent);
+                Group * const parent);
   virtual ~NewComponent() override;
 
   static std::string CatalogName() { return "NewComponent"; }

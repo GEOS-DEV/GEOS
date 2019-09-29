@@ -32,7 +32,7 @@ namespace geosx
 namespace PVTProps
 {
 
-class BrineViscosityFunction : public PVTFunctionBase
+class BrineViscosityFunction : public PVTFunction
 {
 public:
 
@@ -47,16 +47,16 @@ public:
   static string CatalogName()                    { return m_catalogName; }
   virtual string GetCatalogName() override final { return CatalogName(); }
 
-  virtual PVTFUNCTYPE FunctionType() const override
+  virtual PVTFuncType FunctionType() const override
   {
-    return PVTFUNCTYPE::VISCOSITY;
+    return PVTFuncType::VISCOSITY;
 
   }
 
-  virtual void Evaluation( const EvalVarArgs& pressure,
-                           const EvalVarArgs& temperature,
-                           const array1dT<EvalVarArgs>& phaseComposition,
-                           EvalVarArgs& value, bool useMass = 0) const override;
+  virtual void Evaluation( EvalVarArgs const & pressure,
+                           EvalVarArgs const & temperature,
+                           arraySlice1d<EvalVarArgs const> const & phaseComposition,
+                           EvalVarArgs & value, bool useMass = 0) const override;
 
 private:
 

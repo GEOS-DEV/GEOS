@@ -1,26 +1,25 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
+
+
+
 #include "gtest/gtest.h"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Solid/LinearElasticIsotropic.hpp"
 
-#include "fileIO/xmlWrapper.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
@@ -31,7 +30,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(numElems);
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -58,15 +57,15 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
-  cm.bulkModulus0() = K;
-  cm.defaultShearModulus() = G;
+  cm.setDefaultBulkModulus(K);
+  cm.setDefaultShearModulus(G);
 
-  dataRepository::ManagedGroup disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", nullptr );
   disc.resize(2);
   cm.AllocateConstitutiveData( &disc, 2 );
 
-  cm.bulkModulus() = cm.bulkModulus0();
-  cm.shearModulus() = cm.defaultShearModulus();
+//  cm.bulkModulus() = cm.setDefaultBulkModulus();
+//  cm.shearModulus() = cm.setDefaultShearModulus();
 
   arrayView2d<real64>      const & meanStress = cm.meanStress();
   arrayView2d<R2SymTensor> const & deviatorStress = cm.deviatorStress();

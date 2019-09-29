@@ -32,13 +32,13 @@ namespace geosx
 namespace PVTProps
 {
 
-class BrineCO2DensityFunction : public PVTFunctionBase
+class BrineCO2DensityFunction : public PVTFunction
 {
 public:
 
-  BrineCO2DensityFunction( const string_array& inputPara,
-                           const string_array& componentNames,
-                           const real64_array& componentMolarWeight);
+  BrineCO2DensityFunction( string_array const & inputPara,
+                           string_array const & componentNames,
+                           real64_array const & componentMolarWeight);
   ~BrineCO2DensityFunction() override {}
 
 
@@ -47,24 +47,24 @@ public:
   virtual string GetCatalogName() override final { return CatalogName(); }
 
 
-  virtual PVTFUNCTYPE FunctionType() const override
+  virtual PVTFuncType FunctionType() const override
       {
-    return PVTFUNCTYPE::DENSITY;
+    return PVTFuncType::DENSITY;
 
       }
 
-  virtual void Evaluation( const EvalVarArgs& pressure,
-                           const EvalVarArgs& temperature,
-                           const array1dT<EvalVarArgs>& phaseComposition,
-                           EvalVarArgs& value,
+  virtual void Evaluation( EvalVarArgs const & pressure,
+                           EvalVarArgs const & temperature,
+                           arraySlice1d<EvalVarArgs const> const & phaseComposition,
+                           EvalVarArgs & value,
                            bool useMass = 0) const override;
 
 
 private:
 
-  void MakeTable(const string_array& inputPara);
+  void MakeTable(string_array const & inputPara);
 
-  void CalculateBrineDensity(const real64_vector& pressure, const real64_vector& temperature, const real64& salinity, array1dT<real64_vector>& density);
+  void CalculateBrineDensity(real64_const_array const & pressure, real64_const_array const & temperature, real64 const & salinity, real64_array2d const & density);
   
   TableFunctionPtr m_BrineDensityTable;
   localIndex m_CO2Index;

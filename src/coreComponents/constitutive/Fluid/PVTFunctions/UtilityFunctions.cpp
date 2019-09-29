@@ -30,11 +30,9 @@ namespace geosx
 namespace PVTProps
 {
 
-using namespace std;  
-
-EvalArgs2D XYTable::Value(const EvalArgs2D& x, const EvalArgs2D& y) const 
+EvalArgs2D XYTable::Value(EvalArgs2D const & x, EvalArgs2D const & y) const 
 {
-  vector<unsigned long> xIndices(2), yIndices(2);
+  localIndex_array xIndices(2), yIndices(2);
 
   //find i index
 
@@ -48,7 +46,7 @@ EvalArgs2D XYTable::Value(const EvalArgs2D& x, const EvalArgs2D& y) const
   }
   else 
   {
-    for(unsigned long i = 1; i < m_x.size(); ++i)
+    for(localIndex i = 1; i < m_x.size(); ++i)
     {
       if(x <= m_x[i])
       {
@@ -74,7 +72,7 @@ EvalArgs2D XYTable::Value(const EvalArgs2D& x, const EvalArgs2D& y) const
   }
   else 
   {
-    for(unsigned long i = 1; i < m_y.size(); ++i)
+    for(localIndex i = 1; i < m_y.size(); ++i)
     {
 
       if(y <= m_y[i])
@@ -96,10 +94,10 @@ EvalArgs2D XYTable::Value(const EvalArgs2D& x, const EvalArgs2D& y) const
 
 
 template<class T>
-T XTable::GetValue(const T& x) const 
+T XTable::GetValue(T const & x) const 
 {
 
-  unsigned long idx = -1;
+  localIndex idx = 0;
   //find i index
 
   if(x <= m_x[0])
@@ -112,7 +110,7 @@ T XTable::GetValue(const T& x) const
   }
   else 
   {
-    for(unsigned long i = 1; i < m_x.size(); ++i)
+    for(localIndex i = 1; i < m_x.size(); ++i)
     {
       if(x <= m_x[i])
       {

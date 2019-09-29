@@ -34,21 +34,21 @@ namespace PVTProps
 {
 
 
-class FlashModelBase
+class FlashModel
 {
 public:
 
-  FlashModelBase( string const & name,
-                  const string_array& componentNames,
-                  const real64_array& componentMolarWeight):
+  FlashModel( string const & name,
+                  string_array const & componentNames,
+                  real64_array const & componentMolarWeight):
     m_modelName(name),
     m_componentNames(componentNames),
     m_componentMolarWeight(componentMolarWeight)
   {}
 
-  virtual ~FlashModelBase(){}
+  virtual ~FlashModel(){}
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< FlashModelBase, string_array const &,
+  using CatalogInterface = cxx_utilities::CatalogInterface< FlashModel, string_array const &,
                                                                             string_array const &,
                                                                             string_array const &,
                                                                             real64_array const & >;
@@ -69,11 +69,11 @@ public:
   //input: P, T, totalCompFraction
   //output: phaseFraction, phaseCompFraction
 
-  virtual void Partition( const EvalVarArgs& pressure,
-                          const EvalVarArgs& temperature,
-                          const array1dT<EvalVarArgs>& compFraction,
-                          array1dT<EvalVarArgs>& phaseFraction,
-                          array1dT<array1dT<EvalVarArgs> >& phaseCompFraction) const = 0;
+  virtual void Partition( EvalVarArgs const & pressure,
+                          EvalVarArgs const & temperature,
+                          arraySlice1d<EvalVarArgs const> const & compFraction,
+                          arraySlice1d<EvalVarArgs> const & phaseFraction,
+                          arraySlice2d<EvalVarArgs> const & phaseCompFraction) const = 0;
 
 protected:
   string m_modelName;
@@ -81,8 +81,6 @@ protected:
   real64_array m_componentMolarWeight;
 
 };
-
-typedef std::unique_ptr<FlashModelBase> FlashModel;
 
 }
 
