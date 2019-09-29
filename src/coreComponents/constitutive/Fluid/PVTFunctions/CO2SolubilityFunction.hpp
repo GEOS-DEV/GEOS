@@ -32,13 +32,13 @@ namespace geosx
 namespace PVTProps
 {
 
-class CO2SolubilityFunction : public FlashModelBase
+class CO2SolubilityFunction : public FlashModel
 {
 public:
 
-  CO2SolubilityFunction( const string_array& inputPara,
-                         const string_array& phaseNames,
-                         const string_array& componentNames,
+  CO2SolubilityFunction( string_array const & inputPara,
+                         string_array const & phaseNames,
+                         string_array const & componentNames,
                          real64_array const & componentMolarWeight);
 
   ~CO2SolubilityFunction() override
@@ -48,20 +48,16 @@ public:
   static string CatalogName()                    { return m_catalogName; }
   virtual string GetCatalogName() override final { return CatalogName(); }
 
-  virtual void Partition( const EvalVarArgs& pressure,
-                          const EvalVarArgs& temperature,
-                          const array1dT<EvalVarArgs>& compFraction,
-                          array1dT<EvalVarArgs>& phaseFraction,
-                          array1dT<array1dT<EvalVarArgs> >& phaseCompFraction) const override;
+  virtual void Partition( EvalVarArgs const & pressure,
+                          EvalVarArgs const & temperature,
+                          arraySlice1d<EvalVarArgs const> const & compFraction,
+                          arraySlice1d<EvalVarArgs> const & phaseFraction,
+                          arraySlice2d<EvalVarArgs> const & phaseCompFraction) const override;
 
 private:
 
   void MakeTable(const string_array& inputPara);
 
-  void CO2Solubility(real64 const T, real64 const P, real64 &V_r, real64 (*f)(real64 const x1, real64 const x2, real64 const x3));
-
-  void CalculateCO2Solubility(const real64_vector& pressure, const real64_vector& temperature, real64 const salinity, array1dT<real64_vector>& solubiltiy);  
-  
   TableFunctionPtr m_CO2SolubilityTable;
   localIndex m_CO2Index;
   localIndex m_waterIndex;

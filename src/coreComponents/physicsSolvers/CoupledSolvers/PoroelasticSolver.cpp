@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -40,7 +36,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 PoroelasticSolver::PoroelasticSolver( const std::string& name,
-                                      ManagedGroup * const parent ):
+                                      Group * const parent ):
   SolverBase(name,parent),
   m_solidSolverName(),
   m_flowSolverName(),
@@ -48,44 +44,45 @@ PoroelasticSolver::PoroelasticSolver( const std::string& name,
   m_couplingTypeOption()
 
 {
-  RegisterViewWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
+  registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the solid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
+  registerWrapper(viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of the fluid mechanics solver to use in the poroelastic solver");
 
-  RegisterViewWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
+  registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Coupling option: (FixedStress, TightlyCoupled)");
 
 }
 
-void PoroelasticSolver::RegisterDataOnMesh( dataRepository::ManagedGroup * const MeshBodies )
+void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getElemManager();
 
 
-    elemManager->forElementSubRegions( [&]( auto * const elementSubRegion ) -> void
+    elemManager->forElementSubRegions<CellElementSubRegion,
+                                      FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
       {
-        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
+        elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");
-        elementSubRegion->template RegisterViewWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
+        elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
           setDescription("Total Mean Stress");
       });
   }
 }
 
-void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
-                                           real64 const & dt,
+void PoroelasticSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                           real64 const & GEOSX_UNUSED_ARG( dt ),
                                            DomainPartition * const domain,
-                                           DofManager & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           DofManager & GEOSX_UNUSED_ARG( dofManager ),
+                                           ParallelMatrix & GEOSX_UNUSED_ARG( matrix ),
+                                           ParallelVector & GEOSX_UNUSED_ARG( rhs ),
+                                           ParallelVector & GEOSX_UNUSED_ARG( solution ) )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -105,9 +102,9 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
   });
 }
 
-void PoroelasticSolver::ImplicitStepComplete( real64 const& time_n,
-                                              real64 const& dt,
-                                              DomainPartition * const domain)
+void PoroelasticSolver::ImplicitStepComplete( real64 const& GEOSX_UNUSED_ARG( time_n ),
+                                              real64 const& GEOSX_UNUSED_ARG( dt ),
+                                              DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 
@@ -130,7 +127,7 @@ void PoroelasticSolver::PostProcessInput()
 
 }
 
-void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(ManagedGroup * const problemManager)
+void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups(Group * const problemManager)
 {
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
@@ -390,6 +387,6 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 }
 
 
-REGISTER_CATALOG_ENTRY( SolverBase, PoroelasticSolver, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, PoroelasticSolver, std::string const &, Group * const )
 
 } /* namespace geosx */

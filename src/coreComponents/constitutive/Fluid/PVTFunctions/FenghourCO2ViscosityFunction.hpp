@@ -32,13 +32,13 @@ namespace geosx
 namespace PVTProps
 {
 
-class FenghourCO2ViscosityFunction : public PVTFunctionBase
+class FenghourCO2ViscosityFunction : public PVTFunction
 {
 public:
 
-  FenghourCO2ViscosityFunction( const string_array& inputPara,
-                                const string_array& componentNames,
-                                const real64_array& componentMolarWeight );
+  FenghourCO2ViscosityFunction( string_array const & inputPara,
+                                string_array const & componentNames,
+                                real64_array const & componentMolarWeight );
   ~FenghourCO2ViscosityFunction() override
       {}
 
@@ -46,25 +46,25 @@ public:
   static string CatalogName()                    { return m_catalogName; }
   virtual string GetCatalogName() override final { return CatalogName(); }
 
-  virtual PVTFUNCTYPE FunctionType() const override
+  virtual PVTFuncType FunctionType() const override
   {
-    return PVTFUNCTYPE::VISCOSITY;
+    return PVTFuncType::VISCOSITY;
 
   }
 
-  virtual void Evaluation( const EvalVarArgs& pressure,
-                           const EvalVarArgs& temperature,
-                           const array1dT<EvalVarArgs>& phaseComposition,
-                           EvalVarArgs& value, bool useMass = 0) const override;
+  virtual void Evaluation( EvalVarArgs const & pressure,
+                           EvalVarArgs const & temperature,
+                           arraySlice1d<EvalVarArgs const> const & phaseComposition,
+                           EvalVarArgs & value, bool useMass = 0) const override;
 
 
 private:
 
-  void MakeTable(const string_array& inputPara);
+  void MakeTable(string_array const & inputPara);
 
-  void CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity);
+  void CalculateCO2Viscosity(real64_const_array const & pressure, real64_const_array const & temperature, real64_const_array2d const & density, real64_array2d const & viscosity);
 
-  void FenghourCO2Viscosity(real64 const Tcent, real64 const den, real64 &vis);
+  void FenghourCO2Viscosity(real64 const & Tcent, real64 const & den, real64 & vis);
 
   TableFunctionPtr m_CO2ViscosityTable;
 };

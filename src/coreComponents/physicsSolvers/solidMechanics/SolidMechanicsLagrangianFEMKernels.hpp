@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -263,6 +259,82 @@ struct ExplicitKernel
 
     return dt;
   }
+
+
+
+
+  static inline real64
+  CalculateSingleNodalForce( localIndex const k,
+                             localIndex const targetNode,
+                             localIndex const numQuadraturePoints,
+                             arrayView3d< R1Tensor const> const & dNdX,
+                             arrayView2d<real64 const> const & detJ,
+                             arrayView2d<real64 const> const & meanStress,
+                             arrayView2d<R2SymTensor const> const & devStress,
+                             R1Tensor & force )
+  {
+    GEOSX_MARK_FUNCTION;
+    localIndex const & a = targetNode;
+
+    //Compute Quadrature
+    for ( localIndex q = 0; q < numQuadraturePoints; ++q )
+    {
+      real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+
+      force[ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+    }//quadrature loop
+
+    return 0;
+  }
+
+  template< localIndex NUM_QUADRATURE_POINTS >
+  static inline real64
+  CalculateSingleNodalForce( arrayView1d<localIndex const> const & elementList,
+                             arrayView1d<localIndex const> const & targetNodeInElemList,
+                             arrayView3d< R1Tensor const> const & dNdX,
+                             arrayView2d<real64 const> const & detJ,
+                             arrayView2d<real64 const> const & meanStress,
+                             arrayView2d<R2SymTensor const> const & devStress,
+                             arrayView1d< R1Tensor > const & force )
+  {
+   GEOSX_MARK_FUNCTION;
+
+    // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+    {
+      localIndex const k = elementList[ i ];
+
+      //Compute Quadrature
+      for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+      {
+        real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+
+        localIndex const a = targetNodeInElemList[ i ];
+
+        force[i][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+        force[i][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+        force[i][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      }//quadrature loop
+    });
+
+    return 0;
+  }
+
 };
 
 /**
@@ -304,31 +376,31 @@ struct ImplicitKernel
    */
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
-  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          localIndex const numElems,
-          real64 const dt,
-          arrayView3d<R1Tensor const> const & dNdX,
-          arrayView2d<real64 const > const& detJ,
-          FiniteElementBase const * const fe,
-          arrayView1d< integer const > const & elemGhostRank,
-          arrayView2d< localIndex const > const & elemsToNodes,
-          arrayView1d< globalIndex const > const & globalDofNumber,
-          arrayView1d< R1Tensor const > const & disp,
-          arrayView1d< R1Tensor const > const & uhat,
-          arrayView1d< R1Tensor const > const & vtilde,
-          arrayView1d< R1Tensor const > const & uhattilde,
-          arrayView1d< real64 const > const & density,
-          arrayView1d< real64 const > const & fluidPressure,
-          arrayView1d< real64 const > const & deltaFluidPressure,
-          arrayView1d< real64 const > const & biotCoefficient,
-          timeIntegrationOption const tiOption,
-          real64 const stiffnessDamping,
-          real64 const massDamping,
-          real64 const newmarkBeta,
-          real64 const newmarkGamma,
-          DofManager const * const dofManager,
-          ParallelMatrix * const matrix,
-          ParallelVector * const rhs )
+  Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_ARG( constitutiveRelation ),
+          localIndex const GEOSX_UNUSED_ARG( numElems ),
+          real64 const GEOSX_UNUSED_ARG( dt ),
+          arrayView3d<R1Tensor const> const & GEOSX_UNUSED_ARG( dNdX ),
+          arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
+          FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
+          arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
+          arrayView2d< localIndex const > const & GEOSX_UNUSED_ARG( elemsToNodes ),
+          arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( disp ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( vtilde ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhattilde ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( density ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
+          timeIntegrationOption const GEOSX_UNUSED_ARG( tiOption ),
+          real64 const GEOSX_UNUSED_ARG( stiffnessDamping ),
+          real64 const GEOSX_UNUSED_ARG( massDamping ),
+          real64 const GEOSX_UNUSED_ARG( newmarkBeta ),
+          real64 const GEOSX_UNUSED_ARG( newmarkGamma ),
+          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+          ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
+          ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
   {
     GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
     return 0;

@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -26,9 +22,9 @@
 #include <vector>
 #include <math.h>
 
+#include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -54,15 +50,15 @@ using namespace dataRepository;
 using namespace constitutive;
 
 LaplaceFEM::LaplaceFEM( const std::string& name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName("primaryField")
 {
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper<string>(laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("option for default time integration method");
 
-  RegisterViewWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
+  registerWrapper<string>(laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of field variable");
 }
@@ -72,13 +68,13 @@ LaplaceFEM::~LaplaceFEM()
   // TODO Auto-generated destructor stub
 }
 
-void LaplaceFEM::RegisterDataOnMesh( ManagedGroup * const MeshBodies )
+void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0)->getNodeManager();
 
-    nodes->RegisterViewWrapper<real64_array >( m_fieldName )->
+    nodes->registerWrapper<real64_array >( m_fieldName )->
       setApplyDefaultValue(0.0)->
       setPlotLevel(PlotLevel::LEVEL_0)->
       setDescription("Primary field variable");
@@ -137,16 +133,16 @@ real64 LaplaceFEM::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 LaplaceFEM::ExplicitStep( real64 const& time_n,
+real64 LaplaceFEM::ExplicitStep( real64 const& GEOSX_UNUSED_ARG( time_n ),
                                  real64 const& dt,
-                                 const int cycleNumber,
-                                 DomainPartition * const domain )
+                                 const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                 DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
   return dt;
 }
 
-void LaplaceFEM::ImplicitStepSetup( real64 const & time_n,
-                                    real64 const & dt,
+void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                    real64 const & GEOSX_UNUSED_ARG( dt ),
                                     DomainPartition * const domain,
                                     DofManager & dofManager,
                                     ParallelMatrix & matrix,
@@ -157,13 +153,14 @@ void LaplaceFEM::ImplicitStepSetup( real64 const & time_n,
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
-void LaplaceFEM::ImplicitStepComplete( real64 const & time_n,
-                                       real64 const & dt,
-                                       DomainPartition * const domain)
+void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                       real64 const & GEOSX_UNUSED_ARG( dt ),
+                                       DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
 }
 
-void LaplaceFEM::SetupDofs( DofManager & dofManager ) const
+void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG( domain ),
+                            DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
                        DofManager::Location::Node,
@@ -171,14 +168,14 @@ void LaplaceFEM::SetupDofs( DofManager & dofManager ) const
 }
 
 void LaplaceFEM::AssembleSystem( real64 const time_n,
-                                 real64 const dt,
+                                 real64 const GEOSX_UNUSED_ARG( dt ),
                                  DomainPartition * const domain,
                                  DofManager const & dofManager,
                                  ParallelMatrix & matrix,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  ManagedGroup * const nodeManager = mesh->getNodeManager();
+  Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
   numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -204,7 +201,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const GEOSX_UNUSED_ARG( esr ),
                                                                         CellElementSubRegion const * const elementSubRegion )
     {
       array3d<R1Tensor> const &
@@ -370,8 +367,8 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                     [&]( FieldSpecificationBase const * const bc,
                     string const &,
                     set<localIndex> const & targetSet,
-                    ManagedGroup * const targetGroup,
-                    string const fieldName )->void
+                    Group * const targetGroup,
+                    string const GEOSX_UNUSED_ARG( fieldName ) )->void
   {
     bc->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( targetSet,
                                                                               false,
@@ -385,5 +382,5 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
   });
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
 } /* namespace ANST */

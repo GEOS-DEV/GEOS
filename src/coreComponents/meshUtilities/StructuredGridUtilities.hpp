@@ -1,31 +1,23 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef STRUCTURED_GRID_UTILITIES_H
 #define STRUCTURED_GRID_UTILITIES_H
 
 /**
- * @file StructuredGridUtilities.h
- * @author white230
+ * @file StructuredGridUtilities.hpp
  */
-
-//#include "legacy/Common/Common.h"
-#include <cassert>
 
 namespace StructuredGrid
 {
@@ -57,7 +49,8 @@ void map_index<1>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx);
+  GEOS_ASSERT_GT(nnx, index);
+  GEOSX_DEBUG_VAR(nnx);
   indices[0] = index;
 }
 
@@ -67,7 +60,7 @@ void map_index<2>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx*nnx);
+  GEOS_ASSERT_GT(nnx*nnx, index);
   indices[0] = index % nnx;
   indices[1] = index / nnx;
 }
@@ -78,7 +71,7 @@ void map_index<3>(const int index,
                   const int nnx,
                   std::vector<int> &indices)
 {
-  assert(index < nnx*nnx*nnx);
+  GEOS_ASSERT_GT(nnx*nnx*nnx, index);
   indices[0] = index % nnx;
   indices[1] = (index / nnx) % nnx;
   indices[2] = index / (nnx*nnx);

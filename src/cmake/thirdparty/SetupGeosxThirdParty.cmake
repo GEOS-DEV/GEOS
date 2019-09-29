@@ -578,4 +578,45 @@ if(UNCRUSTIFY_FOUND)
     
 endif()
 
-message(STATUS "Leaving SetupGeosxThirdParty.cmake\n")
+################################
+# PETSC
+################################
+#if( ENABLE_PETSC )
+
+  #if(EXISTS ${PETSC_DIR})
+  
+  #else()
+      message( INFO ": setting up PETSC" )
+      set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
+  #endif()
+
+  find_path( Petsc_INCLUDE_DIRS petscvec.h
+             PATHS  ${PETSC_DIR}/include
+             NO_DEFAULT_PATH
+             NO_CMAKE_ENVIRONMENT_PATH
+             NO_CMAKE_PATH
+             NO_SYSTEM_ENVIRONMENT_PATH
+             NO_CMAKE_SYSTEM_PATH)
+
+find_library( Petsc_LIBRARIES NAMES petsc
+              PATHS ${PETSC_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+message( "Petsc_INCLUDE_DIRS = ${Petsc_INCLUDE_DIRS}" )
+message( "Petsc_LIBRARIES = ${Petsc_LIBRARIES}" )
+  
+  
+  blt_register_library( NAME petsc
+                        INCLUDES ${Petsc_INCLUDE_DIRS} 
+                        LIBRARIES ${Petsc_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} petsc )  
+
+#endif()
+
+message("Leaving SetupGeosxThirdParty.cmake\n")
+

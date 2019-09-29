@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -24,7 +20,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
@@ -78,12 +74,12 @@ struct PointDescriptor
  * Main stencil is the one for cell-to-cell fluxes.
  * Boundary stencils are for Dirichlet boundary conditions
  */
-class FluxApproximationBase : public dataRepository::ManagedGroup
+class FluxApproximationBase : public dataRepository::Group
 {
 public:
 
   // necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
@@ -91,7 +87,7 @@ public:
 
   FluxApproximationBase() = delete;
 
-  FluxApproximationBase(string const & name, dataRepository::ManagedGroup * const parent);
+  FluxApproximationBase(string const & name, dataRepository::Group * const parent);
 
   /// return a boundary stencil by face set name
   BoundaryStencil const & getBoundaryStencil(string const & setName) const;
@@ -113,8 +109,8 @@ public:
   /// triggers computation of the stencil, implemented in derived classes
   void compute( DomainPartition const & domain );
 
-  virtual void addToFractureStencil( DomainPartition const & domain,
-                                     string const & faceElementRegionName ) {}
+  virtual void addToFractureStencil( DomainPartition const & GEOSX_UNUSED_ARG( domain ),
+                                     string const & GEOSX_UNUSED_ARG( faceElementRegionName ) ) {}
 
 
   struct viewKeyStruct
@@ -138,7 +134,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /// actual computation of the cell-to-cell stencil, to be overridden by implementations
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
@@ -169,18 +165,18 @@ template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
 {
 //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  this->forViewWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const vw) -> void
+  this->forWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto const * const wrapper) -> void
   {
-    lambda(vw->reference());
+    lambda(wrapper->reference());
   });
 }
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 {
-  this->forViewWrappers<BoundaryStencil>([&] (auto const * const vw) -> void
+  this->forWrappers<BoundaryStencil>([&] (auto const * const wrapper) -> void
   {
-    lambda(vw->reference());
+    lambda(wrapper->reference());
   });
 }
 

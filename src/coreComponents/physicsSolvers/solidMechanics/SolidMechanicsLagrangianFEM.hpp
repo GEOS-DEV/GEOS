@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -35,7 +31,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -56,7 +52,7 @@ public:
    * @param parent the parent group of the solver
    */
   SolidMechanicsLagrangianFEM( const std::string& name,
-                               ManagedGroup * const parent );
+                               Group * const parent );
 
 
   SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
@@ -75,9 +71,9 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -109,7 +105,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -375,7 +372,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -403,6 +400,7 @@ protected:
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
+
 
 } /* namespace geosx */
 

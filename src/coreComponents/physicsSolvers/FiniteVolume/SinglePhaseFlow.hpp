@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -31,7 +27,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 
@@ -48,12 +44,12 @@ class SinglePhaseFlow : public FlowSolverBase
 {
 public:
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   SinglePhaseFlow( const std::string & name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
 
   /// deleted default constructor
@@ -83,7 +79,7 @@ public:
   static string CatalogName()
   { return "SinglePhaseFlow"; }
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,
@@ -108,7 +104,8 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DofManager & dofManager ) const override;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -155,6 +152,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            CellElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -162,6 +160,7 @@ public:
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
                            FaceElementSubRegion const * const subRegion,
+                           DofManager const * const dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -200,6 +199,18 @@ public:
 
 
   /**@}*/
+
+  /**
+   * @brief Function to update all constitutive state and dependent variables
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateState( Group * dataGroup ) const;
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param dataGroup group that contains the fields
+   */
+  void UpdateFluidModel( Group * const dataGroup ) const;
 
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -240,7 +251,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -269,30 +280,17 @@ private:
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  void UpdateFluidModel( ManagedGroup * const dataGroup ) const;
-
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateSolidModel( ManagedGroup * const dataGroup ) const;
+  void UpdateSolidModel( Group * const dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void UpdateMobility( ManagedGroup * const dataGroup ) const;
+  void UpdateMobility( Group * const dataGroup ) const;
 
-  /**
-   * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
-   */
-  void UpdateState( ManagedGroup * dataGroup ) const;
 
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;

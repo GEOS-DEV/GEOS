@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * VTMMeshGenerator.cpp
- *
- *  Created on: Aug 16, 2018
- *      Author: Antoine Mazuyer
+/**
+ * @file VTMMeshGenerator.cpp
  */
 
 #include "VTMMeshGenerator.hpp"
@@ -29,7 +22,6 @@
 
 #include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
-//#include "managers/TableManager.hpp"
 //#include "SimpleGeometricObjects.hpp"
 
 #include "MPI_Communications/PartitionBase.hpp"
@@ -41,7 +33,7 @@ namespace geosx
 {
 using namespace dataRepository;
 
-VTMMeshGenerator::VTMMeshGenerator( string const & name, ManagedGroup * const parent ):
+VTMMeshGenerator::VTMMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
 
@@ -57,7 +49,7 @@ VTMMeshGenerator::VTMMeshGenerator( string const & name, ManagedGroup * const pa
      }
    */
 
-  RegisterViewWrapper<string>(keys::filePath)->
+  registerWrapper<string>(keys::filePath)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the vtm file");
 }
@@ -73,7 +65,7 @@ VTMMeshGenerator::~VTMMeshGenerator()
 /**
  * @param domain
  */
-void VTMMeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
 {
   //  lvector numElements;
   //
@@ -95,12 +87,12 @@ void VTMMeshGenerator::PostProcessInput()
 
 
 
-void VTMMeshGenerator::RemapMesh(dataRepository::ManagedGroup * const domain)
+void VTMMeshGenerator::RemapMesh(dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
 {
 
 }
 
-ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
@@ -108,7 +100,7 @@ ManagedGroup * VTMMeshGenerator::CreateChild( string const & childKey, string co
 void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
     /// Basic mesh registration
-    ManagedGroup * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
+    Group * const meshBodies = domain->GetGroup(std::string("MeshBodies"));
     MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
     MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>(std::string("Level0"));
     NodeManager * nodeManager = meshLevel0->getNodeManager();
@@ -204,15 +196,15 @@ void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
     }
 }
 
-void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                         const int index[],
-                                                         const int& iEle,
-                                                         int nodeIDInBox[],
-                                                         const int node_size )
+void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
+                                                    const int GEOSX_UNUSED_ARG( index )[],
+                                                    const int& GEOSX_UNUSED_ARG( iEle ),
+                                                    int GEOSX_UNUSED_ARG( nodeIDInBox )[],
+                                                    const int GEOSX_UNUSED_ARG( node_size ) )
 
 {
 
 }
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTMMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTMMeshGenerator, std::string const &, Group * const )
 }

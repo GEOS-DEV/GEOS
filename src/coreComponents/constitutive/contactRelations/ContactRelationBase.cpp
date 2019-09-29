@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -37,12 +33,12 @@ namespace constitutive
 
 
 ContactRelationBase::ContactRelationBase( string const & name,
-                                          ManagedGroup * const parent ):
+                                          Group * const parent ):
   ConstitutiveBase(name, parent),
   m_penaltyStiffness(0.0),
   m_apertureFunction(nullptr)
 {
-  RegisterViewWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Value of the penetration penalty stiffness. Units of Pressure/length");
@@ -57,10 +53,10 @@ ContactRelationBase::~ContactRelationBase()
 
 
 
-ManagedGroup *
+Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
 {
-  ManagedGroup * rval = nullptr;
+  Group * rval = nullptr;
 
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
   if( functionCatalog.count(catalogKey) )
@@ -75,7 +71,7 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   return rval;
 }
 
-void ContactRelationBase::InitializePreSubGroups( ManagedGroup * const )
+void ContactRelationBase::InitializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast<TableFunction*>(m_apertureFunction);
   if( apertureTable!=nullptr )
@@ -119,7 +115,7 @@ void ContactRelationBase::InitializePreSubGroups( ManagedGroup * const )
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )
 
 }
 } /* namespace geosx */

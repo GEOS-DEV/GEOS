@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -30,7 +26,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -46,12 +42,12 @@ class FlowSolverBase : public SolverBase
 {
 public:
 /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   FlowSolverBase( const std::string& name,
-                  ManagedGroup * const parent );
+                  Group * const parent );
 
 
   /// deleted default constructor
@@ -74,16 +70,18 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override;
-
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
+
+  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
   localIndex fluidIndex() const { return m_fluidIndex; }
 
   localIndex solidIndex() const { return m_solidIndex; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -139,10 +137,9 @@ private:
 
 protected:
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(ManagedGroup * const rootGroup) override;
-
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -167,9 +164,13 @@ protected:
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
+  /// flag to determine whether or not coupled with wells
+  integer m_coupledWellsFlag;
+  
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;

@@ -1,26 +1,20 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * SystemSolverParameters.cpp
+/**
+ * @file SystemSolverParameters.cpp
  *
- *  Created on: Sep 12, 2017
- *      Author: settgast
  */
 
 #include "SystemSolverParameters.hpp"
@@ -29,8 +23,8 @@ namespace geosx
 {
 using namespace dataRepository;
 SystemSolverParameters::SystemSolverParameters( std::string const & name,
-                                                ManagedGroup * const parent ):
-  ManagedGroup(name,parent),
+                                                Group * const parent ):
+  Group(name,parent),
   m_verbose(0),
   m_solverType("Klu"),
   m_krylovTol(),
@@ -53,125 +47,125 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   setInputFlags(InputFlags::OPTIONAL);
   
   setRestartFlags(RestartFlags::NO_WRITE);
-  RegisterViewWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
+  registerWrapper(viewKeysStruct::verbosityString, &m_verbose, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("verbosity level");
 
-  RegisterViewWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
+  registerWrapper(viewKeysStruct::solverTypeString, &m_solverType, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
+  registerWrapper(viewKeysStruct::krylovTolString, &m_krylovTol, false )->
     setApplyDefaultValue(1.0e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allowable tolerance for krylov solve");
 
-  RegisterViewWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
+  registerWrapper(viewKeysStruct::numKrylovIterString, &m_numKrylovIter, false )->
     setApplyDefaultValue(100)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of Krylov Iterations");
 
-  RegisterViewWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
+  registerWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
+  registerWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
     setApplyDefaultValue(3.0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::ilut_dropString, &m_ilut_drop, false )->
+  registerWrapper(viewKeysStruct::ilut_dropString, &m_ilut_drop, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::useMLPrecondString, &m_useMLPrecond, false )->
+  registerWrapper(viewKeysStruct::useMLPrecondString, &m_useMLPrecond, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::useInnerSolverString, &m_useInnerSolver, false )->
+  registerWrapper(viewKeysStruct::useInnerSolverString, &m_useInnerSolver, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::scalingOptionString, &m_scalingOption, false )->
+  registerWrapper(viewKeysStruct::scalingOptionString, &m_scalingOption, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::useBicgstabString, &m_useBicgstab, false )->
+  registerWrapper(viewKeysStruct::useBicgstabString, &m_useBicgstab, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::useDirectSolverString, &m_useDirectSolver, false )->
+  registerWrapper(viewKeysStruct::useDirectSolverString, &m_useDirectSolver, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
+  registerWrapper(viewKeysStruct::useNewtonSolveString, &m_useNewtonSolve, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
+  registerWrapper(viewKeysStruct::newtonTolString, &m_newtonTol, false )->
     setApplyDefaultValue(1.0e-6)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
-  RegisterViewWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
+  registerWrapper(viewKeysStruct::maxIterNewtonString, &m_maxIterNewton, false )->
     setApplyDefaultValue(5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of Newton iterations");
 
 
-  RegisterViewWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
+  registerWrapper( viewKeysStruct::maxTimeStepCutsString, &m_maxTimeStepCuts, false )->
     setApplyDefaultValue(2)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Max number of time step cuts");
 
-  RegisterViewWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
+  registerWrapper( viewKeysStruct::timeStepCutFactorString, &m_timeStepCutFactor, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time step cut factor");
 
-  RegisterViewWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
+  registerWrapper( viewKeysStruct::maxLineSearchCutsString, &m_maxLineSearchCuts, false )->
     setApplyDefaultValue(4)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Max number of line search cuts");
 
-  RegisterViewWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
+  registerWrapper( viewKeysStruct::lineSearchCutFactorString, &m_lineSearchCutFactor, false )->
     setApplyDefaultValue(0.5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Line search cut factor");
 
-  RegisterViewWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
+  registerWrapper( viewKeysStruct::allowNonConvergedString, &m_allowNonConverged, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allow non-converged solution to be accepted");
 
-  RegisterViewWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
+  registerWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Line search option");  
 
-  RegisterViewWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
+  registerWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum number of time sub-steps allowed for the solver");
 
-  RegisterViewWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
+  registerWrapper(viewKeysStruct::KrylovResidualInitString, &m_KrylovResidualInit, false )->
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
-  RegisterViewWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
+  registerWrapper(viewKeysStruct::KrylovResidualFinalString, &m_KrylovResidualFinal, false )->
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
-  RegisterViewWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
+  registerWrapper(viewKeysStruct::numNewtonIterationsString, &m_numNewtonIterations, false )->
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
@@ -179,7 +173,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
 }
 
 
-REGISTER_CATALOG_ENTRY( ManagedGroup, SystemSolverParameters, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( Group, SystemSolverParameters, std::string const &, Group * const )
 
 } /* namespace geosx */
 
