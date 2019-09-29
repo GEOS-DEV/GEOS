@@ -17,7 +17,7 @@
 
 #include "RAJA/RAJA.hpp"
 #include "common/DataTypes.hpp"
-
+#include "common/GeosxMacros.hpp"
 
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
@@ -69,11 +69,13 @@ RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end,
 template<class POLICY=serialPolicy, typename T, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), std::forward<LAMBDA>(body));
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len), std::forward<LAMBDA>(body));
 }
 
 template< typename T , typename atomicPol=RAJA::auto_atomic>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & localField,
                               arraySlice1d< T const >& globalField,
                               localIndex const N )
@@ -85,7 +87,9 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 }
 
 template< typename atomicPol=RAJA::auto_atomic>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d<R1Tensor const> const & localField,
                               arraySlice1d<R1Tensor>& globalField,
                               localIndex const N )
@@ -101,7 +105,9 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 }
 
 template< localIndex N, typename atomicPol=RAJA::auto_atomic>
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               R1Tensor const * const restrict localField,
                               arraySlice1d<R1Tensor> & globalField )
 {
@@ -116,7 +122,9 @@ inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLoc
 }
 
 template< typename T, typename atomicPol=RAJA::auto_atomic >
-inline void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void AddLocalToGlobal( arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & localField1,
                               arraySlice1d< T const > const & localField2,
                               arraySlice1d< T > & globalField1,

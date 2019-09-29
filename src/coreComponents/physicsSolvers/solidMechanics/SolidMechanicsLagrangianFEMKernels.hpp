@@ -21,6 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "Epetra_FECrsMatrix.h"
 #include "Epetra_FEVector.h"
 #include "common/DataTypes.hpp"
@@ -111,8 +112,37 @@ inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
   });
 }
 
+
 template< int N >
-inline void Integrate( const R2SymTensor& fieldvar,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void Integrate( const R2SymTensor& fieldvar,
+                real64 const (&dNdX)[3][8],
+                real64 const& detJ,
+                real64 const& detF,
+                const R2Tensor& fInv,
+                R1Tensor * restrict const result )
+{
+  real64 const integrationFactor = detJ * detF;
+
+  R2Tensor P;
+  P.AijBkj( fieldvar, fInv );
+  P *= integrationFactor;
+
+  real64 const * const ptrP = P.Data();
+
+  for( int a=0 ; a<N ; ++a )  // loop through all shape functions in element
+  {
+    result[a][0] -= ptrP[0] * dNdX[0][a] + ptrP[1] * dNdX[1][a] + ptrP[2] * dNdX[2][a];
+    result[a][1] -= ptrP[3] * dNdX[0][a] + ptrP[4] * dNdX[1][a] + ptrP[5] * dNdX[2][a];
+    result[a][2] -= ptrP[6] * dNdX[0][a] + ptrP[7] * dNdX[1][a] + ptrP[8] * dNdX[2][a];
+  }
+}
+
+template< int N >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void Integrate( const R2SymTensor& fieldvar,
                        arraySlice1d<R1Tensor const> const & dNdX,
                        real64 const& detJ,
                        real64 const& detF,
@@ -170,6 +200,7 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
  */
 struct ExplicitKernel
 {
+
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -193,8 +224,9 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
           arrayView2d<localIndex const> const & elemsToNodes,
-          arrayView3d< R1Tensor const> const & dNdX,
-          arrayView2d<real64 const> const & detJ,
+          arrayView3d< R1Tensor const> const & ,
+          arrayView2d<real64 const> const & ,
+          arrayView1d<R1Tensor const> const & X,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
@@ -202,9 +234,20 @@ struct ExplicitKernel
           arrayView2d<R2SymTensor> const & devStress,
           real64 const dt )
   {
-    forall_in_set<serialPolicy>( elementList.values(),
+
+#if defined(__CUDACC__)
+    using ELEM_KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+#elif defined(GEOSX_USE_OPENMP)
+    using ELEM_KERNEL_POLICY = RAJA::omp_parallel_for_exec;
+#else
+    using ELEM_KERNEL_POLICY = RAJA::loop_exec;
+#endif
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+
+    forall_in_set<ELEM_KERNEL_POLICY>( elementList.values(),
                               elementList.size(),
-                              GEOSX_LAMBDA ( localIndex k) mutable
+                              GEOSX_DEVICE_LAMBDA ( localIndex k)
     {
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
@@ -217,8 +260,21 @@ struct ExplicitKernel
       //Compute Quadrature
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
       {
+        real64 dNdX_data[3][8];
+#define DNDXKQ(k,q) dNdX_data
+
+
+        real64 const detJ_k_q =
+        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                            q,
+                                                            elemsToNodes,
+                                                            X,
+                                                            dNdX_data );
+
+#define DETJ(k,q) detJ_k_q
+
         R2Tensor dUhatdX, dUdX;
-        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, dNdX[k][q]);
+        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
         dUhatdX *= dt;
 
         R2Tensor F,Ldt, fInv;
@@ -245,12 +301,13 @@ struct ExplicitKernel
         R2SymTensor Dadt;
         HughesWinget(Rot, Dadt, Ldt);
 
-        constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
+        constitutive.StateUpdatePoint( k, q, Dadt, Rot);
 
-        R2SymTensor TotalStress = devStress[k][q];
+        R2SymTensor TotalStress;
+        TotalStress= devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
 
-        Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        Integrate<NUM_NODES_PER_ELEM>( TotalStress, DNDXKQ(k,q), DETJ(k,q), detF, fInv, f_local );
       }//quadrature loop
 
 

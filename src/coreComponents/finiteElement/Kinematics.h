@@ -16,6 +16,7 @@
 #define _KINEMATICS_H_
 
 #include "common/DataTypes.hpp"
+#include "common/GeosxMacros.hpp"
 #include "assert.h"
 
 //*****************************************************************************
@@ -31,7 +32,9 @@ void IncrementalKinematics( const R2Tensor& A,
 void IncrementalRotation( const R2Tensor& A,
                           R2TensorT<3>& Rot );
 
-inline void CalculateGradient( R2Tensor& Gradient,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CalculateGradient( R2Tensor& Gradient,
                                const int* bConnectivity,
                                arraySlice1d<R1Tensor> const & disp,
                                arraySlice1d<R1Tensor> const & dNdX )
@@ -41,7 +44,9 @@ inline void CalculateGradient( R2Tensor& Gradient,
     Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a]);
 }
 
-inline void CalculateGradient(R2Tensor& Gradient,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CalculateGradient(R2Tensor& Gradient,
                               arraySlice1d<R1Tensor const> const & disp,
                               arraySlice1d<R1Tensor const> const & dNdX,
                               localIndex numNodes)
@@ -54,7 +59,9 @@ inline void CalculateGradient(R2Tensor& Gradient,
 }
 
 template< int N >
-inline void CalculateGradient(R2Tensor& Gradient,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CalculateGradient(R2Tensor& Gradient,
                               arraySlice1d<R1Tensor const> const & disp,
                               arraySlice1d<R1Tensor const> const & dNdX )
 {
@@ -66,11 +73,13 @@ inline void CalculateGradient(R2Tensor& Gradient,
 }
 
 template< int N >
-inline void CalculateGradients( R2Tensor & Gradient0,
-                                R2Tensor & Gradient1,
-                                R1Tensor const * restrict const var0,
-                                R1Tensor const * restrict const var1,
-                                arraySlice1d<R1Tensor const> const & dNdX )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CalculateGradients( R2Tensor & Gradient0,
+                         R2Tensor & Gradient1,
+                         R1Tensor const * restrict const var0,
+                         R1Tensor const * restrict const var1,
+                         arraySlice1d<R1Tensor const> const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );
   Gradient1.dyadic_ab( var1[0], dNdX[0] );
@@ -81,7 +90,54 @@ inline void CalculateGradients( R2Tensor & Gradient0,
   }
 }
 
-inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
+template< int N >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CalculateGradients( R2Tensor & Gradient0,
+                         R2Tensor & Gradient1,
+                         R1Tensor const * restrict const var0,
+                         R1Tensor const * restrict const var1,
+                         real64 const (&dNdX)[3][8] )
+{
+  Gradient0 = 0;
+  Gradient1 = 0;
+  real64 * const restrict g0 = Gradient0.Data();
+  real64 * const restrict g1 = Gradient1.Data();
+
+  for( int a=1 ; a<N ; ++a )
+  {
+    real64 const * const restrict v0 = var0[a].Data();
+    real64 const * const restrict v1 = var1[a].Data();
+    g0[0] += v0[0]*dNdX[0][a];
+    g0[1] += v0[0]*dNdX[1][a];
+    g0[2] += v0[0]*dNdX[2][a];
+
+    g0[3] += v0[1]*dNdX[0][a];
+    g0[4] += v0[1]*dNdX[1][a];
+    g0[5] += v0[1]*dNdX[2][a];
+
+    g0[6] += v0[2]*dNdX[0][a];
+    g0[7] += v0[2]*dNdX[1][a];
+    g0[8] += v0[2]*dNdX[2][a];
+
+
+    g1[0] += v1[0]*dNdX[0][a];
+    g1[1] += v1[0]*dNdX[1][a];
+    g1[2] += v1[0]*dNdX[2][a];
+
+    g1[3] += v1[1]*dNdX[0][a];
+    g1[4] += v1[1]*dNdX[1][a];
+    g1[5] += v1[1]*dNdX[2][a];
+
+    g1[6] += v1[2]*dNdX[0][a];
+    g1[7] += v1[2]*dNdX[1][a];
+    g1[8] += v1[2]*dNdX[2][a];
+  }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
 {
 
   real64 * restrict const Dadt_data = Dadt.Data();
@@ -127,7 +183,7 @@ inline void HughesWinget( R2Tensor &Rot, R2SymTensor & Dadt, R2Tensor const & G)
 
 
 }
-
 }
+
 
 #endif

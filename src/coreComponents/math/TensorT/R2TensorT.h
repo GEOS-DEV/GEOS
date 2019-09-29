@@ -42,6 +42,7 @@ class R2TensorT : public TensorBaseT< T_dim*T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
+  GEOSX_HOST_DEVICE
   R2TensorT(void);
 
   /**
@@ -66,17 +67,23 @@ public:
                                                                                                         // otherwise
 
   /// non-virtual destructor
+  GEOSX_HOST_DEVICE
   ~R2TensorT(void);
 
   //***** ASSIGNMENT OPERATORS ************************************************
   /// assignment of all data to an integer
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   R2TensorT<T_dim>& operator=( const int& rhs );
 
   /// assignment to all data to a realT
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   R2TensorT<T_dim>& operator=( const realT& rhs );
 
   /// assignment to another R2TensorT
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs );
 
   /// assignment to another R2SymTensorT
@@ -85,6 +92,8 @@ public:
   /// add another R2SymTensorT
   R2TensorT<T_dim>& operator+=( const R2SymTensorT<T_dim>& rhs );
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   R2TensorT& operator+=( const R2TensorT<T_dim>& rhs );
 
   //***** ACCESS OPERATORS ****************************************************
@@ -98,9 +107,13 @@ public:
   //***** MULTIPLICATION OPERATIONS *******************************************
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
@@ -113,6 +126,8 @@ public:
   void AijBjk( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 2 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B );
 
   /// multiply (inner product) Rank2 tensor with Symmetric Rank 2 tensor
@@ -122,12 +137,16 @@ public:
   void AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   /// multiply (dyadic product) Rank1 tensor with itself
   void dyadic_aa( const R1TensorT<T_dim>& a );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor and add
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
 
   void FillColumn( const int col, const R1TensorT<T_dim>& a );
@@ -155,6 +174,8 @@ public:
   realT Trace(void) const;
 
   /// Determinant
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   realT Det(void) const;
 
   /// One minus Determinant
@@ -164,6 +185,8 @@ public:
   realT Inverse(void) { return Inverse(*this); }
 
   /// Inverse
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   realT Inverse( R2TensorT<T_dim>& tensor );
 
   /// Inverse of tensor minus identity
@@ -173,6 +196,8 @@ public:
   R2TensorT<T_dim>& Inverse_I( R2TensorT<T_dim>& tensor );
 
   /// add a realT to the diagonal
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void PlusIdentity( const realT rhs )
   {
     this->t_data[0] += rhs;
@@ -237,6 +262,7 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
  * @return none
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 R2TensorT<T_dim>::R2TensorT(void):
   TensorBaseT< T_dim*T_dim >()
 {}
@@ -293,6 +319,7 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
  * @return none
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 R2TensorT<T_dim>::~R2TensorT(void)
 {}
 
@@ -327,7 +354,9 @@ inline realT& R2TensorT<T_dim>::operator()( const int i, const int j )
  * @return reference to this
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
 {
   TensorBaseT< T_dim*T_dim >::operator=(rhs);
   return *this;
@@ -351,7 +380,9 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const realT& rhs )
  * @return reference to *this
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2TensorT<T_dim>& rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2TensorT<T_dim>& rhs )
 {
   TensorBaseT< T_dim*T_dim >::operator=(rhs);
   return *this;
@@ -400,7 +431,9 @@ inline R2TensorT<3>& R2TensorT<3>::operator=( const R2SymTensorT<3>& rhs )
 
 
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2TensorT<T_dim>& rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2TensorT<T_dim>& rhs )
 {
   TensorBaseT< T_dim*T_dim >::operator+=(rhs);
   return *this;
@@ -431,7 +464,9 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>
  *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
 {
   // int ij;
   // int jk;
@@ -486,7 +521,9 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
  *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
 {
   if( T_dim == 2 )
   {
@@ -688,7 +725,9 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
  *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
 {
 //  int ij;
 //  int jk;
@@ -811,7 +850,9 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
  *\otimes b}\f$ -or- \f$a_i b_j\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
 //  {
@@ -890,7 +931,9 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
  * tensor.
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
 {
 //  if( T_dim == 2 )
 //  {
@@ -959,7 +1002,9 @@ inline realT R2TensorT<T_dim>::Trace(void) const
  * This function returns the determinate of the tensor that it is called from.
  */
 template< int T_dim >
-inline realT R2TensorT<T_dim>::Det(void) const
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT R2TensorT<T_dim>::Det(void) const
 {
   realT det=0;
   if( T_dim == 2 )
@@ -968,10 +1013,10 @@ inline realT R2TensorT<T_dim>::Det(void) const
     det = this->t_data[0]*( this->t_data[4]*(this->t_data[8]) - this->t_data[5]*(this->t_data[7]) )
           - this->t_data[3]*( this->t_data[1]*(this->t_data[8]) - this->t_data[2]*(this->t_data[7]) )
           + this->t_data[6]*( this->t_data[1]*(this->t_data[5]) - this->t_data[2]*(this->t_data[4]) );
-  else
-  {
-    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
-  }
+//  else
+//  {
+//    GEOS_WARNING("R2TensorT::Det() not implemented for dimension > 3");
+//  }
 
   return det;
 }
@@ -1043,7 +1088,9 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
  */
 template< int T_dim >
 //R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
-inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
 {
   realT const o1 = a.t_data[4] * a.t_data[8] - a.t_data[5] * a.t_data[7];
   realT const o2 = a.t_data[2] * a.t_data[7] - a.t_data[1] * a.t_data[8];

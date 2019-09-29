@@ -87,9 +87,13 @@ public:
   {
   public:
     KernelWrapper( arrayView1d<real64 const> const bulkModulus,
-                   arrayView1d<real64 const> const shearModulus ) :
+                   arrayView1d<real64 const> const shearModulus,
+                   arrayView2d<real64 > const meanStress,
+                   arrayView2d<R2SymTensor> const devStress ):
       m_bulkModulus( bulkModulus ),
-      m_shearModulus( shearModulus )
+      m_shearModulus( shearModulus ),
+      m_meanStress( meanStress ),
+      m_deviatorStress( devStress )
     {}
 
     /**
@@ -124,12 +128,23 @@ public:
       c[5][5] = G;
     }
 
+    GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
+    void StateUpdatePoint( localIndex const k,
+                           localIndex const q,
+                           R2SymTensor const & D,
+                           R2Tensor const & Rot) const;
+
     arrayView1d<real64 const> const m_bulkModulus;
     arrayView1d<real64 const> const m_shearModulus;
+    arrayView2d<real64 > const m_meanStress;
+    arrayView2d<R2SymTensor> const m_deviatorStress;
+
   };
 
-  KernelWrapper createKernelWrapper() const
-  { return KernelWrapper( m_bulkModulus, m_shearModulus ); }
+  KernelWrapper createKernelWrapper()
+  { return KernelWrapper( m_bulkModulus, m_shearModulus, m_meanStress, m_deviatorStress ); }
+
 
 protected:
   virtual void PostProcessInput() override;
@@ -143,6 +158,28 @@ private:
   bool m_postProcessed = false;
 };
 
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void LinearElasticIsotropic::KernelWrapper::StateUpdatePoint( localIndex const k,
+                                                              localIndex const q,
+                                                              R2SymTensor const & D,
+                                                              R2Tensor const & Rot ) const
+{
+  real64 volumeStrain = D.Trace();
+  m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];
+
+  R2SymTensor temp;
+  temp = D;
+  temp.PlusIdentity( -volumeStrain / 3.0 );
+  temp *= 2.0 * m_shearModulus[k];
+  m_deviatorStress[k][q] += temp;
+
+
+  temp.QijAjkQlk( m_deviatorStress[k][q], Rot );
+  m_deviatorStress[k][q] = temp;
+
+}
 
 }
 

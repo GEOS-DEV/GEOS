@@ -136,33 +136,122 @@ public:
   {
     real64 J[3][3] = {{0}};
 
+//#define SPOOF
+#ifdef SPOOF
+    constexpr static real64 dNdXi[8][3] = { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
+                                          { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
+                                          { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
+                                          { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
+                                          { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
+                                          { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
+                                          { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
+                                          { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) } };
+#define DNDXI(q,a,j) dNdXi[a][i]
+
+#else
+    constexpr static real64 dNdXi[8][8][3] = { { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
+                                          { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
+                                          { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
+                                          { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
+                                          { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
+                                          { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
+                                          { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
+                                          { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) }
+                                        },
+                                        { { dNdXi0(1,0), dNdXi1(1,0), dNdXi2(1,0) },
+                                          { dNdXi0(1,1), dNdXi1(1,1), dNdXi2(1,1) },
+                                          { dNdXi0(1,2), dNdXi1(1,2), dNdXi2(1,2) },
+                                          { dNdXi0(1,3), dNdXi1(1,3), dNdXi2(1,3) },
+                                          { dNdXi0(1,4), dNdXi1(1,4), dNdXi2(1,4) },
+                                          { dNdXi0(1,5), dNdXi1(1,5), dNdXi2(1,5) },
+                                          { dNdXi0(1,6), dNdXi1(1,6), dNdXi2(1,6) },
+                                          { dNdXi0(1,7), dNdXi1(1,7), dNdXi2(1,7) }
+                                        },
+                                        { { dNdXi0(2,0), dNdXi1(2,0), dNdXi2(2,0) },
+                                          { dNdXi0(2,1), dNdXi1(2,1), dNdXi2(2,1) },
+                                          { dNdXi0(2,2), dNdXi1(2,2), dNdXi2(2,2) },
+                                          { dNdXi0(2,3), dNdXi1(2,3), dNdXi2(2,3) },
+                                          { dNdXi0(2,4), dNdXi1(2,4), dNdXi2(2,4) },
+                                          { dNdXi0(2,5), dNdXi1(2,5), dNdXi2(2,5) },
+                                          { dNdXi0(2,6), dNdXi1(2,6), dNdXi2(2,6) },
+                                          { dNdXi0(2,7), dNdXi1(2,7), dNdXi2(2,7) }
+                                        },
+                                        { { dNdXi0(3,0), dNdXi1(3,0), dNdXi2(3,0) },
+                                          { dNdXi0(3,1), dNdXi1(3,1), dNdXi2(3,1) },
+                                          { dNdXi0(3,2), dNdXi1(3,2), dNdXi2(3,2) },
+                                          { dNdXi0(3,3), dNdXi1(3,3), dNdXi2(3,3) },
+                                          { dNdXi0(3,4), dNdXi1(3,4), dNdXi2(3,4) },
+                                          { dNdXi0(3,5), dNdXi1(3,5), dNdXi2(3,5) },
+                                          { dNdXi0(3,6), dNdXi1(3,6), dNdXi2(3,6) },
+                                          { dNdXi0(3,7), dNdXi1(3,7), dNdXi2(3,7) }
+                                        },
+                                        { { dNdXi0(4,0), dNdXi1(4,0), dNdXi2(4,0) },
+                                          { dNdXi0(4,1), dNdXi1(4,1), dNdXi2(4,1) },
+                                          { dNdXi0(4,2), dNdXi1(4,2), dNdXi2(4,2) },
+                                          { dNdXi0(4,3), dNdXi1(4,3), dNdXi2(4,3) },
+                                          { dNdXi0(4,4), dNdXi1(4,4), dNdXi2(4,4) },
+                                          { dNdXi0(4,5), dNdXi1(4,5), dNdXi2(4,5) },
+                                          { dNdXi0(4,6), dNdXi1(4,6), dNdXi2(4,6) },
+                                          { dNdXi0(4,7), dNdXi1(4,7), dNdXi2(4,7) }
+                                        },
+                                        { { dNdXi0(5,0), dNdXi1(5,0), dNdXi2(5,0) },
+                                          { dNdXi0(5,1), dNdXi1(5,1), dNdXi2(5,1) },
+                                          { dNdXi0(5,2), dNdXi1(5,2), dNdXi2(5,2) },
+                                          { dNdXi0(5,3), dNdXi1(5,3), dNdXi2(5,3) },
+                                          { dNdXi0(5,4), dNdXi1(5,4), dNdXi2(5,4) },
+                                          { dNdXi0(5,5), dNdXi1(5,5), dNdXi2(5,5) },
+                                          { dNdXi0(5,6), dNdXi1(5,6), dNdXi2(5,6) },
+                                          { dNdXi0(5,7), dNdXi1(5,7), dNdXi2(5,7) }
+                                        },
+                                        { { dNdXi0(6,0), dNdXi1(6,0), dNdXi2(6,0) },
+                                          { dNdXi0(6,1), dNdXi1(6,1), dNdXi2(6,1) },
+                                          { dNdXi0(6,2), dNdXi1(6,2), dNdXi2(6,2) },
+                                          { dNdXi0(6,3), dNdXi1(6,3), dNdXi2(6,3) },
+                                          { dNdXi0(6,4), dNdXi1(6,4), dNdXi2(6,4) },
+                                          { dNdXi0(6,5), dNdXi1(6,5), dNdXi2(6,5) },
+                                          { dNdXi0(6,6), dNdXi1(6,6), dNdXi2(6,6) },
+                                          { dNdXi0(6,7), dNdXi1(6,7), dNdXi2(6,7) }
+                                        },
+                                        { { dNdXi0(7,0), dNdXi1(7,0), dNdXi2(7,0) },
+                                          { dNdXi0(7,1), dNdXi1(7,1), dNdXi2(7,1) },
+                                          { dNdXi0(7,2), dNdXi1(7,2), dNdXi2(7,2) },
+                                          { dNdXi0(7,3), dNdXi1(7,3), dNdXi2(7,3) },
+                                          { dNdXi0(7,4), dNdXi1(7,4), dNdXi2(7,4) },
+                                          { dNdXi0(7,5), dNdXi1(7,5), dNdXi2(7,5) },
+                                          { dNdXi0(7,6), dNdXi1(7,6), dNdXi2(7,6) },
+                                          { dNdXi0(7,7), dNdXi1(7,7), dNdXi2(7,7) }
+                                        } };
+
+#define DNDXI(q,a,j) dNdXi[q][a][j]
+#endif
+
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       for ( int i = 0; i < 3; ++i )
       {
-        J[i][0] += X[elemsToNodes(k, a)][i] * dNdXi0(q,a);
-        J[i][1] += X[elemsToNodes(k, a)][i] * dNdXi1(q,a);
-        J[i][2] += X[elemsToNodes(k, a)][i] * dNdXi2(q,a);
+//        J[i][0] += X[elemsToNodes(k, a)][i] * dNdXi0(q,a);
+//        J[i][1] += X[elemsToNodes(k, a)][i] * dNdXi1(q,a);
+//        J[i][2] += X[elemsToNodes(k, a)][i] * dNdXi2(q,a);
 //        #pragma unroll
-//        for ( int j = 0; j < 3; ++j )
-//        {
-//          J[i][j] += X[elemsToNodes(k, a)][i] * dNdXi[q][a][j];
-//        }
+        for ( int j = 0; j < 3; ++j )
+        {
+          J[i][j] += X[elemsToNodes(k, a)][i] * DNDXI(q,a,j);
+        }
       }
     }
 
-    real64 const detJ = inverse( J );
+    real64 const detJ = inverse( J, &(dNdX[0][0]) );
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       for ( int i = 0; i < 3; ++i )
       {
-//        dNdX[i][a] = J[0][i] * dNdXi[q][a][0] +
-//                     J[1][i] * dNdXi[q][a][1] +
-//                     J[2][i] * dNdXi[q][a][2];
-        dNdX[i][a] = J[0][i] * dNdXi0(q,a) +
-                     J[1][i] * dNdXi1(q,a) +
-                     J[2][i] * dNdXi2(q,a);
+        dNdX[i][a] = J[0][i] * DNDXI(q,a,0) +
+                     J[1][i] * DNDXI(q,a,1) +
+                     J[2][i] * DNDXI(q,a,2);
+//        dNdX[i][a] = J[0][i] * dNdXi0(q,a) +
+//                     J[1][i] * dNdXi1(q,a) +
+//                     J[2][i] * dNdXi2(q,a);
       }
     }
 
@@ -171,31 +260,31 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 (&J)[3][3] )
+  static real64 inverse( real64 (&J)[3][3], real64 * const scratch  )
   {
-    real64 const o1 = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-    real64 const o2 = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-    real64 const o3 = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-    real64 const o4 = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-    real64 const o5 = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-    real64 const o6 = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-    real64 const o7 = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-    real64 const o8 = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-    real64 const o9 = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+    scratch[0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
+    scratch[1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
+    scratch[2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
+    scratch[3] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
+    scratch[4] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
+    scratch[5] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
+    scratch[6] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
+    scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
+    scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    real64 const detJ = J[0][0] * o1 + J[1][0] * o2 + J[2][0] * o3 ;
+    scratch[9] = J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ;
 
-    J[0][0] = o1 / detJ;
-    J[0][1] = o2 / detJ;
-    J[0][2] = o3 / detJ;
-    J[1][0] = o4 / detJ;
-    J[1][1] = o5 / detJ;
-    J[1][2] = o6 / detJ;
-    J[2][0] = o7 / detJ;
-    J[2][1] = o8 / detJ;
-    J[2][2] = o9 / detJ;
+    J[0][0] = scratch[0] / scratch[9];
+    J[0][1] = scratch[1] / scratch[9];
+    J[0][2] = scratch[2] / scratch[9];
+    J[1][0] = scratch[3] / scratch[9];
+    J[1][1] = scratch[4] / scratch[9];
+    J[1][2] = scratch[5] / scratch[9];
+    J[2][0] = scratch[6] / scratch[9];
+    J[2][1] = scratch[7] / scratch[9];
+    J[2][2] = scratch[8] / scratch[9];
 
-    return detJ;
+    return scratch[9];
   }
 
 

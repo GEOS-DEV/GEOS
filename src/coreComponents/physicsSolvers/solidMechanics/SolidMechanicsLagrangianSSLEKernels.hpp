@@ -19,7 +19,7 @@
 #pragma once
 
 #include "common/DataTypes.hpp"
-#include "SolidMechanicsLagrangianFEMKernels.hpp"
+//#include "SolidMechanicsLagrangianFEMKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
@@ -249,7 +249,8 @@ struct ExplicitKernel
    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
+    #define NUM_THREAD_PER_BLOCK 128
+    using KERNEL_POLICY = RAJA::cuda_exec< NUM_THREAD_PER_BLOCK >;
 #elif defined(GEOSX_USE_OPENMP)
     using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
 #else
@@ -263,16 +264,41 @@ struct ExplicitKernel
 //    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
 //                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
 //    {
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+
+//    real64 * gmForce;
+//    cudaMalloc( &gmForce, sizeof(real64)*3*8*128 );
+
+//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+//                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+//    {
+//    localIndex const k = elementList[ i ];
+    forall_in_set< KERNEL_POLICY >( elementList.begin(),
+                                    elementList.size(),
+                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
     {
-      localIndex const k = elementList[ i ];
 
-      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
+#if 1
+#define USE_SHMEM
+#if defined(USE_SHMEM) && defined(__CUDACC__)
+      __shared__ real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ][NUM_THREAD_PER_BLOCK];
+      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        f_local[a][0][threadIdx.x] = 0 ;
+        f_local[a][1][threadIdx.x] = 0 ;
+        f_local[a][2][threadIdx.x] = 0 ;
+      }
+      __syncthreads();
 
+  #define F_LOCAL( a, i ) f_local[a][i][threadIdx.x]
+#else
+      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {{0}};
+#define F_LOCAL( a, i ) f_local[a][i]
+#endif
       real64 const G = constitutive.m_shearModulus[k];
       real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
       real64 const Lame2G = 2*G + Lame;
+
+
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
@@ -303,6 +329,43 @@ struct ExplicitKernel
 #define U(i,b) u[nib][i]
 #endif
 
+
+//#define nostress
+
+#if !defined(nostress)
+//        constitutive.m_deviatorStress[k][q] = 0;
+//        real64 * const stress = constitutive.m_deviatorStress[k][q].Data();
+        real64 stress[6] = {0,0,0,0,0,0};
+        for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
+        {
+          localIndex const nib = elemsToNodes(k, b);
+          stress[0] += ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
+          stress[1] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
+          stress[2] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
+          stress[3] += ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) )*G;
+          stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) )*G;
+          stress[5] += ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) )*G;
+        }
+
+
+        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+        {
+          F_LOCAL(a,0) -= ( DNDX(k,q,a,0) * stress[0] + DNDX(k,q,a,2) * stress[4] + DNDX(k,q,a,1) * stress[5] ) * detJ_k_q;
+          F_LOCAL(a,1) -= ( DNDX(k,q,a,1) * stress[1] + DNDX(k,q,a,2) * stress[3] + DNDX(k,q,a,0) * stress[5] ) * detJ_k_q;
+          F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] ) * detJ_k_q;
+        }
+
+#if defined(UPDATE_STRESS)
+        constitutive.m_meanStress[k][q] = ( stress[0] + stress[1] + stress[2] ) / 3.0;
+        real64 * const devStress = constitutive.m_deviatorStress[k][q].Data();
+        devStress[0] = stress[0];
+        devStress[2] = stress[1];
+        devStress[5] = stress[2];
+        devStress[4] = stress[3];
+        devStress[3] = stress[4];
+        devStress[1] = stress[5];
+#endif
+#else
         #pragma unroll
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
@@ -332,6 +395,7 @@ struct ExplicitKernel
                              ) * detJ_k_q;
           }
         }
+#endif
       }//quadrature loop
 
       #pragma unroll
@@ -340,11 +404,11 @@ struct ExplicitKernel
         #pragma unroll
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes(k, a) ][ b ], f_local[ a ][ b ] );
+          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes(k, a) ][ b ], F_LOCAL(a,b) );
         }
       }
+#endif
     });
-
     return dt;
   }
 #endif

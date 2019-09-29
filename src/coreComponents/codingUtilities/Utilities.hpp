@@ -25,7 +25,9 @@ namespace geosx
 {
 
 template< typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const> const& globalField1,
                               arraySlice1d< T const> const& globalField2,
                               arraySlice1d< T > & localField1,
@@ -40,7 +42,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLoc
 }
 
 template< localIndex N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               T * const restrict localField1,
@@ -54,7 +58,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex const > const & globalToLo
 }
 
 template< localIndex N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRelation,
                               arraySlice1d< T > const & globalField1,
                               arraySlice1d< T > const & globalField2,
                               arraySlice1d< T > const & globalField3,
@@ -71,7 +77,9 @@ inline void CopyGlobalToLocal(arraySlice1d<localIndex> const & globalToLocalRela
 }
 
 template< int N, typename T >
-inline void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+ void CopyGlobalToLocal(arraySlice1d<localIndex const> const & globalToLocalRelation,
                               arraySlice1d< T const > const & globalField1,
                               arraySlice1d< T const > const & globalField2,
                               arraySlice1d< T const > const & globalField3,

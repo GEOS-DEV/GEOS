@@ -483,12 +483,12 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
+//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
@@ -573,7 +573,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
@@ -618,7 +618,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);

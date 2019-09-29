@@ -72,7 +72,7 @@ void setupCXXUtils()
   logger::InitializeLogger();
 #endif
 
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+//  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
   cxx_utilities::SetFPE();
 }
 

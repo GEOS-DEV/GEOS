@@ -52,6 +52,7 @@
   #define GEOSX_DEVICE_LAMBDA [=] __device__
   #define GEOSX_HOST_DEVICE_LAMBDA [=] __host__ __device__
   #define GEOSX_FORCE_INLINE __forceinline__
+  #define GEOSX_CUDA_PARAM( X ) X
 #else
   #define GEOSX_HOST
   #define GEOSX_DEVICE
@@ -59,6 +60,7 @@
   #define GEOSX_DEVICE_LAMBDA [=]
   #define GEOSX_HOST_DEVICE_LAMBDA [=]
   #define GEOSX_FORCE_INLINE inline
+  #define GEOSX_CUDA_PARAM( X )
 #endif
 
 #endif // COMMON_GEOSXMACROS_HPP_

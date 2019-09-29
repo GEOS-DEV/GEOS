@@ -69,6 +69,7 @@ public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
   /// default constructor
+  GEOSX_HOST_DEVICE
   TensorBaseT( void );
 
   /// constructor initialized by single value
@@ -82,6 +83,7 @@ public:
 
   /// non-virtual destructor. This means that this class in NOT intended to be
   /// used as a polymorphically.
+  GEOSX_HOST_DEVICE
   ~TensorBaseT( void );
 
   //***** ASSIGNMENT OPERATORS *************************************************
@@ -104,12 +106,16 @@ public:
   TensorBaseT& operator-=( const realT& rhs );
 
   /// multiply each entry in t_data by a realT
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   TensorBaseT& operator*=( const realT& rhs );
 
   /// divide each entry in t_data by a realT
   TensorBaseT& operator/=( const realT& rhs );
 
   /// add another tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   TensorBaseT& operator+=( const TensorBaseT& rhs );
 
   /// subtract a tensor
@@ -322,6 +328,8 @@ public:
    * @return the maximum single value in the t_data
    * @brief gives the maximum single value in the t_data
    */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   realT MaxVal( void ) const
   {
     realT rval = 0;
@@ -387,6 +395,7 @@ private:
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 TensorBaseT< T_length >::TensorBaseT( void )//:
 {
   *this = 0.0;
@@ -430,6 +439,7 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
  * @return none
  */
 template<int T_length>
+GEOSX_HOST_DEVICE
 TensorBaseT< T_length >::~TensorBaseT( void )
 {}
 
@@ -533,7 +543,9 @@ TensorBaseT< T_length >::operator-=( const realT& rhs )
  * @return none
  */
 template<int T_length>
-inline TensorBaseT< T_length >&
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator*=( const realT& rhs )
 {
   for (int i = 0 ; i < T_length ; ++i)
@@ -569,7 +581,9 @@ TensorBaseT< T_length >::operator/=( const realT& rhs )
  * @return none
  */
 template<int T_length>
-inline TensorBaseT< T_length >&
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+TensorBaseT< T_length >&
 TensorBaseT< T_length >::operator+=( const TensorBaseT< T_length >& rhs )
 {
   for (int i = 0 ; i < T_length ; ++i)

@@ -161,7 +161,7 @@ for roof in smemroofs:
             rotation=180/np.pi*ang)
 
 
-leg1 = plt.legend(handles = marker_handles,loc=4, ncol=2)
+leg1 = plt.legend(handles = marker_handles,loc=4)
 ax.add_artist(leg1)
 
 patch_handles = list()
