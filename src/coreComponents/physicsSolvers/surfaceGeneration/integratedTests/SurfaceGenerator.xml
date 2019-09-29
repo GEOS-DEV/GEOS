@@ -23,7 +23,10 @@
     <SurfaceGenerator name="SurfaceGen"
                       verboseLevel="0"
                       fractureRegion="Fracture"
-                      targetRegions="{Region2}">
+                      targetRegions="{Region2}"
+                      solidMaterialName="granite"
+                      rockToughness="1e6"
+                      >
     </SurfaceGenerator>
   </Solvers>
 
@@ -90,7 +93,7 @@
     </QuadratureRules>
     
     <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
 

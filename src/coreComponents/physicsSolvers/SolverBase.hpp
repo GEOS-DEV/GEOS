@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef SOLVERBASE_HPP_
@@ -24,16 +20,17 @@
 #include <string>
 #include <limits>
 
+#include "dataRepository/Group.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "common/DataTypes.hpp"
-#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/SystemSolverParameters.hpp"
 
-#include "InterfaceTypes.hpp" // LAI
-#include "DofManager.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/DofManager.hpp"
 
 namespace geosx
 {
@@ -55,7 +52,7 @@ class SolverBase : public ExecutableGroup
 public:
 
   explicit SolverBase( std::string const & name,
-                       ManagedGroup * const parent );
+                       Group * const parent );
 
   SolverBase( SolverBase && ) = default;
 
@@ -80,7 +77,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::ManagedGroup * const domain ) override;
+                        dataRepository::Group * const domain ) override;
 
   /**
    * @brief Getter for system matrix
@@ -258,7 +255,8 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DofManager & dofManager ) const;
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const;
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
@@ -444,10 +442,10 @@ public:
   /**@}*/
 
 
-  ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct
@@ -533,10 +531,10 @@ protected:
   string getDiscretizationName() const {return m_discretizationName;}
 
   template<typename BASETYPE>
-  static BASETYPE const * GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name );
+  static BASETYPE const * GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name );
 
   template<typename BASETYPE>
-  static BASETYPE * GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name );
+  static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   integer m_verboseLevel = 0;
   R1Tensor m_gravityVector;
@@ -567,9 +565,9 @@ protected:
 };
 
 template<typename BASETYPE>
-BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup const * dataGroup, string const & name )
+BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name )
 {
-  ManagedGroup const * const constitutiveModels =
+  Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
@@ -580,9 +578,9 @@ BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup 
 }
 
 template<typename BASETYPE>
-BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::ManagedGroup * dataGroup, string const & name )
+BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name )
 {
-  ManagedGroup * const constitutiveModels =
+  Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOS_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 

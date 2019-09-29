@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "ChomboCoupler.hpp"
@@ -38,7 +34,7 @@ ChomboCoupler::ChomboCoupler(MPI_Comm const comm, const std::string& outputPath,
   m_mesh(mesh),
   m_counter(0)
 {
-  m_mesh.getFaceManager()->RegisterViewWrapper< array1d<real64> >("ChomboPressure");
+  m_mesh.getFaceManager()->registerWrapper< array1d<real64> >("ChomboPressure");
 }
 
 void ChomboCoupler::write(double dt)
@@ -47,8 +43,8 @@ void ChomboCoupler::write(double dt)
   FaceManager* faces = m_mesh.getFaceManager();
   NodeManager* nodes = m_mesh.getNodeManager();
 
-  const OrderedVariableOneToManyRelation& face_connectivity = faces->nodeList();
-  const localIndex n_faces = face_connectivity.size();
+  ArrayOfArraysView< localIndex const > const& face_connectivity = faces->nodeList();
+  localIndex const n_faces = face_connectivity.size();
 
   /* Copy the face connectivity into a contiguous array. */
   std::int64_t* connectivity_array = new std::int64_t[4 * n_faces];
@@ -56,7 +52,7 @@ void ChomboCoupler::write(double dt)
   {
     for (localIndex j = 0; j < 4; ++j)
     {
-      connectivity_array[4 * i + j] = face_connectivity[i][j];
+      connectivity_array[4 * i + j] = face_connectivity(i, j);
     }
   }
 

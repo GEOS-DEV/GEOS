@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * ProblemManager.hpp
- *
- *  Created on: Jul 21, 2016
- *      Author: rrsettgast
+/**
+ * @file ProblemManager.hpp
  */
 
 #ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
@@ -58,7 +51,7 @@ class ProblemManager : public ObjectManagerBase
 {
 public:
   explicit ProblemManager( const std::string& name,
-                           ManagedGroup * const parent );
+                           Group * const parent );
 
   ~ProblemManager() override;
 
@@ -80,9 +73,9 @@ public:
                                    xmlWrapper::xmlNode schemaParent,
                                    integer documentationType) override;
 
-  virtual void RegisterDataOnMeshRecursive( ManagedGroup * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);
 
@@ -123,16 +116,16 @@ public:
   DomainPartition const * getDomainPartition() const;
 
   const string & getProblemName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
 
   const string & getInputFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
 
   const string & getRestartFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
 
   const string & getSchemaFileName() const
-  { return GetGroup<ManagedGroup>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;
@@ -158,7 +151,6 @@ public:
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
     dataRepository::GroupKey domain    = { "domain" };
-    dataRepository::GroupKey elementRegionManager = { "ElementRegions" };
     dataRepository::GroupKey eventManager = { "Events" };
     dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
     dataRepository::GroupKey functionManager = { "Functions" };
@@ -182,7 +174,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override final;
+  virtual void InitializePostSubGroups( Group * const group ) override final;
 
 private:
 

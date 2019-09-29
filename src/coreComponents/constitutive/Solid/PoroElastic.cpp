@@ -1,8 +1,20 @@
 /*
- * PoroElastic.cpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Mar 28, 2019
- *      Author: rrsettgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @file PoroElastic.cpp
  */
 
 #include "PoroElastic.hpp"
@@ -18,7 +30,7 @@ namespace constitutive
 {
 
 template< typename BASE >
-PoroElastic<BASE>::PoroElastic( string const & name, ManagedGroup * const parent ):
+PoroElastic<BASE>::PoroElastic( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_compressibility(),
   m_referencePressure(),
@@ -27,27 +39,27 @@ PoroElastic<BASE>::PoroElastic( string const & name, ManagedGroup * const parent
   m_dPVMult_dPressure(),
   m_poreVolumeRelation()
 {
-  this->RegisterViewWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient, 0 )->
+  this->registerWrapper( viewKeyStruct::biotCoefficientString, &m_biotCoefficient, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Biot's coefficient");
 
-  this->RegisterViewWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
+  this->registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
     setApplyDefaultValue(-1)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fluid Compressibilty");
 
-  this->RegisterViewWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
+  this->registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("ReferencePressure");
 
 
-  this->RegisterViewWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
+  this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("");
 
-  this->RegisterViewWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
+  this->registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("");
 }
@@ -73,7 +85,7 @@ void PoroElastic<BASE>::PostProcessInput()
 
 template< typename BASE >
 void PoroElastic<BASE>::DeliverClone( string const & name,
-                                      ManagedGroup * const parent,
+                                      Group * const parent,
                                       std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
@@ -92,7 +104,7 @@ void PoroElastic<BASE>::DeliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
   BASE::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -106,8 +118,8 @@ void PoroElastic<BASE>::AllocateConstitutiveData( dataRepository::ManagedGroup *
 typedef PoroElastic<LinearElasticIsotropic> PoroLinearElasticIsotropic;
 typedef PoroElastic<LinearElasticAnisotropic> PoroLinearElasticAnisotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, ManagedGroup * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

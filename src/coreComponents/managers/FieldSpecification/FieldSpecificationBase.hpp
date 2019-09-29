@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -26,12 +22,13 @@
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "dataRepository/ManagedGroup.hpp"
-#include "linearAlgebraInterface/src/InterfaceTypes.hpp"
+#include "dataRepository/Group.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/ObjectManagerBase.hpp"
+
 
 namespace geosx
 {
@@ -42,7 +39,7 @@ class Function;
  * @class FieldSpecificationBase
  * A class to hold values for and administer a single boundary condition
  */
-class FieldSpecificationBase : public dataRepository::ManagedGroup
+class FieldSpecificationBase : public dataRepository::Group
 {
 public:
 
@@ -56,7 +53,7 @@ public:
    */
   using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
-                                                            dataRepository::ManagedGroup * const >;
+                                                            dataRepository::Group * const >;
 
   /**
    * @brief static function to return static catalog.
@@ -81,7 +78,7 @@ public:
    * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  FieldSpecificationBase( string const & name, dataRepository::ManagedGroup * parent );
+  FieldSpecificationBase( string const & name, dataRepository::Group * parent );
 
   /**
    * destructor
@@ -92,14 +89,14 @@ public:
   void ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
                               real64 const time,
-                              ManagedGroup * dataGroup ) const;
+                              Group * dataGroup ) const;
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
-   * @param[in] dataGroup the ManagedGroup that contains the field to apply the value to.
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
    * @param[in] fieldname the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
@@ -108,7 +105,7 @@ public:
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( set<localIndex> const & targetSet,
                         real64 const time,
-                        dataRepository::ManagedGroup * dataGroup,
+                        dataRepository::Group * dataGroup,
                         string const & fieldname ) const;
 
   /**
@@ -116,7 +113,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] fieldName The name of the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
@@ -134,7 +131,7 @@ public:
   void ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                        bool normalizeBySetSize,
                                        real64 const time,
-                                       dataRepository::ManagedGroup * dataGroup,
+                                       dataRepository::Group * dataGroup,
                                        string const & fieldName,
                                        string const & dofMapName,
                                        integer const & dofDim,
@@ -150,7 +147,7 @@ public:
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -170,7 +167,7 @@ public:
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   bool normalizeBySetSize,
                                   real64 const time,
-                                  dataRepository::ManagedGroup * dataGroup,
+                                  dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
@@ -186,7 +183,7 @@ public:
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
-   * @param[in] dataGroup The ManagedGroup that contains the field to apply the boundary condition to.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMapName The name of the map from the local index of the primary field to the
    *                       global degree of freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
@@ -207,27 +204,30 @@ public:
                                   bool normalizeBySetSize,
                                   real64 const time,
                                   real64 const dt,
-                                  dataRepository::ManagedGroup * dataGroup,
+                                  dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
-
 
   template< typename FIELD_OP, typename LAI, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                   real64 const time,
                                   real64 const dt,
-                                  real64 const setSizeFactor,
-                                  dataRepository::ManagedGroup * dataGroup,
+				  real64 const setSizeFactor,
+                                  dataRepository::Group * dataGroup,
                                   arrayView1d<globalIndex const> const & dofMap,
                                   integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
+
+
+
+  
   
   struct viewKeyStruct
   {
@@ -276,7 +276,7 @@ public:
     return m_component;
   }
 
-  virtual const R1Tensor& GetDirection( realT time )
+  virtual const R1Tensor& GetDirection( realT GEOSX_UNUSED_ARG( time ) )
   {
     return m_direction;
   }
@@ -381,7 +381,7 @@ template < typename FIELD_OP, typename POLICY, typename T, int N >
 void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, localIndex > const & field,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
-                                                    ManagedGroup * dataGroup ) const
+                                                    Group * dataGroup ) const
 {
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
@@ -428,18 +428,18 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
 template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::ApplyFieldValue( set<localIndex> const & targetSet,
                                               real64 const time,
-                                              ManagedGroup * dataGroup,
+                                              Group * dataGroup,
                                               string const & fieldName ) const
 {
-  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                  false,
-                                 [&]( auto arrayInstance, auto dataTypeInstance )
+                                 [&]( auto arrayInstance, auto GEOSX_UNUSED_ARG( dataTypeInstance ) )
   {
     using ArrayType = decltype(arrayInstance);
-    dataRepository::ViewWrapper<ArrayType> & view = dataRepository::ViewWrapper<ArrayType>::cast( *vw );
+    dataRepository::Wrapper<ArrayType> & view = dataRepository::Wrapper<ArrayType>::cast( *wrapper );
 
     typename ArrayType::ViewType const & field = view.referenceAsView();
     ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
@@ -450,15 +450,15 @@ template< typename FIELD_OP, typename LAI >
 void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                                              bool normalizeBySetSize,
                                                              real64 const time,
-                                                             dataRepository::ManagedGroup * dataGroup,
+                                                             dataRepository::Group * dataGroup,
                                                              string const & fieldName,
                                                              string const & dofMapName,
                                                              integer const & dofDim,
                                                              typename LAI::ParallelMatrix & matrix,
                                                              typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::ViewWrapperBase * vw = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( vw->get_typeid());
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
   arrayView1d<globalIndex> const & dofMap = dataGroup->getReference<array1d<globalIndex>>( dofMapName );
   integer const component = GetComponent();
 
@@ -466,7 +466,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( set<localIndex> con
     [&]( auto type ) -> void
     {
       using fieldType = decltype(type);
-      dataRepository::ViewWrapper<fieldType> & view = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vw);
+      dataRepository::Wrapper<fieldType> & view = dynamic_cast< dataRepository::Wrapper<fieldType> & >(*wrapper);
       fieldType & field = view.reference();
 
       this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>( targetSet, normalizeBySetSize, time, dataGroup, dofMap, dofDim, matrix, rhs,
@@ -485,9 +485,9 @@ FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 bool normalizeBySetSize,
                                 real64 const time,
-                                dataRepository::ManagedGroup * dataGroup,
+                                dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -568,9 +568,9 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 bool normalizeBySetSize,
                                 real64 const time,
                                 real64 const dt,
-                                dataRepository::ManagedGroup * dataGroup,
+                                dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
@@ -644,21 +644,21 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
 }
 
+
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
 void
 FieldSpecificationBase::
 ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
                                 real64 const time,
                                 real64 const dt,
-                                real64 const setSizeFactor,
-                                dataRepository::ManagedGroup * dataGroup,
+				real64 const setSizeFactor,
+                                dataRepository::Group * dataGroup,
                                 arrayView1d<globalIndex const> const & dofMap,
-                                integer const & dofDim,
+                                integer const & GEOSX_UNUSED_ARG( dofDim ),
                                 typename LAI::ParallelMatrix & matrix,
                                 typename LAI::ParallelVector & rhs,
                                 LAMBDA && lambda ) const
 {
-
   integer const component = GetComponent();
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
@@ -666,21 +666,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   globalIndex_array  dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
 
-  integer_array& is_ghost = dataGroup->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
+    integer_array& is_ghost = dataGroup->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);
 
   if( functionName.empty() )
   {
 
     integer counter=0;
-
     for( auto a : targetSet )
     {
-
       dof( counter ) = dofMap[a]+component;
 
       if(is_ghost[a] < 0)
-	{
-      
+	{     
 	  FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
 						     matrix,
 						     rhsContribution( counter ),
@@ -689,20 +686,17 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
 	}
       else
 	{
-	  
+
 	  rhsContribution( counter ) = 0.0;
 
 	}
 	  
-
-	  ++counter;
+      ++counter;
     }
     FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
-
   }
   else
   {
-
     FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>( functionName );
 
     GEOS_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
@@ -713,18 +707,25 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
 
-      if(is_ghost[a] < 0)
-	FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
-                                                   matrix,
-                                                   rhsContribution( counter ),
-                                                   value,
-                                                   lambda( a ) );
-      else
-	rhsContribution( counter ) = 0.0;
-      
-      ++counter;
+	if(is_ghost[a] < 0)
+	  {
+	    
+	    FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+						       matrix,
+						       rhsContribution( counter ),
+						       value,
+						       lambda( a ) );
+	  }
+	else
+	  {
+	    
+	    rhsContribution( counter ) = 0.0;
+
+	  }
+	    
+        ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
@@ -736,23 +737,31 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
       integer counter=0;
       for( auto a : targetSet )
       {
-        dof( counter ) = integer_conversion<int>( dofMap[a] )+component;
+        dof( counter ) = dofMap[a] + component;
 
-      if(is_ghost[a] < 0)	
-        FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
-                                                   matrix,
-                                                   rhsContribution( counter ),
-                                                   m_scale * dt * result[counter] * setSizeFactor,
-                                                   lambda( a ) );
-      else 
-	rhsContribution( counter ) = 0.0;
-      
-      ++counter;
+	if(is_ghost[a] < 0)
+	  {
+	
+	    FIELD_OP::template SpecifyFieldValue<LAI>( dof( counter ),
+						       matrix,
+						       rhsContribution( counter ),
+						       m_scale * dt * result[counter] * setSizeFactor,
+						       lambda( a ) );
+
+	  }
+	else
+	  {
+
+	    rhsContribution( counter ) = 0.0;
+
+	  }
+	    
+        ++counter;
       }
       FIELD_OP::template PrescribeRhsValues<LAI>( rhs, counter, dof.data(), rhsContribution.data() );
     }
   }
-}
+}  
 
 }
 #endif

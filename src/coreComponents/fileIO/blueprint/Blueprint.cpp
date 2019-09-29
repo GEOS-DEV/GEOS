@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #include "common/GeosxConfig.hpp"
@@ -52,8 +48,11 @@ const std::unordered_map< localIndex, const std::string > Blueprint::numNodesToE
 
 
 
-Blueprint::Blueprint( const NodeManager& node_manager, const ElementRegionManager& elem_reg_manager,
-                      const std::string& output_path, MPI_Comm comm, const std::string& coord_name,
+Blueprint::Blueprint( const NodeManager& node_manager,
+                      const ElementRegionManager& elem_reg_manager,
+                      const std::string& output_path,
+                      MPI_Comm GEOSX_UNUSED_ARG( comm ),
+                      const std::string& coord_name,
                       const std::string& topo_name):
 #ifdef GEOSX_USE_ATK
   m_node_manager( node_manager ),
@@ -154,9 +153,9 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
   z_view->setExternalDataPtr( const_cast< R1Tensor* >( position.data() ) );
   z_view->apply( axom::sidre::TypeID::DOUBLE_ID, n_nodes, 2, 3 );
 
-  for ( const std::pair< const std::string, const dataRepository::ViewWrapperBase* >& pair : m_node_manager.wrappers() )
+  for ( const std::pair< const std::string, const dataRepository::WrapperBase* >& pair : m_node_manager.wrappers() )
   {
-    const dataRepository::ViewWrapperBase* view = pair.second;
+    const dataRepository::WrapperBase* view = pair.second;
     // if ( view->sizedFromParent() == 1 &&
     //      view->size() > 0 &&
     //      view->shouldRegisterDataPtr() &&
@@ -175,7 +174,7 @@ void Blueprint::addNodes( Group* coords, Group* fields ) const
 }
 
 
-void Blueprint::addCells( Group* topo, Group* fields ) const
+void Blueprint::addCells( Group* topo, Group* GEOSX_UNUSED_ARG( fields ) ) const
 {
 #ifdef GEOSX_USE_ATK
   if ( m_elem_reg_manager.numCellBlocks() != 1 )
@@ -199,9 +198,9 @@ void Blueprint::addCells( Group* topo, Group* fields ) const
   connec_view->setExternalDataPtr( const_cast< localIndex* >( connectivity.data() ) );
   connec_view->apply( detail::SidreTT< localIndex >::id, n_cells * n_nodes_per_cell );
 
-  // for ( const std::pair< const std::string, const ViewWrapperBase* >& pair : cell_block->wrappers() )
+  // for ( const std::pair< const std::string, const WrapperBase* >& pair : cell_block->wrappers() )
   // {
-  //   const ViewWrapperBase* view = pair.second;
+  //   const WrapperBase* view = pair.second;
   //   if ( view->sizedFromParent() == 1 &&
   //        view->size() > 0 &&
   //        view->shouldRegisterDataPtr() &&

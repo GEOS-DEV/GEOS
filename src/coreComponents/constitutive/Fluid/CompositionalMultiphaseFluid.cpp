@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -50,34 +46,34 @@ std::unordered_map<string, EOS_TYPE> const PVTPackage_eosDict =
 
 }
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, ManagedGroup * const parent )
+CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString )->setInputFlag(InputFlags::REQUIRED);
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
   getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
 
-  RegisterViewWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
+  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of equation of state types for each phase");
 
-  RegisterViewWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
+  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Component critical pressures");
 
-  RegisterViewWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
+  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Component critical temperatures");
 
-  RegisterViewWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
+  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Component acentric factors");
 
-  RegisterViewWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
+  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Component volume shifts");
 
-  RegisterViewWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
+  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Table of binary interaction coefficients");
 }
@@ -89,7 +85,7 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 
 void
 CompositionalMultiphaseFluid::DeliverClone( string const & name,
-                                            ManagedGroup * const parent,
+                                            Group * const parent,
                                             std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   std::unique_ptr< CompositionalMultiphaseFluid > newModel = std::make_unique<CompositionalMultiphaseFluid>( name, parent );
@@ -183,7 +179,7 @@ void CompositionalMultiphaseFluid::createFluid()
 
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, std::string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geosx

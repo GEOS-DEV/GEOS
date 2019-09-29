@@ -44,15 +44,15 @@ using namespace stringutilities;
 namespace constitutive
 {
 
-MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( std::string const & name, ManagedGroup * const parent ):
+MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::phasePVTParaFilesString, &m_phasePVTParaFiles, false )->
+  registerWrapper( viewKeyStruct::phasePVTParaFilesString, &m_phasePVTParaFiles, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("List of the names of the files including PVT function parameters");
 
-  RegisterViewWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile, false )->
+  registerWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("name of the filen including flash calculation function parameters");
 
@@ -65,10 +65,9 @@ MultiPhaseMultiComponentFluid::~MultiPhaseMultiComponentFluid()
 
 
 void MultiPhaseMultiComponentFluid::DeliverClone( string const & name,
-                                                  ManagedGroup * const parent,
+                                                  Group * const parent,
                                                   std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  clone = std::make_unique<MultiPhaseMultiComponentFluid>( name, parent );
   if( !clone )
   {
     clone = std::make_unique<MultiPhaseMultiComponentFluid>( name, parent );
@@ -87,8 +86,13 @@ void MultiPhaseMultiComponentFluid::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_flashModelParaFile = this->m_flashModelParaFile;
 
-  newConstitutiveRelation->CreatePVTModels();
+  //  newConstitutiveRelation->CreatePVTModels();
 
+  newConstitutiveRelation->m_phaseDensityFuns = this->m_phaseDensityFuns;
+  newConstitutiveRelation->m_phaseViscosityFuns = this->m_phaseViscosityFuns;  
+
+  newConstitutiveRelation->m_flashModel = this->m_flashModel;
+  
 }
 
 void MultiPhaseMultiComponentFluid::PostProcessInput()
@@ -99,28 +103,21 @@ void MultiPhaseMultiComponentFluid::PostProcessInput()
 
   GEOS_ERROR_IF( m_phasePVTParaFiles.size() != NP, "The number of phasePVTParaFiles is not the same as the number of phases!");   
 
-  //  CreatePVTModels();
+  CreatePVTModels();
 
 }
 
-void MultiPhaseMultiComponentFluid::InitializePostSubGroups( ManagedGroup * const group )
+void MultiPhaseMultiComponentFluid::InitializePostSubGroups( Group * const group )
 {
   MultiFluidBase::InitializePostSubGroups(group);
 
-  CreatePVTModels();
+  //  CreatePVTModels();
 
 }
 
 
 void MultiPhaseMultiComponentFluid::CreatePVTModels()  
 {
-
-  static bool flag = 0;
-  if(flag)
-    return;
-  else
-    flag = 1;
-
   string flashModelParaFile;
 
   ProblemManager const * const problemManager = this->GetGroupByPath<ProblemManager>("/");
@@ -160,11 +157,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
       if(streq(strs[0], "DensityFun")) 
       {
-        m_phaseDensityFuns.push_back( PVTFunctionBase::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseDensityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
       }
       else if(streq(strs[0], "ViscosityFun")) 
       {
-        m_phaseViscosityFuns.push_back( PVTFunctionBase::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseViscosityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
       }
       else 
         GEOS_ERROR("Error: Invalid PVT function: " << strs[0] << ".");
@@ -189,11 +186,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
       if(streq(strs[0], "FlashModel")) 
       {
 
-        m_flashModel = ( FlashModelBase::CatalogInterface::Factory( strs[1],
-                                                                    strs,
-                                                                    m_phaseNames,
-                                                                    m_componentNames,
-                                                                    m_componentMolarWeight) );
+        m_flashModel = ( FlashModel::CatalogInterface::Factory( strs[1],
+								strs,
+								m_phaseNames,
+								m_componentNames,
+								m_componentMolarWeight) );
       }
       else 
         GEOS_ERROR("Error: Not flash model: " << strs[0] << ".");
@@ -244,14 +241,14 @@ void MultiPhaseMultiComponentFluid::PointUpdate( real64 const & pressure,
            m_flashModel);
 }
 
-void MultiPhaseMultiComponentFluid::BatchUpdate( arrayView1d<real64 const> const & pressure,
-                                                 arrayView1d<real64 const> const & temperature,
-                                                 arrayView2d<real64 const> const & composition )
+void MultiPhaseMultiComponentFluid::BatchUpdate( arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( pressure ),
+                                                 arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( temperature ),
+                                                 arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( composition ) )
 {
 }
 
 void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex const NP, bool const useMass,
-                                             arrayView1d<string const> const & phaseNames,
+                                             arrayView1d<string const> const & GEOSX_UNUSED_ARG( phaseNames ),
                                              arrayView1d<real64 const> const & componentMolarWeight,
                                              real64 const & pressure,
                                              real64 const & temperature,
@@ -275,9 +272,9 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
                                              real64 & totalDensity, real64 & dTotalDensity_dPressure,
                                              real64 & dTotalDensity_dTemperature,
                                              arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
-                                             const array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
-                                             const array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
-                                             const PVTProps::FlashModel & flashModel )
+                                             array1d<std::shared_ptr<PVTProps::PVTFunction> const > const & phaseDensityFuns,
+                                             array1d<std::shared_ptr<PVTProps::PVTFunction> const > const & phaseViscosityFuns,
+                                             std::shared_ptr<PVTProps::FlashModel> const & flashModel )
 {
 
   CompositionalVarContainer<1> phaseFrac {
@@ -317,16 +314,14 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
 
 
   localIndex constexpr maxNumComp = MAX_NUM_COMPONENTS;
-
-  std::vector<double> compMoleFrac( NC );
-  stackArray2d<real64, maxNumComp * maxNumComp> dCompMoleFrac_dCompMassFrac( NC, NC );
-
-  array1dT<EvalVarArgs> C(NC);
+  localIndex constexpr maxNumPhase = MAX_NUM_PHASES;
+  
+  stackArray1d<EvalVarArgs, maxNumComp> C(NC);
 
   if (useMass)
   {
 
-    array1dT<EvalVarArgs> X(NC);
+    stackArray1d<EvalVarArgs, maxNumComp> X(NC);
 
     EvalVarArgs totalMolality = 0.0;
     for (localIndex ic = 0; ic < NC; ++ic)
@@ -362,17 +357,15 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
 
   EvalVarArgs T =  temperature - TK;  
 
-  array1dT<EvalVarArgs> phaseFractionTemp(NP);  
-  array1dT<array1dT<EvalVarArgs> > phaseCompFractionTemp(NP);
-  for (localIndex ip = 0; ip < NP; ++ip)
-    phaseCompFractionTemp[ip].resize(NC);
+  stackArray1d<EvalVarArgs, maxNumPhase> phaseFractionTemp(NP);  
+  stackArray2d<EvalVarArgs, maxNumPhase * maxNumComp> phaseCompFractionTemp(NP, NC);
 
   //phaseFractionTemp and phaseCompFractionTemp all are mole fraction,
   //w.r.t mole fraction or mass fraction (useMass)
   flashModel->Partition(P, T, C, phaseFractionTemp, phaseCompFractionTemp);
 
-  array1dT<EvalVarArgs> phaseDensityTemp(NP);  
-  array1dT<EvalVarArgs> phaseViscosityTemp(NP);  
+  stackArray1d<EvalVarArgs, maxNumPhase> phaseDensityTemp(NP);  
+  stackArray1d<EvalVarArgs, maxNumPhase> phaseViscosityTemp(NP);  
 
   for (localIndex ip = 0; ip < NP; ++ip)
   {
@@ -386,7 +379,7 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
   if(useMass)
   {
 
-    array1dT<EvalVarArgs> phaseMW(NP);
+    stackArray1d<EvalVarArgs, maxNumPhase> phaseMW(NP);
 
     for (localIndex ip = 0; ip < NP; ++ip) {
 
@@ -489,31 +482,32 @@ void MultiPhaseMultiComponentFluid::Compute( localIndex const NC, localIndex con
   }
 }
 
-void MultiPhaseMultiComponentFluid::Compute( real64 const & pressure, real64 const & temperature,
-                                             arraySlice1d<double const> const & composition,
-                                             arraySlice1d<real64> const & phaseFraction,
-                                             arraySlice1d<real64> const & dPhaseFraction_dPressure,
-                                             arraySlice1d<real64> const & dPhaseFraction_dTemperature,
-                                             arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
-                                             arraySlice1d<real64> const & phaseDensity,
-                                             arraySlice1d<real64> const & dPhaseDensity_dPressure,
-                                             arraySlice1d<real64> const & dPhaseDensity_dTemperature,
-                                             arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
-                                             arraySlice1d<real64> const & phaseViscosity,
-                                             arraySlice1d<real64> const & dPhaseViscosity_dPressure,
-                                             arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
-                                             arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
-                                             arraySlice2d<real64> const & phaseCompFraction,
-                                             arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
-                                             arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
-                                             arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
-                                             real64 & totalDensity, real64 & dTotalDensity_dPressure,
-                                             real64 & dTotalDensity_dTemperature,
-                                             arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction) const
+void MultiPhaseMultiComponentFluid::Compute( real64 const & GEOSX_UNUSED_ARG( pressure ), real64 const & GEOSX_UNUSED_ARG( temperature ),
+                                             arraySlice1d<double const> const & GEOSX_UNUSED_ARG( composition ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseFraction_dGlobalCompFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseDensity ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseDensity_dGlobalCompFraction ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( phaseViscosity ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dPressure ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dTemperature ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseViscosity_dGlobalCompFraction ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( phaseCompFraction ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dPressure ),
+                                             arraySlice2d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dTemperature ),
+                                             arraySlice3d<real64> const & GEOSX_UNUSED_ARG( dPhaseCompFraction_dGlobalCompFraction ),
+                                             real64 & GEOSX_UNUSED_ARG( totalDensity ),
+					     real64 & GEOSX_UNUSED_ARG( dTotalDensity_dPressure ),
+					     real64 & GEOSX_UNUSED_ARG( dTotalDensity_dTemperature ),
+                                             arraySlice1d<real64> const & GEOSX_UNUSED_ARG( dTotalDensity_dGlobalCompFraction) ) const
 {
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseMultiComponentFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseMultiComponentFluid, std::string const &, Group * const )
 
 } //namespace constitutive
 

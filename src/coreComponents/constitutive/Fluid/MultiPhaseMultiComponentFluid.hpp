@@ -52,12 +52,12 @@ class MultiPhaseMultiComponentFluid : public MultiFluidBase
 {
 public:
 
-  MultiPhaseMultiComponentFluid( std::string const & name, ManagedGroup * const parent );
+  MultiPhaseMultiComponentFluid( std::string const & name, Group * const parent );
 
   virtual ~MultiPhaseMultiComponentFluid() override;
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::multiPhaseMultiComponentFluid; }
@@ -101,9 +101,9 @@ public:
                        real64 & dTotalDensity_dPressure,
                        real64 & dTotalDensity_dTemperature,
                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction,
-                       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseDensityFuns,
-                       const PVTProps::array1dT<PVTProps::PVTFunction>& phaseViscosityFuns,
-                       const PVTProps::FlashModel & flashModel);
+                       array1d<std::shared_ptr<PVTProps::PVTFunction> const > const & phaseDensityFuns,
+                       array1d<std::shared_ptr<PVTProps::PVTFunction> const > const & phaseViscosityFuns,
+                       std::shared_ptr<PVTProps::FlashModel> const & flashModel);
 
   virtual void Compute( real64 const & pressure,
                         real64 const & temperature,
@@ -145,7 +145,7 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
+  virtual void InitializePostSubGroups( Group * const group ) override;
 
 private:
   
@@ -157,10 +157,10 @@ private:
   string m_flashModelParaFile;
 
   // number of entries corrosponds to number of phases
-  PVTProps::array1dT<PVTProps::PVTFunction> m_phaseDensityFuns;
-  PVTProps::array1dT<PVTProps::PVTFunction> m_phaseViscosityFuns;
+  array1d<std::shared_ptr<PVTProps::PVTFunction> > m_phaseDensityFuns;
+  array1d<std::shared_ptr<PVTProps::PVTFunction> > m_phaseViscosityFuns;
 
-  PVTProps::FlashModel m_flashModel;
+  std::shared_ptr<PVTProps::FlashModel> m_flashModel;
   
 };
 
