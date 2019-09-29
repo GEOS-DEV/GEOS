@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -38,11 +34,11 @@ namespace geosx
 using namespace dataRepository;
 
 DomainPartition::DomainPartition( std::string const & name,
-                                  ManagedGroup * const parent ):
-  ManagedGroup( name, parent )
+                                  Group * const parent ):
+  Group( name, parent )
 {
-  this->RegisterViewWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
-  this->RegisterViewWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper< array1d<NeighborCommunicator> >(viewKeys.neighbors)->setRestartFlags( RestartFlags::NO_WRITE );
+  this->registerWrapper<SpatialPartition,PartitionBase>(keys::partitionManager)->setRestartFlags( RestartFlags::NO_WRITE );
 
   RegisterGroup( groupKeys.meshBodies );
   RegisterGroup<constitutive::ConstitutiveManager>( groupKeys.constitutiveManager );
@@ -54,9 +50,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::RegisterDataOnMeshRecursive( ManagedGroup * const )
+void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 {
-  ManagedGroup::RegisterDataOnMeshRecursive( getMeshBodies() );
+  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
 }
 
 
@@ -84,55 +80,26 @@ void DomainPartition::InitializationOrder( string_array & order )
 }
 
 
-void DomainPartition::SetMaps(  )
-{
-  // ManagedGroup * nodeManager = this->GetGroup(keys::FEM_Nodes);
-  // ElementRegionManager * elementRegionManager =
-  // this->GetGroup<ElementRegionManager>(keys::FEM_Elements);
-
-  // {
-  //  integer_array & elementRegionMap =
-  // nodeManager->getReference(keys::elementRegionMap);
-  //  integer_array & elementSubRegionMap =
-  // nodeManager->getReference(keys::elementSubRegionMap);
-  //  integer_array & elementMap = nodeManager->getReference(keys::elementMap);
-
-  //  ManagedGroup * elementRegions =
-  // this->GetGroup(dataRepository::keys::elementRegions);
-
-  //  integer elementRegionIndex = 0;
-  //  elementRegionManager->forElementRegions( [&](ElementRegion&
-  // elementRegion)-> void
-  //  {
-  //    elementRegion.forElementSubRegions( [&]( CellBlockSubRegion & subRegion )->void
-  //    {
-
-  //    });
-  //    ++elementRegionIndex;
-  //  });
-  // }
-}
-
 void DomainPartition::GenerateSets(  )
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody(0)->getMeshLevel(0);
-  ManagedGroup const * const nodeManager = mesh->getNodeManager();
+  Group const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::ManagedGroup const * const
+  dataRepository::Group const * const
   nodeSets = nodeManager->GetGroup(ObjectManagerBase::groupKeyStruct::setsString);
 
   map< string, array1d<bool> > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & viewWrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets->wrappers() )
   {
-    string name = viewWrapper.second->getName();
+    string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name] = false;
-    ViewWrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
+    Wrapper<set<localIndex>> const * const setPtr = nodeSets->getWrapper<set<localIndex>>(name);
     if( setPtr!=nullptr )
     {
       setNames.push_back(name);
@@ -148,13 +115,13 @@ void DomainPartition::GenerateSets(  )
   ElementRegionManager * const elementRegionManager = mesh->getElemManager();
   elementRegionManager->forElementSubRegions( [&]( ElementSubRegionBase * const subRegion )
   {
-    dataRepository::ManagedGroup * elementSets = subRegion->sets();
+    dataRepository::Group * elementSets = subRegion->sets();
 
     for( std::string const & setName : setNames )
     {
       arrayView1d<bool const> const & nodeInCurSet = nodeInSet[setName];
 
-      set<localIndex> & targetSet = elementSets->RegisterViewWrapper< set<localIndex> >(setName)->reference();
+      set<localIndex> & targetSet = elementSets->registerWrapper< set<localIndex> >(setName)->reference();
       for( localIndex k = 0 ; k < subRegion->size() ; ++k )
       {
         localIndex const * const elemToNodes = subRegion->nodeList(k);
@@ -209,7 +176,7 @@ void DomainPartition::SetupCommunications()
     }
   }
 
-  ManagedGroup * const meshBodies = getMeshBodies();
+  Group * const meshBodies = getMeshBodies();
   MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
   MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
 
@@ -311,10 +278,10 @@ void DomainPartition::ReadSilo( const SiloFile& siloFile,
 }
 
 
-void DomainPartition::ReadFiniteElementMesh( const SiloFile& siloFile,
-                                             const int cycleNum,
-                                             const realT problemTime,
-                                             const bool isRestart )
+void DomainPartition::ReadFiniteElementMesh( const SiloFile& GEOSX_UNUSED_ARG( siloFile ),
+                                             const int GEOSX_UNUSED_ARG( cycleNum ),
+                                             const realT GEOSX_UNUSED_ARG( problemTime ),
+                                             const bool GEOSX_UNUSED_ARG( isRestart ) )
 {
 
 

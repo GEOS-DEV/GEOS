@@ -32,13 +32,7 @@ namespace geosx
 namespace PVTProps
 {
 
-template< typename T >
-using array1dT = std::vector<T>;
-
-using real64_vector = std::vector<geosx::real64>;  
-using string_vector = std::vector<std::string>;  
-
-constexpr geosx::localIndex MAX_VAR_DIM = 10;  
+constexpr localIndex MAX_VAR_DIM = 10;  
 
 template<typename T, int Dim>
 class EvalArgs 
@@ -420,10 +414,10 @@ inline bool operator<=(const T& arg1, const EvalArgs<T, Dim> &arg2)
   return arg1 <= arg2.m_var;
 }
 
-typedef EvalArgs<geosx::real64, 1> EvalArgs1D;
-typedef EvalArgs<geosx::real64, 2> EvalArgs2D;
-typedef EvalArgs<geosx::real64, 3> EvalArgs3D;
-typedef EvalArgs<geosx::real64, MAX_VAR_DIM> EvalVarArgs;
+typedef EvalArgs<real64, 1> EvalArgs1D;
+typedef EvalArgs<real64, 2> EvalArgs2D;
+typedef EvalArgs<real64, 3> EvalArgs3D;
+typedef EvalArgs<real64, MAX_VAR_DIM> EvalVarArgs;
 
 class TableFunctionBase 
 {
@@ -447,42 +441,42 @@ class XYTable : public TableFunctionBase
 {
 public:
 
-  XYTable(const std::string& tableName, const real64_vector& x, const real64_vector& y, const array1dT<real64_vector> &value) : m_tableName(tableName), m_x(x), m_y(y), m_value(value) {}
+  XYTable(std::string const & tableName, real64_array const & x, real64_array const & y, real64_array2d const & value) : m_tableName(tableName), m_x(x), m_y(y), m_value(value) {}
 
   ~XYTable(){}
 
-  real64_vector &XArray() {
+  real64_array &XArray() {
     return m_x;
   }
 
-  real64_vector &YArray() 
+  real64_array &YArray() 
   {
     return m_y;
   }
 
-  array1dT<real64_vector> &ValueArray() 
+  real64_array2d &ValueArray() 
   {
     return m_value;
   }
 
 
-  virtual const string& TableName() const 
+  virtual string const & TableName() const 
   {
     return m_tableName;
   }
 
 
-  virtual EvalArgs1D Value(const EvalArgs1D& x) const
+  virtual EvalArgs1D Value(EvalArgs1D const &) const
   {
     return 0;
   }
 
-  virtual EvalArgs2D Value(const EvalArgs2D& x) const 
+  virtual EvalArgs2D Value(EvalArgs2D const &) const 
   {
     return 0;
   }
 
-  virtual EvalArgs2D Value(const EvalArgs2D& x, const EvalArgs2D& y) const;
+  virtual EvalArgs2D Value(EvalArgs2D const & x, EvalArgs2D const & y) const;
 
   virtual void Print() const
   {
@@ -491,9 +485,9 @@ public:
 private:
 
   std::string m_tableName;
-  real64_vector m_x;
-  real64_vector m_y;
-  array1dT<real64_vector> m_value;
+  real64_array m_x;
+  real64_array m_y;
+  real64_array2d m_value;
 
 };
 
@@ -501,39 +495,39 @@ class XTable : public TableFunctionBase
 {
 public:
 
-  XTable(const string& tableName, const real64_vector& x, const real64_vector &value) : m_tableName(tableName), m_x(x), m_value(value) {}
+  XTable(string const & tableName, real64_array const & x, real64_array const & value) : m_tableName(tableName), m_x(x), m_value(value) {}
   ~XTable(){}
 
-  real64_vector &XArray()
+  real64_array &XArray()
   {
     return m_x;
   }
 
-  real64_vector &ValueArray()
+  real64_array &ValueArray()
   {
     return m_value;
   }
 
-  virtual const string& TableName() const 
+  virtual string const & TableName() const 
   {
     return m_tableName;
   }
 
-  virtual EvalArgs1D Value(const EvalArgs1D& x) const 
+  virtual EvalArgs1D Value(EvalArgs1D const & x) const 
   {
 
     return GetValue<EvalArgs1D>(x);
 
   }
 
-  virtual EvalArgs2D Value(const EvalArgs2D& x) const 
+  virtual EvalArgs2D Value(EvalArgs2D const & x) const 
   {
 
     return GetValue<EvalArgs2D>(x);
 
   }
 
-  virtual EvalArgs2D Value(const EvalArgs2D& x, const EvalArgs2D& y) const  
+  virtual EvalArgs2D Value(EvalArgs2D const &, EvalArgs2D const &) const  
   {
     return 0;
   }
@@ -541,15 +535,15 @@ public:
 private:
 
   template<class T> 
-  T GetValue(const T& x) const;
+  T GetValue(T const & x) const;
 
   virtual void Print() const
   {
   }
 
   string m_tableName;
-  real64_vector m_x;
-  real64_vector m_value;
+  real64_array m_x;
+  real64_array m_value;
 
 };
 

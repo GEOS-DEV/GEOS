@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -22,7 +18,6 @@
 
 #include "TableFunction.hpp"
 #include "common/DataTypes.hpp"
-#include "codingUtilities/IOUtilities.hpp"
 #include <algorithm>
 
 namespace geosx
@@ -44,8 +39,11 @@ std::string const valueType = "valueType";
 using namespace dataRepository;
 
 
+
+
+
 TableFunction::TableFunction( const std::string& name,
-                              ManagedGroup * const parent ):
+                              Group * const parent ):
   FunctionBase( name, parent ),
   m_coordinates(),
   m_values(),
@@ -55,23 +53,23 @@ TableFunction::TableFunction( const std::string& name,
   m_corners(),
   m_numCorners(0)
 {
-  RegisterViewWrapper<real64_array>(keys::tableCoordinates)->
+  registerWrapper<real64_array>(keys::tableCoordinates)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table coordinates inputs for 1D tables");
 
-  RegisterViewWrapper<real64_array>(keys::tableValues)->
+  registerWrapper<real64_array>(keys::tableValues)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Table Values for 1D tables");
 
-  RegisterViewWrapper<string_array>(keys::coordinateFiles)->
+  registerWrapper<string_array>(keys::coordinateFiles)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("List of coordinate file names");
 
-  RegisterViewWrapper<string>(keys::voxelFile)->
+  registerWrapper<string>(keys::voxelFile)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Voxel file name");
 
-  RegisterViewWrapper<string>(keys::tableInterpolation)->
+  registerWrapper<string>(keys::tableInterpolation)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Interpolation method");
 }
@@ -79,6 +77,42 @@ TableFunction::TableFunction( const std::string& name,
 TableFunction::~TableFunction()
 {}
 
+
+template< typename T >
+void TableFunction::parse_file( array1d<T> & target, string const & filename, char delimiter )
+{
+  std::ifstream inputStream(filename.c_str());
+  std::string lineString;
+  T value;
+
+  if (inputStream)
+  {
+    while (!inputStream.eof())
+    {
+      std::getline(inputStream, lineString);
+      std::istringstream ss( lineString );
+
+      while(ss.peek() == delimiter || ss.peek() == ' ')
+      {
+        ss.ignore();
+      }
+      while( ss>>value )
+      {
+        target.push_back( value );
+        while(ss.peek() == delimiter || ss.peek() == ' ')
+        {
+          ss.ignore();
+        }
+      }
+    }
+
+    inputStream.close();
+  }
+  else
+  {
+    GEOS_ERROR("Could not read input file!");
+  }
+}
 void TableFunction::InitializeFunction()
 {
   // Read in data
@@ -108,10 +142,10 @@ void TableFunction::InitializeFunction()
 
     // TODO: Read these files on rank 0, then broadcast
     string const& voxelFile = getReference<string>(keys::voxelFile);
-    IOUtilities::parse_file( m_values, voxelFile, ',' );
+    parse_file( m_values, voxelFile, ',' );
     for (localIndex ii=0 ; ii<m_dimensions ; ++ii)
     {
-      IOUtilities::parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
+      parse_file( m_coordinates[ii], coordinateFiles[ii], ',' );
       m_size.push_back(m_coordinates[ii].size());
     }
   }
@@ -210,6 +244,6 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
   return weightedValue;
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )
 
 } /* namespace ANST */

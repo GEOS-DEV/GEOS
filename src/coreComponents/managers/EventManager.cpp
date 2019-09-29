@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -33,8 +29,8 @@ using namespace cxx_utilities;
 
 
 EventManager::EventManager( std::string const & name,
-                            ManagedGroup * const parent ):
-  ManagedGroup( name, parent),
+                            Group * const parent ):
+  Group( name, parent),
   m_maxTime(),
   m_maxCycle(),
   m_verbosity(),
@@ -45,34 +41,34 @@ EventManager::EventManager( std::string const & name,
 {
   setInputFlags(InputFlags::REQUIRED);
   
-  RegisterViewWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
+  registerWrapper(viewKeyStruct::maxTimeString, &m_maxTime, false )->
     setApplyDefaultValue(std::numeric_limits<real64>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation time for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+  registerWrapper(viewKeyStruct::maxCycleString, &m_maxCycle, false )->
     setApplyDefaultValue(std::numeric_limits<integer>::max())->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Maximum simulation cycle for the global event loop.");
 
-  RegisterViewWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
+  registerWrapper(viewKeyStruct::verbosityString, &m_verbosity, false )->
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Verbosity level.");
 
-  RegisterViewWrapper(viewKeyStruct::timeString, &m_time, false )->
+  registerWrapper(viewKeyStruct::timeString, &m_time, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation time.");
 
-  RegisterViewWrapper(viewKeyStruct::dtString, &m_dt, false )->
+  registerWrapper(viewKeyStruct::dtString, &m_dt, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation timestep.");
 
-  RegisterViewWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
+  registerWrapper(viewKeyStruct::cycleString, &m_cycle, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Current simulation cycle number.");
 
-  RegisterViewWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper(viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
     setRestartFlags(RestartFlags::WRITE_AND_READ)->
     setDescription("Index of the current subevent.");
 
@@ -84,7 +80,7 @@ EventManager::~EventManager()
 
 
 
-ManagedGroup * EventManager::CreateChild( string const & childKey, string const & childName )
+Group * EventManager::CreateChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
@@ -102,7 +98,7 @@ void EventManager::ExpandObjectCatalogs()
 }
 
 
-void EventManager::Run(dataRepository::ManagedGroup * domain)
+void EventManager::Run(dataRepository::Group * domain)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -148,13 +144,9 @@ void EventManager::Run(dataRepository::ManagedGroup * domain)
 
 #ifdef GEOSX_USE_MPI
       // Find the min dt across procfesses
-      GEOSX_MARK_BEGIN("EventManager::MPI calls");
-
       real64 dt_global;
       MPI_Allreduce(&m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX);
       m_dt = dt_global;
-
-      GEOSX_MARK_END("EventManager::MPI calls");
 #endif
     }
 

@@ -24,43 +24,52 @@
 #include "constitutive/Fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
 #include "constitutive/Fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
 
-using namespace std;
-
 namespace geosx
 {
 
 namespace PVTProps
 {
 
-FenghourCO2ViscosityFunction::FenghourCO2ViscosityFunction( const string_array& inputPara,
-                                                            const string_array& componentNames,
-                                                            const real64_array& componentMolarWeight):
-  PVTFunctionBase( inputPara[1], componentNames, componentMolarWeight)
+FenghourCO2ViscosityFunction::FenghourCO2ViscosityFunction( string_array const & inputPara,
+                                                            string_array const & componentNames,
+                                                            real64_array const & componentMolarWeight):
+  PVTFunction( inputPara[1], componentNames, componentMolarWeight)
 {
 
   MakeTable(inputPara);
 
 }
 
-void FenghourCO2ViscosityFunction::MakeTable(const string_array& inputPara)
+void FenghourCO2ViscosityFunction::MakeTable(string_array const & inputPara)
 {
 
-  real64_vector pressures;
-  real64_vector temperatures;
+  real64_array pressures;
+  real64_array temperatures;
 
   real64 PStart, PEnd, dP;
   real64 TStart, TEnd, dT;
   real64 P, T;
 
-  PStart = stod(inputPara[2]);
-  PEnd = stod(inputPara[3]);
-  dP = stod(inputPara[4]);
+  GEOS_ERROR_IF(inputPara.size() < 8, "Invalid FenghourCO2Viscosity input!");
 
-  TStart = stod(inputPara[5]);
-  TEnd = stod(inputPara[6]);
-  dT = stod(inputPara[7]);
+  try
+    {
+  
+      PStart = stod(inputPara[2]);
+      PEnd = stod(inputPara[3]);
+      dP = stod(inputPara[4]);
 
+      TStart = stod(inputPara[5]);
+      TEnd = stod(inputPara[6]);
+      dT = stod(inputPara[7]);
 
+    }
+  catch (const std::invalid_argument & e) {
+
+    GEOS_ERROR("Invalid FenghourCO2Viscosity argument:" + std::string(e.what()));  
+
+  }
+    
   P = PStart;
 
   while(P <= PEnd)
@@ -77,26 +86,21 @@ void FenghourCO2ViscosityFunction::MakeTable(const string_array& inputPara)
     T += dT;
   }
 
-  unsigned long nP = pressures.size();
-  unsigned long nT = temperatures.size();
+  localIndex nP = pressures.size();
+  localIndex nT = temperatures.size();
 
-  array1dT<real64_vector> viscosities(nP);
-  array1dT<real64_vector> densities(nP);  
-  for(unsigned long i = 0; i < nP; ++i)
-  {
-    viscosities[i].resize(nT);
-    densities[i].resize(nT);    
-  }
+  real64_array2d viscosities(nP, nT);
+  real64_array2d densities(nP, nT);  
 
   SpanWagnerCO2DensityFunction::CalculateCO2Density(pressures, temperatures, densities);
   
   CalculateCO2Viscosity(pressures, temperatures, densities, viscosities);
 
-  m_CO2ViscosityTable = make_shared<XYTable>("FenghourCO2ViscosityTable", pressures, temperatures, viscosities);
+  m_CO2ViscosityTable = std::make_shared<XYTable>("FenghourCO2ViscosityTable", pressures, temperatures, viscosities);
+
 }
 
-
-void FenghourCO2ViscosityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
+  void FenghourCO2ViscosityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_ARG( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_ARG( useMass )) const
 {
   EvalArgs2D P, T, viscosity;
   P.m_var = pressure.m_var;
@@ -111,7 +115,7 @@ void FenghourCO2ViscosityFunction::Evaluation(const EvalVarArgs& pressure, const
   value.m_der[0] = viscosity.m_der[0];
 }
 
-void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(real64 const Tcent, real64 const den, real64 &vis)
+void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(real64 const & Tcent, real64 const & den, real64 & vis)
 {
   constexpr real64 espar = 251.196;
   constexpr real64 esparInv = 1.0 / espar;
@@ -139,11 +143,11 @@ void FenghourCO2ViscosityFunction::FenghourCO2Viscosity(real64 const Tcent, real
   vis = 1e-6 * (vlimit + vxcess + vcrit);
 }
 
-void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(const real64_vector& pressure, const real64_vector& temperature, const array1dT<real64_vector>& density, array1dT<real64_vector>& viscosity)
+void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(real64_const_array const & pressure, real64_const_array const & temperature, real64_const_array2d const & density, real64_array2d const & viscosity)
 {
-  for(unsigned long i = 0; i < pressure.size(); ++i)
+  for(localIndex i = 0; i < pressure.size(); ++i)
   {
-    for(unsigned long j = 0; j < temperature.size(); ++j)    
+    for(localIndex j = 0; j < temperature.size(); ++j)    
     {
       FenghourCO2Viscosity(temperature[j], density[i][j], viscosity[i][j]);
     }
@@ -151,7 +155,7 @@ void FenghourCO2ViscosityFunction::CalculateCO2Viscosity(const real64_vector& pr
 }
   
   
-REGISTER_CATALOG_ENTRY( PVTFunctionBase,
+REGISTER_CATALOG_ENTRY( PVTFunction,
                         FenghourCO2ViscosityFunction,
                         string_array const &, string_array const &, real64_array const & )
 

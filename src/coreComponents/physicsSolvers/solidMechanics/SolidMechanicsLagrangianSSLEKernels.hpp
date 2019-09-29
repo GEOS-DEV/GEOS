@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -42,6 +38,76 @@ namespace geosx
 
 namespace SolidMechanicsLagrangianSSLEKernels
 {
+
+struct StressCalculationKernel
+{
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
+  static inline real64
+  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+          localIndex const numElems,
+          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView3d< R1Tensor const> const & dNdX,
+          arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( detJ ),
+          arrayView1d<R1Tensor const> const & u )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
+    arrayView2d< R2SymTensor > const & devStress = constitutiveRelation->deviatorStress();
+
+    arrayView2d< real64 > const & meanStress = constitutiveRelation->meanStress();
+
+    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
+                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
+    {
+      real64 u_local[ NUM_NODES_PER_ELEM ][ 3 ];
+
+      for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        for ( int b = 0; b < 3; ++b )
+        {
+          u_local[ a ][ b ] = u[ elemsToNodes[ k ][ a ] ][ b ];
+        }
+      }
+
+      real64 c[ 6 ][ 6 ];
+      constitutive.GetStiffness( k, c );
+
+      //Compute Quadrature
+      for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+      {
+        devStress[ k ][ q ] = 0.0;
+        real64 * const restrict p_stress = devStress[ k ][ q ].Data();
+        for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          real64 const v0_x_dNdXa0 = u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
+          real64 const v1_x_dNdXa1 = u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
+          real64 const v2_x_dNdXa2 = u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
+
+          p_stress[ 0 ] += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] ) ;
+          p_stress[ 2 ] += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] ) ;
+          p_stress[ 5 ] += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] ) ;
+          p_stress[ 4 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ] ;
+          p_stress[ 3 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
+          p_stress[ 1 ] += ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
+        }
+
+        real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 2 ] + p_stress[ 5 ] ) / 3.0;
+        meanStress[ k ][ q ] = dMeanStress;
+
+        p_stress[ 0 ] -= dMeanStress;
+        p_stress[ 2 ] -= dMeanStress;
+        p_stress[ 5 ] -= dMeanStress;
+
+      }//quadrature loop
+
+    });
+
+    return 0.0;
+  }
+};
 
 /**
  * @struct Structure to wrap templated function that implements the explicit time integration kernels.
@@ -73,46 +139,18 @@ struct ExplicitKernel
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
-          arrayView1d<R1Tensor const> const & u,
+          arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
           real64 const dt )
   {
-   GEOSX_MARK_FUNCTION;
-// using KERNEL_POLICY =
-//   RAJA::KernelPolicy<
-//     RAJA::statement::CudaKernelFixed<
-//       0,
-//       RAJA::statement::For<
-//         0,
-//         RAJA::cuda_thread_x_loop,
-//         RAJA::statement::Lambda< 0 >
-//       >
-//     >
-//   >;
-
-// using KERNEL_POLICY =
-//   RAJA::KernelPolicy<
-//     RAJA::statement::For<
-//       0,
-//       RAJA::seq_exec,
-//       RAJA::statement::Lambda< 0 >
-//     >
-//   >;
-
-#if defined(__CUDACC__)
-    using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-    using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
-#else
-    using KERNEL_POLICY = RAJA::loop_exec;
-#endif
+    GEOSX_MARK_FUNCTION;
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
+    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
@@ -183,7 +221,7 @@ struct ExplicitKernel
       {
         for ( int b = 0; b < 3; ++b )
         {
-          RAJA::atomic::atomicAdd<RAJA::atomic::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
+          RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes[ k ][ a ] ][ b ], f_local[ a ][ b ] );
         }
       }
     });
@@ -229,7 +267,7 @@ struct ImplicitKernel
    * @param rhs parallel vector containing the global residual
    * @return The maximum nodal force contribution from all elements.
    */
-  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
+  template< int NUM_NODES_PER_ELEM, int NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
@@ -253,28 +291,28 @@ struct ImplicitKernel
           real64 const massDamping,
           real64 const newmarkBeta,
           real64 const newmarkGamma,
-          DofManager const * const dofManager,
+          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
     constexpr int dim = 3;
-    Epetra_LongLongSerialDenseVector  elementLocalDofIndex   (dim*static_cast<int>(NUM_NODES_PER_ELEM));
-    Epetra_SerialDenseVector     R     (dim*static_cast<int>(NUM_NODES_PER_ELEM));
-    Epetra_SerialDenseMatrix     dRdU  (dim*static_cast<int>(NUM_NODES_PER_ELEM),
-                                                  dim*static_cast<int>(NUM_NODES_PER_ELEM));
-    Epetra_SerialDenseVector     element_dof_np1 (dim*static_cast<int>(NUM_NODES_PER_ELEM));
-
-    Epetra_SerialDenseVector R_InertiaMassDamping(R);
-    Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
-    Epetra_SerialDenseVector R_StiffnessDamping(R);
-    Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
-
-    real64 maxForce = 0;
+    RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    for( localIndex k=0 ; k<numElems ; ++k )
+    RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
+                                  GEOSX_LAMBDA ( localIndex const k )
     {
+      Epetra_LongLongSerialDenseVector elementLocalDofIndex( dim * NUM_NODES_PER_ELEM );
+      Epetra_SerialDenseVector         R                   ( dim * NUM_NODES_PER_ELEM );
+      Epetra_SerialDenseMatrix         dRdU                ( dim * NUM_NODES_PER_ELEM,
+                                                             dim * NUM_NODES_PER_ELEM );
+      Epetra_SerialDenseVector         element_dof_np1     ( dim * NUM_NODES_PER_ELEM );
+
+      Epetra_SerialDenseVector R_InertiaMassDamping(R);
+      Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
+      Epetra_SerialDenseVector R_StiffnessDamping(R);
+      Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
 
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor uhat_local[NUM_NODES_PER_ELEM];
@@ -358,7 +396,6 @@ struct ImplicitKernel
               dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
               dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
 
-
               if( tiOption == timeIntegrationOption::ImplicitDynamic )
               {
 
@@ -392,10 +429,7 @@ struct ImplicitKernel
 
               temp.AijBj(stress0,dNdXa);
               realT maxF = temp.MaxVal();
-              if( maxF > maxForce )
-              {
-                maxForce = maxF;
-              }
+              maxForce.max( maxF );
 
               R(a*dim+0) -= temp[0];
               R(a*dim+1) -= temp[1];
@@ -433,10 +467,7 @@ struct ImplicitKernel
           }
 
           nodeForce = std::max( std::max( R(a*dim+0), R(a*dim+1) ),  R(a*dim+2) );
-          if( fabs(nodeForce) > maxForce )
-          {
-            maxForce = fabs(nodeForce);
-          }
+          maxForce.max( fabs( nodeForce ) );
         }
 
 
@@ -455,8 +486,9 @@ struct ImplicitKernel
         matrix->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, dRdU);
         rhs->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, R);
       }
-    }
-    return maxForce;
+    });
+
+    return maxForce.get();
   }
 };
 

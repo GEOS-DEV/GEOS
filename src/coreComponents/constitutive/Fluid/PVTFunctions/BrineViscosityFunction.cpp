@@ -24,8 +24,6 @@
 
 #include "constitutive/Fluid/PVTFunctions/BrineViscosityFunction.hpp"
 
-using namespace std;
-
 namespace geosx
 {
 
@@ -37,7 +35,7 @@ namespace PVTProps
 BrineViscosityFunction::BrineViscosityFunction( string_array const & inputPara,
                                                 string_array const & componentNames,
                                                 real64_array const & componentMolarWeight):
-  PVTFunctionBase( inputPara[1], componentNames, componentMolarWeight)
+  PVTFunction( inputPara[1], componentNames, componentMolarWeight)
 {
 
   MakeCoef(inputPara);
@@ -55,7 +53,22 @@ void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
 
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
-  real64 m = stod(inputPara[2]);
+  real64 m;
+
+  GEOS_ERROR_IF(inputPara.size() < 3, "Invalid BrineViscosity input!"); 
+
+  try
+    {
+  
+      m = stod(inputPara[2]);
+
+    }
+  catch (const std::invalid_argument & e) {
+
+    GEOS_ERROR("Invalid BrineViscosity argument:" + std::string(e.what()));
+
+  }  
+  
 
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
 
@@ -64,14 +77,14 @@ void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
 }
 
 
-void BrineViscosityFunction::Evaluation(const EvalVarArgs& pressure, const EvalVarArgs& temperature, const array1dT<EvalVarArgs>& phaseComposition, EvalVarArgs& value, bool useMass) const
+  void BrineViscosityFunction::Evaluation(EvalVarArgs const & GEOSX_UNUSED_ARG( pressure ), EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_ARG( phaseComposition ), EvalVarArgs & value, bool GEOSX_UNUSED_ARG( useMass )) const
 {
 
   value = m_coef0 + m_coef1 * temperature;
 
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase,
+REGISTER_CATALOG_ENTRY( PVTFunction,
                         BrineViscosityFunction,
                         string_array const &, string_array const &, real64_array const & )
 

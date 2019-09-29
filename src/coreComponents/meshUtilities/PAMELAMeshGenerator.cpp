@@ -1,26 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * PAMELAMeshGenerator.cpp
- *
- *  Created on: Oct 08, 2018
- *      Author: Antoine Mazuyer
+/**
+ * @file PAMELAMeshGenerator.cpp
  */
 
 #include "PAMELAMeshGenerator.hpp"
@@ -43,24 +36,24 @@ namespace geosx
 {
 using namespace dataRepository;
 
-PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * const parent ):
+PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
 
-  RegisterViewWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
+  registerWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
     setInputFlag(InputFlags::REQUIRED)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("path to the mesh file");
-  RegisterViewWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
+  registerWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Fields to be imported from the external mesh file");
-  RegisterViewWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
+  registerWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Name of the fields within GEOSX");
-  RegisterViewWrapper(viewKeyStruct::scaleString, &m_scale, false)->
+  registerWrapper(viewKeyStruct::scaleString, &m_scale, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(1.)->setDescription("Scale the coordinates of the vertices");
-  RegisterViewWrapper(viewKeyStruct::reverseZString, &m_isZReverse, false)->
+  registerWrapper(viewKeyStruct::reverseZString, &m_isZReverse, false)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDefaultValue(0)->setDescription("0 : Z coordinate is upward, 1 : Z coordinate is downward");
 }
@@ -68,7 +61,7 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, ManagedGroup * co
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& domain )
+void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) )
 {}
 
 void PAMELAMeshGenerator::PostProcessInput()
@@ -85,12 +78,12 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                              PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
-void PAMELAMeshGenerator::RemapMesh( dataRepository::ManagedGroup * const domain )
+void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) )
 {
   return;
 }
 
-ManagedGroup * PAMELAMeshGenerator::CreateChild( string const & childKey, string const & childName )
+Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
 {
   return nullptr;
 }
@@ -99,7 +92,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
   GEOS_LOG_RANK_0("Writing into the GEOSX mesh data structure");
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
-  ManagedGroup * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+  Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
@@ -350,12 +343,12 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& elementType,
-                                                       const int index[],
-                                                       const int& iEle,
-                                                       int nodeIDInBox[],
-                                                       const int node_size )
+void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_ARG( elementType ),
+                                                       const int GEOSX_UNUSED_ARG( index )[],
+                                                       const int& GEOSX_UNUSED_ARG( iEle ),
+                                                       int GEOSX_UNUSED_ARG( nodeIDInBox )[],
+                                                       const int GEOSX_UNUSED_ARG( node_size ) )
 {}
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, std::string const &, Group * const )
 }

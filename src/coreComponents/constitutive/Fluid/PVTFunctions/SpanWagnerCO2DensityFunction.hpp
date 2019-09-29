@@ -32,14 +32,14 @@ namespace geosx
 namespace PVTProps
 {
 
-class SpanWagnerCO2DensityFunction : public PVTFunctionBase
+class SpanWagnerCO2DensityFunction : public PVTFunction
 {
 public:
 
 
-  SpanWagnerCO2DensityFunction( const string_array& inputPara,
-                                const string_array& componentNames,
-                                const real64_array& componentMolarWeight);
+  SpanWagnerCO2DensityFunction( string_array const & inputPara,
+                                string_array const & componentNames,
+                                real64_array const & componentMolarWeight);
 
   ~SpanWagnerCO2DensityFunction() override {}
 
@@ -49,25 +49,20 @@ public:
   virtual string GetCatalogName() override final { return CatalogName(); }
 
 
-  virtual PVTFUNCTYPE FunctionType() const override
+  virtual PVTFuncType FunctionType() const override
   {
-    return PVTFUNCTYPE::DENSITY;
+    return PVTFuncType::DENSITY;
   }
 
-  virtual void Evaluation( const EvalVarArgs& pressure,
-                           const EvalVarArgs& temperature,
-                           const array1dT<EvalVarArgs>& phaseComposition,
-                           EvalVarArgs& value,
-                           bool useMass = 0) const override;
-
-
-  static void CalculateCO2Density(const real64_vector& pressure, const real64_vector& temperature, array1dT<real64_vector>& density);
+  virtual void Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & phaseComposition, EvalVarArgs & value, bool useMass = 0) const override;
+  
+  static void CalculateCO2Density(real64_const_array const & pressure, real64_const_array const & temperature, real64_array2d const & density);
   
 private:
 
-  void MakeTable(const string_array& inputPara);
+  void MakeTable(string_array const & inputPara);
 
-  static void SpanWagnerCO2Density(const real64 &T, const real64 &P, real64 &rho, real64 (*f)(const real64 &x1, const real64 &x2, const real64 &x3));
+  static void SpanWagnerCO2Density(real64 const & T, real64 const & P, real64 & rho, real64 (*f)(real64 const & x1, real64 const & x2, real64 const & x3));
   
 
   TableFunctionPtr m_CO2DensityTable;

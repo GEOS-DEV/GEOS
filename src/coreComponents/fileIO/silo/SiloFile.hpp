@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -34,6 +30,8 @@
 #include "pmpio.h"
 
 #include "mesh/ElementRegionManager.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/InterObjectRelation.hpp"
 
 
@@ -45,6 +43,7 @@ namespace geosx
 
 class DomainPartition;
 class MeshLevel;
+
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -254,22 +253,6 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
-
-  /**
-   *
-   * @param elementManager the element region manager
-   * @param constitutiveManager the constitutive manager
-   * @param meshName the name of the mesh that this write applies to
-   * @param cycleNumber current cycle number
-   * @param problemTime current problem time
-   */
-  void WriteMaterialMapsCompactStorage( ElementRegionManager const * const elementManager,
-                          constitutive::ConstitutiveManager const * const constitutiveManager,
-                          string const & meshName,
-                          int const cycleNumber,
-                          real64 const problemTime);
-
-
   void WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
                           constitutive::ConstitutiveManager const * const constitutiveManager,
                           string const & meshName,
@@ -286,14 +269,14 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void WriteManagedGroupSilo( dataRepository::ManagedGroup const * group,
-                              string const & siloDirName,
-                              string const & meshname,
-                              int const centering,
-                              int const cycleNum,
-                              real64 const problemTime,
-                              bool const isRestart,
-                              const localIndex_array& mask );
+  void WriteGroupSilo( dataRepository::Group const * group,
+                       string const & siloDirName,
+                       string const & meshname,
+                       int const centering,
+                       int const cycleNum,
+                       real64 const problemTime,
+                       bool const isRestart,
+                       const localIndex_array& mask );
 
 
 
@@ -304,7 +287,7 @@ public:
                                 real64 const problemTime,
                                 bool const isRestart );
   /**
-   * Writes the contents of a group of ViewWrapper objects
+   * Writes the contents of a group of Wrapper objects
    * @tparam the output varaible type
    * @param meshname the name of the mesh attach this write to
    * @param wrappers a group of wrappers
@@ -316,8 +299,8 @@ public:
    * @param mask indices to write out to the silo file
    */
   template< typename OUTPUTTYPE >
-  void WriteViewWrappersToSilo( string const & meshname,
-                                const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
+  void WriteWrappersToSilo( string const & meshname,
+                                const dataRepository::Group::wrapperMap & wrappers,
                                 int const centering,
                                 int const cycleNum,
                                 real64 const problemTime,
@@ -648,14 +631,14 @@ void SetVariableNames(string const & fieldName, string_array& varnamestring, cha
 
 
 template< typename OUTPUTTYPE >
-void SiloFile::WriteViewWrappersToSilo( string const & meshname,
-                                        const dataRepository::ManagedGroup::viewWrapperMap & wrappers,
+void SiloFile::WriteWrappersToSilo( string const & meshname,
+                                        const dataRepository::Group::wrapperMap & wrappers,
                                         int const centering,
                                         int const cycleNum,
                                         real64 const problemTime,
-                                        bool const isRestart,
+                                        bool const GEOSX_UNUSED_ARG( isRestart ),
                                         string const & multiRoot,
-                                        const localIndex_array& mask )
+                                        const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
 {
 
   // iterate over all entries in the member map
@@ -673,45 +656,45 @@ void SiloFile::WriteViewWrappersToSilo( string const & meshname,
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array1d<real64>> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<array1d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
-                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                      wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array2d<real64>> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<array2d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
-                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                      wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array3d<real64>) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<array3d<real64>> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<array3d<real64>> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
-                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                      wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(r1_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<r1_array> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<r1_array> const & >( *wrapper );
         this->WriteDataField<real64>( meshname.c_str(), fieldName,
-                                      viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                      wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<integer_array> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<integer_array> const & >( *wrapper );
         this->WriteDataField<integer>( meshname.c_str(), fieldName,
-                                       viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                       wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<localIndex_array> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<localIndex_array> const & >( *wrapper );
         this->WriteDataField<localIndex>( meshname.c_str(), fieldName,
-                                          viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                          wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
-        auto const & viewWrapperT = dynamic_cast< dataRepository::ViewWrapper<globalIndex_array> const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<globalIndex_array> const & >( *wrapper );
         this->WriteDataField<globalIndex>( meshname.c_str(), fieldName,
-                                           viewWrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+                                           wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
     }
   }
@@ -947,7 +930,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
                                        int const cycleNumber,
                                        real64 const problemTime,
                                        string const & multiRoot,
-                                       string_array const & materialNames )
+                                       string_array const & GEOSX_UNUSED_ARG( materialNames ) )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField<TYPE>();
   int const meshType = GetMeshType( meshName );
@@ -1041,7 +1024,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       }
 
       elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                              CellElementSubRegion const * const subRegion )
+                                                                       CellElementSubRegion const * const subRegion )
       {
 
         if( numMatInRegion == 1 )

@@ -23,6 +23,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           OPENMP
                           CUDA
                           PARMETIS
+                          PETSC
                           PYTHON
                           RAJA 
                           SUPERLU_DIST
