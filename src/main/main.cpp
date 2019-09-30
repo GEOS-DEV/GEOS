@@ -64,7 +64,7 @@ int main( int argc, char *argv[] )
         problemManager.ReadRestartOverwrite( restartFileName );
       }
 
-      MPI_Barrier(MPI_COMM_GEOSX);
+      MpiWrapper::Barrier(MPI_COMM_GEOSX);
       GEOS_LOG_RANK_0("Running simulation");
 
       gettimeofday(&tim, nullptr);

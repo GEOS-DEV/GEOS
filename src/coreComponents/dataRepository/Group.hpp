@@ -18,8 +18,6 @@
 #define MANAGEDGROUP_H_
 
 #include <iostream>
-#include <mpi.h>
-
 
 #include "ObjectCatalog.hpp"
 #include "RestartFlags.hpp"

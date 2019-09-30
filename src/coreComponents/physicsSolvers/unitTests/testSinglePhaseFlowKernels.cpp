@@ -363,7 +363,7 @@ int main( int argc, char** argv )
 
   logger::InitializeLogger( MPI_COMM_GEOSX );
 #else
-  logger::InitializeLogger():
+  logger::InitializeLogger();
 #endif
 
   cxx_utilities::setSignalHandling( cxx_utilities::handler1 );

@@ -16,7 +16,8 @@
  * @file PartitionBase.cpp
  */
 
-#include "PartitionBase.hpp"
+#include "mpiCommunications/PartitionBase.hpp"
+
 #include "managers/DomainPartition.hpp"
 #include "mesh/NodeManager.hpp"
 

@@ -17,7 +17,7 @@ if(ENABLE_PVTPackage)
        )
 endif()
 
-set( dependencyList geosx_core gtest  )
+set( dependencyList geosx_core gtest axom )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -46,7 +46,6 @@ foreach(test ${gtest_geosx_tests})
 
     blt_add_test( NAME ${test_name}
                   COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
-                  NUM_MPI_TASKS 1
             )
 
 endforeach()
