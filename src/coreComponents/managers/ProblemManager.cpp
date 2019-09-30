@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "optionparser.h"
 
 #include "DomainPartition.hpp"
@@ -30,8 +32,6 @@
 #include "managers/Outputs/OutputManager.hpp"
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -684,7 +684,7 @@ void ProblemManager::PostProcessInput()
   if( repartition )
   {
     partition.setPartitions( xpar, ypar, zpar );
-    int mpiSize = CommunicationTools::MPI_Size(MPI_COMM_GEOSX) ;
+    int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX) ;
     // Case : Using MPI domain decomposition and partition are not defined (mainly pamela usage)
     if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1)
     {

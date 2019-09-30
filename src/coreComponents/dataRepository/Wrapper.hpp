@@ -19,7 +19,6 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPER_HPP_
 
-#include <type_traits>
 
 #include "KeyNames.hpp"
 #include "IntegerConversion.hpp"
@@ -42,6 +41,7 @@
 #endif
 
 #include <cstdlib>
+#include <type_traits>
 
 
 namespace geosx
@@ -506,7 +506,7 @@ public:
                                       has_memberfunction_v3_size< U >::value ||
                                       has_memberfunction_v4_size< U >::value ||
                                       has_memberfunction_v5_size< U >::value), localIndex >::type
-    size( Wrapper< T > const * const parent, int const i )
+    size( WrapperBase const * const parent, int const i )
     {
       if( i != 0 )
       {
@@ -535,7 +535,7 @@ public:
 
     template< class U=T >
     static typename std::enable_if< !has_memberfunction_resize< U >::value, void >::type
-    resize( Wrapper< T > * parent, int num_dims, localIndex const * const dims )
+    resize( WrapperBase * parent, int num_dims, localIndex const * const dims )
     {
       if( num_dims != 1 )
       {

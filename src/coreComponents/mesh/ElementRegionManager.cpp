@@ -16,12 +16,13 @@
 #include <vector>
 
 #include "ElementRegionManager.hpp"
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
 #include "meshUtilities/MeshManager.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -102,10 +103,17 @@ void ElementRegionManager::SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
     targetChoiceNode.append_attribute("maxOccurs") = "unbounded";
   }
 
+  std::set<string> names;
   this->forElementRegions([&]( ElementRegionBase * const elementRegion )
   {
-    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+    names.insert( elementRegion->getName() );
   });
+
+  for( string const & name: names )
+  {
+    ElementRegionBase * const elementRegion = GetRegion( name );
+    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType);
+  }
 }
 
 void ElementRegionManager::GenerateMesh( Group const * const cellBlockManager )
@@ -133,7 +141,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
   nodeManager->SetMaxGlobalIndex();
   globalIndex const nodeOffsetGlobal = nodeManager->m_maxGlobalIndex + 1;
   localIndex  const elemOffsetLocal  = this->getNumberOfElements();
-  globalIndex const elemOffsetGlobal = CommunicationTools::Sum( elemOffsetLocal );
+  globalIndex const elemOffsetGlobal = MpiWrapper::Sum( elemOffsetLocal );
 
   globalIndex wellElemCount = 0;
   globalIndex wellNodeCount = 0;
@@ -167,7 +175,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     GEOS_ERROR_IF( subRegion == nullptr,
                    "Subregion " << subRegionName << " not found in well " << wellRegion->getName() );
 
-    globalIndex const numWellElemsGlobal = CommunicationTools::Sum( subRegion->size() );
+    globalIndex const numWellElemsGlobal = MpiWrapper::Sum( subRegion->size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != wellGeometry->GetNumElements(),
                    "Invalid partitioning in well " << subRegionName );

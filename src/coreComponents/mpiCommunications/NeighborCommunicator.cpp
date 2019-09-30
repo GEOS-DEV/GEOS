@@ -17,8 +17,9 @@
  *
  */
 
+#include "mpiCommunications/NeighborCommunicator.hpp"
+
 #include "common/TimingMacros.hpp"
-#include "NeighborCommunicator.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/MeshLevel.hpp"
 #include <sys/time.h>
@@ -55,9 +56,8 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MPI_Isend( const_cast<char*>(sendBuffer),
+  MpiWrapper::iSend( const_cast<char*>(sendBuffer),
              sendSize,
-             MPI_CHAR,
              m_neighborRank,
              sendTag,
              mpiComm,
@@ -65,9 +65,8 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 
   int const receiveTag = CommTag( m_neighborRank, Rank(), commID );
   //m_neighborRank * m_size + m_rank + m_size*m_size*commID;
-  MPI_Irecv( receiveBuffer,
+  MpiWrapper::iRecv( receiveBuffer,
              receiveSize,
-             MPI_CHAR,
              m_neighborRank,
              receiveTag,
              mpiComm,
@@ -139,8 +138,8 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
 {
   MPI_iSendReceiveBufferSizes( commID, mpiComm );
 
-  MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MPI_Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
@@ -168,8 +167,8 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
                     commID,
                     mpiComm );
 
-  MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MPI_Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
@@ -190,28 +189,24 @@ void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_ARG( commID ),
                                         MPI_Status& mpiReceiveStatus )
 
 {
-  MPI_Waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
-  MPI_Waitall( 1, &mpiSendRequest, &mpiSendStatus );
+  MpiWrapper::Waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
+  MpiWrapper::Waitall( 1, &mpiSendRequest, &mpiSendStatus );
 }
 
 void NeighborCommunicator::MPI_WaitAll( int const commID )
 {
-  MPI_Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MPI_Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
 }
 
 int NeighborCommunicator::Rank()
 {
-  int rank = -1;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-  return rank;
+  return MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 }
 
 int NeighborCommunicator::MPISize()
 {
-  int size = -1;
-  MPI_Comm_size( MPI_COMM_GEOSX, &size );
-  return size;
+  return MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 }
 
 void NeighborCommunicator::Clear()
