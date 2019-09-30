@@ -38,6 +38,9 @@ namespace geosx
  */
 class PetscSparseMatrix
 {
+#if !defined(GEOSX_USE_MPI)
+  typedef int MPI_Comm;
+#endif
 
 public:
 
@@ -77,7 +80,7 @@ public:
    */
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD );
+                            MPI_Comm const & comm  );
 
   /**
    * @brief Create a square matrix from global number of rows.

@@ -132,13 +132,7 @@ void CGsolver<LAI>::solve( typename LAI::ParallelMatrix const &A,
 
   }
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-  // TODO verbosity management
-  if( rank == 0 )
-    std::cout << "Native CG (no preconditioner) converged in " << numIt << " iterations." << std::endl;
+  GEOS_LOG_RANK_0( "Native CG (no preconditioner) converged in " << numIt << " iterations.");
   return;
 
 }
