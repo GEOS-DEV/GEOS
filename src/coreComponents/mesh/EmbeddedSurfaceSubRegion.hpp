@@ -151,23 +151,16 @@ public:
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
-  private:
-    template<bool DOPACK>
-      localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const;
 
-    /// normal vector to the embedded surface element
-    array1d< R1Tensor > m_normalVector;
-
-    ///
-    array1d< localIndex > m_embeddedSurfaceToCell;
-  private:
     template<bool DOPACK>
     localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                       arrayView1d<localIndex const> const & packList ) const;
 
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
+
+    ///
+    array1d< localIndex > m_embeddedSurfaceToCell;
 
     /// The elements to nodes relation
     NodeMapType  m_toNodesRelation;
@@ -178,8 +171,6 @@ public:
     /// The elements to faces relation
     FaceMapType  m_toFacesRelation;
 
-    ///
-    array1d< localIndex > m_embeddedSurfaceToCell;
 
     /// The member level field for the element center
     array1d< real64 > m_elementAperture;
