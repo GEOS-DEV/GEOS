@@ -20,6 +20,7 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "dataRepository/Group.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "common/DataTypes.hpp"
@@ -1462,7 +1463,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
 
   // compute global residual norm
   integer lresult = result ? 1 : 0;
-  integer const gresult = CommunicationTools::Min( lresult );
+  integer const gresult = MpiWrapper::Min( lresult );
   
   return gresult > 0;
 }
