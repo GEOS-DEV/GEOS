@@ -133,6 +133,7 @@ public:
   enum class couplingTypeOption : int
   {
     FixedStress,
+    ExplicitlyCoupled,
     TightlyCoupled
   };
 

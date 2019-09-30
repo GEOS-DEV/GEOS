@@ -70,6 +70,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::volume0String );
     });
 
     elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
@@ -401,17 +402,34 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
+//  // TODO: update cell, boundary and fracture stencils
+//  NumericalMethodsManager * const
+//  numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>( dataRepository::keys::numericalMethodsManager );
+//
+//  FiniteVolumeManager * const
+//  fvManager = numericalMethodManager->GetGroup<FiniteVolumeManager>( dataRepository::keys::finiteVolumeManager );
+//
+//  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+//  fluxApprox->compute( *domain );
+//
+//  TwoPointFluxApproximation::addToFractureStencil();
+
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
+    arrayView1d<real64> const & vol0 = subRegion->getReference<array1d<real64>>( viewKeyStruct::volume0String );
     arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
     arrayView1d<real64> const & vol  = m_volume[er][esr];
     arrayView1d<real64> const & mass = m_mass[er][esr];
+    arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      mass[ei] = dens[ei][0] * vol[ei];
+      mass[ei] = dens[ei][0] * vol0[ei];
+      vol[ei] += dVol[ei];
+      dens[ei][0] = mass[ei] / vol[ei];
+      vol0[ei] = vol[ei];
     } );
   } );
 

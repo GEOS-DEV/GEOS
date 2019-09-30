@@ -60,7 +60,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
 
   registerWrapper(viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0)->
     setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Coupling option: (FixedStress, TightlyCoupled)");
+    setDescription("Coupling option: (FixedStress, ExplicitlyCoupled, TightlyCoupled)");
 
   registerWrapper(viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -176,6 +176,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
   }
+  else if( m_couplingTypeOption == couplingTypeOption::ExplicitlyCoupled )
+  {
+    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>() );
+  }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
     ImplicitStepSetup( time_n,
@@ -219,6 +223,53 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>(m_contactRelationName);
+
+  if( m_couplingTypeOption == couplingTypeOption::ExplicitlyCoupled )
+  {
+    // update face area
+    faceManager->computeGeometry(nodeManager);
+
+    // update cell deltaVoume
+    arrayView1d<R1Tensor> const & X = nodeManager->getReference<r1_array>(nodeManager->viewKeys.referencePosition);
+    arrayView1d<R1Tensor> const & uhat = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+
+    ElementRegionManager::ElementViewAccessor<arrayView2d<localIndex>> const elemsToNodes =
+      elemManager->ConstructViewAccessor<FixedOneToManyRelation, arrayView2d<localIndex>>( CellElementSubRegion::viewKeyStruct::nodeListString );
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> deltaVolume =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
+
+    for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+    {
+      ElementRegionBase const * const elemRegion = elemManager->GetRegion(er);
+
+      for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
+      {
+        CellElementSubRegion const * const cellElementSubRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
+
+        localIndex const numNodesPerElement = elemsToNodes[er][esr].size(1);
+        r1_array u_local( numNodesPerElement );
+        r1_array uhat_local( numNodesPerElement );
+
+        for( localIndex ei=0 ; ei<cellElementSubRegion->size() ; ++ei )
+        {
+          CopyGlobalToLocal<R1Tensor>( elemsToNodes[er][esr][ei], u, uhat, u_local, uhat_local, numNodesPerElement );
+
+          R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
+          for (localIndex a = 0; a < elemsToNodes[er][esr].size(1); ++a)
+          {
+            Xlocal[a] = X[elemsToNodes[er][esr][ei][a]];
+            Xlocal[a] += u[elemsToNodes[er][esr][ei][a]] ;
+          }
+
+          deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
+        }
+      }
+    }
+  }
 
   elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
   {
@@ -538,8 +589,29 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
                                           DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
+
   m_flowSolver->SolverStep( time_n, dt, cycleNumber, domain );
+
+  m_solidSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
+
+  this->UpdateDeformationForCoupling(domain);
+
+  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
+  {
+    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+    {
+      arrayView1d<real64> const & volume = subRegion->getElementVolume();
+      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
+
+      for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
+      {
+        volume[kfe] += deltaVolume[kfe];
+      }
+    });
+  });
 
   return dt;
 }

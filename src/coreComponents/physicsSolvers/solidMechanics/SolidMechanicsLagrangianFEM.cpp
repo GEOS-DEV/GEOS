@@ -531,6 +531,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
     elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
+  // add fluid pressure
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const fluidPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("pressure");
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
+
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
@@ -560,6 +567,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
+                                   fluidPres[er][esr],
+                                   dPres[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt );
@@ -605,6 +614,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
+                                   fluidPres[er][esr],
+                                   dPres[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt );

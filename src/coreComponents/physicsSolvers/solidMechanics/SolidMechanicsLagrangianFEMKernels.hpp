@@ -198,6 +198,8 @@ struct ExplicitKernel
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
+          arrayView1d< real64 const > const & fluidPressure,
+          arrayView1d< real64 const > const & deltaFluidPressure,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
           real64 const dt )
@@ -249,6 +251,11 @@ struct ExplicitKernel
 
         R2SymTensor TotalStress = devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
+
+        if( !fluidPressure.empty() )
+        {
+          TotalStress.PlusIdentity( - (fluidPressure[k] + deltaFluidPressure[k]) );
+        }
 
         Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
       }//quadrature loop
