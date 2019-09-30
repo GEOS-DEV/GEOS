@@ -20,8 +20,8 @@
 #define PARTITIONBASE_H_
 
 #include "common/DataTypes.hpp"
-#include <mpi.h>
-#include "NeighborCommunicator.hpp"
+
+#include "mpiCommunications/NeighborCommunicator.hpp"
 
 
 class oBinStream;

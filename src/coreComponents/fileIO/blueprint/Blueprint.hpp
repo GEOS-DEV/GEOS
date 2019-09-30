@@ -16,10 +16,10 @@
 #define FILEIO_BLUEPRINT_BLUEPRINT_HPP
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 #include <unordered_map>
 #include <string>
-#include <mpi.h>
 
 /* Forward declarations */
 namespace axom

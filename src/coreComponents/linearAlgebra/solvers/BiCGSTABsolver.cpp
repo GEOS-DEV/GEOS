@@ -161,14 +161,7 @@ void BiCGSTABsolver< LAI >::solve( typename LAI::ParallelMatrix const & A,
 
   }
 
-  // Get the MPI rank
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank );
-
-  // TODO verbosity management
-  if( rank == 0 )
-    std::cout << "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations." << std::endl;
-  return;
+  GEOS_LOG_RANK_0( "Native BiCGSTAB (no preconditioner) converged in " << numIt << " iterations.");
 
 }
 

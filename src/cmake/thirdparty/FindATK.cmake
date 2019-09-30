@@ -66,6 +66,7 @@ if (EXISTS ${ATK_DIR})
     include(${ATK_CMAKE}/axom-targets.cmake)
 
     set(thirdPartyLibs ${thirdPartyLibs} axom )
+
 else()
     set(ATK_FOUND FALSE)
     message("Not using axom")
