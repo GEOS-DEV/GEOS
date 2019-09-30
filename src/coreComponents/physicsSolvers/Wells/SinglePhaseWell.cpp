@@ -18,6 +18,8 @@
 
 #include "SinglePhaseWell.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -30,8 +32,6 @@
 #include "wells/WellControls.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -171,14 +171,14 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     // this will be used to initialize the pressure, starting by the owner rank
     if ( wellControls->GetType() == WellControls::Type::PRODUCER )
     { 
-      resPres = CommunicationTools::Min( resPres );
+      resPres = MpiWrapper::Min( resPres );
     }
     else if ( wellControls->GetType() == WellControls::Type::INJECTOR )
     { 
-      resPres = CommunicationTools::Max( resPres );
+      resPres = MpiWrapper::Max( resPres );
     }
     
-    avgDensity = CommunicationTools::Sum( avgDensity );
+    avgDensity = MpiWrapper::Sum( avgDensity );
 
     globalIndex const numPerforationsGlobal = perforationData->GetNumPerforationsGlobal();
     avgDensity /= numPerforationsGlobal;
@@ -213,8 +213,8 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
     }
 
     // TODO optimize
-    CommunicationTools::Broadcast( pressureControl, subRegion->GetTopRank() );
-    CommunicationTools::Broadcast( gravDepthControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( pressureControl, subRegion->GetTopRank() );
+    MpiWrapper::Broadcast( gravDepthControl, subRegion->GetTopRank() );
 
     GEOS_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
 
@@ -767,7 +767,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
 
   // compute global residual norm
   real64 globalResidualNorm;
-  MPI_Allreduce(&residualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::allReduce(&residualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
 
   return sqrt(globalResidualNorm);
 }
@@ -824,7 +824,7 @@ SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
   });
 
   int isInvalidGlobal;
-  MPI_Allreduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_INT, MPI_SUM, MPI_COMM_GEOSX);
+  MpiWrapper::allReduce(&isInvalidLocal, &isInvalidGlobal, 1, MPI_SUM, MPI_COMM_GEOSX);
  
   bool isValid = (isInvalidGlobal == 0);
   return isValid;
@@ -1235,7 +1235,7 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( tim
 
     // TODO: improve well data output
     /*
-    int mpiSize = CommunicationTools::MPI_Size(MPI_COMM_GEOSX) ;
+    int mpiSize = CommunicationTools::Comm_size(MPI_COMM_GEOSX) ;
     if (mpiSize == 1)
     {
       RecordWellData( subRegion );
