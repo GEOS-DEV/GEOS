@@ -361,7 +361,6 @@ struct FluxKernel
           localIndex const fluidIndex,
           integer const gravityFlag,
           ElementView < arrayView1d<real64 const> > const & pres,
-          ElementView < arrayView1d<real64 const> > const & dPres,
           ElementView < arrayView1d<real64 const> > const & gravDepth,
           MaterialView< arrayView2d<real64 const> > const & dens,
           MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
@@ -584,7 +583,6 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
            ElementView <arrayView1d<real64 const>> const & pres,
-           ElementView <arrayView1d<real64 const>> const & dPres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
            MaterialView<arrayView2d<real64 const>> const & dens,
            MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
@@ -628,7 +626,7 @@ struct FluxKernel
       real64 const gravD = gravDepth[er][esr][ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
 
-      potDif += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - gravTerm);
+      potDif += weight * (pres[er][esr][ei] - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
     }
@@ -664,7 +662,6 @@ struct FluxKernel
            arraySlice1d<real64 const> const & stencilWeights,
            arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
            arrayView1d<real64 const> const & pres,
-           arrayView1d<real64 const> const & dPres,
            arrayView1d<real64 const> const & gravDepth,
            arrayView2d<real64 const> const & dens,
            arrayView2d<real64 const> const & dDens_dPres,
@@ -704,7 +701,7 @@ struct FluxKernel
 
       real64 const gravD = gravDepth[ei];
       real64 const gravTerm = gravityFlag ? densMean * gravD : 0.0;
-      potDif += weight * (pres[ei] + dPres[ei] - gravTerm);
+      potDif += weight * (pres[ei] - gravTerm);
 
       weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
     }
@@ -837,7 +834,6 @@ struct FluxKernel
                    arraySlice1d<real64 const> const & stencilWeights,
                    arraySlice1d<real64 const> const & stencilWeightedElementCenterToConnectorCenter,
                    arrayView1d<real64 const> const & pres,
-                   arrayView1d<real64 const> const & dPres,
                    arrayView1d<real64 const> const & gravDepth,
                    arrayView2d<real64 const> const & dens,
                    arrayView2d<real64 const> const & dDens_dPres,
@@ -878,7 +874,7 @@ struct FluxKernel
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
-        real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
+        real64 const potDif =  ( ( pres[ei[0]] ) - ( pres[ei[1]] ) -
                                  densMean * ( gravDepth[ei[0]] - gravDepth[ei[1]] ) );
 
         // upwinding of fluid properties (make this an option?)
