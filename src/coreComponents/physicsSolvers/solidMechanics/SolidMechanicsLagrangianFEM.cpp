@@ -1245,13 +1245,17 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
-  string const fieldName = keys::TotalDisplacement;
+  string fieldName = keys::TotalDisplacement;
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::IncrementalDisplacement );
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::TotalDisplacement );
+
+//  fieldName = viewKeyStruct::forceExternal;
+//  dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, viewKeyStruct::forceExternal );
 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::IncrementalDisplacement );
   fieldNames["node"].push_back( keys::TotalDisplacement );
+  fieldNames["node"].push_back( viewKeyStruct::forceExternal );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
