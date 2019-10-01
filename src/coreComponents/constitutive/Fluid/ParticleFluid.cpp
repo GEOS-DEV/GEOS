@@ -193,9 +193,9 @@ void ParticleFluid::Compute( real64 const & concentration,
           if(concentration < m_slipConcentration)
             dLambda_dC = -dLambda_dC;
 
-          collisionFactor = (1.0 - lambda * concentration) / (1.0 - concentration);
+          collisionFactor = (lambda - 1.0) / (1.0 - concentration);
 
-          dCollisionFactor_dConc = (collisionFactor - dLambda_dC * concentration - lambda) / (1.0 - concentration);
+          dCollisionFactor_dConc = (dLambda_dC  + collisionFactor) / (1.0 - concentration);
         }
 
     }

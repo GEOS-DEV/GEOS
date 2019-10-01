@@ -35,8 +35,8 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/FaceElementRegion.hpp"
 
 #include "physicsSolvers/FiniteVolume/ProppantTransportKernels.hpp"
