@@ -283,6 +283,7 @@ void testMatrixFunctions()
   // Get the MPI rank
   int numranks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
 
+
   // Define some vectors, matrices
   Vector vec1, vec2, vec3;
   Matrix mat1, mat2, mat3, mat4;
@@ -455,7 +456,13 @@ void testMatrixFunctions()
   Matrix mat2mat2;
   mat2.multiply(mat2, mat2mat2);
 
-  mat2mat2.write("mat2mat2");
+  mat2.write("mat2");
+  mat2mat2.write("mat2mat2-NEW");
+
+//  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  std::cout << "Rank: " << rank << "; "
+//            << "nRows: " << mat2mat2.globalRows() << "; "
+//            << "nCols: " << mat2mat2.globalCols() << std::endl;
 
 
   //  mat2.multiply(mat2, mat1);

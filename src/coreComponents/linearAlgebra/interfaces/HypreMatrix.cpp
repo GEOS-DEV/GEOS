@@ -591,97 +591,52 @@ void HypreMatrix::multiply( HypreVector const &src,
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product this * src = dst.
 void HypreMatrix::multiply( HypreMatrix const & src,
-		                    HypreMatrix & dst,
+		                        HypreMatrix & dst,
                             bool const closeResult ) const
 {
   // Error check
   GEOS_ASSERT_MSG( this->globalCols() == src.globalRows(),
-		           "Incompatible matrix dimensions");
-  hypre_ParCSRMatrix *dst_parcsr;
-  dst_parcsr = hypre_ParMatmul( m_parcsr_mat,
-		                        src.m_parcsr_mat );
+		               "Incompatible matrix dimensions");
 
-  // PARCSR to IJ
-  HYPRE_Int ierr = 0;
-  HYPRE_Int first_local_row, last_local_row, local_num_rows;
-  HYPRE_Int first_local_col, last_local_col;//, local_num_cols;
-  HYPRE_Int M, N;
-  HYPRE_Int i,j;
-  HYPRE_Int                 local_row;
-  HYPRE_Int                *diag_sizes;
-  HYPRE_Int                *offdiag_sizes;
-  HYPRE_Int  size;
-  HYPRE_Int                *col_inds;
-  HYPRE_Real *values;
+  // Constructring IJ directly from parcsr
+  hypre_ParCSRMatrix *dst_parcsr2 = new hypre_ParCSRMatrix;
+  dst_parcsr2 = hypre_ParMatmul( m_parcsr_mat,
+                                 src.m_parcsr_mat );
 
-  MPI_Comm comm = hypre_IJMatrixComm(m_ij_mat);
+  MPI_Comm comm = hypre_ParCSRMatrixComm(dst_parcsr2);
+  HYPRE_Int ilower = hypre_ParCSRMatrixFirstRowIndex(dst_parcsr2);
+  HYPRE_Int jlower = hypre_ParCSRMatrixFirstColDiag(dst_parcsr2);
+  HYPRE_Int iupper = hypre_ParCSRMatrixLastRowIndex(dst_parcsr2);
+  HYPRE_Int jupper = hypre_ParCSRMatrixLastColDiag(dst_parcsr2);
 
-  ierr = HYPRE_ParCSRMatrixGetLocalRange( dst_parcsr,
-            &first_local_row, &last_local_row ,
-            &first_local_col, &last_local_col );
+  HYPRE_IJMatrixCreate( comm,
+                        ilower,
+                        iupper,
+                        jlower,
+                        jupper,
+                        &dst.m_ij_mat );
+  HYPRE_IJMatrixSetObjectType( dst.m_ij_mat,
+                               HYPRE_PARCSR);
+  HYPRE_IJMatrixInitialize( dst.m_ij_mat );
+  dst.m_ij_mat->object      = dst_parcsr2;
 
-  local_num_rows = last_local_row - first_local_row + 1;
+  //  //dst.m_ij_mat->translator
+  dst.m_ij_mat->assumed_part = hypre_ParCSRMatrixAssumedPartition(dst_parcsr2);
 
-  ierr += HYPRE_ParCSRMatrixGetDims( dst_parcsr, &M, &N );
+  dst.m_ij_mat->assemble_flag = 1;
+#ifdef HYPRE_USING_OPENMP
+  dst.m_ij_mat->omp_flag = 1;
+#else
+  dst.m_ij_mat->omp_flag = 0;
+#endif
+  dst.m_ij_mat->print_level = 0;
 
-  ierr += HYPRE_IJMatrixCreate( comm, first_local_row, last_local_row,
-                                first_local_col, last_local_col,
-                                &dst.m_ij_mat );
+  dst.close();
 
-  ierr += HYPRE_IJMatrixSetObjectType( 	dst.m_ij_mat, HYPRE_PARCSR );
-
-  diag_sizes = hypre_CTAlloc(HYPRE_Int,  local_num_rows, HYPRE_MEMORY_HOST);
-  offdiag_sizes = hypre_CTAlloc(HYPRE_Int,  local_num_rows, HYPRE_MEMORY_HOST);
-  local_row = 0;
-  for (i=first_local_row; i<= last_local_row; i++)
+  if (!closeResult)
   {
-    ierr += HYPRE_ParCSRMatrixGetRow( dst_parcsr, i, &size,
-                                      &col_inds, &values );
-    for (j=0; j < size; j++)
-    {
-      if (col_inds[j] < first_local_row || col_inds[j] > last_local_row)
-      {
-        offdiag_sizes[local_row]++;
-      }
-      else
-      {
-        diag_sizes[local_row]++;
-      }
-    }
-    local_row++;
-    ierr += HYPRE_ParCSRMatrixRestoreRow( dst_parcsr, i, &size,
-                                          &col_inds, &values );
+    dst.open();
   }
-  ierr += HYPRE_IJMatrixSetDiagOffdSizes( dst.m_ij_mat,
-                                          (const HYPRE_Int *) diag_sizes,
-                                          (const HYPRE_Int *) offdiag_sizes );
-  hypre_TFree(diag_sizes, HYPRE_MEMORY_HOST);
-  hypre_TFree(offdiag_sizes, HYPRE_MEMORY_HOST);
-
-  ierr = HYPRE_IJMatrixInitialize( dst.m_ij_mat );
-
-  for (i=first_local_row; i<= last_local_row; i++)
-  {
-    ierr += HYPRE_ParCSRMatrixGetRow( dst_parcsr, i, &size,
-                                      &col_inds, &values );
-
-           ierr += HYPRE_IJMatrixSetValues( dst.m_ij_mat, 1, &size, &i,
-                                            (const HYPRE_Int *) col_inds,
-                                            (const HYPRE_Real *) values );
-
-           ierr += HYPRE_ParCSRMatrixRestoreRow( dst_parcsr, i, &size,
-                                                 &col_inds, &values );
-  }
-
-  if (closeResult)
-  {
-	  dst.close();
-	  ierr += HYPRE_ParCSRMatrixDestroy(dst_parcsr);
-
-
-  }
-  GEOS_ASSERT_MSG( ierr == 0,
-				  "Error in driver building IJMatrix from parcsr matrix" );
 
 }
 
