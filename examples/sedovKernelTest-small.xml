@@ -1,0 +1,124 @@
+<?xml version="1.0" ?>
+<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
+  <Solvers>
+    <SolidMechanicsLagrangianSSLE name="lagsolve" 
+                                  cflFactor="0.25"
+                                  discretization="FE1"
+                                  targetRegions="{Region2}"
+                                  solidMaterialName="shale"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}" 
+                  xCoords="{ 0, 100 }"
+                  yCoords="{ 0, 100 }"
+                  zCoords="{ 0, 100 }"
+                  nx="{64}"
+                  ny="{64}"
+                  nz="{64}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh>
+
+
+  <Events maxTime="1.0e-4">
+   
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
+
+    <PeriodicEvent name="plot"
+                   timeFrequency="1e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="solverApplications"
+                   forceDt="1.0e-4"
+                   target="/Solvers/lagsolve" />
+
+  </Events>
+
+
+  <NumericalMethods>
+
+    <BasisFunctions>
+        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    </BasisFunctions>
+    
+    <QuadratureRules>
+        <GaussQuadrature3 name="gaussian"   degree="2"  />
+    </QuadratureRules>
+    
+    <FiniteElements>
+        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+  </ElementRegions>
+
+  <Constitutive>
+      <LinearElasticIsotropic name="granite"
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
+
+      <LinearElasticIsotropic name="shale"
+                              defaultDensity="2700"
+                              defaultBulkModulus="5.5556e9"
+                              defaultShearModulus="4.16667e9"/>
+
+      <LinearElasticIsotropic name="water"
+                              defaultDensity="1000"
+                              defaultBulkModulus="2.0e9"
+                              defaultShearModulus="1.0e-9"/>
+  </Constitutive>
+
+
+  <FieldSpecifications>
+    <!-- FieldSpecification name="source"  
+               initialCondition="1"  
+               setNames="{source}"
+               objectPath="ElementRegions"
+               fieldName="shale_MeanStress"
+               component="-1"
+               scale="-1.0e6"/-->
+
+    <FieldSpecification name="xconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="0"  
+               scale="1.0" 
+               setNames="{xneg}"/>
+               
+    <FieldSpecification name="yconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="1"  
+               scale="0.0" 
+               setNames="{yneg}"/>
+               
+    <FieldSpecification name="zconstraint" 
+               objectPath="nodeManager"
+               fieldName="Velocity"
+               component="2"  
+               scale="0.0" 
+               setNames="{zneg}"/>
+
+  </FieldSpecifications>
+  
+  <Outputs>
+    <Silo name="siloOutput" 
+          parallelThreads="32"
+           plotFileRoot="plot" 
+           slaveDirectory="sub"
+           />
+    <Restart name="sidreRestart"/>
+  </Outputs>
+
+  <Geometry>
+    <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
+  </Geometry>
+</Problem>

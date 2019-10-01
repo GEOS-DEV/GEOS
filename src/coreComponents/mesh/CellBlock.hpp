@@ -27,10 +27,7 @@
 #define USE_ELEM_PATCHES 1
 
 #if USE_ELEM_PATCHES
-  #define ELEM_PATCH_MAX_ELEM 64
-  #define ELEM_PATCH_MAX_NODE 128
   #define ELEM_PATCH_VIZ 1
-  #define ELEM_PATCH_REORDER_NODES 1
 #endif
 
 class StableTimeStep;

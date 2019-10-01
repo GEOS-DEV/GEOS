@@ -22,6 +22,9 @@
 #include "RAJA/RAJA.hpp"
 
 #if USE_ELEM_PATCHES
+  #define ELEM_PATCH_MAX_ELEM 64
+  #define ELEM_PATCH_MAX_NODE 128
+
   #define SSLE_USE_PATCH_KERNEL 1
   #if SSLE_USE_PATCH_KERNEL
     #define SSLE_PATCH_KERNEL_SHARED_FVEC 0
@@ -270,6 +273,18 @@ struct ExplicitKernel
           arrayView2d<R2SymTensor> const & ,
           real64 const dt )
   {
+    static bool printMessage = true;
+
+    if( printMessage )
+    {
+#if SSLE_USE_PATCH_KERNEL
+        GEOS_LOG_RANK_0( "Running patch kernel with " << elemPatchOffsets.size()-1 << " blocks" );
+#else
+        GEOS_LOG_RANK_0( "Running default kernel" );
+#endif
+        printMessage = false;
+    }
+
     GEOSX_MARK_FUNCTION;
 
 
@@ -299,6 +314,7 @@ struct ExplicitKernel
 
     using KERNEL_POLICY =
     RAJA::KernelPolicy<
+      //RAJA::statement::CudaKernel<
       RAJA::statement::CudaKernelFixed<ELEM_PATCH_MAX_ELEM,
         RAJA::statement::For<0, RAJA::cuda_block_x_loop,
           RAJA::statement::InitLocalMem<RAJA::cuda_shared_mem, InitMemParamList,
@@ -333,8 +349,6 @@ struct ExplicitKernel
 
 #endif
 
-    GEOS_LOG_RANK( "Launching element kernel on " << elemPatchOffsets.size()-1 << " patches" );
-
     RAJA::kernel_param<KERNEL_POLICY>
       ( RAJA::make_tuple(
           RAJA::TypedRangeSegment<localIndex>( 0, elemPatchOffsets.size() - 1 ),
@@ -363,8 +377,12 @@ struct ExplicitKernel
         {
           if( node < elemPatchNodes.sizeOfArray( patch ) )
           {
-            localIndex const nodeIndex = elemPatchNodes[patch][node];
-            //GEOS_LOG( "Prefetching node " << nodeIndex );
+            localIndex const nodeIndex = elemPatchNodes(patch, node);
+#ifdef __CUDACC__
+            //printf("Thread %d/%d: prefetching node %d\n", blockIdx.x, threadIdx.x, nodeIndex);
+#else
+            //printf( "Prefetching node %d\n", nodeIndex );
+#endif
             #pragma unroll
             for( int b = 0 ; b < 3 ; ++b )
             {
@@ -399,6 +417,13 @@ struct ExplicitKernel
 
           localIndex const k = elemPatchOffsets[patch] + elem;
 
+
+#ifdef __CUDACC__
+          //printf("Thread %d/%d: processing elem %d\n", blockIdx.x, threadIdx.x, k);
+#else
+          //printf( "Processing elem %d\n", k );
+#endif
+
           real64 const G = constitutive.m_shearModulus[k];
           real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
           real64 const Lame2G = 2*G + Lame;
@@ -430,6 +455,7 @@ struct ExplicitKernel
               {
                 localIndex const nib = elemPatchElemsToNodes(k, b);
 
+
                 real64 const dNdXa0_dNdXb0 = DNDX(k,q,a,0)*DNDX(k,q,b,0);
                 real64 const dNdXa1_dNdXb1 = DNDX(k,q,a,1)*DNDX(k,q,b,1);
                 real64 const dNdXa2_dNdXb2 = DNDX(k,q,a,2)*DNDX(k,q,b,2);
@@ -459,10 +485,19 @@ struct ExplicitKernel
           #pragma unroll
           for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
           {
+/*
+#ifdef __CUDACC__
+            if( k==5376 || k==5377 || k==5380 || k==5381 || k==5392 || k==5393 || k==5396 || k==5397 )
+            {
+              printf("Thread %d/%d: assembling k = %ld, a = %ld, node = %ld, patch_node = %ld\n", blockIdx.x, threadIdx.x, k, a, elemsToNodes(k,a), elemPatchElemsToNodes(k,a) );
+            }
+#endif
+*/
             #pragma unroll
             for ( int b = 0; b < 3; ++b )
             {
               RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes( k, a ) ][ b ], f_local[ a ][ b ] );
+              //RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes( k, a ) ][ b ], 1.0 );
             }
           }
 #else

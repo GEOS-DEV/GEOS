@@ -32,6 +32,13 @@
 
 #include "common/TimingMacros.hpp"
 
+#include "linearAlgebra/DofManager.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp"
+  
+#if USE_ELEM_PATCHES
+  #define ELEM_PATCH_REORDER_NODES 0
+#endif
+
 namespace geosx
 {
 using namespace dataRepository;
