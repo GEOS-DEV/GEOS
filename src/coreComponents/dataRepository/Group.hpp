@@ -55,10 +55,11 @@ namespace geosx
 namespace dataRepository
 {
 
-/// the default key type for the hierarchy.
+//START_SPHINX_INCLUDE_00
+/// The default key type for entries in the hierarchy.
 using keyType = string;
 
-/// the default index type for the hierarchy.
+/// The default index type for entries the hierarchy.
 using indexType = localIndex;
 
 /**
@@ -70,10 +71,11 @@ using indexType = localIndex;
 class Group
 {
 public:
-  /// the type of MappedVector to use for the subGroup collection
+  //START_SPHINX_INCLUDE_01
+  /// The template specialization of MappedVector to use for the collection of sub-Group objects.
   using subGroupMap = MappedVector< Group, Group *, keyType, indexType >;
 
-  /// type of the MappedVector to use for the collection of wrappers.
+  /// The template specialization of MappedVector to use for the collection wrappers objects.
   using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
 
   /**
@@ -681,13 +683,11 @@ public:
   void InitializePostInitialConditions( Group * const group );
 
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > *
-  registerWrapper( std::string const & name,
-                   wrapperMap::KeyIndex::index_type * const rkey = nullptr );
+  Wrapper< TBASE > * registerWrapper( std::string const & name,
+                                      wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > *
-  registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
+  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
 
 
   WrapperBase * registerWrapper( std::string const & name,
@@ -1038,27 +1038,36 @@ private:
    */
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
-  /// the parent of this group
+  //START_SPHINX_INCLUDE_02
+  /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
 
-  /// the container for all wrappers
+  /// The container for the collection of all wrappers continued in "this" Group.
   wrapperMap m_wrappers;
 
-  /// The container for all sub-groups
+  /// The container for the collection of all sub-groups contained in "this" Group.
   subGroupMap m_subGroups;
+
+  /// The size/length of this Group...and all Wrapper<> that are are specified to have the same size as their
+  /// owning group.
+  indexType m_size;
+
+  /// The capacity for wrappers in this group...and all Wrapper<> that are specified to have the same size as their
+  /// owning group.
+  indexType m_capacity;
+
+  /// The name/key of this Group in its parent collection of sub-Groups.
+  string m_name;
+
+  RestartFlags m_restart_flags; ///< Restart flag for this group...and
+                                ///< subsequently all wrappers in this group
+  InputFlags m_input_flags;     ///< Input flag for this group
 
 #ifdef GEOSX_USE_ATK
   /// Pointer to the sidre group that mirrors this group
   axom::sidre::Group * m_sidreGroup;
 #endif
 
-  indexType m_size;             ///< The size/length wrappers in this group
-  indexType m_capacity;         ///< The capacity for wrappers in this group
-  RestartFlags m_restart_flags; ///< Restart flag for this group...and
-                                ///< subsequently all wrappers in this group
-  InputFlags m_input_flags;     ///< Input flag for this group
-  string m_name;                ///< the repository name of this group. This
-                                ///< is the key in the parent group.
 
 };
 
