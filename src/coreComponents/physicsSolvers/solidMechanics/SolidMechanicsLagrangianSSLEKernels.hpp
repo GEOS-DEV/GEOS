@@ -248,6 +248,10 @@ struct ExplicitKernel
   {
    GEOSX_MARK_FUNCTION;
 
+#ifndef __CUDACC__
+#define __CUDACC__
+#endif
+
 #if defined(__CUDACC__)
     #define NUM_THREAD_PER_BLOCK 128
     using KERNEL_POLICY = RAJA::cuda_exec< NUM_THREAD_PER_BLOCK >;
@@ -268,16 +272,15 @@ struct ExplicitKernel
 //    real64 * gmForce;
 //    cudaMalloc( &gmForce, sizeof(real64)*3*8*128 );
 
-//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-//                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
-//    {
-//    localIndex const k = elementList[ i ];
-    forall_in_set< KERNEL_POLICY >( elementList.begin(),
-                                    elementList.size(),
-                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
+    localIndex const k = elementList[ i ];
+//    forall_in_set< KERNEL_POLICY >( elementList.begin(),
+//                                    elementList.size(),
+//                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
+//    {
 
-#if 1
 #define USE_SHMEM
 #if defined(USE_SHMEM) && defined(__CUDACC__)
       __shared__ real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ][NUM_THREAD_PER_BLOCK];
@@ -314,32 +317,32 @@ struct ExplicitKernel
 
 #define ULOCAL
 #ifdef ULOCAL
-#if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
-      __shared__ real64 uLocal[3][8][NUM_THREAD_PER_BLOCK];
-      for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-      {
-        localIndex const nib = elemsToNodes(k, a);
-        for( int i=0 ; i<3 ; ++i )
-        {
-          uLocal[i][a][threadIdx.x] = u[nib][i];
-        }
-      }
-
-  #define U(i,b) uLocal[i][b][threadIdx.x]
-#else
-        real64 uLocal[3][8];
+  #if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
+        __shared__ real64 uLocal[3][8][NUM_THREAD_PER_BLOCK];
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
           localIndex const nib = elemsToNodes(k, a);
           for( int i=0 ; i<3 ; ++i )
           {
-            uLocal[i][a] = u[nib][i];
+            uLocal[i][a][threadIdx.x] = u[nib][i];
           }
         }
-  #define U(i,b) uLocal[i][b]
-#endif
+
+    #define U(i,b) uLocal[i][b][threadIdx.x]
+  #else
+          real64 uLocal[3][8];
+          for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+          {
+  //          localIndex const nib = elemsToNodes(k, a);
+            for( int i=0 ; i<3 ; ++i )
+            {
+              uLocal[i][a] = u[elemsToNodes(k, a)][i];
+            }
+          }
+    #define U(i,b) uLocal[i][b]
+  #endif
 #else
-#define U(i,b) u[nib][i]
+  #define U(i,b) u[nib][i]
 #endif
 
 
@@ -361,6 +364,9 @@ struct ExplicitKernel
           stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) )*G;
           stress[5] += ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) )*G;
         }
+//        stress[3] *= G;
+//        stress[4] *= G;
+//        stress[5] *= G;
 
 
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
@@ -379,37 +385,6 @@ struct ExplicitKernel
         devStress[4] = stress[3];
         devStress[3] = stress[4];
         devStress[1] = stress[5];
-#endif
-#else
-        #pragma unroll
-        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-        {
-          for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
-          {
-#if !defined(ULOCAL)
-            localIndex const nib = elemsToNodes(k, b);
-#endif
-//            real64 const unib[3] = { u[nib][0], u[nib][1], u[nib][2] };
-            real64 const dNdXa0_dNdXb0 = DNDX(k,q,a,0)*DNDX(k,q,b,0);
-            real64 const dNdXa1_dNdXb1 = DNDX(k,q,a,1)*DNDX(k,q,b,1);
-            real64 const dNdXa2_dNdXb2 = DNDX(k,q,a,2)*DNDX(k,q,b,2);
-
-            f_local[a][0] -= ( U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,1)*Lame ) +
-                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,0)*G + DNDX(k,q,a,0)*DNDX(k,q,b,2)*Lame ) +
-                               U(0,b)*( dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*G + dNdXa0_dNdXb0*(Lame2G))
-                             ) * detJ_k_q;
-
-            f_local[a][1] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,0)*Lame ) +
-                               U(2,b)*( DNDX(k,q,a,2)*DNDX(k,q,b,1)*G + DNDX(k,q,a,1)*DNDX(k,q,b,2)*Lame ) +
-                               U(1,b)*( dNdXa0_dNdXb0*G + dNdXa2_dNdXb2*G + dNdXa1_dNdXb1*(Lame2G))
-                             ) * detJ_k_q;
-
-            f_local[a][2] -= ( U(0,b)*( DNDX(k,q,a,0)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,0)*Lame ) +
-                               U(1,b)*( DNDX(k,q,a,1)*DNDX(k,q,b,2)*G + DNDX(k,q,a,2)*DNDX(k,q,b,1)*Lame ) +
-                               U(2,b)*( dNdXa0_dNdXb0*G + dNdXa1_dNdXb1*G + dNdXa2_dNdXb2*(Lame2G))
-                             ) * detJ_k_q;
-          }
-        }
 #endif
       }//quadrature loop
 
