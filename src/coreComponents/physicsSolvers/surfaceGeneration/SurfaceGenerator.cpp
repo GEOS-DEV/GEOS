@@ -497,11 +497,15 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
   map<string, string_array > fieldNames;
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
+  fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  MPI_iCommData icomm;
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+//  MPI_iCommData icomm;
+//  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
+//  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
+//  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
 
 
   if( !prefrac )
