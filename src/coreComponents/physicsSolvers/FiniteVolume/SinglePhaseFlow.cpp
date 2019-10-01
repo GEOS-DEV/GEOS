@@ -445,9 +445,7 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
     arrayView1d<real64> const & poro = m_porosity[er][esr];
     arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
-    applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                   ElementSubRegionBase * const subRegion )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       vol[ei] += dVol[ei];
       dens[ei][0] = mass[ei] / (vol[ei] * poro[ei]);
