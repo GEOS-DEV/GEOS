@@ -1255,7 +1255,6 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::IncrementalDisplacement );
   fieldNames["node"].push_back( keys::TotalDisplacement );
-  fieldNames["node"].push_back( viewKeyStruct::forceExternal );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
