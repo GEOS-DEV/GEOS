@@ -312,8 +312,21 @@ struct ExplicitKernel
                                                             X,
                                                             dNdX_data );
 
-//#define ULOCAL
+#define ULOCAL
 #ifdef ULOCAL
+#if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
+      __shared__ real64 uLocal[3][8][NUM_THREAD_PER_BLOCK];
+      for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+      {
+        localIndex const nib = elemsToNodes(k, a);
+        for( int i=0 ; i<3 ; ++i )
+        {
+          uLocal[i][a][threadIdx.x] = u[nib][i];
+        }
+      }
+
+  #define U(i,b) uLocal[i][b][threadIdx.x]
+#else
         real64 uLocal[3][8];
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
@@ -323,8 +336,8 @@ struct ExplicitKernel
             uLocal[i][a] = u[nib][i];
           }
         }
-
-#define U(i,b) uLocal[i][b]
+  #define U(i,b) uLocal[i][b]
+#endif
 #else
 #define U(i,b) u[nib][i]
 #endif
@@ -338,7 +351,9 @@ struct ExplicitKernel
         real64 stress[6] = {0,0,0,0,0,0};
         for( localIndex b=0 ; b< NUM_NODES_PER_ELEM ; ++b )
         {
+#ifndef ULOCAL
           localIndex const nib = elemsToNodes(k, b);
+#endif
           stress[0] += ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
           stress[1] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
           stress[2] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
