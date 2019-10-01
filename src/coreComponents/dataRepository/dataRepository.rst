@@ -4,21 +4,16 @@
 GEOSX Data Repository
 #####################################
 
-The GEOSX dataRepository is intended to provide the building blocks for the code structure within GEOSX. 
-The dataRepository provides a general capability to store arbitrary data and objects in a hierarchical 
+The GEOSX "dataRepository" is intended to provide the building blocks for the code structure within GEOSX. 
+The "dataRepository" provides a general capability to store arbitrary data and objects in a hierarchical 
 structure, similar to a standard file system.
 The components/classes of the data structure that a developer will require some knowledge of are:
-* **Group** The inheritable building block for the hierarchy structure.
-            In the filesystem analog, the Group is similar to the file folder.
-            As such a Group may contain any number of sub-Groups, and Wrappers.
-            Each collection of sub-Groups and Wrappers are contained in a MappedVector member of the
-            Group.
-            Group also defines a general capaiblity to create and traverse the dataRepository.
-            For example, Group provides the capabilty to create/insert/get/remove sub-Groups, as well as
-            the ability to create/get/remove Wrappers.
-            In addition Group provides functionality to iterate over sub-Groups and wrappers targeting 
-            only certain derived types, and certain keys/names.
-            
+
+* **Group** The inheritable building block for the hierarchy. 
+  In the filesystem analog, the Group is similar to the file folder.
+  See the documentation on :ref:`Group` for more details.
+
+  
 * **Wrapper/WrapperBase** A class that is intended to encapsulate an object for storage in a Group, as well
                           as providing an interface for performing common operations on that object.
                           Wrapper is templated on the type of object it encapsulates, thus providing strong 
@@ -51,3 +46,9 @@ The components/classes of the data structure that a developer will require some 
 
 * **RestartFlags** A strongly typed enum that specifies if the contents of a Wrapper should be written 
                    to and/or read from restart files.
+
+
+.. toctree::
+   :maxdepth: 1
+
+   Group
