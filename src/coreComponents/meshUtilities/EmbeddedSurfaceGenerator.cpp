@@ -21,16 +21,11 @@
  */
 
 #include "EmbeddedSurfaceGenerator.hpp"
-
-
-namespace geosx
-{
-
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
-#include "EmbeddedSurfaceSubRegion.hpp"
+#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx
 {
@@ -38,7 +33,7 @@ using namespace dataRepository;
 
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
-  m_meshBodyName(""),
+  m_meshName(""),
   m_numElems(0),
   m_numNodesPerElem(4),
   m_numNodes(0),
@@ -54,7 +49,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( string const & name, Group *
     setSizedFromParent(0)->
     setDescription("coordinates of the center of the plane defining the surface.");
 
-  registerWrapper(keys::meshBodyName, &m_meshBodyName, false )->
+  registerWrapper(keys::meshName, &m_meshName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("");
@@ -73,17 +68,18 @@ void EmbeddedSurfaceGenerator::PostProcessInput()
   //GEOS_ERROR_IF( m_planeCenter.empty(),
     //               "Cannot be empty " << getName() );
 
-  GEOS_ERROR_IF( m_meshBodyName.empty(),
+  GEOS_ERROR_IF( m_meshName.empty(),
                  "meshName cannot be empty " << getName() );
  }
 
-Group * EmbeddedSurfaceGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ), string const & GEOSX_UNUSED_ARG( childName ) )
+Group * EmbeddedSurfaceGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ),
+                                               string const & GEOSX_UNUSED_ARG( childName ) )
 {
   // does not have any children (at least for now)
   return nullptr;
 }
 
-void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const domain )
+void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const  domain )
 {
   /*
    * Here we need to:
@@ -91,8 +87,21 @@ void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const domain )
    * 2. Generate EmbeddedSurface elements and populate them
    */
 
+  /* 1. Finding intersections
+   *   - Loop over the surfaces and for each surface check if
+   *     nvect * dist changes sign between different nodes. If it does
+   *     it means the plane intersects the surface.
+   *   -
+   *
+   */
 
+  Group * const meshBodies        = domain->getMeshBodies();
+  MeshLevel * const meshLevel     = meshBodies->GetGroup<MeshLevel>(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
 
+  array1d<R1Tensor> & nodesCoordinates = nodeManager->referencePosition();
+
+  // I d like to loop over the faces and then over the nodes belonging to each face.
 }
 
 

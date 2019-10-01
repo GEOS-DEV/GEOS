@@ -19,15 +19,6 @@
                 newtonTol="1.0e-8"
                 maxIterNewton="8" />
         </SinglePhaseFlow>
-<<<<<<< HEAD
-=======
-        <EmbeddedSurfaceGenerator
-            name="SurfaceGen"
-            verboseLevel="0"
-            fractureRegion="Fracture"
-            targetRegions="{Fracture}">
-        </EmbeddedSurfaceGenerator>
->>>>>>> 250de18b22652848e351481843a7bd06165df40d
     </Solvers>
 
     <Mesh>
@@ -41,13 +32,11 @@
             ny="{10}"
             nz="{1}"
             cellBlockNames="{cb1}" />
-
        <InternalEmbeddedSurface
             name="FracturePlane1"
-            unitNormalVector = "{0,1,0}"
-            planeCenter="{0,0,0}"
-            meshName="mesh1"
-            />
+            unitNormalVector = "0.0,1.0,0.0"
+            planeCenter="0.0,0.0,0.0"
+            meshName="mesh1"/>
     </Mesh>
 
     <Geometry>

@@ -18,8 +18,6 @@
 
 /**
  * @file ElementManagerT.h
- * @author Randolph Settgast
- * @date created on Sep 14, 2010
  */
 
 #ifndef EMBEDDEDSURFACEMANAGER_H_

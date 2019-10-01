@@ -259,6 +259,13 @@ Element: Included
 .. include:: ../../coreComponents/fileIO/schema/docs/Included.rst
 
 
+.. _XML_InternalEmbeddedSurface:
+
+Element: InternalEmbeddedSurface
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/InternalEmbeddedSurface.rst
+
+
 .. _XML_InternalMesh:
 
 Element: InternalMesh
@@ -821,6 +828,13 @@ Datastructure: Hydrofracture
 Datastructure: Included
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Included_other.rst
+
+
+.. _DATASTRUCTURE_InternalEmbeddedSurface:
+
+Datastructure: InternalEmbeddedSurface
+======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/InternalEmbeddedSurface_other.rst
 
 
 .. _DATASTRUCTURE_InternalMesh:

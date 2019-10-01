@@ -36,7 +36,7 @@ namespace keys
 {
 string const nVector          = "unitNormalVector";
 string const planeCenter      = "planeCenter";
-string const meshBodyName     = "meshName";
+string const meshName         = "meshName";
 }
 }
 
@@ -60,7 +60,7 @@ public:
   /**
    * @return the name of this type in the catalog
    */
-  static string CatalogName() { return "EmbeddedSurface"; }
+  static string CatalogName() { return "InternalEmbeddedSurface"; }
 
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}
@@ -133,7 +133,7 @@ private:
   // location (point determining where the plane is)
   R1Tensor      m_planeCenter;
 
-  string        m_meshBodyName;
+  string        m_meshName;
 
   // Geometry of the embedded surface (later passed to the EmbeddedSurfaceSubregion)
 

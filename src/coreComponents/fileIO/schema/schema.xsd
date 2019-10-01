@@ -460,11 +460,22 @@
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InternalEmbeddedSurface" type="InternalEmbeddedSurfaceType" />
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="MeshFile" type="MeshFileType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="InternalEmbeddedSurfaceType">
+		<!--meshName => (no description available)-->
+		<xsd:attribute name="meshName" type="string" use="required" />
+		<!--planeCenter => coordinates of the center of the plane defining the surface.-->
+		<xsd:attribute name="planeCenter" type="R1Tensor" use="required" />
+		<!--unitNormalVector => normal unit vector to the fracture plane.-->
+		<xsd:attribute name="unitNormalVector" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
 		<!--cellBlockNames => names of each mesh block-->
