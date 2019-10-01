@@ -890,13 +890,6 @@ ApplySystemSolution( DofManager const & GEOSX_UNUSED_ARG( dofManager ),
                                      -scalingFactor,
                                      domain );
 
-//  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-//  std::map<string, string_array > fieldNames;
-//  fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-//
-//  CommunicationTools::SynchronizeFields( fieldNames, mesh,
-//                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
-
   this->UpdateDeformationForCoupling(domain);
 
 }
