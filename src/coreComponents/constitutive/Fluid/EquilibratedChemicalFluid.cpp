@@ -32,73 +32,73 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-  static void interpolation(const string &name, const array1d<real64> &values1, const array1d<real64> &values2, const real64 &value1, real64 &value2)
+static void interpolation(const string &name, const array1d<real64> &values1, const array1d<real64> &values2, const real64 &value1, real64 &value2)
+{
+
+  if(value1 < values1[0] || value1 > values1[values1.size()-1])
+    GEOS_ERROR("variable: " + name + " is out of bound!");
+
+  localIndex idx = 0;
+
+  for(localIndex i = 1; i < values1.size(); ++i)
+    if(value1 <= values1[i])
+    {
+      idx = i;
+      break;
+    }
+
+  value2 = values2[idx-1] + (values2[idx] - values2[idx-1]) / (values1[idx] - values1[idx-1]) * (value1 - values1[idx-1]);
+
+
+}
+
+
+
+static DatabaseType stringToDatabaseType( string const & databaseType )
+{
+  if (databaseType == "EQ36")
   {
-
-    if(value1 < values1[0] || value1 > values1[values1.size()-1])
-      GEOS_ERROR("variable: " + name + " is out of bound!");
-
-    localIndex idx = 0;
-
-    for(localIndex i = 1; i < values1.size(); ++i)
-      if(value1 <= values1[i])
-	{
-	  idx = i;
-	  break;
-	}
-
-    value2 = values2[idx-1] + (values2[idx] - values2[idx-1]) / (values1[idx] - values1[idx-1]) * (value1 - values1[idx-1]);
-
-    
+    return DatabaseType::EQ36;
   }
 
-    
-  
-  static DatabaseType stringToDatabaseType( string const & databaseType )
-  {
-    if (databaseType == "EQ36")
-      {
-	return DatabaseType::EQ36;
-      }
-  
-    GEOS_ERROR("Database type not supported: " << databaseType);
+  GEOS_ERROR("Database type not supported: " << databaseType);
 
-    return DatabaseType::invalidType;
-  }
+  return DatabaseType::invalidType;
+}
 
-  static ActivityCoefModel stringToActivityCoefModel( string const & activityCoefModel )
-  {
-    if (activityCoefModel == "BDot")
+static ActivityCoefModel stringToActivityCoefModel( string const & activityCoefModel )
+{
+  if (activityCoefModel == "BDot")
   {
     return ActivityCoefModel::BDot;
   }
-  
-    GEOS_ERROR("Activity coefficient model not supported: " << activityCoefModel);
 
-    return ActivityCoefModel::invalidModel;
-  }
-  
-  EquilibratedChemicalFluid::EquilibratedChemicalFluid( std::string const & name, ManagedGroup * const parent ):
-  ReactiveFluidBase( name, parent )
+  GEOS_ERROR("Activity coefficient model not supported: " << activityCoefModel);
+
+  return ActivityCoefModel::invalidModel;
+}
+
+EquilibratedChemicalFluid::EquilibratedChemicalFluid( std::string const & name, Group * const parent ):
+          ReactiveFluidBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::databaseTypeString, &m_databaseTypeString, false )->
+  registerWrapper( viewKeyStruct::databaseTypeString, &m_databaseTypeString, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Thermodynamic database");
 
-  RegisterViewWrapper( viewKeyStruct::databaseFileString, &m_databaseFileName, false )->
+  registerWrapper( viewKeyStruct::databaseFileString, &m_databaseFileName, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Thermodynamic database file name");  
 
-  RegisterViewWrapper( viewKeyStruct::activityCoefModelString, &m_activityCoefModelString, false )->
+  registerWrapper( viewKeyStruct::activityCoefModelString, &m_activityCoefModelString, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Activity coefficient model");
 }
 
 EquilibratedChemicalFluid::~EquilibratedChemicalFluid() = default;
 
-void EquilibratedChemicalFluid::AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+void EquilibratedChemicalFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
+                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   ReactiveFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
 
@@ -108,8 +108,8 @@ void EquilibratedChemicalFluid::AllocateConstitutiveData( dataRepository::Manage
 
 void
 EquilibratedChemicalFluid::DeliverClone( string const & name,
-					 ManagedGroup * const parent,
-					 std::unique_ptr<ConstitutiveBase> & clone ) const
+                                         Group * const parent,
+                                         std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   if( !clone )
   {
@@ -121,7 +121,7 @@ EquilibratedChemicalFluid::DeliverClone( string const & name,
   newConstitutiveRelation->m_databaseTypeString    = this->m_databaseTypeString;
   newConstitutiveRelation->m_databaseFileName   = this->m_databaseFileName;
   newConstitutiveRelation->m_activityCoefModelString = this->m_activityCoefModelString;   
-  
+
   newConstitutiveRelation->m_databaseType     = this->m_databaseType;
   newConstitutiveRelation->m_activityCoefModel   = this->m_activityCoefModel;
   newConstitutiveRelation->ReadDatabase();
@@ -134,20 +134,20 @@ void EquilibratedChemicalFluid::PostProcessInput()
   static bool isDatabaseRead = 0;
 
   if(!isDatabaseRead)
-    {
-      
-      m_databaseType   = stringToDatabaseType( m_databaseTypeString );
-      m_activityCoefModel = stringToActivityCoefModel( m_activityCoefModelString );
+  {
 
-      ReadDatabase();
+    m_databaseType   = stringToDatabaseType( m_databaseTypeString );
+    m_activityCoefModel = stringToActivityCoefModel( m_activityCoefModelString );
 
-      isDatabaseRead = 1;
-      
-    }
-  
+    ReadDatabase();
+
+    isDatabaseRead = 1;
+
+  }
+
 }
 
-void EquilibratedChemicalFluid::InitializePostSubGroups( ManagedGroup * const group )
+void EquilibratedChemicalFluid::InitializePostSubGroups( Group * const group )
 {
   ReactiveFluidBase::InitializePostSubGroups(group);
 
@@ -167,19 +167,21 @@ void EquilibratedChemicalFluid::ResizeFields(localIndex size)
   m_dDependentConc_dConc.resize(size, NDependent + 1, NBasis + 1);      
 
 }
-  
+
 void EquilibratedChemicalFluid::ReadDatabase()
 {
   if(!m_thermoDatabase)
     m_thermoDatabase = ( ThermoDatabaseBase::CatalogInterface::Factory( m_databaseTypeString, m_databaseFileName, m_basisSpeciesNames) );
 
   const array1d<Species> &dependentSpecies = m_thermoDatabase->GetDependentSpecies();
-  const array1d<Species> &basisSpecies = m_thermoDatabase->GetBasisSpecies();
-  const array1d<localIndex> &basisSpeciesIndices = m_thermoDatabase->GetBasisSpeciesIndices();    
+  //const array1d<Species> &basisSpecies = m_thermoDatabase->GetBasisSpecies();
+  //  const array1d<localIndex> &basisSpeciesIndices = m_thermoDatabase->GetBasisSpeciesIndices();
 
   m_dependentSpeciesNames.clear();
   for(localIndex ic = 0; ic < dependentSpecies.size(); ++ic)
+  {
     m_dependentSpeciesNames.push_back(dependentSpecies[ic].name);
+  }
 
   localIndex const NBasis = numBasisSpecies();
   localIndex const NDependent = numDependentSpecies();
@@ -189,50 +191,50 @@ void EquilibratedChemicalFluid::ReadDatabase()
   m_stochMatrix = 0;
 
   for(localIndex j = 0; j < dependentSpecies.size(); ++j)
+  {
+
+    real64 nu2 = dependentSpecies[j].stochs[0];
+
+    bool isSolid = dependentSpecies[j].type == SpeciesType::Solid ? 1 : 0;
+    bool isNonBasisGas = (dependentSpecies[j].name != "O2(g)" && dependentSpecies[j].type == SpeciesType::Gas) ? 1 : 0;
+
+    for(localIndex i = 1; i < dependentSpecies[j].speciesIndices.size(); ++i)
     {
 
-      real64 nu2 = dependentSpecies[j].stochs[0];
+      localIndex ic = dependentSpecies[j].speciesIndices[i];
 
-      bool isSolid = dependentSpecies[j].type == SpeciesType::Solid ? 1 : 0;
-      bool isNonBasisGas = (dependentSpecies[j].name != "O2(g)" && dependentSpecies[j].type == SpeciesType::Gas) ? 1 : 0;      
-      
-      for(localIndex i = 1; i < dependentSpecies[j].speciesIndices.size(); ++i)
-	{
-	  
-	  localIndex ic = dependentSpecies[j].speciesIndices[i];
+      if(ic >= NBasis)
+        continue;
 
-	  if(ic >= NBasis)
-	    continue;
+      //localIndex id = basisSpeciesIndices[ic];
 
-	  localIndex id = basisSpeciesIndices[ic];	  
+      real64 nu1 = dependentSpecies[j].stochs[i];
 
-	  real64 nu1 = dependentSpecies[j].stochs[i];
-	  
-	  if(isSolid || isNonBasisGas)
-	    m_stochMatrix[ic][j] = 0.0;
-	  else 
-	    m_stochMatrix[ic][j] = nu1 / nu2;
-
-	}
+      if(isSolid || isNonBasisGas)
+        m_stochMatrix[ic][j] = 0.0;
+      else
+        m_stochMatrix[ic][j] = nu1 / nu2;
 
     }
-  
+
+  }
+
 }
-  
+
 void EquilibratedChemicalFluid::PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d<real64 const> const & concentration, localIndex const k)
 {
 
   Compute( pressure, temperature, concentration, m_dependentConc[k], m_dDependentConc_dConc[k], m_thermoDatabase);
-  
+
 }
 
-void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & pressure,
-						   real64 const & temperature,
-						   real64 const & ionicStrength,
-						   array1d<real64> & logActCoef1,
-						   array1d<real64> & dLogActCoef1,						   
-						   array1d<real64> & logActCoef2,
-						   array1d<real64> & dLogActCoef2)
+void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & GEOSX_UNUSED_ARG(pressure),
+                                                   real64 const & temperature,
+                                                   real64 const & ionicStrength,
+                                                   array1d<real64> & logActCoef1,
+                                                   array1d<real64> & dLogActCoef1,
+                                                   array1d<real64> & logActCoef2,
+                                                   array1d<real64> & dLogActCoef2)
 {
 
   localIndex const NBasis = numBasisSpecies();
@@ -247,7 +249,7 @@ void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & pressure,
   logActCoef1.resize(NBasis);
   dLogActCoef1.resize(NBasis);
 
- logActCoef2.resize(NDependent);
+  logActCoef2.resize(NDependent);
   dLogActCoef2.resize(NDependent);    
 
   real64 DHA, DHB, Bdot, DHazero, charge;
@@ -264,66 +266,66 @@ void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & pressure,
   real64 TK = temperature + 273.15;
 
   if(m_activityCoefModel == ActivityCoefModel::BDot)
-    {  
+  {
 
-      interpolation("Bdot", actCoefParameters.temperatures, actCoefParameters.BDots, temperature, Bdot);
+    interpolation("Bdot", actCoefParameters.temperatures, actCoefParameters.BDots, temperature, Bdot);
 
-      for(localIndex i = 0; i < NBasis; ++i)
-	{
-	  localIndex ic = basisSpeciesIndices[i];
+    for(localIndex i = 0; i < NBasis; ++i)
+    {
+      localIndex ic = basisSpeciesIndices[i];
 
-	  DHazero = basisSpecies[ic].DHazero;
-	  charge = basisSpecies[ic].charge;	  
+      DHazero = basisSpecies[ic].DHazero;
+      charge = basisSpecies[ic].charge;
 
-	  logActCoef1[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength));
+      logActCoef1[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength));
 
-	  dLogActCoef1[i] = Bdot - DHA * charge * charge * (0.5 / sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength)) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt(ionicStrength)) /(1.0 + DHazero * DHB * sqrt(ionicStrength)));
+      dLogActCoef1[i] = Bdot - DHA * charge * charge * (0.5 / sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength)) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt(ionicStrength)) /(1.0 + DHazero * DHB * sqrt(ionicStrength)));
 
-	}
-
-      for(localIndex i = 0; i < dependentSpecies.size(); ++i)
-	{
-	  DHazero = dependentSpecies[i].DHazero;
-	  charge = dependentSpecies[i].charge;	  
-
-	  if(dependentSpecies[i].name == "CO2(aq)" || dependentSpecies[i].name == "H2(aq)" || dependentSpecies[i].name == "O2(aq)" )
-	    {
-
-	      logActCoef2[i] = ((C + F * TK + G / TK) * ionicStrength -(E + H * TK) * (ionicStrength / (ionicStrength+1) )) / 2.303;
-
-	      dLogActCoef2[i] = ((C + F * TK + G / TK) - (E + H * TK) * (1.0 / (ionicStrength + 1) - ionicStrength / (ionicStrength + 1) / (ionicStrength + 1))) / 2.303;
-
-	    }
-	  else if(strstr(dependentSpecies[i].name.c_str(), "(aq)") || dependentSpecies[i].type == SpeciesType::Gas || dependentSpecies[i].type == SpeciesType::Solid)
-	    {
-
-	      logActCoef2[i] = 0;
-	      dLogActCoef2[i] = 0;	    
-	      
-
-	    }
-	  else
-	    {
-
-	      logActCoef2[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength));
-
-	      dLogActCoef2[i] = Bdot - DHA * charge * charge * (0.5 / sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength)) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt(ionicStrength)) /(1.0 + DHazero * DHB * sqrt(ionicStrength)));
-
-	    }
-
-	}
     }
+
+    for(localIndex i = 0; i < dependentSpecies.size(); ++i)
+    {
+      DHazero = dependentSpecies[i].DHazero;
+      charge = dependentSpecies[i].charge;
+
+      if(dependentSpecies[i].name == "CO2(aq)" || dependentSpecies[i].name == "H2(aq)" || dependentSpecies[i].name == "O2(aq)" )
+      {
+
+        logActCoef2[i] = ((C + F * TK + G / TK) * ionicStrength -(E + H * TK) * (ionicStrength / (ionicStrength+1) )) / 2.303;
+
+        dLogActCoef2[i] = ((C + F * TK + G / TK) - (E + H * TK) * (1.0 / (ionicStrength + 1) - ionicStrength / (ionicStrength + 1) / (ionicStrength + 1))) / 2.303;
+
+      }
+      else if(strstr(dependentSpecies[i].name.c_str(), "(aq)") || dependentSpecies[i].type == SpeciesType::Gas || dependentSpecies[i].type == SpeciesType::Solid)
+      {
+
+        logActCoef2[i] = 0;
+        dLogActCoef2[i] = 0;
+
+
+      }
+      else
+      {
+
+        logActCoef2[i] = Bdot * ionicStrength - DHA * charge * charge * sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength));
+
+        dLogActCoef2[i] = Bdot - DHA * charge * charge * (0.5 / sqrt(ionicStrength) / (1.0 + DHazero * DHB * sqrt(ionicStrength)) - 0.5 * DHazero * DHB / (1.0 + DHazero * DHB * sqrt(ionicStrength)) /(1.0 + DHazero * DHB * sqrt(ionicStrength)));
+
+      }
+
+    }
+  }
   else
     GEOS_ERROR("wrong activity coef model");   
 
 }
 
 void EquilibratedChemicalFluid::Compute( real64 const & pressure,
-					 real64 const & temperature,
-					 arraySlice1d<real64 const> const & concentration,
-					 arraySlice1d<real64> const & dependentConc,		
-					 arraySlice2d<real64> const & dDependentConc_dConc,
-					 ThermoDatabase &thermoDatabase)
+                                         real64 const & temperature,
+                                         arraySlice1d<real64 const> const & concentration,
+                                         arraySlice1d<real64> const & dependentConc,
+                                         arraySlice2d<real64> const & dDependentConc_dConc,
+                                         ThermoDatabase &thermoDatabase)
 {
 
   localIndex const NBasis = numBasisSpecies();
@@ -337,7 +339,7 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
   const ActCoefParameters &actCoefParameters = m_thermoDatabase->GetActCoefParameters();  
 
   static bool firstTime = 1;
-  
+
   //compute d(logActCoef)/dI  
 
   array1d<real64> logActCoef1;
@@ -345,29 +347,29 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
 
   array1d<real64> logActCoef2;
   array1d<real64> dLogActCoef2;    
-  
+
 
   //get ionic strength
-  
+
   dependentConc[NDependent] = 0;
 
   for(localIndex i = 0; i < NBasis; ++i)
-    {
-      localIndex id = basisSpeciesIndices[i];
-      real64 charge = basisSpecies[id].charge;
-      real64 conc = pow(10.0, concentration[i]);
+  {
+    localIndex id = basisSpeciesIndices[i];
+    real64 charge = basisSpecies[id].charge;
+    real64 conc = pow(10.0, concentration[i]);
 
-      dependentConc[NDependent] += 0.5 * charge * charge * conc;
-    }
-  
+    dependentConc[NDependent] += 0.5 * charge * charge * conc;
+  }
+
   for(localIndex i = 0; i < dependentSpecies.size(); ++i)
-    {
-      real64 charge = dependentSpecies[i].charge;
-      real64 conc = pow(10.0, dependentConc[i]);
-      
-      dependentConc[NDependent] += 0.5 * charge * charge * conc;
-      
-    }
+  {
+    real64 charge = dependentSpecies[i].charge;
+    real64 conc = pow(10.0, dependentConc[i]);
+
+    dependentConc[NDependent] += 0.5 * charge * charge * conc;
+
+  }
 
   if(firstTime) {
     dependentConc[NDependent] = 1.0; // Initial guess, need to fix it later
@@ -381,49 +383,49 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
   for(localIndex i = 0; i < NDependent + 1; ++i)
     for(localIndex j = 0; j < NBasis + 1; ++j)    
       dDependentConc_dConc[i][j] = 0;
-  
+
   for(localIndex i = 0; i < dependentSpecies.size(); ++i)
+  {
+
+    if(dependentSpecies[i].type == SpeciesType::Solid) {
+      dependentConc[i] = 0.0;
+      continue;
+    }
+
+
+    real64 nu1 = dependentSpecies[i].stochs[0];
+    interpolation("logK", actCoefParameters.temperatures, dependentSpecies[i].logKs, temperature, logK);
+
+    dependentConc[i] = logK / nu1 - logActCoef2[i];
+
+    for(localIndex j = 1; j < dependentSpecies[i].speciesIndices.size(); ++j)
     {
 
-      if(dependentSpecies[i].type == SpeciesType::Solid) {
-	dependentConc[i] = 0.0;
-	continue;
+      real64 nu2 = dependentSpecies[i].stochs[j];
+      localIndex ic = dependentSpecies[i].speciesIndices[j];
+
+      if(ic == NBasis) {
+        dependentConc[i] -= nu2 / nu1 * m_logActH2O;
+      }
+      else if(ic == NBasis + 1)
+        dependentConc[i] -= nu2 / nu1 * m_logFO2g;
+      else
+      {
+        dependentConc[i] -= nu2 / nu1 * (concentration[ic] + logActCoef1[ic]);
+        dDependentConc_dConc[i][ic] -= nu2 / nu1;
+
       }
 
 
-      real64 nu1 = dependentSpecies[i].stochs[0];
-      interpolation("logK", actCoefParameters.temperatures, dependentSpecies[i].logKs, temperature, logK);
-
-      dependentConc[i] = logK / nu1 - logActCoef2[i];
-      
-      for(localIndex j = 1; j < dependentSpecies[i].speciesIndices.size(); ++j)
-	{
-
-	  real64 nu2 = dependentSpecies[i].stochs[j];	  
-	  localIndex ic = dependentSpecies[i].speciesIndices[j];
-
-	  if(ic == NBasis) {
-	    dependentConc[i] -= nu2 / nu1 * m_logActH2O;
-	  }
-	  else if(ic == NBasis + 1)  
-  	    dependentConc[i] -= nu2 / nu1 * m_logFO2g;
-	  else
-	    {
-	      dependentConc[i] -= nu2 / nu1 * (concentration[ic] + logActCoef1[ic]);
-	      dDependentConc_dConc[i][ic] -= nu2 / nu1;
-
-	    }	      
-	  	      
-
-	}
-
     }
 
-  
+  }
+
+
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, EquilibratedChemicalFluid, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EquilibratedChemicalFluid, std::string const &, Group * const )
 
 } /* namespace constitutive */
 

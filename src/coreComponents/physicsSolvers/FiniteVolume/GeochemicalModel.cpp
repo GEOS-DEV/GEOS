@@ -50,52 +50,52 @@ using namespace constitutive;
 using namespace systemSolverInterface;
 
 GeochemicalModel::GeochemicalModel( const std::string& name,
-                                  ManagedGroup * const parent ):
+                                  Group * const parent ):
   FlowSolverBase(name, parent)
 {
 
-  this->RegisterViewWrapper( viewKeyStruct::reactiveFluidNameString,  &m_reactiveFluidName,  false )->setInputFlag(InputFlags::REQUIRED)->
+  this->registerWrapper( viewKeyStruct::reactiveFluidNameString,  &m_reactiveFluidName,  false )->setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of chemical system constitutive object to use for this solver");
 
-  this->RegisterViewWrapper( viewKeyStruct::reactiveFluidIndexString, &m_reactiveFluidIndex, false );
+  this->registerWrapper( viewKeyStruct::reactiveFluidIndexString, &m_reactiveFluidIndex, false );
 
-  this->RegisterViewWrapper( viewKeyStruct::outputSpeciesFileNameString, &m_outputSpeciesFileName, false )->
+  this->registerWrapper( viewKeyStruct::outputSpeciesFileNameString, &m_outputSpeciesFileName, false )->
     setInputFlag(InputFlags::OPTIONAL)->    
     setDescription("Output species to file");
 
 }
 
-void GeochemicalModel::RegisterDataOnMesh(ManagedGroup * const MeshBodies)
+void GeochemicalModel::RegisterDataOnMesh(Group * const MeshBodies)
 {
   FlowSolverBase::RegisterDataOnMesh(MeshBodies);
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
 
-    MeshLevel * const meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * const meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
 
     applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion)
     {
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::temperatureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array1d<real64> >( viewKeyStruct::deltaTemperatureString );      
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::temperatureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaTemperatureString );      
 
-      subRegion->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::concentrationString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::deltaConcentrationString );
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::concentrationString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::deltaConcentrationString );
 
-      subRegion->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::totalConcentrationString );
-      subRegion->RegisterViewWrapper< array2d<real64> >( viewKeyStruct::concentrationNewString );                  
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::totalConcentrationString );
+      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::concentrationNewString );                  
 
-      subRegion->RegisterViewWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+      subRegion->registerWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
     } );
 
   }
 }
 
-void GeochemicalModel::InitializePreSubGroups(ManagedGroup * const rootGroup)
+void GeochemicalModel::InitializePreSubGroups(Group * const rootGroup)
 {
   FlowSolverBase::InitializePreSubGroups(rootGroup);
 
@@ -118,7 +118,7 @@ void GeochemicalModel::InitializePreSubGroups(ManagedGroup * const rootGroup)
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = ManagedGroup::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
     ResizeFields( meshLevel );
   }
 }
@@ -140,7 +140,7 @@ void GeochemicalModel::ResizeFields( MeshLevel * const meshLevel )
 
 }
   
-void GeochemicalModel::UpdateReactiveFluidModel(ManagedGroup * const dataGroup)
+void GeochemicalModel::UpdateReactiveFluidModel(Group * const dataGroup)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -166,7 +166,7 @@ void GeochemicalModel::UpdateReactiveFluidModel(ManagedGroup * const dataGroup)
 
 }
 
-void GeochemicalModel::UpdateState( ManagedGroup * dataGroup )
+void GeochemicalModel::UpdateState( Group * dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -174,7 +174,7 @@ void GeochemicalModel::UpdateState( ManagedGroup * dataGroup )
 
 }
 
-void GeochemicalModel::InitializePostInitialConditions_PreSubGroups( ManagedGroup * const rootGroup )
+void GeochemicalModel::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -980,5 +980,5 @@ void GeochemicalModel::WriteSpeciesToFile(DomainPartition * const domain)
 
 }  
 
-REGISTER_CATALOG_ENTRY( SolverBase, GeochemicalModel, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( SolverBase, GeochemicalModel, std::string const &, Group * const )
 } /* namespace geosx */

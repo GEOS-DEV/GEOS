@@ -30,27 +30,27 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ReactiveFluidBase::ReactiveFluidBase( std::string const & name, ManagedGroup * const parent )
+ReactiveFluidBase::ReactiveFluidBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
 
-  RegisterViewWrapper( viewKeyStruct::basisSpeciesNamesString, &m_basisSpeciesNames, false )->
+  registerWrapper( viewKeyStruct::basisSpeciesNamesString, &m_basisSpeciesNames, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Basis speciese name list");
 
-  RegisterViewWrapper( viewKeyStruct::logActH2OString, &m_logActH2O, false )->
+  registerWrapper( viewKeyStruct::logActH2OString, &m_logActH2O, false )->
     setApplyDefaultValue(-1.65676E-02)->
     setInputFlag(InputFlags::OPTIONAL)->    
     setDescription("logActH2O");
 
-  RegisterViewWrapper( viewKeyStruct::logFO2gString, &m_logFO2g, false )->
+  registerWrapper( viewKeyStruct::logFO2gString, &m_logFO2g, false )->
     setApplyDefaultValue(-0.7)->
     setInputFlag(InputFlags::OPTIONAL)->    
     setDescription("logFO2g");    
 
-  RegisterViewWrapper( viewKeyStruct::dependentConcString, &m_dependentConc, false );
+  registerWrapper( viewKeyStruct::dependentConcString, &m_dependentConc, false );
 
-  RegisterViewWrapper( viewKeyStruct::dDependentConc_dConcString, &m_dDependentConc_dConc, false );  
+  registerWrapper( viewKeyStruct::dDependentConc_dConcString, &m_dDependentConc_dConc, false );  
 
   
 }
@@ -89,7 +89,7 @@ void ReactiveFluidBase::PostProcessInput()
   
 }
 
-void ReactiveFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
+void ReactiveFluidBase::AllocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -98,7 +98,7 @@ void ReactiveFluidBase::AllocateConstitutiveData( ManagedGroup * const parent,
   
 void
 ReactiveFluidBase::DeliverClone( string const & name,
-                               ManagedGroup * const parent,
+                               Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
   GEOS_ERROR_IF( !clone, "clone not allocated" );

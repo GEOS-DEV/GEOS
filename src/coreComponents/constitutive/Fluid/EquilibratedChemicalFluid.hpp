@@ -41,26 +41,28 @@ class EquilibratedChemicalFluid : public ReactiveFluidBase
 {
 public:
 
-  EquilibratedChemicalFluid( std::string const & name, ManagedGroup * const parent );
+  EquilibratedChemicalFluid( std::string const & name, Group * const parent );
 
   virtual ~EquilibratedChemicalFluid() override;
 
   // *** ConstitutiveBase interface
 
   virtual void DeliverClone( string const & name,
-                             ManagedGroup * const parent,
+                             Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
   static std::string CatalogName() { return dataRepository::keys::equilibratedChemicalFluid; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void AllocateConstitutiveData( dataRepository::ManagedGroup * const parent,
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d<real64 const> const & concentration, localIndex const k) override;
 
-  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & temperature, arrayView2d<real64 const> const & concentration ) override {}  
+  virtual void BatchUpdate( arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(pressure),
+                            arrayView1d<real64 const> const & GEOSX_UNUSED_ARG(temperature),
+                            arrayView2d<real64 const> const & GEOSX_UNUSED_ARG(concentration) ) override {}
 
   // *** Data repository keys
 
@@ -79,7 +81,7 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostSubGroups( ManagedGroup * const group ) override;
+  virtual void InitializePostSubGroups( Group * const group ) override;
   
 private:
 

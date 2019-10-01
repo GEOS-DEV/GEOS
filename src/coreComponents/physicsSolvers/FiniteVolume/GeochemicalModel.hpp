@@ -33,7 +33,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -48,12 +48,12 @@ class GeochemicalModel : public FlowSolverBase
 {
 public:
   /**
-   * @brief main constructor for ManagedGroup Objects
-   * @param name the name of this instantiation of ManagedGroup in the repository
-   * @param parent the parent group of this instantiation of ManagedGroup
+   * @brief main constructor for Group Objects
+   * @param name the name of this instantiation of Group in the repository
+   * @param parent the parent group of this instantiation of Group
    */
   GeochemicalModel( const std::string& name,
-                   ManagedGroup * const parent );
+                   Group * const parent );
 
 
   /// deleted default constructor
@@ -82,9 +82,9 @@ public:
    */
   static string CatalogName() { return "GeochemicalModel"; }
 
-  virtual void InitializePreSubGroups(ManagedGroup * const rootGroup) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void RegisterDataOnMesh(ManagedGroup * const MeshBodies) override;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
@@ -224,7 +224,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::ManagedGroup * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -264,9 +264,9 @@ private:
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateReactiveFluidModel( ManagedGroup * const dataGroup );
+  void UpdateReactiveFluidModel( Group * const dataGroup );
 
-  void UpdateState( ManagedGroup * dataGroup );
+  void UpdateState( Group * dataGroup );
 
   /// views into primary variable fields
 
