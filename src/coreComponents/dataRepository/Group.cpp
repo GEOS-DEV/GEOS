@@ -70,7 +70,7 @@ Group::Group( std::string const & name,
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID )
 #ifdef GEOSX_USE_ATK
-  ,m_sidreGroup( Group::setSidreGroup( name, parent ))
+  , m_sidreGroup( Group::setSidreGroup( name, parent ))
 #endif
 {}
 
@@ -87,7 +87,7 @@ Group::Group( Group && source ):
   m_restart_flags( source.m_restart_flags ),
   m_input_flags( InputFlags::INVALID )
 #ifdef GEOSX_USE_ATK
-  ,m_sidreGroup( std::move( source.m_sidreGroup ) )
+  , m_sidreGroup( std::move( source.m_sidreGroup ) )
 #endif
 {}
 

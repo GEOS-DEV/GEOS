@@ -76,7 +76,8 @@ A listing of these functions is provided:
 
 .. literalinclude:: Group.hpp
    :language: c++
-   :lines:  152-153, 170-173, 185-186, 202-203, 226-227
+   :start-after: //START_SPHINX_INCLUDE_REGISTER_GROUP
+   :end-before: //END_SPHINX_INCLUDE_REGISTER_GROUP
 
 These functions all take in a ``name`` for the new ``Group``, which will be used as the key when trying to 
 access the ``Group`` in the future.
@@ -87,18 +88,22 @@ Please see the doxygen documentation for a detailed description of each option.
 
 Getting Groups
 ^^^^^^^^^^^^^^
+The collection of functions to retrieve a ``Group`` and their descriptions are taken from source and shown 
+here:
 
 .. literalinclude:: Group.hpp
    :language: c++
-   :lines:  302-303, 314-315, 326-327, 338-339, 350-351, 362-363, 375-376, 388,389, 399,400,455,456
+   :start-after: //START_SPHINX_INCLUDE_GET_GROUP
+   :end-before: //END_SPHINX_INCLUDE_GET_GROUP
 
 
-Register/Deregister Wrappers
+Register Wrappers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: Group.hpp
    :language: c++
-   :lines:   683-700,709-712
+   :start-after: //START_SPHINX_INCLUDE_REGISTER_WRAPPER
+   :end-before: //END_SPHINX_INCLUDE_REGISTER_WRAPPER
 
 
 Getting Wrappers/Wrapped Objects
@@ -106,11 +111,13 @@ Getting Wrappers/Wrapped Objects
 
 .. literalinclude:: Group.hpp
    :language: c++
-   :lines:   787-885
+   :start-after: //START_SPHINX_INCLUDE_GET_WRAPPER
+   :end-before: //END_SPHINX_INCLUDE_GET_WRAPPER
    
 Looping Interface
 ^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: Group.hpp
    :language: c++
-   :lines:   569-616
+   :start-after: //START_SPHINX_INCLUDE_LOOP_INTERFACE
+   :end-before: //END_SPHINX_INCLUDE_LOOP_INTERFACE
