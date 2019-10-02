@@ -528,16 +528,6 @@ public:
   globalIndex iupper() const;
 
   /**
-   * @brief Returns the number of nonzeros in the local portion of the matrix
-   */
-  localIndex localNonzeros() const {GEOS_ERROR("Not implemented!"); return 0;};
-
-  /**
-   * @brief Returns the total number of nonzeros in the matrix
-   */
-  globalIndex globalNonzeros() const {GEOS_ERROR("Not implemented!"); return 0;};
-
-  /**
    * @brief Returns the infinity norm of the matrix.
    */
   real64 normInf() const;
