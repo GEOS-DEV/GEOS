@@ -69,7 +69,7 @@ RAJA_INLINE void forall_in_range(const globalIndex begin, const globalIndex end,
 template<class POLICY=serialPolicy, typename T, typename LAMBDA=void>
 RAJA_INLINE void forall_in_set(const T * const indexList, const localIndex len, LAMBDA && body)
 {
-  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len), std::forward<LAMBDA>(body));
+  RAJA::forall<POLICY>(RAJA::TypedListSegment<T>(indexList, len, RAJA::Unowned), std::forward<LAMBDA>(body));
 }
 
 template< typename T , typename atomicPol=RAJA::auto_atomic>

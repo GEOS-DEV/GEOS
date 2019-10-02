@@ -81,18 +81,16 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void parentShapeFunctionDerivatives( localIndex const a,
-                                              real64 const xi0,
-                                              real64 const xi1,
-                                              real64 const xi2,
+                                              localIndex const q,
                                               real64 (&dNdXi)[3] )
   {
-    real64 const pC_0_a = parentCoords(0,a);
-    real64 const pC_1_a = parentCoords(1,a);
-    real64 const pC_2_a = parentCoords(2,a);
+    constexpr static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
+                                              { -1, -1,  1,  1, -1, -1,  1,  1 },
+                                              { -1, -1, -1, -1,  1,  1,  1,  1 } };
 
-    dNdXi[0] = 0.125 * pC_0_a * ( 1 + xi1*pC_1_a ) * ( 1 + xi2*pC_2_a ) ;
-    dNdXi[1] = 0.125 * ( 1 + xi0*pC_0_a ) * pC_1_a * ( 1 + xi2*pC_2_a ) ;
-    dNdXi[2] = 0.125 * ( 1 + xi0*pC_0_a ) * ( 1 + xi1*pC_1_a ) * pC_2_a ;
+    dNdXi[0] = 0.125 * pCoords[0][a]                                        * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
+    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * pCoords[1][a]                                        * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
+    dNdXi[2] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * pCoords[2][a] ;
   }
 
   GEOSX_HOST_DEVICE
@@ -148,91 +146,94 @@ public:
                                           { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) } };
 #define DNDXI(q,a,j) dNdXi[a][i]
 
-#else
+#elif 0
     constexpr static real64 dNdXi[8][8][3] = { { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
-                                          { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
-                                          { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
-                                          { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
-                                          { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
-                                          { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
-                                          { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
-                                          { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) }
-                                        },
-                                        { { dNdXi0(1,0), dNdXi1(1,0), dNdXi2(1,0) },
-                                          { dNdXi0(1,1), dNdXi1(1,1), dNdXi2(1,1) },
-                                          { dNdXi0(1,2), dNdXi1(1,2), dNdXi2(1,2) },
-                                          { dNdXi0(1,3), dNdXi1(1,3), dNdXi2(1,3) },
-                                          { dNdXi0(1,4), dNdXi1(1,4), dNdXi2(1,4) },
-                                          { dNdXi0(1,5), dNdXi1(1,5), dNdXi2(1,5) },
-                                          { dNdXi0(1,6), dNdXi1(1,6), dNdXi2(1,6) },
-                                          { dNdXi0(1,7), dNdXi1(1,7), dNdXi2(1,7) }
-                                        },
-                                        { { dNdXi0(2,0), dNdXi1(2,0), dNdXi2(2,0) },
-                                          { dNdXi0(2,1), dNdXi1(2,1), dNdXi2(2,1) },
-                                          { dNdXi0(2,2), dNdXi1(2,2), dNdXi2(2,2) },
-                                          { dNdXi0(2,3), dNdXi1(2,3), dNdXi2(2,3) },
-                                          { dNdXi0(2,4), dNdXi1(2,4), dNdXi2(2,4) },
-                                          { dNdXi0(2,5), dNdXi1(2,5), dNdXi2(2,5) },
-                                          { dNdXi0(2,6), dNdXi1(2,6), dNdXi2(2,6) },
-                                          { dNdXi0(2,7), dNdXi1(2,7), dNdXi2(2,7) }
-                                        },
-                                        { { dNdXi0(3,0), dNdXi1(3,0), dNdXi2(3,0) },
-                                          { dNdXi0(3,1), dNdXi1(3,1), dNdXi2(3,1) },
-                                          { dNdXi0(3,2), dNdXi1(3,2), dNdXi2(3,2) },
-                                          { dNdXi0(3,3), dNdXi1(3,3), dNdXi2(3,3) },
-                                          { dNdXi0(3,4), dNdXi1(3,4), dNdXi2(3,4) },
-                                          { dNdXi0(3,5), dNdXi1(3,5), dNdXi2(3,5) },
-                                          { dNdXi0(3,6), dNdXi1(3,6), dNdXi2(3,6) },
-                                          { dNdXi0(3,7), dNdXi1(3,7), dNdXi2(3,7) }
-                                        },
-                                        { { dNdXi0(4,0), dNdXi1(4,0), dNdXi2(4,0) },
-                                          { dNdXi0(4,1), dNdXi1(4,1), dNdXi2(4,1) },
-                                          { dNdXi0(4,2), dNdXi1(4,2), dNdXi2(4,2) },
-                                          { dNdXi0(4,3), dNdXi1(4,3), dNdXi2(4,3) },
-                                          { dNdXi0(4,4), dNdXi1(4,4), dNdXi2(4,4) },
-                                          { dNdXi0(4,5), dNdXi1(4,5), dNdXi2(4,5) },
-                                          { dNdXi0(4,6), dNdXi1(4,6), dNdXi2(4,6) },
-                                          { dNdXi0(4,7), dNdXi1(4,7), dNdXi2(4,7) }
-                                        },
-                                        { { dNdXi0(5,0), dNdXi1(5,0), dNdXi2(5,0) },
-                                          { dNdXi0(5,1), dNdXi1(5,1), dNdXi2(5,1) },
-                                          { dNdXi0(5,2), dNdXi1(5,2), dNdXi2(5,2) },
-                                          { dNdXi0(5,3), dNdXi1(5,3), dNdXi2(5,3) },
-                                          { dNdXi0(5,4), dNdXi1(5,4), dNdXi2(5,4) },
-                                          { dNdXi0(5,5), dNdXi1(5,5), dNdXi2(5,5) },
-                                          { dNdXi0(5,6), dNdXi1(5,6), dNdXi2(5,6) },
-                                          { dNdXi0(5,7), dNdXi1(5,7), dNdXi2(5,7) }
-                                        },
-                                        { { dNdXi0(6,0), dNdXi1(6,0), dNdXi2(6,0) },
-                                          { dNdXi0(6,1), dNdXi1(6,1), dNdXi2(6,1) },
-                                          { dNdXi0(6,2), dNdXi1(6,2), dNdXi2(6,2) },
-                                          { dNdXi0(6,3), dNdXi1(6,3), dNdXi2(6,3) },
-                                          { dNdXi0(6,4), dNdXi1(6,4), dNdXi2(6,4) },
-                                          { dNdXi0(6,5), dNdXi1(6,5), dNdXi2(6,5) },
-                                          { dNdXi0(6,6), dNdXi1(6,6), dNdXi2(6,6) },
-                                          { dNdXi0(6,7), dNdXi1(6,7), dNdXi2(6,7) }
-                                        },
-                                        { { dNdXi0(7,0), dNdXi1(7,0), dNdXi2(7,0) },
-                                          { dNdXi0(7,1), dNdXi1(7,1), dNdXi2(7,1) },
-                                          { dNdXi0(7,2), dNdXi1(7,2), dNdXi2(7,2) },
-                                          { dNdXi0(7,3), dNdXi1(7,3), dNdXi2(7,3) },
-                                          { dNdXi0(7,4), dNdXi1(7,4), dNdXi2(7,4) },
-                                          { dNdXi0(7,5), dNdXi1(7,5), dNdXi2(7,5) },
-                                          { dNdXi0(7,6), dNdXi1(7,6), dNdXi2(7,6) },
-                                          { dNdXi0(7,7), dNdXi1(7,7), dNdXi2(7,7) }
-                                        } };
+                                               { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
+                                               { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
+                                               { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
+                                               { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
+                                               { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
+                                               { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
+                                               { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) }
+                                             },
+                                             { { dNdXi0(1,0), dNdXi1(1,0), dNdXi2(1,0) },
+                                               { dNdXi0(1,1), dNdXi1(1,1), dNdXi2(1,1) },
+                                               { dNdXi0(1,2), dNdXi1(1,2), dNdXi2(1,2) },
+                                               { dNdXi0(1,3), dNdXi1(1,3), dNdXi2(1,3) },
+                                               { dNdXi0(1,4), dNdXi1(1,4), dNdXi2(1,4) },
+                                               { dNdXi0(1,5), dNdXi1(1,5), dNdXi2(1,5) },
+                                               { dNdXi0(1,6), dNdXi1(1,6), dNdXi2(1,6) },
+                                               { dNdXi0(1,7), dNdXi1(1,7), dNdXi2(1,7) }
+                                             },
+                                             { { dNdXi0(2,0), dNdXi1(2,0), dNdXi2(2,0) },
+                                               { dNdXi0(2,1), dNdXi1(2,1), dNdXi2(2,1) },
+                                               { dNdXi0(2,2), dNdXi1(2,2), dNdXi2(2,2) },
+                                               { dNdXi0(2,3), dNdXi1(2,3), dNdXi2(2,3) },
+                                               { dNdXi0(2,4), dNdXi1(2,4), dNdXi2(2,4) },
+                                               { dNdXi0(2,5), dNdXi1(2,5), dNdXi2(2,5) },
+                                               { dNdXi0(2,6), dNdXi1(2,6), dNdXi2(2,6) },
+                                               { dNdXi0(2,7), dNdXi1(2,7), dNdXi2(2,7) }
+                                             },
+                                             { { dNdXi0(3,0), dNdXi1(3,0), dNdXi2(3,0) },
+                                               { dNdXi0(3,1), dNdXi1(3,1), dNdXi2(3,1) },
+                                               { dNdXi0(3,2), dNdXi1(3,2), dNdXi2(3,2) },
+                                               { dNdXi0(3,3), dNdXi1(3,3), dNdXi2(3,3) },
+                                               { dNdXi0(3,4), dNdXi1(3,4), dNdXi2(3,4) },
+                                               { dNdXi0(3,5), dNdXi1(3,5), dNdXi2(3,5) },
+                                               { dNdXi0(3,6), dNdXi1(3,6), dNdXi2(3,6) },
+                                               { dNdXi0(3,7), dNdXi1(3,7), dNdXi2(3,7) }
+                                             },
+                                             { { dNdXi0(4,0), dNdXi1(4,0), dNdXi2(4,0) },
+                                               { dNdXi0(4,1), dNdXi1(4,1), dNdXi2(4,1) },
+                                               { dNdXi0(4,2), dNdXi1(4,2), dNdXi2(4,2) },
+                                               { dNdXi0(4,3), dNdXi1(4,3), dNdXi2(4,3) },
+                                               { dNdXi0(4,4), dNdXi1(4,4), dNdXi2(4,4) },
+                                               { dNdXi0(4,5), dNdXi1(4,5), dNdXi2(4,5) },
+                                               { dNdXi0(4,6), dNdXi1(4,6), dNdXi2(4,6) },
+                                               { dNdXi0(4,7), dNdXi1(4,7), dNdXi2(4,7) }
+                                             },
+                                             { { dNdXi0(5,0), dNdXi1(5,0), dNdXi2(5,0) },
+                                               { dNdXi0(5,1), dNdXi1(5,1), dNdXi2(5,1) },
+                                               { dNdXi0(5,2), dNdXi1(5,2), dNdXi2(5,2) },
+                                               { dNdXi0(5,3), dNdXi1(5,3), dNdXi2(5,3) },
+                                               { dNdXi0(5,4), dNdXi1(5,4), dNdXi2(5,4) },
+                                               { dNdXi0(5,5), dNdXi1(5,5), dNdXi2(5,5) },
+                                               { dNdXi0(5,6), dNdXi1(5,6), dNdXi2(5,6) },
+                                               { dNdXi0(5,7), dNdXi1(5,7), dNdXi2(5,7) }
+                                             },
+                                             { { dNdXi0(6,0), dNdXi1(6,0), dNdXi2(6,0) },
+                                               { dNdXi0(6,1), dNdXi1(6,1), dNdXi2(6,1) },
+                                               { dNdXi0(6,2), dNdXi1(6,2), dNdXi2(6,2) },
+                                               { dNdXi0(6,3), dNdXi1(6,3), dNdXi2(6,3) },
+                                               { dNdXi0(6,4), dNdXi1(6,4), dNdXi2(6,4) },
+                                               { dNdXi0(6,5), dNdXi1(6,5), dNdXi2(6,5) },
+                                               { dNdXi0(6,6), dNdXi1(6,6), dNdXi2(6,6) },
+                                               { dNdXi0(6,7), dNdXi1(6,7), dNdXi2(6,7) }
+                                             },
+                                             { { dNdXi0(7,0), dNdXi1(7,0), dNdXi2(7,0) },
+                                               { dNdXi0(7,1), dNdXi1(7,1), dNdXi2(7,1) },
+                                               { dNdXi0(7,2), dNdXi1(7,2), dNdXi2(7,2) },
+                                               { dNdXi0(7,3), dNdXi1(7,3), dNdXi2(7,3) },
+                                               { dNdXi0(7,4), dNdXi1(7,4), dNdXi2(7,4) },
+                                               { dNdXi0(7,5), dNdXi1(7,5), dNdXi2(7,5) },
+                                               { dNdXi0(7,6), dNdXi1(7,6), dNdXi2(7,6) },
+                                               { dNdXi0(7,7), dNdXi1(7,7), dNdXi2(7,7) }
+                                             } };
 
 #define DNDXI(q,a,j) dNdXi[q][a][j]
+#else
+    real64 dNdXi[3];
+#define CALC_DNDXI(q,a) parentShapeFunctionDerivatives(q,a,dNdXi)
+#define DNDXI(q,a,i) dNdXi[i]
 #endif
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
+      CALC_DNDXI(q,a);
+      localIndex const nib = elemsToNodes(k, a);
+
       for ( int i = 0; i < 3; ++i )
       {
-//        J[i][0] += X[elemsToNodes(k, a)][i] * dNdXi0(q,a);
-//        J[i][1] += X[elemsToNodes(k, a)][i] * dNdXi1(q,a);
-//        J[i][2] += X[elemsToNodes(k, a)][i] * dNdXi2(q,a);
-//        #pragma unroll
         for ( int j = 0; j < 3; ++j )
         {
           J[i][j] += X[elemsToNodes(k, a)][i] * DNDXI(q,a,j);
@@ -240,18 +241,37 @@ public:
       }
     }
 
-    real64 const detJ = inverse( J, &(dNdX[0][0]) );
+//    real64 const detJ = inverse( J, &(dNdX[0][0]) );
+    dNdX[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
+    dNdX[0][1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
+    dNdX[0][2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
+    dNdX[1][0] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
+    dNdX[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
+    dNdX[1][2] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
+    dNdX[2][0] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
+    dNdX[2][1] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
+    dNdX[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+
+    real64 const detJ = J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] ;
+
+    for( int i=0 ; i<3 ; ++i )
+    {
+      for( int j=0 ; j<3 ; ++j )
+      {
+        J[i][j] = dNdX[i][j] / detJ;
+      }
+    }
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
+      CALC_DNDXI(q,a);
       for ( int i = 0; i < 3; ++i )
       {
-        dNdX[i][a] = J[0][i] * DNDXI(q,a,0) +
-                     J[1][i] * DNDXI(q,a,1) +
-                     J[2][i] * DNDXI(q,a,2);
-//        dNdX[i][a] = J[0][i] * dNdXi0(q,a) +
-//                     J[1][i] * dNdXi1(q,a) +
-//                     J[2][i] * dNdXi2(q,a);
+        dNdX[i][a] = 0.0;
+        for ( int j = 0; j < 3; ++j )
+        {
+          dNdX[i][a] += DNDXI(q,a,j) * J[j][i] ;
+        }
       }
     }
 
@@ -274,15 +294,23 @@ public:
 
     scratch[9] = J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ;
 
-    J[0][0] = scratch[0] / scratch[9];
-    J[0][1] = scratch[1] / scratch[9];
-    J[0][2] = scratch[2] / scratch[9];
-    J[1][0] = scratch[3] / scratch[9];
-    J[1][1] = scratch[4] / scratch[9];
-    J[1][2] = scratch[5] / scratch[9];
-    J[2][0] = scratch[6] / scratch[9];
-    J[2][1] = scratch[7] / scratch[9];
-    J[2][2] = scratch[8] / scratch[9];
+    for( int i=0 ; i<3 ; ++i )
+    {
+      for( int j=0 ; j<3 ; ++j )
+      {
+        J[i][j] = scratch[i*3+j] / scratch[9];
+      }
+    }
+
+//    J[0][0] = scratch[0] / scratch[9];
+//    J[0][1] = scratch[1] / scratch[9];
+//    J[0][2] = scratch[2] / scratch[9];
+//    J[1][0] = scratch[3] / scratch[9];
+//    J[1][1] = scratch[4] / scratch[9];
+//    J[1][2] = scratch[5] / scratch[9];
+//    J[2][0] = scratch[6] / scratch[9];
+//    J[2][1] = scratch[7] / scratch[9];
+//    J[2][2] = scratch[8] / scratch[9];
 
     return scratch[9];
   }

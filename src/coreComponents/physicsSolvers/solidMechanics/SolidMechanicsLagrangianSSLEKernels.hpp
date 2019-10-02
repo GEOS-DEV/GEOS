@@ -261,25 +261,13 @@ struct ExplicitKernel
     using KERNEL_POLICY = RAJA::loop_exec;
 #endif
 
-//    localIndex const numElems = elemsToNodes.size(0);
-
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-//    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-//                                   GEOSX_DEVICE_LAMBDA ( localIndex const k )
-//    {
-
-//    real64 * gmForce;
-//    cudaMalloc( &gmForce, sizeof(real64)*3*8*128 );
 
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
-    localIndex const k = elementList[ i ];
-//    forall_in_set< KERNEL_POLICY >( elementList.begin(),
-//                                    elementList.size(),
-//                                    GEOSX_DEVICE_LAMBDA ( localIndex const k )
-//    {
+      localIndex const k = elementList[ i ];
 
 #define USE_SHMEM
 #if defined(USE_SHMEM) && defined(__CUDACC__)
@@ -333,10 +321,10 @@ struct ExplicitKernel
           real64 uLocal[3][8];
           for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
           {
-  //          localIndex const nib = elemsToNodes(k, a);
+            localIndex const nib = elemsToNodes(k, a);
             for( int i=0 ; i<3 ; ++i )
             {
-              uLocal[i][a] = u[elemsToNodes(k, a)][i];
+              uLocal[i][a] = u[nib][i];
             }
           }
     #define U(i,b) uLocal[i][b]
