@@ -98,33 +98,49 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const& time_n,
-                                  real64 const& dt,
-                                  DomainPartition * const domain,
-                                  systemSolverInterface::EpetraBlockSystem * const blockSystem ) override;
-
-
-  virtual void AssembleSystem( DomainPartition * const domain,
-                               systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                               real64 const time_n,
-                               real64 const dt ) override;
-
-  virtual void ApplyBoundaryConditions( DomainPartition * const domain,
-                                        systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                                        real64 const time_n,
-                                        real64 const dt ) override;
-
-  virtual real64
-  CalculateResidualNorm(systemSolverInterface::EpetraBlockSystem const *const blockSystem,
-                        DomainPartition *const domain) override;
-
-  virtual void SolveSystem( systemSolverInterface::EpetraBlockSystem * const blockSystem,
-                            SystemSolverParameters const * const params ) override;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain,
+                     DofManager & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
-  ApplySystemSolution( systemSolverInterface::EpetraBlockSystem const * const blockSystem,
+  SetupDofs( DomainPartition const * const domain,
+             DofManager & dofManager ) const override;
+
+  virtual void AssembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
+
+  virtual void ApplyBoundaryConditions( real64 const time,
+                                        real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs ) override;
+
+  virtual real64
+  CalculateResidualNorm( DomainPartition const * const domain,
+                         DofManager const & dofManager,
+                         ParallelVector const & rhs ) override;
+
+  virtual void SolveSystem( DofManager const & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
+
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
@@ -141,10 +157,9 @@ public:
    */
 
   void AssembleAccumulationTerms( DomainPartition * const domain,
-                                  Epetra_FECrsMatrix * const jacobian,
-                                  Epetra_FEVector * const residual,
-                                  real64 const time_n,
-                                  real64 const dt );
+                                  DofManager const * const dofManager,
+                                  ParallelMatrix * const matrix,
+                                  ParallelVector * const rhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -153,12 +168,13 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void AssembleFluxTerms( DomainPartition * const domain,
-                          Epetra_FECrsMatrix * const jacobian,
-                          Epetra_FEVector * const residual,
-                          real64 const time_n,
-                          real64 const dt );
 
+  void AssembleFluxTerms( real64 const time_n,
+                          real64 const dt,
+                          DomainPartition const * const domain,
+                          DofManager const * const dofManager,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs );
 
   void ResizeFields( MeshLevel * const meshLevel );
 
@@ -228,33 +244,6 @@ protected:
 
 private:
 
-  void SetupSystem ( DomainPartition * const domain,
-                     systemSolverInterface::EpetraBlockSystem * const blockSystem );
-
-  /**
-   * @brief set the sparsity pattern for the linear system
-   * @param domain the domain partition
-   * @param sparsity the sparsity pattern matrix
-   */
-  void SetSparsityPattern( DomainPartition const * const domain,
-                           Epetra_FECrsGraph * const sparsity );
-
-  /**
-   * @brief sets the dof indices for this solver
-   * @param meshLevel the mesh object (single level only)
-   * @param numLocalRows the number of local rows on this partition
-   * @param numGlobalRows the number of global rows in the problem
-   * @param localIndices unused TODO delete
-   * @param offset the DOF offset for this solver in the case of a non-block system
-   *
-   * This function sets the number of global rows, and sets the dof numbers for
-   * this solver. dof numbers are referred to trilinosIndices currently.
-   */
-  void SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                     localIndex & numLocalRows,
-                                     globalIndex & numGlobalRows,
-                                     localIndex offset );
-
   /**
    * @brief Setup stored views into domain data for the current step
    */
@@ -269,8 +258,6 @@ private:
   void UpdateState( Group * dataGroup );
 
   /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor<arrayView1d<globalIndex>> m_dofNumber; // TODO will move to DofManager
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;

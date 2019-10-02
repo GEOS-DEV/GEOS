@@ -34,10 +34,12 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "systemSolverInterface/LinearSolverWrapper.hpp"
-#include "systemSolverInterface/EpetraBlockSystem.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -47,7 +49,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace systemSolverInterface;
 
 GeochemicalModel::GeochemicalModel( const std::string& name,
                                   Group * const parent ):
@@ -98,9 +99,6 @@ void GeochemicalModel::RegisterDataOnMesh(Group * const MeshBodies)
 void GeochemicalModel::InitializePreSubGroups(Group * const rootGroup)
 {
   FlowSolverBase::InitializePreSubGroups(rootGroup);
-
-  // set the blockID for the block system interface
-  getLinearSystemRepository()->SetBlockID( BlockIDs::geochemicalModelBlock, this->getName() );
 
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   
@@ -205,23 +203,26 @@ real64 GeochemicalModel::SolverStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  //  FlowSolverBase::PrecomputeData(domain);
-
-  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  
   real64 dt_return = dt;
 
-  ImplicitStepSetup( time_n, dt, domain, getLinearSystemRepository() );
+  ImplicitStepSetup( time_n,
+                     dt,
+                     domain,
+                     m_dofManager,
+                     m_matrix,
+                     m_rhs,
+                     m_solution );
+
 
   // currently the only method is implicit time integration
   dt_return= this->NonlinearImplicitStep( time_n,
                                           dt,
                                           cycleNumber,
                                           domain,
-                                          getLinearSystemRepository() );
+                                          m_dofManager,
+                                          m_matrix,
+                                          m_rhs,
+                                          m_solution );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -231,10 +232,13 @@ real64 GeochemicalModel::SolverStep( real64 const& time_n,
 }
 
 
-void GeochemicalModel::ImplicitStepSetup( real64 const& time_n,
-                                         real64 const& dt,
-                                         DomainPartition * const domain,
-                                         EpetraBlockSystem * const blockSystem )
+void GeochemicalModel::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                          real64 const & GEOSX_UNUSED_ARG( dt ),
+                                           DomainPartition * const domain,
+                                           DofManager & GEOSX_UNUSED_ARG(dofManager),
+                                           ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
+                                           ParallelVector & GEOSX_UNUSED_ARG(rhs),
+                                          ParallelVector & GEOSX_UNUSED_ARG(solution) )
 {
   ResetViews( domain );
 
@@ -243,7 +247,7 @@ void GeochemicalModel::ImplicitStepSetup( real64 const& time_n,
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
 
@@ -254,15 +258,15 @@ void GeochemicalModel::ImplicitStepSetup( real64 const& time_n,
     arrayView2d<real64> const & totalConc   = m_totalConcentration[er][esr];
     
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dPres[ei] = 0.0;
       dTemp[ei] = 0.0;
       for (localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
-	{
-	  dConc[ei][ic] = 0.0;
-	  conc[ei][ic] = log10(totalConc[ei][ic]);
-	}
+        {
+          dConc[ei][ic] = 0.0;
+          conc[ei][ic] = log10(totalConc[ei][ic]);
+        }
 
     } );
 
@@ -271,12 +275,16 @@ void GeochemicalModel::ImplicitStepSetup( real64 const& time_n,
   } );
 
   // setup dof numbers and linear system
-  SetupSystem( domain, blockSystem );
+  SetupSystem( domain,
+               m_dofManager,
+               m_matrix,
+               m_rhs,
+               m_solution  );
 
 }
 
-void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
-                                            real64 const & dt,
+void GeochemicalModel::ImplicitStepComplete(real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                            real64 const & GEOSX_UNUSED_ARG( dt ),
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -284,7 +292,7 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
@@ -296,7 +304,7 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
     arrayView1d<real64 const> const & dTemp = m_deltaTemperature[er][esr];    
     arrayView2d<real64 const> const & dConc = m_deltaConcentration[er][esr];    
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
 
       pres[ei] += dPres[ei];
@@ -312,221 +320,61 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
 
 }
 
-void GeochemicalModel::SetNumRowsAndTrilinosIndices( MeshLevel * const meshLevel,
-                                                    localIndex & numLocalRows,
-                                                    globalIndex & numGlobalRows,
-                                                    localIndex offset )
+void GeochemicalModel::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG(domain),
+                                   DofManager & dofManager ) const
 {
-  int numMpiProcesses;
-  MPI_Comm_size( MPI_COMM_GEOSX, &numMpiProcesses );
-
-  int thisMpiProcess = 0;
-  MPI_Comm_rank( MPI_COMM_GEOSX, &thisMpiProcess );
-
-  localIndex numLocalRowsToSend = numLocalRows;
-  array1d<localIndex> gather( numMpiProcesses );
-
-  // communicate the number of local rows to each process
-  m_linearSolverWrapper.m_epetraComm.GatherAll( &numLocalRowsToSend,
-                                                &gather.front(),
-                                                1 );
-
-  GEOS_ERROR_IF( numLocalRows != numLocalRowsToSend, "number of local rows inconsistent" );
-
-  // find the first local row on this partition, and find the number of total global rows.
-  localIndex firstLocalRow = 0;
-  numGlobalRows = 0;
-
-  for( integer p=0 ; p<numMpiProcesses ; ++p )
-  {
-    numGlobalRows += gather[p];
-    if( p < thisMpiProcess )
-    {
-      firstLocalRow += gather[p];
-    }
-  }
-
-  // loop over all elements and set the dof number if the element is not a ghost
-  localIndex localCount = 0;
-
-  applyToSubRegions( meshLevel, [&] ( localIndex er, localIndex esr,
-                                      ElementRegion * const region,
-                                      ElementSubRegionBase * const subRegion )
-  {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex> const & dofNumber = m_dofNumber[er][esr];
-
-    forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), [&] ( localIndex const a )
-    {
-      if( elemGhostRank[a] < 0 )
-      {
-        dofNumber[a] = firstLocalRow + localCount + offset;
-        localCount += 1;
-      }
-      else
-      {
-        dofNumber[a] = -1;
-      }
-    } );
-  } );
-
-  GEOS_ERROR_IF(localCount != numLocalRows, "Number of DOF assigned does not match numLocalRows" );
+  dofManager.addField( viewKeyStruct::pressureString,
+                       DofManager::Location::Elem,
+                       DofManager::Connectivity::Face,
+                       m_numDofPerCell,
+                       m_targetRegions );
 }
 
-void GeochemicalModel::SetupSystem ( DomainPartition * const domain,
-                                    EpetraBlockSystem * const blockSystem )
-{
-  // assume that there is only a single MeshLevel for now
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  // for this solver, the dof are on the cell center, and the row corrosponds to an element
-
-  localIndex numLocalRows  = 0;
-  globalIndex numGlobalRows = 0;
-
-  // get the number of local elements, and ghost elements...i.e. local rows and ghost rows
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
-  {
-    localIndex subRegionGhosts = subRegion->GetNumberOfGhosts();
-
-    numLocalRows += subRegion->size() - subRegionGhosts;
-
-  } );
-
-  SetNumRowsAndTrilinosIndices( mesh,
-                                numLocalRows,
-                                numGlobalRows,
-                                0 );
-
-  std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::blockLocalDofNumberString );
-
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  // construct row map, and set a pointer to the row map
-  Epetra_Map * const
-  rowMap = blockSystem->
-           SetRowMap( BlockIDs::geochemicalModelBlock,
-                      std::make_unique<Epetra_Map>( numGlobalRows * m_numDofPerCell,
-                                                    numLocalRows * m_numDofPerCell,
-                                                    0,
-                                                    m_linearSolverWrapper.m_epetraComm ) );
-
-  // construct sparisty matrix, set a pointer to the sparsity pattern matrix
-  Epetra_FECrsGraph * const
-  sparsity = blockSystem->SetSparsity( BlockIDs::geochemicalModelBlock,
-                                       BlockIDs::geochemicalModelBlock,
-                                       std::make_unique<Epetra_FECrsGraph>(Copy,*rowMap,0) );
-
-
-  // set the sparsity patter
-  SetSparsityPattern( domain, sparsity );
-
-  // assemble the global sparsity matrix
-  sparsity->GlobalAssemble();
-  sparsity->OptimizeStorage();
-
-  // construct system matrix
-  blockSystem->SetMatrix( BlockIDs::geochemicalModelBlock,
-                          BlockIDs::geochemicalModelBlock,
-                          std::make_unique<Epetra_FECrsMatrix>(Copy,*sparsity) );
-
-  // construct solution vector
-  blockSystem->SetSolutionVector( BlockIDs::geochemicalModelBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-  // construct residual vector
-  blockSystem->SetResidualVector( BlockIDs::geochemicalModelBlock,
-                                  std::make_unique<Epetra_FEVector>(*rowMap) );
-
-}
-
-void GeochemicalModel::SetSparsityPattern( DomainPartition const * const domain,
-                                          Epetra_FECrsGraph * const sparsity )
-{
-
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion const * const region,
-                                 ElementSubRegionBase const * const subRegion )
-  {
-    arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
-
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if (elemGhostRank[ei] < 0)
-      {
-	stackArray1d<globalIndex, ReactiveFluidBase::MAX_NUM_SPECIES> dofIndex(m_numDofPerCell);
-	
-        globalIndex const elemDOF = dofNumber[ei];
-	globalIndex const offset = m_numDofPerCell * elemDOF;	
-
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-	  {
-	
-	    dofIndex[idof] = offset + idof;
-
-	  }
-
-	sparsity->InsertGlobalIndices(integer_conversion<int>(m_numDofPerCell),
-				      dofIndex.data(),
-				      integer_conversion<int>(m_numDofPerCell),
-				      dofIndex.data());
-
-      }
-	
-    } );
-  } );
-
-
-}
-
-void GeochemicalModel::AssembleSystem( DomainPartition * const domain,
-                                      EpetraBlockSystem * const blockSystem,
-                                      real64 const time_n,
-                                      real64 const dt )
+void GeochemicalModel::AssembleSystem( real64 const time,
+                                       real64 const dt,
+                                       DomainPartition * const domain,
+                                       DofManager const & dofManager,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  Epetra_FECrsMatrix * const jacobian = blockSystem->GetMatrix( BlockIDs::geochemicalModelBlock, BlockIDs::geochemicalModelBlock );
-  Epetra_FEVector * const residual = blockSystem->GetResidualVector( BlockIDs::geochemicalModelBlock );
+  matrix.zero();
+  rhs.zero();
 
-  jacobian->Scale(0.0);
-  residual->Scale(0.0);
+  matrix.open();
+  rhs.open();
 
-  AssembleAccumulationTerms( domain, jacobian, residual, time_n, dt );
+  AssembleAccumulationTerms( domain, &dofManager, &matrix, &rhs );
 
-  if( verboseLevel() >= 2 )
-  {
-    GEOS_LOG_RANK("After GeochemicalModel::AssembleAccumulationTerms");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
-  }
+  AssembleFluxTerms( time,
+                     dt,
+                     domain,
+                     &dofManager,
+                     &matrix,
+                     &rhs);
 
-  AssembleFluxTerms( domain, jacobian, residual, time_n, dt );
+    
+  matrix.close();
+  rhs.close();
 
-  jacobian->GlobalAssemble(true);
-  residual->GlobalAssemble();
 
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK("After GeochemicalModel::AssembleSystem");
-    GEOS_LOG_RANK("\nJacobian:\n" << *jacobian);
-    GEOS_LOG_RANK("\nResidual:\n" << *residual);
+    GEOS_LOG_RANK_0("\nJacobian:\n");
+    matrix.print(std::cout);
+    GEOS_LOG_RANK_0("\nResidual:\n");
+    rhs.print(std::cout);
   }
 
 }
 
 void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain,
-                                                 Epetra_FECrsMatrix * const jacobian,
-                                                 Epetra_FEVector * const residual,
-                                                 real64 const time_n,
-                                                 real64 const dt )
+                                                   DofManager const * const dofManager,
+                                                   ParallelMatrix * const matrix,
+                                                   ParallelVector * const rhs)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -541,11 +389,14 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
 
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion const * const region,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
+
+    string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );    
+    
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber     = m_dofNumber[er][esr];
 
     arrayView2d<real64 const> const & conc          = m_concentration[er][esr];
     arrayView2d<real64 const> const & dConc         = m_deltaConcentration[er][esr];    
@@ -554,60 +405,64 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
     arrayView2d<real64 const> const & dependentConc     = m_dependentConc[er][esr][m_reactiveFluidIndex];
     arrayView3d<real64 const> const & dDependentConc_dConc     = m_dDependentConc_dConc[er][esr][m_reactiveFluidIndex];         
 
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       if (elemGhostRank[ei] < 0)
       {
-	stackArray1d<globalIndex, ReactiveFluidBase::MAX_NUM_SPECIES> dofIndex(m_numDofPerCell);
-        stackArray1d<real64, ReactiveFluidBase::MAX_NUM_SPECIES>  resid(m_numDofPerCell);
-        stackArray2d<real64, ReactiveFluidBase::MAX_NUM_SPECIES * ReactiveFluidBase::MAX_NUM_SPECIES> matrix(m_numDofPerCell, m_numDofPerCell);
-	
+        stackArray1d<globalIndex, ReactiveFluidBase::MAX_NUM_SPECIES> localAccumDOF( m_numDofPerCell );
+        stackArray1d<real64, ReactiveFluidBase::MAX_NUM_SPECIES> localAccum( m_numDofPerCell );
+        stackArray2d<real64, ReactiveFluidBase::MAX_NUM_SPECIES * ReactiveFluidBase::MAX_NUM_SPECIES> localAccumJacobian( m_numDofPerCell, m_numDofPerCell );
+        
         globalIndex const elemDOF = dofNumber[ei];
-	globalIndex const offset = m_numDofPerCell * elemDOF;	
+        
+        for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
+        {
+          localAccumDOF[idof] = elemDOF + idof;
+        }
+        
+        localAccumJacobian = 0.0;
 
-	for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
-	  {
-	
-	    dofIndex[idof] = offset + idof;
+        for (localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
+          {
 
-	  }
+            real64 concBasis = pow(10.0, conc[ei][ic]+dConc[ei][ic]);
 
-	matrix = 0.0;
+            localAccum[ic] = concBasis - totalConc[ei][ic];
 
-	for (localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
-	  {
+            localAccumJacobian[ic][ic] = log(10.0) * concBasis;
 
-	    real64 concBasis = pow(10.0, conc[ei][ic]+dConc[ei][ic]);
+            if(isHplus[ic])
+              {
+                localAccum[ic] = 0.0;
+                localAccumJacobian[ic][ic] = 1.0;
+                continue;
+              }
 
-	    resid[ic] = concBasis - totalConc[ei][ic];
+            for (localIndex id = 0; id < m_numDependentSpecies; ++id)
+              {
+                real64 concDependent = pow(10.0, dependentConc[ei][id]);
+                localAccum[ic] -= stochMatrix[ic][id] * concDependent;
 
-	    matrix[ic][ic] = log(10.0) * concBasis;
+                for (localIndex idc = 0; idc < m_numBasisSpecies; ++idc)
+                  {
 
-	    if(isHplus[ic])
-	      {
-		resid[ic] = 0.0;
-		matrix[ic][ic] = 1.0;
-		continue;
-	      }
+                    localAccumJacobian[ic][idc] -= stochMatrix[ic][id] * log(10.0) * concDependent * dDependentConc_dConc[ei][id][idc];
 
-	    for (localIndex id = 0; id < m_numDependentSpecies; ++id)
-	      {
-		real64 concDependent = pow(10.0, dependentConc[ei][id]);
-		resid[ic] -= stochMatrix[ic][id] * concDependent;
+                  }
+              }
+          }
 
-		for (localIndex idc = 0; idc < m_numBasisSpecies; ++idc)
-		  {
 
-		    matrix[ic][idc] -= stochMatrix[ic][id] * log(10.0) * concDependent * dDependentConc_dConc[ei][id][idc];
-
-		  }
-	      }
-	  }
 
         // add contribution to global residual and jacobian
-        residual->SumIntoGlobalValues(integer_conversion<int>(m_numDofPerCell), dofIndex.data(), resid.data());
+        rhs->add( localAccumDOF.data(),
+                  localAccum.data(),
+                  m_numDofPerCell );
 
-        jacobian->SumIntoGlobalValues(integer_conversion<int>(m_numDofPerCell), dofIndex.data(), integer_conversion<int>(m_numDofPerCell), dofIndex.data(), matrix.data(),Epetra_FECrsMatrix::ROW_MAJOR);
+        matrix->add( localAccumDOF.data(),
+                     localAccumDOF.data(),
+                     localAccumJacobian.data(),
+                     m_numDofPerCell, m_numDofPerCell );        
 
       }
 
@@ -616,64 +471,69 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
 
 }
 
-void GeochemicalModel::AssembleFluxTerms(DomainPartition * const domain,
-                                         Epetra_FECrsMatrix * const jacobian,
-                                         Epetra_FEVector * const residual,
-                                         real64 const time_n,
-                                         real64 const dt )
+void GeochemicalModel::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n),
+                                          real64 const GEOSX_UNUSED_ARG(dt),
+                                          DomainPartition const * const GEOSX_UNUSED_ARG(domain),
+                                          DofManager const * const GEOSX_UNUSED_ARG(dofManager),
+                                          ParallelMatrix * const GEOSX_UNUSED_ARG(matrix),
+                                          ParallelVector * const GEOSX_UNUSED_ARG(rhs) )
 {
 
 }
 
-void GeochemicalModel::ApplyBoundaryConditions( DomainPartition * const domain,
-                                               EpetraBlockSystem * const blockSystem,
-                                               real64 const time_n,
-                                               real64 const dt )
+void GeochemicalModel::ApplyBoundaryConditions(real64 const GEOSX_UNUSED_ARG(time_n),
+                                               real64 const GEOSX_UNUSED_ARG(dt),
+                                               DomainPartition * const GEOSX_UNUSED_ARG(domain),
+                                               DofManager const & GEOSX_UNUSED_ARG(dofManager),
+                                               ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
+                                               ParallelVector & GEOSX_UNUSED_ARG(rhs) )
 {
+
 }
 
 
 real64
 GeochemicalModel::
-CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
-                       DomainPartition * const domain )
+CalculateResidualNorm( DomainPartition const * const domain,
+                       DofManager const & dofManager,
+                       ParallelVector const & rhs )
 {
-  Epetra_FEVector const * const residual = blockSystem->GetResidualVector( BlockIDs::geochemicalModelBlock );
-  Epetra_Map      const * const rowMap   = blockSystem->GetRowMap( BlockIDs::geochemicalModelBlock );
 
   MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
   // get a view into local residual vector
-  int localSizeInt;
-  double* localResidual = nullptr;
-  residual->ExtractView(&localResidual, &localSizeInt);
+  real64 const * localResidual = rhs.extractLocalVector();
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );  
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;
 
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegion const * const region,
+                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
   {
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
 
-    localResidualNorm += sum_in_range( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const a )
+    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+    
+    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
+
+    localIndex const subRegionSize = subRegion->size();
+    for ( localIndex a = 0; a < subRegionSize; ++a )
     {
+
       if (elemGhostRank[a] < 0)
       {
-        real64 cell_norm = 0.0;
-        globalIndex const offset = m_numDofPerCell * dofNumber[a];
+        localIndex const offset = dofNumber[a];
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
-          int const lid = rowMap->LID(integer_conversion<int>(offset + idof));
-	  real64 const val = localResidual[lid];	  
-	  cell_norm += val * val;
-	}
-        return cell_norm;
+          localIndex const lid = rhs.getLocalRowID( offset + idof );
+          real64 const val = localResidual[lid];
+          localResidualNorm += val * val;
+        }
       }
-      return 0.0;
-    } );
+    }
+    
   } );
 
   // compute global residual norm
@@ -683,46 +543,26 @@ CalculateResidualNorm( EpetraBlockSystem const * const blockSystem,
   return sqrt(globalResidualNorm);
 }
 
-void GeochemicalModel::ApplySystemSolution( EpetraBlockSystem const * const blockSystem,
-                                           real64 const scalingFactor,
-                                           DomainPartition * const domain )
+
+void GeochemicalModel::ApplySystemSolution( DofManager const & dofManager,
+                                             ParallelVector const & solution,
+                                             real64 const scalingFactor,
+                                             DomainPartition * const domain )
 {
   
-  Epetra_Map const * const rowMap        = blockSystem->GetRowMap( BlockIDs::geochemicalModelBlock );
-  Epetra_FEVector const * const solution = blockSystem->GetSolutionVector( BlockIDs::geochemicalModelBlock );
-
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  int dummy;
-  double* local_solution = nullptr;
-  solution->ExtractView( &local_solution, &dummy );
-
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegion * const region,
+  applyToSubRegions( mesh, [&] ( localIndex GEOSX_UNUSED_ARG(er), localIndex GEOSX_UNUSED_ARG(esr),
+                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
-    arrayView1d<globalIndex const> const & dofNumber = m_dofNumber[er][esr];
-    arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
 
-    arrayView2d<real64> const & dConc = m_deltaConcentration[er][esr];
-
-    arrayView2d<real64> const & conc = m_concentration[er][esr];        
-    
-    forall_in_range<elemPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-    {
-      if (elemGhostRank[ei] < 0)
-      {
-	int lid;
-	for(localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
-	  {
-	
-	    lid = rowMap->LID( integer_conversion<int>( dofNumber[ei] * m_numDofPerCell + ic) );
-	    dConc[ei][ic] += scalingFactor * local_solution[lid];
-
-	  }
-
-      }
-    } );
+    dofManager.addVectorToField( solution,
+                                 viewKeyStruct::pressureString,
+                                 scalingFactor,
+                                 subRegion,
+                                 viewKeyStruct::deltaConcentrationString,
+                                 0, m_numDofPerCell );
   } );
 
   std::map<string, string_array > fieldNames;
@@ -742,34 +582,27 @@ void GeochemicalModel::ApplySystemSolution( EpetraBlockSystem const * const bloc
 
 }
 
-void GeochemicalModel::SolveSystem( EpetraBlockSystem * const blockSystem,
-                                   SystemSolverParameters const * const params )
+void GeochemicalModel::SolveSystem( DofManager const & dofManager,
+                                     ParallelMatrix & matrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
-  Epetra_FEVector * const
-  solution = blockSystem->GetSolutionVector( BlockIDs::geochemicalModelBlock );
+  rhs.scale( -1.0 );
+  solution.zero();
 
-  Epetra_FEVector * const
-  residual = blockSystem->GetResidualVector( BlockIDs::geochemicalModelBlock );
-
-  residual->Scale(-1.0);
-
-  solution->Scale(0.0);
-  
-  m_linearSolverWrapper.SolveSingleBlockSystem( blockSystem,
-                                                params,
-                                                BlockIDs::geochemicalModelBlock );
+  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   if( verboseLevel() >= 2 )
   {
     GEOS_LOG_RANK("After GeochemicalModel::SolveSystem");
-    GEOS_LOG_RANK("\nsolution\n" << *solution);
+    GEOS_LOG_RANK("\nsolution\n" << solution);
   }
 
 }
 
-void GeochemicalModel::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void GeochemicalModel::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG(domain) )
 {
 }
 
@@ -780,9 +613,6 @@ void GeochemicalModel::ResetViews(DomainPartition * const domain)
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
-
-  m_dofNumber =
-    elemManager->ConstructViewAccessor<array1d<globalIndex>, arrayView1d<globalIndex>>( viewKeyStruct::blockLocalDofNumberString );
 
   m_pressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
@@ -838,144 +668,144 @@ void GeochemicalModel::WriteSpeciesToFile(DomainPartition * const domain)
   for( localIndex er = 0 ; er < elementManager->numRegions() ; ++er )
     {
       
-      ElementRegion const * const elemRegion = elementManager->GetRegion(er);
+      ElementRegionBase const * const elemRegion = elementManager->GetRegion(er);
       
       for( localIndex esr = 0 ; esr < elemRegion->numSubRegions() ; ++esr) 
-	{
+        {
 
-	  arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
+          arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
 
-	  arrayView2d<real64 const> const & conc          = m_concentration[er][esr];
+          arrayView2d<real64 const> const & conc          = m_concentration[er][esr];
 
-	  arrayView2d<real64 const> const & dependentConc     = m_dependentConc[er][esr][m_reactiveFluidIndex];
+          arrayView2d<real64 const> const & dependentConc     = m_dependentConc[er][esr][m_reactiveFluidIndex];
 
-	  CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
+          CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion<CellElementSubRegion>(esr);
       
-	  for( localIndex ei = 0 ; ei < subRegion->size() ; ++ei )
-	    {
+          for( localIndex ei = 0 ; ei < subRegion->size() ; ++ei )
+            {
 
-	      if (elemGhostRank[ei] < 0)
-		{
+              if (elemGhostRank[ei] < 0)
+                {
 
-		  array1d<localIndex> indices;
-		  array1d<real64> speciesConc;
-		  localIndex count  = 0;
+                  array1d<localIndex> indices;
+                  array1d<real64> speciesConc;
+                  localIndex count  = 0;
 
-		  for(localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
-		    {
+                  for(localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
+                    {
 
-		      indices.push_back(count++);
+                      indices.push_back(count++);
 
-		      speciesConc.push_back(conc[ei][ic]);
+                      speciesConc.push_back(conc[ei][ic]);
 
-		    }
+                    }
 
-		  for(localIndex ic = 0; ic < m_numDependentSpecies; ++ic)
-		    {
-	    
-		      indices.push_back(count++);
+                  for(localIndex ic = 0; ic < m_numDependentSpecies; ++ic)
+                    {
+            
+                      indices.push_back(count++);
 
-		      speciesConc.push_back(dependentConc[ei][ic]);	    
+                      speciesConc.push_back(dependentConc[ei][ic]);         
 
-		    }
+                    }
 
-		  std::sort( indices.begin(),indices.end(), [&](localIndex i,localIndex j){return speciesConc[i] > speciesConc[j];});
+                  std::sort( indices.begin(),indices.end(), [&](localIndex i,localIndex j){return speciesConc[i] > speciesConc[j];});
 
-		  os << "   --- Distribution of Aqueous Solute Species ---" << std::endl;
+                  os << "   --- Distribution of Aqueous Solute Species ---" << std::endl;
 
-		  os << std::endl;
+                  os << std::endl;
 
-		  os << "Species                   Molality            Log Molality" << std::endl;
+                  os << "Species                   Molality            Log Molality" << std::endl;
 
-		  os << std::endl;	
-	
-		  for(localIndex ic = 0; ic < indices.size(); ic++)
-		    {
+                  os << std::endl;      
+        
+                  for(localIndex ic = 0; ic < indices.size(); ic++)
+                    {
 
-		      localIndex idx = indices[ic];
-		      real64 spC, spLogC;
-		      string spName;
-	    
-		      if(idx < m_numBasisSpecies)
-			{
-			  spName = basisSpeciesNames[idx];
-			  spLogC = conc[ei][idx];
-			}
-		      else 
-			{
-			  idx -= m_numBasisSpecies;
-			  spName = dependentSpeciesNames[idx];		
-			  spLogC = dependentConc[ei][idx];
-			}
+                      localIndex idx = indices[ic];
+                      real64 spC, spLogC;
+                      string spName;
+            
+                      if(idx < m_numBasisSpecies)
+                        {
+                          spName = basisSpeciesNames[idx];
+                          spLogC = conc[ei][idx];
+                        }
+                      else 
+                        {
+                          idx -= m_numBasisSpecies;
+                          spName = dependentSpeciesNames[idx];          
+                          spLogC = dependentConc[ei][idx];
+                        }
 
-		      auto found = spName.find("(g)");
-		      if(found != std::string::npos)
-			continue;
+                      auto found = spName.find("(g)");
+                      if(found != std::string::npos)
+                        continue;
 
-		      spC = pow(10.0, spLogC);
-	    
-		      if(fabs(spLogC) < 1e-64 || spC < 1e-40)
-			continue;
-	    
-		      os <<  std::left << std::setw(25) << spName << std::setw(10) << std::scientific << std::setprecision(4)<< std::right << spC << std::fixed << std::setw(20) << spLogC << std::endl;
+                      spC = pow(10.0, spLogC);
+            
+                      if(fabs(spLogC) < 1e-64 || spC < 1e-40)
+                        continue;
+            
+                      os <<  std::left << std::setw(25) << spName << std::setw(10) << std::scientific << std::setprecision(4)<< std::right << spC << std::fixed << std::setw(20) << spLogC << std::endl;
 
-		    }
+                    }
 
-		  os << std::endl;
-		  os << std::endl;
-	
-		  os << "            --- Gas Fugacities ---" << std::endl;
+                  os << std::endl;
+                  os << std::endl;
+        
+                  os << "            --- Gas Fugacities ---" << std::endl;
 
-		  os << std::endl;
+                  os << std::endl;
 
-		  os << "Gas                      Log Fugacity           Fugacity" << std::endl;
+                  os << "Gas                      Log Fugacity           Fugacity" << std::endl;
 
-		  os << std::endl;
+                  os << std::endl;
 
-		  for(localIndex ic = 0; ic < indices.size(); ic++)
-		    {
+                  for(localIndex ic = 0; ic < indices.size(); ic++)
+                    {
 
-		      localIndex idx = indices[ic];
-		      real64 spC, spLogC;
-		      string spName;
-	    
-		      if(idx < m_numBasisSpecies)
-			{
-			  spName = basisSpeciesNames[idx];
-			  spLogC = conc[ei][idx];
-			}
-		      else 
-			{
-			  idx -= m_numBasisSpecies;
-			  spName = dependentSpeciesNames[idx];		
-			  spLogC = dependentConc[ei][idx];
-			}
+                      localIndex idx = indices[ic];
+                      real64 spC, spLogC;
+                      string spName;
+            
+                      if(idx < m_numBasisSpecies)
+                        {
+                          spName = basisSpeciesNames[idx];
+                          spLogC = conc[ei][idx];
+                        }
+                      else 
+                        {
+                          idx -= m_numBasisSpecies;
+                          spName = dependentSpeciesNames[idx];          
+                          spLogC = dependentConc[ei][idx];
+                        }
 
-		      auto found = spName.find("(g)");
-		      if(found == std::string::npos)
-			continue;
+                      auto found = spName.find("(g)");
+                      if(found == std::string::npos)
+                        continue;
 
-		      spC = pow(10.0, spLogC);
+                      spC = pow(10.0, spLogC);
 
-		      os <<  std::left << std::setw(20) << spName << std::setw(15) << std::fixed << std::setprecision(5)<< std::right << spLogC << std::scientific << std::setw(23) << spC << std::endl;    	    	    
+                      os <<  std::left << std::setw(20) << spName << std::setw(15) << std::fixed << std::setprecision(5)<< std::right << spLogC << std::scientific << std::setw(23) << spC << std::endl;                    
 
-		    }
+                    }
 
-		  os << std::endl;
-		  os << std::endl;
-		  os << std::endl;			
+                  os << std::endl;
+                  os << std::endl;
+                  os << std::endl;                      
 
-		  os << "           --- Ionic Strength ---" << std::endl;
+                  os << "           --- Ionic Strength ---" << std::endl;
 
-		  os << std::endl;
-		  
-		  os <<  "Ionic Strength = " <<  std::fixed << std::setprecision(4) << dependentConc[ei][m_numDependentSpecies] << std::endl;    
-	
-		}
-	    }
-	}
+                  os << std::endl;
+                  
+                  os <<  "Ionic Strength = " <<  std::fixed << std::setprecision(4) << dependentConc[ei][m_numDependentSpecies] << std::endl;    
+        
+                }
+            }
+        }
     }
-	
+        
   os.close();
 
 }  
