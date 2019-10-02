@@ -256,13 +256,13 @@ public:
     dNdX[2][1] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
     dNdX[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    real64 const detJ = J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] ;
+    real64 const invDetJ = 1.0 / ( J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] );
 
     for( int i=0 ; i<3 ; ++i )
     {
       for( int j=0 ; j<3 ; ++j )
       {
-        J[i][j] = dNdX[i][j] / detJ;
+        J[i][j] = dNdX[i][j] * invDetJ;
       }
     }
 
@@ -279,7 +279,7 @@ public:
       }
     }
 
-    return detJ;
+    return 1.0 / invDetJ;
   }
 
   GEOSX_HOST_DEVICE
