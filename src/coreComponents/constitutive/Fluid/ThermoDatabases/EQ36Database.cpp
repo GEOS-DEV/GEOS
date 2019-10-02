@@ -465,7 +465,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
   speciesIndices.clear();
   stochs.clear();
   logKs.clear();
-  speciesNames.clear();		
+  speciesNames.clear();         
 
   while (is.getline(buf, buf_size))
   {
@@ -640,7 +640,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
   speciesIndices.clear();
   stochs.clear();
   logKs.clear();
-  speciesNames.clear();		
+  speciesNames.clear();         
 
   while (is.getline(buf, buf_size))
   {
@@ -816,7 +816,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
   speciesIndices.clear();
   stochs.clear();
   logKs.clear();
-  speciesNames.clear();		
+  speciesNames.clear();         
 
   while (is.getline(buf, buf_size))
   {
@@ -993,7 +993,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
   speciesIndices.clear();
   stochs.clear();
   logKs.clear();
-  speciesNames.clear();		
+  speciesNames.clear();         
 
   while (is.getline(buf, buf_size))
   {

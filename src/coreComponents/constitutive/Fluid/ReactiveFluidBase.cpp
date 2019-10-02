@@ -73,13 +73,13 @@ void ReactiveFluidBase::PostProcessInput()
     {
 
       if(m_basisSpeciesNames[id] == "H+")
-	{
-	  HplusNotFound = 0;
-	  m_isHplus[id] = 1;
-	}
+        {
+          HplusNotFound = 0;
+          m_isHplus[id] = 1;
+        }
       
       if(m_basisSpeciesNames[id] == "H2O")
-	H2OFound = 1;      
+        H2OFound = 1;      
 
     }
 

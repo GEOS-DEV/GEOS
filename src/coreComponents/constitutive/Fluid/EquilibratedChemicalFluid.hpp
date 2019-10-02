@@ -86,21 +86,21 @@ protected:
 private:
 
   void Compute( real64 const & pressure,
-		real64 const & temperature,		
-		arraySlice1d<const real64> const & concentration,
-		arraySlice1d<real64> const & dependentConc,		
-		arraySlice2d<real64> const & dDependentConc_dConc,
-		ThermoDatabase &thermoDatabase);
+                real64 const & temperature,             
+                arraySlice1d<const real64> const & concentration,
+                arraySlice1d<real64> const & dependentConc,             
+                arraySlice2d<real64> const & dDependentConc_dConc,
+                ThermoDatabase &thermoDatabase);
 
   void ReadDatabase();  
 
   void ComputeLogActCoef( real64 const & pressure,
-			  real64 const & temperature,
-			  real64 const & ionicStrength,
-			  array1d<real64> & logActCoef1,
-			  array1d<real64> & dLogActCoef1,
-			  array1d<real64> & logActCoef2,
-			  array1d<real64> & dLogActCoef2);
+                          real64 const & temperature,
+                          real64 const & ionicStrength,
+                          array1d<real64> & logActCoef1,
+                          array1d<real64> & dLogActCoef1,
+                          array1d<real64> & logActCoef2,
+                          array1d<real64> & dLogActCoef2);
 
   void ResizeFields(localIndex size);
   

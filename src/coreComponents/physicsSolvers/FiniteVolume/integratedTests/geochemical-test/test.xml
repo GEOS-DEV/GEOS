@@ -12,9 +12,9 @@
                      discretization="dummy"
                      targetRegions="{Region2}"
                      fluidName="water"
-                     reactiveFluidName="chem"		     
+                     reactiveFluidName="chem"                
                      solidName="rock"
-		     outputSpeciesFileName="speciesOutput.txt">
+                     outputSpeciesFileName="speciesOutput.txt">
 
     <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-12"
@@ -87,10 +87,10 @@
                                  compressibility="1e-9"/>
 
     <EquilibratedChemicalFluid name="chem"
-			       databaseType="EQ36"
-			       databaseFile="data0.shv"
-			       basisSpeciesNames="{Na+, Cl-, HCO3-, H+}"
-			       activityCoefModel="BDot"/>
+                               databaseType="EQ36"
+                               databaseFile="data0.shv"
+                               basisSpeciesNames="{Na+, Cl-, HCO3-, H+}"
+                               activityCoefModel="BDot"/>
 
   </Constitutive>
 
@@ -118,7 +118,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="totalConcentration"
-               component="0"	       
+               component="0"           
                scale="1.092"/>
 
     <FieldSpecification name="totalCl-"
@@ -126,7 +126,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="totalConcentration"
-               component="1"	       
+               component="1"           
                scale="1.12"/>
 
     <FieldSpecification name="totalHCO3-"
@@ -134,7 +134,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="totalConcentration"
-               component="2"	       
+               component="2"           
                scale="0.1161"/>
 
     <FieldSpecification name="totalH+"
@@ -142,8 +142,8 @@
                setNames="{all}"
                objectPath="ElementRegions/Region2/cb1"
                fieldName="totalConcentration"
-               component="3"	       
-               scale="7.7798E-07"/>	
+               component="3"           
+               scale="7.7798E-07"/>     
 
   </FieldSpecifications>
 
