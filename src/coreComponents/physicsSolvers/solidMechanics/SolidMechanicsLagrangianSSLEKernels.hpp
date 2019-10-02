@@ -293,8 +293,8 @@ struct ExplicitKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        real64 dNdX_data[3][8];
-#define DNDX(k,q,a,i) dNdX_data[i][a]
+        real64 dNdX_data[8][3];
+#define DNDX(k,q,a,i) dNdX_data[a][i]
 
         real64 const detJ_k_q =
         FiniteElementShapeKernel::shapeFunctionDerivatives( k,
@@ -318,16 +318,16 @@ struct ExplicitKernel
 
     #define U(i,b) uLocal[i][b][threadIdx.x]
   #else
-          real64 uLocal[3][8];
+          real64 uLocal[8][3];
           for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
           {
             localIndex const nib = elemsToNodes(k, a);
             for( int i=0 ; i<3 ; ++i )
             {
-              uLocal[i][a] = u[nib][i];
+              uLocal[a][i] = u[nib][i];
             }
           }
-    #define U(i,b) uLocal[i][b]
+    #define U(i,b) uLocal[b][i]
   #endif
 #else
   #define U(i,b) u[nib][i]

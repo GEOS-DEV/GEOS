@@ -260,21 +260,21 @@ struct ExplicitKernel
       //Compute Quadrature
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
       {
-        real64 dNdX_data[3][8];
+        real64 dNdX_data[8][3];
 #define DNDXKQ(k,q) dNdX_data
 
 
-        real64 const detJ_k_q =
-        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
-                                                            q,
-                                                            elemsToNodes,
-                                                            X,
-                                                            dNdX_data );
+        real64 const detJ_k_q = 0;
+//        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+//                                                            q,
+//                                                            elemsToNodes,
+//                                                            X,
+//                                                            dNdX_data );
 
 #define DETJ(k,q) detJ_k_q
 
         R2Tensor dUhatdX, dUdX;
-        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
+//        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
         dUhatdX *= dt;
 
         R2Tensor F,Ldt, fInv;
@@ -307,7 +307,7 @@ struct ExplicitKernel
         TotalStress= devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
 
-        Integrate<NUM_NODES_PER_ELEM>( TotalStress, DNDXKQ(k,q), DETJ(k,q), detF, fInv, f_local );
+//        Integrate<NUM_NODES_PER_ELEM>( TotalStress, DNDXKQ(k,q), DETJ(k,q), detF, fInv, f_local );
       }//quadrature loop
 
 

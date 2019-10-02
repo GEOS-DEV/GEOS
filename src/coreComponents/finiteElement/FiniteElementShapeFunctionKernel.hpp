@@ -130,7 +130,7 @@ public:
                                           localIndex const q,
                                           arrayView2d<localIndex const> const & elemsToNodes,
                                           arrayView1d<R1Tensor const> const & X,
-                                          real64 (&dNdX)[3][numNodes] )
+                                          real64 (&dNdX)[numNodes][3] )
   {
     real64 J[3][3] = {{0}};
 
@@ -270,7 +270,7 @@ public:
         dNdX[i][a] = 0.0;
         for ( int j = 0; j < 3; ++j )
         {
-          dNdX[i][a] += DNDXI(q,a,j) * J[j][i] ;
+          dNdX[a][i] += DNDXI(q,a,j) * J[j][i] ;
         }
       }
     }
