@@ -84,13 +84,17 @@ public:
                                               localIndex const q,
                                               real64 (&dNdXi)[3] )
   {
-    constexpr static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
-                                              { -1, -1,  1,  1, -1, -1,  1,  1 },
-                                              { -1, -1, -1, -1,  1,  1,  1,  1 } };
+//    constexpr static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
+//                                              { -1, -1,  1,  1, -1, -1,  1,  1 },
+//                                              { -1, -1, -1, -1,  1,  1,  1,  1 } };
+//
+//    dNdXi[0] = 0.125 * pCoords[0][a]                                        * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
+//    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * pCoords[1][a]                                        * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
+//    dNdXi[2] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * pCoords[2][a] ;
 
-    dNdXi[0] = 0.125 * pCoords[0][a]                                        * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
-    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * pCoords[1][a]                                        * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
-    dNdXi[2] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * pCoords[2][a] ;
+    dNdXi[0] = 0.125 * parentCoords0(a)                                        * ( 1 + quadratureFactor*parentCoords1(q)*parentCoords1(a) ) * ( 1 + quadratureFactor*parentCoords2(q)*parentCoords2(a) ) ;
+    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*parentCoords0(q)*parentCoords0(a) ) * parentCoords1(a)                                        * ( 1 + quadratureFactor*parentCoords2(q)*parentCoords2(a) ) ;
+    dNdXi[2] = 0.125 * ( 1 + quadratureFactor*parentCoords0(q)*parentCoords0(a) ) * ( 1 + quadratureFactor*parentCoords1(q)*parentCoords1(a) ) * parentCoords2(a) ;
   }
 
   GEOSX_HOST_DEVICE
@@ -236,7 +240,7 @@ public:
       {
         for ( int j = 0; j < 3; ++j )
         {
-          J[i][j] += X[elemsToNodes(k, a)][i] * DNDXI(q,a,j);
+          J[i][j] += X[nib][i] * DNDXI(q,a,j);
         }
       }
     }
