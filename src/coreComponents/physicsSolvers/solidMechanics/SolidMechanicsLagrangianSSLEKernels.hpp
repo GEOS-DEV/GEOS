@@ -303,6 +303,12 @@ struct ExplicitKernel
                                                             X,
                                                             dNdX_data );
 
+//        printf( "dNdX \n" );
+//        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+//        {
+//          printf( "%6.4f, %6.4f, %6.4f\n", dNdX_data[a][0],dNdX_data[a][1],dNdX_data[a][2] );
+//        }
+
 #define ULOCAL
 #ifdef ULOCAL
   #if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
@@ -334,9 +340,6 @@ struct ExplicitKernel
 #endif
 
 
-//#define nostress
-
-#if !defined(nostress)
 //        constitutive.m_deviatorStress[k][q] = 0;
 //        real64 * const stress = constitutive.m_deviatorStress[k][q].Data();
         real64 stress[6] = {0,0,0,0,0,0};
@@ -356,6 +359,7 @@ struct ExplicitKernel
 //        stress[4] *= G;
 //        stress[5] *= G;
 
+//        printf( "%6.4f, %6.4f, %6.4f, %6.4f, %6.4f, %6.4f\n", stress[0], stress[1], stress[2], stress[3], stress[4], stress[5] );
 
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
@@ -364,6 +368,7 @@ struct ExplicitKernel
           F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] ) * detJ_k_q;
         }
 
+//#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
         constitutive.m_meanStress[k][q] = ( stress[0] + stress[1] + stress[2] ) / 3.0;
         real64 * const devStress = constitutive.m_deviatorStress[k][q].Data();
@@ -385,7 +390,6 @@ struct ExplicitKernel
           RAJA::atomicAdd<RAJA::auto_atomic>( &acc[ elemsToNodes(k, a) ][ b ], F_LOCAL(a,b) );
         }
       }
-#endif
     });
     return dt;
   }

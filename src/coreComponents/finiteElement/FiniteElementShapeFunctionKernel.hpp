@@ -80,13 +80,13 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void parentShapeFunctionDerivatives( localIndex const a,
-                                              localIndex const q,
+  static void parentShapeFunctionDerivatives( localIndex const q,
+                                              localIndex const a,
                                               real64 (&dNdXi)[3] )
   {
-//    constexpr static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
-//                                              { -1, -1,  1,  1, -1, -1,  1,  1 },
-//                                              { -1, -1, -1, -1,  1,  1,  1,  1 } };
+//    const static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
+//                                          { -1, -1,  1,  1, -1, -1,  1,  1 },
+//                                          { -1, -1, -1, -1,  1,  1,  1,  1 } };
 //
 //    dNdXi[0] = 0.125 * pCoords[0][a]                                        * ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
 //    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) * pCoords[1][a]                                        * ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
@@ -138,19 +138,8 @@ public:
   {
     real64 J[3][3] = {{0}};
 
-//#define SPOOF
-#ifdef SPOOF
-    constexpr static real64 dNdXi[8][3] = { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
-                                          { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
-                                          { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
-                                          { dNdXi0(0,3), dNdXi1(0,3), dNdXi2(0,3) },
-                                          { dNdXi0(0,4), dNdXi1(0,4), dNdXi2(0,4) },
-                                          { dNdXi0(0,5), dNdXi1(0,5), dNdXi2(0,5) },
-                                          { dNdXi0(0,6), dNdXi1(0,6), dNdXi2(0,6) },
-                                          { dNdXi0(0,7), dNdXi1(0,7), dNdXi2(0,7) } };
-#define DNDXI(q,a,j) dNdXi[a][i]
-
-#elif 0
+//#define STOREPARENTSHAPEDER
+#ifdef STOREPARENTSHAPEDER
     constexpr static real64 dNdXi[8][8][3] = { { { dNdXi0(0,0), dNdXi1(0,0), dNdXi2(0,0) },
                                                { dNdXi0(0,1), dNdXi1(0,1), dNdXi2(0,1) },
                                                { dNdXi0(0,2), dNdXi1(0,2), dNdXi2(0,2) },
@@ -225,17 +214,18 @@ public:
                                              } };
 
 #define DNDXI(q,a,j) dNdXi[q][a][j]
+#define CALC_DNDXI(q,a)
 #else
     real64 dNdXi[3];
 #define CALC_DNDXI(q,a) parentShapeFunctionDerivatives(q,a,dNdXi)
 #define DNDXI(q,a,i) dNdXi[i]
 #endif
 
+
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       CALC_DNDXI(q,a);
       localIndex const nib = elemsToNodes(k, a);
-
       for ( int i = 0; i < 3; ++i )
       {
         for ( int j = 0; j < 3; ++j )
@@ -245,33 +235,36 @@ public:
       }
     }
 
-//    real64 const detJ = inverse( J, &(dNdX[0][0]) );
-    dNdX[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-    dNdX[0][1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-    dNdX[0][2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-    dNdX[1][0] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-    dNdX[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-    dNdX[1][2] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-    dNdX[2][0] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-    dNdX[2][1] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-    dNdX[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
-
-    real64 const invDetJ = 1.0 / ( J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] );
-
-    for( int i=0 ; i<3 ; ++i )
-    {
-      for( int j=0 ; j<3 ; ++j )
-      {
-        J[i][j] = dNdX[i][j] * invDetJ;
-      }
-    }
+    real64 const invDetJ = inverse( J, &(dNdX[0][0]) );
+//    dNdX[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
+//    dNdX[0][1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
+//    dNdX[0][2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
+//    dNdX[1][0] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
+//    dNdX[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
+//    dNdX[1][2] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
+//    dNdX[2][0] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
+//    dNdX[2][1] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
+//    dNdX[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+//
+//    real64 const invDetJ = 1.0 / ( J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] );
+//
+//    printf( "invDetJ =  %6.4f\n", invDetJ );
+//
+//
+//    for( int i=0 ; i<3 ; ++i )
+//    {
+//      for( int j=0 ; j<3 ; ++j )
+//      {
+//        J[i][j] = dNdX[i][j] * invDetJ;
+//      }
+//    }
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       CALC_DNDXI(q,a);
       for ( int i = 0; i < 3; ++i )
       {
-        dNdX[i][a] = 0.0;
+        dNdX[a][i] = 0.0;
         for ( int j = 0; j < 3; ++j )
         {
           dNdX[a][i] += DNDXI(q,a,j) * J[j][i] ;
@@ -284,7 +277,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 (&J)[3][3], real64 * const scratch  )
+  static real64 inverse( real64 (&J)[3][3], real64 * GEOSX_RESTRICT const scratch  )
   {
     scratch[0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
     scratch[1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
@@ -296,25 +289,15 @@ public:
     scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
     scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    scratch[9] = J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ;
+    scratch[9] = 1 / ( J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ) ;
 
     for( int i=0 ; i<3 ; ++i )
     {
       for( int j=0 ; j<3 ; ++j )
       {
-        J[i][j] = scratch[i*3+j] / scratch[9];
+        J[i][j] = scratch[3*i+j] * scratch[9];
       }
     }
-
-//    J[0][0] = scratch[0] / scratch[9];
-//    J[0][1] = scratch[1] / scratch[9];
-//    J[0][2] = scratch[2] / scratch[9];
-//    J[1][0] = scratch[3] / scratch[9];
-//    J[1][1] = scratch[4] / scratch[9];
-//    J[1][2] = scratch[5] / scratch[9];
-//    J[2][0] = scratch[6] / scratch[9];
-//    J[2][1] = scratch[7] / scratch[9];
-//    J[2][2] = scratch[8] / scratch[9];
 
     return scratch[9];
   }
