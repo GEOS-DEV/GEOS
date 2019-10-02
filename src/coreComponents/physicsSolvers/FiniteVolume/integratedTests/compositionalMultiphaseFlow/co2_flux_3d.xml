@@ -31,32 +31,39 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{0, 100}"
+                  xCoords="{0, 30}"
                   yCoords="{0, 30}"
-                  zCoords="{0, 100}"
-                  nx="{50}"
+                  zCoords="{0, 30}"
+                  nx="{15}"
                   ny="{15}"
-                  nz="{50}"
+                  nz="{15}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
-    <Box name="source" xMin="-0.01, 27.99, -0.01" xMax="2.01, 30.01, 20.01"/>
-    <Box name="sink1"   xMin="97.99, -0.01, -0.01" xMax="100.01, 50.01, 100.01"/>
-    <Box name="sink2"   xMin="-0.01, -0.01, 97.99" xMax="100.01, 50.01, 100.01"/>    
+    <Box name="source" xMin="-0.01, 27.99, -0.01" xMax="2.01, 30.01, 10.01"/>
+    <Box name="sink1"   xMin="27.99, -0.01, -0.01" xMax="30.01, 30.01, 30.01"/>
+    <Box name="sink2"   xMin="-0.01, -0.01, 27.99" xMax="30.01, 30.01, 30.01"/>    
   </Geometry>
 
 
-  <Events maxTime="5e6">
+  <Events maxTime="1e6">
 
     <PeriodicEvent name="solverApplications"
                    forceDt="5e4"
                    target="/Solvers/compflow" />
-
+<!--
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e6"
+                   timeFrequency="1e5"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+-->
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5e5"
+                   targetExactTimestep="0"
+                   target="/Outputs/sidreRestart"/>
+    
   </Events>
 
   <NumericalMethods>
@@ -153,7 +160,7 @@
     <SourceFlux name="sourceTerm"
                objectPath="ElementRegions/Region2/elementSubRegions/cb1"
                component="0"	       
-               scale="-0.1"
+               scale="-0.03"
                setNames="{source}"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
@@ -208,7 +215,8 @@
   </Functions>
 
   <Outputs>
-      <Silo name="siloOutput" plotFileRoot="plot-new"/>
+      <Silo name="siloOutput"/>
+      <Restart name="sidreRestart"/>
   </Outputs>
 
 </Problem>
