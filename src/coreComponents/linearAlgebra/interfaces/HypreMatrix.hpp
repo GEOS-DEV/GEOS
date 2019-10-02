@@ -25,6 +25,10 @@
 #include "HYPRE_IJ_mv.h"
 #include "HYPRE_parcsr_mv.h"
 
+#include "HYPRE.h"
+#include "_hypre_IJ_mv.h"
+#include "_hypre_parcsr_mv.h"
+
 
 namespace geosx
 {
@@ -347,8 +351,26 @@ public:
    * the nonzero entries produced by the product this*B.
    */
   void multiply( HypreMatrix const & src,
-		         HypreMatrix & dst,
+		             HypreMatrix & dst,
                  bool const closeResult = true ) const;
+
+  /**
+   * @brief Matrix/Matrix transpose multiplication.
+   *
+   * Compute <tt>this^T * B = C<tt>.
+   *
+   * \param src Input matrix (B).
+   * \param dst Output matrix (C).
+   * \param closeResult whether to close @p dst for additional entries.
+   *
+   * Note that the output matrix C should have the same
+   * row-map as this.  If close() has already been called
+   * on C, then C's sparsity pattern must already contain
+   * the nonzero entries produced by the product this*B.
+   */
+//  void multiplyTranspose( HypreMatrix const & src,
+//                          HypreMatrix & dst,
+//                          bool const closeResult = true ) const;
 
   /**
    * @brief Compute residual <tt>r = b - A*x</tt>.
@@ -511,6 +533,11 @@ public:
   //@}
 
 private:
+
+  /**
+   * @brief Perform a matrix matrix product with Parallel Matrix
+   */
+  void parCSRtoIJ( HYPRE_ParCSRMatrix & parCSRMatrix );
 
   /**
    * Boolean value, true if the matrix sparsity pattern has been fixed.

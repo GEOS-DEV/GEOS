@@ -454,16 +454,20 @@ void testMatrixFunctions()
 
   // Matrix-Matrix multiply
   Matrix mat2mat2;
-  mat2.multiply(mat2, mat2mat2);
+
+  {
+  Matrix mat22(mat2);
+
+  mat22.multiply(mat22, mat2mat2);
+  }
 
   mat2.write("mat2");
   mat2mat2.write("mat2mat2-NEW");
 
-//  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-//  std::cout << "Rank: " << rank << "; "
-//            << "nRows: " << mat2mat2.globalRows() << "; "
-//            << "nCols: " << mat2mat2.globalCols() << std::endl;
-
+//  Matrix mat2Tmat2;
+//  mat2.multiplyTranspose(mat2, mat2mat2);
+//
+//  mat2mat2.write("mat2Tmat2-NEW");
 
   //  mat2.multiply(mat2, mat1);
 //  array
