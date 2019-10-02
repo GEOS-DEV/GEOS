@@ -1,5 +1,5 @@
 ###############################################################################
-Python Input Processing: pygeos
+Advanced XML Features (pygeos)
 ###############################################################################
 
 Pygeos is a python module that enables advanced .xml features in GEOSX.
@@ -34,18 +34,10 @@ To use the virtual environment, do one of the following:
 
 
 
-Advanced XML Features
+Usage
 =================================
 
-The xml preprocessor in pygeos is designed to take an raw input file, and generate an new file that can be directly read by GEOSX.
-The syntax for the advanced xml format is given below.
-During the processing the order of operations are:
-
-1) Merging any included xml files into the root structure
-2) Substituting in any parameters
-3) Evaluating unit strings
-4) Evaluating symbolic math
-5) Error checking and validation
+Pygeos can be used either as a command-line tool or be imported into a python script.  Note: pygeos will be on your path if you are in a virtual environment.  Otherwise, it can be called directly from the bin directory of your python distribution.
 
 
 
@@ -53,19 +45,19 @@ Command-line Example
 ------------------------------
 
 Pygeos can be called from the command line to process .xml files via the script.
-(Note: this be on your path if you are in a virtual environment.  Otherwise, it can be called directly from the bin directory of your python distribution.)
-The following will read a raw .xml file, generate a processed version, and return the new file name.
+The following will read a raw .xml file, generate a processed version, and return the new file name:
 
-pygeos input_file.xml
+``pygeos input_file.xml``
 
 Optional arguments include:
+
 - -o / --output = The desired name for the output file (otherwise, it is randomly generated)
 - -s / --schema = The location of a schema to validate the final .xml file
 - -v / --verbose = Increase module verbosity
 
-This can be embedded within a call to GEOSX:
+For convenience, this script can be embedded within GEOSX arguments:
 
-srun -n 16 geosx -i \`pygeos input_file.xml\`
+``srun -n 16 geosx -i `pygeos input_file.xml```
 
 
 Script-based Example
@@ -81,6 +73,20 @@ The pygeos module can also be called from within a python script.  For example:
   new_filename = pygeos.preprocessGEOSXML(sys.argv[1])
   print(new_filename)
 
+
+
+Advanced XML Features
+=================================
+
+The xml preprocessor in pygeos is designed to take an raw input file, and generate an new file that can be directly read by GEOSX.
+The syntax for the advanced xml format is given below.
+During the processing the order of operations are:
+
+1) Merging any included xml files into the root structure
+2) Substituting in any parameters
+3) Evaluating unit strings
+4) Evaluating symbolic math
+5) Error checking and validation
 
 
 Including Child XML Files
