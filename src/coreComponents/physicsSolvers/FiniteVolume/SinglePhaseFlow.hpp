@@ -276,6 +276,11 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
 protected:
 
   virtual void PostProcessInput() override;
@@ -284,10 +289,6 @@ protected:
 
 private:
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void ResetViews( DomainPartition * const domain ) override;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces

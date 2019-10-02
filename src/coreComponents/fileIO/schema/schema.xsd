@@ -716,7 +716,7 @@
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => (no description available)-->
-		<xsd:attribute name="plotFileRoot" type="string" default="" />
+		<xsd:attribute name="plotFileRoot" type="string" default="plot" />
 		<!--plotLevel => (no description available)-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
@@ -859,6 +859,8 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
+		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
@@ -991,6 +993,8 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
@@ -1031,6 +1035,8 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
@@ -1470,6 +1476,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="FaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--defaultAperture => The default aperture of for new faceElements.-->
+		<xsd:attribute name="defaultAperture" type="real64" use="required" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

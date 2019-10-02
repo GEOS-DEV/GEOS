@@ -204,7 +204,7 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   m_elemGhostRank =
     elemManager->ConstructViewAccessor<array1d<integer>, arrayView1d<integer>>( ObjectManagerBase::viewKeyStruct::ghostRankString );
   m_volume =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( CellElementSubRegion::viewKeyStruct::elementVolumeString );
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
   m_volume0 =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::volume0String );
   m_gravDepth =

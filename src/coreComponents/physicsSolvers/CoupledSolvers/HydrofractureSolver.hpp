@@ -93,6 +93,11 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution ) override;
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -149,6 +154,7 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
+    static constexpr auto maxNumResolvesString = "maxNumResolves";
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -171,6 +177,8 @@ private:
 
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
+
+  integer m_maxNumResolves;
 
 };
 

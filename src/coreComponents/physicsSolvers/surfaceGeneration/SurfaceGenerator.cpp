@@ -29,6 +29,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 
 #ifdef USE_GEOSX_PTP
@@ -497,11 +498,15 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
   map<string, string_array > fieldNames;
   fieldNames["face"].push_back(viewKeyStruct::ruptureStateString);
+  fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  MPI_iCommData icomm;
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
-  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
+  CommunicationTools::SynchronizeFields( fieldNames, mesh,
+                                         domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
+
+//  MPI_iCommData icomm;
+//  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
+//  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
+//  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
 
 
   if( !prefrac )
@@ -2723,7 +2728,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
     SIFonFace[i] = 0.0;
   }
 
-//  arrayView1d<R1Tensor>& fExternal = nodeManager.getReference<arrayView1d<R1Tensor>>( "fExternal" );
+  arrayView1d<R1Tensor> const &
+    fext = nodeManager.getReference< array1d<R1Tensor> >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   arrayView1d<R1Tensor> const & displacement = nodeManager.getReference<r1_array>(keys::TotalDisplacement);
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
@@ -2893,7 +2899,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             nodeDisconnectForce /= 2.0;
           }
 
-          //Find the trailing node according the node index and face index
+          //Find the trailing node according to the node index and face index
           if (unpinchedNodeID.size() == 0) //Tet mesh under three nodes pinched scenario. Need to find the other trailing face that containing the trailing node.
           {
             for ( localIndex const edgeIndex: faceToEdgeMap.getIterableArray( trailingFaceIndex ) )
@@ -2953,13 +2959,45 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
           trailingNodeDisp = displacement[theOtherTrailingNodeID];
           trailingNodeDisp -= displacement[tralingNodeID];
 
-  //        tipNodeForce[0] = nodeDisconnectForce[0] + ( fExternal[tralingNodeID][0] - fExternal[theOtherTrailingNodeID][0]) / 2.0;
-  //        tipNodeForce[1] = nodeDisconnectForce[1] + ( fExternal[tralingNodeID][1] - fExternal[theOtherTrailingNodeID][1]) / 2.0;
-  //        tipNodeForce[2] = nodeDisconnectForce[2] + ( fExternal[tralingNodeID][2] - fExternal[theOtherTrailingNodeID][2]) / 2.0;
+          //Calculate average young's modulus and poisson ratio for fext.
+          R1Tensor fExternal[2];
+          for  (localIndex i=0 ; i<2 ; ++i )
+          {
+            realT averageYoungsModulus(0), averagePoissonRatio(0);
+            localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
+            for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
+            {
+              CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodeToRegionMap[nodeID][k] )->
+                  GetSubRegion<CellElementSubRegion>( nodeToSubRegionMap[nodeID][k] );
+              localIndex iEle = nodeToElementMap[nodeID][k];
 
-          tipNodeForce[0] = nodeDisconnectForce[0];
-          tipNodeForce[1] = nodeDisconnectForce[1];
-          tipNodeForce[2] = nodeDisconnectForce[2];
+              ElementRegionBase * const
+              elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
+              string const elementRegionName = elementRegion->getName();
+              localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
+              localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+
+              realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              realT G = shearModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              averageYoungsModulus += 9 * K * G / ( 3 * K + G );
+              averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+            }
+
+            averageYoungsModulus /= nodeToRegionMap.sizeOfArray(nodeID);
+            averagePoissonRatio /= nodeToRegionMap.sizeOfArray(nodeID);
+
+            fExternal[i] = fext[nodeID];
+            fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
+          }
+
+          //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
+          tipNodeForce[0] = nodeDisconnectForce[0] - ( fExternal[0][0] - fExternal[1][0] ) / 2.0;
+          tipNodeForce[1] = nodeDisconnectForce[1] - ( fExternal[0][1] - fExternal[1][1] ) / 2.0;
+          tipNodeForce[2] = nodeDisconnectForce[2] - ( fExternal[0][2] - fExternal[1][2] ) / 2.0;
+
+//          tipNodeForce[0] = nodeDisconnectForce[0];
+//          tipNodeForce[1] = nodeDisconnectForce[1];
+//          tipNodeForce[2] = nodeDisconnectForce[2];
 
           realT tipArea;
           tipArea = faceArea(trailingFaceIndex);
@@ -3005,13 +3043,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
               if( Dot( v0, vecTip ) < 0 )
                 vecTip *= -1.0;
 
-  //            tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm ) + Dot( fExternal[tralingNodeID], vecTipNorm ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecTipNorm ) /2.0;
-  //            tipForce[1] = Dot( nodeDisconnectForce, vecTip ) + Dot( fExternal[tralingNodeID], vecTip ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecTip ) /2.0;
-  //            tipForce[2] = Dot( nodeDisconnectForce, vecEdge ) + Dot( fExternal[tralingNodeID], vecEdge ) / 2.0 - Dot( fExternal[theOtherTrailingNodeID], vecEdge ) /2.0;
+              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm ) - (Dot( fExternal[0], vecTipNorm ) - Dot( fExternal[1], vecTipNorm ))/2.0;
+              tipForce[1] = Dot( nodeDisconnectForce, vecTip ) - (Dot( fExternal[0], vecTip ) - Dot( fExternal[1], vecTip ))/2.0;
+              tipForce[2] = Dot( nodeDisconnectForce, vecEdge ) - (Dot( fExternal[0], vecEdge ) - Dot( fExternal[1], vecEdge )) /2.0;
 
-              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm );
-              tipForce[1] = Dot( nodeDisconnectForce, vecTip );
-              tipForce[2] = Dot( nodeDisconnectForce, vecEdge );
+//              tipForce[0] = Dot( nodeDisconnectForce, vecTipNorm );
+//              tipForce[1] = Dot( nodeDisconnectForce, vecTip );
+//              tipForce[2] = Dot( nodeDisconnectForce, vecEdge );
 
               tipOpening[0] = Dot( trailingNodeDisp, vecTipNorm );
               tipOpening[1] = Dot( trailingNodeDisp, vecTip );
@@ -3593,11 +3631,11 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   for (localIndex i=0; i < nodeIndices.size() ; ++i)
   {
     localIndex nodeID = nodeIndices(i);
-    localIndex_array temp11;
-    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
-    {
-      temp11.push_back(nodeToElementMap[nodeID][ii]);
-    }
+//    localIndex_array temp11;
+//    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
+//    {
+//      temp11.push_back(nodeToElementMap[nodeID][ii]);
+//    }
 
     for( localIndex k=0 ; k<nodeToRegionMap.sizeOfArray(nodeID) ; ++k )
     {
@@ -3657,16 +3695,31 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
               {
                 nElemEachSide[0] += 1;
                 fNode += temp;
+
+                //wu40: for debug purpose
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Add to total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
               else
               {
                 nElemEachSide[1] +=1;
                 fNode -= temp;
+
+                //wu40: for debug purpose
+//                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//                std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//                std::cout << "Minus from total nodal force (fdisc): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
               }
             }
             else
             {
               fNode += temp;
+
+              //wu40: for debug purpose
+//              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
+//              std::cout << "Nodal force: " << temp[0] << ", " << temp[1] << ", " << temp[2] << std::endl;
+//              std::cout << "Add to total nodal force (fext): " << fNode[0] << ", " << fNode[1] << ", " << fNode[2] << std::endl;
             }
           }
         }
