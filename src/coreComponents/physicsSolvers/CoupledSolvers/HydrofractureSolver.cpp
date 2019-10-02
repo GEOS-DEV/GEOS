@@ -590,9 +590,11 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  m_flowSolver->SolverStep( time_n, dt, cycleNumber, domain );
+  real64 dt_return = dt;
 
-  m_solidSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
+  dt_return = m_flowSolver->SolverStep( time_n, dt, cycleNumber, domain );
+
+  dt_return = m_solidSolver->ExplicitStep( time_n, dt_return, cycleNumber, domain );
 
   this->UpdateDeformationForCoupling(domain);
 
@@ -613,7 +615,7 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
     });
   });
 
-  return dt;
+  return dt_return;
 }
 
 

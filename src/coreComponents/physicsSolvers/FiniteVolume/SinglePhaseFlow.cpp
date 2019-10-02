@@ -391,8 +391,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
     UpdateState( subRegion );
   } );
 
-  m_maxStableDt = 1;
-  return m_maxStableDt;
+  return dt;
 }
 
 void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
@@ -888,9 +887,6 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
                         &m_mass,
                         &m_maxStableDt);
   });
-
-  m_maxStableDt *= m_cflFactor;
-
 }
 
 void

@@ -80,6 +80,12 @@ public:
                         dataRepository::Group * const domain ) override;
 
   /**
+   * This method will collect time-step size requests from its
+   * targets and/or children.
+   */
+  virtual real64 GetTimestepRequest(real64 const time) override;
+
+  /**
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */

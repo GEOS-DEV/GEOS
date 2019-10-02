@@ -87,6 +87,11 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
+real64 SolverBase::GetTimestepRequest(real64 const GEOSX_UNUSED_ARG( time ))
+{
+  return (m_maxStableDt * m_cflFactor);
+}
+
 Group * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
