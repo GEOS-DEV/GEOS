@@ -30,6 +30,7 @@
 namespace geosx
 {
 using namespace dataRepository;
+using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
@@ -79,29 +80,9 @@ Group * EmbeddedSurfaceGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( 
   return nullptr;
 }
 
-void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const  domain )
+void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
 {
-  /*
-   * Here we need to:
-   * 1. Find intersections between the fracture plane and the background mesh.
-   * 2. Generate EmbeddedSurface elements and populate them
-   */
-
-  /* 1. Finding intersections
-   *   - Loop over the surfaces and for each surface check if
-   *     nvect * dist changes sign between different nodes. If it does
-   *     it means the plane intersects the surface.
-   *   -
-   *
-   */
-
-  Group * const meshBodies        = domain->getMeshBodies();
-  MeshLevel * const meshLevel     = meshBodies->GetGroup<MeshLevel>(0);
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-
-  array1d<R1Tensor> & nodesCoordinates = nodeManager->referencePosition();
-
-  // I d like to loop over the faces and then over the nodes belonging to each face.
+  // won't do anything at this point coz the mesh does not exist yet.
 }
 
 

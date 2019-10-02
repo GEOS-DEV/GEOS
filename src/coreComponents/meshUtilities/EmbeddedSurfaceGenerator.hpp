@@ -41,9 +41,9 @@ string const meshName         = "meshName";
 }
 
 /**
- * @class InternalWellGenerator
+ * @class EmbeddedSurfaceGenerator
  *
- * This class processes the data of a single well from the XML and generates the well geometry
+ * This class processes the data of a single fracture plane (surface) from the XML file
  */
 class EmbeddedSurfaceGenerator : public MeshGeneratorBase
 {
@@ -135,11 +135,7 @@ private:
 
   string        m_meshName;
 
-  // Geometry of the embedded surface (later passed to the EmbeddedSurfaceSubregion)
-
-  // well element data
-
-  /// Global number of well elements
+  /// Global number of
   globalIndex          m_numElems;
 
   /// Connectivity between elements and nodes
@@ -150,7 +146,7 @@ private:
 
   // Surface node data
 
-  /// Number of nodes per well element
+  /// Number of nodes per
   globalIndex          m_numNodesPerElem;
 
   /// Global number of  nodes

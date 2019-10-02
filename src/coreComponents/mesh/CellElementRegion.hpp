@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FaceElementRegion.hpp
+ * @file ElementRegionBase.hpp
  *
  */
 
@@ -24,10 +24,11 @@
 
 namespace geosx
 {
-
+class EdgeManager;
+class EmbeddedSurfaceGenerator;
 
 /**
- * @class FaceElementRegion
+ * @class ElementRegionBase
  *
  * The FaceElementRegion class contains the functionality to support the concept of a FaceElementRegion in the element
  * hierarchy. FaceElementRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
@@ -66,6 +67,11 @@ public:
   virtual void GenerateMesh( Group const * const cellBlocks ) override;
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
+
+  void GenerateEmbeddedSurfaces( FaceManager              const * const faceManager,
+                                 EdgeManager              const * const edgeManager,
+                                 NodeManager              const * const nodeManager,
+                                 EmbeddedSurfaceGenerator const * const embeddedSurface);
 
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {

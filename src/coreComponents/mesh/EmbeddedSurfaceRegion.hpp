@@ -25,6 +25,7 @@
 #define CORECOMPONENTS_MESH_EMBEDDEDSURFACEREGION_HPP_
 
 #include "ElementRegionBase.hpp"
+#include "meshUtilities/EmbeddedSurfaceGenerator.hpp"
 
 namespace geosx
 {
@@ -80,6 +81,13 @@ public:
 
 
   */
+
+  /**
+     * @brief Getter for the name of the InternalWellGenerator object of this well
+     * @param the name of the InternalWellGenerator object
+     */
+  string const & GetEmbeddedSurfaceGeneratorName() const { return m_embeddedSurfaceName; }
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
@@ -87,6 +95,7 @@ public:
 
 
 private:
+  string m_embeddedSurfaceName;
 
 };
 

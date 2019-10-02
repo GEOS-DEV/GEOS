@@ -28,6 +28,7 @@
 #include "FaceElementRegion.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "wells/WellElementRegion.hpp"
+#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -108,6 +109,7 @@ public:
 
   void GenerateWells( MeshManager * const meshManager, MeshLevel * const meshLevel );
 
+  void GenerateEmbeddedSurfaces( MeshManager * const meshManager, MeshLevel * const meshLevel );
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;

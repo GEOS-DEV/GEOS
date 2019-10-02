@@ -20,7 +20,8 @@
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
 #include "cxx-utilities/src/src/SparsityPattern.hpp"
-
+#include "NodeManager.hpp"
+#include "EdgeManager.hpp"
 #include "metis.h"
 
 namespace geosx
@@ -175,6 +176,45 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
 
+void CellElementRegion::GenerateEmbeddedSurfaces( FaceManager              const * const GEOSX_UNUSED_ARG(faceManager),
+                                                  EdgeManager              const * const GEOSX_UNUSED_ARG(edgeManager),
+                                                  NodeManager              const * const GEOSX_UNUSED_ARG(nodeManager),
+                                                  EmbeddedSurfaceGenerator const * const GEOSX_UNUSED_ARG(embeddedSurface))
+{
+  /*
+    * Here we need to find intersections between the fracture plane and the background mesh.
+    */
+   /* 1. Finding intersections
+    *   - Loop over the cell elements in each subregion and for each edge check if
+    *     nvect * dist changes sign between the two different nodes. If it does
+    *     it means the plane intersects the face. It is going to be reduntant coz
+    *     blocks share edges.
+    */
+
+  // Get nodes coordinates.
+  //array1d<R1Tensor>   const & nodesCoordinates   = nodeManager->referencePosition();
+  // InterObjectRelation< ArrayOfArrays< localIndex > >  const & faceToEdges     = faceManager->edgeList();
+  // array2d<localIndex> const & edgeToNodes        = edgeManager->nodeList();
+
+  // Loop over the subregions
+  this->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const elementSubRegion ) -> void
+  {
+    //FixedOneToManyRelation const & cellToFaces = elementSubRegion->faceList();
+    for(localIndex cellIndex = 0; cellIndex < elementSubRegion->size() ; cellIndex++)
+        {
+          std::cout << "cell number: " << cellIndex << "   ";
+          // std::cout << cellToFaces.size(1);
+          std::cout << "number  of Edges: " << elementSubRegion->numEdgesPerElement() << std::endl;
+          for (localIndex ke = 0; ke < elementSubRegion->numEdgesPerElement(); ke++)
+            {
+            // loop over the edges of each element
+             std::cout << ke;
+            }
+        }
+
+  });
+
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, std::string const &, Group * const )
 

@@ -186,6 +186,28 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
   nodeManager->SetMaxGlobalIndex();
 }
 
+void ElementRegionManager::GenerateEmbeddedSurfaces( MeshManager * const meshManager,
+                                                     MeshLevel   * const meshLevel )
+{
+  // Get face and node managers
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+
+  for( localIndex a=0; a <meshManager->GetSubGroups().size() ; ++a )
+  {
+  EmbeddedSurfaceGenerator * EmbeddedSurface = meshManager->GetGroup<EmbeddedSurfaceGenerator>(a);
+  // is this how I get only the groups of type EmbeddedSurfaceGenerator ?
+
+  // Loop over all the element regions
+  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
+    {
+      elemRegion->GenerateEmbeddedSurfaces( faceManager, edgeManager, nodeManager, EmbeddedSurface);
+    });
+  }
+
+}
+
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {

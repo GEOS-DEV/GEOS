@@ -91,7 +91,7 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    ManagedGroup * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    Group * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
     elementRegions->forSubGroups<CellBlock>( lambda );
   }
 private:
