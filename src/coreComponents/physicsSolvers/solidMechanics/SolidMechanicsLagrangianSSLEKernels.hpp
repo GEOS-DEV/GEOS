@@ -331,12 +331,12 @@ struct ExplicitKernel
 #ifndef ULOCAL
           localIndex const nib = elemsToNodes(k, b);
 #endif
-          stress[0] += ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
-          stress[1] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
-          stress[2] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
-          stress[3] += ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) );
-          stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) );
-          stress[5] = stress[5] + ( DNDX(k,q,b,1)*U(0,b) ) + ( DNDX(k,q,b,0)*U(1,b) );
+          stress[0] = stress[0] + ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
+          stress[1] = stress[1] + ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
+          stress[2] = stress[2] + ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
+          stress[3] = stress[3] + DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b);
+          stress[4] = stress[4] + DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b);
+          stress[5] = stress[5] + DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b);
         }
         //#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
@@ -351,17 +351,17 @@ struct ExplicitKernel
 #endif
 
         stress[0] *= detJ_k_q;
-        stress[0] *= detJ_k_q;
-        stress[0] *= detJ_k_q;
+        stress[1] *= detJ_k_q;
+        stress[2] *= detJ_k_q;
         stress[3] *= G * detJ_k_q;
         stress[4] *= G * detJ_k_q;
         stress[5] *= G * detJ_k_q;
 
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
-          F_LOCAL(a,0) -= ( DNDX(k,q,a,0) * stress[0] + DNDX(k,q,a,2) * stress[4] + DNDX(k,q,a,1) * stress[5] );
-          F_LOCAL(a,1) -= ( DNDX(k,q,a,1) * stress[1] + DNDX(k,q,a,2) * stress[3] + DNDX(k,q,a,0) * stress[5] );
-          F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] );
+          F_LOCAL(a,0) = F_LOCAL(a,0) - DNDX(k,q,a,0) * stress[0] + DNDX(k,q,a,2) * stress[4] + DNDX(k,q,a,1) * stress[5];
+          F_LOCAL(a,1) = F_LOCAL(a,1) - DNDX(k,q,a,1) * stress[1] + DNDX(k,q,a,2) * stress[3] + DNDX(k,q,a,0) * stress[5];
+          F_LOCAL(a,2) = F_LOCAL(a,2) - DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4];
         }
 
       }//quadrature loop

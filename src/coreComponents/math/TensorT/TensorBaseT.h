@@ -198,7 +198,7 @@ public:
   inline void plus_cA( const realT& c, const TensorBaseT< T_length >& A )
   {
     for (int i = 0 ; i < T_length ; ++i)
-      t_data[i] += c * A.t_data[i];
+      t_data[i] = t_data[i] + c * A.t_data[i];
 
   }
 
