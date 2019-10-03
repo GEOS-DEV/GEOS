@@ -1,24 +1,27 @@
 
 import re
-from . import DictRegexHandler, regexConfig
+from pygeos import regex_tools
 
 
 class UnitManager():
   def __init__(self):
     self.units = {}
-    self.unitMatcher = DictRegexHandler()
+    self.unitMatcher = regex_tools.DictRegexHandler()
+    self.buildUnits()
 
   def __call__(self, unitStruct):
-    if (not bool(self.units)):
-      self.buildUnits()
-
     # Replace all instances of units in the string with their dict equivalents
-    symbolicUnits = re.sub(regexConfig.units_b, self.unitMatcher, unitStruct[1])
+    symbolicUnits = re.sub(regex_tools.patterns['units_b'], self.unitMatcher, unitStruct[1])
 
     # Strip out any stray alpha characters and evaluate
-    symbolicUnits_sanitized = re.sub(regexConfig.sanitize, '', symbolicUnits).strip()
+    symbolicUnits_sanitized = re.sub(regex_tools.patterns['sanitize'], '', symbolicUnits).strip()
     value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__': None})
-    return str(value)
+
+    # Format the string, removing any trailing zeros and decimals
+    str_value = re.sub(regex_tools.patterns['strip_trailing'], '', regex_tools.symbolic_format % (value))
+    # Strip + and trailing zero exponents
+    str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '', str_value)
+    return str_value
 
   def regexHandler(self, match):
     return self.__call__([match.group(1), match.group(2)])
@@ -78,10 +81,10 @@ class UnitManager():
     unit_defs.update(other_defs)
 
     # Expand the alternate values:
-    for p in prefixes.keys():
+    for p in list(prefixes.keys()):
       if prefixes[p]['alt']:
         prefixes[prefixes[p]['alt']] = {'value': prefixes[p]['value']}
-    for u in unit_defs.keys():
+    for u in list(unit_defs.keys()):
       for alt in unit_defs[u]['alt']:
         unit_defs[alt] = {'value': unit_defs[u]['value'], 'usePrefix': unit_defs[u]['usePrefix']}
 
@@ -107,5 +110,3 @@ class UnitManager():
     self.unitMatcher.target = self.units
     # print('Done!')
 
-
-unitManager = UnitManager()

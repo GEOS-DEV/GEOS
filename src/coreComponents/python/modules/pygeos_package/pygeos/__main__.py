@@ -1,6 +1,6 @@
 
 import argparse
-from pygeos import preprocessGEOSXML
+from pygeos import xml_processor
 
 
 def main():
@@ -13,10 +13,10 @@ def main():
   args = parser.parse_args()
 
   # Process the xml file
-  output_name = preprocessGEOSXML(args.input,
-                                  outputFile=args.output,
-                                  schema=args.schema,
-                                  verbose=args.verbose)
+  output_name = xml_processor.process(args.input,
+                                      outputFile=args.output,
+                                      schema=args.schema,
+                                      verbose=args.verbose)
 
   print(output_name)
 
