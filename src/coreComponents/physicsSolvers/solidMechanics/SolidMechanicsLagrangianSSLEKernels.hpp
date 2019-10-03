@@ -336,8 +336,7 @@ struct ExplicitKernel
           stress[2] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
           stress[3] += ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) );
           stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) );
-          stress[5] += ( DNDX(k,q,b,1)*U(0,b) );
-          stress[5] += ( DNDX(k,q,b,0)*U(1,b) );
+          stress[5] = stress[5] + ( DNDX(k,q,b,1)*U(0,b) ) + ( DNDX(k,q,b,0)*U(1,b) );
         }
         //#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
