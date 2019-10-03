@@ -368,9 +368,9 @@ public:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-//  void multiplyTranspose( HypreMatrix const & src,
-//                          HypreMatrix & dst,
-//                          bool const closeResult = true ) const;
+  void multiplyTranspose( HypreMatrix const & src,
+                          HypreMatrix & dst,
+                          bool const closeResult = true ) const;
 
   /**
    * @brief Compute residual <tt>r = b - A*x</tt>.

@@ -614,30 +614,30 @@ void HypreMatrix::multiply( HypreMatrix const & src,
 
 }
 
-//// Perform the matrix-matrix product transpose(this) * src = dst.
-//void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
-//                                     HypreMatrix & dst,
-//                                     bool const closeResult ) const
-//{
-//  // Error check
-//  GEOS_ASSERT_MSG( this->globalRows() == src.globalRows(),
-//                   "Incompatible matrix dimensions");
-//
-//  // Compute product
-//  HYPRE_ParCSRMatrix dst_parcsr;
-//  dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
-//                                 src.m_parcsr_mat );
-//
-//  // Create IJ layer (with matrix closed)
-//  dst.parCSRtoIJ( * dst_parcsr );
-//
-//  // Reopen matrix if desired
-//  if (!closeResult)
-//  {
-//    dst.open();
-//  }
-//
-//}
+// Perform the matrix-matrix product transpose(this) * src = dst.
+void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
+                                     HypreMatrix & dst,
+                                     bool const closeResult ) const
+{
+  // Error check
+  GEOS_ASSERT_MSG( this->globalRows() == src.globalRows(),
+                   "Incompatible matrix dimensions");
+
+  // Compute product
+  HYPRE_ParCSRMatrix dst_parcsr;
+  dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
+                                 src.m_parcsr_mat );
+
+  // Create IJ layer (with matrix closed)
+  dst.parCSRtoIJ( dst_parcsr );
+
+  // Reopen matrix if desired
+  if (!closeResult)
+  {
+    dst.open();
+  }
+
+}
 
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
 {
@@ -682,10 +682,9 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
     row_partitioning[0] = row_starts[0];
     row_partitioning[1] = row_starts[1];
 #else
-    //TODO
+    GEOS_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
 #endif
     hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
-//    hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) = 1;
     hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
   }
 
@@ -703,10 +702,9 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
     col_partitioning[0] = col_starts[0];
     col_partitioning[1] = col_starts[1];
 #else
-    //TODO
+    GEOS_ERROR( "HYPRE intended to be used only with HYPRE_NO_GLOBAL_PARTITION" )
 #endif
     hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
-//    hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) = 1;
     hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
   }
 
@@ -715,317 +713,6 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
   this->close();
 
 }
-
-
-//void HypreMatrix::parCSRtoIJ(  HYPRE_ParCSRMatrix & parCSRMatrix )
-//{
-//
-////  // New version
-////  hypre_IJMatrix *ijmatrix;
-//////
-////  ijmatrix = hypre_CTAlloc(hypre_IJMatrix, 1, HYPRE_MEMORY_HOST);
-////  hypre_IJMatrixComm( ijmatrix ) = hypre_ParCSRMatrixComm( parCSRMatrix );
-//
-//
-////  std::cout << "CSR2IJ-rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; GlobalFirstRow: "
-////            << hypre_IJMatrixGlobalFirstRow( ijmatrix )
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; GlobalFirstCol: "
-////            << hypre_IJMatrixGlobalFirstCol( ijmatrix )
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; GlobalNumRows: "
-////            << hypre_IJMatrixGlobalNumRows( ijmatrix )
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; GlobalNumCols: "
-////            << hypre_IJMatrixGlobalNumCols( ijmatrix )
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; ObjectType: "
-////            << hypre_IJMatrixObjectType( ijmatrix )
-////            << std::endl;
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ))
-////            << "; Object: "
-////            << hypre_IJMatrixObject( ijmatrix )
-////            << std::endl;
-//
-////  hypre_IJMatrixGlobalFirstRow( ijmatrix ) = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
-////  hypre_IJMatrixGlobalFirstCol( ijmatrix ) = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
-////  hypre_IJMatrixGlobalNumRows( ijmatrix )  = hypre_ParCSRMatrixGlobalNumRows( parCSRMatrix );
-////  hypre_IJMatrixGlobalNumCols( ijmatrix )  = hypre_ParCSRMatrixGlobalNumCols( parCSRMatrix );
-////
-////  // Define row/col partitioning
-////  HYPRE_Int *row_partitioning;
-////  HYPRE_Int *col_partitioning;
-////  HYPRE_Int *row_starts = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
-////  HYPRE_Int *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
-////#ifdef HYPRE_NO_GLOBAL_PARTITION
-////  row_partitioning = hypre_CTAlloc(HYPRE_Int,  2, HYPRE_MEMORY_HOST);
-////  col_partitioning = hypre_CTAlloc(HYPRE_Int,  2, HYPRE_MEMORY_HOST);
-////  row_partitioning[0] = row_starts[0];
-////  row_partitioning[1] = row_starts[1];
-////  col_partitioning[0] = col_starts[0];
-////  col_partitioning[1] = col_starts[1];
-////#else
-////  //TODO
-////#endif
-////  hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
-////  hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
-////
-////
-////
-////HYPRE_Int rank = MpiWrapper::Comm_rank(hypre_IJMatrixComm( ijmatrix ));
-////std::cout << "Rank: " << rank << " STARTING\n";
-////
-////
-////
-////  // Set owning
-////  std::cout << "Rank: " << rank
-////            << "owns_data: " <<  hypre_ParCSRMatrixOwnsData(parCSRMatrix) << "; "
-////            << "owns_row_starts: " <<  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) << "; "
-////            << "owns_col_starts: " <<  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) << "; "
-////            << "row_starts: " << hypre_ParCSRMatrixRowStarts( parCSRMatrix ) << "; "
-////            << "assumed_partition: " << hypre_ParCSRMatrixAssumedPartition(parCSRMatrix)
-////            << std::endl;
-////  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) = 1;
-////  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) = 1;
-////  hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
-////  hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
-////  std::cout << "Rank: " << rank
-////            << "owns_data: " <<  hypre_ParCSRMatrixOwnsData(parCSRMatrix) << "; "
-////            << "owns_row_starts: " <<  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) << "; "
-////            << "owns_col_starts: " <<  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) << "; "
-////            << "row_starts: " << hypre_ParCSRMatrixRowStarts( parCSRMatrix ) << "; "
-////            << "assumed_partition: " << hypre_ParCSRMatrixAssumedPartition(parCSRMatrix)
-////            << std::endl;
-////
-////std::cout << "Rank: " << rank << " PARTITIONING DONE\n";
-////
-////  row_partitioning = hypre_IJMatrixRowPartitioning( ijmatrix );
-////  col_partitioning = hypre_IJMatrixColPartitioning( ijmatrix );
-////
-////
-////
-////  std::cout << "Rank: " << rank << " "
-////            << row_partitioning[0] << " "
-////            << row_partitioning[1] << " "
-////            << col_partitioning[0] << " "
-////            << col_partitioning[1] << std::endl;
-////
-////
-////
-////
-////  hypre_IJMatrixObjectType(ijmatrix)   = HYPRE_PARCSR;
-////  hypre_IJMatrixObject(ijmatrix)       = parCSRMatrix;
-////  hypre_IJMatrixTranslator(ijmatrix)   = nullptr;
-////  hypre_IJMatrixAssumedPart(ijmatrix)  = hypre_ParCSRMatrixAssumedPartition( parCSRMatrix );
-////  hypre_IJMatrixAssembleFlag(ijmatrix) = 1;
-////
-////  std::cout << "Rank: " << rank
-////            << "owns_data: " <<  hypre_ParCSRMatrixOwnsData(parCSRMatrix) << "; "
-////            << "owns_row_starts: " <<  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) << "; "
-////            << "owns_col_starts: " <<  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) << "; "
-////            << "row_starts: " << hypre_ParCSRMatrixRowStarts( parCSRMatrix ) << "; "
-////            << "assumed_partition: " << hypre_ParCSRMatrixAssumedPartition(parCSRMatrix)
-////            << std::endl;
-////
-////#ifdef HYPRE_USING_OPENMP
-////  hypre_IJMatrixOMPFlag(ijmatrix)      = 1;
-////#else
-////  hypre_IJMatrixOMPFlag(ijmatrix)      = 0;
-////#endif
-////  hypre_IJMatrixPrintLevel(ijmatrix)   = 0;
-////
-////  m_ij_mat = (HYPRE_IJMatrix) ijmatrix;
-////
-////  HYPRE_Int ierr = HYPRE_IJMatrixPrint( m_ij_mat, "PROVAnew" );
-////  std::cout << "ierr_Print : " << ierr << std::endl;
-////
-//////  this->close();
-//////  this->write("PROVA");
-////
-////  std::cout << "YES ----------------- *************\n";
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//  MPI_Comm comm    = hypre_ParCSRMatrixComm(parCSRMatrix);
-//  HYPRE_Int ilower = hypre_ParCSRMatrixFirstRowIndex(parCSRMatrix);
-//  HYPRE_Int jlower = hypre_ParCSRMatrixFirstColDiag(parCSRMatrix);
-//  HYPRE_Int iupper = hypre_ParCSRMatrixLastRowIndex(parCSRMatrix);
-//  HYPRE_Int jupper = hypre_ParCSRMatrixLastColDiag(parCSRMatrix);
-//
-//  HYPRE_Int *row_starts = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
-//  HYPRE_Int *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
-//  std::cout << "Rank: " << MpiWrapper::Comm_rank(hypre_ParCSRMatrixComm( parCSRMatrix ))
-//            << "owns_data: " <<  hypre_ParCSRMatrixOwnsData(parCSRMatrix) << "; "
-//            << "owns_row_starts: " <<  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) << "; "
-//            << "owns_col_starts: " <<  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) << "; "
-//            << "row_starts[0]: " << row_starts[0] << "; "
-//            << "row_starts[1]: " << row_starts[1] << "; "
-//            << "col_starts[0]: " << col_starts[0] << "; "
-//            << "col_starts[1]: " << col_starts[1] << "; "
-//            << std::endl;
-//
-//
-//  HYPRE_IJMatrixCreate( comm,
-//                        ilower,
-//                        iupper,
-//                        jlower,
-//                        jupper,
-//                        &m_ij_mat );
-//
-//  std::cout << "CSR2IJ-rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalFirstRow: "
-//            << hypre_IJMatrixGlobalFirstRow( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalFirstCol: "
-//            << hypre_IJMatrixGlobalFirstCol( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalNumRows: "
-//            << hypre_IJMatrixGlobalNumRows( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalNumCols: "
-//            << hypre_IJMatrixGlobalNumCols( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; ObjectType: "
-//            << hypre_IJMatrixObjectType( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; Object: "
-//            << hypre_IJMatrixObject( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; translator: "
-//            << hypre_IJMatrixTranslator( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; assumed_part: "
-//            << hypre_IJMatrixAssumedPart( m_ij_mat )
-//            << std::endl;
-//
-////  hypre_ParCSRMatrix *parmatrix;
-////  hypre_IJMatrix *ijmatrix = (hypre_IJMatrix *) m_ij_mat;
-////  parmatrix = (hypre_ParCSRMatrix *) hypre_IJMatrixObject( ijmatrix );
-////
-////  std::cout << "      -rank: "
-////		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-////            << "; Object->global_num_rows: "
-////            << hypre_ParCSRMatrixGlobalNumRows( parmatrix )
-////            << std::endl;
-//
-//  HYPRE_IJMatrixSetObjectType( m_ij_mat,
-//                               HYPRE_PARCSR);
-//
-//  std::cout << "CSR2IJ-rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalFirstRow: "
-//            << hypre_IJMatrixGlobalFirstRow( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalFirstCol: "
-//            << hypre_IJMatrixGlobalFirstCol( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalNumRows: "
-//            << hypre_IJMatrixGlobalNumRows( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; GlobalNumCols: "
-//            << hypre_IJMatrixGlobalNumCols( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; ObjectType: "
-//            << hypre_IJMatrixObjectType( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; Object: "
-//            << hypre_IJMatrixObject( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; translator: "
-//            << hypre_IJMatrixTranslator( m_ij_mat )
-//            << std::endl;
-//  std::cout << "      -rank: "
-//		    << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-//            << "; assumed_part: "
-//            << hypre_IJMatrixAssumedPart( m_ij_mat )
-//            << std::endl;
-//
-////  HYPRE_IJMatrixInitialize( m_ij_mat );
-//  m_ij_mat->object = parCSRMatrix;
-//
-//  m_ij_mat->assumed_part = hypre_ParCSRMatrixAssumedPartition(parCSRMatrix);
-//
-//  m_ij_mat->assemble_flag = 1;
-//#ifdef HYPRE_USING_OPENMP
-//  m_ij_mat->omp_flag = 1;
-//#else
-//  m_ij_mat->omp_flag = 0;
-//#endif
-//  m_ij_mat->print_level = 0;
-//
-//
-//  this->close();
-//
-//  HYPRE_Int * row_partitioning = hypre_IJMatrixRowPartitioning(m_ij_mat);
-//  HYPRE_Int * col_partitioning = hypre_IJMatrixColPartitioning(m_ij_mat);
-//
-//  std::cout << "Rank: " << MpiWrapper::Comm_rank(hypre_IJMatrixComm( m_ij_mat ))
-////            << "owns_data: " <<  hypre_ParCSRMatrixOwnsData(parCSRMatrix) << "; "
-////            << "owns_row_starts: " <<  hypre_ParCSRMatrixOwnsRowStarts(parCSRMatrix) << "; "
-////            << "owns_col_starts: " <<  hypre_ParCSRMatrixOwnsColStarts(parCSRMatrix) << "; "
-////            << "row_starts: " << hypre_ParCSRMatrixRowStarts( parCSRMatrix ) << "; "
-////            << "assumed_partition: " << hypre_ParCSRMatrixAssumedPartition(parCSRMatrix) << "; "
-//			<< "row[0]: " << row_partitioning[0] << "; "
-//			<< "row[1]: " << row_partitioning[1] << "; "
-//			<< "col[0]: " << col_partitioning[0] << "; "
-//			<< "col[1]: " << col_partitioning[1] << "; "
-//            << std::endl;
-//
-//
-//}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Compute residual.
@@ -1133,6 +820,9 @@ void HypreMatrix::leftScale( HypreVector const &vec )
 
 //void EpetraMatrix::rightScale( EpetraVector const &vec )
 //{
+
+// --- CREATE SCRATCH DIAGONAL MATRIX
+
 //  m_matrix->RightScale( *(*vec.unwrappedPointer())(0) );
 //}
 //
