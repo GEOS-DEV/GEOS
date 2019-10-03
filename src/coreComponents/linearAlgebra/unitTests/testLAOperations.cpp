@@ -305,6 +305,19 @@ void testMatrixFunctions()
   A.multiply(B, C);
   }
 
+
+  C.open();
+  if ( MpiWrapper::Comm_rank(MPI_COMM_WORLD) == MpiWrapper::Comm_size(MPI_COMM_WORLD)-1)
+  {
+    std::cout << "Rank: " << MpiWrapper::Comm_rank(MPI_COMM_WORLD)
+              << " row: " << C.ilower()
+              << " row: " << C.iupper() - 1
+              << std::endl;
+    C.clearRow( C.ilower(), -1 );
+    C.clearRow( C.iupper() - 1 );
+  }
+  C.close();
+
 //  Matrix D;
 //  C.multiply(B,D);
 

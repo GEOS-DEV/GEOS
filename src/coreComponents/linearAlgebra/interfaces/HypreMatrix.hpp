@@ -436,17 +436,17 @@ public:
 //   */
 //  void leftRightScale( EpetraVector const &vecLeft,
 //                       EpetraVector const &vecRight );
-//
-//  /**
-//   * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
-//   *
-//   * \param row globalIndex of the row to be cleared.
-//   * \param diagValue (Optional) set diagonal element to desired value.
-//   *
-//   */
-//  void clearRow( globalIndex const row,
-//                 real64 const diagValue = 0 );
-//
+
+  /**
+   * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
+   *
+   * \param row globalIndex of the row to be cleared.
+   * \param diagValue (Optional) set diagonal element to desired value.
+   *
+   */
+  void clearRow( globalIndex const row,
+                 real64 const diagValue = 0 );
+
   //@}
 
   //! @name Accessors Methods
@@ -512,10 +512,10 @@ public:
    */
   real64 normFrobenius() const;
 
-//  /**
-//   * @brief Returns true is the matrix has been assembled, false if not.
-//   */
-//  bool isAssembled() const;
+  /**
+   * @brief Returns true is the matrix has been assembled, false if not.
+   */
+  bool isAssembled() const;
   //@}
 
 //  //! @name I/O Methods

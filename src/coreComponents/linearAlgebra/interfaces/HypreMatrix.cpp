@@ -662,19 +662,29 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
 #endif
   hypre_IJMatrixPrintLevel(ijmatrix) = 0;
 
-  hypre_IJMatrixGlobalFirstRow( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix ) );
-  hypre_IJMatrixGlobalFirstCol( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstColDiag( parCSRMatrix ) );
+  array1d<HYPRE_Int> info( 2 );
+  if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( ijmatrix ) ) == 0 )
+  {
+    info(0) = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
+    info(1) = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
+  }
+  MpiWrapper::bcast( info.data(), 2, 0, hypre_IJMatrixComm( ijmatrix ) );
+  hypre_IJMatrixGlobalFirstRow( ijmatrix ) = info(0);
+  hypre_IJMatrixGlobalFirstCol( ijmatrix ) = info(1);
+
+//  hypre_IJMatrixGlobalFirstRow( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix ) );
+//  hypre_IJMatrixGlobalFirstCol( ijmatrix ) = MpiWrapper::Min( hypre_ParCSRMatrixFirstColDiag( parCSRMatrix ) );
 
   hypre_IJMatrixGlobalNumRows( ijmatrix ) = hypre_ParCSRMatrixGlobalNumRows( parCSRMatrix );
   hypre_IJMatrixGlobalNumCols( ijmatrix ) = hypre_ParCSRMatrixGlobalNumCols( parCSRMatrix );
 
+  // Set row partitioning
   if( hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) )
   {
     hypre_IJMatrixRowPartitioning( ijmatrix ) = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
   }
   else
   {
-    // Define row partitioning
     HYPRE_Int *row_partitioning;
     HYPRE_Int *row_starts = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
 #ifdef HYPRE_NO_GLOBAL_PARTITION
@@ -688,13 +698,13 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
     hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
   }
 
+  // Set column partitioning
   if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
   {
     hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
   }
   else
   {
-    // Define col partitioning
     HYPRE_Int *col_partitioning;
     HYPRE_Int *col_starts = hypre_ParCSRMatrixColStarts( parCSRMatrix );
 #ifdef HYPRE_NO_GLOBAL_PARTITION
@@ -838,59 +848,83 @@ void HypreMatrix::leftScale( HypreVector const &vec )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 void HypreMatrix::getRowCopy( globalIndex globalRow,
-                              array1d<globalIndex> & colIndices,
-                              array1d<real64> & values) const
-{
-	GEOS_ASSERT_MSG(  m_is_pattern_fixed == true,
-			          "matrix sparsity pattern not created" );
-    GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
-                     globalRow < this->iupper(),
-					 std::string("Row ") +
-					 std::to_string(globalRow) +
-                     std::string(" not on processor ") +
-					 std::to_string( MpiWrapper::Comm_rank( hypre_IJMatrixComm(m_ij_mat) ) ) );
+                              array1d<globalIndex> &colIndices,
+                              array1d<real64> &values ) const
+                              {
+  GEOS_ASSERT_MSG( m_is_pattern_fixed == true,
+                   "matrix sparsity pattern not created" );
+  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+                   globalRow < this->iupper(),
+                   std::string("Row ") +
+                   std::to_string(globalRow) +
+                   std::string(" not on processor ") +
+                   std::to_string( MpiWrapper::Comm_rank( hypre_IJMatrixComm(m_ij_mat) ) ) );
 
-    HYPRE_Int n_entries;
-    HYPRE_IJMatrixGetRowCounts( m_ij_mat,
-			                    1,
-								toHYPRE_Int(&globalRow),
-			                    &n_entries );
+  HYPRE_Int n_entries;
+  HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                              1,
+                              toHYPRE_Int( &globalRow ),
+                              &n_entries );
 
 //	localIndex length = integer_conversion<localIndex>(n_entries);
 
-	values.resize(n_entries);
-	colIndices.resize(n_entries);
-	hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-	                              -1,
-	    						  &n_entries,
-		                          toHYPRE_Int(&globalRow),
-		         				  toHYPRE_Int(colIndices.data()),
-								  values.data() );
+  values.resize( n_entries );
+  colIndices.resize( n_entries );
+  hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                 -1,
+                                 &n_entries,
+                                 toHYPRE_Int( &globalRow ),
+                                 toHYPRE_Int( colIndices.data() ),
+                                 values.data() );
 }
-//
-//
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Clear row
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Clear the row.  By default the diagonal value will be set
-//// to zero, but the user can pass a desired diagValue.
-//
-//void EpetraMatrix::clearRow( globalIndex const globalRow,
-//                             real64 const diagValue )
-//{
-//  double *values = nullptr;
-//  int length;
-//
-//  int err = m_matrix->ExtractGlobalRowView( globalRow, length, values );
-//  GEOS_ERROR_IF(err != 0, "getRowView failed. This often happens if the requested global row is not local to this processor, or if close() hasn't been called.");
-//
-//  for(int j=0; j<length; ++j)
-//    values[j] = 0.0;
-//
-//  set(globalRow,globalRow,diagValue);
-//}
-//
-//
+
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear row
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Clear the row.  By default the diagonal value will be set
+// to zero, but the user can pass a desired diagValue.
+
+void HypreMatrix::clearRow( globalIndex const globalRow,
+                            real64 const diagValue )
+{
+  GEOS_ASSERT_MSG( m_is_pattern_fixed,
+                   std::string("HypreMatrix, sparsity pattern must be fixed") );
+  GEOS_ASSERT_MSG( !m_is_ready_to_use,
+                   std::string("HypreMatrix, matrix must be opened") );
+  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+                   globalRow < this->iupper(),
+                   std::string("HypreMatrix, it is not possible to clear") +
+                   std::string("rows on other processors") );
+
+  // Get local row index
+  HYPRE_Int localRow = integer_conversion<HYPRE_Int>(globalRow - this->ilower());
+
+  // Clear row in diagonal block
+  hypre_CSRMatrix * prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int *       IA       = hypre_CSRMatrixI( prt_CSR );
+  double *          ptr_data = hypre_CSRMatrixData( prt_CSR );
+
+  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  {
+    ptr_data[j] = 0.0;
+  }
+
+  // Clear row in off-diagonal block
+  prt_CSR  = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  IA       = hypre_CSRMatrixI( prt_CSR );
+  ptr_data = hypre_CSRMatrixData( prt_CSR );
+
+  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  {
+    ptr_data[j] = 0.0;
+  }
+
+  // Set diagonal value
+  this->set(globalRow,globalRow,diagValue);
+}
+
+
 // ---------------------------------------------------------
 //  Accessors
 // ---------------------------------------------------------
@@ -1040,14 +1074,14 @@ real64 HypreMatrix::normFrobenius() const
   return static_cast<real64>( normFrob );
 }
 
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Is-assembled.
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Boolean indicator. True = matrix assembled and ready to be used.
-//bool EpetraMatrix::isAssembled() const
-//{
-//  return assembled;
-//}
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Is-assembled.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Boolean indicator. True = matrix assembled and ready to be used.
+bool HypreMatrix::isAssembled() const
+{
+  return m_is_pattern_fixed;
+}
 
 }// end geosx namespace
 
