@@ -118,9 +118,9 @@ ProblemManager::ProblemManager( const std::string& name,
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
 
   // The function manager is handled separately
-  m_functionManager = NewFunctionManager::Instance();
+  m_functionManager = FunctionManager::Instance();
   // Mandatory groups that read from the xml
-  RegisterGroup<NewFunctionManager>( groupKeys.functionManager.Key(),
+  RegisterGroup<FunctionManager>( groupKeys.functionManager.Key(),
                                      m_functionManager,
                                      false );
 

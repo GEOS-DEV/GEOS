@@ -665,7 +665,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                                                    ParallelVector & rhs )
 {
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+  FunctionManager * const functionManager = FunctionManager::Instance();
 
   FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
   NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();

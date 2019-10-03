@@ -13,11 +13,11 @@
  */
 
 /**
- * @file NewFunctionManager.hpp
+ * @file FunctionManager.hpp
  */
 
-#ifndef NEWFUNCTIONMANAGER_HPP_
-#define NEWFUNCTIONMANAGER_HPP_
+#ifndef FUNCTIONMANAGER_HPP_
+#define FUNCTIONMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
@@ -27,19 +27,19 @@ namespace geosx
 
 
 
-class NewFunctionManager : public dataRepository::Group
+class FunctionManager : public dataRepository::Group
 {
 public:
-  NewFunctionManager( const std::string& name,
+  FunctionManager( const std::string& name,
                       dataRepository::Group * const parent );
-  virtual ~NewFunctionManager() override;
+  virtual ~FunctionManager() override;
 
-  static NewFunctionManager * Instance()
+  static FunctionManager * Instance()
   {
-    static NewFunctionManager * theFunctionManager = nullptr;
+    static FunctionManager * theFunctionManager = nullptr;
     if (theFunctionManager == nullptr)
     {
-      theFunctionManager = new NewFunctionManager("Functions", nullptr); 
+      theFunctionManager = new FunctionManager("Functions", nullptr); 
     }
     return theFunctionManager;
   }
@@ -49,7 +49,7 @@ public:
     delete Instance();
   }
 
-  static string CatalogName() { return "NewFunctionManager"; }
+  static string CatalogName() { return "FunctionManager"; }
   virtual Group * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 
   /// This function is used to expand any catalogs in the data structure
@@ -60,4 +60,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* NEWFUNCTIONMANAGER_HPP_ */
+#endif /* FUNCTIONMANAGER_HPP_ */
