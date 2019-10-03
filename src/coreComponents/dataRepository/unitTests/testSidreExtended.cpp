@@ -12,16 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
-
-
-#include <mpi.h>
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "Logger.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
+#include <gtest/gtest.h>
 
 namespace geosx
 {
@@ -519,14 +518,18 @@ TEST( testSidreExtended, testSidreExtended )
 
 int main( int argc, char * argv[] )
 {
-  MPI_Init( &argc, &argv );
+  geosx::MpiWrapper::Init( &argc, &argv );
+#ifdef GEOSX_USE_MPI
   logger::InitializeLogger( MPI_COMM_WORLD );
+#else
+  logger::InitializeLogger();
+#endif
 
   int result = 0;
   testing::InitGoogleTest( &argc, argv );
   result = RUN_ALL_TESTS();
 
   logger::FinalizeLogger();
-  MPI_Finalize();
+  geosx::MpiWrapper::Finalize();
   return result;
 }
