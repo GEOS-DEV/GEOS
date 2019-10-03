@@ -18,7 +18,7 @@ set(managers_headers
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
     Functions/CompositeFunction.hpp
-    Functions/NewFunctionManager.hpp
+    Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
@@ -51,7 +51,7 @@ set(managers_sources
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
     Functions/CompositeFunction.cpp
-    Functions/NewFunctionManager.cpp
+    Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp

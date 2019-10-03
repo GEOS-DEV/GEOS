@@ -13,10 +13,10 @@
  */
 
 /**
- * @file NewFunctionManager.cpp
+ * @file FunctionManager.cpp
  */
 
-#include "NewFunctionManager.hpp"
+#include "FunctionManager.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
@@ -28,20 +28,20 @@ namespace geosx
 using namespace dataRepository;
 
 
-NewFunctionManager::NewFunctionManager( const std::string& name,
+FunctionManager::FunctionManager( const std::string& name,
                                         Group * const parent ):
   Group( name, parent )
 {
   setInputFlags(InputFlags::OPTIONAL);
 }
 
-NewFunctionManager::~NewFunctionManager()
+FunctionManager::~FunctionManager()
 {
   // TODO Auto-generated destructor stub
 }
 
 
-Group * NewFunctionManager::CreateChild( string const & functionCatalogKey,
+Group * FunctionManager::CreateChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
   GEOS_LOG_RANK_0("   " << functionCatalogKey << ": " << functionName);
@@ -50,7 +50,7 @@ Group * NewFunctionManager::CreateChild( string const & functionCatalogKey,
 }
 
 
-void NewFunctionManager::ExpandObjectCatalogs()
+void FunctionManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FunctionBase here
   for (auto& catalogIter: FunctionBase::GetCatalog())
