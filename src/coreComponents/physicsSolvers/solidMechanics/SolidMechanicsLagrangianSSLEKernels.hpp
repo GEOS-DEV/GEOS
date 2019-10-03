@@ -248,10 +248,6 @@ struct ExplicitKernel
   {
    GEOSX_MARK_FUNCTION;
 
-#ifndef __CUDACC__
-#define __CUDACC__
-#endif
-
 #if defined(__CUDACC__)
     #define NUM_THREAD_PER_BLOCK 128
     using KERNEL_POLICY = RAJA::cuda_exec< NUM_THREAD_PER_BLOCK >;
@@ -265,9 +261,9 @@ struct ExplicitKernel
 
 
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+                                   GEOSX_DEVICE_LAMBDA ( localIndex const index )
     {
-      localIndex const k = elementList[ i ];
+      localIndex const k = elementList[ index ];
 
 #define USE_SHMEM
 #if defined(USE_SHMEM) && defined(__CUDACC__)
@@ -303,11 +299,6 @@ struct ExplicitKernel
                                                             X,
                                                             dNdX_data );
 
-//        printf( "dNdX \n" );
-//        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-//        {
-//          printf( "%6.4f, %6.4f, %6.4f\n", dNdX_data[a][0],dNdX_data[a][1],dNdX_data[a][2] );
-//        }
 
 #define ULOCAL
 #ifdef ULOCAL
@@ -351,15 +342,13 @@ struct ExplicitKernel
           stress[0] += ( DNDX(k,q,b,1)*U(1,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,0)*U(0,b)*(Lame2G);
           stress[1] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,2)*U(2,b) )*Lame + DNDX(k,q,b,1)*U(1,b)*(Lame2G);
           stress[2] += ( DNDX(k,q,b,0)*U(0,b) + DNDX(k,q,b,1)*U(1,b) )*Lame + DNDX(k,q,b,2)*U(2,b)*(Lame2G);
-          stress[3] += ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) )*G;
-          stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) )*G;
-          stress[5] += ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) )*G;
+          stress[3] += ( DNDX(k,q,b,2)*U(1,b) + DNDX(k,q,b,1)*U(2,b) );
+          stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) );
+          stress[5] += ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) );
         }
-//        stress[3] *= G;
-//        stress[4] *= G;
-//        stress[5] *= G;
-
-//        printf( "%6.4f, %6.4f, %6.4f, %6.4f, %6.4f, %6.4f\n", stress[0], stress[1], stress[2], stress[3], stress[4], stress[5] );
+        stress[3] *= G;
+        stress[4] *= G;
+        stress[5] *= G;
 
         for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
         {
@@ -368,13 +357,13 @@ struct ExplicitKernel
           F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] ) * detJ_k_q;
         }
 
-//#define UPDATE_STRESS
+#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
         constitutive.m_meanStress[k][q] = ( stress[0] + stress[1] + stress[2] ) / 3.0;
-        real64 * const devStress = constitutive.m_deviatorStress[k][q].Data();
-        devStress[0] = stress[0];
-        devStress[2] = stress[1];
-        devStress[5] = stress[2];
+        real64 * GEOSX_RESTRICT const devStress = constitutive.m_deviatorStress[k][q].Data();
+        devStress[0] = stress[0] - constitutive.m_meanStress[k][q];
+        devStress[2] = stress[1] - constitutive.m_meanStress[k][q];
+        devStress[5] = stress[2] - constitutive.m_meanStress[k][q];
         devStress[4] = stress[3];
         devStress[3] = stress[4];
         devStress[1] = stress[5];

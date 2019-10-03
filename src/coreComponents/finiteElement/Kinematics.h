@@ -97,7 +97,7 @@ void CalculateGradients( R2Tensor & Gradient0,
                          R2Tensor & Gradient1,
                          R1Tensor const * restrict const var0,
                          R1Tensor const * restrict const var1,
-                         real64 const (&dNdX)[3][8] )
+                         real64 const (&dNdX)[8][3] )
 {
   Gradient0 = 0;
   Gradient1 = 0;
@@ -108,30 +108,30 @@ void CalculateGradients( R2Tensor & Gradient0,
   {
     real64 const * const restrict v0 = var0[a].Data();
     real64 const * const restrict v1 = var1[a].Data();
-    g0[0] += v0[0]*dNdX[0][a];
-    g0[1] += v0[0]*dNdX[1][a];
-    g0[2] += v0[0]*dNdX[2][a];
+    g0[0] += v0[0]*dNdX[a][0];
+    g0[1] += v0[0]*dNdX[a][1];
+    g0[2] += v0[0]*dNdX[a][2];
 
-    g0[3] += v0[1]*dNdX[0][a];
-    g0[4] += v0[1]*dNdX[1][a];
-    g0[5] += v0[1]*dNdX[2][a];
+    g0[3] += v0[1]*dNdX[a][0];
+    g0[4] += v0[1]*dNdX[a][1];
+    g0[5] += v0[1]*dNdX[a][2];
 
-    g0[6] += v0[2]*dNdX[0][a];
-    g0[7] += v0[2]*dNdX[1][a];
-    g0[8] += v0[2]*dNdX[2][a];
+    g0[6] += v0[2]*dNdX[a][0];
+    g0[7] += v0[2]*dNdX[a][1];
+    g0[8] += v0[2]*dNdX[a][2];
 
 
-    g1[0] += v1[0]*dNdX[0][a];
-    g1[1] += v1[0]*dNdX[1][a];
-    g1[2] += v1[0]*dNdX[2][a];
+    g1[0] += v1[0]*dNdX[a][0];
+    g1[1] += v1[0]*dNdX[a][1];
+    g1[2] += v1[0]*dNdX[a][2];
 
-    g1[3] += v1[1]*dNdX[0][a];
-    g1[4] += v1[1]*dNdX[1][a];
-    g1[5] += v1[1]*dNdX[2][a];
+    g1[3] += v1[1]*dNdX[a][0];
+    g1[4] += v1[1]*dNdX[a][1];
+    g1[5] += v1[1]*dNdX[a][2];
 
-    g1[6] += v1[2]*dNdX[0][a];
-    g1[7] += v1[2]*dNdX[1][a];
-    g1[8] += v1[2]*dNdX[2][a];
+    g1[6] += v1[2]*dNdX[a][0];
+    g1[7] += v1[2]*dNdX[a][1];
+    g1[8] += v1[2]*dNdX[a][2];
   }
 }
 

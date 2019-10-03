@@ -117,7 +117,7 @@ template< int N >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Integrate( const R2SymTensor& fieldvar,
-                real64 const (&dNdX)[3][8],
+                real64 const (&dNdX)[8][3],
                 real64 const& detJ,
                 real64 const& detF,
                 const R2Tensor& fInv,
@@ -133,9 +133,9 @@ void Integrate( const R2SymTensor& fieldvar,
 
   for( int a=0 ; a<N ; ++a )  // loop through all shape functions in element
   {
-    result[a][0] -= ptrP[0] * dNdX[0][a] + ptrP[1] * dNdX[1][a] + ptrP[2] * dNdX[2][a];
-    result[a][1] -= ptrP[3] * dNdX[0][a] + ptrP[4] * dNdX[1][a] + ptrP[5] * dNdX[2][a];
-    result[a][2] -= ptrP[6] * dNdX[0][a] + ptrP[7] * dNdX[1][a] + ptrP[8] * dNdX[2][a];
+    result[a][0] -= ptrP[0] * dNdX[a][0] + ptrP[1] * dNdX[a][1] + ptrP[2] * dNdX[a][2];
+    result[a][1] -= ptrP[3] * dNdX[a][0] + ptrP[4] * dNdX[a][1] + ptrP[5] * dNdX[a][2];
+    result[a][2] -= ptrP[6] * dNdX[a][0] + ptrP[7] * dNdX[a][1] + ptrP[8] * dNdX[a][2];
   }
 }
 
@@ -265,16 +265,16 @@ struct ExplicitKernel
 
 
         real64 const detJ_k_q = 0;
-//        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
-//                                                            q,
-//                                                            elemsToNodes,
-//                                                            X,
-//                                                            dNdX_data );
+        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+                                                            q,
+                                                            elemsToNodes,
+                                                            X,
+                                                            dNdX_data );
 
 #define DETJ(k,q) detJ_k_q
 
         R2Tensor dUhatdX, dUdX;
-//        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
+        CalculateGradients<NUM_NODES_PER_ELEM>( dUhatdX, dUdX, v_local, u_local, DNDXKQ(k,q));
         dUhatdX *= dt;
 
         R2Tensor F,Ldt, fInv;
@@ -307,7 +307,7 @@ struct ExplicitKernel
         TotalStress= devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
 
-//        Integrate<NUM_NODES_PER_ELEM>( TotalStress, DNDXKQ(k,q), DETJ(k,q), detF, fInv, f_local );
+        Integrate<NUM_NODES_PER_ELEM>( TotalStress, DNDXKQ(k,q), DETJ(k,q), detF, fInv, f_local );
       }//quadrature loop
 
 

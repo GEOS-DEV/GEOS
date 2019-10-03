@@ -4,9 +4,9 @@ comproofs 7068.86 3535.79
 comp_roof_names 'FMA' 'No-FMA'
 
 # omit the following if only plotting roofs
-AI_HBM    1.29     4.69     40.4    5.29   23.0
-AI_L2     0.687    3.25      6.2    3.24    1.92
-AI_L1     0.989    2.33      5.4    1.99    1.65
-FLOPS   765.0   2183.7    3756.0 1874.6  3763.2
-labels 'fsle-pcsfd' 'fsle-ksfd' 'ssle-stress' 'ssle-stressup' 'ssle-shmem'
+AI_HBM    1.29           4.69        36.5        2.06
+AI_L2     0.687          3.25         1.83       1.05
+AI_L1     0.989          2.33         2.5        2.4
+FLOPS   765.0         2183.7       4106.0        912.8
+labels 'fsle-pcsfd' 'fsle-ksfd' 'ssle' 'ssle-stressup'
 
