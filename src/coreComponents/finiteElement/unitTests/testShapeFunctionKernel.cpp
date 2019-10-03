@@ -104,11 +104,11 @@ void testKernelDriver()
       for( localIndex q=0 ; q<8 ; ++q )
       {
         real64 dNdX_data[8][3];
-        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
-                                                            q,
-                                                            elemsToNodes,
-                                                            X,
-                                                            dNdX_data );
+//        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
+//                                                            q,
+//                                                            elemsToNodes,
+//                                                            X,
+//                                                            dNdX_data );
 
         for( localIndex a=0 ; a<8 ; ++a )
         {

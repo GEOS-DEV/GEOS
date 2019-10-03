@@ -129,6 +129,6 @@ ax.add_artist(leg1)
 plt.savefig(filename+'.png')
 plt.savefig(filename+'.eps')
 
-#plt.show()
+plt.show()
 
 

@@ -130,10 +130,11 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 shapeFunctionDerivatives( localIndex const k,
+  static real64 shapeFunctionDerivatives( localIndex const, //k,
                                           localIndex const q,
-                                          arrayView2d<localIndex const> const & elemsToNodes,
-                                          arrayView1d<R1Tensor const> const & X,
+                                          real64 (&X)[numNodes][3],
+//                                          arrayView2d<localIndex const> const & elemsToNodes,
+//                                          arrayView1d<R1Tensor const> const & X,
                                           real64 (&dNdX)[numNodes][3] )
   {
     real64 J[3][3] = {{0}};
@@ -225,39 +226,17 @@ public:
     for( localIndex a=0 ; a<numNodes ; ++a )
     {
       CALC_DNDXI(q,a);
-      localIndex const nib = elemsToNodes(k, a);
+//      localIndex const nib = elemsToNodes(k, a);
       for ( int i = 0; i < 3; ++i )
       {
         for ( int j = 0; j < 3; ++j )
         {
-          J[i][j] += X[nib][i] * DNDXI(q,a,j);
+          J[i][j] += X[a][i] * DNDXI(q,a,j);
         }
       }
     }
 
     real64 const invDetJ = inverse( J, &(dNdX[0][0]) );
-//    dNdX[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-//    dNdX[0][1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-//    dNdX[0][2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-//    dNdX[1][0] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-//    dNdX[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-//    dNdX[1][2] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-//    dNdX[2][0] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-//    dNdX[2][1] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-//    dNdX[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
-//
-//    real64 const invDetJ = 1.0 / ( J[0][0] * dNdX[0][0] + J[1][0] * dNdX[0][1] + J[2][0] * dNdX[0][2] );
-//
-//    printf( "invDetJ =  %6.4f\n", invDetJ );
-//
-//
-//    for( int i=0 ; i<3 ; ++i )
-//    {
-//      for( int j=0 ; j<3 ; ++j )
-//      {
-//        J[i][j] = dNdX[i][j] * invDetJ;
-//      }
-//    }
 
     for( localIndex a=0 ; a<numNodes ; ++a )
     {

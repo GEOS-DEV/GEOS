@@ -64,13 +64,10 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
   GEOSX_MARK_FUNCTION;
 
   RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+                                 GEOSX_DEVICE_LAMBDA ( localIndex const a )
   {
-    for (int j = 0; j < 3; ++j)
-    {
-      velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
-      acceleration[ i ][ j ] = 0;
-    } 
+    velocity[ a ].plus_cA( dt, acceleration[ a ] );
+    acceleration[ a ] = 0.0;
   });
 }
 
@@ -86,11 +83,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                                  GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     localIndex const a = indices[ i ];
-    for (int j = 0; j < 3; ++j)
-    {
-      acceleration[ a ][ j ] /= mass[ a ];
-      velocity[ a ][ j ] += dt * acceleration[ a ][ j ];
-    }
+    acceleration[ a ] /= mass[ a ];
+    velocity[ a ].plus_cA( dt, acceleration[ a ]);
   });
 }
 
@@ -104,11 +98,8 @@ inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
   RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
                                  GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
-    for (int j = 0; j < 3; ++j)
-    {
-      uhat[ i ][ j ] = velocity[ i ][ j ] * dt;
-      u[ i ][ j ] += uhat[ i ][ j ];
-    }
+    uhat[ i ].cA( dt, velocity[ i ] );
+    u[ i ] += uhat[ i ];
   });
 }
 
@@ -226,7 +217,7 @@ struct ExplicitKernel
           arrayView2d<localIndex const> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & ,
           arrayView2d<real64 const> const & ,
-          arrayView1d<R1Tensor const> const & X,
+          arrayView1d<R1Tensor const> const & ,//X,
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
@@ -252,6 +243,7 @@ struct ExplicitKernel
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
+      real64 X_local[8][3];
 
       CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
                                                       u, vel,
@@ -267,8 +259,7 @@ struct ExplicitKernel
         real64 const detJ_k_q = 0;
         FiniteElementShapeKernel::shapeFunctionDerivatives( k,
                                                             q,
-                                                            elemsToNodes,
-                                                            X,
+                                                            X_local,
                                                             dNdX_data );
 
 #define DETJ(k,q) detJ_k_q

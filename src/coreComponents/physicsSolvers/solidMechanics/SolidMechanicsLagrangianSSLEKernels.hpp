@@ -246,7 +246,7 @@ struct ExplicitKernel
           arrayView2d<R2SymTensor> const & ,
           real64 const dt )
   {
-   GEOSX_MARK_FUNCTION;
+    GEOSX_MARK_FUNCTION;
 
 #if defined(__CUDACC__)
     #define NUM_THREAD_PER_BLOCK 128
@@ -281,6 +281,31 @@ struct ExplicitKernel
       real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {{0}};
 #define F_LOCAL( a, i ) f_local[a][i]
 #endif
+
+#define ULOCAL
+#ifdef ULOCAL
+  #if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
+      __shared__ real64 uLocal[8][3][NUM_THREAD_PER_BLOCK];
+    #define U(i,b) uLocal[b][i][threadIdx.x]
+  #else
+      real64 uLocal[8][3];
+      real64 xLocal[8][3];
+    #define U(i,b) uLocal[b][i]
+    #define XLOCAL(i,b) xLocal[b][i]
+  #endif
+      for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+      {
+        localIndex const nib = elemsToNodes(k, a);
+        for( int i=0 ; i<3 ; ++i )
+        {
+          U(i,a) = u[nib][i];
+          XLOCAL(i,a) = X[nib][i];
+        }
+      }
+#else
+  #define U(i,b) u[nib][i]
+#endif
+
       real64 const G = constitutive.m_shearModulus[k];
       real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
       real64 const Lame2G = 2*G + Lame;
@@ -295,41 +320,8 @@ struct ExplicitKernel
         real64 const detJ_k_q =
         FiniteElementShapeKernel::shapeFunctionDerivatives( k,
                                                             q,
-                                                            elemsToNodes,
-                                                            X,
+                                                            xLocal,
                                                             dNdX_data );
-
-
-#define ULOCAL
-#ifdef ULOCAL
-  #if 0 && defined(USE_SHMEM) && defined(__CUDACC__)
-        __shared__ real64 uLocal[3][8][NUM_THREAD_PER_BLOCK];
-        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-        {
-          localIndex const nib = elemsToNodes(k, a);
-          for( int i=0 ; i<3 ; ++i )
-          {
-            uLocal[i][a][threadIdx.x] = u[nib][i];
-          }
-        }
-
-    #define U(i,b) uLocal[i][b][threadIdx.x]
-  #else
-          real64 uLocal[8][3];
-          for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-          {
-            localIndex const nib = elemsToNodes(k, a);
-            for( int i=0 ; i<3 ; ++i )
-            {
-              uLocal[a][i] = u[nib][i];
-            }
-          }
-    #define U(i,b) uLocal[b][i]
-  #endif
-#else
-  #define U(i,b) u[nib][i]
-#endif
-
 
 //        constitutive.m_deviatorStress[k][q] = 0;
 //        real64 * const stress = constitutive.m_deviatorStress[k][q].Data();
@@ -346,18 +338,7 @@ struct ExplicitKernel
           stress[4] += ( DNDX(k,q,b,2)*U(0,b) + DNDX(k,q,b,0)*U(2,b) );
           stress[5] += ( DNDX(k,q,b,1)*U(0,b) + DNDX(k,q,b,0)*U(1,b) );
         }
-        stress[3] *= G;
-        stress[4] *= G;
-        stress[5] *= G;
-
-        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
-        {
-          F_LOCAL(a,0) -= ( DNDX(k,q,a,0) * stress[0] + DNDX(k,q,a,2) * stress[4] + DNDX(k,q,a,1) * stress[5] ) * detJ_k_q;
-          F_LOCAL(a,1) -= ( DNDX(k,q,a,1) * stress[1] + DNDX(k,q,a,2) * stress[3] + DNDX(k,q,a,0) * stress[5] ) * detJ_k_q;
-          F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] ) * detJ_k_q;
-        }
-
-#define UPDATE_STRESS
+        //#define UPDATE_STRESS
 #if defined(UPDATE_STRESS)
         constitutive.m_meanStress[k][q] = ( stress[0] + stress[1] + stress[2] ) / 3.0;
         real64 * GEOSX_RESTRICT const devStress = constitutive.m_deviatorStress[k][q].Data();
@@ -368,6 +349,21 @@ struct ExplicitKernel
         devStress[3] = stress[4];
         devStress[1] = stress[5];
 #endif
+
+        stress[0] *= detJ_k_q;
+        stress[0] *= detJ_k_q;
+        stress[0] *= detJ_k_q;
+        stress[3] *= G * detJ_k_q;
+        stress[4] *= G * detJ_k_q;
+        stress[5] *= G * detJ_k_q;
+
+        for( localIndex a=0 ; a< NUM_NODES_PER_ELEM ; ++a )
+        {
+          F_LOCAL(a,0) -= ( DNDX(k,q,a,0) * stress[0] + DNDX(k,q,a,2) * stress[4] + DNDX(k,q,a,1) * stress[5] );
+          F_LOCAL(a,1) -= ( DNDX(k,q,a,1) * stress[1] + DNDX(k,q,a,2) * stress[3] + DNDX(k,q,a,0) * stress[5] );
+          F_LOCAL(a,2) -= ( DNDX(k,q,a,2) * stress[2] + DNDX(k,q,a,1) * stress[3] + DNDX(k,q,a,0) * stress[4] );
+        }
+
       }//quadrature loop
 
       #pragma unroll

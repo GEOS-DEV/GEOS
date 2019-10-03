@@ -111,6 +111,7 @@ public:
   TensorBaseT& operator*=( const realT& rhs );
 
   /// divide each entry in t_data by a realT
+  GEOSX_HOST_DEVICE
   TensorBaseT& operator/=( const realT& rhs );
 
   /// add another tensor
@@ -193,6 +194,7 @@ public:
 
 
   /// function to add the product of a scalar and tensor
+  GEOSX_HOST_DEVICE
   inline void plus_cA( const realT& c, const TensorBaseT< T_length >& A )
   {
     for (int i = 0 ; i < T_length ; ++i)
@@ -201,6 +203,7 @@ public:
   }
 
   /// function to take the product of a scalar and tensor
+  GEOSX_HOST_DEVICE
   inline void cA( const realT& c, const TensorBaseT< T_length >& A )
   {
     for (int i = 0 ; i < T_length ; ++i)
