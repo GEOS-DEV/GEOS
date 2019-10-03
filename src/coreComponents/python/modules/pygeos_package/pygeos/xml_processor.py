@@ -2,10 +2,15 @@ from lxml import etree as ElementTree
 from lxml.etree import XMLSyntaxError
 import re
 import os
-from . import unitManager, parameterHandler, symbolicMathRegexHandler, regexConfig
+from pygeos import regex_tools, unit_manager
 
 
-def mergeXMLNodes(existingNode, targetNode, level):
+# Create an instance of the regex managers
+unitManager = unit_manager.UnitManager()
+parameterHandler = regex_tools.DictRegexHandler()
+
+
+def merge_xml_nodes(existingNode, targetNode, level):
   # Copy attributes
   for tk in targetNode.attrib.keys():
     existingNode.set(tk, targetNode.get(tk))
@@ -26,19 +31,19 @@ def mergeXMLNodes(existingNode, targetNode, level):
 
       if (level == 0):
         insertCurrentLevel = False
-        mergeXMLNodes(matchingSubNodes[0], target, level + 1)
+        merge_xml_nodes(matchingSubNodes[0], target, level + 1)
 
       elif (targetName and (currentTag not in ['Nodeset'])):
         for match in matchingSubNodes:
           if (match.get('name') == targetName):
             insertCurrentLevel = False
-            mergeXMLNodes(match, target, level + 1)
+            merge_xml_nodes(match, target, level + 1)
 
     if (insertCurrentLevel):
       existingNode.insert(-1, target)
 
 
-def mergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
+def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
   # Expand the input path
   pwd = os.getcwd()
   includePath, fname = os.path.split(os.path.abspath(os.path.expanduser(fname)))
@@ -67,33 +72,39 @@ def mergeIncludedXMLFiles(root, fname, includeCount, maxInclude=100):
   # Recursively add the includes:
   for includeNode in includeRoot.findall('Included'):
     for f in includeNode.findall('File'):
-      mergeIncludedXMLFiles(root, f.get('name'), includeCount)
+      merge_included_xml_files(root, f.get('name'), includeCount)
 
   # Merge the results into the xml tree
-  mergeXMLNodes(root, includeRoot, 0)
+  merge_xml_nodes(root, includeRoot, 0)
   os.chdir(pwd)
 
 
-def applyRegexToNode(node):
+def apply_regex_to_node(node):
   for k in node.attrib.keys():
     value = node.get(k)
 
     # Parameter format:  $Parameter or $:Parameter
     ii = 0
     while ('$' in value):
-      value = re.sub(regexConfig.parameters, parameterHandler, value)
+      value = re.sub(regex_tools.patterns['parameters'],
+                     parameterHandler,
+                     value)
       ii += 1
       if (ii > 100):
         raise Exception('Reached maximum parameter expands (Node=%s, value=%s)' % (node.tag, value))
 
     # Unit format:       9.81[m**2/s] or 1.0 [bbl/day]
     if ('[' in value):
-      value = re.sub(regexConfig.units, unitManager.regexHandler, value)
+      value = re.sub(regex_tools.patterns['units'],
+                     unitManager.regexHandler,
+                     value)
 
-    # Symbolic format:   {1 + 2.34e5*2 * ...}
+    # Symbolic format:   `1 + 2.34e5*2 * ...`
     ii = 0
-    while ('{' in value):
-      value = re.sub(regexConfig.symbolic, symbolicMathRegexHandler, value)
+    while ('`' in value):
+      value = re.sub(regex_tools.patterns['symbolic'],
+                     regex_tools.SymbolicMathRegexHandler,
+                     value)
       ii += 1
       if (ii > 100):
         raise Exception('Reached maximum symbolic expands (Node=%s, value=%s)' % (node.tag, value))
@@ -101,10 +112,10 @@ def applyRegexToNode(node):
     node.set(k, value)
 
   for subNode in node.getchildren():
-    applyRegexToNode(subNode)
+    apply_regex_to_node(subNode)
 
 
-def generateRandomName(prefix='', suffix='.xml'):
+def generate_random_name(prefix='', suffix='.xml'):
   from hashlib import md5
   from time import time
   from os import getpid
@@ -113,7 +124,7 @@ def generateRandomName(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-def preprocessGEOSXML(inputFile, outputFile='', schema='', verbose=0):
+def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True, keep_includes=True):
 
   if verbose:
     print('\nReading input xml parameters and parsing symbolic math...')
@@ -137,7 +148,7 @@ def preprocessGEOSXML(inputFile, outputFile='', schema='', verbose=0):
   includeCount = 0
   for includeNode in root.findall('Included'):
     for f in includeNode.findall('File'):
-      mergeIncludedXMLFiles(root, f.get('name'), includeCount)
+      merge_included_xml_files(root, f.get('name'), includeCount)
   os.chdir(pwd)
 
   # Build the parameter map
@@ -148,11 +159,21 @@ def preprocessGEOSXML(inputFile, outputFile='', schema='', verbose=0):
   parameterHandler.target = Pmap
 
   # Process the xml
-  applyRegexToNode(root)
+  apply_regex_to_node(root)
+
+  # Comment out or remove the Parameter, Included nodes
+  for includeNode in root.findall('Included'):
+    if keep_includes:
+      root.insert(-1, ElementTree.Comment(ElementTree.tostring(includeNode)))
+    root.remove(includeNode)
+  for parameterNode in root.findall('Parameters'):
+    if keep_parameters:
+      root.insert(-1, ElementTree.Comment(ElementTree.tostring(parameterNode)))
+    root.remove(parameterNode)
 
   # Generate a random output name if not specified
   if not outputFile:
-    outputFile = generateRandomName(prefix='prep_')
+    outputFile = generate_random_name(prefix='prep_')
 
   # Write the output file
   tree.write(outputFile, pretty_print=True)
@@ -160,19 +181,19 @@ def preprocessGEOSXML(inputFile, outputFile='', schema='', verbose=0):
   # Check for un-matched special characters
   with open(outputFile, 'r') as ofile:
     for line in ofile:
-      if any([sc in line for sc in ['$', '[', ']', '{', '}']]):
+      if any([sc in line for sc in ['$', '[', ']', '`']]):
         raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
 
   if verbose:
     print('Preprocessed xml file stored in %s' % (outputFile))
 
   if schema:
-    validateXML(outputFile, schema, verbose)
+    validate_xml(outputFile, schema, verbose)
 
   return outputFile
 
 
-def validateXML(fname, schema, verbose):
+def validate_xml(fname, schema, verbose):
   if verbose:
     print('Validating the xml against the schema...')
   try:

@@ -2,14 +2,18 @@ import unittest
 import re
 import os
 import filecmp
-from . import preprocessGEOSXML, DictRegexHandler, unitManager, symbolicMathRegexHandler, regexConfig
-from . import __file__ as modPath
+from pygeos import regex_tools, unit_manager, xml_processor
+from pygeos.tests import generate_test_xml
+
+
+# Create an instance of the unit manager
+unitManager = unit_manager.UnitManager()
 
 
 class TestUnitManager(unittest.TestCase):
-
-  def setUp(self):
-    self.tol = 1e-6
+  @classmethod
+  def setUpClass(cls):
+    cls.tol = 1e-6
 
   def test_unit_dict(self):
     unitManager.buildUnits()
@@ -102,16 +106,14 @@ class TestUnitManager(unittest.TestCase):
 
 class TestParameterRegex(unittest.TestCase):
 
-  def setUp(self):
-    self.regexHandler = DictRegexHandler()
-    self.regexHandler.target['foo'] = '1.23'
-    self.regexHandler.target['bar'] = '4.56e7'
-
-  def tearDown(self):
-    del self.regexHandler
+  @classmethod
+  def setUpClass(cls):
+    cls.regexHandler = regex_tools.DictRegexHandler()
+    cls.regexHandler.target['foo'] = '1.23'
+    cls.regexHandler.target['bar'] = '4.56e7'
 
   def evaluateRegex(self, parameterInput, expectedValue):
-    result = re.sub(regexConfig.parameters, self.regexHandler, parameterInput)
+    result = re.sub(regex_tools.patterns['parameters'], self.regexHandler, parameterInput)
     self.assertEqual(result, expectedValue)
 
   def test_parameter_regex_a(self):
@@ -143,11 +145,12 @@ class TestParameterRegex(unittest.TestCase):
 
 class TestUnitsRegex(unittest.TestCase):
 
-  def setUp(self):
-    self.tol = 1e-6
+  @classmethod
+  def setUpClass(cls):
+    cls.tol = 1e-6
 
   def evaluateRegex(self, unitInput, expectedValue):
-    result = re.sub(regexConfig.units, unitManager.regexHandler, unitInput)
+    result = re.sub(regex_tools.patterns['units'], unitManager.regexHandler, unitInput)
     self.assertEqual(result, expectedValue)
 
   def test_units_regex_a(self):
@@ -160,10 +163,10 @@ class TestUnitsRegex(unittest.TestCase):
     self.evaluateRegex('1.234[m**2/s]*3.4', '1.234*3.4')
 
   def test_units_regex_d(self):
-    self.evaluateRegex('1.234[m**2/s] + 5.678[mm/s]', '1.234 + 0.005678')
+    self.evaluateRegex('1.234[m**2/s] + 5.678[mm/s]', '1.234 + 5.678e-3')
 
   def test_units_regex_e(self):
-    self.evaluateRegex('1.234 [m**2/s] + 5.678 [mm/s]', '1.234 + 0.005678')
+    self.evaluateRegex('1.234 [m**2/s] + 5.678 [mm/s]', '1.234 + 5.678e-3')
 
   def test_units_regex_f(self):
     self.evaluateRegex('(1.234[m**2/s])*5.678', '(1.234)*5.678')
@@ -171,93 +174,126 @@ class TestUnitsRegex(unittest.TestCase):
 
 class TestSymbolicRegex(unittest.TestCase):
 
-  def setUp(self):
-    self.tol = 1e-6
+  @classmethod
+  def setUpClass(cls):
+    cls.tol = 1e-6
 
   def evaluateRegex(self, symbolicInput, expectedValue):
-    result = re.sub(regexConfig.symbolic, symbolicMathRegexHandler, symbolicInput)
+    result = re.sub(regex_tools.patterns['symbolic'], regex_tools.SymbolicMathRegexHandler, symbolicInput)
     self.assertEqual(result, expectedValue)
 
   def test_symbolic_regex_a(self):
-    self.evaluateRegex('{1.234}', '1.234')
+    self.evaluateRegex('`1.234`', '1.234')
 
   def test_symbolic_regex_b(self):
-    self.evaluateRegex('{1.234*2.0}', '2.468')
+    self.evaluateRegex('`1.234*2.0`', '2.468')
 
   def test_symbolic_regex_c(self):
-    self.evaluateRegex('{10}', '10')
+    self.evaluateRegex('`10`', '1e1')
 
   def test_symbolic_regex_d(self):
-    self.evaluateRegex('{10*2}', '20')
+    self.evaluateRegex('`10*2`', '2e1')
 
   def test_symbolic_regex_e(self):
-    self.evaluateRegex('{1.0/2.0}', '0.5')
+    self.evaluateRegex('`1.0/2.0`', '5e-1')
 
   def test_symbolic_regex_f(self):
-    self.evaluateRegex('{2.0**2}', '4.0')
+    self.evaluateRegex('`2.0**2`', '4')
 
   def test_symbolic_regex_g(self):
-    self.evaluateRegex('{1.0 + 2.0**2}', '5.0')
+    self.evaluateRegex('`1.0 + 2.0**2`', '5')
 
   def test_symbolic_regex_h(self):
-    self.evaluateRegex('{(1.0 + 2.0)**2}', '9.0')
+    self.evaluateRegex('`(1.0 + 2.0)**2`', '9')
 
   def test_symbolic_regex_i(self):
-    self.evaluateRegex('{((1.0 + 2.0)**2)**(0.5)}', '3.0')
+    self.evaluateRegex('`((1.0 + 2.0)**2)**(0.5)`', '3')
 
   def test_symbolic_regex_j(self):
-    self.evaluateRegex('{(1.2e3)*2}', '2400.0')
+    self.evaluateRegex('`(1.2e3)*2`', '2.4e3')
 
   def test_symbolic_regex_k(self):
-    self.evaluateRegex('{1.2e3*2}', '2400.0')
+    self.evaluateRegex('`1.2e3*2`', '2.4e3')
 
   @unittest.expectedFailure
   def test_symbolic_regex_l(self):
-    self.evaluateRegex('{2.0^2}', '4.0')
+    self.evaluateRegex('`2.0^2`', '4')
 
   @unittest.expectedFailure
   def test_symbolic_regex_m(self):
-    self.evaluateRegex('{sqrt(4.0)}', '2.0')
+    self.evaluateRegex('`sqrt(4.0)`', '2')
 
 
 class TestXMLProcessor(unittest.TestCase):
-  def setUp(self):
-    self.modPath = os.path.dirname(os.path.abspath(modPath))
+  @classmethod
+  def setUpClass(cls):
+    # Create a directory to hold tests
+    cls.pwd = os.getcwd()
+    rand_name = xml_processor.generate_random_name(suffix='')[:10]
+    os.makedirs('./pygeos_tests_%s/included' % (rand_name), exist_ok=True)
+    os.chdir('./pygeos_tests_%s' % (rand_name))
+
+    # Generate tests
+    generate_test_xml.generate_test_xml_files('.')
+
+  @classmethod
+  def tearDownClass(cls):
+    os.chdir(cls.pwd)
 
   def diff_xml(self, source, target):
     self.assertTrue(filecmp.cmp(source, target))
-    os.remove(source)
+    # os.remove(source)
 
-  def test_basic_xml(self):
-    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/basic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_basic.xml')
+  def test_no_advanced_xml(self):
+    tmp = xml_processor.process('./no_advanced_features_input.xml',
+                                outputFile='./no_advanced_features_processed.xml',
+                                verbose=0,
+                                keep_parameters=False,
+                                keep_includes=False)
+    self.diff_xml(tmp, './no_advanced_features_target.xml')
+
+  def test_parameters_xml(self):
+    tmp = xml_processor.process('./parameters_input.xml',
+                                outputFile='./parameters_processed.xml',
+                                verbose=0,
+                                keep_parameters=False,
+                                keep_includes=False)
+    self.diff_xml(tmp, './parameters_target.xml')
 
   def test_includes_xml(self):
-    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/includes.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_includes.xml')
+    tmp = xml_processor.process('./included_input.xml',
+                                outputFile='./included_processed.xml',
+                                verbose=0,
+                                keep_parameters=False,
+                                keep_includes=False)
+    self.diff_xml(tmp, './included_target.xml')
 
   def test_symbolic_xml(self):
-    tmp = preprocessGEOSXML(self.modPath + '/tests/source_xml/symbolic.xml', verbose=0)
-    self.diff_xml(tmp, self.modPath + '/tests/target_xml/target_symbolic.xml')
+    tmp = xml_processor.process('./symbolic_parameters_input.xml',
+                                outputFile='./symbolic_parameters_processed.xml',
+                                verbose=0,
+                                keep_parameters=False,
+                                keep_includes=False)
+    self.diff_xml(tmp, './symbolic_parameters_target.xml')
 
 
-def runUnitTests():
-  print('\nRunning unit manager tests:')
+def run_unit_tests():
+  # Unit manager tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestUnitManager)
   unittest.TextTestRunner(verbosity=2).run(suite)
 
-  print('\nRunning parameter regex handler tests:')
+  # Parameter regex handler tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestParameterRegex)
   unittest.TextTestRunner(verbosity=2).run(suite)
 
-  print('\nRunning unit regex handler tests:')
+  # Regex handler tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestUnitsRegex)
   unittest.TextTestRunner(verbosity=2).run(suite)
 
-  print('\nRunning symbolic regex handler tests:')
+  # Symbolic regex handler tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestSymbolicRegex)
   unittest.TextTestRunner(verbosity=2).run(suite)
 
-  print('\nRunning xml processor tests:')
+  # xml processor tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestXMLProcessor)
   unittest.TextTestRunner(verbosity=2).run(suite)
