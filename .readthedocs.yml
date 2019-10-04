@@ -24,4 +24,7 @@ python:
 #    - requirements: docs/requirements.txt
     
 submodules:
-  exclude: all
+  include: 
+    - src/coreComponents/cxx-utilities
+    - integratedTests
+  recursive: true
