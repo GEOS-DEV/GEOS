@@ -16,8 +16,8 @@
  * @file TableFunction.hpp
  */
 
-#ifndef TABLEFUNCTION_HPP_
-#define TABLEFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -100,4 +100,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* TABLEFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_ */

@@ -16,8 +16,8 @@
  * @file GeosxTraits.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_
+#ifndef GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
+#define GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_
 
 #include <type_traits>
 #include "common/DataTypes.hpp"
@@ -154,4 +154,4 @@ using add_const_if_t = typename add_const_if<T, COND>::type;
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CODINGUTILITIES_GEOSXTRAITS_HPP_ */
+#endif /* GEOSX_CODINGUTILITIES_GEOSXTRAITS_HPP_ */

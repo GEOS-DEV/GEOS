@@ -16,8 +16,8 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_
+#ifndef GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
+#define GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -492,4 +492,4 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
 
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */

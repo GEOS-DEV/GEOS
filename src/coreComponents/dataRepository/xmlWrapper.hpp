@@ -16,8 +16,8 @@
  * @file xmlWrapper.hpp
  */
 
-#ifndef _FILEIO_XMLWRAPPER_HPP_
-#define _FILEIO_XMLWRAPPER_HPP_
+#ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
+#define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 
 #include <algorithm>
 #include <sstream>
@@ -214,4 +214,4 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 
 } /* namespace geosx */
 
-#endif /*_FILEIO_XMLWRAPPER_HPP_ */
+#endif /*GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_ */

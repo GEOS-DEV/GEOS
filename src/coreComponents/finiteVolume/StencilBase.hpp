@@ -16,8 +16,8 @@
  * @file CellElementStencilTPFA.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_FINITEVOLUME_STENCILBASE_HPP_
-#define SRC_CORECOMPONENTS_FINITEVOLUME_STENCILBASE_HPP_
+#ifndef GEOSX_FINITEVOLUME_STENCILBASE_HPP_
+#define GEOSX_FINITEVOLUME_STENCILBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -151,4 +151,4 @@ bool StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::zero( localIndex const connectorInd
 }
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_FINITEVOLUME_STENCILBASE_HPP_ */
+#endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */

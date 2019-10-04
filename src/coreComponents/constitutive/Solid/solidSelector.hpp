@@ -17,8 +17,8 @@
  * @file solidSelector.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 
 #include "LinearElasticIsotropic.hpp"
 
@@ -48,4 +48,4 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
 }
 }
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_ */
