@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef FILEIO_BLUEPRINT_BLUEPRINT_HPP
-#define FILEIO_BLUEPRINT_BLUEPRINT_HPP
+#ifndef GEOSX_FILEIO_BLUEPRINT_BLUEPRINT_HPP
+#define GEOSX_FILEIO_BLUEPRINT_BLUEPRINT_HPP
 
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -70,4 +70,4 @@ private:
 
 } /* end namespace geosx */
 
-#endif /* FILEIO_BLUEPRINT_BLUEPRINT_HPP */
+#endif /* GEOSX_FILEIO_BLUEPRINT_BLUEPRINT_HPP */

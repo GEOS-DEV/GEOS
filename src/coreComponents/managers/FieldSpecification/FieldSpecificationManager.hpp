@@ -16,8 +16,8 @@
  * @file BoundaryConditionManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
+#define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "managers/FieldSpecification/FieldSpecificationBase.hpp"
@@ -210,7 +210,7 @@ public:
           string processedPath;
           for( localIndex pathLevel=0 ; pathLevel<targetPathLength ; ++pathLevel )
           {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( dataRepository::keys::elementRegionsGroup );
+            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
             if( elemRegionSubGroup!=nullptr )
             {
               targetGroup = elemRegionSubGroup;
@@ -231,7 +231,7 @@ public:
 //              targetGroup = targetGroup->GetGroup( ElementRegion::viewKeyStruct::elementSubRegions );
 //            }
 
-            if( targetPath[pathLevel] == dataRepository::keys::elementRegionsGroup ||
+            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup ||
                 targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
             {
               continue;
@@ -344,6 +344,4 @@ ApplyFieldValue( real64 const time,
 
 } /* namespace geosx */
 
-#endif /*
-          SRC_COMPONENTS_CORE_SRC_BOUNDARYCONDITIONS_BOUNDARYCONDITIONMANAGER_HPP_
-        */
+#endif /* GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_ */
