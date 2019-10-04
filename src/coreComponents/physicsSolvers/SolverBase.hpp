@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SOLVERBASE_HPP_
-#define SOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 
 
@@ -587,4 +587,4 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 } /* namespace ANST */
 
 
-#endif /* SOLVERBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

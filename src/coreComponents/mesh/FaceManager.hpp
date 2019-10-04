@@ -16,8 +16,8 @@
  * @file FaceManager.hpp
  */
 
-#ifndef FACEMANAGER_H_
-#define FACEMANAGER_H_
+#ifndef GEOSX_MESH_FACEMANAGER_HPP_
+#define GEOSX_MESH_FACEMANAGER_HPP_
 
 #include "ToElementRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"

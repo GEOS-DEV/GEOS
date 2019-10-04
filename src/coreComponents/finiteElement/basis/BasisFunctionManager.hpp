@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
+#ifndef GEOSX_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
+#define GEOSX_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/xmlWrapper.hpp"
@@ -47,4 +47,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_BASISFUNCTIONMANAGER_HPP_ */

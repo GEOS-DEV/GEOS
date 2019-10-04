@@ -13,8 +13,8 @@
  */
 
 
-#ifndef MESH_BUFFEROPS_H_
-#define MESH_BUFFEROPS_H_
+#ifndef GEOSX_MESH_BUFFEROPS_HPP_
+#define GEOSX_MESH_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
 
