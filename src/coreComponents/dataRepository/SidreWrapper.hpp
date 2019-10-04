@@ -16,8 +16,8 @@
  * @file SidreWrapper.hpp
  */
 
-#ifndef COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
-#define COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_
+#ifndef GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_
+#define GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_
 
 #include "common/GeosxConfig.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -56,4 +56,4 @@ private:
 } /* namespace dataRepository */
 } /* namespace geosx */
 
-#endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_SIDREWRAPPER_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_ */

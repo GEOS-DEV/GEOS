@@ -16,8 +16,8 @@
  * @file CompositeFunction.hpp
  */
 
-#ifndef COMPOSITEFUNCTION_HPP_
-#define COMPOSITEFUNCTION_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
@@ -86,4 +86,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* COMPOSITEFUNCTION_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_COMPOSITEFUNCTION_HPP_ */

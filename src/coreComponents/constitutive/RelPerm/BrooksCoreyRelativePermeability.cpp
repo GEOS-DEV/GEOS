@@ -29,11 +29,12 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
-
+//START_SPHINX_INCLUDE_00
 BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string const & name,
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
+
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
     setApplyDefaultValue(0.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -152,6 +153,7 @@ void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> co
            m_satScale );
 }
 
+//START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyRelativePermeability, std::string const &, Group * const )
 } // namespace constitutive
 

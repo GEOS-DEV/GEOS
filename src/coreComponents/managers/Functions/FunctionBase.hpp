@@ -16,8 +16,8 @@
  * @file FunctionBase.hpp
  */
 
-#ifndef FUNCTIONBASE_HPP_
-#define FUNCTIONBASE_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -172,4 +172,4 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
 }
 } /* namespace geosx */
 
-#endif /* FUNCTIONBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_FUNCTIONBASE_HPP_ */

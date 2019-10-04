@@ -16,8 +16,8 @@
  * @file CompositionalMultiphaseFlow.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
@@ -31,10 +31,6 @@ namespace dataRepository
 {
 class Group;
 
-namespace keys
-{
-string const compositionalMultiphaseFlow = "CompositionalMultiphaseFlow";
-}
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -45,6 +41,7 @@ namespace constitutive
 class MultiFluidBase;
 }
 
+//START_SPHINX_INCLUDE_00
 /**
  * @class CompositionalMultiphaseFlow
  *
@@ -82,11 +79,12 @@ public:
    */
   virtual ~CompositionalMultiphaseFlow() override = default;
 
+ //START_SPHINX_INCLUDE_01
   /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @brief name of the solver in the object catalog
+   * @return string that contains the catalog name to generate a new CompositionalMultiphaseFlow solver object through the object catalog.
    */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
+  static string CatalogName() { return "CompositionalMultiphaseFlow"; }
 
   virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
@@ -536,4 +534,4 @@ private:
 } // namespace geosx
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
