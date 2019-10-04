@@ -778,14 +778,9 @@ void ProblemManager::GenerateMesh()
 
       });
 
-      // The mesh and all the maps exist from now on
-
       elemManager->GenerateAggregates( faceManager, nodeManager );
 
       elemManager->GenerateWells( meshManager, meshLevel );
-
-      elemManager->GenerateEmbeddedSurfaces( meshManager, meshLevel);
-
     }
   }
 }

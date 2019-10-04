@@ -19,6 +19,8 @@
                 newtonTol="1.0e-8"
                 maxIterNewton="8" />
         </SinglePhaseFlow>
+        <EmbeddedSurfaceGenerator
+            name="SurfaceGenerator"/>
     </Solvers>
 
     <Mesh>
@@ -32,11 +34,6 @@
             ny="{10}"
             nz="{1}"
             cellBlockNames="{cb1}" />
-       <InternalEmbeddedSurface
-            name="FracturePlane1"
-            unitNormalVector = "0.0,1.0,0.0"
-            planeCenter="0.0,0.0,0.0"
-            meshName="mesh1"/>
     </Mesh>
 
     <Geometry>
@@ -107,7 +104,7 @@
 
         <EmbeddedSurfaceRegion
             name="Fracture"
-            materialList="{water, rock}" />
+            materialList="{water}" />
 
     </ElementRegions>
 

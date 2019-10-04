@@ -176,39 +176,46 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   aggregateSubRegion->CreateFromFineToCoarseMap(nbAggregates, partsGEOS, aggregateBarycenters);
 }
 
-void CellElementRegion::GenerateEmbeddedSurfaces( FaceManager              const * const GEOSX_UNUSED_ARG(faceManager),
-                                                  EdgeManager              const * const GEOSX_UNUSED_ARG(edgeManager),
-                                                  NodeManager              const * const GEOSX_UNUSED_ARG(nodeManager),
+void CellElementRegion::GenerateEmbeddedSurfaces( FaceManager              const * const faceManager,
+                                                  EdgeManager              const * const edgeManager,
+                                                  NodeManager              const * const nodeManager,
                                                   EmbeddedSurfaceGenerator const * const GEOSX_UNUSED_ARG(embeddedSurface))
 {
   /*
-    * Here we need to find intersections between the fracture plane and the background mesh.
-    */
-   /* 1. Finding intersections
-    *   - Loop over the cell elements in each subregion and for each edge check if
-    *     nvect * dist changes sign between the two different nodes. If it does
-    *     it means the plane intersects the face. It is going to be reduntant coz
-    *     blocks share edges.
-    */
+   * Here we need to find intersections between the fracture plane and the background mesh.
+   *
+   * 1. Finding intersections
+   *   - Loop over the cell elements in each subregion and for each edge check if
+   *     <nvect, dist> changes sign between the two different nodes. If it does
+   *     it means the plane intersects the face. It is going to be redundant coz
+   *     blocks share edges.
+   */
 
   // Get nodes coordinates.
-  //array1d<R1Tensor>   const & nodesCoordinates   = nodeManager->referencePosition();
-  // InterObjectRelation< ArrayOfArrays< localIndex > >  const & faceToEdges     = faceManager->edgeList();
-  // array2d<localIndex> const & edgeToNodes        = edgeManager->nodeList();
+  array1d<R1Tensor>   const & nodesCoordinates   = nodeManager->referencePosition();
+  InterObjectRelation< ArrayOfArrays< localIndex > >  const & faceToEdges     = faceManager->edgeList();
+  array2d<localIndex> const & edgeToNodes        = edgeManager->nodeList();
+  globalIndex faceIndex, edgeIndex;
 
   // Loop over the subregions
   this->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const elementSubRegion ) -> void
   {
-    //FixedOneToManyRelation const & cellToFaces = elementSubRegion->faceList();
+    FixedOneToManyRelation const & cellToFaces = elementSubRegion->faceList();
     for(localIndex cellIndex = 0; cellIndex < elementSubRegion->size() ; cellIndex++)
         {
-          std::cout << "cell number: " << cellIndex << "   ";
-          // std::cout << cellToFaces.size(1);
-          std::cout << "number  of Edges: " << elementSubRegion->numEdgesPerElement() << std::endl;
-          for (localIndex ke = 0; ke < elementSubRegion->numEdgesPerElement(); ke++)
+          for (localIndex kf = 0; kf < elementSubRegion->numFacesPerElement(); kf++)
             {
-            // loop over the edges of each element
-             std::cout << ke;
+              // loop over the edges of each element
+              faceIndex = cellToFaces[cellIndex][kf];
+              for (localIndex ke = 0; ke < 4; ke++)
+              {
+                std::cout << "Edge: " << ke << std::endl;
+                edgeIndex = faceToEdges[faceIndex][ke];
+                std::cout << "node 1: " << nodesCoordinates[edgeToNodes[edgeIndex][0]]<< " ";
+                std::cout << "node 2: " << nodesCoordinates[edgeToNodes[edgeIndex][1]] << std::endl;
+                bool b = true;
+                if (b) {break;}
+              }
             }
         }
 

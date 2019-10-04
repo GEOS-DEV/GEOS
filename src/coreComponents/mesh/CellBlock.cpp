@@ -300,23 +300,31 @@ void CellBlock::SetElementType( string const & elementType)
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
+    // Hexahedron
     this->numNodesPerElement() = 8;
     this->numFacesPerElement() = 6;
+    this->numEdgesPerElement() = 12;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
+    // Tetrahedron
     this->numNodesPerElement() = 4;
     this->numFacesPerElement() = 4;
+    this->numEdgesPerElement() = 6;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
+    // Triangular prism
     this->numNodesPerElement() = 8;
     this->numFacesPerElement() = 5;
+    this->numEdgesPerElement() = 9;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
+    // Pyramid
     this->numNodesPerElement() = 5;
     this->numFacesPerElement() = 5;
+    this->numEdgesPerElement() = 8;
   }
 
 }

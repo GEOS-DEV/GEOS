@@ -194,18 +194,15 @@ void ElementRegionManager::GenerateEmbeddedSurfaces( MeshManager * const meshMan
   FaceManager * const faceManager = meshLevel->getFaceManager();
   EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-  for( localIndex a=0; a <meshManager->GetSubGroups().size() ; ++a )
+  // Loop over all the embedded surfaces (planes) to generate Embeddes surface elements for each one of them.
+  meshManager->forSubGroups<EmbeddedSurfaceGenerator>([&](EmbeddedSurfaceGenerator * const embeddedSurface)->void
   {
-  EmbeddedSurfaceGenerator * EmbeddedSurface = meshManager->GetGroup<EmbeddedSurfaceGenerator>(a);
-  // is this how I get only the groups of type EmbeddedSurfaceGenerator ?
-
   // Loop over all the element regions
   this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
     {
-      elemRegion->GenerateEmbeddedSurfaces( faceManager, edgeManager, nodeManager, EmbeddedSurface);
+      elemRegion->GenerateEmbeddedSurfaces( faceManager, edgeManager, nodeManager, embeddedSurface);
     });
-  }
-
+  });
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
