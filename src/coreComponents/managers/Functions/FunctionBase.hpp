@@ -77,7 +77,7 @@ public:
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
   // Setup catalog
-  using CatalogInterface = cxx_utilities::CatalogInterface< FunctionBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
