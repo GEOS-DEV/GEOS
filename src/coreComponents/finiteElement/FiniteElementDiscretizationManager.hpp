@@ -16,20 +16,13 @@
  * @file FiniteElementSpaceManager.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
+#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
+#define GEOSX_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-}
-}
-
 
 class FiniteElementDiscretizationManager : public dataRepository::Group
 {
@@ -47,4 +40,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTSPACEMANAGER_HPP_ */

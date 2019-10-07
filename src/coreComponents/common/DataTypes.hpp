@@ -18,8 +18,8 @@
  * use of the data types.
  */
 
-#ifndef DATATYPES_HPP
-#define DATATYPES_HPP
+#ifndef GEOSX_COMMON_DATATYPES_HPP
+#define GEOSX_COMMON_DATATYPES_HPP
 
 #include <cassert>
 #include <cmath>
@@ -1282,4 +1282,4 @@ public:
 
 
 
-#endif /* COMPONENTS_CORE_SRC_DATAREPOSITORY_DATATYPES_HPP_ */
+#endif /* GEOSX_COMMON_DATATYPES_HPP */

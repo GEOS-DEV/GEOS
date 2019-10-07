@@ -16,8 +16,8 @@
  * @file DomainPartition.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_
+#ifndef GEOSX_MANAGERS_DOMAINPARTITION_HPP_
+#define GEOSX_MANAGERS_DOMAINPARTITION_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
@@ -143,4 +143,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_DOMAINPARTITION_HPP_ */
+#endif /* GEOSX_MANAGERS_DOMAINPARTITION_HPP_ */

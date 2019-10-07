@@ -16,8 +16,8 @@
  * @file CellBlock.hpp
  */
 
-#ifndef CELLBLOCK_HPP_
-#define CELLBLOCK_HPP_
+#ifndef GEOSX_MESH_CELLBLOCK_HPP_
+#define GEOSX_MESH_CELLBLOCK_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
@@ -267,4 +267,4 @@ private:
 
 
 
-#endif /* ELEMENTOBJECTT_H_ */
+#endif /* CELLBLOCK_HPP_ */
