@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FILEIO_UTILS_UTILS_HPP
-#define SRC_COMPONENTS_CORE_SRC_FILEIO_UTILS_UTILS_HPP
+#ifndef GEOSX_FILEIO_UTILS_UTILS_HPP
+#define GEOSX_FILEIO_UTILS_UTILS_HPP
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -91,4 +91,4 @@ inline bool regexMatch(const std::string & str, REGEX regex)
 
 } /* end namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FILEIO_UTILS_UTILS_HPP */
+#endif /* GEOSX_FILEIO_UTILS_UTILS_HPP */

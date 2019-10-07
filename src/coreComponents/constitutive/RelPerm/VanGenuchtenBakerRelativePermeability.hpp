@@ -16,22 +16,13 @@
   * @file VanGenuchtenBakerRelativePermeability.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#define GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/RelPerm/RelativePermeabilityBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const vanGenuchtenBakerRelativePermeability = "VanGenuchtenBakerRelativePermeability";
-}
-}
-
 namespace constitutive
 {
 
@@ -47,7 +38,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::vanGenuchtenBakerRelativePermeability; }
+  static std::string CatalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -410,4 +401,4 @@ VanGenuchtenBakerRelativePermeability::InterpolateTwoPhaseRelPerms( real64 const
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOSX_CONSTITUTIVE_VANGENUCHTENBAKERRELATIVEPERMEABILITY_HPP
