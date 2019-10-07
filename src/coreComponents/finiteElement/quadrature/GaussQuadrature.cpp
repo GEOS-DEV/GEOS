@@ -138,15 +138,11 @@ void GaussQuadrature<dim>::PostProcessInput()
   }
 }
 
-/*
- * Explicit instantiations.
- */
-
 namespace
 {
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, Group * const > catEntry_GaussQuadrature1;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, Group * const > catEntry_GaussQuadrature2;
-cxx_utilities::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, Group * const > catEntry_GaussQuadrature3;
+dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<1>, std::string const &, Group * const > catEntry_GaussQuadrature1;
+dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<2>, std::string const &, Group * const > catEntry_GaussQuadrature2;
+dataRepository::CatalogEntryConstructor<QuadratureBase, GaussQuadrature<3>, std::string const &, Group * const > catEntry_GaussQuadrature3;
 }
 
 }
