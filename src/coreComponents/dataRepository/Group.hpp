@@ -20,7 +20,7 @@
 #define GEOSX_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 #include "MappedVector.hpp"
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
@@ -121,7 +121,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< Group, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< Group, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
   ///@}
 

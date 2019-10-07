@@ -20,12 +20,11 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/Group.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
+#include "dataRepository/xmlWrapper.hpp"
 
 #include <cassert>
-
-#include "dataRepository/Group.hpp"
-#include "dataRepository/xmlWrapper.hpp"
 
 /*
  * Pure virtual base class representing a generic quadrature object.
@@ -46,7 +45,7 @@ public:
   // Catalog name interface
   static string CatalogName() { return "QuadratureBase"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< QuadratureBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< QuadratureBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;
