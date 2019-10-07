@@ -32,7 +32,7 @@ ElementRegionManager::ElementRegionManager(  string const & name, Group * const 
   ObjectManagerBase(name,parent)
 {
   setInputFlags(InputFlags::OPTIONAL);
-  this->RegisterGroup<Group>(keys::elementRegionsGroup);
+  this->RegisterGroup<Group>(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -69,7 +69,7 @@ Group * ElementRegionManager::CreateChild( string const & childKey, string const
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName(childKey)),
                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog");
   GEOS_LOG_RANK_0("Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog.");
-  Group * const elementRegions = this->GetGroup(keys::elementRegionsGroup);
+  Group * const elementRegions = this->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup);
   return elementRegions->RegisterGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 

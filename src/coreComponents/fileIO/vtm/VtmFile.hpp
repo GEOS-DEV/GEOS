@@ -16,8 +16,8 @@
  * @file PvtuFile.hpp
  */
 
-#ifndef VTUPFILE_HPP_
-#define VTUPFILE_HPP_
+#ifndef GEOSX_FILEIO_VTM_VTUPFILE_HPP_
+#define GEOSX_FILEIO_VTM_VTUPFILE_HPP_
 
 #include "pugixml.hpp"
 #include "common/DataTypes.hpp"
@@ -483,4 +483,4 @@ class VtmFile {
 };
 
 }
-#endif /*PvtuFile.hpp*/
+#endif /*GEOSX_FILEIO_VTM_VTUPFILE_HPP_*/

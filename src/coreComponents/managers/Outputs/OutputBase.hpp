@@ -15,8 +15,8 @@
 /**
  * @file OutputBase.hpp
  */
-#ifndef SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_
+#ifndef GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_
+#define GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
@@ -71,4 +71,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_OUTPUTBASE_HPP_ */
+#endif /* GEOSX_MANAGERS_OUTPUTS_OUTPUTBASE_HPP_ */

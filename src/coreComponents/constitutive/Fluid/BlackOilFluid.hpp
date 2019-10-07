@@ -16,8 +16,8 @@
   * @file BlackOilFluid.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BLACKOILFLUID_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BLACKOILFLUID_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
 #include "constitutive/Fluid/MultiFluidPVTPackageWrapper.hpp"
 
@@ -28,13 +28,6 @@ class BlackOilMultiphaseSystem;
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const blackOilFluid = "BlackOilFluid";
-}
-}
 
 namespace constitutive
 {
@@ -59,7 +52,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::blackOilFluid; }
+  static std::string CatalogName() { return "BlackOilFluid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -103,4 +96,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BLACKOILFLUID_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_

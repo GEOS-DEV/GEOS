@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
-#define SRC_CORECOMPONENTS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#ifndef GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
+#define GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -47,4 +47,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */
+#endif /* GEOSX_FILEIO_COUPLING_CHOMBOCOUPLER_HPP_ */

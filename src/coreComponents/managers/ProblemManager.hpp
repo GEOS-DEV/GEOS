@@ -16,8 +16,8 @@
  * @file ProblemManager.hpp
  */
 
-#ifndef COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
-#define COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
+#define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #ifdef GEOSX_USE_PYTHON
 // Note: the python header must be included first to avoid conflicting
@@ -36,15 +36,6 @@ namespace geosx
 {
 
 class PhysicsSolverManager;
-namespace dataRepository
-{
-namespace keys
-{
-string const eventManager="EventManager";
-}
-}
-
-
 class DomainPartition;
 
 class ProblemManager : public ObjectManagerBase
@@ -148,6 +139,7 @@ public:
 
   struct groupKeysStruct
   {
+//    constexpr auto eventManager="EventManager";
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
     dataRepository::GroupKey domain    = { "domain" };
@@ -185,4 +177,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* COMPONENTS_CORE_SRC_MANAGERS_PROBLEMMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_PROBLEMMANAGER_HPP_ */

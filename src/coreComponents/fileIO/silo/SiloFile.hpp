@@ -16,8 +16,8 @@
  * @file SiloFile.hpp
  */
 
-#ifndef SILOFILE_HPP_
-#define SILOFILE_HPP_
+#ifndef GEOSX_FILEIO_SILO_SILOFILE_HPP_
+#define GEOSX_FILEIO_SILO_SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -1352,4 +1352,4 @@ void SiloFile::WriteMultiXXXX( const DBObjectType type,
 
 
 }
-#endif /* SILOFILE_H_ */
+#endif /* GEOSX_FILEIO_SILO_SILOFILE_HPP_ */

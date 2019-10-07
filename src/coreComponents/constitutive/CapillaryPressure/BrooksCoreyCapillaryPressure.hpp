@@ -16,21 +16,13 @@
   * @file BrooksCoreyCapillaryPressure.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BROOKSCOREYCAPILLARYPRESSURE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BROOKSCOREYCAPILLARYPRESSURE_HPP
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_BROOKSCOREYCAPILLARYPRESSURE_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_BROOKSCOREYCAPILLARYPRESSURE_HPP
 
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const brooksCoreyCapillaryPressure = "BrooksCoreyCapillaryPressure";
-}
-}
 
 namespace constitutive
 {
@@ -48,7 +40,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::brooksCoreyCapillaryPressure; }
+  static std::string CatalogName() { return "BrooksCoreyCapillaryPressure"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -217,5 +209,5 @@ BrooksCoreyCapillaryPressure::EvaluateBrooksCoreyFunction( real64 const scaledWe
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_BROOKSCOREYCAPILLARYPRESSURE_HPP
+#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_BROOKSCOREYCAPILLARYPRESSURE_HPP
 
