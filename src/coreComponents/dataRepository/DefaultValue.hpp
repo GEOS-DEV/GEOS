@@ -13,11 +13,11 @@
  */
 
 /**
- * @file WrapperDefaultValueHelper.hpp
+ * @file DefaultValue.hpp
  */
 
-#ifndef CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
-#define CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
+#define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "SFINAE_Macros.hpp"
@@ -130,4 +130,4 @@ using DefaultValue = wrapperDefaultValue::Helper< T >;
 }
 
 
-#endif /* CORECOMPONENTS_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_ */
