@@ -108,9 +108,9 @@ its definition:
 
 CatalogEntryConstructor
 ^^^^^^^^^^^^^^^^^^^^^^^
-The ``CatalogEntryConstructor`` is a helper class that has a sole purpose of creating a new
-``CatalogEntry`` and adding it to the catalog.
-When a new ``CatalogEntryConstructor`` is created, a new ``CatlogEntry``entry is created and
+The ``CatalogEntryConstructor`` is a helper class that has a sole purpose of creating a 
+new ``CatalogEntry`` and adding it to the catalog.
+When a new ``CatalogEntryConstructor`` is created, a new ``CatalogEntry`` entry is created and
 inserted into the catalog automatically.
 
 
