@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -21,39 +17,42 @@
  */
 
 #include "EmbeddedSurfaceGenerator.hpp"
+
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "managers/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
-#include "mesh/EmbeddedSurfaceSubRegion.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
+#include "managers/NumericalMethodsManager.hpp"
+#include "mesh/FaceElementRegion.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
+
+
+#ifdef USE_GEOSX_PTP
+#include "GEOSX_PTP/ParallelTopologyChange.hpp"
+#endif
+
+#include <set>
 
 namespace geosx
 {
-using namespace dataRepository;
-using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using namespace dataRepository;
+  using namespace constitutive;
 
-EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
-  m_meshName(""),
-  m_numElems(0),
-  m_numNodesPerElem(4),
-  m_numNodes(0),
-  m_nDims(3)
+EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string& name,
+                                    Group * const parent ):
+  SolverBase( name, parent ),
+  m_solidMaterialName("")
 {
-  registerWrapper(keys::nVector, &m_nVector, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("normal unit vector to the fracture plane.");
+  registerWrapper(viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0)->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("Name of the solid material used in solid mechanic solver");
 
-  registerWrapper(keys::planeCenter, &m_planeCenter, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("coordinates of the center of the plane defining the surface.");
-
-  registerWrapper(keys::meshName, &m_meshName, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("");
+  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+      setInputFlag(dataRepository::InputFlags::OPTIONAL)->
+      setApplyDefaultValue("FractureRegion");
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
@@ -61,33 +60,115 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void EmbeddedSurfaceGenerator::PostProcessInput()
+void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
-  // GEOS_ERROR_IF( m_nVector.empty(),
-     //              "Cannot be empy " << getName() );
+  for( auto & mesh : MeshBodies->GetSubGroups() )
+  {
+    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
 
-  //GEOS_ERROR_IF( m_planeCenter.empty(),
-    //               "Cannot be empty " << getName() );
+    NodeManager * const nodeManager = meshLevel->getNodeManager();
+    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-  GEOS_ERROR_IF( m_meshName.empty(),
-                 "meshName cannot be empty " << getName() );
- }
+    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of node.");
 
-Group * EmbeddedSurfaceGenerator::CreateChild( string const & GEOSX_UNUSED_ARG( childKey ),
-                                               string const & GEOSX_UNUSED_ARG( childName ) )
-{
-  // does not have any children (at least for now)
-  return nullptr;
+    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Child index of node.");
+
+    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Parent index of the edge.");
+
+    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
+      setApplyDefaultValue(-1)->
+      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+      setDescription("Child index of the edge.");
+  }
 }
 
-void EmbeddedSurfaceGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG ( problemManager ) )
 {
-  // won't do anything at this point coz the mesh does not exist yet.
+
+}
+
+void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
+{
+  std::cout << "2. InitializePostInitialConditions_PreSubGroups \n";
 }
 
 
-REGISTER_CATALOG_ENTRY( MeshGeneratorBase,
+void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain0 ) )
+{
+  std::cout << "postRestartInitialization \n";
+}
+
+
+real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n),
+                                             real64 const & GEOSX_UNUSED_ARG( dt ),
+                                             const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                             DomainPartition * const  domain )
+{
+  real64 rval = 0;
+
+  // hardcoding the plane
+  R1Tensor planeCenter  = {0, 0, 0};
+  R1Tensor normalVector = {0, 1, 0};
+
+  // Get meshLevel
+  Group * const meshBodies = domain->getMeshBodies();
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+
+  // Get managers
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  // NodeManager * const nodeManager = meshLevel->getNodeManager();
+  // EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  array1d<R1Tensor> & faceCenter  = faceManager->faceCenter();
+
+  // Initialize variables
+  globalIndex faceIndex;
+  real64 sumScalarProduct;
+  integer numEmbeddedSurfaceElem = 0;
+  R1Tensor distVec;
+
+  // 1. Count the number of embedded surface elemetns
+  elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
+      {
+        Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+        subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
+        {
+          FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+          for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
+          {
+            sumScalarProduct = 0;
+            for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
+            {
+              faceIndex = cellToFaces[cellIndex][kf];
+              distVec  = planeCenter;
+              distVec -= faceCenter[faceIndex];
+              sumScalarProduct *= Dot(distVec, normalVector);
+            }
+            if (sumScalarProduct < 0)
+            {
+              numEmbeddedSurfaceElem += 1;
+            }
+          }
+        });
+
+      });
+  std::cout << "number of embedded surface elements: " << numEmbeddedSurfaceElem;
+  return rval;
+}
+
+
+REGISTER_CATALOG_ENTRY( SolverBase,
                         EmbeddedSurfaceGenerator,
-                        std::string const &, dataRepository::Group* const )
+                        std::string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

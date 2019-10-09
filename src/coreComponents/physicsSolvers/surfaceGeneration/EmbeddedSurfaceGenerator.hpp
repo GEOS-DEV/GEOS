@@ -19,149 +19,107 @@
 /**
  * @file EmbeddedSurfaceGenerator.hpp
  */
-#ifndef SRC_COMPONENTS_MESHUTILITIES_EMBEDDEDSURFACEGENERATOR_HPP_
-#define SRC_COMPONENTS_MESHUTILITIES_EMBEDDEDSURFACEGENERATOR_HPP_
 
+#ifndef SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
+#define SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
-
-#include "dataRepository/Group.hpp"
-#include "meshUtilities/MeshGeneratorBase.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
 
-namespace dataRepository
+struct ModifiedObjectLists
 {
-namespace keys
-{
-string const nVector          = "unitNormalVector";
-string const planeCenter      = "planeCenter";
-string const meshName         = "meshName";
-}
-}
+  std::set<localIndex> newNodes;
+  std::set<localIndex> newEdges;
+  std::set<localIndex> newFaces;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+};
+
+
+class SpatialPartition;
+
+class NodeManager;
+class EdgeManager;
+class FaceManager;
+class ExternalFaceManager;
+class ElementRegionManager;
+class ElementRegionBase;
 
 /**
- * @class EmbeddedSurfaceGenerator
+ * @class SurfaceGenerator
  *
- * This class processes the data of a single fracture plane (surface) from the XML file
+ * This solver manages the mesh topology splitting methods.
+ *
  */
-class EmbeddedSurfaceGenerator : public MeshGeneratorBase
+class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-
   EmbeddedSurfaceGenerator( const std::string& name,
-                         Group * const parent );
+                    Group * const parent );
+  ~EmbeddedSurfaceGenerator() override;
+
+
+  static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
+
+  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
   /**
-   * @brief default destructor
+   * @defgroup Solver Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
    */
-  virtual ~EmbeddedSurfaceGenerator() override;
+  /**@{*/
 
-  /**
-   * @return the name of this type in the catalog
-   */
-  static string CatalogName() { return "InternalEmbeddedSurface"; }
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const GEOSX_UNUSED_ARG( eventCounter ),
+                        real64 const  GEOSX_UNUSED_ARG( eventProgress ),
+                        dataRepository::Group * domain ) override
+  {
+    SolverStep( time_n, dt, cycleNumber, domain->group_cast<DomainPartition*>());
+  }
 
-  /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual real64 SolverStep( real64 const& time_n,
+                             real64 const& dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
-  virtual Group * CreateChild( string const & childKey,
-                                      string const & childName ) override;
-
-  /**
-   * @brief main function of this class: processes the well input and creates the globla well topology
-   * @param domain the physical domain object
-   */
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
-
-  /// not implemented
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
-                                             int const * GEOSX_UNUSED_ARG( index ),
-                                             int const & GEOSX_UNUSED_ARG( iEle ),
-                                             int * GEOSX_UNUSED_ARG( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_ARG( size )) override {}
-
-  /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
-
-  // getters for element data
-
-  /**
-   * @brief Getter for the global number of well elements
-   * @return the global number of elements
-   */
-  globalIndex GetNumElements() const { return m_numElems; }
-
-  /**
-   * @brief Getter for the global indices of the well nodes nodes connected to each element
-   * @return list providing the global index of the well nodes for each well element
-   */
-  array2d<globalIndex const> const & GetElemToNodesMap() const { return m_elemToNodesMap; }
-
-  /**
-   * @brief Getter for the volume of the well elements
-   * @return list of volumes of the well elements
-   */
-  array1d<real64 const> const & GetElemVolume() const { return m_elemVolume; }
-
-
-  // getters for node data
-
-  /**
-   * @brief Getter for the global number of well nodes
-   * @return the global number of nodes
-   */
-  globalIndex GetNumNodes() const { return m_numNodes; }
-
-  /**
-   * @brief Getter for the physical location of the centers of well elements
-   * @return list of center locations of the well elements
-   */
-  array1d<R1Tensor const> const & GetNodeCoords() const { return m_nodeCoords; }
+  /**@}*/
 
 protected:
 
-  void PostProcessInput() override final;
+  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+  virtual void postRestartInitialization( Group * const domain ) override final;
 
 private:
 
-  // XML Input
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto fractureRegionNameString = "fractureRegion";
+    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
+    constexpr static auto rockToughnessString = "rockToughness";
+  }; //SurfaceGenViewKeys;
 
-  /// normal vector
-  R1Tensor      m_nVector;
 
-  // location (point determining where the plane is)
-  R1Tensor      m_planeCenter;
 
-  string        m_meshName;
 
-  /// Global number of
-  globalIndex          m_numElems;
-
-  /// Connectivity between elements and nodes
-  array2d<globalIndex> m_elemToNodesMap;
-
-  /// Volume of well elements
-  array1d<real64> m_elemVolume;
-
-  // Surface node data
-
-  /// Number of nodes per
-  globalIndex          m_numNodesPerElem;
-
-  /// Global number of  nodes
-  globalIndex          m_numNodes;
-
-  /// Physical location of the nodes
-  array1d<R1Tensor>    m_nodeCoords;
-
-  // Auxiliary data
-
-  // Number of physical dimensions
-  const int m_nDims;
-
+private:
+  // solid solver name
+  string m_solidMaterialName;
+  // fracture region name
+  string m_fractureRegionName;
 };
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_MESHUTILITIES_EMBEDDEDSURFACEGENERATOR_HPP_ */
+#endif /* SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */

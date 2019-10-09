@@ -186,25 +186,6 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
   nodeManager->SetMaxGlobalIndex();
 }
 
-void ElementRegionManager::GenerateEmbeddedSurfaces( MeshManager * const meshManager,
-                                                     MeshLevel   * const meshLevel )
-{
-  // Get face and node managers
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-
-  // Loop over all the embedded surfaces (planes) to generate Embeddes surface elements for each one of them.
-  meshManager->forSubGroups<EmbeddedSurfaceGenerator>([&](EmbeddedSurfaceGenerator * const embeddedSurface)->void
-  {
-  // Loop over all the element regions
-  this->forElementRegions<CellElementRegion>([&](CellElementRegion * const elemRegion)->void
-    {
-      elemRegion->GenerateEmbeddedSurfaces( faceManager, edgeManager, nodeManager, embeddedSurface);
-    });
-  });
-}
-
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
               ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const
 {

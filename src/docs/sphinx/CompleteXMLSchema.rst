@@ -147,6 +147,13 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
+.. _XML_EmbeddedSurfaceGenerator:
+
+Element: EmbeddedSurfaceGenerator
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
+
+
 .. _XML_Events:
 
 Element: Events
@@ -257,13 +264,6 @@ Element: Hydrofracture
 Element: Included
 =================
 .. include:: ../../coreComponents/fileIO/schema/docs/Included.rst
-
-
-.. _XML_InternalEmbeddedSurface:
-
-Element: InternalEmbeddedSurface
-================================
-.. include:: ../../coreComponents/fileIO/schema/docs/InternalEmbeddedSurface.rst
 
 
 .. _XML_InternalMesh:
@@ -711,6 +711,13 @@ Datastructure: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
 
 
+.. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
+
+Datastructure: EmbeddedSurfaceGenerator
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
+
+
 .. _DATASTRUCTURE_Events:
 
 Datastructure: Events
@@ -828,13 +835,6 @@ Datastructure: Hydrofracture
 Datastructure: Included
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Included_other.rst
-
-
-.. _DATASTRUCTURE_InternalEmbeddedSurface:
-
-Datastructure: InternalEmbeddedSurface
-======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/InternalEmbeddedSurface_other.rst
 
 
 .. _DATASTRUCTURE_InternalMesh:

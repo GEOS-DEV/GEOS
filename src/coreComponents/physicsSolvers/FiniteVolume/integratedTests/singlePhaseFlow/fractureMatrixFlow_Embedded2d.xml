@@ -20,7 +20,10 @@
                 maxIterNewton="8" />
         </SinglePhaseFlow>
         <EmbeddedSurfaceGenerator
-            name="SurfaceGenerator"/>
+            name="SurfaceGenerator"
+            solidMaterialName="rock"
+            targetRegions="{Region2, Fracture}"
+            fractureRegion="Fracture"/>
     </Solvers>
 
     <Mesh>

@@ -25,7 +25,6 @@
 #define CORECOMPONENTS_MESH_EMBEDDEDSURFACEREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "meshUtilities/EmbeddedSurfaceGenerator.hpp"
 
 namespace geosx
 {
