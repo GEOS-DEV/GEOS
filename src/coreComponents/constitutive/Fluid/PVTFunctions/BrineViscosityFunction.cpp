@@ -48,7 +48,7 @@ void BrineViscosityFunction::MakeCoef(string_array const & inputPara)
 
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
-  real64 m;
+  real64 m = -1.0;
 
   GEOS_ERROR_IF(inputPara.size() < 3, "Invalid BrineViscosity input!"); 
 
