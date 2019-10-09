@@ -23,6 +23,8 @@
 
 using namespace cxx_utilities;
 using namespace geosx;
+
+//START_SPHINX_BASE
 class Base
 {
 public:
@@ -43,9 +45,11 @@ public:
     return catalog;
   }
 
-  virtual std::string getName() = 0;
+  virtual std::string getCatalogName() = 0;
 };
+//STOP_SPHINX
 
+//START_SPHINX_DERIVED1
 class Derived1 : public Base
 {
 public:
@@ -60,11 +64,13 @@ public:
     GEOS_LOG( "calling Derived1 destructor" );
   }
   static std::string CatalogName() { return "derived1"; }
-  std::string getName() { return CatalogName(); }
+  std::string getCatalogName() { return CatalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived1, int &, double const & )
+//STOP_SPHINX
 
+//START_SPHINX_DERIVED2
 class Derived2 : public Base
 {
 public:
@@ -79,21 +85,32 @@ public:
     GEOS_LOG( "calling Derived2 destructor" );
   }
   static std::string CatalogName() { return "derived2"; }
-  std::string getName() { return CatalogName(); }
+  std::string getCatalogName() { return CatalogName(); }
 
 };
 REGISTER_CATALOG_ENTRY( Base, Derived2, int &, double const & )
+//STOP_SPHINX
 
-
+//START_SPHINX_TEST
 TEST( testObjectCatalog, testRegistration )
 {
   GEOS_LOG( "EXECUTING MAIN" );
   int junk = 1;
   double junk2 = 3.14;
-  std::unique_ptr< Base > derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2 );
-  std::unique_ptr< Base > derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk2 );
 
-  assert( derived1->getName() == Derived1::CatalogName() );
-  assert( derived2->getName() == Derived2::CatalogName() );
+  // allocate a new Derived1 object
+  std::unique_ptr< Base >
+  derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2 );
+
+  // allocate a new Derived2 object
+  std::unique_ptr< Base >
+  derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk2 );
+
+  EXPECT_STREQ( derived1->getCatalogName().c_str(),
+                Derived1::CatalogName().c_str() );
+
+  EXPECT_STREQ( derived2->getCatalogName().c_str(),
+                Derived2::CatalogName().c_str() );
   GEOS_LOG( "EXITING MAIN" );
 }
+//STOP_SPHINX

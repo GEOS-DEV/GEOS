@@ -46,9 +46,13 @@ The components/classes of the data structure that a developer will require some 
 
 * **RestartFlags** A strongly typed enum that specifies if the contents of a Wrapper should be written 
                    to and/or read from restart files.
+                   
+* **ObjectCatalog** A statically initialized factory used for creating new objects in the dataRepository.
+                    See the documentation on :ref:`ObjectCatalog` for more details.
 
 
 .. toctree::
    :maxdepth: 1
 
    Group
+   ObjectCatalog
