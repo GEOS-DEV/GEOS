@@ -2,7 +2,7 @@
 
 
 ObjectCatalog
-============================
+=============
 
 The "ObjectCatalog" is a collection of classes that acts as a statically initialized factory. 
 It functions in a similar manner to a classic 
