@@ -16,6 +16,13 @@
 
 /**
  * @file ObjectCatalog.hpp
+ * The ObjectCatalog acts as a statically initialized factory. It functions in
+ * a similar manner to classic virtual factory method, except that it is no
+ * maintained list of derived objects that is required to create new objects.
+ * Instead, the ``ObjectCatalog`` creates a "catalog" of derived objects using
+ * a ``std::unordered_map``.
+ * This ``std::unordered_map`` is then statically initialized through the declaration
+ * of a
  */
 
 #include "Logger.hpp"
@@ -35,20 +42,10 @@
 #define BASEHOLDSCATALOG 1
 #endif
 
-/**
- * namespace to hold the object catalog classes
- */
 namespace geosx
 {
 namespace dataRepository
 {
-
-
-#if ( __cplusplus < 201402L )
-
-#else
-
-#endif
 
 /**
  *  This class provides the base class/interface for the catalog value objects
@@ -57,13 +54,17 @@ namespace dataRepository
  *  @tparam ARGS  variadic template pack to hold the parameters needed for the
  * constructor of the BASETYPE
  */
+//START_SPHINX_0
 template< typename BASETYPE, typename ... ARGS >
 class CatalogInterface
 {
 public:
   /// This is the type that will be used for the catalog. The catalog is
-  // actually instantiated in the BASETYPE
-  typedef std::unordered_map< std::string, std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
+  /// actually instantiated in the BASETYPE
+  //START_SPHINX_1
+  typedef std::unordered_map< std::string,
+                              std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
+  //STOP_SPHINX
 
   /// default constructor.
   CatalogInterface()
@@ -122,10 +123,12 @@ public:
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
+  //START_SPHINX_2
   static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName, ARGS... args )
   {
     return GetCatalog().at( objectTypeName ).get()->Allocate( args ... );
   }
+  //STOP_SPHINX
 
   template< typename TYPE >
   static TYPE & catalog_cast( BASETYPE & object )
@@ -151,6 +154,7 @@ public:
  * @tparam BASETYPE this is the base class that TYPE derives from
  * @tparam ARGS constructor arguments
  */
+//START_SPHINX_3
 template< typename BASETYPE, typename TYPE, typename ... ARGS >
 class CatalogEntry : public CatalogInterface< BASETYPE, ARGS... >
 {
@@ -200,6 +204,7 @@ public:
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
+  //START_SPHINX_4
   virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const override final
   {
 #if OBJECTCATALOGVERBOSE > 0
@@ -212,6 +217,8 @@ public:
     return std::unique_ptr< BASETYPE >( new TYPE( args ... ) );
 #endif
   }
+  //STOP_SPHINX
+
 };
 
 
@@ -231,7 +238,7 @@ public:
   CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    GEOS_LOG_RANK( "Calling constructor for CatalogueEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
+    GEOS_LOG_RANK( "Calling constructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
                                                                          << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
                                                                          << " , ... >" );
 #endif
@@ -248,10 +255,10 @@ public:
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOS_LOG_RANK( "Registered " << cxx_utilities::demangle( typeid(BASETYPE).name())
-                                 << " catalogue component of derived type "
+                                 << " catalog component of derived type "
                                  << cxx_utilities::demangle( typeid(TYPE).name())
                                  << " where " << cxx_utilities::demangle( typeid(TYPE).name())
-                                 << "::CatalogueName() = " << TYPE::CatalogName());
+                                 << "::CatalogName() = " << TYPE::CatalogName());
 #endif
   }
 
@@ -259,7 +266,7 @@ public:
   ~CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    GEOS_LOG_RANK( "Calling destructor for CatalogueEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
+    GEOS_LOG_RANK( "Calling destructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
                                                                         << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
                                                                         << " , ... >" );
 #endif
@@ -272,7 +279,7 @@ public:
 
 };
 
-/// Specializtion for constructors with empty argument list
+/// Specialization for constructors with empty argument list
 template< typename BASETYPE >
 class CatalogInterface< BASETYPE >
 {
@@ -423,7 +430,7 @@ public:
   CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    GEOS_LOG_RANK( "Calling constructor for CatalogueEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
+    GEOS_LOG_RANK( "Calling constructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
                                                                          << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
                                                                          << " , ... >" );
 #endif
@@ -438,10 +445,10 @@ public:
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOS_LOG_RANK( "Registered " << cxx_utilities::demangle( typeid(BASETYPE).name())
-                                 << " catalogue component of derived type "
+                                 << " catalog component of derived type "
                                  << cxx_utilities::demangle( typeid(TYPE).name())
                                  << " where " << cxx_utilities::demangle( typeid(TYPE).name())
-                                 << "::CatalogueName() = " << TYPE::CatalogName());
+                                 << "::CatalogName() = " << TYPE::CatalogName());
 #endif
   }
 
@@ -449,7 +456,7 @@ public:
   ~CatalogEntryConstructor()
   {
 #if OBJECTCATALOGVERBOSE > 1
-    GEOS_LOG_RANK( "Calling destructor for CatalogueEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
+    GEOS_LOG_RANK( "Calling destructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
                                                                         << " , " << cxx_utilities::demangle( typeid(BASETYPE).name()) << " , ... >" );
 #endif
   }
