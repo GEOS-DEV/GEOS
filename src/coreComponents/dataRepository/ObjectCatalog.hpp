@@ -239,8 +239,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOS_LOG_RANK( "Calling constructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
-                                                                         << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
-                                                                         << " , ... >" );
+                                                                       << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
+                                                                       << " , ... >" );
 #endif
 
     std::string name = TYPE::CatalogName();
@@ -267,8 +267,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOS_LOG_RANK( "Calling destructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
-                                                                        << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
-                                                                        << " , ... >" );
+                                                                      << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
+                                                                      << " , ... >" );
 #endif
   }
 
@@ -431,8 +431,8 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOS_LOG_RANK( "Calling constructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
-                                                                         << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
-                                                                         << " , ... >" );
+                                                                       << " , " << cxx_utilities::demangle( typeid(BASETYPE).name())
+                                                                       << " , ... >" );
 #endif
 
     std::string name = TYPE::CatalogName();
@@ -457,7 +457,7 @@ public:
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOS_LOG_RANK( "Calling destructor for CatalogEntryConstructor< " << cxx_utilities::demangle( typeid(TYPE).name())
-                                                                        << " , " << cxx_utilities::demangle( typeid(BASETYPE).name()) << " , ... >" );
+                                                                      << " , " << cxx_utilities::demangle( typeid(BASETYPE).name()) << " , ... >" );
 #endif
   }
 
