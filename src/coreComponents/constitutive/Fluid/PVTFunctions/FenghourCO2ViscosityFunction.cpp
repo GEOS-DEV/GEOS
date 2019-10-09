@@ -46,6 +46,13 @@ void FenghourCO2ViscosityFunction::MakeTable(string_array const & inputPara)
   real64 TStart, TEnd, dT;
   real64 P, T;
 
+  dT = -1.0;
+  dP = -1.0;
+  TStart = -1.0;
+  TEnd = -1.0;  
+  PStart = -1.0;
+  PEnd = -1.0;  
+  
   GEOS_ERROR_IF(inputPara.size() < 8, "Invalid FenghourCO2Viscosity input!");
 
   try
