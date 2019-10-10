@@ -225,7 +225,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
   arrayView1d<R1Tensor> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
   arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-  arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
+  // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
   ConstitutiveManager const * const
@@ -241,7 +241,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView1d<real64> const & aperture = subRegion->getElementAperture();
       arrayView1d<real64> const & volume = subRegion->getElementVolume();
       arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
-      arrayView1d<real64> const & area = subRegion->getElementArea();
+      arrayView1d<real64 const> const & area = subRegion->getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
 
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
@@ -255,7 +255,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
           temp += u[faceToNodeMap(kf0, a)];
           temp -= u[faceToNodeMap(kf1, a)];
         }
-        area[kfe] = faceArea[kfe];
+        //area[kfe] = faceArea[kf0];
 
 
         // TODO this needs a proper contact based strategy for aperture
