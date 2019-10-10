@@ -67,6 +67,7 @@ public:
 
     void CalculateElementGeometricQuantities( localIndex const index);
 
+    void addNewEmbeddedSurface(localIndex const numEmbeddedSurfaceElem, localIndex const cellIndex, R1Tensor normalVector);
 
     virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
@@ -148,10 +149,14 @@ public:
     arrayView1d< localIndex > const &       getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
     arrayView1d< localIndex const > const & getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
 
+    array1d< R1Tensor > const &       getNormalVector()       { return m_normalVector; }
+    array1d< R1Tensor const > const & getNormalVector() const { return m_normalVector; }
+
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
     map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
 
+private:
     template<bool DOPACK>
     localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                       arrayView1d<localIndex const> const & packList ) const;

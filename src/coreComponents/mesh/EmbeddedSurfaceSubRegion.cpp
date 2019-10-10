@@ -127,6 +127,22 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 
 }
 
+void EmbeddedSurfaceSubRegion::addNewEmbeddedSurface (localIndex const numEmbeddedSurfaceElem,
+                                                      localIndex const cellIndex,
+                                                      R1Tensor normalVector)
+{
+  // resize
+  m_embeddedSurfaceToCell.resize(numEmbeddedSurfaceElem);
+  m_normalVector.resize(numEmbeddedSurfaceElem);
+  m_elementAperture.resize(numEmbeddedSurfaceElem);
+  m_elementArea.resize(numEmbeddedSurfaceElem);
+
+  // add the cellIndex and the normalVector
+  m_embeddedSurfaceToCell[numEmbeddedSurfaceElem - 1] = cellIndex;
+  m_normalVector[numEmbeddedSurfaceElem - 1]          = normalVector;
+}
+
+
 localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
   buffer_unit_type * junk = nullptr;

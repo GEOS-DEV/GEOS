@@ -69,6 +69,10 @@
             target="/Outputs/siloOutput" />
             
         <SoloEvent
+            name="preFracture"
+            target="/Solvers/SurfaceGenerator" />
+            
+        <SoloEvent
             name="output1"
             target="/Outputs/siloOutput" />
 

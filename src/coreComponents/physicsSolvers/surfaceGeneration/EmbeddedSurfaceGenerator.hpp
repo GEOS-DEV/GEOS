@@ -110,9 +110,6 @@ private:
     constexpr static auto rockToughnessString = "rockToughness";
   }; //SurfaceGenViewKeys;
 
-
-
-
 private:
   // solid solver name
   string m_solidMaterialName;
