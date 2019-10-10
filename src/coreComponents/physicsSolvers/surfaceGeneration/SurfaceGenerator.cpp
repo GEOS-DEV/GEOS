@@ -502,11 +502,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   CommunicationTools::SynchronizeFields( fieldNames, mesh,
                                          domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors ) );
 
-//  MPI_iCommData icomm;
-//  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm );
-//  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm );
-//  CommunicationTools::SynchronizeUnpack( mesh, neighbors, icomm );
-
 
   if( !prefrac )
   {
@@ -3529,6 +3524,8 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   {
     rval = -1.0;
   }
+
+//  std::cout << "EdgeID: " << edgeID << " SIF: " << rval << std::endl;
 
   return rval;
 }
