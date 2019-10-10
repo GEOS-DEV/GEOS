@@ -561,11 +561,48 @@ public:
   //END_SPHINX_INCLUDE_LOOP_INTERFACE
 
 
+  /**
+   * @brief Run initialization functions on this and all subgroups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   *
+   * This function will first call InitializePreSubGroups() on this Group, then
+   * loop over all subgroups and call Initialize() on them, then
+   * call InitializePostSubGroups() on this Group.
+   *
+   * @note The order in which the sub-Groups are iterated over is defined by
+   * InitializationOrder().
+   */
   void Initialize( Group * const group );
 
+  /**
+   * @brief Sets the initialization order for sub-Groups.
+   * @param[out] order An array of strings that define the iteration order.
+   *
+   * This function will fill the @p order array that is used to specify the
+   * order in which the Initialize() function loops over sub-Groups. If a
+   * custom order is required by a derived type, this function should be
+   * overridden with a implementation that specifies the desired order.
+   */
   virtual void InitializationOrder( string_array & order );
 
 
+  /**
+   * @brief Initialization routine to be called after calling
+   *        ApplyInitialConditions().
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   *
+   * This function provides a capability for post-initial condition problem
+   * initialization. First the InitializePostInitialConditions_PreSubGroups()
+   * function is called on this Group. Then there is a loop over all subgroups
+   * and InitializePostInitialConditions() is called on them. Finally, the
+   * InitializePostInitialConditions_PostSubGroups() function is called this
+   * Group.
+   *
+   * @note The order in which the sub-Groups are iterated over is defined by
+   * InitializationOrder().
+   */
   void InitializePostInitialConditions( Group * const group );
 
   //START_SPHINX_INCLUDE_REGISTER_WRAPPER
@@ -621,8 +658,20 @@ public:
    */
   void deregisterWrapper( string const & name );
 
+  /**
+   * @brief Prints the data hierarchy recursively.
+   * @param[in] indent The level of indentation to add to this level of output.
+   */
   void PrintDataHierarchy( integer indent = 0 );
 
+  /**
+   * @brief Creates a new sub-Group using the ObjectCatalog functionality.
+   * @param[in] childKey The name of the new object type's key in the
+   *                     ObjectCatalog.
+   * @param[in] childName The name of the new object in the collection of
+   *                      sub-Groups.
+   * @return A pointer to the new Group created by this function.
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName );
 
   /**
@@ -666,26 +715,89 @@ public:
                                     xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
                                     integer GEOSX_UNUSED_ARG( documentationType ) ) {}
 
+
+  /**
+   * @brief Calls RegisterDataOnMesh() recursively
+   * @param[in,out] MeshBodies The group of MeshBody objects to register data on.
+   */
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
 
+  /**
+   * @brief Register data on mesh entities.
+   * @param[in,out] MeshBodies The group of MeshBody objects to register data on.
+   *
+   * This function is used to register data on mesh entities such as the NodeManager,
+   * FaceManager...etc.
+   */
   virtual void RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) ) {}
 
+  /**
+   * @brief Get the size required to pack a list of wrappers.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of the buffer required to pack the wrappers.
+   */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;
 
+  /**
+   * @brief Get the size required to pack a list of indices within a list of wrappers.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] packList The list of indices to pack
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of the buffer required to pack the wrapper indices.
+   */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive ) const;
 
+  /**
+   * @brief Pack a list of wrappers to a buffer.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrrapperNames, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @buffer plus the size of data packed to the buffer.
+   *
+   */
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive ) const;
 
+  /**
+   * @brief Pack a list of indices within a list of wrappers.
+   * @param[in,out] buffer The buffer that will be packed.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] packList The list of indices to pack
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrrapperNames, @p packList, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @buffer plus the size of data packed to the buffer.
+   */
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive ) const;
 
+  /**
+   * @brief Unpack a buffer.
+   * @param[in,out] buffer The buffer to unpack
+   * @param[in,out] packList The list of indices that will be unpacked.
+   * @param[in] recursive Whether or not to perform a recursive unpack.
+   * @return The number of bytes unpacked.
+   *
+   * This function takes a reference to a pointer to const buffer type, and
+   * unpacks data from that buffer into the current Group. If the packList
+   * is non-empty, then a check is made to ensure that the data that is
+   * unpacked matches the packList. If the packList is empty, the values
+   * of the indices that are unpacked are stored and returned in packList.
+   */
   virtual localIndex Unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive );
@@ -694,6 +806,23 @@ public:
   //***********************************************************************************************
 
   //START_SPHINX_INCLUDE_GET_WRAPPER
+  /**
+   * @name FUNCTION GROUP for getWrapperBase()
+   * @brief These functions search and return a WrapperBase pointer from this
+   *        Group.
+   * @param[in] index An integral lookup value used to search the collection
+   *                  of wrappers.
+   * @param[in] name A string lookup value used to search the collection
+   *                 of wrappers.
+   * @param[in] keyIndex A KeyIndex lookup value used to search the collection
+   *                     of wrappers.
+   * @return A pointer to the WrapperBase that resulted from the lookup.
+   *
+   * These functions query the collection of Wrapper objects for the given
+   * index/name/KeyIndex and returns a WrapperBase pointer to the object if
+   * it exists. If it is not found, nullptr is returned.
+   */
+  ///@{
   WrapperBase const * getWrapperBase( indexType const index ) const
   { return m_wrappers[index]; }
 
@@ -711,8 +840,29 @@ public:
 
   WrapperBase * getWrapperBase( wrapperMap::KeyIndex const & keyIndex )
   { return m_wrappers[keyIndex]; }
+  ///@}
 
-
+  /**
+   * @name FUNCTION GROUP for getWrapper()
+   * @brief These functions search and return a Wrapper<T> pointer retrieved
+   *        from this Group.
+   * @tparam T The object type contained in the Wrapper.
+   * @tparam LOOKUP_TYPE The type of key used to perform the lookup.
+   * @param[in] index An integral lookup value used to search the collection
+   *                  of wrappers.
+   * @param[in] key A string lookup value used to search the collection
+   *                 of wrappers.
+   * @return A pointer to the Wrapper<T> that resulted from the lookup.
+   *
+   * These functions query the collection of Wrapper objects for the given
+   * index/key and returns a Wrapper<T> pointer to the object if
+   * it exists. The template parameter @p T is used to perform a cast
+   * on the WrapperBase pointer that is returned by the lookup, into
+   * a Wrapper<T> pointer. If the wrapper is not found, or the
+   * WrapperBase pointer cannot be cast to a Wrapper<T> pointer, then nullptr
+   * is returned.
+   */
+  ///@{
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const * getWrapper( LOOKUP_TYPE const & index ) const
   {
@@ -734,6 +884,7 @@ public:
   template< typename T >
   Wrapper< T > * getWrapper( char const * const key )
   { return getWrapper< T >( string( key ) ); }
+  ///@}
 
 
   indexType getWrapperIndex( std::string const & name ) const
@@ -925,19 +1076,59 @@ public:
 
 protected:
   /**
-   * @brief Post processing of the input values.
+   * This function provides capability to post process input values prior to
+   * any other initialization operations.
    */
   virtual void PostProcessInput() {}
 
-  virtual void InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by Initialize() prior to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePreSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by Initialize() after to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain ) ) {}
+  /**
+   * @brief Performs initialization required after reading from a restart file.
+   * @param domain A pointer to the domain partition.
+   */
+  virtual void postRestartInitialization( Group * const domain )
+  {
+    GEOSX_UNUSED_VAR( domain );
+  }
 
 private:
   /**
