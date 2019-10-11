@@ -28,14 +28,19 @@
 #include "EpetraMatrix.hpp"
 
 // Include required Epetra headers
-#include <Epetra_Comm.h>
-#include <Epetra_MpiComm.h>
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_FEVector.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
+
+#ifdef GEOSX_USE_MPI
+#include <Epetra_MpiComm.h>
+#else
+#include<Epetra_SerialComm.h>
+using Epetra_MpiComm =  Epetra_SerialComm;
+#endif
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -97,14 +102,14 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalSize,
 void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
                                          globalIndex const globalCols,
                                          localIndex const maxEntriesPerRow,
-                                         MPI_Comm const & comm )
+                                         MPI_Comm const & MPI_PARAM(comm) )
 {
   m_dst_map = std::make_unique< Epetra_Map >( globalRows,
                                               0,
-                                              Epetra_MpiComm( comm ) );
+                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
   m_src_map = std::make_unique< Epetra_Map >( globalCols,
                                               0,
-                                              Epetra_MpiComm( comm ) );
+                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      integer_conversion< int >( maxEntriesPerRow ),
@@ -121,16 +126,16 @@ void EpetraMatrix::createWithLocalSize( localIndex const localSize,
 void EpetraMatrix::createWithLocalSize( localIndex const localRows,
                                         localIndex const localCols,
                                         localIndex const maxEntriesPerRow,
-                                        MPI_Comm const & comm )
+                                        MPI_Comm const & MPI_PARAM(comm) )
 {
   m_dst_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
                                               integer_conversion< int >( localRows ),
                                               0,
-                                              Epetra_MpiComm( comm ) );
+                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
   m_src_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
                                               integer_conversion< int >( localCols ),
                                               0,
-                                              Epetra_MpiComm( comm ) );
+                                              Epetra_MpiComm( MPI_PARAM(comm) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      integer_conversion< int >( maxEntriesPerRow ),

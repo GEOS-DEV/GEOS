@@ -4,13 +4,14 @@
 
 set( dataRepository_tests
      testDefaultValue.cpp
+     testObjectCatalog.cpp
      testSidreBasic.cpp
      testSidreExtended.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
    )
 
-set( dependencyList dataRepository gtest cxx-utilities managers MPI_Communications mesh wells constitutive meshUtilities )
+set( dependencyList dataRepository gtest cxx-utilities managers mpiCommunications mesh wells constitutive meshUtilities )
 #
 # Add gtest C++ based tests
 #

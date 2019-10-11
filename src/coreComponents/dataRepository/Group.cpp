@@ -17,7 +17,6 @@
 #include "ArrayUtilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-#include <mpi.h>
 
 #ifdef GEOSX_USE_ATK
 #include "dataRepository/SidreWrapper.hpp"
@@ -65,14 +64,14 @@ Group::Group( std::string const & name,
   m_parent( parent ),
   m_wrappers(),
   m_subGroups(),
-#ifdef GEOSX_USE_ATK
-  m_sidreGroup( Group::setSidreGroup( name, parent )),
-#endif
   m_size( 0 ),
   m_capacity( 0 ),
+  m_name( name ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
-  m_input_flags( InputFlags::INVALID ),
-  m_name( name )
+  m_input_flags( InputFlags::INVALID )
+#ifdef GEOSX_USE_ATK
+  , m_sidreGroup( Group::setSidreGroup( name, parent ))
+#endif
 {}
 
 Group::~Group()
@@ -81,13 +80,15 @@ Group::~Group()
 Group::Group( Group && source ):
   m_parent( std::move( source.m_parent ) ),
   m_wrappers( std::move( source.m_wrappers ) ),
-#ifdef GEOSX_USE_ATK
-  m_sidreGroup( std::move( source.m_sidreGroup ) ),
-#endif
+  m_subGroups(),
   m_size( source.m_size ),
   m_capacity( source.m_capacity ),
+  m_name( source.m_name ),
   m_restart_flags( source.m_restart_flags ),
-  m_name( source.m_name )
+  m_input_flags( InputFlags::INVALID )
+#ifdef GEOSX_USE_ATK
+  , m_sidreGroup( std::move( source.m_sidreGroup ) )
+#endif
 {}
 
 

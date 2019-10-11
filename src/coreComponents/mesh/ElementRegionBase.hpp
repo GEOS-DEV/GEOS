@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef ELEMENT_REGION_BASE_H
-#define ELEMENT_REGION_BASE_H
+#ifndef GEOSX_MESH_ELEMENTREGIONBASE_HPP
+#define GEOSX_MESH_ELEMENTREGIONBASE_HPP
 
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
@@ -203,4 +203,4 @@ private:
 
 
 
-#endif /* ELEMENT_REGION_BASE_H_ */
+#endif /* GEOSX_MESH_ELEMENTREGIONBASE_HPP */

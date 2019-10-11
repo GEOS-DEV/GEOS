@@ -16,11 +16,12 @@
  * @file SpatialPartition.hpp
  */
 
-#ifndef SPATIALPARTITION_H_
-#define SPATIALPARTITION_H_
+#ifndef GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
+#define GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 
 #include <map>
-#include "PartitionBase.hpp"
+
+#include "mpiCommunications/PartitionBase.hpp"
 
 
 constexpr int nsdof = 3;
@@ -151,4 +152,4 @@ public:
 
 };
 }
-#endif /* SPATIALPARTITION_H_ */
+#endif /* GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */
