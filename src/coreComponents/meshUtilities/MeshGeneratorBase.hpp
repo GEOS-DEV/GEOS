@@ -59,7 +59,7 @@ public:
 
   int m_delayMeshDeformation = 0;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 };
