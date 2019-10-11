@@ -6,6 +6,7 @@ env:
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - DOCKER_DATE=2019-09-22
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=176
 matrix:
   include:
   - os: osx
@@ -86,8 +87,8 @@ before_script:
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      wget https://www.dropbox.com/s/xrpjakpkkzq4ydt/tpl-osx-clang10-20190918.tar.gz;
-      tar -xf tpl-osx-clang10-20190918.tar.gz;
+      curl "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" --output tpl.tar;
+      tar xvf tpl.tar;
       sudo mkdir -p /Users/settgast1/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
       cd /Users/travis/build/GEOSX/GEOSX ;
