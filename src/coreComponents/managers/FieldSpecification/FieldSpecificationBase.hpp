@@ -51,7 +51,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
+  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::Group * const >;
 

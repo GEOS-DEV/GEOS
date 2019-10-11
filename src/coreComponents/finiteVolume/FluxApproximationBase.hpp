@@ -79,7 +79,7 @@ class FluxApproximationBase : public dataRepository::Group
 public:
 
   // necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
