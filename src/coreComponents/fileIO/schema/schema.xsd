@@ -423,10 +423,27 @@
 	</xsd:complexType>
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BoundedThickPlane" type="BoundedThickPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BoundedThickPlaneType">
+		<!--dimensions => Length and width of the bounded plane-->
+		<xsd:attribute name="dimensions" type="real64_array" use="required" />
+		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
+		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
+		<xsd:attribute name="normal" type="R1Tensor" use="required" />
+		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
+		<xsd:attribute name="origin" type="R1Tensor" use="required" />
+		<!--thickness => The total thickness of the plane (with half to each side)-->
+		<xsd:attribute name="thickness" type="real64" use="required" />
+		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
+		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BoxType">
 		<!--strike => The strike angle of the box-->

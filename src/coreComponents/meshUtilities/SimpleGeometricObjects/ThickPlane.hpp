@@ -34,10 +34,10 @@ public:
 
   static string CatalogName() { return "ThickPlane"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  virtual bool IsCoordInObject( const R1Tensor& coord ) const override;
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void PostProcessInput() override;
 
 private:
 
@@ -52,6 +52,7 @@ private:
     static constexpr auto thicknessString = "thickness";
   };
 
+  friend class BoundedThickPlane;
 
 };
 } /* namespace geosx */

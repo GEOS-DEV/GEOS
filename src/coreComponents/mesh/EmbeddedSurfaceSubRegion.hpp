@@ -94,6 +94,8 @@ public:
     {
       static constexpr auto elementApertureString        = "elementAperture";
       static constexpr auto elementAreaString            = "elementArea";
+      static constexpr auto cellListString               = "fractureElementsToCellIndices";
+      static constexpr auto normalVectorString           = "normalVector";
 
       //
       //static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
@@ -103,7 +105,7 @@ public:
 
     virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-    virtual string GetElementTypeString() const override { return "C3D8"; }
+    virtual string GetElementTypeString() const override { return "Embedded"; }
 
 
     /**

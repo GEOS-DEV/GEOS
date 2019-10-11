@@ -91,31 +91,18 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG ( problemManager ) )
+void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
 {
+  /*
+   * Here we generate embedded elements for fractures (or faults) that already exist in the domain and
+   * were specified in the input file.
+   */
 
-}
+  // Get domain
+  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( problemManager ) )
-{
-  std::cout << "2. InitializePostInitialConditions_PreSubGroups \n";
-}
-
-
-void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain0 ) )
-{
-  std::cout << "postRestartInitialization \n";
-}
-
-
-real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n),
-                                             real64 const & GEOSX_UNUSED_ARG( dt ),
-                                             const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                             DomainPartition * const  domain )
-{
-  real64 rval = 0;
-
-  // hardcoding the plane
+  // TODO: it should loop over all the planes that are listed in the input file and start creating the fractures.
+  // hardcoding a plane.
   R1Tensor planeCenter  = {0, 4.5, 0.5};
   R1Tensor normalVector = {0, 1, 0};
 
@@ -150,56 +137,81 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( ti
    * a 0 dot product it has to be neglected or the method won't work (as a matter of fact it means
    * that the plane does cut the cell).
    *
-  */
+   */
   elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
       {
-        Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-        subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
+    Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+    subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
         {
-          FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
-          for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
+      FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+      for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
+      {
+        prodScalarProduct = 1;
+        for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
+        {
+          faceIndex = cellToFaces[cellIndex][kf];
+          distVec  = faceCenter[faceIndex];
+          distVec -= planeCenter;
+          // check if the dot product is zero
+          if ( fabs(Dot(distVec, normalVector) - 0) > 1e-8 )
           {
-            prodScalarProduct = 1;
-            for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
-            {
-              faceIndex = cellToFaces[cellIndex][kf];
-              distVec  = faceCenter[faceIndex];
-              distVec -= planeCenter;
-              // check if the dot product is zero
-              if ( fabs(Dot(distVec, normalVector) - 0) > 1e-8 )
-              {
-                prodScalarProduct *= Dot(distVec, normalVector);
-              }
-            }
-            if (prodScalarProduct < 0)
-            {
-              // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
-              // that the cell is inside the actual fracture plane.
-              numEmbeddedSurfaceElem += 1;
-              // Add new embedded surface element
-              embeddedSurfaceSubRegion->addNewEmbeddedSurface(numEmbeddedSurfaceElem, cellIndex, normalVector);
-            }
+            prodScalarProduct *= Dot(distVec, normalVector);
           }
+        }
+        if (prodScalarProduct < 0)
+        {
+          // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
+          // that the cell is inside the actual fracture plane.
+          numEmbeddedSurfaceElem += 1;
+          // Add new embedded surface element
+          embeddedSurfaceSubRegion->addNewEmbeddedSurface(numEmbeddedSurfaceElem, cellIndex, normalVector);
+        }
+      }
         });
 
       });
-  std::cout << "Number of embedded surface elements: " << numEmbeddedSurfaceElem << std::endl;
+  std::cout << "Initial number of embedded surface elements: " << numEmbeddedSurfaceElem << std::endl;
 
   /* 2. Now that the number of embedded elements is known it is time to
-   * fill in the data relative to where the actual intersections are and then compute
-   * the geometric quantities and the Heaviside.
-   */
-  array1d< localIndex > const & embeddedSurfaceToCell = embeddedSurfaceSubRegion->getSurfaceToCellList();
-  for (localIndex embSurfIndex=0; embSurfIndex < embeddedSurfaceSubRegion->size(); embSurfIndex++)
-  {
-    localIndex cellIndex = embeddedSurfaceToCell[embSurfIndex];
-    // loop over the edges of each cell
-    for()
+     * fill in the data relative to where the actual intersections are and then compute
+     * the geometric quantities and the Heaviside.
+     */
+    /*
+    array1d< localIndex > const & embeddedSurfaceToCell = embeddedSurfaceSubRegion->getSurfaceToCellList();
+    for (localIndex embSurfIndex=0; embSurfIndex < embeddedSurfaceSubRegion->size(); embSurfIndex++)
     {
+      localIndex cellIndex = embeddedSurfaceToCell[embSurfIndex];
+      // loop over the edges of each cell
+      //for()
+      //{
 
+      // }
     }
-  }
+    */
+}
 
+void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_ARG ( problemManager ) )
+{
+  // I don't think there is  much to do here.
+}
+
+
+void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain0 ) )
+{
+  // Not sure about this for now.
+  std::cout << "postRestartInitialization \n";
+}
+
+
+real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n),
+                                             real64 const & GEOSX_UNUSED_ARG( dt ),
+                                             const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                             DomainPartition * const  GEOSX_UNUSED_ARG( domain ) )
+{
+  real64 rval = 0;
+  /*
+   * This should be method that generates new fracture elements based on the propagation criterion of choice.
+   */
   return rval;
 }
 

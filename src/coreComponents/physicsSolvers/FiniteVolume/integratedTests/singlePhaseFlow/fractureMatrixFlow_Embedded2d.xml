@@ -60,6 +60,15 @@
             name="source"
             xMin="-0.01, -0.01, -0.01"
             xMax=" 0.01,  1.01, 1.01" />
+            
+        <BoundedThickPlane
+            name="FracturePlane"
+            normal="0, 1, 0"
+            origin="0, 4.5, 0.5"
+            thickness="0.1"
+            lengthVector= "1, 0, 0"
+            widthVector="0, 0, 1"
+            dimensions="{3, 3}"/>
     </Geometry>
 
 

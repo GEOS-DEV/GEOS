@@ -281,11 +281,13 @@
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BoundedThickPlane" type="BoundedThickPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BoundedThickPlaneType" />
 	<xsd:complexType name="BoxType">
 		<!--center => (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />

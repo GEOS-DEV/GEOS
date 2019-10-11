@@ -56,8 +56,13 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
       setDescription("Map to the faces attached to each FaceElement.")->
       reference().resize(0,2);
 
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
+  registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell, false )->
+        setDescription(".");
 
+  registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector, false )->
+          setDescription(".");
+
+  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setApplyDefaultValue(1.0e-5)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
     setDescription("The aperture of each EmbeddedSurface.");
@@ -132,10 +137,7 @@ void EmbeddedSurfaceSubRegion::addNewEmbeddedSurface (localIndex const numEmbedd
                                                       R1Tensor normalVector)
 {
   // resize
-  m_embeddedSurfaceToCell.resize(numEmbeddedSurfaceElem);
-  m_normalVector.resize(numEmbeddedSurfaceElem);
-  m_elementAperture.resize(numEmbeddedSurfaceElem);
-  m_elementArea.resize(numEmbeddedSurfaceElem);
+  this->resize(numEmbeddedSurfaceElem);
 
   // add the cellIndex and the normalVector
   m_embeddedSurfaceToCell[numEmbeddedSurfaceElem - 1] = cellIndex;
