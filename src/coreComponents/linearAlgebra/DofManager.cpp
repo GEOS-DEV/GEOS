@@ -1907,8 +1907,6 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
       createIndexArrayImpl<EDGE, FaceElementSubRegion>( m_domain, m_mesh, fieldEdge );
       typename ArrayHelperEdge::Accessor & indexArrayEdge = ArrayHelperEdge::get( m_mesh, fieldEdge );
       numLocalConns += fieldEdge.numLocalNodes;
-      localIndex const firstLocalConn = MpiWrapper::PrefixSum<globalIndex>( numLocalConns ).first;
-      localIndex const adjustment = firstLocalConn - firstLocalFace;
 
       // adjust face connector indexing to account for added edge connectors on every rank
       // since we need contiguous numbering of connectors within a rank in order to create CL matrix
