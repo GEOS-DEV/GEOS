@@ -231,7 +231,7 @@ public:
       {
         for ( int j = 0; j < 3; ++j )
         {
-          J[i][j] += X[a][i] * DNDXI(q,a,j);
+          J[i][j] = J[i][j] + X[a][i] * DNDXI(q,a,j);
         }
       }
     }
@@ -246,7 +246,7 @@ public:
         dNdX[a][i] = 0.0;
         for ( int j = 0; j < 3; ++j )
         {
-          dNdX[a][i] += DNDXI(q,a,j) * J[j][i] ;
+          dNdX[a][i] = dNdX[a][i] + DNDXI(q,a,j) * J[j][i] ;
         }
       }
     }
