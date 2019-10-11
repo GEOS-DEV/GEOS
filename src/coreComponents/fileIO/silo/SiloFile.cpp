@@ -39,6 +39,28 @@
 
 #include "mesh/MeshBody.hpp"
 
+#include "mpiCommunications/MpiWrapper.hpp"
+
+
+#if !defined(GEOSX_USE_MPI)
+  int MPI_Comm_size(MPI_Comm , int *) {return 1;}
+  int MPI_Comm_rank(MPI_Comm , int *) {return 1;}
+
+  int MPI_Ssend(const void *, int , MPI_Datatype , int , int ,
+                MPI_Comm )
+  {
+    return 0;
+  }
+
+  int MPI_Recv(void * buf, int , MPI_Datatype , int , int ,
+               MPI_Comm , MPI_Status* )
+  {
+    *reinterpret_cast<int*>(buf) = 0;
+    return 0;
+  }
+#endif
+#include "pmpio.h"
+
 /// forward declaration of NodeManagerT for use as a template argument
 class NodeManager;
 
@@ -339,32 +361,27 @@ void SiloFile::MakeSiloDirectories()
 /**
  *
  */
-void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
+void SiloFile::Initialize( int const MPI_PARAM(numGroups) )
 {
   MakeSiloDirectories();
 
 #ifdef GEOSX_USE_MPI
   // Ensure all procs agree on numGroups, driver and file_ext
   m_numGroups = numGroups;
-
-  MPI_Bcast(&m_numGroups, 1, MPI_INT, 0, MPI_COMM_GEOSX);
+#else
+  m_numGroups = 1;
+#endif
+  MpiWrapper::bcast(&m_numGroups, 1, 0, MPI_COMM_GEOSX);
 //  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
-                        readwrite,
+                        PMPIO_WRITE,
                         MPI_COMM_GEOSX,
                         1,
                         PMPIO_DefaultCreate,
                         PMPIO_DefaultOpen,
                         PMPIO_DefaultClose,
                         const_cast<int*>(&m_driver));
-#else
-  m_numGroups = 1;
-  // Initialize PMPIO, pass a pointer to the driver type as the user data.
-  m_baton = PMPIO_Init(m_numGroups, PMPIO_WRITE, nullptr, 1, PMPIO_DefaultCreate, PMPIO_DefaultOpen,
-                       PMPIO_DefaultClose, &m_driver);
-#endif
-
 }
 
 // *********************************************************************************************************************
@@ -374,6 +391,11 @@ void SiloFile::Initialize( const PMPIO_iomode_t readwrite, int const numGroups )
 void SiloFile::Finish()
 {
   PMPIO_Finish(m_baton);
+}
+
+int SiloFile::groupRank( int const i ) const
+{
+  return PMPIO_GroupRank(m_baton, i);
 }
 
 // *********************************************************************************************************************
@@ -1124,7 +1146,7 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
 
   integer_array rcounts(size);
   integer_array displs(size);
-  MPI_Gather( &sizeOfSendBufferVars, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::gather( &sizeOfSendBufferVars, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBuffer = 0;
   displs[0] = 0;
@@ -1135,12 +1157,16 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
   }
   string receiveBufferVars(sizeOfReceiveBuffer,'\0');
 
-  MPI_Gatherv ( &sendbufferVars[0], sizeOfSendBufferVars, MPI_CHAR,
-                &receiveBufferVars[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gatherv ( &sendbufferVars[0],
+                        sizeOfSendBufferVars,
+                        &receiveBufferVars[0],
+                        rcounts.data(),
+                        displs.data(),
+                        0,
+                        MPI_COMM_GEOSX );
 
 
-  MPI_Gather( &sizeOfSendBufferMesh, 1, MPI_INT, rcounts.data(), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::gather( &sizeOfSendBufferMesh, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX);
 
   int sizeOfReceiveBufferMesh = 0;
   displs[0] = 0;
@@ -1151,9 +1177,13 @@ void SiloFile::ClearEmptiesFromMultiObjects(int const cycleNum)
   }
   string receiveBufferMesh(sizeOfReceiveBufferMesh,'\0');
 
-  MPI_Gatherv ( &sendbufferMesh[0], sizeOfSendBufferMesh, MPI_CHAR,
-                &receiveBufferMesh[0], rcounts.data(), displs.data(),
-                MPI_CHAR, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gatherv ( &sendbufferMesh[0],
+                        sizeOfSendBufferMesh,
+                        &receiveBufferMesh[0],
+                        rcounts.data(),
+                        displs.data(),
+                        0,
+                        MPI_COMM_GEOSX );
 
 
 
@@ -1554,11 +1584,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                real64 const problemTime,
                                bool const isRestart )
 {
-  int rank = 0;
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-#endif
-
   //--------------WRITE FE DATA-----------------
 //  if (m_feElementManager->m_numElems > 0)
 //  {

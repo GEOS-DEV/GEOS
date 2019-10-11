@@ -15,10 +15,10 @@
 /**
  * @file SurfaceGenerator.hpp
  */
-#ifndef SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
-#define SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
+#define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_
 
-#include "MPI_Communications/NeighborCommunicator.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
@@ -573,4 +573,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_SURFACEGENERATION_SURFACEGENERATOR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_SURFACEGENERATOR_HPP_ */

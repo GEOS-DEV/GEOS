@@ -16,10 +16,11 @@
  * @file testLinearAlgebraUtils.hpp
  */
 
-#ifndef GEOSX_TESTLINEARALGEBRAUTILS_HPP
-#define GEOSX_TESTLINEARALGEBRAUTILS_HPP
+#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
+#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 // ==============================
@@ -137,4 +138,4 @@ typename LAI::ParallelMatrix compute2DLaplaceOperator( MPI_Comm comm,
 
 //@}
 
-#endif //GEOSX_TESTLINEARALGEBRAUTILS_HPP
+#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP

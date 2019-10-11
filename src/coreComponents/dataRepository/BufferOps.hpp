@@ -14,8 +14,8 @@
 
 
 
-#ifndef DATAREPOSITORY_BUFFEROPS_H_
-#define DATAREPOSITORY_BUFFEROPS_H_
+#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_
+#define GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -489,4 +489,4 @@ PackSize( VARPACK && ... pack )
 
 #include "BufferOps_inline.hpp"
 
-#endif /* DATAREPOSITORY_BUFFEROPS_H_ */
+#endif /* GEOSX_DATAREPOSITORY_BUFFEROPS_HPP_ */

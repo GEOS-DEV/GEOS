@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#ifndef GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FluxStencil.hpp"
@@ -79,7 +79,7 @@ class FluxApproximationBase : public dataRepository::Group
 public:
 
   // necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = cxx_utilities::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface<FluxApproximationBase, string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   // typedefs for stored stencil types
@@ -182,4 +182,4 @@ void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
+#endif //GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_

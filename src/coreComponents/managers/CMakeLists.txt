@@ -14,7 +14,6 @@ set(managers_headers
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/BlueprintOutput.hpp
-    Outputs/ChomboIO.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -48,7 +47,6 @@ set(managers_sources
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
     Outputs/BlueprintOutput.cpp
-    Outputs/ChomboIO.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -63,6 +61,11 @@ set(managers_sources
     FieldSpecification/SourceFluxBoundaryCondition.cpp
     initialization.cpp
    )
+
+if( ENABLE_MPI )
+    list( APPEND managers_headers Outputs/ChomboIO.hpp )
+    list( APPEND managers_sources Outputs/ChomboIO.cpp )
+endif()
 
 set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
 

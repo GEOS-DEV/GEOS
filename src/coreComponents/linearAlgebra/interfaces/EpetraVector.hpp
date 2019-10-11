@@ -16,10 +16,11 @@
  * @file EpetraVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 class Epetra_FEVector;
 class Epetra_Map;
@@ -413,4 +414,4 @@ std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
 
 } // end geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_EPETRAVECTOR_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRAVECTOR_HPP_*/

@@ -16,8 +16,8 @@
  * @file PetscVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_PETSCVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_PETSCVECTOR_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -54,6 +54,9 @@ namespace geosx
  */
 class PetscVector
 {
+#if !defined(GEOSX_USE_MPI)
+  typedef int MPI_Comm;
+#endif
 public:
   //! @name Constructor/Destructor Methods
   //@{
@@ -104,7 +107,7 @@ public:
    * \param localSize local number of elements.
    *
    */
-  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm  );
 
   /**
    * @brief Create a vector based on global number of elements. Creates a CPU MPI vector.
@@ -116,7 +119,7 @@ public:
    * \param globalSize Global number of elements.
    *
    */
-  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm  );
 
   /**
    * @brief Construct parallel vector from a local array. Creates a CPU MPI vector.
@@ -126,7 +129,7 @@ public:
    * \param localValues local data to put into vector
    *
    */
-  void create( array1d<real64> const & localValues, MPI_Comm const & comm = MPI_COMM_WORLD );
+  void create( array1d<real64> const & localValues, MPI_Comm const & comm  );
 
   //@}
   //! @name Open / close
@@ -453,4 +456,4 @@ protected:
 
 } // end geosx namespace
 
-#endif /*GEOSX_LINEARALGEBRA_PETSCVECTOR_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCVECTOR_HPP_*/

@@ -10,6 +10,7 @@ set(dataRepository_headers
     InputFlags.hpp
     KeyIndexT.hpp
     MappedVector.hpp
+    ObjectCatalog.hpp 
     ReferenceWrapper.hpp
     RestartFlags.hpp
     SidreWrapper.hpp

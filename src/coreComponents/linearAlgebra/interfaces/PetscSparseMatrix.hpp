@@ -16,8 +16,8 @@
  * @file PetscSparseMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_PETSCSPARSEMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_PETSCSPARSEMATRIX_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "PetscVector.hpp"
@@ -38,6 +38,9 @@ namespace geosx
  */
 class PetscSparseMatrix
 {
+#if !defined(GEOSX_USE_MPI)
+  typedef int MPI_Comm;
+#endif
 
 public:
 
@@ -77,7 +80,7 @@ public:
    */
   void createWithLocalSize( localIndex const localSize,
                             localIndex const maxEntriesPerRow,
-                            MPI_Comm const & comm = MPI_COMM_WORLD );
+                            MPI_Comm const & comm  );
 
   /**
    * @brief Create a square matrix from global number of rows.
@@ -616,4 +619,4 @@ private:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_PETSCSPARSEMATRIX_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_*/
