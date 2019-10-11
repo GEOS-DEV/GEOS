@@ -13,10 +13,6 @@
  */
 
 
-
-#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_H_
-#define DATAREPOSITORY_BUFFEROPS_INLINE_H_
-
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
@@ -1572,5 +1568,3 @@ Unpack( char const * & buffer, std::pair< T_FIRST, T_SECOND > & var )
 
 } /* namespace bufferOps */
 } /* namespace geosx */
-
-#endif /* DATAREPOSITORY_BUFFEROPS_INLINE_H_ */

@@ -12,7 +12,7 @@ set( subdirs
      finiteVolume
      mesh
      meshUtilities
-     MPI_Communications
+     mpiCommunications
      physicsSolvers
      wells
      python

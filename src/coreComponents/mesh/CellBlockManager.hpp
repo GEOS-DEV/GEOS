@@ -16,8 +16,8 @@
  * @file CellBlockManager.hpp
  */
 
-#ifndef CELLBLOCKMANAGER_H_
-#define CELLBLOCKMANAGER_H_
+#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
+#define GEOSX_MESH_CELLBLOCKMANAGER_H_
 
 #include "CellBlock.hpp"
 
@@ -92,4 +92,4 @@ private:
 
 };
 }
-#endif /* ELEMENTMANAGERT_H_ */
+#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

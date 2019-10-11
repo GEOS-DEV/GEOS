@@ -16,8 +16,8 @@
  * @file EpetraMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_EPETRAMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_EPETRAMATRIX_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "EpetraVector.hpp"
@@ -653,4 +653,4 @@ std::ostream & operator<<( std::ostream & os,
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_EPETRAMATRIX_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_*/

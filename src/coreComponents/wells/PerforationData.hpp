@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
-#define GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
+#ifndef GEOSX_WELLS_PERFORATIONDATA_HPP
+#define GEOSX_WELLS_PERFORATIONDATA_HPP
 
 #include "dataRepository/Group.hpp"
 #include "managers/ObjectManagerBase.hpp"
@@ -204,4 +204,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_CORECOMPONENTS_WELLS_PERFORATIONDATA_HPP
+#endif //GEOSX_WELLS_PERFORATIONDATA_HPP

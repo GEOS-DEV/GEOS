@@ -16,21 +16,13 @@
   * @file VanGenuchtenCapillaryPressure.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENCAPILLARYPRESSURE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENCAPILLARYPRESSURE_HPP
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_VANGENUCHTENCAPILLARYPRESSURE_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_VANGENUCHTENCAPILLARYPRESSURE_HPP
 
 #include "constitutive/CapillaryPressure/CapillaryPressureBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-namespace keys
-{
-string const vanGenuchtenCapillaryPressure = "VanGenuchtenCapillaryPressure";
-}
-}
 
 namespace constitutive
 {
@@ -48,7 +40,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::vanGenuchtenCapillaryPressure; }
+  static std::string CatalogName() { return "VanGenuchtenCapillaryPressure"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -219,5 +211,5 @@ VanGenuchtenCapillaryPressure::EvaluateVanGenuchtenFunction( real64 const & scal
 
 } // namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_VANGENUCHTENCAPILLARYPRESSURE_HPP
+#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_VANGENUCHTENCAPILLARYPRESSURE_HPP
 

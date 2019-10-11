@@ -16,8 +16,8 @@
  * @file ExponentialRelations.hpp
  */
 
-#ifndef GEOSX_EXPONENTIALRELATION_HPP_
-#define GEOSX_EXPONENTIALRELATION_HPP_
+#ifndef GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
+#define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
 #include <common/DataTypes.hpp>
 
@@ -348,4 +348,4 @@ void ExponentialRelation<T, EAT>::Inverse( const T & y, T & x, T & dx_dy ) const
 
 } // namespace geosx
 
-#endif // GEOSX_EXPONENTIALRELATION_HPP_
+#endif // GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_

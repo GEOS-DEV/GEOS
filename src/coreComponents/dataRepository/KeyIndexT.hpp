@@ -16,8 +16,8 @@
  * @file KeyIndexT.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_
+#ifndef GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
+#define GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_
 
 #include <string>
 #include <ostream>
@@ -141,4 +141,4 @@ std::ostream & operator<<( std::ostream & os, const KeyIndexT< KEY_TYPE, INDEX_T
   return os;
 }
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_KEYINDEXT_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_KEYINDEXT_HPP_ */

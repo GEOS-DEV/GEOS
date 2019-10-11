@@ -17,11 +17,12 @@
  */
 
 #include "DofManager.hpp"
+
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 
 namespace geosx
 {
@@ -928,7 +929,7 @@ void createIndexArrayImpl( DomainPartition * const domain,
 
   // step 2. gather row counts across ranks
   std::tie( field.firstLocalRow, field.numGlobalRows ) =
-    CommunicationTools::PrefixSum<globalIndex>( field.numLocalRows );
+    MpiWrapper::PrefixSum<globalIndex>( field.numLocalRows );
 
   // step 3. adjust local dof offsets to reflect processor offset
   forMeshLocation<LOC, SUBREGIONTYPES...>( mesh, field.regionNames,
@@ -1171,7 +1172,7 @@ void DofManager::addField( string const & fieldName,
   field.numLocalRows = field.numLocalNodes * components;
 
   std::tie( field.firstLocalRow, field.numGlobalRows ) =
-    CommunicationTools::PrefixSum<globalIndex>( field.numLocalRows );
+    MpiWrapper::PrefixSum<globalIndex>( field.numLocalRows );
 
   // create the pattern from the user-provided location-connectivity matrix
   localIndex const nrows = connLocInput.localRows();
@@ -1906,6 +1907,8 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
       createIndexArrayImpl<EDGE, FaceElementSubRegion>( m_domain, m_mesh, fieldEdge );
       typename ArrayHelperEdge::Accessor & indexArrayEdge = ArrayHelperEdge::get( m_mesh, fieldEdge );
       numLocalConns += fieldEdge.numLocalNodes;
+      localIndex const firstLocalConn = MpiWrapper::PrefixSum<globalIndex>( numLocalConns ).first;
+      localIndex const adjustment = firstLocalConn - firstLocalFace;
 
       // adjust face connector indexing to account for added edge connectors on every rank
       // since we need contiguous numbering of connectors within a rank in order to create CL matrix
@@ -2085,7 +2088,7 @@ void DofManager::printConnectivityLocationPattern( string const & fieldName, str
 // Print the coupling table on screen
 void DofManager::printConnectivityMatrix( std::ostream & os ) const
 {
-  if( CommunicationTools::MPI_Rank(MPI_COMM_GEOSX) == 0 )
+  if( MpiWrapper::Comm_rank(MPI_COMM_GEOSX) == 0 )
   {
     localIndex numFields = m_fields.size();
 
