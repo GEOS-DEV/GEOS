@@ -12,23 +12,21 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/** @file */
+/**
+ * @file Group.hpp
+ */
 
-#ifndef MANAGEDGROUP_H_
-#define MANAGEDGROUP_H_
+#ifndef GEOSX_DATAREPOSITORY_GROUP_HPP_
+#define GEOSX_DATAREPOSITORY_GROUP_HPP_
+
+#include "InputFlags.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
+#include "MappedVector.hpp"
+#include "RestartFlags.hpp"
+#include "Wrapper.hpp"
+#include "xmlWrapper.hpp"
 
 #include <iostream>
-#include <mpi.h>
-
-
-#include "ObjectCatalog.hpp"
-#include "RestartFlags.hpp"
-
-#include "MappedVector.hpp"
-
-#include "xmlWrapper.hpp"
-#include "InputFlags.hpp"
-#include "Wrapper.hpp"
 
 #ifndef USE_DYNAMIC_CASTING
 /// macro definition to specify whether or not to use dynamic_cast
@@ -50,30 +48,38 @@ class Group;
 }
 
 /**
- * namespace to encapsulate functions in simulation tools
+ * namespace to encapsulate GEOSX
  */
 namespace geosx
 {
+
+/**
+ * Encapsulates all dataRepository classes and functionality.
+ */
 namespace dataRepository
 {
 
-/// the default key type
+//START_SPHINX_INCLUDE_00
+/// The default key type for entries in the hierarchy.
 using keyType = string;
 
-/// the default index type
+/// The default index type for entries the hierarchy.
 using indexType = localIndex;
 
 /**
- * class that encapsulates and manages a collection of DataObjects. Can be
- * considered a "node" in a hierarchy of managers that represent physical groupings of data/
+ * @class Group
+ *
+ * The Group class serves as a "node" in a hierarchy of the dataRepository. The data structure is built as a
+ * hierarchy of Group objects, or objects derived from group objects.
  */
 class Group
 {
 public:
-  /// the type of MappedVector to use for the subGroup collection
+  //START_SPHINX_INCLUDE_01
+  /// The template specialization of MappedVector to use for the collection of sub-Group objects.
   using subGroupMap = MappedVector< Group, Group *, keyType, indexType >;
 
-  /// type of the MappedVector to use for the collection of wrappers.
+  /// The template specialization of MappedVector to use for the collection wrappers objects.
   using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
 
   /**
@@ -115,7 +121,7 @@ public:
    */
   ///@{
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< Group, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< Group, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
   ///@}
 
@@ -136,69 +142,40 @@ public:
     return typeToCheck == get_typeid() ? true : false;
   }
 
-
+  //START_SPHINX_INCLUDE_REGISTER_GROUP
   /**
-   * @brief Register a new subgroup
-   * @tparam T        The type of the group to register
-   * @param name      The repository name of the group
-   * @param newObject A unique_ptr to the object that is being registered.
-   * @return pointer to the subgroup
+   * @name FUNCTION GROUP for functions that add/register a new sub-Group to the current Group
+   * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
+   * @param[in] name      The name of the group to use as a string key.
+   * @param[in] newObject A pointer/unique_ptr to the object that is being registered.
+   * @param[in] takeOwnership A flag to indicate whether or not the repository should
+   *                          take ownership of the group. This only applies when
+   *                          passing a raw pointer. If passing a unique_ptr, then
+   *                          the ownership is always transferred.
+   * @param keyIndex A KeyIndex object that will be used to specify the name of
+   *                 the new group. The index of the KeyIndex will also be set.
+   * @param catalogName The catalog name of the new type.
+   * @return A pointer to the newly registered/created Group.
    *
-   * This registration function takes an Group or class derived from
-   * Group and registers it as a subgroup of this Group. The
-   * data repository takes ownership of the object that is passed in through
-   * a unique_ptr.
+   * These registration functions registers (and may create) a Group or class
+   * derived from Group as a subgroup of this Group.
    */
+  ///@{
+
   template< typename T = Group >
   T * RegisterGroup( std::string const & name, std::unique_ptr< Group > newObject );
 
-  /**
-   *
-   * @brief Register a new subgroup
-   * @tparam T        The type of the group to register
-   * @param name      The repository name of the group
-   * @param newObject Pointer to the object tp register
-   * @param takeOwnership flag to indicate whether or not the repository should
-   *                      take ownership of the group.
-   * @return pointer to the subgroup
-   *
-   * This registration function creates and registers a Group or class
-   * derived from Group and registers it as a subgroup of this
-   * Group. The data repository takes ownership of the new object if
-   * \p takeOwnership is true.
-   */
   template< typename T = Group >
   T * RegisterGroup( std::string const & name,
                      T * newObject,
                      bool const takeOwnership );
 
-  /**
-   * @brief      Register a new subgroup
-   * @tparam T   The type of the group to register
-   * @param name The repository name of the group
-   * @return     pointer to the subgroup
-   *
-   * This registration function creates and registers a Group or class
-   * derived from Group and registers it as a subgroup of this
-   * Group. The data repository takes ownership of the new object.
-   */
   template< typename T = Group >
   T * RegisterGroup( std::string const & name )
   {
     return RegisterGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
   }
 
-  /**
-   * @brief          Register a new subgroup
-   * @tparam T       The type of the group to register
-   * @param keyIndex A KeyIndex object that will be used to specify the name of
-   *                 the new group.
-   * @return         pointer to the subgroup
-   *
-   * This registration function creates and registers a Group or class
-   * derived from Group and registers it as a subgroup of this
-   * Group. The data repository takes ownership of the new object.
-   */
   template< typename T = Group >
   T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
   {
@@ -207,28 +184,15 @@ public:
     return rval;
   }
 
-  /**
-   * @brief             Register a new subgroup
-   * @tparam T          The type of the group to register
-   * @tparam TBASE      The type of the group that contains an object catalog
-   *                    for the creation of a new \p T
-   * @param name        The repository name of the new group
-   * @param catalogName The catalog name of the type
-   * @return            A pointer to the subgroup
-   *
-   * This registration function creates and registers a Group or class
-   * derived from Group and registers it as a subgroup of this
-   * Group. The \p TBASE type provide the object catalog that is used
-   * to create the new group. The data repository takes ownership of the new
-   * object.
-   *
-   */
   template< typename T = Group, typename TBASE = Group >
   T * RegisterGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
     return RegisterGroup< T >( name, std::move( newGroup ) );
   }
+  ///@}
+
+  //END_SPHINX_INCLUDE_REGISTER_GROUP
 
   /**
    * @brief       Downcast a Group *
@@ -292,171 +256,93 @@ public:
 #endif
   }
 
-
+  //START_SPHINX_INCLUDE_GET_GROUP
   /**
-   * @brief Get a Group from the repository using direct index
-   * @param index integral index to use for as a lookup
-   * @return A pointer to \p T that refers to the group retrieved from the
+   * @name FUNCTION GROUP for GetGroup()
+   * @brief Functions to retrieve a sub-Group from the current Group using various lookup methods.
+   * @tparam T The type of the Group. This may be a type that derives from Group.
+   * @param[in] index The integral index of the group to retrieve.
+   * @param[in] name The name/key of the group lookup and retrieve.
+   * @param[in] key The KeyIndex to use for the lookup. Note that const-correctness may be
+   *                broken if the key is incorrect as @p key will be modified to contain the
+   *                correct index.
+   * @param[in] path A unix-style string (absolute, relative paths valid) to lookup the Group
+   *                 to return.
+   * @return A pointer to @p T (or const @p T) that refers to the group retrieved from the
    *         repository.
+   *
+   * This collection of functions are used to get a sub-Group from the current group. Various methods
+   * for performing the lookup are provided (localIndex, string, KeyIndex), and each have their
+   * advantages and costs. The lowest cost lookup is the "localIndex" lookup. The KeyIndex lookup
+   * will add a cost for checking to make sure the index stored in KeyIndex is valid (a string
+   * compare, and a hash if it is incorrect). The string lookup is the full cost hash lookup every
+   * time that it is called.
+   *
+   * The template parameter specifies the "type" that the caller expects to lookup, and thus attempts
+   * to cast the pointer that is stored in m_subGroups to a pointer of the desired type. If this
+   * cast fails, then a nullptr is returned. If no template parameter is specified then a default
+   * type of Group is assumed.
    */
+  ///@{
+
   template< typename T = Group >
   T * GetGroup( localIndex index )
   {
     return group_cast< T * >( m_subGroups[index] );
   }
 
-  /**
-   * @brief Get a Group from the repository using direct index
-   * @param index integral index to use for as a lookup
-   * @return A pointer to const \p T that refers to the group retrieved from the
-   *         repository.
-   */
   template< typename T = Group >
   T const * GetGroup( localIndex index ) const
   {
     return group_cast< T const * >( m_subGroups[index] );
   }
 
-  /**
-   * @brief Get a Group from the repository using string lookup
-   * @param name Name of the group to retrieve
-   * @return A pointer to \p T that refers to the group retrieved from the
-   *         repository.
-   */
   template< typename T = Group >
   T * GetGroup( string const & name )
   {
     return group_cast< T * >( m_subGroups[name] );
   }
 
-  /**
-   * @brief Get a Group from the repository using string lookup
-   * @param name Name of the group to retrieve
-   * @return A pointer to const \p T that refers to the group retrieved from the
-   *         repository.
-   */
   template< typename T = Group >
   T const * GetGroup( string const & name ) const
   {
     return group_cast< T const * >( m_subGroups[name] );
   }
 
-  /**
-   * @brief Get a Group from the repository using KeyIndex lookup
-   * @param key the KeyIndex to use for the lookup
-   * @return A pointer to \p T that refers to the group retrieved from the
-   *         repository.
-   */
   template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex & key )
   {
     return group_cast< T * >( m_subGroups[key] );
   }
 
-  /**
-   * @brief Get a Group from the repository using KeyIndex lookup
-   * @param key the KeyIndex to use for the lookup
-   * @return A pointer to const \p T that refers to the group retrieved from
-   *         the repository.
-   */
   template< typename T = Group >
   T const * GetGroup( subGroupMap::KeyIndex & key ) const
   {
     return group_cast< T const * >( m_subGroups[key] );
   }
 
-  /**
-   * @brief Get a Group from the repository using KeyIndex lookup
-   * @param key the KeyIndex to use for the lookup. Note that
-   *            const-correctness may be broken if the key is incorrect.
-   * @return A pointer to \p T that refers to the group retrieved from the
-   *         repository.
-   */
   template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
     return group_cast< T * >( m_subGroups[key] );
   }
 
-  /**
-   * @brief Get a Group from the repository using KeyIndex lookup
-   * @param key the KeyIndex to use for the lookup. Note that
-   *            const-correctness may be broken if the key is incorrect.
-   * @return A pointer to const \p T that refers to the group retrieved from
-   *         the repository.
-   */
   template< typename T = Group >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
     return group_cast< T const * >( m_subGroups[key] );
   }
 
-  /**
-   * @brief This will grab the pointer to an object in the data structure
-   * @param[in] path a unix-style string (absolute, relative paths valid)
-   * @return A pointer to const \p T that refers to the target group.
-   */
   template< typename T = Group >
-  T const * GetGroupByPath( string const & path ) const
-  {
-    // needed for getting root correctly with GetGroupByPath("/");
-    if( path.empty())
-    {
-      return group_cast< T const * >( this );
-    }
+  T const * GetGroupByPath( string const & path ) const;
 
-    size_t directoryMarker = path.find( '/' );
-
-    if( directoryMarker == std::string::npos )
-    {
-      // Target should be a child of this group
-      return this->GetGroup< T >( path );
-    }
-    else
-    {
-      // Split the path
-      string const child = path.substr( 0, directoryMarker );
-      string const subPath = path.substr( directoryMarker+1, path.size());
-
-      if( directoryMarker == 0 )            // From root
-      {
-        if( this->getParent() == nullptr )  // At root
-        {
-          return this->GetGroupByPath< T >( subPath );
-        }
-        else                               // Not at root
-        {
-          return this->getParent()->GetGroupByPath< T >( path );
-        }
-      }
-      else if( child[0] == '.' )
-      {
-        if( child[1] == '.' )               // '../' = Reverse path
-        {
-          return this->getParent()->GetGroupByPath< T >( subPath );
-        }
-        else                               // './' = This path
-        {
-          return this->GetGroupByPath< T >( subPath );
-        }
-      }
-      else
-      {
-        return m_subGroups[child]->GetGroupByPath< T >( subPath );
-      }
-    }
-  }
-
-  /**
-   * @brief This will grab the pointer to an object in the data structure
-   * @param[in] path a unix-style string (absolute, relative paths valid)
-   * @return A pointer to \p T that refers to the target group.
-   */
   template< typename T = Group >
   T * GetGroupByPath( string const & path )
   {
     return const_cast< T * >(const_cast< Group const * >(this)->GetGroupByPath< T >( path ));
   }
+  ///@}
+  //END_SPHINX_INCLUDE_GET_GROUP
 
   /**
    * @brief Get the subgroups object
@@ -548,6 +434,7 @@ public:
   ///@}
 
 
+  //START_SPHINX_INCLUDE_LOOP_INTERFACE
   /**
    * @name FUNCTION GROUP for forSubGroups()
    * @brief These functions apply the specified lambda function to a group if the group can be
@@ -671,23 +558,80 @@ public:
     }
   }
   ///@}
+  //END_SPHINX_INCLUDE_LOOP_INTERFACE
 
 
+  /**
+   * @brief Run initialization functions on this and all subgroups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   *
+   * This function will first call InitializePreSubGroups() on this Group, then
+   * loop over all subgroups and call Initialize() on them, then
+   * call InitializePostSubGroups() on this Group.
+   *
+   * @note The order in which the sub-Groups are iterated over is defined by
+   * InitializationOrder().
+   */
   void Initialize( Group * const group );
 
+  /**
+   * @brief Sets the initialization order for sub-Groups.
+   * @param[out] order An array of strings that define the iteration order.
+   *
+   * This function will fill the @p order array that is used to specify the
+   * order in which the Initialize() function loops over sub-Groups. If a
+   * custom order is required by a derived type, this function should be
+   * overridden with a implementation that specifies the desired order.
+   */
   virtual void InitializationOrder( string_array & order );
 
 
+  /**
+   * @brief Initialization routine to be called after calling
+   *        ApplyInitialConditions().
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   *
+   * This function provides a capability for post-initial condition problem
+   * initialization. First the InitializePostInitialConditions_PreSubGroups()
+   * function is called on this Group. Then there is a loop over all subgroups
+   * and InitializePostInitialConditions() is called on them. Finally, the
+   * InitializePostInitialConditions_PostSubGroups() function is called this
+   * Group.
+   *
+   * @note The order in which the sub-Groups are iterated over is defined by
+   * InitializationOrder().
+   */
   void InitializePostInitialConditions( Group * const group );
 
+  //START_SPHINX_INCLUDE_REGISTER_WRAPPER
+  /**
+   * @name FUNCTION GROUP for functions that add/register a new Wrapper to this Group.
+   * @tparam T The type of the Wrapper to add/register.
+   * @tparam TBASE The type of the Wrapper to add/register.
+   * @param[in] name      The name of the group to use as a string key.
+   * @param[in] rkey      A pointer to a index type that will be filled with the new
+   *                      Wrappers index in this Group.
+   * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
+   * @param[in] type The runtime type to wrap in the new Wrapper.
+   * @param[in] newObject A pointer/unique_ptr to the object that is being registered.
+   * @param[in] takeOwnership A flag to indicate whether or not the repository should
+   *                          take ownership of the group. This only applies when
+   *                          passing a raw pointer. If passing a unique_ptr, then
+   *                          the ownership is always transferred.
+   * @param[in] wrapper A pointer to the an existing wrapper.
+   * @return A pointer to the newly registered/created Wrapper.
+   *
+   * These registration functions register (and may create) a Wrapper's around objects.
+   */
+  ///@{
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > *
-  registerWrapper( std::string const & name,
-                   wrapperMap::KeyIndex::index_type * const rkey = nullptr );
+  Wrapper< TBASE > * registerWrapper( std::string const & name,
+                                      wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > *
-  registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
+  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
 
 
   WrapperBase * registerWrapper( std::string const & name,
@@ -702,20 +646,32 @@ public:
                                   T * newObject,
                                   bool takeOwnership );
 
-  /**
-   * @brief Register a Wrapper into this Group
-   * @param[in] name the key name to use for this new wrapper
-   * @param[in] wrapper a pointer to the new wrapper
-   * @return a WrapperBase pointer that holds the address of the new wrapper
-   */
   WrapperBase * registerWrapper( string const & name,
                                  WrapperBase * const wrapper );
 
+  ///@}
+  //END_SPHINX_INCLUDE_REGISTER_WRAPPER
+
+  /**
+   * @brief Removes a Wrapper from this group.
+   * @param name The name of the Wrapper to remove from this group.
+   */
   void deregisterWrapper( string const & name );
 
-
+  /**
+   * @brief Prints the data hierarchy recursively.
+   * @param[in] indent The level of indentation to add to this level of output.
+   */
   void PrintDataHierarchy( integer indent = 0 );
 
+  /**
+   * @brief Creates a new sub-Group using the ObjectCatalog functionality.
+   * @param[in] childKey The name of the new object type's key in the
+   *                     ObjectCatalog.
+   * @param[in] childName The name of the new object in the collection of
+   *                      sub-Groups.
+   * @return A pointer to the new Group created by this function.
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName );
 
   /**
@@ -759,26 +715,89 @@ public:
                                     xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
                                     integer GEOSX_UNUSED_ARG( documentationType ) ) {}
 
+
+  /**
+   * @brief Calls RegisterDataOnMesh() recursively
+   * @param[in,out] MeshBodies The group of MeshBody objects to register data on.
+   */
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
 
+  /**
+   * @brief Register data on mesh entities.
+   * @param[in,out] MeshBodies The group of MeshBody objects to register data on.
+   *
+   * This function is used to register data on mesh entities such as the NodeManager,
+   * FaceManager...etc.
+   */
   virtual void RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) ) {}
 
+  /**
+   * @brief Get the size required to pack a list of wrappers.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of the buffer required to pack the wrappers.
+   */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive ) const;
 
+  /**
+   * @brief Get the size required to pack a list of indices within a list of wrappers.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] packList The list of indices to pack
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of the buffer required to pack the wrapper indices.
+   */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive ) const;
 
+  /**
+   * @brief Pack a list of wrappers to a buffer.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrrapperNames, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @buffer plus the size of data packed to the buffer.
+   *
+   */
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive ) const;
 
+  /**
+   * @brief Pack a list of indices within a list of wrappers.
+   * @param[in,out] buffer The buffer that will be packed.
+   * @param[in] wrapperNames An array that contains the names of the wrappers to pack.
+   * @param[in] packList The list of indices to pack
+   * @param[in] recursive Whether or not to perform a recursive pack.
+   * @return The size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrrapperNames, @p packList, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @buffer plus the size of data packed to the buffer.
+   */
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive ) const;
 
+  /**
+   * @brief Unpack a buffer.
+   * @param[in,out] buffer The buffer to unpack
+   * @param[in,out] packList The list of indices that will be unpacked.
+   * @param[in] recursive Whether or not to perform a recursive unpack.
+   * @return The number of bytes unpacked.
+   *
+   * This function takes a reference to a pointer to const buffer type, and
+   * unpacks data from that buffer into the current Group. If the packList
+   * is non-empty, then a check is made to ensure that the data that is
+   * unpacked matches the packList. If the packList is empty, the values
+   * of the indices that are unpacked are stored and returned in packList.
+   */
   virtual localIndex Unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive );
@@ -786,6 +805,24 @@ public:
 
   //***********************************************************************************************
 
+  //START_SPHINX_INCLUDE_GET_WRAPPER
+  /**
+   * @name FUNCTION GROUP for getWrapperBase()
+   * @brief These functions search and return a WrapperBase pointer from this
+   *        Group.
+   * @param[in] index An integral lookup value used to search the collection
+   *                  of wrappers.
+   * @param[in] name A string lookup value used to search the collection
+   *                 of wrappers.
+   * @param[in] keyIndex A KeyIndex lookup value used to search the collection
+   *                     of wrappers.
+   * @return A pointer to the WrapperBase that resulted from the lookup.
+   *
+   * These functions query the collection of Wrapper objects for the given
+   * index/name/KeyIndex and returns a WrapperBase pointer to the object if
+   * it exists. If it is not found, nullptr is returned.
+   */
+  ///@{
   WrapperBase const * getWrapperBase( indexType const index ) const
   { return m_wrappers[index]; }
 
@@ -803,8 +840,29 @@ public:
 
   WrapperBase * getWrapperBase( wrapperMap::KeyIndex const & keyIndex )
   { return m_wrappers[keyIndex]; }
+  ///@}
 
-
+  /**
+   * @name FUNCTION GROUP for getWrapper()
+   * @brief These functions search and return a Wrapper<T> pointer retrieved
+   *        from this Group.
+   * @tparam T The object type contained in the Wrapper.
+   * @tparam LOOKUP_TYPE The type of key used to perform the lookup.
+   * @param[in] index An integral lookup value used to search the collection
+   *                  of wrappers.
+   * @param[in] key A string lookup value used to search the collection
+   *                 of wrappers.
+   * @return A pointer to the Wrapper<T> that resulted from the lookup.
+   *
+   * These functions query the collection of Wrapper objects for the given
+   * index/key and returns a Wrapper<T> pointer to the object if
+   * it exists. The template parameter @p T is used to perform a cast
+   * on the WrapperBase pointer that is returned by the lookup, into
+   * a Wrapper<T> pointer. If the wrapper is not found, or the
+   * WrapperBase pointer cannot be cast to a Wrapper<T> pointer, then nullptr
+   * is returned.
+   */
+  ///@{
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const * getWrapper( LOOKUP_TYPE const & index ) const
   {
@@ -826,6 +884,7 @@ public:
   template< typename T >
   Wrapper< T > * getWrapper( char const * const key )
   { return getWrapper< T >( string( key ) ); }
+  ///@}
 
 
   indexType getWrapperIndex( std::string const & name ) const
@@ -911,6 +970,7 @@ public:
   template< typename T >
   T * getPointer( char const * const name )
   { return getPointer< T >( string( name ) ); }
+  //END_SPHINX_INCLUDE_GET_WRAPPER
 
 
   bool hasGroup( std::string const & name ) const
@@ -1016,19 +1076,59 @@ public:
 
 protected:
   /**
-   * @brief Post processing of the input values.
+   * This function provides capability to post process input values prior to
+   * any other initialization operations.
    */
   virtual void PostProcessInput() {}
 
-  virtual void InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by Initialize() prior to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePreSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by Initialize() after to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const GEOSX_UNUSED_ARG( group ) ) {}
+  /**
+   * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
+   * @param[in] group A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
+  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group )
+  {
+    GEOSX_UNUSED_VAR( group );
+  }
 
-  virtual void postRestartInitialization( Group * const GEOSX_UNUSED_ARG( domain ) ) {}
+  /**
+   * @brief Performs initialization required after reading from a restart file.
+   * @param domain A pointer to the domain partition.
+   */
+  virtual void postRestartInitialization( Group * const domain )
+  {
+    GEOSX_UNUSED_VAR( domain );
+  }
 
 private:
   /**
@@ -1038,27 +1138,36 @@ private:
    */
   virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
 
-  /// the parent of this group
+  //START_SPHINX_INCLUDE_02
+  /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
 
-  /// the container for all wrappers
+  /// The container for the collection of all wrappers continued in "this" Group.
   wrapperMap m_wrappers;
 
-  /// The container for all sub-groups
+  /// The container for the collection of all sub-groups contained in "this" Group.
   subGroupMap m_subGroups;
+
+  /// The size/length of this Group...and all Wrapper<> that are are specified to have the same size as their
+  /// owning group.
+  indexType m_size;
+
+  /// The capacity for wrappers in this group...and all Wrapper<> that are specified to have the same size as their
+  /// owning group.
+  indexType m_capacity;
+
+  /// The name/key of this Group in its parent collection of sub-Groups.
+  string m_name;
+
+  RestartFlags m_restart_flags; ///< Restart flag for this group...and
+                                ///< subsequently all wrappers in this group
+  InputFlags m_input_flags;     ///< Input flag for this group
 
 #ifdef GEOSX_USE_ATK
   /// Pointer to the sidre group that mirrors this group
   axom::sidre::Group * m_sidreGroup;
 #endif
 
-  indexType m_size;             ///< The size/length wrappers in this group
-  indexType m_capacity;         ///< The capacity for wrappers in this group
-  RestartFlags m_restart_flags; ///< Restart flag for this group...and
-                                ///< subsequently all wrappers in this group
-  InputFlags m_input_flags;     ///< Input flag for this group
-  string m_name;                ///< the repository name of this group. This
-                                ///< is the key in the parent group.
 
 };
 
@@ -1158,11 +1267,58 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
   return rval;
 }
 
+template< typename T >
+T const * Group::GetGroupByPath( string const & path ) const
+{
+  // needed for getting root correctly with GetGroupByPath("/");
+  if( path.empty())
+  {
+    return group_cast< T const * >( this );
+  }
+
+  size_t directoryMarker = path.find( '/' );
+
+  if( directoryMarker == std::string::npos )
+  {
+    // Target should be a child of this group
+    return this->GetGroup< T >( path );
+  }
+  else
+  {
+    // Split the path
+    string const child = path.substr( 0, directoryMarker );
+    string const subPath = path.substr( directoryMarker+1, path.size());
+
+    if( directoryMarker == 0 )            // From root
+    {
+      if( this->getParent() == nullptr )  // At root
+      {
+        return this->GetGroupByPath< T >( subPath );
+      }
+      else                               // Not at root
+      {
+        return this->getParent()->GetGroupByPath< T >( path );
+      }
+    }
+    else if( child[0] == '.' )
+    {
+      if( child[1] == '.' )               // '../' = Reverse path
+      {
+        return this->getParent()->GetGroupByPath< T >( subPath );
+      }
+      else                               // './' = This path
+      {
+        return this->GetGroupByPath< T >( subPath );
+      }
+    }
+    else
+    {
+      return m_subGroups[child]->GetGroupByPath< T >( subPath );
+    }
+  }
+}
 
 } /* end namespace dataRepository */
 } /* end namespace geosx */
 
-
-//typedef geosx::dataRepository::Group ObjectDataStructureBaseT;
-
-#endif /* MANAGEDGROUP_H_ */
+#endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */

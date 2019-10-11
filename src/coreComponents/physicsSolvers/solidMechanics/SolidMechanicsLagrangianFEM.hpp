@@ -16,14 +16,14 @@
  * @file SolidMechanicsLagrangianFEM.hpp
  */
 
-#ifndef SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
-#define SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
 
@@ -427,4 +427,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* SOLID_MECHANICS_LAGRANGIAN_FEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */

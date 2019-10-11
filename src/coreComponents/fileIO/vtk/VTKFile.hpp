@@ -16,8 +16,8 @@
  * @file VTKFile.hpp
  */
 
-#ifndef VTKFILE_HPP_
-#define VTKFILE_HPP_
+#ifndef GEOSX_FILEIO_VTK_VTKFILE_HPP_
+#define GEOSX_FILEIO_VTK_VTKFILE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/RestartFlags.hpp" 
@@ -26,9 +26,6 @@
 
 #include "dataRepository/xmlWrapper.hpp"
 
-#ifdef GEOSX_USE_MPI
-#include <mpi.h>
-#endif
 
 namespace geosx
 {
@@ -142,4 +139,4 @@ class VTKFile
     bool m_binary;
 };
 }
-#endif /* VTKFILE_H_ */
+#endif /* GEOSX_FILEIO_VTK_VTKFILE_HPP_ */

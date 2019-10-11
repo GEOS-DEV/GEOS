@@ -932,8 +932,7 @@ void print_norms( Epetra_FECrsMatrix * m_matrix[2][2],
                   Epetra_FEVector * m_rhs[2],
                   std::string nametag )
 {
-   int rank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   int const rank = MpiWrapper::Comm_rank(MPI_COMM_WORLD );
 
    double matnorm[2][2];
    double rhsnorm[2];
@@ -1293,9 +1292,6 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   RCP<Thyra::MultiVectorBase<double> >     lhs_block[2];
   RCP<Thyra::MultiVectorBase<double> >     rhs_block[2];
 
-
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   for(unsigned i=0; i<2; ++i)
   for(unsigned j=0; j<2; ++j)
   {

@@ -21,8 +21,11 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlf90_r.so
                    ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcublas.so
                    ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcudart.so
-                   /usr/gapps/GEOS/geosx/thirdPartyLibs/liblapackforesslgeosx.a
+                   /usr/gapps/GEOSX/thirdPartyLibs/liblapackforesslgeosx.a
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
                    CACHE PATH "")
 
 set(PETSC_OMP_DIR /usr/gapps/GEOS/geosx/thirdPartyLibs/omp-links-for-petsc CACHE STRING "")
+
+# PETSc doesn't seem to work correctly with clang.
+set(ENABLE_PETSC OFF CACHE BOOL "")

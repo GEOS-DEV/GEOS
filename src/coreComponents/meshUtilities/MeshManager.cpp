@@ -15,8 +15,8 @@
 
 #include "MeshManager.hpp"
 
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "MeshGeneratorBase.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
 #include "common/TimingMacros.hpp"
 
 namespace geosx

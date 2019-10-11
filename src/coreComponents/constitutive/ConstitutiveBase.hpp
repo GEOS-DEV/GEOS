@@ -16,10 +16,10 @@
  * @file ConstitutiveBase.hpp
  */
 
-#ifndef CONSTITUTIVEBASE_HPP_
-#define CONSTITUTIVEBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 
@@ -71,7 +71,7 @@ public:
   virtual void resize( localIndex newSize ) override;
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
   static typename CatalogInterface::CatalogType& GetCatalog();
 
   /**

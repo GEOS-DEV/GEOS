@@ -14,9 +14,10 @@
 
 
 #include "DummySolver.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
 #include <thread>
 #include <chrono>
+
+#include "mpiCommunications/CommunicationTools.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
@@ -55,7 +56,7 @@ void DummySolver::InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( proble
 {
   if (m_randSeed > 0)
   {
-    integer const rank = CommunicationTools::MPI_Rank( MPI_COMM_GEOSX );
+    integer const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     std::srand((1 + rank) * m_randSeed);
   }
 }

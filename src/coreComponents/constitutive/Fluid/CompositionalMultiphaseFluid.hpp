@@ -16,8 +16,8 @@
   * @file CompositionalMultiphaseFluid.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
 #include "constitutive/Fluid/MultiFluidPVTPackageWrapper.hpp"
 
@@ -28,14 +28,6 @@ class CompositionalMultiphaseSystem;
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const compositionalMultiphaseFluid = "CompositionalMultiphaseFluid";
-}
-}
-
 namespace constitutive
 {
 
@@ -51,7 +43,7 @@ public:
                      Group * const parent,
                      std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::compositionalMultiphaseFluid; }
+  static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -101,4 +93,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPOSITIONALMULTIPHASEFLUID_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_

@@ -16,8 +16,8 @@
  * @file NewFunctionManager.hpp
  */
 
-#ifndef NEWFUNCTIONMANAGER_HPP_
-#define NEWFUNCTIONMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_NEWFUNCTIONMANAGER_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_NEWFUNCTIONMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
@@ -60,4 +60,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* NEWFUNCTIONMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_NEWFUNCTIONMANAGER_HPP_ */

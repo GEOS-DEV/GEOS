@@ -16,8 +16,8 @@
  * @file FieldBase.hpp
  */
 
-#ifndef BOUNDARYCONDITIONBASE_H
-#define BOUNDARYCONDITIONBASE_H
+#ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
@@ -49,7 +49,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
+  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::Group * const >;
 

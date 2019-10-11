@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef __GEOS_RAJA_POLICY__HPP
-#define __GEOS_RAJA_POLICY__HPP
+#ifndef GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#define GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
 
 #include "RAJA/RAJA.hpp"
 #include "common/DataTypes.hpp"

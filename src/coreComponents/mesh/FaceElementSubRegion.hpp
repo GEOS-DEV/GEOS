@@ -16,8 +16,8 @@
  * @file FaceElementSubRegion.hpp
  */
 
-#ifndef FACECELLSUBREGION_HPP_
-#define FACECELLSUBREGION_HPP_
+#ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
+#define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
@@ -190,4 +190,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* FACECELLSUBREGION_HPP_ */
+#endif /* GEOSX_MESH_FACEELEMENTSUBREGION_HPP_ */

@@ -226,16 +226,7 @@ void LagrangeBasis<dim>::PostProcessInput()
     m_polynomials.push_back(Polynomial(coeff[n]));
 }
 
-/*
- * Explicit instantiations.
- */
-
-//template class LagrangeBasis<1>;
-//template class LagrangeBasis<2>;
-//template class LagrangeBasis<3>;
-
-//REGISTER_CATALOG_ENTRY( BasisBase, LagrangeBasis<1>,void )
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, Group * const > catEntry_LagrangeBasis1; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, Group * const > catEntry_LagrangeBasis2; }
-namespace { cxx_utilities::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, Group * const > catEntry_LagrangeBasis3; }
+namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, Group * const > catEntry_LagrangeBasis1; }
+namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, Group * const > catEntry_LagrangeBasis2; }
+namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, Group * const > catEntry_LagrangeBasis3; }
 }

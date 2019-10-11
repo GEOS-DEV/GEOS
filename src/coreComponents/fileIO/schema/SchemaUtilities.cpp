@@ -155,12 +155,11 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
         // Get a list of the subgroup names in alphabetic order
         // Note: this is necessary because the order that objects
         //       are registered to catalogs may vary by compiler
-        std::vector<string> subGroupNames;
+        std::set<string> subGroupNames;
         for( auto & subGroupPair : group->GetSubGroups())
         {
-          subGroupNames.push_back(subGroupPair.first);
+          subGroupNames.insert(subGroupPair.first);
         }
-        std::sort(subGroupNames.begin(), subGroupNames.end());
 
         // Add children of the group
         for ( string subName : subGroupNames )
@@ -177,12 +176,11 @@ void SchemaUtilities::SchemaConstruction(Group * const group,
       // Note: wrappers that were added to this group by another group
       //       may end up in different order.  To avoid this, add them
       //       into the schema in alphabetic order.
-      std::vector<string> groupWrapperNames;
+      std::set<string> groupWrapperNames;
       for( auto & wrapperPair : group->wrappers())
       {
-        groupWrapperNames.push_back(wrapperPair.first);
+        groupWrapperNames.insert(wrapperPair.first);
       }
-      std::sort(groupWrapperNames.begin(), groupWrapperNames.end());
 
       for ( string attributeName : groupWrapperNames )
       {

@@ -16,7 +16,7 @@
  * @file SpatialPartition.cpp
  */
 
-#include "SpatialPartition.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 
@@ -85,7 +85,7 @@ SpatialPartition::~SpatialPartition()
 void SpatialPartition::InitializePostSubGroups( Group * const )
 {
   //get size of problem and decomposition
-  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   //check to make sure our dimensions agree
   {
@@ -101,10 +101,10 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
   MPI_Comm cartcomm;
   {
     int reorder = 0;
-    MPI_Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+    MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
   }
-  MPI_Comm_rank( cartcomm, &m_rank );
-  MPI_Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
+  m_rank = MpiWrapper::Comm_rank( cartcomm );
+  MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
 
 
   m_color = GetColor();
@@ -116,7 +116,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     AddNeighbors( 0, cartcomm, ncoords );
   }
 
-  MPI_Comm_free( &cartcomm );
+  MpiWrapper::Comm_free( &cartcomm );
 
   //initialize cached requests and status
   m_mpiRequest.resize( 2 * m_neighbors.size() );
@@ -126,8 +126,8 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
 void SpatialPartition::InitializeMetis()
 {
   //get size of problem and decomposition
-  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
-  MPI_Comm_rank( MPI_COMM_GEOSX, &m_rank );
+  m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   //check to make sure our dimensions agree
   {
     assert( m_sizeMetis == m_size );
@@ -185,7 +185,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
     {
       m_neighbors.push_back( NeighborCommunicator());
       int rank;
-      MPI_Cart_rank( cartcomm, ncoords, &rank );
+      rank = MpiWrapper::Cart_rank( cartcomm, ncoords );
       m_neighbors.back().SetNeighborRank( rank );
 //      m_neighbors.back().Initialize( rank, this->m_rank, this->m_size );
 
@@ -249,7 +249,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 
   {
     //get size of problem and decomposition
-    MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+    m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
     //check to make sure our dimensions agree
     {
@@ -265,10 +265,10 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MPI_Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::Cart_create( MPI_COMM_GEOSX, nsdof, m_Partitions.data(), m_Periodic.data(), reorder, &cartcomm );
     }
-    MPI_Comm_rank( cartcomm, &m_rank );
-    MPI_Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
+    m_rank = MpiWrapper::Comm_rank( cartcomm );
+    MpiWrapper::Cart_coords( cartcomm, m_rank, nsdof, m_coords.data());
 
 
     m_color = GetColor();
@@ -280,7 +280,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
       AddNeighbors( 0, cartcomm, ncoords );
     }
 
-    MPI_Comm_free( &cartcomm );
+    MpiWrapper::Comm_free( &cartcomm );
 
   }
 

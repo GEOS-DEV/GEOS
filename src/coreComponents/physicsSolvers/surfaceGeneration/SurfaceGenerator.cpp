@@ -18,15 +18,15 @@
 
 #include "SurfaceGenerator.hpp"
 
+#include "mpiCommunications/CommunicationTools.hpp"
+#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "MPI_Communications/CommunicationTools.hpp"
-#include "MPI_Communications/SpatialPartition.hpp"
-#include "MPI_Communications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
@@ -535,9 +535,6 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
                            edgesToRupturedFaces );
 
   int rval = 0;
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
   //  array1d<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 
   const arrayView1d<integer>& isNodeGhost = nodeManager.GhostRank();
@@ -1516,9 +1513,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         const map<localIndex, int>& faceLocations,
                                         const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations )
 {
-
-  int rank=0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
   arrayView1d<R1Tensor> const & X = nodeManager.referencePosition();
   ArrayOfSets< localIndex > & nodeToEdgeMap = nodeManager.edgeList();
@@ -2602,10 +2597,6 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
   arrayView1d<integer> const & isEdgeGhost = edgeManager.GhostRank();
   real64_array& SIFNode = nodeManager.getReference<real64_array>( "SIFNode" );
 
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-
   // We use the color map scheme because we can mark a face to be rupture ready from a partition where the face is a
   // ghost.
 
@@ -3404,9 +3395,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 
       if( trailingEdge > edgeManager.size())
       {
-        // GEOS_ERROR("Error: I have two trailing nodes but cannot find a trailing edge.");
-        int rank=0;
-        MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+        int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
         std::cout << "Cannot find trailing edge (edge=" << edgeID << ", rank=" << rank <<   "  )" << std::endl;
         return 0.0;
       }

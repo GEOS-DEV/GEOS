@@ -22,7 +22,7 @@
 //#include "common/Common.h"
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/StringUtilities.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 class Function;
 
@@ -50,7 +50,7 @@ public:
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) const = 0;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 };

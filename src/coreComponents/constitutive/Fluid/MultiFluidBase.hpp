@@ -16,8 +16,8 @@
   * @file MultiFluidBase.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -429,4 +429,4 @@ void MultiFluidBase::BatchUpdateKernel( arrayView1d<real64 const> const & pressu
 
 } //namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_MULTIFLUIDBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP

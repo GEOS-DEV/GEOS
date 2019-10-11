@@ -50,3 +50,6 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
 
 
 set( ENABLE_TOTALVIEW_OUTPUT ON CACHE BOOL "Enables Totalview custom view" FORCE)
+
+# PETSc doesn't seem to work correctly with clang.
+set(ENABLE_PETSC OFF CACHE BOOL "")
