@@ -64,8 +64,6 @@ public:
                                    xmlWrapper::xmlNode schemaParent,
                                    integer documentationType) override;
 
-  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
-
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   void ParseCommandLineInput( int argc, char* argv[]);

@@ -187,7 +187,7 @@ void ProblemManager::ProblemSetup()
 
   ApplyNumericalMethods();
 
-  RegisterDataOnMeshRecursive( nullptr );
+  RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 
   Initialize( this );
 
@@ -196,12 +196,6 @@ void ProblemManager::ProblemSetup()
   InitializePostInitialConditions( this );
 }
 
-
-void ProblemManager::RegisterDataOnMeshRecursive( Group * const )
-{
-  GEOSX_MARK_FUNCTION;
-  Group::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
-}
 
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
