@@ -1,8 +1,8 @@
 .. _Group:
 
 
-geosx::dataRepository::Group
-============================
+Group
+=====
 
 ``dataRepository::Group`` serves as a base class for most objects in GEOSX.
 In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a hierachical filesystem-like 
