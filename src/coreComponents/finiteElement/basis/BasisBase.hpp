@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 /**
  * Pure virtual base class representing a space
@@ -46,7 +46,7 @@ public:
   // Catalog name interface
   static string CatalogName() { return "BasisBase"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< BasisBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< BasisBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   virtual int size() const = 0;
