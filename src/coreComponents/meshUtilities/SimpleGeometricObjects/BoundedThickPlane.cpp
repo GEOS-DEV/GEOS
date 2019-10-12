@@ -58,14 +58,15 @@ void BoundedThickPlane::PostProcessInput()
 
   //check if they are all orthogonal
   R1Tensor vector = Cross(m_lengthVector, m_widthVector);
-  real64 scalarProd = Dot(m_normal, vector);
-  GEOS_ERROR_IF(std::fabs(scalarProd) - 1 > 1e-15, "Error: the 3 vectors provided do not form an orthonormal basis!");
+  GEOS_ERROR_IF(std::fabs(Dot(m_normal, vector)) - 1 > 1e-15 || std::fabs(Dot(m_widthVector, m_lengthVector)) > 1e-15 ,
+      "Error: the 3 vectors provided do not form an orthonormal basis!");
   GEOS_ERROR_IF(m_dimensions.size() != 2, "Error: Need to provide both length and width!");
 }
 
 
 bool BoundedThickPlane::IsCoordInObject( const R1Tensor& coord ) const
 {
+  //TODO This is true for a plane not for a bounded plane. Need to fix it.
   real64 normalDistance = 0.0;
   for(int i=0; i<3; ++i)
   {
@@ -73,8 +74,6 @@ bool BoundedThickPlane::IsCoordInObject( const R1Tensor& coord ) const
   }
 
   return std::fabs(normalDistance) <= m_thickness;
-
-
 }
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedThickPlane, std::string const &, Group * const )

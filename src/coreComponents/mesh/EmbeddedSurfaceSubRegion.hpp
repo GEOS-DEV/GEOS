@@ -26,6 +26,7 @@
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
+#include "EdgeManager.hpp"
 
 namespace geosx
 {
@@ -35,7 +36,6 @@ namespace geosx
  *
  * The EmbeddedSurfaceSubRegion class contains the functionality to support the concept of Embedded
  *  Surface Elements.
- *
  */
 class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
 {
@@ -67,7 +67,12 @@ public:
 
     void CalculateElementGeometricQuantities( localIndex const index);
 
-    void addNewEmbeddedSurface(localIndex const numEmbeddedSurfaceElem, localIndex const cellIndex, R1Tensor normalVector);
+    void AddNewEmbeddedSurface(localIndex const cellIndex, R1Tensor normalVector);
+
+    void ComputeElementArea(localIndex const k,
+                            NodeManager const & nodeManager,
+                            EdgeManager const & faceManager,
+                            FaceManager const & edgeManager);
 
     virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 

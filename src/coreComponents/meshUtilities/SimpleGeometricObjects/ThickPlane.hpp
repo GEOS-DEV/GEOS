@@ -36,6 +36,19 @@ public:
 
   virtual bool IsCoordInObject( const R1Tensor& coord ) const override;
 
+  /*
+   * Accessors
+   */
+  // normal vector
+  R1Tensor & getNormal() {return m_normal;}
+
+  R1Tensor const & getNormal() const {return m_normal;}
+
+  // origin of the plane
+  R1Tensor & getCenter() {return m_origin;}
+
+  R1Tensor const & getCenter() const {return m_origin;}
+
 protected:
   virtual void PostProcessInput() override;
 

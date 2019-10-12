@@ -28,7 +28,8 @@
 #include "mesh/FaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
-
+#include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
+#include "meshUtilities/SimpleGeometricObjects/BoundedThickPlane.hpp"
 
 #ifdef USE_GEOSX_PTP
 #include "GEOSX_PTP/ParallelTopologyChange.hpp"
@@ -100,16 +101,13 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   // Get domain
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
-
-  // TODO: it should loop over all the planes that are listed in the input file and start creating the fractures.
-  // hardcoding a plane.
-  R1Tensor planeCenter  = {0, 4.5, 0.5};
-  R1Tensor normalVector = {0, 1, 0};
+  // Get geometric object manager
+  GeometricObjectManager * geometricObjManager = problemManager->GetGroup<GeometricObjectManager>( "Geometry");
 
   // Get meshLevel
-  Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
-  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
+  Group     * const meshBodies = domain->getMeshBodies();
+  MeshBody  * const meshBody   = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel  = meshBody->GetGroup<MeshLevel>(0);
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -118,76 +116,71 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   FaceManager * const faceManager = meshLevel->getFaceManager();
   array1d<R1Tensor> & faceCenter  = faceManager->faceCenter();
 
-
-  // Initialize variables
-  globalIndex faceIndex;
-  real64 prodScalarProduct;
-  integer numEmbeddedSurfaceElem = 0;
-  R1Tensor distVec;
-
   // Get EmbeddedSurfaceSubRegions
-  EmbeddedSurfaceRegion    * const    embeddedSurfaceRegion = elemManager->GetRegion<EmbeddedSurfaceRegion>(this->m_fractureRegionName);
-  EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion = embeddedSurfaceRegion->GetSubRegion<EmbeddedSurfaceSubRegion>(0);
+  EmbeddedSurfaceRegion    * const    embeddedSurfaceRegion =
+      elemManager->GetRegion<EmbeddedSurfaceRegion>(this->m_fractureRegionName);
+  EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
+      embeddedSurfaceRegion->GetSubRegion<EmbeddedSurfaceSubRegion>(0);
 
-  /* 1. Count the number of embedded surface elements
-   * Loop over all the elements and for each one of them loop over the faces and compute the
-   * dot product between the distance between the plane center and the face and the normal
-   * vector defining the plane. If two scalar products have different signs the plane cuts the
-   * cell. To do this check multiply all dot products and then check the sign. If a face gives
-   * a 0 dot product it has to be neglected or the method won't work (as a matter of fact it means
-   * that the plane does cut the cell).
-   *
-   */
-  elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
+  // Loop over all the fracture planes
+  geometricObjManager->forSubGroups<ThickPlane>( [&]( ThickPlane * const fracture ) -> void
+  {
+    /* 1. Find out if an element is cut but the fracture or not.
+     * Loop over all the elements and for each one of them loop over the faces and compute the
+     * dot product between the distance between the plane center and the face and the normal
+     * vector defining the plane. If two scalar products have different signs the plane cuts the
+     * cell. To do this check multiply all dot products and then check the sign. If a face gives
+     * a 0 dot product it has to be neglected or the method won't work (as a matter of fact it means
+     * that the plane does cut the cell).
+     *
+     */
+    R1Tensor planeCenter  = fracture->getCenter();
+    R1Tensor normalVector = fracture->getNormal();
+    // Initialize variables
+    globalIndex faceIndex;
+    real64 prodScalarProduct;
+    R1Tensor distVec;
+
+    elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
+    {
+      Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
+      subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
       {
-    Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
-    subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
+        FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+        for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
         {
-      FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
-      for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
-      {
-        prodScalarProduct = 1;
-        for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
-        {
-          faceIndex = cellToFaces[cellIndex][kf];
-          distVec  = faceCenter[faceIndex];
-          distVec -= planeCenter;
-          // check if the dot product is zero
-          if ( fabs(Dot(distVec, normalVector) - 0) > 1e-8 )
+          prodScalarProduct = 1;
+          for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
           {
-            prodScalarProduct *= Dot(distVec, normalVector);
+            faceIndex = cellToFaces[cellIndex][kf];
+            distVec  = faceCenter[faceIndex];
+            distVec -= planeCenter;
+            // check if the dot product is zero
+            if ( std::fabs(Dot(distVec, normalVector)) > 1e-15 )
+            {
+              prodScalarProduct *= Dot(distVec, normalVector);
+            }
+          }
+          if (prodScalarProduct < 0)
+            // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
+            // that the cell is inside the actual fracture plane. For now let us assume the plane is not bounded.
+          {
+            /* 2. Now that you know that the element is cut by the fracture we can
+             * a. add new embedded surface element
+             * b. fill in the data relative to where the actual intersections are
+             * c. compute the geometric quantities and the Heaviside.
+            */
+            // a. Add the embedded surface element
+            embeddedSurfaceSubRegion->AddNewEmbeddedSurface(cellIndex, normalVector);
+            // b. find actual intersections with each edge and compute area.
+            // embeddedSurfaceSubRegion->ComputeElementArea();
           }
         }
-        if (prodScalarProduct < 0)
-        {
-          // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
-          // that the cell is inside the actual fracture plane.
-          numEmbeddedSurfaceElem += 1;
-          // Add new embedded surface element
-          embeddedSurfaceSubRegion->addNewEmbeddedSurface(numEmbeddedSurfaceElem, cellIndex, normalVector);
-        }
-      }
-        });
-
       });
-  std::cout << "Initial number of embedded surface elements: " << numEmbeddedSurfaceElem << std::endl;
+    });
+  });
 
-  /* 2. Now that the number of embedded elements is known it is time to
-     * fill in the data relative to where the actual intersections are and then compute
-     * the geometric quantities and the Heaviside.
-     */
-    /*
-    array1d< localIndex > const & embeddedSurfaceToCell = embeddedSurfaceSubRegion->getSurfaceToCellList();
-    for (localIndex embSurfIndex=0; embSurfIndex < embeddedSurfaceSubRegion->size(); embSurfIndex++)
-    {
-      localIndex cellIndex = embeddedSurfaceToCell[embSurfIndex];
-      // loop over the edges of each cell
-      //for()
-      //{
-
-      // }
-    }
-    */
+  std::cout << "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() << std::endl;
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const  GEOSX_UNUSED_ARG ( problemManager ) )

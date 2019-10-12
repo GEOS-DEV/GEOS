@@ -122,28 +122,31 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex c
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_ARG(facemanager) )
 {
-  // Compute surface area of embedded fracture surface
   // loop over the elements
   forall_in_range<serialPolicy>( 0, this->size(), GEOSX_LAMBDA ( localIndex const k )
     {
-      m_elementArea[k] = 1;
       m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
     });
-
 }
 
-void EmbeddedSurfaceSubRegion::addNewEmbeddedSurface (localIndex const numEmbeddedSurfaceElem,
-                                                      localIndex const cellIndex,
+void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
                                                       R1Tensor normalVector)
 {
   // resize
-  this->resize(numEmbeddedSurfaceElem);
+  this->resize(this->size() + 1);
 
   // add the cellIndex and the normalVector
-  m_embeddedSurfaceToCell[numEmbeddedSurfaceElem - 1] = cellIndex;
-  m_normalVector[numEmbeddedSurfaceElem - 1]          = normalVector;
+  m_embeddedSurfaceToCell[this->size() - 1] = cellIndex;
+  m_normalVector[this->size() - 1]          = normalVector;
 }
 
+void EmbeddedSurfaceSubRegion::ComputeElementArea(localIndex const k,
+                                                  NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
+                                                  EdgeManager const & GEOSX_UNUSED_ARG(faceManager),
+                                                  FaceManager const & GEOSX_UNUSED_ARG(edgeManager) )
+{
+  m_elementArea[k] = 1;
+}
 
 localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
