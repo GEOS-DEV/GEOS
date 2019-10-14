@@ -188,6 +188,21 @@ public:
                              real64 const problemTime,
                              bool const isRestart );
 
+
+  template< typename REGIONTYPE, typename ... REGIONTYPES >
+  void WriteElementMesh( ElementRegionManager const * const elementManager,
+                         constitutive::ConstitutiveManager const * const constitutiveManager,
+                         NodeManager const * const nodeManager,
+                         string const & meshName,
+                         const localIndex nnodes,
+                         real64 * coords[3],
+                         globalIndex const * const globalNodeNum,
+                         char const * const ghostNodeFlag,
+                         int const cycleNumber,
+                         real64 const problemTime,
+                         bool const writeNodalFields,
+                         bool & writeArbitraryPolygon );
+
   /**
    * @brief write a mesh level out to the silo file
    * @param meshLevel the meshLevel to write out
@@ -249,6 +264,7 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
+  template< typename REGIONTYPE, typename ... REGIONTYPES >
   void WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
                           constitutive::ConstitutiveManager const * const constitutiveManager,
                           string const & meshName,
@@ -275,7 +291,7 @@ public:
                        const localIndex_array& mask );
 
 
-
+  template< typename REGIONTYPE, typename ... REGIONTYPES >
   void WriteElementManagerSilo( ElementRegionManager const * group,
                                 string const & siloDirName,
                                 string const & meshName,
@@ -466,6 +482,23 @@ public:
     m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
   }
 
+  void setWriteEdgeMesh( int const val )
+  {
+    m_writeEdgeMesh = val;
+  }
+  void setWriteFaceMesh( int const val )
+  {
+    m_writeFaceMesh = val;
+  }
+  void setWriteCellElementMesh( int const val )
+  {
+    m_writeCellElementMesh = val;
+  }
+  void setWriteFaceElementMesh( int const val )
+  {
+    m_writeFaceElementMesh = val;
+  }
+
   void setPlotFileRoot( string const & fileRoot )
   {
     m_plotFileRoot = fileRoot;
@@ -503,6 +536,11 @@ private:
 
   string_array m_emptyMeshes;
   string_array m_emptyVariables;
+
+  integer m_writeEdgeMesh;
+  integer m_writeFaceMesh;
+  integer m_writeCellElementMesh;
+  integer m_writeFaceElementMesh;
 
   dataRepository::PlotLevel m_plotLevel;
 

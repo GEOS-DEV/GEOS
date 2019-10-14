@@ -321,6 +321,13 @@ SiloFile::SiloFile():
   m_restartFileRoot("restart"),
   m_fileName(),
   m_baseFileName(),
+  m_emptyMeshes(),
+  m_emptyVariables(),
+  m_writeEdgeMesh(0),
+  m_writeFaceMesh(0),
+  m_writeCellElementMesh(1),
+  m_writeFaceElementMesh(1),
+  m_plotLevel(dataRepository::PlotLevel::LEVEL_1),
   m_ghostFlags(true)
 {
 }
@@ -785,13 +792,14 @@ void SiloFile::WritePointMesh( string const & meshName,
 
 }
 
+template< typename REGIONTYPE, typename ... REGIONTYPES >
 void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const elementManager,
                                              ConstitutiveManager const * const constitutiveManager,
                                              string const & meshName,
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
-  string name = "materials";
+  string name = meshName + "_materials";
   int const nmat = constitutiveManager->GetSubGroups().size();
   array1d<int> matnos(nmat);
   std::vector<string> materialNameStrings(nmat);
@@ -810,7 +818,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   int dims = 0;
   int mixlen=0;
 
-  elementManager->forElementRegions( [&]( ElementRegionBase const * const elemRegion )
+  elementManager->forElementRegions<REGIONTYPE,REGIONTYPES...>( [&]( ElementRegionBase const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
@@ -831,7 +839,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   int elemCount = 0;
   int mixCount = 0;
-  elementManager->forElementRegions( [&]( ElementRegionBase const * const elemRegion )
+  elementManager->forElementRegions<REGIONTYPE,REGIONTYPES...>( [&]( ElementRegionBase const * const elemRegion )
   {
     int const numMatInRegion = elemRegion->getMaterialList().size();
     if (numMatInRegion > 0)
@@ -962,7 +970,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
 
-  string subDirectory = "MaterialFields";
+  string subDirectory = meshName + "_MaterialFields";
   string rootDirectory = "/" + subDirectory;
 
   {
@@ -1452,6 +1460,7 @@ void SiloFile::WriteGroupSilo( Group const * group,
 
 }
 
+template< typename REGIONTYPE, typename ... REGIONTYPES >
 void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementManager,
                                         string const & siloDirName,
                                         string const & meshName,
@@ -1464,8 +1473,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
   dataRepository::Group fakeGroup(elementManager->getName(), nullptr);
   array1d< array1d< std::map< string, WrapperBase const * > > > viewPointers(elementManager->numRegions());
 
-  elementManager->forElementRegionsComplete( [&]( localIndex const er,
-                                                  ElementRegionBase const * const elemRegion )
+  elementManager->forElementRegionsComplete<REGIONTYPE,REGIONTYPES...>( [&]( localIndex const er,
+                                                                             ElementRegionBase const * const elemRegion )
   {
     viewPointers[er].resize( elemRegion->numSubRegions() );
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
@@ -1523,8 +1532,8 @@ void SiloFile::WriteElementManagerSilo( ElementRegionManager const * elementMana
       arrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elementManager->forElementRegionsComplete( [&]( localIndex const er,
-                                                      ElementRegionBase const * const elemRegion )
+      elementManager->forElementRegionsComplete<REGIONTYPE,REGIONTYPES...>( [&]( localIndex const er,
+                                                                                 ElementRegionBase const * const elemRegion )
       {
         elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr,
                                                     ElementSubRegionBase const * const subRegion )
@@ -1578,15 +1587,163 @@ void SiloFile::WriteDomainPartition( DomainPartition const & domain,
 
 }
 
+
+template< typename REGIONTYPE, typename ... REGIONTYPES >
+void SiloFile::WriteElementMesh( ElementRegionManager const * const elementManager,
+                                 ConstitutiveManager const * const constitutiveManager,
+                                 NodeManager const * const nodeManager,
+                                 string const & meshName,
+                                 const localIndex numNodes,
+                                 real64 * coords[3],
+                                 globalIndex const * const globalNodeNum,
+                                 char const * const ghostNodeFlag,
+                                 int const cycleNumber,
+                                 real64 const problemTime,
+                                 bool const writeNodalFields,
+                                 bool & writeArbitraryPolygon )
+{
+  localIndex numElementShapes = 0;
+
+  elementManager->forElementRegions<REGIONTYPE, REGIONTYPES...>( [&] ( auto const * const region )
+  {
+    region->forElementSubRegions( [&]( auto const * const GEOSX_UNUSED_ARG( subRegion ) )
+    {
+      ++numElementShapes;
+    });
+  });
+
+  array1d<localIndex*> meshConnectivity(numElementShapes);
+  array1d<globalIndex*> globalElementNumbers(numElementShapes);
+  array1d<integer> shapecnt(numElementShapes);
+  array1d<integer> shapetype(numElementShapes);
+  array1d<integer> shapesize(numElementShapes);
+  array1d<char> ghostZoneFlag;
+
+  array1d<FixedOneToManyRelation> elementToNodeMap;
+  elementToNodeMap.resize( numElementShapes );
+
+  int count = 0;
+  elementManager->forElementRegions<REGIONTYPE, REGIONTYPES...>( [&] ( auto const * const region )
+  {
+    region->forElementSubRegions( [&]( auto const * const elementSubRegion )
+    {
+      TYPEOFPTR(elementSubRegion)::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
+
+      // TODO HACK. this isn't correct for variable relations.
+      elementToNodeMap[count].resize( elemsToNodes.size(0), elementSubRegion->numNodesPerElement(0) );
+
+      integer_array const & elemGhostRank = elementSubRegion->GhostRank();
+
+
+      string elementType = elementSubRegion -> GetElementTypeString();
+      integer_array const & nodeOrdering = SiloNodeOrdering(elementType);
+      for( localIndex k = 0 ; k < elementSubRegion->size() ; ++k )
+      {
+        integer numNodesPerElement = integer_conversion<int>( elementSubRegion->numNodesPerElement(k));
+        for( localIndex a = 0 ; a < numNodesPerElement ; ++a )
+        {
+          elementToNodeMap[count](k, a) = elemsToNodes[k][nodeOrdering[a]];
+        }
+
+        if( elemGhostRank[k] >= 0 )
+        {
+          ghostZoneFlag.push_back( 1 );
+        }
+        else
+        {
+          ghostZoneFlag.push_back( 0 );
+        }
+      }
+
+
+      meshConnectivity[count] = elementToNodeMap[count].data();
+
+
+      //        globalElementNumbers[count] = elementRegion.m_localToGlobalMap.data();
+      shapecnt[count] = static_cast<int>(elementSubRegion->size());
+
+
+      if (! elementType.compare(0, 4, "C3D8") )
+      {
+        shapetype[count] = DB_ZONETYPE_HEX;
+      }
+      else if ( !elementType.compare(0, 4, "C3D4") )
+      {
+        shapetype[count] = DB_ZONETYPE_TET;
+      }
+      else if ( !elementType.compare(0, 4, "C3D6") )
+      {
+        shapetype[count] = DB_ZONETYPE_PRISM;
+        writeArbitraryPolygon = true;
+      }
+      else if ( !elementType.compare(0, 4, "C3D5") )
+      {
+        shapetype[count] = DB_ZONETYPE_PYRAMID;
+        writeArbitraryPolygon = true;
+      }
+      else if ( !elementType.compare(0, 4, "BEAM") )
+      {
+        shapetype[count] = DB_ZONETYPE_BEAM;
+      }
+      shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
+      ++count;
+    });
+  });
+
+
+
+
+  WriteMeshObject(meshName,
+                  numNodes,
+                  coords,
+                  globalNodeNum,
+                  ghostNodeFlag,
+                  ghostZoneFlag.data(),
+                  integer_conversion<int>(numElementShapes),
+                  shapecnt.data(),
+                  meshConnectivity.data(),
+                  nullptr /*globalElementNumbers.data()*/,
+                  shapetype.data(),
+                  shapesize.data(),
+                  cycleNumber,
+                  problemTime);
+
+
+  if( writeNodalFields )
+  {
+    WriteGroupSilo( nodeManager,
+                    "NodalFields",
+                    meshName,
+                    DB_NODECENT,
+                    cycleNumber,
+                    problemTime,
+                    false,
+                    localIndex_array() );
+  }
+
+
+  WriteMaterialMapsFullStorage<REGIONTYPE,REGIONTYPES...>( elementManager,
+                                                           constitutiveManager,
+                                                           meshName,
+                                                           cycleNumber,
+                                                           problemTime );
+
+
+  WriteElementManagerSilo<REGIONTYPE,REGIONTYPES...>( elementManager,
+                                                       meshName + "Data",
+                                                       meshName,
+                                                       cycleNumber,
+                                                       problemTime,
+                                                       false );
+
+}
+
 void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                ConstitutiveManager const * const constitutiveManager,
                                int const cycleNum,
                                real64 const problemTime,
                                bool const isRestart )
 {
-  //--------------WRITE FE DATA-----------------
-//  if (m_feElementManager->m_numElems > 0)
-//  {
 
     NodeManager const * const nodeManager = meshLevel->getNodeManager();
     localIndex const numNodes = nodeManager->size();
@@ -1598,10 +1755,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     integer_array const & nodeGhostRank = nodeManager->GhostRank();
     array1d<char> ghostNodeFlag( nodeGhostRank.size() );
     array1d<char> ghostZoneFlag;
-
-
-
-
 
     r1_array const & referencePosition = nodeManager->getReference<r1_array>(keys::referencePositionString);
 
@@ -1638,7 +1791,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     coords[1] = ycoords.data();
     coords[2] = zcoords.data();
 
+
+
+
     ElementRegionManager const * const elementManager = meshLevel->getElemManager();
+
+#if 0
     localIndex numElementShapes = 0;
 
     elementManager->forElementSubRegions( [&]( auto const * const GEOSX_UNUSED_ARG( subRegion ) )
@@ -1771,7 +1929,34 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                problemTime,
                                isRestart );
     }
-//  }//end FE write
+
+#else
+    WriteElementMesh<CellElementRegion>( elementManager,
+                                         constitutiveManager,
+                                         nodeManager,
+                                         "CellElements",
+                                         numNodes,
+                                         coords,
+                                         nodeManager->m_localToGlobalMap.data(),
+                                         ghostNodeFlag,
+                                         cycleNum,
+                                         problemTime,
+                                         true,
+                                         writeArbitraryPolygon );
+
+    WriteElementMesh<FaceElementRegion>( elementManager,
+                                         constitutiveManager,
+                                         nodeManager,
+                                         "FaceElements",
+                                         numNodes,
+                                         coords,
+                                         nodeManager->m_localToGlobalMap.data(),
+                                         ghostNodeFlag,
+                                         cycleNum,
+                                         problemTime,
+                                         false,
+                                         writeArbitraryPolygon );
+#endif
 
 
 
@@ -1779,7 +1964,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-  if ( 0 )//(isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
+  if ( m_writeFaceMesh )
   {
 
     FaceManager const * const faceManager = meshLevel->getFaceManager();
@@ -1899,7 +2084,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   }
 
 
-  if ( 0 ) //isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
+  if ( m_writeEdgeMesh )
   {
     // write edges
     FaceManager const * const faceManager = meshLevel->getFaceManager();
