@@ -92,7 +92,6 @@ public:
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -166,7 +165,6 @@ public:
 
   set< localIndex > m_newFaceElements;
 
-
 private:
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
@@ -186,7 +184,6 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
-
 
 
 };

@@ -76,13 +76,22 @@ public:
                                 localIndex const faceIndices[2] );
 
 
+  real64 getDefaultAperture() const { return m_defaultAperture; }
+
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
+
+protected:
+  virtual void InitializePreSubGroups( Group * const ) override;
 
 
 private:
+  /// The
+  real64 m_defaultAperture;
 
 };
 

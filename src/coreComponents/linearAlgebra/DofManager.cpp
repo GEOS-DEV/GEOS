@@ -1717,11 +1717,11 @@ void DofManager::addCoupling( string const & rowFieldName,
   {
     std::unique_ptr<ParallelMatrix> & rowConnLocPattern = m_sparsityPattern( rowFieldIndex, colFieldIndex ).first;
     rowConnLocPattern = std::make_unique<ParallelMatrix>();
-    makeConnLocPattern( m_fields[rowFieldIndex], connectivity, regions, *rowConnLocPattern );
+    makeConnLocPattern( m_fields[rowFieldIndex], connectivity, regionList, *rowConnLocPattern );
 
     std::unique_ptr<ParallelMatrix> & colConnLocPattern = m_sparsityPattern( rowFieldIndex, colFieldIndex ).second;
     colConnLocPattern = std::make_unique<ParallelMatrix>();
-    makeConnLocPattern( m_fields[colFieldIndex], connectivity, regions, *colConnLocPattern );
+    makeConnLocPattern( m_fields[colFieldIndex], connectivity, regionList, *colConnLocPattern );
   }
 }
 
@@ -1906,24 +1906,17 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
 
       createIndexArrayImpl<EDGE, FaceElementSubRegion>( m_domain, m_mesh, fieldEdge );
       typename ArrayHelperEdge::Accessor & indexArrayEdge = ArrayHelperEdge::get( m_mesh, fieldEdge );
-
-      // backup old values for face connectors
-      localIndex  const numLocalFaces  = fieldConn.numLocalNodes;
-      globalIndex const firstLocalFace = fieldConn.firstLocalRow;
+      numLocalConns += fieldEdge.numLocalNodes;
 
       // adjust face connector indexing to account for added edge connectors on every rank
-      // the reason is we need contiguous numbering of connectors within a rank in order to create CL matrix
-      numLocalConns += fieldEdge.numLocalNodes;
-      localIndex const firstLocalConn = MpiWrapper::PrefixSum<globalIndex>( numLocalConns ).first;
-      localIndex const adjustment = firstLocalConn - firstLocalFace;
-
+      // since we need contiguous numbering of connectors within a rank in order to create CL matrix
       forMeshLocation<CONN>( m_mesh, regions,
                              [&]( auto const & faceIdx,
                                   auto const,
                                   localIndex const )
       {
         GEOS_ASSERT( ArrayHelperCon::value( indexArrayCon, faceIdx ) >= 0 );
-        ArrayHelperCon::reference( indexArrayCon, faceIdx ) += adjustment;
+        ArrayHelperCon::reference( indexArrayCon, faceIdx ) += fieldEdge.firstLocalRow;
       } );
 
       // also adjust edge connector indexing in a similar way
@@ -1933,7 +1926,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
                                                         localIndex const )
       {
         GEOS_ASSERT( ArrayHelperEdge::value( indexArrayEdge, edgeIdx ) >= 0 );
-        ArrayHelperEdge::reference( indexArrayEdge, edgeIdx ) += adjustment + numLocalFaces;
+        ArrayHelperEdge::reference( indexArrayEdge, edgeIdx ) += fieldConn.firstLocalRow + fieldConn.numLocalRows;
       } );
 
       // sync index arrays after adjustment
@@ -1951,7 +1944,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
                                                              auto const & edgeIdx,
                                                              localIndex const k )
       {
-        globalIndex const indexElem  = ArrayHelperLoc::value( indexArrayLoc, elemIdx );
+        globalIndex const indexElem = ArrayHelperLoc::value( indexArrayLoc, elemIdx );
         globalIndex const indexEdge = ArrayHelperEdge::value( indexArrayEdge, edgeIdx );
         GEOS_ASSERT( indexEdge >= 0 );
         GEOS_ASSERT( indexElem >= 0 );
