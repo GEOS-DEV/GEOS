@@ -81,6 +81,11 @@ public:
 
   integer GetTimestepBehavior() { return m_timestepType; }
 
+  /**
+   * This method will set the initial time-step size based on requests from its
+   * targets and/or children.
+   */
+  virtual void SetInitialTimeStep( dataRepository::Group * GEOSX_UNUSED_ARG( domain ) ) {}
 
 private:
   integer m_timestepType = 0;

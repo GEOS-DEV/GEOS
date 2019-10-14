@@ -246,6 +246,14 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups(Group * const rootGroup
 
 }
 
+void SolidMechanicsLagrangianFEM::SetInitialTimeStep(Group * const domain )
+{
+  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
+  {
+    ExplicitStepSetup( 0, 0, domain->group_cast<DomainPartition *>() );
+  }
+}
+
 void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -418,11 +426,27 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
+    ExplicitStepSetup( time_n, dt, domain);
 
+    ExplicitStep( time_n, dt, cycleNumber, Group::group_cast<DomainPartition*>(domain) );
+
+    int locallyFractured = 0;
+    int globallyFractured = 0;
     if( surfaceGenerator!=nullptr )
     {
-      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+      if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
+      {
+        locallyFractured = 1;
+      }
+      MpiWrapper::allReduce( &locallyFractured,
+                             &globallyFractured,
+                             1,
+                             MPI_MAX,
+                             MPI_COMM_GEOSX);
+    }
+    if( globallyFractured == 0 )
+    {
+      updateIntrinsicNodalData(domain);
     }
 
   }
@@ -462,15 +486,251 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
-                                                  real64 const& dt,
-                                                  const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                                  DomainPartition * const domain )
+void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& time_n,
+                                                              real64 const& dt,
+                                                              const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                                              DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // updateIntrinsicNodalData(domain);
 
+  m_maxStableDt = std::numeric_limits<real64>::max();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodes = mesh->getNodeManager();
+
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+
+  array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
+  arrayView1d<R1Tensor> const & vel = velocityArray;
+
+  arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView1d<R1Tensor> const & uhat = nodes->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
+
+  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back("Velocity");
+
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm );
+
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
+
+  //3: v^{n+1/2} = v^{n} + a^{n} dt/2
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
+
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+  //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
+  SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
+
+  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::TotalDisplacement,
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+    {
+      integer const component = bc->GetComponent();
+      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          vel[a][component] = u[a][component];
+        }
+      );
+    },
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+    {
+      integer const component = bc->GetComponent();
+      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          uhat[a][component] = u[a][component] - vel[a][component];
+          vel[a][component]  = uhat[a][component] / dt;
+        }
+      );
+    }
+  );
+
+}
+
+
+real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& time_n,
+                                                                real64 const& dt,
+                                                                const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                                                DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  m_maxStableDt = std::numeric_limits<real64>::max();
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  NodeManager * const nodes = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
+  FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(keys::finiteElementDiscretizations);
+  ConstitutiveManager * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);
+
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+
+  arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
+  array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
+  arrayView1d<R1Tensor> const & vel = velocityArray;
+
+  arrayView1d<R1Tensor> const & u = nodes->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+  arrayView1d<R1Tensor> const & acc = nodes->getReference<array1d<R1Tensor>>(keys::Acceleration);
+
+  array1d<NeighborCommunicator> & neighbors = domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  std::map<string, string_array > fieldNames;
+  fieldNames["node"].push_back("Velocity");
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
+  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
+                                                               arrayView2d<real64> >("MeanStress",
+                                                                                     constitutiveManager);
+
+  ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
+  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+                                                                                         constitutiveManager);
+
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
+    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+
+  // add fluid pressure
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const fluidPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("pressure");
+
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const dPres =
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>("deltaPressure");
+
+  //Step 5. Calculate deformation input to constitutive model and update state to
+  // Q^{n+1}
+  m_maxStableDt = std::numeric_limits<real64>::max();
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+    {
+      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
+
+      ExplicitElementKernelLaunch( numNodesPerElement,
+                                   numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                   this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
+                                   elemsToNodes,
+                                   dNdX,
+                                   detJ,
+                                   u,
+                                   vel,
+                                   acc,
+                                   fluidPres[er][esr],
+                                   dPres[er][esr],
+                                   meanStress[er][esr][m_solidMaterialFullIndex],
+                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   dt,
+                                   &m_maxStableDt);
+
+    }); //Element Region
+
+  } //Element Manager
+
+  // apply this over a set
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
+
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+  // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
+  if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
+  CommunicationTools::SynchronizePackSendRecv( fieldNames, mesh, neighbors, m_iComm );
+
+  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  {
+    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
+
+    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+
+    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
+    {
+      arrayView3d< R1Tensor > const & dNdX = elementSubRegion->getReference< array3d< R1Tensor > >(keys::dNdX);
+
+      arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
+
+      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+
+      localIndex const numNodesPerElement = elemsToNodes.size(1);
+
+      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
+
+      ExplicitElementKernelLaunch( numNodesPerElement,
+                                   numQuadraturePoints,
+                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
+                                   this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
+                                   elemsToNodes,
+                                   dNdX,
+                                   detJ,
+                                   u,
+                                   vel,
+                                   acc,
+                                   fluidPres[er][esr],
+                                   dPres[er][esr],
+                                   meanStress[er][esr][m_solidMaterialFullIndex],
+                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   dt,
+                                   &m_maxStableDt );
+
+    }); //Element Region
+
+  } //Element Manager
+
+  // apply this over a set
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
+
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+  // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
+  if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
+  CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
+
+  return dt;
+}
+
+
+void
+SolidMechanicsLagrangianFEM::
+ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                   real64 const & GEOSX_UNUSED_ARG( dt ),
+                   DomainPartition * const domain )
+{
+  static int setMechanicsSolverTimeStep = 0;
+  if( setMechanicsSolverTimeStep == 0 )
+  {
+    updateIntrinsicNodalData( domain );
+    ExplicitStep( 0, 0, 0, domain );
+    setMechanicsSolverTimeStep = 1;
+  }
+}
+
+real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
+                                                  real64 const& dt,
+                                                  const int cycleNumber,
+                                                  DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  ExplicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
+  return ExplicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
+/*
+  // updateIntrinsicNodalData(domain);
+
+  m_maxStableDt = std::numeric_limits<real64>::max();
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   NodeManager * const nodes = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -552,6 +812,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
+  m_maxStableDt = std::numeric_limits<real64>::max();
   for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
@@ -583,7 +844,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    dPres[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
-                                   dt );
+                                   dt,
+                                   &m_maxStableDt);
 
     }); //Element Region
 
@@ -630,7 +892,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    dPres[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
-                                   dt );
+                                   dt,
+                                   &m_maxStableDt);
     }); //Element Region
 
   } //Element Manager
@@ -645,6 +908,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm );
 
   return dt;
+  */
 }
 
 

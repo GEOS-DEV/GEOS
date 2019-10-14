@@ -82,6 +82,8 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
+  virtual void SetInitialTimeStep( Group * const domain ) override;
+
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
@@ -90,9 +92,9 @@ public:
 
   virtual real64
   ExplicitStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition * domain ) override;
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition * domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -101,10 +103,10 @@ public:
    */
   /**@{*/
 
-  void
+  virtual void
   ExplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain);
+                     DomainPartition * const domain) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -209,13 +211,11 @@ public:
                           ParallelVector * const rhs );
 
   /**
-   * @brief assembles the flux terms for all cells
+   * @brief assembles the flux terms for all cells in the explicit solver
    * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
    */
   void AssembleFluxTermsExplicit( real64 const time_n,
                                   real64 const dt,

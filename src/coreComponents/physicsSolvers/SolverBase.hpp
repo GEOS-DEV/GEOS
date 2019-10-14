@@ -85,6 +85,8 @@ public:
    */
   virtual real64 GetTimestepRequest(real64 const time) override;
 
+  virtual void SetInitialTimeStep( Group * domain ) override;
+
   /**
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
@@ -135,6 +137,23 @@ public:
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * const domain );
+
+  /**
+   * @brief function to perform setup for explicit timestep
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   *
+   * This function should contain any step level initialization required to perform an explicit
+   * step.
+   *
+   * @note This function must be overridden in the derived physics solver in order to use an explicit
+   * solution method.
+   */
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain );
 
   /**
    * @brief Entry function for an explicit time integration step

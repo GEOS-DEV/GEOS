@@ -144,7 +144,8 @@ struct ExplicitKernel
           arrayView1d<R1Tensor> const & acc,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
-          real64 const dt )
+          real64 const dt,
+          real64 * const GEOSX_UNUSED_ARG(maxStableDt) )
   {
     GEOSX_MARK_FUNCTION;
 

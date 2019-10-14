@@ -135,7 +135,6 @@ public:
     static constexpr auto deltaVolumeString = "deltaVolume";
 
     static constexpr auto aperture0String  = "aperture_n";
-    static constexpr auto volume0String  = "volume_n";
 
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maximumApertureString      = "maximumAperture";
@@ -216,7 +215,6 @@ protected:
 
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume0;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;

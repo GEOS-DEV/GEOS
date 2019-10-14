@@ -62,7 +62,8 @@ public:
                                arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
                                arrayView2d<real64> const & meanStress,
                                arrayView2d<R2SymTensor> const & devStress,
-                               real64 const dt ) const override
+                               real64 const dt,
+                               real64 * const maxStableDt) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
@@ -78,7 +79,8 @@ public:
                                                         acc,
                                                         meanStress,
                                                         devStress,
-                                                        dt );
+                                                        dt,
+                                                        maxStableDt);
   }
 
   virtual real64

@@ -774,8 +774,6 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--relPermName => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermName" type="string" use="required" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
@@ -807,8 +805,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -832,8 +828,6 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--scale => Scale for modifying requested dt-->
 		<xsd:attribute name="scale" type="real64" default="1e-09" />
 		<!--seed => Scale for modifying requested dt-->
@@ -861,8 +855,6 @@
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -882,8 +874,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
@@ -905,8 +895,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -926,8 +914,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
@@ -949,8 +935,6 @@
 		<xsd:attribute name="fluidName" type="string" use="required" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--solidName => Name of solid constitutive object to use for this solver-->
 		<xsd:attribute name="solidName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -976,8 +960,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--gravityFlag => Flag that enables/disables gravity-->
 		<xsd:attribute name="gravityFlag" type="integer" use="required" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--verboseLevel => Verbosity level for this solver. Higher values will lead to more screen output. For non-debug  simulations, this should remain at 0.-->
@@ -1001,8 +983,6 @@
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -1043,8 +1023,6 @@
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -1081,8 +1059,6 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
-		<!--maxStableDt => Value of the Maximum Stable Time for the first timestep in the explicit solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" default="0.5" />
 		<!--nodeBasedSIF => Rock toughness of the solid material-->
 		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
 		<!--rockToughness => Rock toughness of the solid material-->

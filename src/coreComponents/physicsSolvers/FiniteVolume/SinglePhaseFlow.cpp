@@ -70,7 +70,6 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::massString );
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::volume0String );
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -223,6 +222,14 @@ void SinglePhaseFlow::UpdateState( Group * dataGroup ) const
   UpdateMobility( dataGroup );
 }
 
+void SinglePhaseFlow::SetInitialTimeStep(Group * const domain )
+{
+  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  {
+    ExplicitStepSetup( 0, 0, domain->group_cast<DomainPartition *>() );
+  }
+}
+
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
@@ -298,13 +305,13 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 dt_return = dt;
+  real64 dtReturn = dt;
 
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
     ExplicitStepSetup( time_n, dt, domain);
 
-    dt_return = ExplicitStep( time_n, dt, cycleNumber, domain );
+    ExplicitStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
@@ -318,17 +325,17 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
     ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
     // currently the only method is implicit time integration
-    dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+    dtReturn = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
-    ImplicitStepComplete( time_n, dt_return, domain );
+    ImplicitStepComplete( time_n, dtReturn, domain );
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::InertialTransient )
   {
     GEOS_ERROR( "timeIntegrationOption::InertialTransient not yet implemented");
   }
 
-  return dt_return;
+  return dtReturn;
 }
 
 real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
@@ -386,6 +393,9 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
     {
       dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
       fluid->PointUpdate( pres[ei], ei, 0);
+//      std::cout<< "\n Check Point 3, ei = " << ei << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
+//               << ", vol[ei] = " << vol[ei]
+//               << ", dens[ei][0] = " << dens[ei][0] << ", pres= " << pres[ei] << "\n";
     } );
   } );
 
@@ -412,16 +422,17 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   return dt;
 }
 
-void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
+void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
                                          real64 const & GEOSX_UNUSED_ARG( dt ),
                                          DomainPartition * const domain)
 {
+  ResetViews( domain );
+
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
-  if (time_n <= 0)
+  static int setFlowSolverTimeStep = 0;
+  if( setFlowSolverTimeStep == 0 )
   {
-    ResetViews( domain );
-
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                    ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                    ElementSubRegionBase * const subRegion )
@@ -460,12 +471,13 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
     arrayView1d<real64> const & vol  = m_volume[er][esr];
     arrayView1d<real64> const & mass = m_mass[er][esr];
     arrayView1d<real64> const & poro = m_porosity[er][esr];
-    arrayView1d<real64 const> const & dVol  = m_deltaVolume[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
-      vol[ei] += dVol[ei];
       dens[ei][0] = mass[ei] / (vol[ei] * poro[ei]);
+//    std::cout<< "\n Check Point 1, ei = " << ei << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
+//             << ", vol[ei] = " << vol[ei]
+//             << ", dens[ei][0] = " << dens[ei][0];
     } );
   } );
 
@@ -507,6 +519,13 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
     } );
     UpdateMobility( subRegion );
   } );
+
+  // get the maxStableDt for the first time step
+  if( setFlowSolverTimeStep == 0 )
+  {
+    AssembleFluxTermsExplicit( 0, 0, domain, &m_dofManager);
+    setFlowSolverTimeStep = 1;
+  }
 }
 
 void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),

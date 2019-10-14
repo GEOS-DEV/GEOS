@@ -891,6 +891,9 @@ struct FluxKernel
         real64 weightedSum = ( stencilWeightedElementCenterToConnectorCenter[k[0]] * aperture[stencilElementIndices[k[0]]] + stencilWeightedElementCenterToConnectorCenter[k[1]] * aperture[stencilElementIndices[k[1]]])
                             * ( 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]] ) / weight ;
 
+//        std::cout << "\n dens=" << dens[ei[0]][0] << ", mob[ei_up]=" << mob[ei_up];
+//        std::cout << "\n aperture=" << aperture[stencilElementIndices[k[0]]] << ",  stencilWeights[k[0]]=" <<  stencilWeights[k[0]] << ", weight=" << weight;
+
         *maxStableDt = std::min(dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 
       }

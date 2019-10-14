@@ -56,6 +56,12 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
+  virtual real64 GetTimestepRequest(real64 const time) override;
+
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain) override final;
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -105,6 +111,8 @@ public:
                        DomainPartition * const domain ) override;
 
   virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+
+  virtual void SetInitialTimeStep( Group * const domain ) override;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,

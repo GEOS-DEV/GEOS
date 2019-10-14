@@ -75,6 +75,8 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
+  virtual void SetInitialTimeStep( Group * const domain ) override;
+
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
   /**
@@ -90,10 +92,27 @@ public:
                              DomainPartition * domain ) override;
 
   virtual
+  void ExplicitStepDisplacementUpdate( real64 const& time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition * domain );
+
+  virtual
+  real64 ExplicitStepVelocityUpdate( real64 const& time_n,
+                                     real64 const & dt,
+                                     integer const cycleNumber,
+                                     DomainPartition * domain );
+
+  virtual
   real64 ExplicitStep( real64 const& time_n,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition * domain ) override;
+
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition * const domain ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -188,7 +207,8 @@ public:
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                arrayView2d<real64> const & meanStress,
                                arrayView2d<R2SymTensor> const & devStress,
-                               real64 const dt ) const
+                               real64 const dt,
+                               real64 * const maxStableDt) const
   {
     using ExplicitKernel = SolidMechanicsLagrangianFEMKernels::ExplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
@@ -206,7 +226,8 @@ public:
                                                         deltaFluidPressure,
                                                         meanStress,
                                                         devStress,
-                                                        dt );
+                                                        dt,
+                                                        maxStableDt);
   }
 
   /**

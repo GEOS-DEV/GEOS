@@ -202,8 +202,16 @@ struct ExplicitKernel
           arrayView1d< real64 const > const & deltaFluidPressure,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
-          real64 const dt )
+          real64 const dt,
+          real64 * const maxStableDt)
   {
+    if (elementList.empty())
+      return dt;
+
+    arrayView2d<real64 const> const & density =  constitutiveRelation->density();
+    arrayView1d<real64 const> const & bulkModulus =  constitutiveRelation->bulkModulus();
+    arrayView1d<real64 const> const & shearModulus =  constitutiveRelation->shearModulus();
+
     forall_in_set<serialPolicy>( elementList.values(),
                               elementList.size(),
                               GEOSX_LAMBDA ( localIndex k) mutable
@@ -211,10 +219,16 @@ struct ExplicitKernel
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
+      R1Tensor s_dNdx[NUM_NODES_PER_ELEM];
 
       CopyGlobalToLocal<NUM_NODES_PER_ELEM,R1Tensor>( elemsToNodes[k],
                                                       u, vel,
                                                       u_local, v_local );
+
+      std::cout << "\n eleID = " << k+1 << " :";
+      std::cout << "\n     u_local      v_local    ";
+      for( localIndex i = 0 ; i<NUM_NODES_PER_ELEM ; ++i)
+      std::cout << "\n     " << u_local[i] << "         " << v_local[i];
 
       //Compute Quadrature
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
@@ -242,27 +256,61 @@ struct ExplicitKernel
         real64 detF = F.Det();
         fInv.Inverse(F);
 
-
         R2Tensor Rot;
         R2SymTensor Dadt;
         HughesWinget(Rot, Dadt, Ldt);
+
+        std::cout << "\n eleID = " << k+1 << ", q = " << q << ": \n Rot=" << Rot << ", \n Dadt=" << Dadt << ", \n Ldt=" << Ldt << std::endl;
 
         constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
 
         R2SymTensor TotalStress = devStress[k][q];
         TotalStress.PlusIdentity( meanStress[k][q] );
 
+//        if (q == 0)
+//        std::cout << "\n k= " << k << ", Effective Stress=" << TotalStress;
         if( !fluidPressure.empty() )
         {
           TotalStress.PlusIdentity( - (fluidPressure[k] + deltaFluidPressure[k]) );
         }
 
+      std::cout << "\n eleID = " << k+1 << ", q = " << q << " : \n TotalStress=" << TotalStress;
+
         Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+
+        for( int a=0 ; a<NUM_NODES_PER_ELEM ; ++a )  // loop through all shape functions in element
+        {
+          s_dNdx[a].AijBj( fInv, dNdX[k][q][a] );
+        }
+
+
       }//quadrature loop
 
+      real64 BB = 0.0;
+      for( unsigned int a=0; a<NUM_NODES_PER_ELEM ; ++a )
+      {
+        s_dNdx[a] /= NUM_QUADRATURE_POINTS;
+        BB += Dot( s_dNdx[a], s_dNdx[a] ) ;
+      }
 
+      *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / BB ));
+//      std::cout << "\n maxStableDt=" << *maxStableDt << ", BB=" << BB << ", density[k][0]=" << density[k][0]<< ", bulkModulus[k]=" << bulkModulus[k];
       AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
+
+      std::cout << "\n eleID = " << k+1 << " :";
+      std::cout << "\n     f_local";
+      for( localIndex i = 0 ; i<NUM_NODES_PER_ELEM ; ++i) {
+        std::cout << "\n     " << f_local[i];
+      }
+
+      std::cout << "\n eleID = " << k+1 << "  Acc =";
+      for( localIndex i = 0 ; i<acc.size() ; ++i) {
+        std::cout << "\n     " << acc[i];
+      }
+
     });
+
+    std::cout << "\n ********************************* \n";
 
     return dt;
   }

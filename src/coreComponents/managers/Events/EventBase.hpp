@@ -189,6 +189,8 @@ public:
 
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
+  ExecutableGroup * GetTarget() const { return m_target; }
+
 
 protected:
   real64 m_lastTime;

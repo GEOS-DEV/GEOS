@@ -55,9 +55,8 @@ SolverBase::SolverBase( std::string const & name,
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
   registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Value of the Maximum Stable Time for the first timestep in the explicit solver." );
+      setInputFlag( InputFlags::FALSE )->
+      setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
     setApplyDefaultValue( "none" )->
@@ -90,6 +89,10 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
 real64 SolverBase::GetTimestepRequest(real64 const GEOSX_UNUSED_ARG( time ))
 {
   return (m_maxStableDt * m_cflFactor);
+}
+
+void SolverBase::SetInitialTimeStep(Group * GEOSX_UNUSED_ARG( domain ))
+{
 }
 
 Group * SolverBase::CreateChild( string const & childKey, string const & childName )
@@ -446,6 +449,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   // return the achieved timestep
   return stepDt;
+}
+
+void SolverBase::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                    real64 const & GEOSX_UNUSED_ARG( dt ),
+                                    DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+{
+  GEOS_ERROR( "SolverBase::ExplicitStepSetup called!. Should be overridden." );
 }
 
 real64 SolverBase::ExplicitStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
