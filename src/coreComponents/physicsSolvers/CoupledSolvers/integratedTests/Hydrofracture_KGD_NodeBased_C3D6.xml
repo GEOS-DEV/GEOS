@@ -78,11 +78,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D6}"
-                  xCoords="{ -10, 10}"
-                  yCoords="{0, 100}"
+                  xCoords="{ -5, 5}"
+                  yCoords="{0, 15}"
                   zCoords="{0, 1}"
-                  nx="{20}"
-                  ny="{100}"
+                  nx="{10}"
+                  ny="{15}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -134,11 +134,10 @@
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
-    <!-- PeriodicEvent name="restarts"
+    <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
-                   endTime="-1" /-->
+                   target="/Outputs/sidreRestart"/>
   </Events>
 
   <NumericalMethods>
