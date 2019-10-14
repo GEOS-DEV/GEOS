@@ -72,6 +72,7 @@ matrix:
 git:
   submodules: false
 before_script:
+  - set -e -o pipefail
   - git submodule update --init --recursive src/coreComponents/cxx-utilities
   - git submodule update --init --recursive src/cmake/blt
   - git submodule update --init --recursive src/externalComponents/PVTPackage
@@ -87,8 +88,7 @@ before_script:
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      curl "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" --output tpl.tar;
-      tar xvf tpl.tar;
+      curl "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" | tar xv -
       sudo mkdir -p /Users/settgast1/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
       cd /Users/travis/build/GEOSX/GEOSX ;
