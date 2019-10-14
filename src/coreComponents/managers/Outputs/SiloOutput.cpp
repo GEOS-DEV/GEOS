@@ -17,6 +17,8 @@
  */
 
 #include "SiloOutput.hpp"
+
+#include "common/TimingMacros.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/NewFunctionManager.hpp"
@@ -30,12 +32,13 @@ using namespace cxx_utilities;
 SiloOutput::SiloOutput( std::string const & name,
                         Group * const parent ):
   OutputBase( name, parent),
-  m_plotFileRoot(),
+  m_plotFileRoot("plot"),
   m_writeFaceMesh(),
   m_plotLevel()
 {
   registerWrapper(viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag(InputFlags::OPTIONAL)->
+    setApplyDefaultValue("plot")->
     setDescription("");
 
   registerWrapper(viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
@@ -61,6 +64,8 @@ void SiloOutput::Execute(real64 const time_n,
                          real64 const eventProgress,
                          Group * domain)
 {
+  GEOSX_MARK_FUNCTION;
+
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   SiloFile silo;
 
