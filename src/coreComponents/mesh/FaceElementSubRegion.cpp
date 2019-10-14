@@ -63,7 +63,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription("The area of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
-    setApplyDefaultValue({-1.0e9,-1.0e9,-1.0e9})->
+    setApplyDefaultValue({0.0,0.0,0.0})->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The center of each FaceElement.");
 
