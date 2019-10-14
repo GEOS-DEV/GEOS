@@ -59,9 +59,12 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(-1.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The area of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
+    setApplyDefaultValue({-1.0e9,-1.0e9,-1.0e9})->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
     setDescription("The center of each FaceElement.");
 
   registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
@@ -76,16 +79,17 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "A map of face element local indices to the cell local indices");
 
   registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
-                       &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+                   &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
 
   registerWrapper( viewKeyStruct::faceElementsToCellIndexString,
-                       &(m_faceElementsToCells.m_toElementIndex), 0 )->
+                   &(m_faceElementsToCells.m_toElementIndex), 0 )->
     setApplyDefaultValue(-1)->
     setPlotLevel(PlotLevel::NOPLOT)->
     setDescription( "A map of face element local indices to the cell local indices");
+
 
   m_faceElementsToCells.resize(0,2);
   m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast<ElementRegionManager*>() );
