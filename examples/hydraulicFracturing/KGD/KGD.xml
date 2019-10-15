@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="1"
+      verboseLevel="0"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -78,11 +78,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-180, -40, 40, 180}"
-                  yCoords="{0, 100, 180}"
+                  xCoords="{-18, -4, 4, 18}"
+                  yCoords="{0, 10, 18}"
                   zCoords="{0, 1}"
-                  nx="{50, 80, 50}"
-                  ny="{100, 40}"
+                  nx="{5, 8, 5}"
+                  ny="{10, 4}"
                   nz="{2}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -100,7 +100,7 @@
   </Geometry>
 
 
-  <Events maxTime="100.0">
+  <Events maxTime="1.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -198,7 +198,7 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e9" >
+      penaltyStiffness="0.0e8" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"

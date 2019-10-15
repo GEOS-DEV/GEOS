@@ -800,19 +800,16 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
                                              real64 const problemTime)
 {
   string name = meshName + "_materials";
-  int const nmat = constitutiveManager->GetSubGroups().size();
-  array1d<int> matnos(nmat);
-  std::vector<string> materialNameStrings(nmat);
-  array1d<char const*> materialNames(nmat+1);
-  materialNames.back() = nullptr;
+//  int const nmat = constitutiveManager->GetSubGroups().size();
+  std::set<string> materialNameStrings;
 
-  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
-  {
-    matnos[matIndex] = matIndex;
-
-    materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
-    materialNames[matIndex] = materialNameStrings[matIndex].c_str();
-  }
+//  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
+//  {
+//    matnos[matIndex] = matIndex;
+//
+//    materialNameStrings[matIndex] = constitutiveManager->GetGroup(matIndex)->getName();
+//    materialNames[matIndex] = materialNameStrings[matIndex].c_str();
+//  }
 
   int ndims = 1;
   int dims = 0;
@@ -820,7 +817,14 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
 
   elementManager->forElementRegions<REGIONTYPE,REGIONTYPES...>( [&]( ElementRegionBase const * const elemRegion )
   {
-    int const numMatInRegion = elemRegion->getMaterialList().size();
+    string_array const & materialList = elemRegion->getMaterialList();
+    int const numMatInRegion = materialList.size();
+
+    for( string const & matName : materialList )
+    {
+      materialNameStrings.insert(matName);
+    }
+
     elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
     {
       if( numMatInRegion > 1 )
@@ -830,6 +834,20 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       dims += subRegion->size();
     });
   } );
+
+  int const nmat = materialNameStrings.size();
+  array1d<int> matnos(nmat);
+  array1d<char const*> materialNames(nmat+1);
+  materialNames.back() = nullptr;
+  std::map<string,int> matNameToIndex;
+
+  int count = 0;
+  for( string const & matName : materialNameStrings )
+  {
+    matNameToIndex[matName] = count;
+    materialNames[count++] = matName.c_str();
+  }
+
 
   array1d<integer> matlist( dims );
   array1d<integer> mix_zone( mixlen );
@@ -841,16 +859,15 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   int mixCount = 0;
   elementManager->forElementRegions<REGIONTYPE,REGIONTYPES...>( [&]( ElementRegionBase const * const elemRegion )
   {
-    int const numMatInRegion = elemRegion->getMaterialList().size();
+    string_array const & materialList = elemRegion->getMaterialList();
+    int const numMatInRegion = materialList.size();
     if (numMatInRegion > 0)
     {
       array1d<localIndex> matIndices(numMatInRegion);
 
       for( localIndex a=0 ; a<numMatInRegion ; ++a )
       {
-        matIndices[a] = constitutiveManager->
-                        GetConstitutiveRelation( elemRegion->getMaterialList()[a] )->
-                        getIndexInParent();
+        matIndices[a] = matNameToIndex.at(materialList[a]);
       }
 
       elemRegion->forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
@@ -989,10 +1006,10 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
   }
 
   std::set<std::pair<string, WrapperBase const *>> fieldNames;
-  for( localIndex matI=0 ; matI<nmat ; ++matI )
+  for( localIndex matIndex=0 ; matIndex<nmat ; ++matIndex )
   {
     ConstitutiveBase const * const
-    constitutiveModel = constitutiveManager->GetConstitutiveRelation(matI);
+    constitutiveModel = constitutiveManager->GetConstitutiveRelation(matIndex);
 
     for( auto const & wrapperIter : constitutiveModel->wrappers() )
     {
