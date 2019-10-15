@@ -88,7 +88,7 @@ before_script:
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
-      curl "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" | tar xv - ;
+      curl -s "https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${TPL_OSX_TRAVIS_BUILD_NUMBER}.tar?alt=media" | tar xf - ;
       sudo mkdir -p /Users/settgast1/Codes/geosx/;
       sudo ln -s /Users/travis/build/GEOSX/thirdPartyLibs /Users/settgast1/Codes/geosx/thirdPartyLibs;
       cd /Users/travis/build/GEOSX/GEOSX ;
