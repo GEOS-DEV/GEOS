@@ -71,7 +71,7 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
         elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
           setDescription("Total Mean Stress");
         elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
-          setDescription("Total Mean Stress");
+          setDescription("Old total Mean Stress");
       });
   }
 }

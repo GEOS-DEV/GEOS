@@ -89,7 +89,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
           elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::totalMeanStressString )->
             setDescription("Total Mean Stress");
           elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::oldTotalMeanStressString )->
-            setDescription("Total Mean Stress");
+            setDescription("Old total Mean Stress");
         });
     }
   }
@@ -206,9 +206,27 @@ HydrofractureSolver::~HydrofractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG( domain ) )
+void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
+  if( m_couplingTypeOption == couplingTypeOption::ExplicitlyCoupled )
+  {
+    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+    ElementRegionManager * const elemManager = mesh->getElemManager();
 
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const totalMeanStress =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::totalMeanStressString);
+
+    ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> oldTotalMeanStress =
+      elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(viewKeyStruct::oldTotalMeanStressString);
+
+    //***** loop over all elements and initialize the derivative arrays *****
+    forAllElemsInMesh( mesh, [&]( localIndex const er,
+                                  localIndex const esr,
+                                  localIndex const k)->void
+    {
+      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+    });
+  }
 }
 
 void HydrofractureSolver::SetInitialTimeStep(Group * const domain )
