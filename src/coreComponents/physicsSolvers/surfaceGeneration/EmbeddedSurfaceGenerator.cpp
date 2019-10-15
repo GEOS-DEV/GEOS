@@ -111,10 +111,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
-  //NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
   // EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-  array1d<R1Tensor> & faceCenter  = faceManager->faceCenter();
+  array1d<R1Tensor> const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
   EmbeddedSurfaceRegion    * const    embeddedSurfaceRegion =
@@ -126,19 +125,19 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   geometricObjManager->forSubGroups<ThickPlane>( [&]( ThickPlane * const fracture ) -> void
   {
     /* 1. Find out if an element is cut but the fracture or not.
-     * Loop over all the elements and for each one of them loop over the faces and compute the
-     * dot product between the distance between the plane center and the face and the normal
+     * Loop over all the elements and for each one of them loop over the nodes and compute the
+     * dot product between the distance between the plane center and the node and the normal
      * vector defining the plane. If two scalar products have different signs the plane cuts the
-     * cell. To do this check multiply all dot products and then check the sign. If a face gives
-     * a 0 dot product it has to be neglected or the method won't work (as a matter of fact it means
-     * that the plane does cut the cell).
+     * cell. To do this check multiply all dot products and then check the sign. If a nodes gives
+     * a 0 dot product it has to be neglected or the method won't work.
+     *
      *
      */
     R1Tensor planeCenter  = fracture->getCenter();
     R1Tensor normalVector = fracture->getNormal();
     // Initialize variables
-    globalIndex faceIndex;
-    real64 prodScalarProduct;
+    globalIndex nodeIndex;
+    integer isPositive, isNegative;
     R1Tensor distVec;
 
     elemManager->forElementRegions( [&](ElementRegionBase * const region )->void
@@ -146,39 +145,44 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       Group * subRegions = region->GetGroup(ElementRegionBase::viewKeyStruct::elementSubRegions);
       subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
       {
-        FixedOneToManyRelation const & cellToFaces = subRegion->faceList();
+        FixedOneToManyRelation const & cellToNodes = subRegion->nodeList();
+        // FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
         for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
         {
-          prodScalarProduct = 1;
-          for(localIndex kf =0; kf<subRegion->numFacesPerElement(); kf++)
+          isPositive = 0;
+          isNegative = 0;
+          for(localIndex kn =0; kn<subRegion->numNodesPerElement(); kn++)
           {
-            faceIndex = cellToFaces[cellIndex][kf];
-            distVec  = faceCenter[faceIndex];
+            nodeIndex = cellToNodes[cellIndex][kn];
+            distVec  = nodesCoord[nodeIndex];
             distVec -= planeCenter;
             // check if the dot product is zero
-            if ( std::fabs(Dot(distVec, normalVector)) > 1e-15 )
+            if ( Dot(distVec, normalVector) > 0 )
             {
-              prodScalarProduct *= Dot(distVec, normalVector);
+              isPositive = 1;
+              // std::cout << prodScalarProduct << std::endl;
+            } else if (Dot(distVec, normalVector) < 0 )
+            {
+              isNegative = 1;
             }
-          }
-          if (prodScalarProduct < 0)
+          } // end loop over nodes
+          if (isPositive * isNegative == 1)
             // TODO in reality this condition is not sufficient because the fracture is a bounded plane. I should also check
             // that the cell is inside the actual fracture plane. For now let us assume the plane is not bounded.
           {
-            /* 2. Now that you know that the element is cut by the fracture we can
-             * a. add new embedded surface element
-             * b. fill in the data relative to where the actual intersections are
-             * c. compute the geometric quantities and the Heaviside.
-            */
-            // a. Add the embedded surface element
+            // Add the embedded surface element
             embeddedSurfaceSubRegion->AddNewEmbeddedSurface(cellIndex, normalVector);
-            // b. find actual intersections with each edge and compute area.
-            // embeddedSurfaceSubRegion->ComputeElementArea();
           }
-        }
-      });
-    });
-  });
+        } // end loop over cells
+        /* 2. Now that you know that the element is cut by the fracture we can
+         * a. fill in the data relative to where the actual intersections are
+         * b. compute the geometric quantities and the Heaviside.
+         */
+        // embeddedSurfaceSubRegion->ComputeElementArea(*nodeManager, *edgeManager,
+                                                     // cellToEdges, planeCenter);
+      }); // end loop over subregions
+    });   // end loop over elementRegions
+  });     // end loop over thick planes
 
   std::cout << "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() << std::endl;
 }

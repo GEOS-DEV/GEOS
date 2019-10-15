@@ -27,6 +27,7 @@
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
+#include "CellElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -67,12 +68,15 @@ public:
 
     void CalculateElementGeometricQuantities( localIndex const index);
 
-    void AddNewEmbeddedSurface(localIndex const cellIndex, R1Tensor normalVector);
+    void AddNewEmbeddedSurface(localIndex const cellIndex,
+                               R1Tensor normalVector);
 
-    void ComputeElementArea(localIndex const k,
-                            NodeManager const & nodeManager,
-                            EdgeManager const & faceManager,
-                            FaceManager const & edgeManager);
+
+    void ComputeElementArea(NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FixedOneToManyRelation const & cellToEdges,
+                            R1Tensor origin);
+
 
     virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
 
@@ -171,16 +175,16 @@ private:
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
 
-    ///
+    /// list of elements cut by the embedded surface el
     array1d< localIndex > m_embeddedSurfaceToCell;
 
-    /// The elements to nodes relation
+    /// list of nodes
     NodeMapType  m_toNodesRelation;
 
-    /// The elements to edges relation
+    /// list of edges (if necessary)
     EdgeMapType  m_toEdgesRelation;
 
-    /// The elements to faces relation
+    /// list of faces affected by the embedded surface element
     FaceMapType  m_toFacesRelation;
 
 

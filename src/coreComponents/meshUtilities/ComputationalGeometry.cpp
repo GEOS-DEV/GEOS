@@ -24,6 +24,48 @@ namespace computationalGeometry
 {
 
 /**
+ * Calculates the intersection between a line and a plane
+ * @param[in] vector defining direction of the line
+ * @param[in] 1 point of the line
+ * @param[in] normal to plane
+ * @param[in] plane origin
+ * @return area of the convex 3D polygon
+ */
+
+R1Tensor LinePlaneIntersection(R1Tensor lineDir,
+                               R1Tensor linePoint,
+                               R1Tensor planeNormal,
+                               R1Tensor planeOrigin)
+{
+  /* Find intersection line plane
+   * line equation: p - (d*lineDir + linePoing) = 0;
+   * plane equation: ( p - planeOrigin) * planeNormal = 0;
+   * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
+   * pInt = d*lineDir+linePoint;
+   */
+  R1Tensor dummy;
+  real64 d;
+  // Intersection
+  R1Tensor pInt;
+
+  dummy = planeOrigin;
+  dummy -= linePoint;
+  d  = Dot(dummy, planeNormal);
+  d /= Dot(lineDir, planeNormal);
+
+
+  pInt    = linePoint;
+  pInt[0] = d * lineDir[0];
+  pInt[1] = d * lineDir[1];
+  pInt[2] = d * lineDir[2];
+
+  return pInt;
+}
+
+
+
+
+/**
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
  * order (CW or CCW) about the polygon loop

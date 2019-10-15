@@ -38,6 +38,7 @@ class CellBlock : public ElementSubRegionBase
 public:
 
   using NodeMapType=FixedOneToManyRelation;
+  using EdgeMapType=FixedOneToManyRelation;
   using FaceMapType=FixedOneToManyRelation;
 
   /**
@@ -246,6 +247,8 @@ protected:
 
   /// The elements to nodes relation
   NodeMapType  m_toNodesRelation;
+
+  EdgeMapType  m_toEdgesRelation;
 
   /// The elements to faces relation
   FaceMapType  m_toFacesRelation;

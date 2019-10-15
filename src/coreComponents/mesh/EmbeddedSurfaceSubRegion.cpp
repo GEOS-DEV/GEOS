@@ -132,21 +132,59 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex,
                                                       R1Tensor normalVector)
 {
+  m_embeddedSurfaceToCell.push_back(cellIndex);
+  m_normalVector.push_back(normalVector);
+
   // resize
   this->resize(this->size() + 1);
 
+  //for (localIndex k =0; k < this->size(); k++){
+  //std::cout << m_embeddedSurfaceToCell[k] << std::endl;
+  //}
   // add the cellIndex and the normalVector
-  m_embeddedSurfaceToCell[this->size() - 1] = cellIndex;
-  m_normalVector[this->size() - 1]          = normalVector;
+
+  // m_embeddedSurfaceToCell[this->size() - 1] = cellIndex;
+  // m_normalVector[this->size() - 1]          = normalVector;
 }
 
-void EmbeddedSurfaceSubRegion::ComputeElementArea(localIndex const k,
-                                                  NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                  EdgeManager const & GEOSX_UNUSED_ARG(faceManager),
-                                                  FaceManager const & GEOSX_UNUSED_ARG(edgeManager) )
+void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManager,
+                                                  EdgeManager const & edgeManager,
+                                                  FixedOneToManyRelation const & cellToEdges,
+                                                  R1Tensor origin)
 {
-  m_elementArea[k] = 1;
+  array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
+  array2d<localIndex> const & edgeToNodes = edgeManager.nodeList();
+  localIndex count;
+  localIndex edgeIndex;
+  R1Tensor lineDir;
+
+  // loop over the elements
+  for ( localIndex k=0; k < this->size(); k++ )
+   {
+    count = 0;
+    array1d<R1Tensor> intersectionPoints; // I am assuming there are 4 intersections (needs to be fixed)
+    for (localIndex ke = 0; ke < 12; ke++)
+    {
+      edgeIndex = cellToEdges[k][ke];
+      real64 prodScalarProd = Dot(nodesCoord[edgeToNodes[edgeIndex][0]], m_normalVector[k])
+                    * Dot(nodesCoord[edgeToNodes[edgeIndex][1]], m_normalVector[k]);
+      if (prodScalarProd < 0)
+      {
+        lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
+        lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
+        lineDir.Normalize();
+        intersectionPoints.push_back(computationalGeometry::LinePlaneIntersection(lineDir, nodesCoord[edgeToNodes[edgeIndex][0]],
+            m_normalVector[k], origin));
+
+        R1Tensor a;
+        a = intersectionPoints[count];
+        a.print(std::cout);
+        count += 1;
+      }
+    }
+   }
 }
+
 
 localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
 {
