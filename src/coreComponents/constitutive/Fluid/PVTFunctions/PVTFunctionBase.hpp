@@ -43,7 +43,7 @@ public:
   virtual ~PVTFunction(){}
 
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< PVTFunction, string_array const &,
+  using CatalogInterface = dataRepository::CatalogInterface< PVTFunction, string_array const &,
 							    string_array const &,
 							    real64_array const & >;
   static typename CatalogInterface::CatalogType& GetCatalog()
