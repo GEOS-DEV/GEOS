@@ -134,6 +134,11 @@ public:
     static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto deltaVolumeString = "deltaVolume";
 
+    static constexpr auto porosityString = "porosity";
+    static constexpr auto porosityOldString = "porosityOld";
+
+    static constexpr auto densityOldString = "densityOld";
+
     static constexpr auto aperture0String  = "aperture_n";
 
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";

@@ -245,7 +245,6 @@ public:
     // intermediate fields
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
-    static constexpr auto porosityString = "porosity";
 
     static constexpr auto massString = "mass";
 
@@ -253,10 +252,6 @@ public:
     static constexpr auto faceDensityString = "faceDensity";
     static constexpr auto faceViscosityString = "faceViscosity";
     static constexpr auto faceMobilityString = "faceMobility";
-
-    //backup fields
-    static constexpr auto porosityOldString = "porosityOld";
-    static constexpr auto densityOldString = "densityOld";
 
   } viewKeysSinglePhaseFlow;
 

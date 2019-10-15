@@ -142,6 +142,7 @@ struct ExplicitKernel
           arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
           real64 const dt,
@@ -362,7 +363,7 @@ struct ImplicitKernel
         R2SymTensor referenceStress;
         if( !fluidPressure.empty() )
         {
-          referenceStress.PlusIdentity( - biotCoefficient[0] * (fluidPressure[k] + deltaFluidPressure[k]));
+          referenceStress.PlusIdentity( - biotCoefficient[k] * (fluidPressure[k] + deltaFluidPressure[k]));
         }
 
 

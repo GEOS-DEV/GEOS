@@ -581,6 +581,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back("Velocity");
 
+  ElementRegionManager::MaterialViewAccessor<real64> const biotCoefficient =
+    elemManager->ConstructFullMaterialViewAccessor<real64>( "BiotCoefficient", constitutiveManager);
+
   ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
   meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
                                                                arrayView2d<real64> >("MeanStress",
@@ -633,6 +636,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
+                                   biotCoefficient[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt,
@@ -681,6 +685,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
                                    acc,
                                    fluidPres[er][esr],
                                    dPres[er][esr],
+                                   biotCoefficient[er][esr],
                                    meanStress[er][esr][m_solidMaterialFullIndex],
                                    devStress[er][esr][m_solidMaterialFullIndex],
                                    dt,

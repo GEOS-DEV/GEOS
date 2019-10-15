@@ -219,16 +219,16 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaPressureString);
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> poro =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const poroOld =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::porosityOldString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::porosityOldString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> const volume =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(CellBlock::viewKeyStruct::elementVolumeString);
   
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> dVol =
-    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(SinglePhaseFlow::viewKeyStruct::deltaVolumeString);
+    elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>(FlowSolverBase::viewKeyStruct::deltaVolumeString);
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
     elemManager->ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
@@ -274,6 +274,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
         poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
                                                  * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
+
+        std::cout<< "\n Update stress: ei = " << ei  <<", oldTotalMeanStress = "<< oldTotalMeanStress[er][esr][ei] <<", totalMeanStress = "<< totalMeanStress[er][esr][ei] <<", poro = "<< poro[er][esr][ei] << std::endl;
 
         // update element volume
         R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];

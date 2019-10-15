@@ -388,14 +388,18 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
     arrayView1d<real64> const & poro = m_porosity[er][esr];
     arrayView1d<real64> const & mass = m_mass[er][esr];
     arrayView1d<real64> const & pres = m_pressure[er][esr];
+    arrayView1d<real64> const & dPres = m_deltaPressure[er][esr];
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
       dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
+      dPres[ei] = pres[ei];
       fluid->PointUpdate( pres[ei], ei, 0);
-//      std::cout<< "\n Check Point 3, ei = " << ei << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
-//               << ", vol[ei] = " << vol[ei]
-//               << ", dens[ei][0] = " << dens[ei][0] << ", pres= " << pres[ei] << "\n";
+      dPres[ei] = pres[ei] - dPres[ei];
+
+      std::cout<< "\n Check Point 3, ei = " << ei << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
+               << ", vol[ei] = " << vol[ei]
+               << ", dens[ei][0] = " << dens[ei][0] << ", pres= " << pres[ei] << "\n";
     } );
   } );
 
@@ -463,6 +467,44 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 //
 //  TwoPointFluxApproximation::addToFractureStencil();
 
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete<CellElementSubRegion>( this->m_targetRegions,
+                                                                   [&] ( localIndex er,
+                                                                         localIndex esr,
+                                                                         ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
+                                                                         auto const * const subRegion )
+  {
+    arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64> const & vol  = m_volume[er][esr];
+    arrayView1d<real64> const & mass = m_mass[er][esr];
+    arrayView1d<real64> const & poro = m_porosity[er][esr];
+    arrayView1d<real64> const & poroOld       = m_porosityOld[er][esr];
+
+    arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
+    arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
+
+    arrayView1d<real64 const> const & dPres              = m_deltaPressure[er][esr];
+    arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
+    arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
+    arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
+    real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
+
+    if (m_poroElasticFlag)
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        poroOld[ei] = poro[ei];
+        poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei] * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
+        dens[ei][0] = mass[ei] / (vol[ei] * poro[ei]);
+      } );
+    else
+      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+      {
+        poroOld[ei] = poro[ei];
+        poro[ei] = poroRef[ei] * pvmult[ei][0];
+        dens[ei][0] = mass[ei] / (vol[ei] * poro[ei]);
+      } );
+  } );
+
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
@@ -480,28 +522,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 //             << ", dens[ei][0] = " << dens[ei][0];
     } );
   } );
-
-//  // update porosity here
-//  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-//                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-//                                 ElementSubRegionBase * const subRegion )
-//    {
-//      arrayView1d<real64> const & poro                = m_porosity[er][esr];
-//      arrayView1d<real64 const> const & poroRef       = m_porosityRef[er][esr];
-//      arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
-//      arrayView1d<real64> const & mass = m_mass[er][esr];
-//      arrayView1d<real64> const & pres = m_pressure[er][esr];
-//      arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//
-//      forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-//      {
-//        std::cout<< "\n ei = " << ei << ", poro= " << poro[ei] << ", new = " << poroRef[ei] * pvmult[ei][0]
-//                 << ", pres = " << pres[ei]
-//                 << ", dens = " << dens[ei][0]
-//                 << ", mass = " << mass[ei];
-//        poro[ei] = poroRef[ei] * pvmult[ei][0];
-//      } );
-//    });
 
   mesh->getElemManager()->
       forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
@@ -703,7 +723,7 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView2d<real64 const> const & pvmult        = m_pvMult[er][esr][m_solidIndex];
   arrayView2d<real64 const> const & dPVMult_dPres = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-  arrayView1d<real64 const> const & dPres              = m_poroElasticFlag ? m_deltaPressure[er][esr]             : poroOld;
+  arrayView1d<real64 const> const & dPres              = m_deltaPressure[er][esr];
   arrayView1d<real64 const> const & oldTotalMeanStress = m_poroElasticFlag ? m_totalMeanStressOld[er][esr]        : poroOld;
   arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
   arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
