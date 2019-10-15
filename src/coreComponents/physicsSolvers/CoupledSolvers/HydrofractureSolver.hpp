@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef HydrofractureSolver_HPP_
-#define HydrofractureSolver_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -192,4 +192,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* HydrofractureSolver_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_ */

@@ -16,8 +16,8 @@
   * @file SingleFluidBase.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SINGLEFLUIDBASE_HPP
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SINGLEFLUIDBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP
+#define GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -268,4 +268,4 @@ void SingleFluidBase::BatchViscosityUpdateKernel( arrayView1d<real64 const> cons
 
 } //namespace geosx
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_SINGLEFLUIDBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP

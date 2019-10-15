@@ -19,8 +19,8 @@
 
 #include "common/GeosxConfig.hpp"
 
-#ifndef COMMON_GEOSXMACROS_HPP_
-#define COMMON_GEOSXMACROS_HPP_
+#ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
+#define GEOSX_COMMON_GEOSXMACROS_HPP_
 
 #define GEOSX_LAMBDA [=]
 
@@ -61,4 +61,4 @@
   #define GEOSX_FORCE_INLINE inline
 #endif
 
-#endif // COMMON_GEOSXMACROS_HPP_
+#endif // GEOSX_COMMON_GEOSXMACROS_HPP_

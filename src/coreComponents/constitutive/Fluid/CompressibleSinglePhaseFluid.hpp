@@ -16,8 +16,8 @@
   * @file CompressibleSinglePhaseFluid.hpp
   */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPRESSIBLESINGLEPHASEFLUID_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPRESSIBLESINGLEPHASEFLUID_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 
@@ -25,13 +25,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const compressibleSinglePhaseFluid = "CompressibleSinglePhaseFluid";
-}
-}
 
 namespace constitutive
 {
@@ -50,7 +43,7 @@ public:
                              Group * const parent,
                              std::unique_ptr<ConstitutiveBase> & clone ) const override;
 
-  static std::string CatalogName() { return dataRepository::keys::compressibleSinglePhaseFluid; }
+  static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -212,4 +205,4 @@ inline void CompressibleSinglePhaseFluid::Inverse( real64 const & property,
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */

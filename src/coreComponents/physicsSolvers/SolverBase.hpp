@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SOLVERBASE_HPP_
-#define SOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
 
 
@@ -483,7 +483,7 @@ public:
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct
@@ -625,4 +625,4 @@ BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, 
 } /* namespace ANST */
 
 
-#endif /* SOLVERBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

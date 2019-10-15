@@ -306,6 +306,18 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
   SinglePhaseFlow &
   fluidSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
+  fluidSolver.SetupSystem( domain,
+                           fluidSolver.getDofManager(),
+                           fluidSolver.getSystemMatrix(),
+                           fluidSolver.getSystemRhs(),
+                           fluidSolver.getSystemSolution() );
+
+  solidSolver.SetupSystem( domain,
+                           solidSolver.getDofManager(),
+                           solidSolver.getSystemMatrix(),
+                           solidSolver.getSystemRhs(),
+                           solidSolver.getSystemSolution() );
+
   fluidSolver.ImplicitStepSetup( time_n, dt, domain,
                                  fluidSolver.getDofManager(),
                                  fluidSolver.getSystemMatrix(),
