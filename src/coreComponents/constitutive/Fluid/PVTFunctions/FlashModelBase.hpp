@@ -43,7 +43,7 @@ public:
 
   virtual ~FlashModel(){}
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< FlashModel, string_array const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FlashModel, string_array const &,
                                                                             string_array const &,
                                                                             string_array const &,
                                                                             real64_array const & >;
