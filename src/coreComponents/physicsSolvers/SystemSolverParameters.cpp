@@ -150,7 +150,12 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
   registerWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
     setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Line search option");  
+    setDescription("Line search option");
+
+  registerWrapper( viewKeysStruct::minNumNewtonIterationsString, &m_minNumNewtonIterations, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Min number of Newton iterations");    
 
   registerWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
     setApplyDefaultValue(10)->
