@@ -174,7 +174,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="1.0e-4"
+                       defaultAperture="0.2e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -198,11 +198,11 @@
                                 />
                                 
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e9" >
+      penaltyStiffness="1.0e0" >
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 1.0e-4}" 
+        values      = "{  1.0e-6, 0.2e-3}" 
         />
     </Contact>
   </Constitutive>

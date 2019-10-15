@@ -1931,10 +1931,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     }
 
 #else
-    WriteElementMesh<CellElementRegion>( elementManager,
+    WriteElementMesh<CellElementRegion,FaceElementRegion>( elementManager,
                                          constitutiveManager,
                                          nodeManager,
-                                         "CellElements",
+                                         "AllElements",
                                          numNodes,
                                          coords,
                                          nodeManager->m_localToGlobalMap.data(),
@@ -1944,18 +1944,18 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                          true,
                                          writeArbitraryPolygon );
 
-    WriteElementMesh<FaceElementRegion>( elementManager,
-                                         constitutiveManager,
-                                         nodeManager,
-                                         "FaceElements",
-                                         numNodes,
-                                         coords,
-                                         nodeManager->m_localToGlobalMap.data(),
-                                         ghostNodeFlag,
-                                         cycleNum,
-                                         problemTime,
-                                         false,
-                                         writeArbitraryPolygon );
+//    WriteElementMesh<FaceElementRegion>( elementManager,
+//                                         constitutiveManager,
+//                                         nodeManager,
+//                                         "FaceElements",
+//                                         numNodes,
+//                                         coords,
+//                                         nodeManager->m_localToGlobalMap.data(),
+//                                         ghostNodeFlag,
+//                                         cycleNum,
+//                                         problemTime,
+//                                         false,
+//                                         writeArbitraryPolygon );
 #endif
 
 

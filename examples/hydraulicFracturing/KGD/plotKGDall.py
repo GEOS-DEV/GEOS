@@ -47,8 +47,8 @@ for i in range(0,numFiles):
 
     t_sim[i], press0[i], aper0[i], Area[i] = np.loadtxt(prefix[i]+'_timehist.txt',skiprows=1, unpack=True)
     
-#    radP[i], Pressure[i] = np.loadtxt(prefix[i]+'_pressure.ply',skiprows=11, usecols = (0,1), unpack=True)
-#    radA[i], Aperture[i] = np.loadtxt(prefix[i]+'_aperture.ply',skiprows=11, usecols = (0,1), unpack=True)
+    radP[i], Pressure[i] = np.loadtxt(prefix[i]+'_pressure.ply',skiprows=11, usecols = (0,1), unpack=True)
+    radA[i], Aperture[i] = np.loadtxt(prefix[i]+'_aperture.ply',skiprows=11, usecols = (0,1), unpack=True)
 
     labels.append(prefix[i])
 
@@ -128,31 +128,31 @@ plt.ylim([ 0.0  , 0.8 ])
 
 #plt.savefig(prefix + '_vsTime.eps')
 
-# N1 = 1
-# fig2 = fig1 #plt.figure()  # a new figure window
-# ax2 = fig2.add_subplot(3, 2, 4)  # specify (nrows, ncols, axnum)
-# for i in range(0,numFiles):
-#     plt.plot(radA[i][1::N1]/np.amax(radA[i]),Aperture[i][1::N1]*1000,symbols[i],fillstyle='none', markersize=4,label=labels[i] )
-# #plt.plot(solns[0],w_tough[0]*1000,  'k-', label='$\mu$ => 0' )
-# plt.plot(solns[0],w_viscous[0]*1000,'r-', label='$K_{Ic}$ => 0' )
-# #plt.xlabel('Radius (m)')
-# plt.ylabel('Aperture(t=200s) \n (mm)', multialignment='center')
-# #plt.legend(loc='upper right')
-# plt.xlim([0, 1 ])
-# #plt.ylim([ 0.0  , 2.0 ])
-#  
-# #print Pressure[i][1::N1]
-# #print np.append(Pressure[i][1::N1],Pressure[i][-1])
-# ax2 = fig2.add_subplot(3, 2, 6)  # specify (nrows, ncols, axnum)
-# for i in range(0,numFiles):
-#     plt.plot(radP[i][1::N1]/np.amax(radP[i]),Pressure[i][1::N1]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
-# #plt.plot(solns[0],p_tough[0]/1.0e6,  'k-', label='$\mu$ => 0' )
-# plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
-# plt.xlabel('Length Coordinate') 
-# plt.ylabel('Pressure(t=200s) \n (MPa)', multialignment='center')
-# plt.xlim([0, 1 ])
-# #plt.yticks(np.arange(-0.2, 0.501, 0.1))
-# #plt.ylim([ -0.3 , 0.31 ])
+N1 = 1
+fig2 = fig1 #plt.figure()  # a new figure window
+ax2 = fig2.add_subplot(3, 2, 4)  # specify (nrows, ncols, axnum)
+for i in range(0,numFiles):
+    plt.plot(radA[i][1::N1]/np.amax(radA[i]),Aperture[i][1::N1]*1000,symbols[i],fillstyle='none', markersize=4,label=labels[i] )
+#plt.plot(solns[0],w_tough[0]*1000,  'k-', label='$\mu$ => 0' )
+plt.plot(solns[0],w_viscous[0]*1000,'r-', label='$K_{Ic}$ => 0' )
+#plt.xlabel('Radius (m)')
+plt.ylabel('Aperture(t=200s) \n (mm)', multialignment='center')
+#plt.legend(loc='upper right')
+plt.xlim([0, 1 ])
+#plt.ylim([ 0.0  , 2.0 ])
+  
+#print Pressure[i][1::N1]
+#print np.append(Pressure[i][1::N1],Pressure[i][-1])
+ax2 = fig2.add_subplot(3, 2, 6)  # specify (nrows, ncols, axnum)
+for i in range(0,numFiles):
+    plt.plot(radP[i][1::N1]/np.amax(radP[i]),Pressure[i][1::N1]/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+#plt.plot(solns[0],p_tough[0]/1.0e6,  'k-', label='$\mu$ => 0' )
+plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
+plt.xlabel('Length Coordinate') 
+plt.ylabel('Pressure(t=200s) \n (MPa)', multialignment='center')
+plt.xlim([0, 1 ])
+#plt.yticks(np.arange(-0.2, 0.501, 0.1))
+#plt.ylim([ -0.3 , 0.31 ])
 #  
 # plt.savefig('kgd2.eps',dpi=1200)
 plt.show()
