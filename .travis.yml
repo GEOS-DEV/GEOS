@@ -6,7 +6,7 @@ env:
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - DOCKER_DATE=2019-09-22
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=176
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=182
 matrix:
   include:
   - os: osx
@@ -72,7 +72,6 @@ matrix:
 git:
   submodules: false
 before_script:
-  - set -e -o pipefail
   - git submodule update --init --recursive src/coreComponents/cxx-utilities
   - git submodule update --init --recursive src/cmake/blt
   - git submodule update --init --recursive src/externalComponents/PVTPackage
