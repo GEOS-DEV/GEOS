@@ -320,9 +320,9 @@ SiloFile::SiloFile():
   m_plotFileRoot("plot"),
   m_restartFileRoot("restart"),
   m_fileName(),
-  m_baseFileName()
+  m_baseFileName(),
+  m_ghostFlags(true)
 {
-  m_ghostFlags = false;
 }
 
 // *********************************************************************************************************************
@@ -1591,14 +1591,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
     NodeManager const * const nodeManager = meshLevel->getNodeManager();
     localIndex const numNodes = nodeManager->size();
 
-    FaceManager const * const faceManager = meshLevel->getFaceManager();
-    localIndex const numFaces = faceManager->size();
-
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
-
-    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
-    localIndex const numEdges = edgeManager->size();
-
 
     string const ghostNodeName = "ghostNodeFlag";
     string const ghostZoneName = "ghostZoneFlag";
@@ -1724,27 +1716,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         shapetype[count] = DB_ZONETYPE_BEAM;
       }
-      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE4") ||
-      // !elementRegion.m_elementGeometryID.compare(0, 3, "S4R") )
-      //      {
-      //        shapetype[count] = DB_ZONETYPE_QUAD;
-      //      }
-      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "STRI") ||
-      // !elementRegion.m_elementGeometryID.compare(0, 4, "TRSH") ||
-      // !elementRegion.m_elementGeometryID.compare(0, 4, "CPE3"))
-      //      {
-      //        shapetype[count] = DB_ZONETYPE_TRIANGLE;
-      //      }
-      //      else if ( !elementRegion.m_elementGeometryID.compare(0, 4, "CPE2") )
-      //      {
-      //        shapetype[count] = DB_ZONETYPE_TRIANGLE;
-      //      }
-      //      else
-      //      {
-      //        GEOS_ERROR("PhysicalDomainT::WriteFiniteElementMesh: Do not recognize
-      // geometry type " + elementRegion.m_elementGeometryID + " \n");
-      //      }
-
       shapesize[count] = integer_conversion<int>( elementSubRegion->numNodesPerElement(0) );
       ++count;
     });
@@ -1799,29 +1770,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                                cycleNum,
                                problemTime,
                                isRestart );
-
-//      for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
-//      {
-//        ElementRegion const * const elemRegion = elemManager->GetRegion(er);
-//        for( localIndex esr=0 ; esr<elemRegion->numSubRegions() ; ++esr )
-//        {
-//          CellBlockSubRegion const * const subRegion = elemRegion->GetSubRegion(esr);
-//
-//          string regionName = elemRegion->getName() + "_" + subRegion->getName();
-//
-//          WriteGroupSilo( subRegion,
-//                              regionName,
-//                              meshName,
-//                              DB_ZONECENT,
-//                              cycleNum,
-//                              problemTime,
-//                              isRestart,
-//                              localIndex_array());
-//
-//
-//
-//        }
-//      }
     }
 //  }//end FE write
 
@@ -1831,8 +1779,12 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-//  if ( (isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
+  if ( 0 )//(isRestart || (writeFEMFaces && faceManager.DataLengths() > 0)) )
   {
+
+    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    localIndex const numFaces = faceManager->size();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
 
     // face mesh
     const std::string facemeshName("face_mesh");
@@ -1947,9 +1899,15 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   }
 
 
-//  if ( isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
+  if ( 0 ) //isRestart || (writeFEMEdges && edgeManager.DataLengths() > 0) )
   {
     // write edges
+    FaceManager const * const faceManager = meshLevel->getFaceManager();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+    localIndex const numEdges = edgeManager->size();
+
 
     const std::string edgeMeshName("edge_mesh");
 
