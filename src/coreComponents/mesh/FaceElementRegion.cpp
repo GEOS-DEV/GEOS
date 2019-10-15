@@ -27,10 +27,25 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
   ElementRegionBase( name, parent )
 {
   this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<FaceElementSubRegion>("default");
+
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("The default aperture of for new faceElements.");
 }
 
 FaceElementRegion::~FaceElementRegion()
 {}
+
+
+void FaceElementRegion::InitializePreSubGroups( Group * const )
+{
+  this->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion * const subRegion )
+  {
+    subRegion->getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
+      setApplyDefaultValue( m_defaultAperture );
+
+  });
+}
 
 
 
