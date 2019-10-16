@@ -28,7 +28,6 @@
 #include "FaceElementRegion.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "wells/WellElementRegion.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -104,6 +103,8 @@ public:
 //  void Initialize(  ){}
 
   void GenerateMesh( Group const * const cellBlockManager );
+
+  void GenerateCellToEdgeMaps(FaceManager const * const faceManager);
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 

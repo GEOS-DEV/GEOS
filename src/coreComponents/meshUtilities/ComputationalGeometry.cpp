@@ -55,9 +55,9 @@ R1Tensor LinePlaneIntersection(R1Tensor lineDir,
 
 
   pInt    = linePoint;
-  pInt[0] = d * lineDir[0];
-  pInt[1] = d * lineDir[1];
-  pInt[2] = d * lineDir[2];
+  pInt[0] += d * lineDir[0];
+  pInt[1] += d * lineDir[1];
+  pInt[2] += d * lineDir[2];
 
   return pInt;
 }

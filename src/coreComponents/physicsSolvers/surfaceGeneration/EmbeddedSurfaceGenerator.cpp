@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/EmbeddedSurfaceRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
@@ -112,7 +112,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   NodeManager * const nodeManager = meshLevel->getNodeManager();
-  // EdgeManager * const edgeManager = meshLevel->getEdgeManager();
+  EdgeManager * const edgeManager = meshLevel->getEdgeManager();
   array1d<R1Tensor> const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
@@ -146,7 +146,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       subRegions->forSubGroups<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion ) -> void
       {
         FixedOneToManyRelation const & cellToNodes = subRegion->nodeList();
-        // FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
+        FixedOneToManyRelation const & cellToEdges = subRegion->edgeList();
         for(localIndex cellIndex =0; cellIndex<subRegion->size(); cellIndex++)
         {
           isPositive = 0;
@@ -178,11 +178,11 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
          * a. fill in the data relative to where the actual intersections are
          * b. compute the geometric quantities and the Heaviside.
          */
-        // embeddedSurfaceSubRegion->ComputeElementArea(*nodeManager, *edgeManager,
-                                                     // cellToEdges, planeCenter);
-      }); // end loop over subregions
-    });   // end loop over elementRegions
-  });     // end loop over thick planes
+        embeddedSurfaceSubRegion->ComputeElementArea(*nodeManager, *edgeManager,
+                                                      cellToEdges, planeCenter);
+      });// end loop over subregions
+    });// end loop over elementRegions
+  });// end loop over thick planes
 
   std::cout << "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() << std::endl;
 }

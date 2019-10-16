@@ -778,6 +778,8 @@ void ProblemManager::GenerateMesh()
 
       });
 
+      elemManager->GenerateCellToEdgeMaps(faceManager);
+
       elemManager->GenerateAggregates( faceManager, nodeManager );
 
       elemManager->GenerateWells( meshManager, meshLevel );

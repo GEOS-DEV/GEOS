@@ -34,6 +34,7 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toFacesRelation()
 {
   registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
+  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
   registerWrapper(viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
   registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
   registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
@@ -275,22 +276,30 @@ void CellBlock::SetElementType( string const & elementType)
 
   if (!m_elementTypeString.compare(0, 4, "C3D8"))
   {
+    // Hexahedron
     m_toNodesRelation.resize(0,8);
+    m_toEdgesRelation.resize(0,12);
     m_toFacesRelation.resize(0,6);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
+    // Tetrahedron
     m_toNodesRelation.resize(0,4);
+    m_toEdgesRelation.resize(0,6);
     m_toFacesRelation.resize(0,4);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
+    // Triangular prism
     m_toNodesRelation.resize(0,8);
+    m_toEdgesRelation.resize(0,9);
     m_toFacesRelation.resize(0,5);
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
+    // Pyramid
     m_toNodesRelation.resize(0,5);
+    m_toEdgesRelation.resize(0,8);
     m_toFacesRelation.resize(0,5);
   }
   else
@@ -302,29 +311,29 @@ void CellBlock::SetElementType( string const & elementType)
   {
     // Hexahedron
     this->numNodesPerElement() = 8;
-    this->numFacesPerElement() = 6;
     this->numEdgesPerElement() = 12;
+    this->numFacesPerElement() = 6;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D4"))
   {
     // Tetrahedron
     this->numNodesPerElement() = 4;
-    this->numFacesPerElement() = 4;
     this->numEdgesPerElement() = 6;
+    this->numFacesPerElement() = 4;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D6"))
   {
     // Triangular prism
     this->numNodesPerElement() = 8;
-    this->numFacesPerElement() = 5;
     this->numEdgesPerElement() = 9;
+    this->numFacesPerElement() = 5;
   }
   else if (!m_elementTypeString.compare(0, 4, "C3D5"))
   {
     // Pyramid
     this->numNodesPerElement() = 5;
-    this->numFacesPerElement() = 5;
     this->numEdgesPerElement() = 8;
+    this->numFacesPerElement() = 5;
   }
 
 }

@@ -68,11 +68,6 @@ public:
 
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 
-  void GenerateEmbeddedSurfaces( FaceManager              const * const faceManager,
-                                 EdgeManager              const * const edgeManager,
-                                 NodeManager              const * const nodeManager,
-                                 EmbeddedSurfaceGenerator const * const embeddedSurface);
-
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto coarseningRatioString = "coarseningRatio";

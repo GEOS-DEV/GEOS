@@ -152,22 +152,47 @@ void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManage
                                                   FixedOneToManyRelation const & cellToEdges,
                                                   R1Tensor origin)
 {
+  /*
+   * Compute area of each embedded surface element:
+   *
+   * To compute the area of each embedded surface I need to find the intersection point
+   * between the plane and each edge of each fractured element. So, I perform a loop over
+   * all the embeddedSurfaceElements, then, for each of them I loop over the edges of the
+   * relative fractured element (cut by the ) embedded surface) contained in m_embeddedSurfaceToCell.
+   *
+   * For each edge:
+   *
+   * 1. I check if it is cut by the plane using the Dot product between the distance of each node
+   * from the origin and the normal vector. If an edgde is cut by the plane it is just a
+   * matter of finding the intersection between a line and a plane.
+   *
+   * 2. Once I have the intersection points computing the area is easy as long as
+   * they are ordered either CW or CCW.
+   */
+
   array1d<R1Tensor> const & nodesCoord = nodeManager.referencePosition();
   array2d<localIndex> const & edgeToNodes = edgeManager.nodeList();
-  localIndex count;
-  localIndex edgeIndex;
-  R1Tensor lineDir;
+  localIndex count, edgeIndex;
+  R1Tensor lineDir, dist;
+  real64 prodScalarProd;
 
-  // loop over the elements
+  // loop over the embedded surface elements
   for ( localIndex k=0; k < this->size(); k++ )
    {
     count = 0;
-    array1d<R1Tensor> intersectionPoints; // I am assuming there are 4 intersections (needs to be fixed)
+    array1d<R1Tensor> intersectionPoints;
+    // loop over the edges
+    std::cout << "embedded elem " << k << std::endl;
     for (localIndex ke = 0; ke < 12; ke++)
     {
-      edgeIndex = cellToEdges[k][ke];
-      real64 prodScalarProd = Dot(nodesCoord[edgeToNodes[edgeIndex][0]], m_normalVector[k])
-                    * Dot(nodesCoord[edgeToNodes[edgeIndex][1]], m_normalVector[k]);
+      edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
+      dist = nodesCoord[edgeToNodes[edgeIndex][0]];
+      dist -= origin;
+      prodScalarProd = Dot(dist, m_normalVector[k]);
+      dist = nodesCoord[edgeToNodes[edgeIndex][1]];
+      dist -= origin;
+      prodScalarProd *= Dot(dist, m_normalVector[k]);
+
       if (prodScalarProd < 0)
       {
         lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
@@ -177,9 +202,11 @@ void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManage
             m_normalVector[k], origin));
 
         R1Tensor a;
+        std::cout << "intersection point " << count + 1 << ": ";
         a = intersectionPoints[count];
         a.print(std::cout);
         count += 1;
+        std::cout << std::endl;
       }
     }
    }
