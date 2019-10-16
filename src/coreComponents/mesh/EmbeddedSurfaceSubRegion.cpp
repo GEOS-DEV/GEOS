@@ -201,15 +201,15 @@ void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManage
         intersectionPoints.push_back(computationalGeometry::LinePlaneIntersection(lineDir, nodesCoord[edgeToNodes[edgeIndex][0]],
             m_normalVector[k], origin));
 
-        R1Tensor a;
-        std::cout << "intersection point " << count + 1 << ": ";
-        a = intersectionPoints[count];
-        a.print(std::cout);
+        // std::cout << "intersection point " << count + 1 << ": ";
+        // intersectionPoints[count].print(std::cout);
         count += 1;
-        std::cout << std::endl;
       }
-    }
-   }
+    } //end of edge loop
+
+    m_elementArea[k] = computationalGeometry::ComputeSurfaceArea(intersectionPoints, count, m_normalVector[k]);
+    std::cout << "Area = " << m_elementArea[k] << std::endl;
+   } // end of embedded element loop
 }
 
 

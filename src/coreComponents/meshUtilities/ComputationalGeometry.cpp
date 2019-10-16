@@ -31,7 +31,6 @@ namespace computationalGeometry
  * @param[in] plane origin
  * @return area of the convex 3D polygon
  */
-
 R1Tensor LinePlaneIntersection(R1Tensor lineDir,
                                R1Tensor linePoint,
                                R1Tensor planeNormal,
@@ -61,8 +60,105 @@ R1Tensor LinePlaneIntersection(R1Tensor lineDir,
 
   return pInt;
 }
+/**
+ * Calculates the area of a polygon given the set of points defining it
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return area
+ */
+real64 ComputeSurfaceArea(array1d<R1Tensor const> const & points,
+                          localIndex const numPoints,
+                          R1Tensor const & normal)
+{
+  // reorder points counterclockwise
 
+  array1d<R1Tensor> pointsReordered = orderPointsCCW(points, numPoints, normal);
 
+  real64 surfaceArea;
+  R1Tensor v1,v2;
+  const R1Tensor& x0 = pointsReordered[0];
+
+  for( localIndex a=0 ; a<(numPoints-2) ; ++a )
+      {
+        v1  = pointsReordered[a+1];
+        v2  = pointsReordered[a+2];
+
+        v1 -= x0;
+        v2 -= x0;
+
+        R1Tensor triangleNormal;
+        triangleNormal.Cross( v1,v2 );
+        const real64 triangleArea = triangleNormal.Normalize();
+
+        surfaceArea += triangleArea;
+      }
+  surfaceArea *= 0.5;
+  return surfaceArea;
+}
+
+/**
+ * Given a set of points on a plane it orders them counterclockwise
+ * @param[in] coordinates of the points
+ * @param[in] number of points
+ * @param[in] unit normal vector to the surface
+ * @return reordered points
+ */
+array1d<R1Tensor> orderPointsCCW(array1d<R1Tensor const> const & points,
+                                 localIndex const numPoints,
+                                 R1Tensor const & normal)
+{
+  array1d<R1Tensor> orderedPoints(numPoints);
+  R1Tensor p0 = points[0];
+  R1Tensor centroid = p0;
+
+  std::vector<int> indices(numPoints);
+  indices[0] = 0;
+  real64 dot, det;
+  std::vector<real64 > angle(numPoints);
+
+  // compute centroid of the set of points
+
+  for (localIndex a=1; a < numPoints; a++)
+  {
+    centroid += points[a];
+    indices[a] = a;
+  }
+  centroid /= numPoints;
+
+  R1Tensor v0, v;
+  v0  = centroid;
+  v0 -= points[0];
+  v0.Normalize();
+
+  // compute angles
+  angle[0] = 0;
+  //std::cout << std::endl;
+  for (localIndex a=1; a < numPoints; a++)
+    {
+      v        = centroid;
+      v       -= points[a];
+      dot      = Dot(v, v0);
+      det      = Dot(normal, Cross(v, v0));
+      angle[a] = std::atan2(det, dot);
+      // std::cout << angle[a] << " - ";
+    }
+
+  // sort the indices
+  std::sort( indices.begin(), indices.end(), [&](int i,int j){return angle[i]<angle[j];} );
+  // std::cout << std::endl;
+
+  // copy the points in the reorderedPoints array.
+  for (localIndex a=0; a < numPoints; a++)
+      {
+        // fill in with ordered
+        // std::cout << indices[a] << " - ";
+        orderedPoints[a] = points[indices[a]];
+      }
+  //std::cout << std::endl;
+
+  return orderedPoints;
+}
 
 
 /**
