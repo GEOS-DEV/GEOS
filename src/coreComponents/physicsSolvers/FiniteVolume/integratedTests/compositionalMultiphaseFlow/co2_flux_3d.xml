@@ -24,7 +24,8 @@
                               maxTimeStepCuts="5"
                               maxLineSearchCuts="2"
                               allowNonConverged="1"
-                              doLineSearch="0"/>      
+                              doLineSearch="0"
+                              minNumberOfNewtonIterations="1"/>      
     </CompositionalMultiphaseFlow>
   </Solvers>
   
