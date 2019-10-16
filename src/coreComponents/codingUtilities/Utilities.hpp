@@ -16,8 +16,8 @@
  * @file Utilities.hpp
  */
 
-#ifndef UTILITIES_H_
-#define UTILITIES_H_
+#ifndef GEOSX_CODINGUTILITIES_UTILITIES_H_
+#define GEOSX_CODINGUTILITIES_UTILITIES_H_
 
 #include "common/DataTypes.hpp"
 
@@ -209,4 +209,4 @@ inline void applyChainRuleInPlace( localIndex N,
 
 } // namespace geosx
 
-#endif /* UTILITIES_H_ */
+#endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

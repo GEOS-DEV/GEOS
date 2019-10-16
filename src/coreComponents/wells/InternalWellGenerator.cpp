@@ -192,7 +192,8 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();  
   WellElementRegion * const 
-  wellRegion = elemManager->GetGroup(keys::elementRegionsGroup)->GetGroup<WellElementRegion>( this->m_wellRegionName );
+  wellRegion = elemManager->GetGroup(ElementRegionManager::groupKeyStruct::elementRegionsGroup)->
+                            GetGroup<WellElementRegion>( this->m_wellRegionName );
 
   GEOS_ERROR_IF( wellRegion == nullptr, 
                  "Well region " << this->m_wellRegionName << " not found in well " << getName() );
