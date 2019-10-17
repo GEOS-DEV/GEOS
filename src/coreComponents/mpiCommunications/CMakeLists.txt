@@ -22,7 +22,13 @@ set(mpiCommunications_sources
     SpatialPartition.cpp
    )
 
-set( dependencyList common )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList fileIO common trilinos )
+else()
+  set( dependencyList common )
+endif()
+
+
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -40,7 +46,7 @@ blt_add_library( NAME                  mpiCommunications
                  SOURCES               ${mpiCommunications_sources}
                  HEADERS               ${mpiCommunications_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( mpiCommunications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
