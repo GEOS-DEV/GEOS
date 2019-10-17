@@ -647,6 +647,11 @@ struct FluxKernel
     (*mass)[seri[0]][sesri[0]][sei[0]] -= dt * mob[er_up][esr_up][ei_up] * potDif;
     (*mass)[seri[1]][sesri[1]][sei[1]] += dt * mob[er_up][esr_up][ei_up] * potDif;
 
+ //   std::cout<< "\n potDif 1 = " << potDif << "\n dMass = " << dt * mob[er_up][esr_up][ei_up] * potDif ;
+//    << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
+//             << ", vol[ei] = " << vol[ei]
+//             << ", dens[ei][0] = " << dens[ei][0]  << ", pres= " << pres[ei] << ", dPres= " << dPres[ei] << "\n";
+
   }
 
 
@@ -718,6 +723,8 @@ struct FluxKernel
     // populate local flux
     (*mass)[stencilElementIndices[0]] -= dt * mob[ei_up] * potDif;
     (*mass)[stencilElementIndices[1]] += dt * mob[ei_up] * potDif;
+
+  //  std::cout<< "\n potDif 2  = " << potDif ;
   }
 
   /**
@@ -896,6 +903,7 @@ struct FluxKernel
 
         *maxStableDt = std::min(dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
 
+   //     std::cout<< "\n potDif in ComputeJunction = " << potDif ;
       }
     }
   }

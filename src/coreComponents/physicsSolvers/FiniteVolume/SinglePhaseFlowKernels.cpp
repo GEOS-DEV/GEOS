@@ -329,6 +329,7 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
 
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
+  // std::cout<< "\n iconn in ComputeCell = " << iconn ;
     FluxKernel::Compute( stencilSize,
                          seri[iconn],
                          sesri[iconn],
@@ -377,6 +378,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
+  //  std::cout<< "\n iconn in ComputeJunction = " << iconn ;
     FluxKernel::ComputeJunction( numFluxElems,
                                  sei[iconn],
                                  weights[iconn],

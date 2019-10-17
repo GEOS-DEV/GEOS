@@ -65,8 +65,9 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead
    */
-  virtual void PointUpdate( real64 & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q ) = 0;
 
+  virtual void PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
   /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] pressure array containing target pressure values

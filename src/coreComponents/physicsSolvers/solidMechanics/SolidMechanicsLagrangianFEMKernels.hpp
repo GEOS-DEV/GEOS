@@ -200,7 +200,7 @@ struct ExplicitKernel
           arrayView1d<R1Tensor> const & acc,
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
-          arrayView1d< real64 const > const & biotCoefficient,
+          real64 const biotCoefficient,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
           real64 const dt,
@@ -226,8 +226,11 @@ struct ExplicitKernel
                                                       u, vel,
                                                       u_local, v_local );
 
+//  std::cout << "\n eleID = " << k+1;
+//  for( localIndex i = 0 ; i<NUM_NODES_PER_ELEM ; ++i)
+//    std::cout << " : \n    " << u_local[i] <<"        " << v_local[i] ;
+
       //Compute Quadrature
-      real64 BB = 0.0;
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
       {
         R2Tensor dUhatdX, dUdX;
@@ -264,24 +267,33 @@ struct ExplicitKernel
 
         if( !fluidPressure.empty() )
         {
-          TotalStress.PlusIdentity( - biotCoefficient[k] * (fluidPressure[k] + deltaFluidPressure[k]) );
+          TotalStress.PlusIdentity( - biotCoefficient * (fluidPressure[k] + deltaFluidPressure[k]) );
+//          if (q==0)
+//            std::cout << "\n eleID = " << k+1 << " , fluidPressure[k]=" << fluidPressure[k];
         }
-
-        if (q==0)
-          std::cout << "\n eleID = " << k+1 << " : \n TotalStress=" << TotalStress;
+//        if (q==0)
+//          std::cout << "\n eleID = " << k+1 << " : \n TotalStress=" << TotalStress;
 
         Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
 
         for( int a=0 ; a<NUM_NODES_PER_ELEM ; ++a )  // loop through all shape functions in element
         {
-          s_dNdx[a].AijBj( fInv, dNdX[k][q][a] );
-          s_dNdx[a] /= NUM_QUADRATURE_POINTS;
-          BB += Dot( s_dNdx[a], s_dNdx[a] ) ;
+          R1Tensor temp;
+          temp.AijBj( fInv, dNdX[k][q][a] );
+          s_dNdx[a] += temp;
         }
 
       }//quadrature loop
 
+      real64 BB = 0.0;
+      for( int a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+      {
+        s_dNdx[a] /= NUM_QUADRATURE_POINTS;
+        BB += Dot( s_dNdx[a], s_dNdx[a] ) ;
+      }
+
       *maxStableDt = std::min(*maxStableDt, sqrt( density[k][0] / ( bulkModulus[k] + 4 / 3.0 * shearModulus[k] ) / 2 /BB ));
+//      std::cout << "\n eleID = " << k+1 << " : \n maxStableDt=" << *maxStableDt << " , density[k][0]=" << density[k][0] << ", BB=" << BB;
       AddLocalToGlobal<NUM_NODES_PER_ELEM>( elemsToNodes[k], f_local, acc );
     });
 
@@ -417,7 +429,7 @@ struct ImplicitKernel
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( density ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( biotCoefficient ),
+          real64 const GEOSX_UNUSED_ARG( biotCoefficient ),
           timeIntegrationOption const GEOSX_UNUSED_ARG( tiOption ),
           real64 const GEOSX_UNUSED_ARG( stiffnessDamping ),
           real64 const GEOSX_UNUSED_ARG( massDamping ),
