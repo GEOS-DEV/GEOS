@@ -35,9 +35,6 @@ using namespace dataRepository;
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                       dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
-  m_unmappedGlobalIndicesInToNodes(),
-  m_unmappedGlobalIndicesInToEdges(),
-  m_unmappedGlobalIndicesInToFaces(),
   m_normalVector(),
   m_embeddedSurfaceToCell(),
   m_toNodesRelation(),
@@ -87,35 +84,8 @@ EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
 {}
 
 
-R1Tensor const & EmbeddedSurfaceSubRegion::calculateElementCenter( localIndex k,
-                                                               const NodeManager& nodeManager,
-                                                               const bool useReferencePos ) const
-{
-  r1_array const & X = nodeManager.referencePosition();
-  m_elementCenter[k] = 0;
-  localIndex const numNodes = numNodesPerElement( k );
-  for ( localIndex a = 0 ; a < numNodes ; ++a)
-  {
-    const localIndex b = m_toNodesRelation[k][a];
-    m_elementCenter[k] += X[b];
-    if(!useReferencePos)
-      m_elementCenter[k] += X[b];
-  }
-  m_elementCenter[k] /= numNodes;
-
-  return m_elementCenter[k];
-
-}
-
-void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
-{
-  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-}
-
-
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex const k)
 {
-  // Matteo: needs to be filled in with the proper computation.
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
@@ -138,19 +108,12 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface (localIndex const cellIndex
   // resize
   this->resize(this->size() + 1);
 
-  //for (localIndex k =0; k < this->size(); k++){
-  //std::cout << m_embeddedSurfaceToCell[k] << std::endl;
-  //}
-  // add the cellIndex and the normalVector
-
-  // m_embeddedSurfaceToCell[this->size() - 1] = cellIndex;
-  // m_normalVector[this->size() - 1]          = normalVector;
 }
 
-void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManager,
-                                                  EdgeManager const & edgeManager,
-                                                  FixedOneToManyRelation const & cellToEdges,
-                                                  R1Tensor origin)
+void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities(NodeManager const & nodeManager,
+                                                                   EdgeManager const & edgeManager,
+                                                                   FixedOneToManyRelation const & cellToEdges,
+                                                                   R1Tensor origin)
 {
   /*
    * Compute area of each embedded surface element:
@@ -201,132 +164,23 @@ void EmbeddedSurfaceSubRegion::ComputeElementArea(NodeManager const & nodeManage
         intersectionPoints.push_back(computationalGeometry::LinePlaneIntersection(lineDir, nodesCoord[edgeToNodes[edgeIndex][0]],
             m_normalVector[k], origin));
 
-        // std::cout << "intersection point " << count + 1 << ": ";
-        // intersectionPoints[count].print(std::cout);
-        count += 1;
+        m_elementCenter[k] += intersectionPoints[count];
+        count++;
       }
     } //end of edge loop
 
-    m_elementArea[k] = computationalGeometry::ComputeSurfaceArea(intersectionPoints, count, m_normalVector[k]);
-    std::cout << "Area = " << m_elementArea[k] << std::endl;
+    m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea(intersectionPoints, count, m_normalVector[k]);
+    m_elementCenter[k] /= count;
+    this->CalculateElementGeometricQuantities(k);
+
+    // std::cout << "Area = " << m_elementArea[k] << std::endl;
    } // end of embedded element loop
 }
 
 
-localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const
+void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
-  buffer_unit_type * junk = nullptr;
-  return PackUpDownMapsPrivate<false>( junk, packList );
-}
-
-localIndex EmbeddedSurfaceSubRegion::PackUpDownMaps( buffer_unit_type * & buffer,
-                                                 arrayView1d<localIndex const> const & packList ) const
-{
-  return PackUpDownMapsPrivate<true>( buffer, packList );
-}
-
-template<bool DOPACK>
-localIndex EmbeddedSurfaceSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d<localIndex const> const & packList ) const
-{
-
-  localIndex packedSize = 0;
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::nodeListString) );
-
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toNodesRelation.Base(),
-                                         m_unmappedGlobalIndicesInToNodes,
-                                         packList,
-                                         this->m_localToGlobalMap,
-                                         m_toNodesRelation.RelatedObjectLocalToGlobal() );
-
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::edgeListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toEdgesRelation.Base(),
-                                         m_unmappedGlobalIndicesInToEdges,
-                                         packList,
-                                         this->m_localToGlobalMap,
-                                         m_toEdgesRelation.RelatedObjectLocalToGlobal() );
-
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::faceListString) );
-  packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         m_toFacesRelation.Base(),
-                                         m_unmappedGlobalIndicesInToFaces,
-                                         packList,
-                                         this->m_localToGlobalMap,
-                                         m_toFacesRelation.RelatedObjectLocalToGlobal() );
-  return packedSize;
-}
-
-
-
-localIndex EmbeddedSurfaceSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                   localIndex_array & packList,
-                                                   bool const GEOSX_UNUSED_ARG( overwriteUpMaps   ),
-                                                   bool const GEOSX_UNUSED_ARG( overwriteDownMaps ) )
-{
-  localIndex unPackedSize = 0;
-  string nodeListString;
-  unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toNodesRelation,
-                                     packList,
-                                     m_unmappedGlobalIndicesInToNodes,
-                                     this->m_globalToLocalMap,
-                                     m_toNodesRelation.RelatedObjectGlobalToLocal() );
-
-
-  string edgeListString;
-  unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString );
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toEdgesRelation,
-                                     packList,
-                                     m_unmappedGlobalIndicesInToEdges,
-                                     this->m_globalToLocalMap,
-                                     m_toEdgesRelation.RelatedObjectGlobalToLocal() );
-
-  string faceListString;
-  unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toFacesRelation.Base(),
-                                     packList,
-                                     m_unmappedGlobalIndicesInToFaces,
-                                     this->m_globalToLocalMap,
-                                     m_toFacesRelation.RelatedObjectGlobalToLocal() );
-  return unPackedSize;
-}
-
-void EmbeddedSurfaceSubRegion::FixUpDownMaps( bool const clearIfUnmapped )
-{
-  ObjectManagerBase::FixUpDownMaps( m_toNodesRelation,
-                                    m_unmappedGlobalIndicesInToNodes,
-                                    clearIfUnmapped );
-
-  ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
-                                    m_unmappedGlobalIndicesInToEdges,
-                                    clearIfUnmapped );
-
-  ObjectManagerBase::FixUpDownMaps( m_toFacesRelation,
-                                    m_unmappedGlobalIndicesInToFaces,
-                                    clearIfUnmapped );
-
-}
-
-void EmbeddedSurfaceSubRegion::ViewPackingExclusionList( set<localIndex> & exclusionList ) const
-{
-  ObjectManagerBase::ViewPackingExclusionList(exclusionList);
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::nodeListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::edgeListString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceListString));
-  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellRegionsString));
-  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellSubRegionsString));
-  //exclusionList.insert(this->getWrapperIndex(viewKeyStruct::faceElementsToCellIndexString));
+  this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
 } /* namespace geosx */

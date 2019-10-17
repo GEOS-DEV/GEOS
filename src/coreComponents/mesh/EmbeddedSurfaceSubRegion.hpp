@@ -60,11 +60,14 @@ public:
     virtual ~EmbeddedSurfaceSubRegion() override;
 
     virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                       const NodeManager& nodeManager,
-                                       const bool useReferencePos = true) const override;
+                                       const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
+                                       const bool GEOSX_UNUSED_ARG( useReferencePos = true)) const override
+    {
+      return m_elementCenter[k];
+    }
 
     virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                        FaceManager const & facemanager ) override;
+                                                      FaceManager const & facemanager ) override;
 
     void CalculateElementGeometricQuantities( localIndex const index);
 
@@ -72,26 +75,10 @@ public:
                                R1Tensor normalVector);
 
 
-    void ComputeElementArea(NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FixedOneToManyRelation const & cellToEdges,
-                            R1Tensor origin);
-
-
-    virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
-
-
-    virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                       arrayView1d<localIndex const> const & packList ) const override;
-
-    virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                         localIndex_array & packList,
-                                         bool const overwriteUpMaps,
-                                         bool const overwriteDownMaps ) override;
-
-    virtual void FixUpDownMaps( bool const clearIfUnmapped ) override;
-
-    virtual void ViewPackingExclusionList( set<localIndex> & exclusionList ) const override;
+    void CalculateElementGeometricQuantities(NodeManager const & nodeManager,
+                                             EdgeManager const & edgeManager,
+                                             FixedOneToManyRelation const & cellToEdges,
+                                             R1Tensor origin);
 
     /**
      * @brief function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
@@ -163,15 +150,7 @@ public:
     array1d< R1Tensor > const &       getNormalVector()       { return m_normalVector; }
     array1d< R1Tensor const > const & getNormalVector() const { return m_normalVector; }
 
-    map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
-    map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToEdges;
-    map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToFaces;
-
 private:
-    template<bool DOPACK>
-    localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                      arrayView1d<localIndex const> const & packList ) const;
-
     /// normal vector to the embedded surface element
     array1d < R1Tensor > m_normalVector;
 
@@ -179,13 +158,13 @@ private:
     array1d< localIndex > m_embeddedSurfaceToCell;
 
     /// list of nodes
-    NodeMapType  m_toNodesRelation;
+    NodeMapType  m_toNodesRelation; // ?
 
     /// list of edges (if necessary)
-    EdgeMapType  m_toEdgesRelation;
+    EdgeMapType  m_toEdgesRelation; // ?
 
     /// list of faces affected by the embedded surface element
-    FaceMapType  m_toFacesRelation;
+    FaceMapType  m_toFacesRelation; // ?
 
 
     /// The member level field for the element center

@@ -128,10 +128,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
      * Loop over all the elements and for each one of them loop over the nodes and compute the
      * dot product between the distance between the plane center and the node and the normal
      * vector defining the plane. If two scalar products have different signs the plane cuts the
-     * cell. To do this check multiply all dot products and then check the sign. If a nodes gives
-     * a 0 dot product it has to be neglected or the method won't work.
-     *
-     *
+     * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
      */
     R1Tensor planeCenter  = fracture->getCenter();
     R1Tensor normalVector = fracture->getNormal();
@@ -176,10 +173,10 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
         } // end loop over cells
         /* 2. Now that you know that the element is cut by the fracture we can
          * a. fill in the data relative to where the actual intersections are
-         * b. compute the geometric quantities and the Heaviside.
+         * b. compute the geometric quantities (and the Heaviside ?).
          */
-        embeddedSurfaceSubRegion->ComputeElementArea(*nodeManager, *edgeManager,
-                                                      cellToEdges, planeCenter);
+        embeddedSurfaceSubRegion->CalculateElementGeometricQuantities(*nodeManager, *edgeManager,
+                                                                       cellToEdges, planeCenter);
       });// end loop over subregions
     });// end loop over elementRegions
   });// end loop over thick planes
