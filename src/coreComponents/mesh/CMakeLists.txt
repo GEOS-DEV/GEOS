@@ -41,7 +41,12 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(dependencyList common metis)
+if( BUILD_OBJ_LIBS)
+  set(dependencyList managers metis)
+else()
+  set(dependencyList common metis)
+endif()
+
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -55,7 +60,7 @@ blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
