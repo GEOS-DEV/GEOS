@@ -39,7 +39,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_embeddedSurfaceToCell(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_toFacesRelation(),
   m_elementAperture(),
   m_elementArea()
 {
@@ -47,17 +46,13 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription("Map to the nodes attached to each EmbeddedSurface.");
 
   registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
-      setDescription("Map to the edges attached to each FaceElement.");
-
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
-      setDescription("Map to the faces attached to each FaceElement.")->
-      reference().resize(0,2);
+    setDescription("Map to the edges.");
 
   registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell, false )->
-        setDescription(".");
+    setDescription("Map to the cells.");
 
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector, false )->
-          setDescription(".");
+    setDescription("Unit normal vector to the embedded surface.");
 
   registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
     setApplyDefaultValue(1.0e-5)->
@@ -66,15 +61,15 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
     setApplyDefaultValue(-1.0)->
-    setDescription("The area of each EmbeddedSurface.");
+    setDescription("The area of each EmbeddedSurface element.");
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
-    setDescription("The center of each EmbeddedSurface.");
+    setDescription("The center of each EmbeddedSurface element.");
 
   registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
     setApplyDefaultValue(-1.0)->
     setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
-    setDescription("The volume of each EmbeddedSurface.");
+    setDescription("The volume of each EmbeddedSurface element.");
 
   m_numNodesPerElement = 4; // Let s assume it's a plane for now
 }
@@ -145,7 +140,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities(NodeManager c
     count = 0;
     array1d<R1Tensor> intersectionPoints;
     // loop over the edges
-    std::cout << "embedded elem " << k << std::endl;
+    // std::cout << "embedded elem " << k << std::endl;
     for (localIndex ke = 0; ke < 12; ke++)
     {
       edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];

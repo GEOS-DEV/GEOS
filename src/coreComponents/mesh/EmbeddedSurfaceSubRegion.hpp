@@ -59,9 +59,9 @@ public:
 
     virtual ~EmbeddedSurfaceSubRegion() override;
 
-    virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                       const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
-                                       const bool GEOSX_UNUSED_ARG( useReferencePos = true)) const override
+    virtual R1Tensor const & calculateElementCenter(localIndex k,
+                                                    const NodeManager& GEOSX_UNUSED_ARG( nodeManager ),
+                                                    const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
     {
       return m_elementCenter[k];
     }
@@ -162,10 +162,6 @@ private:
 
     /// list of edges (if necessary)
     EdgeMapType  m_toEdgesRelation; // ?
-
-    /// list of faces affected by the embedded surface element
-    FaceMapType  m_toFacesRelation; // ?
-
 
     /// The member level field for the element center
     array1d< real64 > m_elementAperture;
