@@ -992,6 +992,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
                                                   ParallelMatrix & matrix,
                                                   ParallelVector & rhs )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
   ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(keys::ConstitutiveManager);

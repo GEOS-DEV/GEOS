@@ -261,6 +261,9 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
   if( !m_coupledWellsFlag )
   {
     SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+
+    m_derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( m_matrix.localRows(),
+                                                                                                    m_matrix.localCols() );
   }
 
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
@@ -381,6 +384,8 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
+//  m_derivativeFluxResidual_dAperture->setEntries(0.0);
+
   if (m_poroElasticFlag)
   {
     AssembleAccumulationTerms<true>( domain, &dofManager, &matrix, &rhs );
@@ -399,6 +404,7 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
     matrix.close();
     rhs.close();
   }
+
 
   if( verboseLevel() == 2 )
   {
@@ -619,7 +625,8 @@ void SinglePhaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG( time_n )
                         aperture0,
                         aperture,
                         matrix,
-                        rhs );
+                        rhs,
+                        *m_derivativeFluxResidual_dAperture );
   });
 
 }

@@ -19,7 +19,8 @@
       <SystemSolverParameters
         maxIterNewton="50"
         newtonTol="1e-5"
-        verbosityFlag="0"
+        krylovTol="1.0e-4"
+        verbosityFlag="1"
         maxLineSearchCuts="10"
         useMLPrecond="1"
         scalingOption="2"
@@ -78,29 +79,29 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-180, -40, 40, 180}"
-                  yCoords="{0, 100, 180}"
+                  xCoords="{-400, -200, -100, 100, 200, 400}"
+                  yCoords="{0, 100, 200, 300}"
                   zCoords="{0, 1}"
-                  nx="{50, 80, 50}"
-                  ny="{100, 40}"
-                  nz="{2}"
+                  nx="{6, 6, 30, 6, 6 }"
+                  ny="{20, 6, 6}"
+                  nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01,  -0.01, -0.01"
-         xMax=" 0.01,   4.01,  1.01"/>
+         xMax=" 0.01,   5.01,  1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  1.01, 1.01"/>
+         xMax=" 0.01,  5.01, 1.01"/>
     <Box name="core"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  100.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="100.0">
+  <Events maxTime="5.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -111,7 +112,7 @@
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
-  
+
     <!-- SoloEvent 
       name="preFracturePlot"
       target="/Outputs/siloOutput"
@@ -122,24 +123,21 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="20.0"
-      forceDt="0.5"
+      endTime="5.0"
+      forceDt="0.2"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <!-- PeriodicEvent 
       name="solverApplications1"
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
       target="/Solvers/hydrofracture" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
                    timeFrequency="2"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -174,7 +172,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.1e-3"
+                       defaultAperture="0.2e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -202,7 +200,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  0.01e-3, 0.2e-3}" 
         />
     </Contact>
   </Constitutive>

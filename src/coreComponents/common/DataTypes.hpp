@@ -42,6 +42,7 @@
 #include "SortedArray.hpp"
 #include "ArrayOfArrays.hpp"
 #include "ArrayOfSets.hpp"
+#include "CRSMatrix.hpp"
 #include "math/TensorT/TensorT.h"
 
 #ifdef GEOSX_USE_ATK
@@ -201,6 +202,12 @@ using SortedArray = LvArray::SortedArray< T, localIndex >;
 
 template< typename T >
 using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
+
+template< typename T, typename ROWINDEX, typename COLINDEX >
+using CRSMatrix = LvArray::CRSMatrix<T,COLINDEX,ROWINDEX>;
+
+template< typename T, typename COLINDEX, typename LINEEARINDEX >
+using CRSMatrixView = LvArray::CRSMatrixView<T,COLINDEX,LINEEARINDEX>;
 
 template< typename TKEY, typename TVAL, typename SORTED >
 class mapBase

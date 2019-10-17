@@ -335,7 +335,8 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
           ParallelMatrix * const jacobian,
-          ParallelVector * const residual );
+          ParallelVector * const residual,
+          CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper );
 
 
   /**
@@ -566,7 +567,6 @@ struct FluxKernel
     real64 sumOfWeights = 0;
     real64 aperTerm[10];
     real64 dAperTerm_dAper[10];
-    real64 dSumOfWeights_dAper[10];
 
     for( localIndex k=0 ; k<numFluxElems ; ++k )
     {
@@ -577,8 +577,6 @@ struct FluxKernel
                                             dAperTerm_dAper[k] );
 
       sumOfWeights += aperTerm[k] * stencilWeights[k];
-
-      dSumOfWeights_dAper[k] = stencilWeights[k] * dAperTerm_dAper[k];
     }
 
     localIndex k[2];
@@ -596,8 +594,8 @@ struct FluxKernel
 
         real64 const
         dWeight_dAper[2] =
-        { weight * dAperTerm_dAper[k[0]] / aperTerm[k[0]] - dSumOfWeights_dAper[k[0]] / sumOfWeights,
-          weight * dAperTerm_dAper[k[1]] / aperTerm[k[1]] - dSumOfWeights_dAper[k[1]] / sumOfWeights };
+        { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
+          ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
 
         // average density
         real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );

@@ -296,6 +296,7 @@ struct ImplicitKernel
           ParallelVector * const rhs )
   {
     constexpr int dim = 3;
+    constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
@@ -303,29 +304,28 @@ struct ImplicitKernel
     RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                   GEOSX_LAMBDA ( localIndex const k )
     {
-      Epetra_LongLongSerialDenseVector elementLocalDofIndex( dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseVector         R                   ( dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseMatrix         dRdU                ( dim * NUM_NODES_PER_ELEM,
-                                                             dim * NUM_NODES_PER_ELEM );
-      Epetra_SerialDenseVector         element_dof_np1     ( dim * NUM_NODES_PER_ELEM );
+      stackArray1d<globalIndex, ndof>       elementLocalDofIndex( ndof );
+      stackArray1d<real64, ndof>            R( ndof );
+      stackArray2d<real64, ndof*ndof>  dRdU( ndof,ndof );
+      stackArray1d<real64, ndof>       element_dof_np1( ndof );
 
-      Epetra_SerialDenseVector R_InertiaMassDamping(R);
-      Epetra_SerialDenseMatrix dRdU_InertiaMassDamping(dRdU);
-      Epetra_SerialDenseVector R_StiffnessDamping(R);
-      Epetra_SerialDenseMatrix dRdU_StiffnessDamping(dRdU);
+      stackArray1d<real64, ndof> R_InertiaMassDamping(ndof);
+      stackArray2d<real64, ndof*ndof> dRdU_InertiaMassDamping(ndof,ndof);
+      stackArray1d<real64, ndof> R_StiffnessDamping(ndof);
+      stackArray2d<real64, ndof*ndof> dRdU_StiffnessDamping(ndof,ndof);
 
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor uhat_local[NUM_NODES_PER_ELEM];
       R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
       R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
 
-      dRdU.Scale(0);
-      R.Scale(0);
+      dRdU = 0.0;
+      R = 0.0;
 
-      dRdU_InertiaMassDamping.Scale(0);
-      R_InertiaMassDamping.Scale(0);
-      dRdU_StiffnessDamping.Scale(0);
-      R_StiffnessDamping.Scale(0);
+      dRdU_InertiaMassDamping = 0.0;
+      R_InertiaMassDamping = 0.0;
+      dRdU_StiffnessDamping = 0.0;
+      R_StiffnessDamping = 0.0;
 
       real64 c[6][6];
       constitutive.GetStiffness( k, c );
@@ -367,7 +367,6 @@ struct ImplicitKernel
 
         R1Tensor dNdXa;
         R1Tensor dNdXb;
-
 
         for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
         {
@@ -414,7 +413,6 @@ struct ImplicitKernel
             }
           }
         }
-
 
 
           R1Tensor temp;
@@ -473,18 +471,19 @@ struct ImplicitKernel
 
         if( tiOption == timeIntegrationOption::ImplicitDynamic )
         {
-          dRdU_StiffnessDamping = dRdU;
-          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
-
-          dRdU += dRdU_InertiaMassDamping;
-          dRdU += dRdU_StiffnessDamping;
-          R    += R_InertiaMassDamping;
-          R    += R_StiffnessDamping;
+          GEOS_ERROR("NOT IMPLEMENTED");
+//          dRdU_StiffnessDamping = dRdU;
+//          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
+//
+//          dRdU += dRdU_InertiaMassDamping;
+//          dRdU += dRdU_StiffnessDamping;
+//          R    += R_InertiaMassDamping;
+//          R    += R_StiffnessDamping;
         }
 
         // TODO remove local epetra objects, remove use of unwrappedPointer()
-        matrix->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, dRdU);
-        rhs->unwrappedPointer()->SumIntoGlobalValues( elementLocalDofIndex, R);
+        matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
+        rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
       }
     });
 

@@ -108,6 +108,7 @@ public:
                                ParallelMatrix * const matrix,
                                ParallelVector * const rhs ) const override
   {
+    GEOSX_MARK_FUNCTION;
     using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
            ElementKernelLaunchSelector<ImplicitKernel>( NUM_NODES_PER_ELEM,

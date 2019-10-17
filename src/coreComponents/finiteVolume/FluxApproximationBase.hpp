@@ -102,6 +102,10 @@ public:
   template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
 
+
+  template<typename TYPE, typename ... TYPES, typename LAMBDA>
+  void forStencils(LAMBDA && lambda) const;
+
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
   void forBoundaryStencils(LAMBDA && lambda) const;
@@ -170,6 +174,16 @@ void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const
     lambda(wrapper->reference());
   });
 }
+
+template<typename TYPE, typename ... TYPES, typename LAMBDA>
+void FluxApproximationBase::forStencils(LAMBDA && lambda) const
+{
+  this->forWrappers<TYPE,TYPES...>([&] (auto const * const wrapper) -> void
+  {
+    lambda(wrapper->reference());
+  });
+}
+
 
 template<typename LAMBDA>
 void FluxApproximationBase::forBoundaryStencils(LAMBDA && lambda) const

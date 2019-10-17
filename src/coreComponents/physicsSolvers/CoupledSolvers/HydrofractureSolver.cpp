@@ -25,6 +25,8 @@
 #include "constitutive/contactRelations/ContactRelationBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
@@ -207,6 +209,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       if( globallyFractured == 0 )
       {
         break;
+      }
+      else
+      {
+        GEOS_LOG_RANK_0("  Fracture propagation...re-entring Newton Solve!");
       }
     }
 
@@ -435,6 +441,18 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                            m_flowSolver->getSystemRhs(),
                            m_flowSolver->getSystemSolution() );
 
+  std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
+  derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
+
+  derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( m_flowSolver->getSystemMatrix().localRows(),
+                                                                                                m_flowSolver->getSystemMatrix().localCols() );
+
+  derivativeFluxResidual_dAperture->reserveNonZeros( m_flowSolver->getSystemMatrix().localNonzeros() );
+  for( localIndex row=0 ; row<m_flowSolver->getSystemMatrix().localRows() ; ++row )
+  {
+    derivativeFluxResidual_dAperture->reserveNonZeros( row, m_flowSolver->getSystemMatrix().getRowLength( row ) );
+  }
+
 
   // TODO: once we move to a monolithic matrix, we can just use SolverBase implementation
 
@@ -505,9 +523,60 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                          values.data(),
                          1,
                          activeDisplacementDOF.size() );
-
     }
   });
+
+  NumericalMethodsManager const * numericalMethodManager =
+    domain->getParent()->GetGroup<NumericalMethodsManager>( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const * fvManager =
+    numericalMethodManager->GetGroup<FiniteVolumeManager>( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+
+
+  fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
+  {
+    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize(iconn);
+      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+      FaceElementSubRegion const * const
+      elementSubRegion = elemManager->GetRegion(seri[iconn][0])->GetSubRegion<FaceElementSubRegion>(sesri[iconn][0]);
+      array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView1d<globalIndex> const &
+      faceElementDofNumber = elementSubRegion->getReference< array1d<globalIndex> >( presDofKey );
+      for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
+      {
+        globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+        for( localIndex k1=0 ; k1<numFluxElems ; ++k1 )
+        {
+          localIndex const numNodesPerElement = elemsToNodes[k1].size();
+          array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
+          array1d<real64> values( 3*numNodesPerElement );
+          values = 1;
+
+          for( localIndex a=0 ; a<numNodesPerElement ; ++a )
+          {
+            for( int d=0 ; d<3 ; ++d )
+            {
+              activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k1][a]] + d;
+            }
+          }
+
+          m_matrix10.insert( &activeFlowDOF,
+                             activeDisplacementDOF.data(),
+                             values.data(),
+                             1,
+                             activeDisplacementDOF.size() );
+        }
+      }
+    });
+
+  });
+
 
   m_matrix01.close();
   m_matrix10.close();
@@ -574,40 +643,46 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if( this->m_verboseLevel == 2 )
   {
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix00");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_solidSolver->getSystemMatrix().print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
-
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix01");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_matrix01.print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
-
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("matrix00");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_solidSolver->getSystemMatrix().print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
+//
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("matrix01");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_matrix01.print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
+//
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix10");
     GEOS_LOG_RANK_0("***********************************************************");
     m_matrix10.print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
+//
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("matrix11");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_flowSolver->getSystemMatrix().print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix11");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_flowSolver->getSystemMatrix().print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("dResidual/dAperture");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_flowSolver->getDerivativeFluxResidual_dAperture()->print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual0");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_solidSolver->getSystemRhs().print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
-
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual1");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_flowSolver->getSystemRhs().print(std::cout);
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("residual0");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_solidSolver->getSystemRhs().print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
+//
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("residual1");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_flowSolver->getSystemRhs().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
   }
 
@@ -664,7 +739,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOS_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  GEOS_LOG_RANK_0("    residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
 
   return fluidResidual + solidResidual;
 }
@@ -797,6 +872,9 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
+//  CRSMatrixView<real64 const,localIndex const,localIndex const> const &
+//  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup<ContactRelationBase>( m_contactRelationName );
 
@@ -836,10 +914,14 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
       {
         globalIndex const elemDOF = presDofNumber[ei];
 
+//        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros(ei);
+//        arraySlice1d<localIndex const> const & columns = dFluxResidual_dAperture.getColumns( ei );
+//        arraySlice1d<real64 const> const & values = dFluxResidual_dAperture.getEntries( ei );
+
+
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(elemsToFaces[ei][0]);
 
-        real64 const dRdAper = dens[ei][0] * area[ei];
-
+        real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
 
         globalIndex nodeDOF[8*3];
 
@@ -849,6 +931,37 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
 
         stackArray1d<real64, 24> dRdU(2*numNodesPerFace*3);
 
+#if 0
+        for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+        {
+          real64 dRdAper = 0.0;
+          localIndex const ei2 = columns[kfe2];
+          if( ei==ei2 )
+          {
+            dRdAper += dAccumulationResidualdAperture;
+          }
+          dRdAper += values[kfe2];
+
+          for( localIndex kf=0 ; kf<2 ; ++kf )
+          {
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            {
+              for( int i=0 ; i<3 ; ++i )
+              {
+                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap(elemsToFaces[ei2][kf],a)] +i;
+                real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
+                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
+                dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+              }
+            }
+          }
+          matrix10->add( elemDOF,
+                         nodeDOF,
+                         dRdU.data(),
+                         2*numNodesPerFace*3 );
+
+        }
+#else
         for( localIndex kf=0 ; kf<2 ; ++kf )
         {
           for( localIndex a=0 ; a<numNodesPerFace ; ++a )
@@ -858,7 +971,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap(elemsToFaces[ei][kf],a)] +i;
               real64 const dGap_dU = - pow(-1,kf) * Nbar[i] / numNodesPerFace;
               real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
-              dRdU(kf*3*numNodesPerFace + 3*a+i) = dRdAper * dAper_dU;
+              dRdU(kf*3*numNodesPerFace + 3*a+i) = dAccumulationResidualdAperture * dAper_dU;
             }
           }
         }
@@ -866,10 +979,10 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
                        nodeDOF,
                        dRdU.data(),
                        2*numNodesPerFace*3 );
-
+#endif
       }
-    } );
-  } );
+    });
+  });
 
   matrix10->close();
 }
@@ -1150,7 +1263,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 
   using namespace Teuchos;
   using namespace Thyra;
-
+  GEOSX_MARK_BEGIN(Setup);
   Epetra_FECrsMatrix * p_matrix[2][2];
   Epetra_FEVector * p_rhs[2];
   Epetra_FEVector * p_solution[2];
@@ -1224,6 +1337,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   p_solution[0]->PutScalar(0.0);
   p_solution[1]->PutScalar(0.0);
 
+  GEOSX_MARK_END(Setup);
+
     // The standard AMG aggregation strategy based on
     // the system matrix A can struggle when using
     // grids with large element aspect ratios.  To fix
@@ -1287,6 +1402,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // where "false" implies the RCP does not own the object and
     // should not attempt to delete it when finished.
 
+  GEOSX_MARK_BEGIN(THYRA_SETUP);
 
   RCP<const Thyra::LinearOpBase<double> >  matrix_block[2][2];
   RCP<Thyra::MultiVectorBase<double> >     lhs_block[2];
@@ -1366,6 +1482,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     // we store both "sub operators" in a 1x2 array:
 
   RCP<const Thyra::LinearOpBase<double> > sub_op[2];
+  GEOSX_MARK_END(THYRA_SETUP);
 
     // each implicit "inverse" is based on an inner krylov solver,
     // with their own sub-preconditioners.  this leads to a very
@@ -1379,6 +1496,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     //   2.  build a solver factory
     //   3.  build the inner solver operator
 
+  GEOSX_MARK_BEGIN(PRECONDITIONER);
 
   for(unsigned i=0; i<2; ++i) // loop over diagonal blocks
   {
@@ -1506,6 +1624,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     //preconditioner = Thyra::multiply(Uinv,Dinv,Linv);
   }
 
+  GEOSX_MARK_END(PRECONDITIONER);
+
+
 
     // define solver strategy for blocked system. this is
     // similar but slightly different from the sub operator
@@ -1552,12 +1673,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     {
       Thyra::apply(*matrix, Thyra::NOTRANS,*lhs,Ax.ptr());
       Thyra::V_VmV<double>(r.ptr(),*rhs,*Ax);
-      params->m_KrylovResidualInit = Thyra::norm(*r);
     }
+      params->m_KrylovResidualInit = Thyra::norm(*r);
 
     // !!!! Actual Solve !!!!
-
+    GEOSX_MARK_BEGIN(SOLVER);
     Thyra::SolveStatus<double> status = solver->solve(Thyra::NOTRANS,*rhs,lhs.ptr());
+    GEOSX_MARK_END(SOLVER);
     params->m_numKrylovIter = status.extraParameters->get<int>("Iteration Count");
 
         // JAW: check "true" residual after
@@ -1570,6 +1692,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     }
 
     // write a solver profile file
+    if( params->m_verbose>=1 )
+    {
+      printf("    kryolv iter, r0, rf: %d %.3e %.3e\n", params->m_numKrylovIter, params->m_KrylovResidualInit, params->m_KrylovResidualFinal);
+    }
 
     if( params->m_verbose>=3 )
     {

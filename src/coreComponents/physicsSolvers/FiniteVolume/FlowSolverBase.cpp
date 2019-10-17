@@ -31,20 +31,24 @@ using namespace dataRepository;
 using namespace constitutive;
 
 FlowSolverBase::FlowSolverBase( std::string const & name,
-                                Group * const parent )
-  : SolverBase( name, parent ),
-    m_gravityFlag(1),
-    m_fluidName(),
-    m_solidName(),
-    m_fluidIndex(),
-    m_solidIndex(),
-    m_poroElasticFlag(0),
-    m_coupledWellsFlag(0),
-    m_numDofPerCell(0),
-    m_elemGhostRank(),
-    m_volume(),
-    m_gravDepth(),
-    m_porosityRef()
+                                Group * const parent ):
+  SolverBase( name, parent ),
+  m_gravityFlag(1),
+  m_fluidName(),
+  m_solidName(),
+  m_fluidIndex(),
+  m_solidIndex(),
+  m_poroElasticFlag(0),
+  m_coupledWellsFlag(0),
+  m_numDofPerCell(0),
+  m_derivativeFluxResidual_dAperture(),
+  m_elemGhostRank(),
+  m_volume(),
+  m_gravDepth(),
+  m_porosityRef(),
+  m_elementArea(),
+  m_elementAperture0(),
+  m_elementAperture()
 {
   registerWrapper( viewKeyStruct::gravityFlagString, &m_gravityFlag, false )->
     setApplyDefaultValue(1)->

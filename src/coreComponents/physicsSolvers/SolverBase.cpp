@@ -278,7 +278,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
     {
       if( m_verboseLevel >= 1 )
       {
-        GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", solution check failed" );
+        GEOS_LOG_RANK_0( "    Line search: " << lineSearchIteration << ", solution check failed" );
       }
       continue;
     }
@@ -296,7 +296,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( m_verboseLevel >= 1 )
     {
-      GEOS_LOG_RANK_0( "Line search: " << lineSearchIteration << ", R = " << residualNorm );
+      GEOS_LOG_RANK_0( "    Line search: " << lineSearchIteration << ", R, R0 = " << residualNorm<<", "<<lastResidual );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -369,7 +369,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       if( m_verboseLevel >= 1 )
       {
-        GEOS_LOG_RANK_0( "Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
+        GEOS_LOG_RANK_0( "  Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
       }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
@@ -404,7 +404,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       if( !CheckSystemSolution( domain, dofManager, solution, scaleFactor ) )
       {
         // TODO try chopping (similar to line search)
-        GEOS_LOG_RANK_0( "Solution check failed. Newton loop terminated." );
+        GEOS_LOG_RANK_0( "  Solution check failed. Newton loop terminated." );
         break;
       }
 

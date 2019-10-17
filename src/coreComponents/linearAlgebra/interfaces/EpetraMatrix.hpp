@@ -498,6 +498,9 @@ public:
   //! @name Accessors Methods
   //@{
 
+
+  localIndex getRowLength( localIndex localRow );
+
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.
    * Note that the input arrays will be resized internally to fit the number of entries.

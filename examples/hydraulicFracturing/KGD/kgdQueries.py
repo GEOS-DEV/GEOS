@@ -117,8 +117,8 @@ for state in range(TimeSliderGetNStates()):
     SetTimeSliderState(state)
     SetQueryFloatFormat("%g")
     time = Query("Time")[:-1].split(' ')[-1]
-    injectionPressure = ZonePick(coord=(0, 0.01, 0.5), vars=("AllElementsData/pressure"))['AllElementsData/pressure']
-    injectionAperture = ZonePick(coord=(0, 0.01, 0.5), vars=("AllElementsData/elementAperture"))['AllElementsData/elementAperture']
+    injectionPressure = ZonePick(coord=(0, 0.1, 0.5), vars=("AllElementsData/pressure"))['AllElementsData/pressure']
+    injectionAperture = ZonePick(coord=(0, 0.1, 0.5), vars=("AllElementsData/elementAperture"))['AllElementsData/elementAperture']
     fractureArea = Query("Variable Sum").split(' ')[-1]
     timehist.append([float(time), float(injectionPressure), float(injectionAperture), float(fractureArea)])
 

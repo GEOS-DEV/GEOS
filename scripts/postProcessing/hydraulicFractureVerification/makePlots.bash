@@ -1,0 +1,11 @@
+#!/bin/bash
+
+python plotPenny.py run01 0.0005 32000000000 0.02 547351
+python plotPenny.py run02 0.001 32000000000 0.04 744830
+python plotPenny.py run03 0.002 32000000000 0.08 1013558
+python plotPenny.py run04 0.0005 32000000000 0.02 1966000
+python plotPenny.py run05 0.001 32000000000 0.04 2676000
+python plotPenny.py run06 0.002 32000000000 0.08 3641000
+python plotPenny.py run07 0.0005 32000000000 0.02 4236000
+python plotPenny.py run08 0.001 32000000000 0.04 5765000
+python plotPenny.py run09 0.002 32000000000 0.08 7844000

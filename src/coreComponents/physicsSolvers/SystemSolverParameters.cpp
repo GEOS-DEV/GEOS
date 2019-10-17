@@ -67,7 +67,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setDescription("Maximum number of Krylov Iterations");
 
   registerWrapper(viewKeysStruct::kspaceString, &m_kspace, false )->
-    setApplyDefaultValue(0)->
+    setApplyDefaultValue(300)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 

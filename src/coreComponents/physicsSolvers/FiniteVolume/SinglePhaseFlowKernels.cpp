@@ -150,7 +150,8 @@ Launch<CellElementStencilTPFA>( CellElementStencilTPFA const & stencil,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 FluxKernel::ElementView < arrayView1d<real64 const> > const &,
                                 ParallelMatrix * const jacobian,
-                                ParallelVector * const residual )
+                                ParallelVector * const residual,
+                                CRSMatrixView<real64,localIndex,localIndex const > const & )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -229,7 +230,8 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture0,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
                             ParallelMatrix * const jacobian,
-                            ParallelVector * const residual )
+                            ParallelVector * const residual,
+                            CRSMatrixView<real64,localIndex,localIndex const > const &  )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -298,6 +300,13 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                          localFlux.data(),
                                          jacobian,
                                          residual );
+
+//    dR_dAper->add( eqnRowIndices.data(),
+//                   dofColIndices.data(),
+//                   dFlux_dAper.data(),
+//                   numFluxElems,
+//                   stencilSize );
+
   } );
 }
 
