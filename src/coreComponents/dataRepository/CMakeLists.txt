@@ -38,8 +38,11 @@ if( ENABLE_MPI )
 endif()
 
 
-
-set( dependencyList common )
+if( BUILD_OBJ_LIBS )
+  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+else()
+  set( dependencyList common )
+endif()
 
 if( CONDUIT_FOUND )
   set( dependencyList ${dependencyList} conduit )
@@ -49,7 +52,7 @@ blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

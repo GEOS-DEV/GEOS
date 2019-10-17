@@ -42,6 +42,12 @@ set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
+
+set( buildAsObj FALSE)
+if ( BUILD_OBJ_LIBS)
+  set(buildAsObj TRUE)
+endif()
+
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
@@ -72,18 +78,20 @@ if( GEOSX_USE_ATK )
 endif()
 
 
-blt_combine_static_libraries( NAME          geosx_core
-                              SOURCE_LIBS   ${coreLibs}
-                              LIB_TYPE SHARED
-                              LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                              LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                            )
-
-#blt_add_library ( NAME geosx_core
-#                  SOURCES dummy.cpp
-#                  DEPENDS_ON  ${coreLibs}
-#                  SHARED TRUE
-#                )
+if( BUILD_OBJ_LIBS )
+  blt_add_library ( NAME geosx_core
+                    SOURCES dummy.cpp
+                    DEPENDS_ON  ${coreLibs}
+                    SHARED TRUE
+                  )
+else()                  
+  blt_combine_static_libraries( NAME          geosx_core
+                                SOURCE_LIBS   ${coreLibs}
+                                LIB_TYPE SHARED
+                                LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
+                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
+                              )
+endif()
 
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
