@@ -384,7 +384,7 @@ void SinglePhaseFlow::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
-//  m_derivativeFluxResidual_dAperture->setEntries(0.0);
+  m_derivativeFluxResidual_dAperture->setEntries(0.0);
 
   if (m_poroElasticFlag)
   {
