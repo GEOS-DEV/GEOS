@@ -20,7 +20,7 @@
         maxIterNewton="50"
         newtonTol="1e-5"
         krylovTol="1.0e-4"
-        verbosityFlag="1"
+        verbosityFlag="0"
         maxLineSearchCuts="10"
         useMLPrecond="1"
         scalingOption="2"
@@ -101,7 +101,7 @@
   </Geometry>
 
 
-  <Events maxTime="5.0">
+  <Events maxTime="1.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -132,12 +132,12 @@
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" /-->
+      target="/Solvers/hydrofracture" />
 
     <PeriodicEvent name="outputs"
                    timeFrequency="2"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/siloOutput" /-->
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="1e99"
