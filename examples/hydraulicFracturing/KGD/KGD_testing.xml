@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="2"
+      verboseLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -79,11 +79,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-1, 1}"
-                  yCoords="{0, 2}"
+                  xCoords="{-10, 10}"
+                  yCoords="{0, 8}"
                   zCoords="{0, 1}"
-                  nx="{2}"
-                  ny="{2}"
+                  nx="{4}"
+                  ny="{8}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -91,7 +91,7 @@
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01,  -0.01, -0.01"
-         xMax=" 0.01,   5.01,  1.01"/>
+         xMax=" 0.01,   2.01,  1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  1.01, 1.01"/>
@@ -101,7 +101,7 @@
   </Geometry>
 
 
-  <Events maxTime="1.0">
+  <Events maxTime="2.0">
   
     <!-- SoloEvent 
       name="initialPlot"
@@ -123,8 +123,8 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="5.0"
-      forceDt="0.2"
+      endTime="10.0"
+      forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
     <!-- PeriodicEvent 

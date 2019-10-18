@@ -499,7 +499,8 @@ public:
   //@{
 
 
-  localIndex getRowLength( localIndex localRow );
+  localIndex getLocalRowLocalLength( localIndex localRow );
+  localIndex getLocalRowGlobalLength( localIndex localRow );
 
   /**
    * @brief Returns a copy of the data in row <tt>globalRow</tt>.

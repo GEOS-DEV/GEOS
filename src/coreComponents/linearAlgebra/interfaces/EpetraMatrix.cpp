@@ -407,21 +407,14 @@ void EpetraMatrix::leftRightScale( EpetraVector const & vecLeft,
 }
 
 
-localIndex EpetraMatrix::getRowLength( localIndex localRow )
+localIndex EpetraMatrix::getLocalRowLocalLength( localIndex localRow )
 {
-  GEOS_ERROR_IF( !m_assembled, "Attempting to call " << __FUNCTION__ << " before close() is illegal" );
-  GEOS_ASSERT( m_matrix->IndicesAreLocal() ); // internal consistency check
+  return m_matrix->NumMyEntries( localRow );
+}
 
-  int n_entries;
-  int * indices_ptr;
-  double * values_ptr;
-
-  int const err = m_matrix->ExtractMyRowView( localRow, n_entries, values_ptr, indices_ptr );
-  GEOS_ERROR_IF( err != 0,
-                 "Epetra_FECrsMatrix::ExtractMyRowView() failed. This often happens if the requested global row "
-                 "is not local to this processor, or if close() hasn't been called." );
-
-  return n_entries;
+localIndex EpetraMatrix::getLocalRowGlobalLength( localIndex localRow )
+{
+  return m_matrix->NumGlobalEntries( m_matrix->GRID64(localRow) );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

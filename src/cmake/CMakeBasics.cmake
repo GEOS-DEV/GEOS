@@ -55,8 +55,8 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################
     # Add define we can use when debug builds are enabled
     ######################################################
-    if (CMAKE_BUILD_TYPE MATCHES "Debug")
-        set(ENABLE_ARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE)
+    if (CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+        set(ENABLE_ARRAY_BOUNDS_CHECK ON CACHE BOOL "")
         add_definitions(-DAXOM_DEBUG)
     endif()
 endif()

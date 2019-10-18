@@ -252,6 +252,8 @@ bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
+
+  GEOS_LOG_RANK_0("    Dropping Into Line Search: Last Residual = "<<lastResidual );
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
 
   integer const maxNumberLineSearchCuts = solverParams->maxLineSearchCuts();
@@ -266,6 +268,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
   // scale factor is value applied to the previous solution. In this case we want to
   // subtract a portion of the previous solution.
   real64 localScaleFactor = -scaleFactor;
+  real64 cumulativeScale = scaleFactor;
 
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
@@ -273,6 +276,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // cut the scale factor by half. This means that the scale factors will
     // have values of -0.5, -0.25, -0.125, ...
     localScaleFactor *= lineSearchCutFactor;
+    cumulativeScale += localScaleFactor;
 
     if( !CheckSystemSolution( domain, dofManager, solution, localScaleFactor ) )
     {
@@ -296,7 +300,7 @@ bool SolverBase::LineSearch( real64 const & time_n,
 
     if( m_verboseLevel >= 1 )
     {
-      GEOS_LOG_RANK_0( "    Line search: " << lineSearchIteration << ", R, R0 = " << residualNorm<<", "<<lastResidual );
+      GEOS_LOG_RANK_0( "    Line search "<< lineSearchIteration<<" (scale="<<cumulativeScale<<") R = "<< residualNorm );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -357,6 +361,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // main Newton loop
     for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
     {
+      if( m_verboseLevel >= 1 )
+      {
+        GEOS_LOG_RANK_0( "  Attempt: " << dtAttempt << ", Newton Iteration: " << newtonIter);
+      }
 
       // call assemble to fill the matrix and the rhs
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
@@ -366,11 +374,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // get residual norm
       real64 residualNorm = CalculateResidualNorm( domain, dofManager, rhs );
-
-      if( m_verboseLevel >= 1 )
-      {
-        GEOS_LOG_RANK_0( "  Attempt: " << dtAttempt << ", Newton: " << newtonIter << ", R = " << residualNorm );
-      }
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
