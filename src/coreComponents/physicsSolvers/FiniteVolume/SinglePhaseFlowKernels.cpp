@@ -231,7 +231,7 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                             FluxKernel::ElementView < arrayView1d<real64 const> > const & aperture,
                             ParallelMatrix * const jacobian,
                             ParallelVector * const residual,
-                            CRSMatrixView<real64,localIndex,localIndex const > const &  )
+                            CRSMatrixView<real64,localIndex,localIndex const > const & dR_dAper )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -250,6 +250,9 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     // working arrays
     stackArray1d<globalIndex, maxNumFluxElems> eqnRowIndices(numFluxElems);
     stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
+
+    stackArray1d<localIndex, maxNumFluxElems> localRowIndices(numFluxElems);
+    stackArray1d<localIndex, maxNumFluxElems> localColIndices(numFluxElems);
 
     stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
     stackArray2d<real64, maxNumFluxElems*maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
@@ -285,11 +288,13 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
     for (localIndex i = 0; i < numFluxElems; ++i)
     {
       eqnRowIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+      localRowIndices[i] = sei(iconn,i);
     }
 
     for (localIndex i = 0; i < stencilSize; ++i)
     {
       dofColIndices[i] = dofNumber[seri(iconn,i)][sesri(iconn,i)][sei(iconn,i)];
+      localColIndices[i] = sei(iconn,i);
     }
 
     addLocalContributionsToGlobalSystem( numFluxElems,
@@ -301,11 +306,11 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                          jacobian,
                                          residual );
 
-//    dR_dAper->add( eqnRowIndices.data(),
-//                   dofColIndices.data(),
-//                   dFlux_dAper.data(),
-//                   numFluxElems,
-//                   stencilSize );
+    dR_dAper.add( localRowIndices.data(),
+                  localColIndices.data(),
+                  dFlux_dAper.data(),
+                  numFluxElems,
+                  stencilSize );
 
   } );
 }

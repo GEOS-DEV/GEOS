@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="1"
+      verboseLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -79,11 +79,11 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-400, -200, -100, 100, 200, 400}"
-                  yCoords="{0, 100, 200, 300}"
+                  xCoords="{-1, 1}"
+                  yCoords="{0, 2}"
                   zCoords="{0, 1}"
-                  nx="{6, 6, 30, 6, 6 }"
-                  ny="{20, 6, 6}"
+                  nx="{2}"
+                  ny="{2}"
                   nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
@@ -94,7 +94,7 @@
          xMax=" 0.01,   5.01,  1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  5.01, 1.01"/>
+         xMax=" 0.01,  1.01, 1.01"/>
     <Box name="core"
          xMin="-0.01, -0.01, -0.01"
          xMax=" 0.01,  100.01, 1.01"/>
@@ -132,12 +132,12 @@
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture" /-->
 
     <PeriodicEvent name="outputs"
                    timeFrequency="2"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" /-->
+                   target="/Outputs/siloOutput" />
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -172,7 +172,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.2e-3"
+                       defaultAperture="0.1e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -200,7 +200,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  0.01e-3, 0.2e-3}" 
+        values      = "{  0.01e-3, 0.1e-3}" 
         />
     </Contact>
   </Constitutive>
