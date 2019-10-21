@@ -181,13 +181,14 @@ Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_ARG( childKey )
 
 void ProblemManager::ProblemSetup()
 {
+  GEOSX_MARK_FUNCTION;
   PostProcessInputRecursive();
 
   GenerateMesh();
 
   ApplyNumericalMethods();
 
-  RegisterDataOnMeshRecursive( nullptr );
+  RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
 
   Initialize( this );
 
@@ -196,12 +197,6 @@ void ProblemManager::ProblemSetup()
   InitializePostInitialConditions( this );
 }
 
-
-void ProblemManager::RegisterDataOnMeshRecursive( Group * const )
-{
-  GEOSX_MARK_FUNCTION;
-  Group::RegisterDataOnMeshRecursive( GetGroup<DomainPartition>(groupKeys.domain)->getMeshBodies() );
-}
 
 void ProblemManager::ParseCommandLineInput( int argc, char** argv)
 {
@@ -789,7 +784,6 @@ void ProblemManager::GenerateMesh()
 
 void ProblemManager::ApplyNumericalMethods()
 {
-  GEOSX_MARK_FUNCTION;
   NumericalMethodsManager const * const
   numericalMethodManager = GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
 
@@ -894,6 +888,7 @@ void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_ARG( gr
 
 void ProblemManager::RunSimulation()
 {
+  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run(domain);
 }

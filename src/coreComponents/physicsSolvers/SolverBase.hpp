@@ -195,7 +195,8 @@ public:
               DofManager const & dofManager,
               ParallelMatrix & matrix,
               ParallelVector & rhs,
-              ParallelVector & solution,
+              ParallelVector const & solution,
+              real64 const scaleFactor,
               real64 & lastResidual );
 
   /**
@@ -379,6 +380,18 @@ public:
                        real64 const scalingFactor );
 
   /**
+   * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
+   * @param[in] domain The domain partition.
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] solution the solution vector
+   * @return The factor that should be used to scale the solution vector values when they are being applied.
+   */
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution );
+
+  /**
    * @brief Function to apply the solution vector to the state
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
@@ -445,7 +458,7 @@ public:
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeyStruct

@@ -47,7 +47,7 @@ public:
   virtual void SetupDirectoryStructure();
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< OutputBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   struct viewKeysStruct

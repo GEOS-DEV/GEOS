@@ -40,7 +40,6 @@ SingleFluidBase::SingleFluidBase( std::string const & name, Group * const parent
 
   registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure, false );
 
   registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
