@@ -16,8 +16,8 @@
  * @file SinglePhaseFlowKernels.hpp
  */
 
-#ifndef GEOSX_SINGLEPHASEFLOWKERNELS_HPP
-#define GEOSX_SINGLEPHASEFLOWKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -199,6 +199,8 @@ struct AccumulationKernel<FaceElementSubRegion>
 
     // Residual contribution is mass conservation in the cell
     localAccum = densNew * volNew - densOld * volume;
+
+//    std::cout<<"localAccum = "<<densNew<<" * "<<volNew<<" - "<< densOld <<" * "<< volume<<" = "<<localAccum<<std::endl;
 
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew ;
@@ -650,4 +652,4 @@ struct FluxKernel
 
 } // namespace geosx
 
-#endif //GEOSX_SINGLEPHASEFLOWKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOWKERNELS_HPP

@@ -16,8 +16,8 @@
  * @file FlowSolverBase.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -127,6 +127,11 @@ public:
   {
   } groupKeysFlowSolverBase;
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  virtual void ResetViews( DomainPartition * const domain );
+
 private:
 
   /**
@@ -135,16 +140,13 @@ private:
    */
   void PrecomputeData(DomainPartition *const domain);
 
+
 protected:
 
   virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void ResetViews( DomainPartition * const domain );
 
   /// flag to determine whether or not to apply gravity
   integer m_gravityFlag;
@@ -185,4 +187,4 @@ protected:
 
 }
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_FLOWSOLVERBASE_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

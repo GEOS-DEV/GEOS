@@ -13,8 +13,8 @@
  */
 
 
-#ifndef SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_EVENTMANAGER_HPP_
+#define GEOSX_MANAGERS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
@@ -82,7 +82,7 @@ public:
   } viewKeys;
 
   /// Catalog interface
-  using CatalogInterface = cxx_utilities::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
 private:
@@ -100,4 +100,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_EVENTMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_EVENTMANAGER_HPP_ */

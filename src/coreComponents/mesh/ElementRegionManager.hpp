@@ -16,8 +16,8 @@
  * @file ElementRegionManager.hpp
  */
 
-#ifndef ELEMENT_REGION_MANAGER_HPP
-#define ELEMENT_REGION_MANAGER_HPP
+#ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
+#define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 
 #include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -33,14 +33,6 @@ namespace geosx
 {
 
 class MeshManager;
-
-namespace dataRepository
-{
-namespace keys
-{
-string const elementRegionsGroup = "elementRegionsGroup";
-}
-}
 
 /**
  * Class to manage the data stored at the element level.
@@ -132,40 +124,40 @@ public:
 
   subGroupMap const & GetRegions() const
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups();
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetSubGroups();
   }
   subGroupMap & GetRegions()
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups();
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetSubGroups();
   }
 
   template< typename T=ElementRegionBase >
   T const * GetRegion( string const & regionName ) const
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(regionName);
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetGroup<T>(regionName);
   }
 
   template< typename T=ElementRegionBase >
   T * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(regionName);
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetGroup<T>(regionName);
   }
 
   template< typename T=ElementRegionBase >
   T const * GetRegion( localIndex const & index ) const
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(index);
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetGroup<T>(index);
   }
 
   template< typename T=ElementRegionBase >
   T * GetRegion( localIndex const & index )
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetGroup<T>(index);
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetGroup<T>(index);
   }
 
   localIndex numRegions() const
   {
-    return this->GetGroup(dataRepository::keys::elementRegionsGroup)->GetSubGroups().size();
+    return this->GetGroup(groupKeyStruct::elementRegionsGroup)->GetSubGroups().size();
   }
 
   localIndex numCellBlocks() const;
@@ -174,28 +166,28 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda )
   {
-    Group * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group const * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
     elementRegions->forSubGroups<REGIONTYPE, REGIONTYPES...>( std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
   {
-    Group * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
     elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
   template< typename LAMBDA >
   void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
   {
-    Group const * const elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group const * const elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
     elementRegions->forSubGroups<ElementRegionBase>( targetRegions, std::forward<LAMBDA>(lambda) );
   }
 
@@ -274,7 +266,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    Group * elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group * elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
@@ -286,7 +278,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    Group const * elementRegions = this->GetGroup(dataRepository::keys::elementRegionsGroup);
+    Group const * elementRegions = this->GetGroup(groupKeyStruct::elementRegionsGroup);
 
     for( auto & region : elementRegions->GetSubGroups() )
     {
@@ -500,6 +492,10 @@ public:
                         bool const overwriteMap );
 
 
+  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
+  {
+    static constexpr auto elementRegionsGroup = "elementRegionsGroup";
+  } m_ElementRegionManagerKeys;
 
 
 private:
@@ -761,4 +757,4 @@ ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::Constitut
 }
 
 }
-#endif /* ELEMENT_REGION_MANAGER_HPP */
+#endif /* GEOSX_MESH_ELEMENTREGIONMANAGER_HPP */
