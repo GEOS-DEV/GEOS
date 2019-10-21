@@ -3,9 +3,34 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="string">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
@@ -13,7 +38,7 @@
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real64_array2d">
+	<xsd:simpleType name="r1_array2d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
@@ -23,7 +48,22 @@
 			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array2d">
+	<xsd:simpleType name="localIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
@@ -33,12 +73,17 @@
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real32">
+	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
@@ -53,44 +98,9 @@
 			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="real64_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real64_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[0-9]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="R2SymTensor">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="r2_array">
@@ -98,19 +108,14 @@
 			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?; )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="R2Tensor">
+	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array3d">
+	<xsd:simpleType name="real64_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+			<xsd:pattern value="(([+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? )*)?[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
@@ -118,14 +123,24 @@
 			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="integer_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2SymTensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="real64">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="string">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R1Tensor">
@@ -133,29 +148,9 @@
 			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?,? [+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="mapPair">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\*]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="[+-]?[0-9]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="mapPair_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="(([a-zA-Z0-9_,\(\)+-/\*]*,? )*)?[a-zA-Z0-9_,\(\)+-/\*]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="(([+-]?[0-9]*,? )*)?[+-]?[0-9]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -163,9 +158,14 @@
 			<xsd:pattern value="[+-]?[0-9]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="r1_array2d">
+	<xsd:simpleType name="real32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-zA-Z0-9_,\(\)+-/\* \n]*" />
+			<xsd:pattern value="[+-]?[0-9]*\.?([0-9]*)?[eE]?[-+]?([0-9]*)?" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[+-]?[0-9]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -716,7 +716,7 @@
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => (no description available)-->
-		<xsd:attribute name="plotFileRoot" type="string" default="" />
+		<xsd:attribute name="plotFileRoot" type="string" default="plot" />
 		<!--plotLevel => (no description available)-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
@@ -847,6 +847,8 @@
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
+		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
+		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -961,6 +963,8 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
@@ -999,6 +1003,8 @@
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--massDamping => Value of mass based damping coefficient. -->
@@ -1434,6 +1440,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="FaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--defaultAperture => The default aperture of for new faceElements.-->
+		<xsd:attribute name="defaultAperture" type="real64" use="required" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
