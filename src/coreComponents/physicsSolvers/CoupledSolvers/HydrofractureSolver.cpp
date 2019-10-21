@@ -643,9 +643,39 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                 m_flowSolver->getSystemMatrix(),
                                 m_flowSolver->getSystemRhs() );
 
+  if( this->m_verboseLevel == 2 )
+  {
+  GEOS_LOG_RANK_0("***********************************************************");
+  GEOS_LOG_RANK_0("residual0");
+  GEOS_LOG_RANK_0("***********************************************************");
+  m_solidSolver->getSystemRhs().print(std::cout);
+  MPI_Barrier(MPI_COMM_GEOSX);
+
+  GEOS_LOG_RANK_0("***********************************************************");
+  GEOS_LOG_RANK_0("residual1");
+  GEOS_LOG_RANK_0("***********************************************************");
+  m_flowSolver->getSystemRhs().print(std::cout);
+  MPI_Barrier(MPI_COMM_GEOSX);
+  }
+
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
 
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10, &(m_flowSolver->getSystemRhs()) );
+
+  if( this->m_verboseLevel == 2 )
+  {
+  GEOS_LOG_RANK_0("***********************************************************");
+  GEOS_LOG_RANK_0("residual0 - Post Coupling");
+  GEOS_LOG_RANK_0("***********************************************************");
+  m_solidSolver->getSystemRhs().print(std::cout);
+  MPI_Barrier(MPI_COMM_GEOSX);
+
+  GEOS_LOG_RANK_0("***********************************************************");
+  GEOS_LOG_RANK_0("residual1 - Post Coupling");
+  GEOS_LOG_RANK_0("***********************************************************");
+  m_flowSolver->getSystemRhs().print(std::cout);
+  MPI_Barrier(MPI_COMM_GEOSX);
+  }
 
 }
 
@@ -689,11 +719,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //    m_matrix01.print(std::cout);
 //    MPI_Barrier(MPI_COMM_GEOSX);
 //
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix10");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_matrix10.print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("matrix10");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_matrix10.print(std::cout);
+//    MPI_Barrier(MPI_COMM_GEOSX);
 //
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    GEOS_LOG_RANK_0("matrix11");
@@ -707,16 +737,16 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //    m_flowSolver->getDerivativeFluxResidual_dAperture()->print(std::cout);
 //    MPI_Barrier(MPI_COMM_GEOSX);
 
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("residual0");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    m_solidSolver->getSystemRhs().print(std::cout);
-//    MPI_Barrier(MPI_COMM_GEOSX);
-//
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("residual1");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    m_flowSolver->getSystemRhs().print(std::cout);
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("residual0 - BC");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_solidSolver->getSystemRhs().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("residual1 - BC");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_flowSolver->getSystemRhs().print(std::cout);
     MPI_Barrier(MPI_COMM_GEOSX);
   }
 
@@ -1755,7 +1785,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
-  if( this->m_verboseLevel == 2 )
+  if( this->m_verboseLevel == 20 )
   {
 
     GEOS_LOG_RANK_0("***********************************************************");

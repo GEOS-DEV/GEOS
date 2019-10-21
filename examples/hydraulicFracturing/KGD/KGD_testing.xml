@@ -21,7 +21,7 @@
         newtonTol="1e-5"
         krylovTol="1.0e-4"
         verbosityFlag="0"
-        maxLineSearchCuts="10"
+        maxLineSearchCuts="20"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -52,6 +52,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
+      inputFluxEstimate="1.0"
       >
       <SystemSolverParameters 
         name="SystemSolverParameters"
@@ -113,10 +114,10 @@
       target="/Solvers/SurfaceGen"
       />
 
-    <!-- SoloEvent 
+    <SoloEvent 
       name="preFracturePlot"
       target="/Outputs/siloOutput"
-      /-->
+      />
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
@@ -132,12 +133,12 @@
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture" /-->
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="2"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
-                   target="/Outputs/siloOutput" /-->
+                   target="/Outputs/siloOutput" />
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="1e99"

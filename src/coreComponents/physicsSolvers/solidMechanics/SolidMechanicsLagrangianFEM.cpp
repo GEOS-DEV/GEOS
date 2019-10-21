@@ -1242,9 +1242,29 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
+  arrayView1d<R1Tensor> const & disp = nodeManager->getReference<array1d<R1Tensor> >(keys::TotalDisplacement);
+  if( m_verboseLevel >= 1 )
+  {
+    std::cout<<"Displacement - presolution"<<std::endl;
+    for( localIndex a=0 ; a<disp.size() ; ++a )
+    {
+      std::cout<<a<<", "<<disp[a]<<std::endl;
+    }
+  }
+
   string fieldName = keys::TotalDisplacement;
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::IncrementalDisplacement );
   dofManager.addVectorToField( solution, fieldName, -scalingFactor, nodeManager, keys::TotalDisplacement );
+
+  if( m_verboseLevel >= 1 )
+  {
+    std::cout<<"Displacement - postsolution"<<std::endl;
+    for( localIndex a=0 ; a<disp.size() ; ++a )
+    {
+      std::cout<<a<<", "<<disp[a]<<std::endl;
+    }
+  }
+
 
   std::map<string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::IncrementalDisplacement );

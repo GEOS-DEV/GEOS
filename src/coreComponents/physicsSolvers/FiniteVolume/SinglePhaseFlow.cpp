@@ -1039,7 +1039,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   // compute the norm of local residual scaled by cell pore volume
-  real64 localResidualNorm = 0.0;
+  real64 localResidualNorm[2] = { 0.0, 0.0 };
   applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
                                  ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase const * const subRegion )
@@ -1049,9 +1049,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64 const> const & dVol           = m_deltaVolume[er][esr];
-//    arrayView1d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex].dimReduce();
-    arrayView2d<real64 const> const & dens           = m_density[er][esr][m_fluidIndex];
+    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex a = 0; a < subRegionSize; ++a )
@@ -1059,17 +1057,22 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
       if (elemGhostRank[a] < 0)
       {
         localIndex const lid = rhs.getLocalRowID( dofNumber[a] );
-        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
-        localResidualNorm += val * val;
+        real64 const val = localResidual[lid];
+        localResidualNorm[0] += val * val;
+        localResidualNorm[1] += refPoro[a] * densOld[a] * volume[a];
       }
     }
   });
 
   // compute global residual norm
-  real64 globalResidualNorm;
-  MpiWrapper::allReduce(&localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX);
+  real64 globalResidualNorm[2] = {0,0};
+  MpiWrapper::allReduce( localResidualNorm,
+                         globalResidualNorm,
+                         2,
+                         MPI_SUM,
+                         MPI_COMM_GEOSX);
 
-  return sqrt(globalResidualNorm);
+  return sqrt(globalResidualNorm[0]) / ( globalResidualNorm[1] + m_fluxEstimate );
 }
 
 void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
@@ -1079,16 +1082,39 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
 {
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  applyToSubRegions( mesh, [&] ( localIndex const GEOSX_UNUSED_ARG( er ),
-                                 localIndex const GEOSX_UNUSED_ARG( esr ),
+
+  applyToSubRegions( mesh, [&] ( localIndex const er,
+                                 localIndex const esr,
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
                                  ElementSubRegionBase * const subRegion )
   {
+    arrayView1d<real64 const> const & pressure = m_pressure[er][esr] ;
+    arrayView1d<real64 const> const & dp = m_deltaPressure[er][esr] ;
+    if( m_verboseLevel >= 1 )
+    {
+      std::cout<<"Pressure - Presolution"<<std::endl;
+      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
+      {
+        std::cout<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+      }
+    }
+
     dofManager.addVectorToField( solution,
                                  viewKeyStruct::pressureString,
                                  scalingFactor,
                                  subRegion,
                                  viewKeyStruct::deltaPressureString );
+
+    if( m_verboseLevel >= 1 )
+    {
+      std::cout<<"Pressure - Postsolution"<<std::endl;
+      for( localIndex a=0 ; a<pressure.size(0) ; ++a )
+      {
+        std::cout<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+      }
+    }
+
+
   } );
 
   std::map<string, string_array> fieldNames;

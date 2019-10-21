@@ -104,6 +104,8 @@ public:
 
     static constexpr auto aperture0String  = "aperture_n";
 
+    static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
+
     using ViewKey = dataRepository::ViewKey;
 
     // input data
@@ -189,6 +191,8 @@ protected:
   localIndex m_numDofPerCell;
 
   std::unique_ptr< CRSMatrix<real64,localIndex,localIndex> > m_derivativeFluxResidual_dAperture;
+
+  real64 m_fluxEstimate;
 
 
   

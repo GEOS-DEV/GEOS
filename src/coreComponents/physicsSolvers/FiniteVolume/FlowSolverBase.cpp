@@ -42,6 +42,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   m_coupledWellsFlag(0),
   m_numDofPerCell(0),
   m_derivativeFluxResidual_dAperture(),
+  m_fluxEstimate(),
   m_elemGhostRank(),
   m_volume(),
   m_gravDepth(),
@@ -70,6 +71,12 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
   this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
   
+
+  this->registerWrapper( viewKeyStruct::inputFluxEstimateString,  &m_fluxEstimate,  false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Initial estimate of the input flux used only for residual scaling. This should be "
+                   "essentially equivalent to the input flux * dt.");
+
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
