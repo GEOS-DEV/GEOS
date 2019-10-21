@@ -17,8 +17,8 @@
  */
 
 
-#ifndef MESH_NODEMANAGER_HPP_
-#define MESH_NODEMANAGER_HPP_
+#ifndef GEOSX_MESH_NODEMANAGER_HPP_
+#define GEOSX_MESH_NODEMANAGER_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
 #include <string.h>

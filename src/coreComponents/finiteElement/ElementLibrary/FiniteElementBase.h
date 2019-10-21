@@ -20,7 +20,7 @@
 #define FINITEELEMENTBASE_H_
 
 #include "common/DataTypes.hpp"
-#include "ObjectCatalog.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ public:
   virtual ~FiniteElementBase();
 
   static string CatalogName() { return "FiniteElementBase"; }
-  using CatalogInterface = cxx_utilities::CatalogInterface< FiniteElementBase, BasisBase const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FiniteElementBase, BasisBase const &,
                                                                                QuadratureBase const &,
                                                                                const int >;
   static CatalogInterface::CatalogType& GetCatalog()

@@ -566,7 +566,7 @@ In our case, the first lines are:
 
 .. code-block:: sh
 
-  (base) USEP-MAC062:pamela_test j0529096$ ../../../../../../build-default-release/bin/geosx -i 3D_10x10x10_compressible_pamela_tetra_gravity.xml
+  (base) USEP-MAC062:pamela_test j0529096$ ../../../../../../build-environment-release/bin/geosx -i 3D_10x10x10_compressible_pamela_tetra_gravity.xml
   GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeTetra
