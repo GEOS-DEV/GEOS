@@ -193,7 +193,7 @@ public:
     static constexpr auto deltaVolumeString = "deltaVolume";
 
     // these are used to store last converged time step values
-    static constexpr auto densityString   = "density";
+    static constexpr auto densityString   = "oldDensity";
     static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
     static constexpr auto slipVelocityString   = "slipVelocity";
     

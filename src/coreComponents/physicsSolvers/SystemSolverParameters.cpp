@@ -147,6 +147,16 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Allow non-converged solution to be accepted");
 
+  registerWrapper( viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Line search option");
+
+  registerWrapper( viewKeysStruct::minNumNewtonIterationsString, &m_minNumNewtonIterations, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Min number of Newton iterations");    
+
   registerWrapper( viewKeysStruct::maxSubStepsString, &m_maxSubSteps, false )->
     setApplyDefaultValue(10)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -164,11 +174,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
-  registerWrapper(viewKeysStruct::doLineSearchString, &m_doLineSearch, false )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("line search option");  
-  
+
 }
 
 

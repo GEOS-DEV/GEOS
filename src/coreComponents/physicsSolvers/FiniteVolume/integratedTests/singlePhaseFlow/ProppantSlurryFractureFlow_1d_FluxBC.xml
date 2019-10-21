@@ -19,7 +19,9 @@
       <SystemSolverParameters name="SystemSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-5"
-                              maxIterNewton="40"/>
+                              maxIterNewton="40" 
+                              doLineSearch="0"
+                              minNumberOfNewtonIterations="1"/>
     </ProppantTransport>
     
     <SurfaceGenerator name="SurfaceGen"
@@ -66,16 +68,19 @@
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
+
+<!--
     <PeriodicEvent name="outputs"
                    cycleFrequency="100"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
+-->
 
-    <!--PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"
-                   endTime="-1" /-->
+                   target="/Outputs/sidreRestart"/>
+
   </Events>
 
   <NumericalMethods>
@@ -92,6 +97,7 @@
                    materialList="{water, rock, sand}"/>
                    
     <FaceElementRegion name="Fracture"
+                       defaultAperture="5.0e-3"                       
                        materialList="{water, rock, sand}"/>
                    
   </ElementRegions>
@@ -201,7 +207,7 @@
 
   <Outputs>
       <Silo name="siloOutput"/>
-      <!--Restart name="sidreRestart"/-->
+      <Restart name="sidreRestart"/>
   </Outputs>
 
 

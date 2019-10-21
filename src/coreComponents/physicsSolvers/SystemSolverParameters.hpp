@@ -63,9 +63,9 @@ public:
     static constexpr auto maxLineSearchCutsString   = "maxLineSearchCuts";
     static constexpr auto lineSearchCutFactorString = "lineSearchCutFactor";
     static constexpr auto allowNonConvergedString   = "allowNonConverged";
+    static constexpr auto doLineSearchString   = "doLineSearch";    
     static constexpr auto maxSubStepsString         = "maxSubSteps";
-
-    static constexpr auto doLineSearchString   = "doLineSearch";
+    static constexpr auto minNumNewtonIterationsString   = "minNumberOfNewtonIterations";    
     
   } viewKeys;
 
@@ -97,9 +97,11 @@ public:
   integer maxLineSearchCuts() const           { return m_maxLineSearchCuts; }
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
+  integer doLineSearch() const           { return m_doLineSearch; }  
   integer maxSubSteps() const                 { return m_maxSubSteps; }
 
-  integer doLineSearch() const           { return m_doLineSearch; }    
+  integer minNumNewtonIterations() const           { return m_minNumNewtonIterations; }  
+  
 
   integer m_verbose;
   string  m_solverType;
@@ -125,11 +127,12 @@ public:
   integer m_maxLineSearchCuts;
   real64  m_lineSearchCutFactor;
   integer m_allowNonConverged;
+  integer m_doLineSearch;
+  integer m_minNumNewtonIterations;    
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
 
-  integer m_doLineSearch;
-  
+
 };
 
 } /* namespace geosx */

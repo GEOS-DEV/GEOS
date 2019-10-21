@@ -18,6 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {
@@ -166,6 +167,46 @@ void SolverBase::SetLinearSolverParameters()
       m_linearSolverParameters.dd.overlap = 1;
     }
   }
+}
+
+void SolverBase::SetSourceFluxSetSize(real64 const time,
+				      real64 const dt,
+				      DomainPartition * const domain)
+{
+
+  FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
+
+  array1d<integer> fluxBCElementNumberLocal;
+
+  fsManager->Apply( time + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const GEOSX_UNUSED_ARG(fs),
+                    string const &,
+                    set<localIndex> const & lset,
+		    Group * subRegion,
+                    string const & ) -> void
+  {
+
+    integer_array& is_ghost = subRegion->getReference<integer_array>( ObjectManagerBase::viewKeyStruct::ghostRankString);    
+
+    integer aa = 0;
+
+    for( auto a : lset )
+      {
+	if(is_ghost[a] < 0)    
+	  aa++;
+      }
+
+    fluxBCElementNumberLocal.push_back(aa);
+    
+  });
+
+
+  integer fluxBCNum = integer_conversion<int>(fluxBCElementNumberLocal.size());
+
+  m_sourceFluxSetSize.resize(fluxBCNum);
+
+  MPI_Allreduce( fluxBCElementNumberLocal.data(), m_sourceFluxSetSize.data(), fluxBCNum, MPI_INT, MPI_SUM, MPI_COMM_GEOSX );
+
 }
 
 real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_ARG( time_n ),
@@ -336,8 +377,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   bool const allowNonConverged = solverParams->allowNonConverged() > 0;
 
-  bool const doLineSearch = solverParams->doLineSearch() > 0; 
-  
+  bool const doLineSearch = solverParams->doLineSearch() > 0;
+
+  integer const minNumberNewtonIterations = solverParams->minNumNewtonIterations();  
+
   // a flag to denote whether we have converged
   integer isConverged = 0;
 
@@ -376,7 +419,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
-      if( residualNorm < newtonTol && newtonIter > 0)
+
+      if ( residualNorm < newtonTol && newtonIter >= minNumberNewtonIterations)        
       {
         isConverged = 1;
         break;
@@ -384,7 +428,6 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
 
       // do line search in case residual has increased
-
       if( residualNorm > lastResidual && doLineSearch)
       {
 
@@ -398,7 +441,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           break;
         }
       }
-
+    
       // call the default linear solver on the system
       SolveSystem( dofManager, matrix, rhs, solution );
 
