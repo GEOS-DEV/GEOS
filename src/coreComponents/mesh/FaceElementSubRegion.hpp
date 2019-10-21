@@ -16,8 +16,8 @@
  * @file FaceElementSubRegion.hpp
  */
 
-#ifndef FACECELLSUBREGION_HPP_
-#define FACECELLSUBREGION_HPP_
+#ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
+#define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
@@ -92,7 +92,6 @@ public:
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
     static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
     static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -166,7 +165,6 @@ public:
 
   set< localIndex > m_newFaceElements;
 
-
 private:
   template<bool DOPACK>
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
@@ -188,9 +186,8 @@ private:
   array1d< real64 > m_elementArea;
 
 
-
 };
 
 } /* namespace geosx */
 
-#endif /* FACECELLSUBREGION_HPP_ */
+#endif /* GEOSX_MESH_FACEELEMENTSUBREGION_HPP_ */

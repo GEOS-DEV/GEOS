@@ -16,8 +16,8 @@
  * @file PartitionBase.hpp
  */
 
-#ifndef PARTITIONBASE_H_
-#define PARTITIONBASE_H_
+#ifndef GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
+#define GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -166,4 +166,4 @@ private:
 
 }
 
-#endif /* PARTITIONBASE_H_ */
+#endif /* GEOSX_MPICOMMUNICATIONS_PARTITIONBASE_HPP_ */

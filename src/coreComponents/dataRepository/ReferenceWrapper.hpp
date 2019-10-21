@@ -16,9 +16,8 @@
  * @file ReferenceWrapper.hpp
  * This file contains the class definition of ReferenceWrapper.
  */
-
-#ifndef SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
+#ifndef GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
+#define GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
 
 #include "SFINAE_Macros.hpp"
 #include <type_traits>
@@ -256,4 +255,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_DATAREPOSITORY_REFERENCEWRAPPER_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_ */

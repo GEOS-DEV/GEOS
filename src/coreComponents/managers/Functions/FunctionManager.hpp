@@ -16,8 +16,8 @@
  * @file FunctionManager.hpp
  */
 
-#ifndef FUNCTIONMANAGER_HPP_
-#define FUNCTIONMANAGER_HPP_
+#ifndef GEOSX_MANAGERS_FUNCTIONS_FUNCTIONMANAGER_HPP_
+#define GEOSX_MANAGERS_FUNCTIONS_FUNCTIONMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "FunctionBase.hpp"
@@ -60,4 +60,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* FUNCTIONMANAGER_HPP_ */
+#endif /* GEOSX_MANAGERS_FUNCTIONS_FUNCTIONMANAGER_HPP_ */

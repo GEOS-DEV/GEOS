@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
-#define CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
+#define GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
@@ -410,5 +410,5 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_WELLS_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_ */
 

@@ -16,8 +16,8 @@
  * @file SinglePhaseFlow.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
-#define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_
 
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
@@ -249,16 +249,17 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseFlow; }
 
+  /**
+   * @brief Setup stored views into domain data for the current step
+   */
+  void ResetViews( DomainPartition * const domain ) override;
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void ResetViews( DomainPartition * const domain ) override;
 
   /**
    * @brief Function to perform the application of Dirichlet BCs on faces
@@ -332,4 +333,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_SINGLEPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_SINGLEPHASEFLOW_HPP_

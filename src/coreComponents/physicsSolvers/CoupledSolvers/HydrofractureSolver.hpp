@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef HydrofractureSolver_HPP_
-#define HydrofractureSolver_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -93,6 +93,11 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const * const domain,
+                            DofManager const & dofManager,
+                            ParallelVector const & solution ) override;
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
@@ -148,6 +153,7 @@ public:
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
+    static constexpr auto maxNumResolvesString = "maxNumResolves";
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -171,8 +177,10 @@ private:
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
 
+  integer m_maxNumResolves;
+
 };
 
 } /* namespace geosx */
 
-#endif /* HydrofractureSolver_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_HYDROFRACTURESOLVER_HPP_ */

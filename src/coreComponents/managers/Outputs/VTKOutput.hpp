@@ -16,8 +16,8 @@
  * @file VTKOutput.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_VTKOUTPUT_HPP_
-#define SRC_COMPONENTS_CORE_SRC_VTKOUTPUT_HPP_
+#ifndef GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
+#define GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
 #include "fileIO/vtk/VTKFile.hpp"
@@ -85,4 +85,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_VTKOUTPUT_HPP_ */
+#endif /* GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_ */
