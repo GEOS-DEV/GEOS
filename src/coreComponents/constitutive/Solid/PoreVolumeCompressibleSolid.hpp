@@ -16,8 +16,8 @@
  * @file PoreVolumeCompressibleSolid.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
-#define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 
@@ -25,14 +25,6 @@
 
 namespace geosx
 {
-namespace dataRepository
-{
-namespace keys
-{
-string const poreVolumeCompressibleSolid = "PoreVolumeCompressibleSolid";
-}
-}
-
 namespace constitutive
 {
 
@@ -52,7 +44,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  static std::string CatalogName() { return dataRepository::keys::poreVolumeCompressibleSolid; }
+  static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
@@ -95,4 +87,4 @@ inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const &
 } /* namespace geosx */
 
 
-#endif //SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#endif //GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_

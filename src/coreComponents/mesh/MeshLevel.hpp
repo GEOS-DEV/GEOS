@@ -16,8 +16,8 @@
  * @file MeshLevel.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
-#define SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_
+#ifndef GEOSX_MESH_MESHLEVEL_HPP_
+#define GEOSX_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
 #include "EdgeManager.hpp"
@@ -92,4 +92,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_MANAGERS_MESHLEVEL_HPP_ */
+#endif /* GEOSX_MESH_MESHLEVEL_HPP_ */

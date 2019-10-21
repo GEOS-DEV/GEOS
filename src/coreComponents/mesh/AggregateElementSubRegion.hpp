@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef AGGREGATECELLSUBREGION_HPP_
-#define AGGREGATECELLSUBREGION_HPP_
+#ifndef GEOSX_MESH_AGGREGATEELEMENTSUBREGION_HPP_
+#define GEOSX_MESH_AGGREGATEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"

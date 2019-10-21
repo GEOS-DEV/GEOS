@@ -16,8 +16,8 @@
  * @file SchemaUtilities.hpp
  */
 
-#ifndef SCHEMAUTILITIES_HPP_
-#define SCHEMAUTILITIES_HPP_
+#ifndef GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
+#define GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
 
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
@@ -94,4 +94,4 @@ SetDefaultValueString( dataRepository::DefaultValue<T> const & defVal, xmlWrappe
 
 }
 
-#endif /* SCHEMAUTILITIES_HPP_ */
+#endif /* GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */

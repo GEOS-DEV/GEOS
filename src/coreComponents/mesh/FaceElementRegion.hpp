@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
-#define CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_
+#ifndef GEOSX_MESH_FACEELEMENTREGION_HPP_
+#define GEOSX_MESH_FACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 
@@ -76,16 +76,25 @@ public:
                                 localIndex const faceIndices[2] );
 
 
+  real64 getDefaultAperture() const { return m_defaultAperture; }
+
+
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto fractureSetString = "fractureSet";
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
+
+protected:
+  virtual void InitializePreSubGroups( Group * const ) override;
 
 
 private:
+  /// The
+  real64 m_defaultAperture;
 
 };
 
 } /* namespace geosx */
 
-#endif /* CORECOMPONENTS_MESH_FACEELEMENTREGION_HPP_ */
+#endif /* GEOSX_MESH_FACEELEMENTREGION_HPP_ */
