@@ -6,7 +6,7 @@ env:
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
   - DOCKER_DATE=2019-09-22
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=184
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=186
 matrix:
   include:
   - os: osx
@@ -83,7 +83,6 @@ before_script:
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew install openmpi;
-      ln -s /usr/local/Cellar/open-mpi/4.0.1_2 /usr/local/Cellar/open-mpi/4.0.1_1;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
