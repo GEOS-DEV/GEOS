@@ -49,7 +49,7 @@ public:
   /**
    * alias to define the catalog type for this base type
    */
-  using CatalogInterface = cxx_utilities::CatalogInterface< FieldSpecificationBase,
+  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                             string const &,
                                                             dataRepository::Group * const >;
 
@@ -563,7 +563,12 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   real64_array rhsContribution( targetSet.size() );
 
   // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  int mytargetSetNumber = targetSet.size();
+  int totalTargetSetNumber;
+
+  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+
+  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
   if( functionName.empty() )
   {

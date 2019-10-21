@@ -91,6 +91,7 @@
     <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{granite}" />
 
     <FaceElementRegion name="Fracture"
+                       defaultAperture="1.0e-4"
                        materialList="{granite}"/>
   </ElementRegions>
 
