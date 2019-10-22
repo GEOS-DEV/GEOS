@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 
 namespace geosx
 {
