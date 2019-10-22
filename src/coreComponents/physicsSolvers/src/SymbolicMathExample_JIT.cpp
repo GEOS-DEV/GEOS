@@ -24,7 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "mesh/NodeManager.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include <numeric>
 
@@ -153,7 +153,7 @@ real64 SymbolicMathExample_JIT::SolverStep( real64 const& time_n,
   view_rtype_const<r1_array> X = targetObject->getData<r1_array>(keys::referencePositionString);
 
   // Evaluate symbolic math
-  NewFunctionManager * functionManager = NewFunctionManager::Instance();
+  FunctionManager * functionManager = FunctionManager::Instance();
   FunctionBase * function = functionManager->GetGroup<FunctionBase>(getData<std::string>(keys::FunctionName));
 
   // Test automatic evaluation for the entire mesh
