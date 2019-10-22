@@ -29,7 +29,7 @@
 
 #include "ObjectManagerBase.hpp"
 #include "EventManager.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 
 namespace geosx
@@ -170,7 +170,7 @@ private:
 
   PhysicsSolverManager * m_physicsSolverManager;
   EventManager * m_eventManager;
-  NewFunctionManager * m_functionManager;
+  FunctionManager * m_functionManager;
 };
 
 } /* namespace geosx */
