@@ -46,6 +46,10 @@ Linear (or more) algebra solvers
 - `superlu_dist <https://portal.nersc.gov/project/sparse/superlu/>`_
 - `trilinos <https://trilinos.github.io/>`_
 
+Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
+If you do not have access to internet, you shall modify the `./configure` step of petsc in the `CMakeLists.txt` file,
+and change the `--download-ptscotch` option accordingly. 
+
 A graph partitioning tool
 
 - `parmetis <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_
@@ -74,6 +78,9 @@ On Debian flavored distribution, consider installing (apt-get install) the
     zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
 
 packages.
+
+Note also that `pt-scotch` relies on `bison` and `flex`.
+The developper should provide these tools too.
 
 Third party libraries build management pattern
 ==============================================
@@ -111,9 +118,27 @@ If you want to directly write the `cmake` command line, we advise you to dig int
 Continuous Integration process
 ==============================
 
-TODO
+To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
+
+Everytime a pull is requested in the TPL repository, a docker image is generated and deployed on `dockerhub <https://hub.docker.com/r/geosx/compiler>`_.
+The date (YYYY-MM-DD) is appended to the tag name so the client code (i.e. GEOSX) can select the version it needs
+(the `DOCKER_DATE` env variable is defined in the `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_).
+
+For the OSX builds, be do not use docker (can we?) this is why we build a tarball of the compiled TPL and save them in the cloud.
+The client (GEOSX again) will select the version it needs by defining the `TPL_OSX_TRAVIS_BUILD_NUMBER` environment variable in the `.travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ file.
+
+It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
+Therefore, a client building against a PR which is not closed may experience a 404 error sooner or later.
+
+It must be noted that there are now two different ways to designate the same version of the TPL.
+An effort should be done to make this homogemneous.
 
 Troubleshooting
 ===============
 
-TODO
+An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
+
+Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ to install open-mpi in particular.
+It is not straightforward for the client to install exactly the same versions through Homebrew and client builds may fail.
+The most common solution is to rebuild the precompiled tarball against an actuated of the brew elements.
+But there is no anticipation here...
