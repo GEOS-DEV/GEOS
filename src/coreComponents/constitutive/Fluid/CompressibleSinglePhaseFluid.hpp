@@ -56,7 +56,7 @@ public:
 
   virtual void PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q ) override;
 
-  virtual void PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q ) override;
+  virtual void PointInverseUpdate( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility) override;
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) override;
 
@@ -72,21 +72,6 @@ public:
                         real64 & dViscosity_dPressure ) const override;
 
   // *** Compute kernels
-
-  /**
-   * @brief Compute kernel for the partial constitutive update (single property)
-   * @tparam EAT exponential approximation type
-   * @param[in]  pressure
-   * @param[out] property
-   * @param[out] dProperty_dPressure
-   * @param[in]  propertyRelation property exponential relation
-   */
-  template<ExponentApproximationType EAT>
-  inline static void Compute( real64 const & pressure,
-                              real64 & property,
-                              real64 & dProperty_dPressure,
-                              ExponentialRelation<real64, EAT> const & propertyRelation );
-
   /**
    * @brief Compute kernel for the full constitutive update
    * @tparam DENS_EAT density exponential approximation type
@@ -120,6 +105,20 @@ public:
                               real64 & pressure,
                               ExponentialRelation<real64, EAT> const & propertyRelation );
 
+  /**
+   * @brief Compute kernel for the partial constitutive update (single property)
+   * @tparam EAT exponential approximation type
+   * @param[in]  pressure
+   * @param[out] property
+   * @param[out] dProperty_dPressure
+   * @param[in]  propertyRelation property exponential relation
+   */
+  template<ExponentApproximationType EAT>
+  inline static void Compute( real64 const & pressure,
+                              real64 & property,
+                              real64 & dProperty_dPressure,
+                              ExponentialRelation<real64, EAT> const & propertyRelation );
+
   // *** Data repository keys
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
@@ -141,6 +140,15 @@ public:
     dataRepository::ViewKey viscosityModel     = { viscosityModelString     };
 
   } viewKeysCompressibleSinglePhaseFluid;
+
+  real64 &       compressibility()       { return m_compressibility; }
+  real64 const & compressibility() const { return m_compressibility; }
+
+  real64 &       referencePressure()       { return m_referencePressure; }
+  real64 const & referencePressure() const { return m_referencePressure; }
+
+  real64 &       referenceDensity()       { return m_referenceDensity; }
+  real64 const & referenceDensity() const { return m_referenceDensity; }
 
 protected:
   virtual void PostProcessInput() override;

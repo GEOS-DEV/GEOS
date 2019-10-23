@@ -41,6 +41,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_poroElasticFlag(0),
     m_coupledWellsFlag(0),
     m_numDofPerCell(0),
+	m_relaxationCoefficient(1),
     m_timeIntegrationOptionString(),
     m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
     m_elemGhostRank(),
@@ -72,6 +73,10 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Time integration method. Options are: \n SteadyState \n ImplicitTransient \n ExplicitTransient \n InertialTransient");
 
+  this->registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient,  false )->
+	setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Relaxation Coefficient for fracture pressure update in explicit flow solver");
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )

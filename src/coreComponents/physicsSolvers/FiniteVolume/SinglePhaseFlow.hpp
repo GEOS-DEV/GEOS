@@ -22,6 +22,7 @@
 #include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
 #include "constitutive/Fluid/CompressibleSinglePhaseFluid.hpp"
+#include "constitutive/Solid/solidSelector.hpp"
 
 namespace geosx
 {
@@ -333,6 +334,7 @@ private:
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_densityOld;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalCompressibility;
 
   /// views into material fields
 

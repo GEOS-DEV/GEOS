@@ -29,6 +29,7 @@ namespace constitutive
 
 LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
+  m_compressibility(),
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_bulkModulus(),
@@ -62,6 +63,16 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
   registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
     setApplyDefaultValue(-1)->
     setDescription("Elastic Shear Modulus");
+
+  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
+    setApplyDefaultValue(-1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Rock Compressibilty");
+
+  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("ReferencePressure");
 }
 
 
@@ -81,7 +92,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   SolidBase::DeliverClone( name, parent, clone );
   LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast<LinearElasticIsotropic *>(clone.get());
 
-
+  newConstitutiveRelation->m_compressibility      = m_compressibility;
   newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
@@ -180,6 +191,14 @@ void LinearElasticIsotropic::PostProcessInput()
       GEOS_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified.");
     }
   }
+
+  m_compressibility = 1 / m_defaultBulkModulus;
+  if (m_compressibility <= 0)
+  {
+    string const message = "Must specify 2 elastic constants!";
+    GEOS_ERROR( message );
+  }
+
   m_postProcessed = true;
 }
 

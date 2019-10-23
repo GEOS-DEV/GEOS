@@ -29,7 +29,7 @@ namespace constitutive
 
 
 PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent )
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
     setInputFlag(InputFlags::REQUIRED)->
@@ -50,22 +50,24 @@ void
 PoreVolumeCompressibleSolid::DeliverClone( string const & name,
                                            Group * const parent,
                                            std::unique_ptr<ConstitutiveBase> & clone ) const
-{
-  std::unique_ptr<PoreVolumeCompressibleSolid> newConstitutiveRelation =
-    std::make_unique<PoreVolumeCompressibleSolid>( name, parent );
+ {
+   if( !clone )
+   {
+     clone = std::make_unique<PoreVolumeCompressibleSolid>( name, parent );
+   }
+  SolidBase::DeliverClone( name, parent, clone );
+  PoreVolumeCompressibleSolid * const newConstitutiveRelation = dynamic_cast<PoreVolumeCompressibleSolid *>(clone.get());
 
   newConstitutiveRelation->m_compressibility   = this->m_compressibility;
   newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
 
   newConstitutiveRelation->m_poreVolumeRelation  = this->m_poreVolumeRelation;
-
-  clone = std::move( newConstitutiveRelation );
 }
 
 void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 
@@ -83,6 +85,14 @@ void PoreVolumeCompressibleSolid::PostProcessInput()
   }
   m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 
+}
+
+void PoreVolumeCompressibleSolid::StateUpdatePoint( localIndex const GEOSX_UNUSED_ARG( k ),
+                                                   localIndex const GEOSX_UNUSED_ARG( q ),
+                                                   R2SymTensor const & GEOSX_UNUSED_ARG( D ),
+                                                   R2Tensor const & GEOSX_UNUSED_ARG( Rot ),
+                                                   integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
+{
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoreVolumeCompressibleSolid, std::string const &, Group * const )

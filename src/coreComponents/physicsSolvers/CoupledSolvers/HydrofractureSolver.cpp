@@ -599,6 +599,8 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
 
   m_flowSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
 
+  ApplyContactAndPressureToFacesForExplicitSolver( domain );
+
   m_solidSolver->ExplicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
 
   this->UpdateDeformationForCoupling(domain);
@@ -903,7 +905,71 @@ CalculateResidualNorm( DomainPartition const * const domain,
   return fluidResidual + solidResidual;
 }
 
+void
+HydrofractureSolver::
+ApplyContactAndPressureToFacesForExplicitSolver( DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  NodeManager * const nodeManager = mesh->getNodeManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+  arrayView1d<R1Tensor> const & acc = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
+
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+    if( subRegion->hasView("pressure") )
+    {
+      arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+      arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+      arrayView1d<real64> const & area = subRegion->getElementArea();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+
+      forall_in_range<serialPolicy>( 0,
+                                   subRegion->size(),
+                                   GEOSX_LAMBDA ( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
+
+          localIndex const kf0 = elemsToFaces[kfe][0];
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
+
+          real64 const Ja = area[kfe] / numNodesPerFace;
+
+//          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
+          real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
+          R1Tensor nodalForce(Nbar);
+          nodalForce *= nodalForceMag;
+
+          for( localIndex kf=0 ; kf<2 ; ++kf )
+          {
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            {
+              for( int i=0 ; i<3 ; ++i )
+              {
+                acc[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
+              }
+            }
+
+          }
+        }
+      });
+    }
+  });
+
+}
 
 void
 HydrofractureSolver::

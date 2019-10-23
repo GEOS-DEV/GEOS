@@ -32,8 +32,6 @@ namespace constitutive
 template< typename BASE >
 PoroElastic<BASE>::PoroElastic( string const & name, Group * const parent ):
   BASE( name, parent ),
-  m_compressibility(),
-  m_referencePressure(),
   m_biotCoefficient(),
   m_poreVolumeMultiplier(),
   m_dPVMult_dPressure(),
@@ -43,17 +41,6 @@ PoroElastic<BASE>::PoroElastic( string const & name, Group * const parent ):
     setApplyDefaultValue(0)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Biot's coefficient");
-
-  this->registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, 0 )->
-    setApplyDefaultValue(-1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Fluid Compressibilty");
-
-  this->registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, 0 )->
-    setApplyDefaultValue(0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("ReferencePressure");
-
 
   this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, 0 )->
     setApplyDefaultValue(-1)->
@@ -72,14 +59,16 @@ PoroElastic<BASE>::~PoroElastic()
 template< typename BASE >
 void PoroElastic<BASE>::PostProcessInput()
 {
-  //    m_compressibility = 1 / K;
+	BASE::PostProcessInput();
 
-  if (m_compressibility <= 0)
-  {
+//   m_compressibility = 1 / m_defaultBulkModulus;
+//
+//  if (m_compressibility <= 0)
+//  {
 //    string const message = std::to_string( numConstantsSpecified ) + " Elastic Constants Specified. Must specify 2 constants!";
 //    GEOS_ERROR( message );
-  }
-  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
+//  }
+//  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
 
 }
 
@@ -95,8 +84,6 @@ void PoroElastic<BASE>::DeliverClone( string const & name,
   BASE::DeliverClone( name, parent, clone );
   PoroElastic<BASE> * const newConstitutiveRelation = dynamic_cast<PoroElastic<BASE> *>(clone.get());
 
-  newConstitutiveRelation->m_compressibility      = m_compressibility;
-  newConstitutiveRelation->m_referencePressure    = m_referencePressure;
   newConstitutiveRelation->m_biotCoefficient      = m_biotCoefficient;
   newConstitutiveRelation->m_poreVolumeMultiplier = m_poreVolumeMultiplier;
   newConstitutiveRelation->m_dPVMult_dPressure    = m_dPVMult_dPressure;

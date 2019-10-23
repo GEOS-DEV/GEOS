@@ -226,10 +226,6 @@ struct ExplicitKernel
                                                       u, vel,
                                                       u_local, v_local );
 
-//  std::cout << "\n eleID = " << k+1;
-//  for( localIndex i = 0 ; i<NUM_NODES_PER_ELEM ; ++i)
-//    std::cout << " : \n    " << u_local[i] <<"        " << v_local[i] ;
-
       //Compute Quadrature
       for( localIndex q = 0 ; q<NUM_QUADRATURE_POINTS ; ++q)
       {

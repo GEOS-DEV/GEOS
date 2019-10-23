@@ -129,6 +129,8 @@ public:
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
+  void ApplyContactAndPressureToFacesForExplicitSolver( DomainPartition * const domain );
+
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                                    ParallelMatrix * const matrix01,
                                                    ParallelVector * const rhs0 );

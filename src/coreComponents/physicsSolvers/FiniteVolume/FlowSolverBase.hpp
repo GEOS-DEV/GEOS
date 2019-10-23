@@ -139,8 +139,11 @@ public:
 
     static constexpr auto densityOldString = "densityOld";
 
+    static constexpr auto totalCompressibilityString = "totalCompressibility";
+
     static constexpr auto aperture0String  = "aperture_n";
 
+    static constexpr auto relaxationCoefficientString = "relaxationCoefficient";
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maximumApertureString      = "maximumAperture";
 
@@ -160,6 +163,7 @@ public:
     ViewKey solidName      = { solidNameString };
     ViewKey fluidIndex     = { fluidIndexString };
     ViewKey solidIndex     = { solidIndexString };
+    ViewKey relaxationCoefficient = { relaxationCoefficientString };
     ViewKey timeIntegrationOption = { timeIntegrationOptionString };
     ViewKey maximumAperture = { maximumApertureString };
 
@@ -213,6 +217,9 @@ protected:
   
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
+
+  /// the relaxation Coefficient for fracture pressure update
+  real64 m_relaxationCoefficient;
 
   /// option for time integration
   string m_timeIntegrationOptionString;

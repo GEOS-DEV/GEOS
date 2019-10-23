@@ -67,7 +67,7 @@ public:
    */
   virtual void PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q ) = 0;
 
-  virtual void PointUpdateViscosity( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
+  virtual void PointInverseUpdate( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility) = 0;
   /**
    * @brief Perform a batch constitutive update (all points).
    * @param[in] pressure array containing target pressure values

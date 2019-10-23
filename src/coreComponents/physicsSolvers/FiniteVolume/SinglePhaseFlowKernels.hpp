@@ -365,10 +365,11 @@ struct FluxKernel
           ElementView < arrayView1d<real64 const> > const & pres,
           ElementView < arrayView1d<real64 const> > const & gravDepth,
           MaterialView< arrayView2d<real64 const> > const & dens,
-          MaterialView< arrayView2d<real64 const> > const & dDens_dPres,
           ElementView < arrayView1d<real64 const> > const & mob,
           ElementView < arrayView1d<real64 const> > const & aperture0,
           ElementView < arrayView1d<real64 const> > const & aperture,
+          ElementView < arrayView1d<real64 const> > const & poro,
+          ElementView < arrayView1d<real64 const> > const & totalCompressibility,
           ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> * const mass,
           real64 * const maxStableDt);
 
@@ -587,8 +588,9 @@ struct FluxKernel
            ElementView <arrayView1d<real64 const>> const & pres,
            ElementView <arrayView1d<real64 const>> const & gravDepth,
            MaterialView<arrayView2d<real64 const>> const & dens,
-           MaterialView<arrayView2d<real64 const>> const & dDens_dPres,
            ElementView <arrayView1d<real64 const>> const & mob,
+           ElementView <arrayView1d<real64 const>> const & poro,
+           ElementView <arrayView1d<real64 const>> const & totalCompressibility,
            localIndex const fluidIndex,
            integer const gravityFlag,
            real64 const dt,
@@ -640,17 +642,19 @@ struct FluxKernel
     localIndex esr_up = sesri[k_up];
     localIndex ei_up  = sei[k_up];
 
+    real64 viscosity = 1 / mob[er_up][esr_up][ei_up] * dens[er_up][esr_up][fluidIndex][ei_up][0];
+
     // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
-    *maxStableDt = std::min(dDens_dPres[er_up][esr_up][fluidIndex][ei_up][0] / mob[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+    *maxStableDt = std::min( totalCompressibility[er_up][esr_up][ei_up] * viscosity * poro[er_up][esr_up][ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+
+//    std::cout<< "In matrix: dens = " << dens[er_up][esr_up][fluidIndex][ei_up][0]  << ", poro= " << poro[er_up][esr_up][ei_up]
+//			<< ", totalCompressibility= " << totalCompressibility[er_up][esr_up][ei_up] << ", viscosity= " << viscosity << "\n";
 
     // populate local flux
     (*mass)[seri[0]][sesri[0]][sei[0]] -= dt * mob[er_up][esr_up][ei_up] * potDif;
     (*mass)[seri[1]][sesri[1]][sei[1]] += dt * mob[er_up][esr_up][ei_up] * potDif;
 
- //   std::cout<< "\n potDif 1 = " << potDif << "\n dMass = " << dt * mob[er_up][esr_up][ei_up] * potDif ;
-//    << ", poro= " << poro[ei] << ", mass[ei] = " << mass[ei]
-//             << ", vol[ei] = " << vol[ei]
-//             << ", dens[ei][0] = " << dens[ei][0]  << ", pres= " << pres[ei] << ", dPres= " << dPres[ei] << "\n";
+    std::cout<< "\n Matrix mass transfer between " << sei[0] << " and " << sei[1] << " = " << dt * mob[er_up][esr_up][ei_up] * potDif ;
 
   }
 
@@ -671,8 +675,10 @@ struct FluxKernel
            arrayView1d<real64 const> const & pres,
            arrayView1d<real64 const> const & gravDepth,
            arrayView2d<real64 const> const & dens,
-           arrayView2d<real64 const> const & dDens_dPres,
+           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( dDens_dPres ),
            arrayView1d<real64 const> const & mob,
+           arrayView1d<real64 const> const & poro,
+           arrayView1d<real64 const> const & totalCompressibility,
            localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
            integer const gravityFlag,
            real64 const dt,
@@ -718,13 +724,15 @@ struct FluxKernel
 
     localIndex ei_up  = stencilElementIndices[k_up];
 
-    *maxStableDt = std::min( dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
+    real64 viscosity = 1 / mob[ei_up] * dens[ei_up][0];
+
+    // TODO the density terms in dDens_dPres and mob cancel out only for ExponentApproximationType::Full relationship. Need to consider other ExponentApproximationTypes.
+    *maxStableDt = std::min( totalCompressibility[ei_up] * viscosity * poro[ei_up] / 2.0 * weightedSum * weightedSum, *maxStableDt);
 
     // populate local flux
     (*mass)[stencilElementIndices[0]] -= dt * mob[ei_up] * potDif;
     (*mass)[stencilElementIndices[1]] += dt * mob[ei_up] * potDif;
 
-  //  std::cout<< "\n potDif 2  = " << potDif ;
   }
 
   /**
@@ -845,10 +853,10 @@ struct FluxKernel
                    arrayView1d<real64 const> const & pres,
                    arrayView1d<real64 const> const & gravDepth,
                    arrayView2d<real64 const> const & dens,
-                   arrayView2d<real64 const> const & dDens_dPres,
                    arrayView1d<real64 const> const & mob,
                    arrayView1d<real64 const> const & aperture0,
                    arrayView1d<real64 const> const & aperture,
+				   arrayView1d<real64 const> const & totalCompressibility,
                    localIndex const GEOSX_UNUSED_ARG( fluidIndex ),
                    integer const GEOSX_UNUSED_ARG( gravityFlag ),
                    real64 const dt,
@@ -895,14 +903,25 @@ struct FluxKernel
         (*mass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
         (*mass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;
 
-        real64 weightedSum = ( stencilWeightedElementCenterToConnectorCenter[k[0]] * aperture[stencilElementIndices[k[0]]] + stencilWeightedElementCenterToConnectorCenter[k[1]] * aperture[stencilElementIndices[k[1]]])
-                            * ( 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]] ) / weight ;
+        std::cout<< "\n Fracture mass transfer between " << stencilElementIndices[k[0]] << " and " << stencilElementIndices[k[1]]
+				 << " = " << mob[ei_up] * weight * potDif * dt ;
 
-//        std::cout << "\n dens=" << dens[ei[0]][0] << ", mob[ei_up]=" << mob[ei_up];
-//        std::cout << "\n aperture=" << aperture[stencilElementIndices[k[0]]] << ",  stencilWeights[k[0]]=" <<  stencilWeights[k[0]] << ", weight=" << weight;
+        real64 const maxApertureForCriticalTime = 1e-2;
 
-        *maxStableDt = std::min(dDens_dPres[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
+        real64 const edgeLength = 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]];
 
+        real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxApertureForCriticalTime)
+                                            + stencilWeightedElementCenterToConnectorCenter[k[1]] * std::min(aperture[stencilElementIndices[k[1]]], maxApertureForCriticalTime);
+
+        real64 weightedSum = edgeLength * areaAlongFlowDirection * sumOfWeights /
+                            ( stencilWeights[k[0]] * std::min(aperTerm[k[0]], pow(maxApertureForCriticalTime, 3)) *
+                              stencilWeights[k[1]] * std::min(aperTerm[k[1]], pow(maxApertureForCriticalTime, 3)) );
+
+        std::cout << "\n Fracture flux: dens=" << dens[ei[0]][0] << ", mob[ei_up]=" << mob[ei_up] << ", total compressibility=" << totalCompressibility[ei_up]
+			      << ", viscosity =" << dens[ei_up][0] / mob[ei_up] ;
+        std::cout << "\n aperture =" << aperture[stencilElementIndices[k[0]]] << ",  stencilWeights[k[0]]=" <<  stencilWeights[k[0]] << ", weight=" << weight;
+
+        *maxStableDt = std::min(totalCompressibility[ei_up] * dens[ei_up][0] / mob[ei_up] / 2.0 * weightedSum, *maxStableDt);
    //     std::cout<< "\n potDif in ComputeJunction = " << potDif ;
       }
     }

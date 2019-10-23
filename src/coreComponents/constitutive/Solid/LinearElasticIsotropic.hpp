@@ -72,6 +72,9 @@ public:
 
     static constexpr auto bulkModulusString  = "BulkModulus";
     static constexpr auto shearModulusString = "ShearModulus";
+
+    static constexpr auto compressibilityString =  "compressibility" ;
+    static constexpr auto referencePressureString =  "referencePressure" ;
   };
 
   void setDefaultBulkModulus (real64 const bulkModulus) {m_defaultBulkModulus = bulkModulus;}
@@ -82,6 +85,9 @@ public:
 
   arrayView1d<real64> const &       shearModulus()       { return m_shearModulus; }
   arrayView1d<real64 const> const & shearModulus() const { return m_shearModulus; }
+
+  real64 &       compressibility()       { return m_compressibility; }
+  real64 const & compressibility() const { return m_compressibility; }
 
   class KernelWrapper
   {
@@ -136,6 +142,11 @@ protected:
   virtual void PostProcessInput() override;
 
 private:
+  /// reference pressure parameter
+  real64 m_referencePressure;
+
+  /// scalar compressibility parameter
+  real64 m_compressibility;
 
   real64 m_defaultBulkModulus;
   real64 m_defaultShearModulus;
