@@ -3,6 +3,7 @@ import argparse
 from pygeos import xml_processor
 
 
+# Entry point for the pygeos console script
 def main():
   # Parse the user arguments
   parser = argparse.ArgumentParser()

@@ -3,6 +3,7 @@ from lxml import etree as ElementTree
 import os
 
 
+# Format the xml files to enable comparison
 def pretty_print_xml(init, final):
   parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
   tree = ElementTree.parse(init, parser)
@@ -10,6 +11,8 @@ def pretty_print_xml(init, final):
   os.remove(init)
 
 
+# Build example input/output xml files, which can be used to test the parser
+# These are derived from a GEOSX integrated test xml
 def generate_test_xml_files(root_dir):
   # Build segments of an xml file that can be compiled to form a test
   # File header/footer
@@ -371,14 +374,6 @@ def generate_test_xml_files(root_dir):
     f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
   pretty_print_xml('%s/included_target.tmp' % (root_dir), '%s/included_target.xml' % (root_dir))
 
-
-
-xml_includes = """
-<Included>
-    <File name="./included/include_a.xml"/>
-    <File name="./included/include_b.xml"/>
-    <File name="./included/include_c.xml"/>
-</Included>"""
 
 
 
