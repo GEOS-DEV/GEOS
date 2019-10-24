@@ -5,13 +5,15 @@ import os
 from pygeos import regex_tools, unit_manager
 
 
-# Create an instance of the regex managers
+# Create an instance of the unit, parameter regex handlers
 unitManager = unit_manager.UnitManager()
 parameterHandler = regex_tools.DictRegexHandler()
 
 
+# Merge nodes in an included file into the current
+# structure level by level
 def merge_xml_nodes(existingNode, targetNode, level):
-  # Copy attributes
+  # Copy attributes on the current level
   for tk in targetNode.attrib.keys():
     existingNode.set(tk, targetNode.get(tk))
 
@@ -22,6 +24,8 @@ def merge_xml_nodes(existingNode, targetNode, level):
   for target in targetNode.getchildren():
     insertCurrentLevel = True
 
+    # Check to see if a node with the appropriate type
+    #  exists at this level 
     if (currentTag != target.tag):
       currentTag = target.tag
       matchingSubNodes = existingNode.findall(target.tag)
@@ -29,20 +33,25 @@ def merge_xml_nodes(existingNode, targetNode, level):
     if (matchingSubNodes):
       targetName = target.get('name')
 
+      # Special case for the root Problem node (which may be unnamed)
       if (level == 0):
         insertCurrentLevel = False
         merge_xml_nodes(matchingSubNodes[0], target, level + 1)
 
+      # Handle named xml nodes
       elif (targetName and (currentTag not in ['Nodeset'])):
         for match in matchingSubNodes:
           if (match.get('name') == targetName):
             insertCurrentLevel = False
             merge_xml_nodes(match, target, level + 1)
 
+    # Insert any unnamed nodes or named nodes that aren't present
+    # in the current xml structure
     if (insertCurrentLevel):
       existingNode.insert(-1, target)
 
 
+# Recursively merge included files into the current structure
 def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
   # Expand the input path
   pwd = os.getcwd()
@@ -79,6 +88,8 @@ def merge_included_xml_files(root, fname, includeCount, maxInclude=100):
   os.chdir(pwd)
 
 
+# Apply regexes that handle parameters, units, and symbolic math to
+# each xml attribute in the structure
 def apply_regex_to_node(node):
   for k in node.attrib.keys():
     value = node.get(k)
@@ -115,6 +126,7 @@ def apply_regex_to_node(node):
     apply_regex_to_node(subNode)
 
 
+# If the target name is not specified, generate a random name for the compiled xml
 def generate_random_name(prefix='', suffix='.xml'):
   from hashlib import md5
   from time import time
@@ -124,8 +136,8 @@ def generate_random_name(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
+# Process an xml file
 def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True, keep_includes=True):
-
   if verbose:
     print('\nReading input xml parameters and parsing symbolic math...')
 
@@ -145,6 +157,7 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
     raise Exception('\nCheck input file!')
 
   # Add the included files to the xml structure
+  # Note: doing this first assumes that parameters aren't used in Included block
   includeCount = 0
   for includeNode in root.findall('Included'):
     for f in includeNode.findall('File'):
@@ -158,7 +171,7 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
       Pmap[p.get('name')] = p.get('value')
   parameterHandler.target = Pmap
 
-  # Process the xml
+  # Process any parameters, units, and symbolic math in the xml
   apply_regex_to_node(root)
 
   # Comment out or remove the Parameter, Included nodes
@@ -193,6 +206,7 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
   return outputFile
 
 
+# Validate an xml file, and parse the warnings
 def validate_xml(fname, schema, verbose):
   if verbose:
     print('Validating the xml against the schema...')
