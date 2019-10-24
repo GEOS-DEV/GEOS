@@ -994,9 +994,10 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       {
         std::type_info const & typeID = wrapper->get_typeid();
 
-        if( typeID == typeid( array2d<real64> )
-         || typeID == typeid( array3d<real64> )
-         || typeID == typeid( array4d<real64> ) )
+        if( typeID == typeid( array2d<real64> ) ||
+            typeID == typeid( array2d<R2SymTensor> ) ||
+            typeID == typeid( array3d<real64> ) ||
+            typeID == typeid( array4d<real64> ) )
         {
           fieldNames.insert( std::make_pair( wrapper->getName(), wrapper ) );
         }
@@ -1010,6 +1011,15 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
     {
       ElementRegionManager::MaterialViewAccessor<arrayView2d<real64> > const field =
         elementManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( fieldName.first,
+                                                                                                  constitutiveManager);
+
+      WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
+                                     DB_ZONECENT, cycleNumber, problemTime, rootDirectory, string_array());
+    }
+    if (fieldName.second->get_typeid() == typeid( array2d<R2SymTensor>))
+    {
+      ElementRegionManager::MaterialViewAccessor<arrayView2d<R2SymTensor> > const field =
+        elementManager->ConstructFullMaterialViewAccessor<array2d<R2SymTensor>, arrayView2d<R2SymTensor> >( fieldName.first,
                                                                                                   constitutiveManager);
 
       WriteMaterialDataField<real64>( meshName, fieldName.first, field, elementManager, constitutiveManager,
@@ -1048,9 +1058,19 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
       MakeSubDirectory(matName, matDir);
       DBSetDir(m_dbBaseFilePtr, matDir.c_str());
 
+      std::pair<string, WrapperBase const *> const * devStress = nullptr;
+      std::pair<string, WrapperBase const *> const * meanStress = nullptr;
       ConstitutiveBase const * const constitutiveModel = constitutiveManager->GetConstitutiveRelation(matIndex);
-      for (auto fieldName : fieldNames)
+      for (auto const & fieldName : fieldNames)
       {
+        if( fieldName.first == "DeviatorStress" )
+        {
+          devStress = &fieldName;
+        }
+        else if( fieldName.first == "MeanStress" )
+        {
+          meanStress = &fieldName;
+        }
         if (constitutiveModel->hasView(fieldName.first))
         {
           WrapperBase const * wrapper = fieldName.second;
@@ -1083,6 +1103,100 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionManager const * const 
               }
             }
           }
+        }
+      }
+
+      if( devStress!=nullptr && meanStress !=nullptr )
+      {
+        {
+          string const expressionName = matDir + "/sigma_00";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[0][0]+<MaterialFields/MeanStress>";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
+        }
+        {
+          string const expressionName = matDir + "/sigma_11";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[1][1]+<MaterialFields/MeanStress>";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
+        }
+        {
+          string const expressionName = matDir + "/sigma_22";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[2][2]+<MaterialFields/MeanStress>";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
+        }
+        {
+          string const expressionName = matDir + "/sigma_12";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[1][2]";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
+        }
+        {
+          string const expressionName = matDir + "/sigma_02";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[0][2]";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
+        }
+        {
+          string const expressionName = matDir + "/sigma_01";
+          const char * expObjName = expressionName.c_str();
+          const char * const names[1] = { expObjName } ;
+          int const types[1] = { DB_VARTYPE_SCALAR };
+          string const definition = "<MaterialFields/DeviatorStress>[0][1]";
+          const char * const defns[1] = { definition.c_str() };
+          DBPutDefvars( m_dbBaseFilePtr,
+                        expObjName,
+                        1,
+                        names,
+                        types,
+                        defns,
+                        nullptr );
         }
       }
 
