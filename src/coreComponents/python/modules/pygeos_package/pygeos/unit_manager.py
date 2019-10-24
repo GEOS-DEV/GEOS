@@ -3,32 +3,38 @@ import re
 from pygeos import regex_tools
 
 
+# A structure for creating and applying unit definitions
 class UnitManager():
   def __init__(self):
     self.units = {}
     self.unitMatcher = regex_tools.DictRegexHandler()
     self.buildUnits()
 
+  # Evaluate the symbolic expression
   def __call__(self, unitStruct):
-    # Replace all instances of units in the string with their dict equivalents
+    # Replace all instances of units in the string with their scale defined in self.units
     symbolicUnits = re.sub(regex_tools.patterns['units_b'], self.unitMatcher, unitStruct[1])
 
-    # Strip out any stray alpha characters and evaluate
+    # Strip out any undesired characters and evaluate
+    # Note: the only allowed alpha characters are e and E.  This could be relaxed to allow
+    #       functions such as sin, cos, etc.
     symbolicUnits_sanitized = re.sub(regex_tools.patterns['sanitize'], '', symbolicUnits).strip()
     value = float(unitStruct[0])*eval(symbolicUnits_sanitized, {'__builtins__': None})
 
-    # Format the string, removing any trailing zeros and decimals
+    # Format the string, removing any trailing zeros, decimals, extraneous exponential formats
     str_value = re.sub(regex_tools.patterns['strip_trailing'], '', regex_tools.symbolic_format % (value))
-    # Strip + and trailing zero exponents
     str_value = re.sub(regex_tools.patterns['strip_trailing_b'], '', str_value)
     return str_value
 
+  # This function is called when the regex identifies unit definitions in a string
   def regexHandler(self, match):
+    # The first matched group includes the scale of the value (e.g. 1.234)
+    # The second matches the string inside the unit definition (e.g. m/s**2)
     return self.__call__([match.group(1), match.group(2)])
 
+  # Build the unit definitions
   def buildUnits(self):
-    # print('Building UnitManager dictionary...')
-
+    # Long, short names for SI prefixes
     prefixes = {'giga':  {'value': 1e9,  'alt': 'G'},
                 'mega':  {'value': 1e6,  'alt': 'M'},
                 'kilo':  {'value': 1e3,  'alt': 'k'},
@@ -41,7 +47,8 @@ class UnitManager():
                 'micro': {'value': 1e-6, 'alt': 'mu'},
                 'nano':  {'value': 1e-9, 'alt': 'n'}}
 
-    # Base units:
+    # Base units, and their abbreviations
+    # Note: setting (usePrefix = True) instructs the manager to expand using SI prefixes
     unit_defs = {'gram':   {'value': 1e-3,               'alt': ['g', 'grams'],         'usePrefix': True},
                  'meter':  {'value': 1.0,                'alt': ['m', 'meters'],        'usePrefix': True},
                  'second': {'value': 1.0,                'alt': ['s', 'seconds'],       'usePrefix': True},
@@ -54,7 +61,7 @@ class UnitManager():
                  'joule':  {'value': 1.0,                'alt': ['J'],                  'usePrefix': True},
                  'watt':   {'value': 1.0,                'alt': ['W'],                  'usePrefix': True}}
 
-    # Imperial units:
+    # Imperial units, and their abbreviations
     imp_defs = {'pound':      {'value': 0.453592,       'alt': ['lb', 'pounds', 'lbs'], 'usePrefix': True},
                 'poundforce': {'value': 0.453592*9.81,  'alt': ['lbf'],                 'usePrefix': True},
                 'stone':      {'value': 6.35029,        'alt': ['st'],                  'usePrefix': True},
@@ -69,7 +76,7 @@ class UnitManager():
                 'psi':        {'value': 6894.76,        'alt': [],                      'usePrefix': True},
                 'psf':        {'value': 1853.184,       'alt': [],                      'usePrefix': True}}
 
-    # Other units:
+    # Other commonly used units:
     other_defs = {'dyne':       {'value': 1.0e-5,    'alt': ['dynes'],              'usePrefix': True},
                   'bar':        {'value': 1.0e5,     'alt': ['bars'],               'usePrefix': True},
                   'atmosphere': {'value': 101325.0,  'alt': ['atm', 'atmospheres'], 'usePrefix': True},
@@ -77,10 +84,15 @@ class UnitManager():
                   'barrel':     {'value': 0.1589873, 'alt': ['bbl', 'barrels'],     'usePrefix': True},
                   'horsepower': {'value': 745.7,     'alt': ['hp', 'horsepowers'],  'usePrefix': True}}
 
+    # Combine the unit dicts
     unit_defs.update(imp_defs)
     unit_defs.update(other_defs)
 
-    # Expand the alternate values:
+    # Use brute-force to generate a list of potential units, rather than trying to parse
+    # unit strings on the fly.  This is still quite fast, and allows us to do simple
+    # checks for overlapping definitions
+
+    # Expand prefix and alternate names
     for p in list(prefixes.keys()):
       if prefixes[p]['alt']:
         prefixes[prefixes[p]['alt']] = {'value': prefixes[p]['value']}
@@ -89,24 +101,21 @@ class UnitManager():
         unit_defs[alt] = {'value': unit_defs[u]['value'], 'usePrefix': unit_defs[u]['usePrefix']}
 
     # Combine the results into the final dictionary
-    # Add entries that have a tailing 's'
-    tmp = []
     for u in unit_defs.keys():
       if (unit_defs[u]['usePrefix']):
         for p in prefixes.keys():
-          tmp.append(p+u)
           self.units[p+u] = prefixes[p]['value']*unit_defs[u]['value']
       else:
-        tmp.append(u)
         self.units[u] = unit_defs[u]['value']
 
     # Test to make sure that there are no overlapping unit definitions
     from collections import Counter
+    tmp = list(self.units.keys())
     duplicates = [k for k, v in Counter(tmp).items() if v > 1]
     if (duplicates):
       print(duplicates)
       raise Exception('Error: There are overlapping unit definitions in the UnitManager')
 
     self.unitMatcher.target = self.units
-    # print('Done!')
+
 
