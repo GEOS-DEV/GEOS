@@ -10,6 +10,7 @@ from pygeos.tests import generate_test_xml
 unitManager = unit_manager.UnitManager()
 
 
+# Test the unit manager definitions
 class TestUnitManager(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -104,6 +105,7 @@ class TestUnitManager(unittest.TestCase):
     self.checkUnits(['1.0', 'cP'], 0.001)
 
 
+# Test the behavior of the parameter regex
 class TestParameterRegex(unittest.TestCase):
 
   @classmethod
@@ -143,6 +145,7 @@ class TestParameterRegex(unittest.TestCase):
     self.evaluateRegex('$foo$*1.234/$bar$', '4.56e7*1.234/4.56e7')
 
 
+# Test the behavior of the unit regex
 class TestUnitsRegex(unittest.TestCase):
 
   @classmethod
@@ -172,6 +175,7 @@ class TestUnitsRegex(unittest.TestCase):
     self.evaluateRegex('(1.234[m**2/s])*5.678', '(1.234)*5.678')
 
 
+# Test the symbolic math regex
 class TestSymbolicRegex(unittest.TestCase):
 
   @classmethod
@@ -224,6 +228,7 @@ class TestSymbolicRegex(unittest.TestCase):
     self.evaluateRegex('`sqrt(4.0)`', '2')
 
 
+# Test the complete xml processor
 class TestXMLProcessor(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
@@ -233,7 +238,7 @@ class TestXMLProcessor(unittest.TestCase):
     os.makedirs('./pygeos_tests_%s/included' % (rand_name), exist_ok=True)
     os.chdir('./pygeos_tests_%s' % (rand_name))
 
-    # Generate tests
+    # Generate test xml files to process
     generate_test_xml.generate_test_xml_files('.')
 
   @classmethod
@@ -277,6 +282,7 @@ class TestXMLProcessor(unittest.TestCase):
     self.diff_xml(tmp, './symbolic_parameters_target.xml')
 
 
+# Main entry point for the unit tests
 def run_unit_tests():
   # Unit manager tests
   suite = unittest.TestLoader().loadTestsFromTestCase(TestUnitManager)
