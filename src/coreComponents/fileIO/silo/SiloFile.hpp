@@ -572,6 +572,19 @@ OUTTYPE CastField(const TYPE& field, int const i)
   return field.Data()[i];
 }
 
+template<>
+inline real64 CastField<real64,R2SymTensor >( const R2SymTensor & field, int const i )
+{
+  int ii = 0;
+  if( i==1 ) ii=2;
+  if( i==2 ) ii=5;
+  if( i==3 ) ii=4;
+  if( i==4 ) ii=3;
+  if( i==5 ) ii=1;
+  return field.Data()[ii];
+}
+
+
 template<> inline int CastField<int, int> (const int& field, int const )
 {
   return field;
@@ -692,6 +705,13 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
         this->WriteDataField<globalIndex>( meshname.c_str(), fieldName,
                                            wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
+//      if( typeID==typeid(array2d<R2SymTensor> ) )
+//      {
+//        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<array2d<R2SymTensor>> const & >( *wrapper );
+//        this->WriteDataField<real64>( meshname.c_str(), fieldName,
+//                                           wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
+//      }
+
     }
   }
 }
@@ -1004,8 +1024,10 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
       mixvars[a] = static_cast<void*>(mixvarsData[a].data());
     }
 
-    localIndex mixlen2 = 0;
-    localIndex nels2 = 0;
+    array1d<localIndex> mixlen2(nvars);
+    array1d<localIndex> nels2(nvars);
+    mixlen2 = 0;
+    nels2 = 0;
 
     for( localIndex er=0 ; er<elementManager->numRegions() ; ++er )
     {
@@ -1029,8 +1051,8 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
           {
             for( localIndex k = 0 ; k < subRegion->size() ; ++k )
             {
-              varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
-              mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+              varsData[i][nels2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+              mixvarsData[i][mixlen2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
             }
           }
         }
@@ -1042,21 +1064,21 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
             {
               if (field[er][esr][matIndices[0]].size() > 0)
               {
-                varsData[i][nels2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
+                varsData[i][nels2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[0]][k][0], i);
               }
               else
               {
-                varsData[i][nels2++] = 0.0;
+                varsData[i][nels2[i]++] = 0.0;
               }
               for( localIndex a=0 ; a<numMatInRegion ; ++a )
               {
                 if( field[er][esr][matIndices[a]].size() > 0 )
                 {
-                  mixvarsData[i][mixlen2++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
+                  mixvarsData[i][mixlen2[i]++] = SiloFileUtilities::CastField<OUTTYPE>(field[er][esr][matIndices[a]][k][0], i);
                 }
                 else
                 {
-                  mixvarsData[i][mixlen2++] = 0.0;
+                  mixvarsData[i][mixlen2[i]++] = 0.0;
                 }
               }
             }
