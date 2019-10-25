@@ -614,14 +614,47 @@ public:
   class typeRegex
   {
 private:
-    std::string ru = "[0-9]*";
-    std::string ri = "[+-]?[0-9]*";
-    std::string rr = "[+-]?[0-9]*\\.?([0-9]*)?[eE]?[-+]?([0-9]*)?";
-    std::string rs = "[a-zA-Z0-9_,\\(\\)+-/\\*]*";
-    std::string r1 = rr + ",? " + rr + ",? " + rr;
-    std::string r2 = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
-    std::string r2s = rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr + ",? " + rr;
+    // Function to build Array regexes
+    // Note: The sub pattern is the base object you are targeting.  It can either
+    //       be a simple type or a lower-dimensional array.  Sub-elements and
+    //       axes are given as a comma-separated list enclosed in a curly brace.
+    //       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
+    std::string constructArrayRegex(std::string subPattern, integer dimension)
+    {
+      if (dimension > 1)
+      {
+        subPattern = constructArrayRegex(subPattern, dimension-1);
+      }
 
+      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      return arrayPattern;
+    }
+
+    // Define the component regexes:
+    // Regex to match an unsigned int (123, etc.)
+    std::string ru = "\\d+";
+
+    // Regex to match an signed int (-123, 455, +789, etc.)
+    std::string ri = "[+-]?\\d+";
+
+    // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
+    // Explanation of parts:
+    // [+-]?\\d*  matches an optional +/- at the beginning, any numbers preceding the decimal
+    // (\\d\\.?|\\.\\d) matches the decimal region of the number (0, 1., 2.3, .4)
+    // \\d*  matches any number of numbers following the decimal
+    // ([eE][-+]?\\d+|)  matches an optional scientific notation number
+    std::string rr = "[+-]?\\d*(\\d\\.?|\\.\\d)\\d*([eE][-+]?\\d+|)";
+    
+    // Regex to match a string that does not contain the characters  ,{} 
+    std::string rs = "[^,\\{\\}]+";
+
+    // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
+    // These are identical aside from the number of repetitions in the curly brackets
+    std::string r1 = "(" + rr + ",\\s*){2}" + rr;
+    std::string r2 = "(" + rr + ",\\s*){8}" + rr;
+    std::string r2s = "(" + rr + ",\\s*){5}" + rr;
+
+    // Build master list of regexes
     std::unordered_map< std::string, std::string > regexMap =
     {
       {"integer", ri},
@@ -632,31 +665,31 @@ private:
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
-      {"integer_array", "((" + ri + ",? )*)?" + ri},
-      {"localIndex_array", "((" + ri + ",? )*)?" + ri},
-      {"globalIndex_array", "((" + ri + ",? )*)?" + ri},
-      {"real32_array", "((" + rr + ",? )*)?" + rr},
-      {"real64_array", "((" + rr + ",? )*)?" + rr},
-      {"r1_array", "((" + r1 + "; )*)?" + r1},
-      {"r2_array", "((" + r2 + "; )*)?" + r2},
-      {"r2Sym_array", "((" + r2s + "; )*)?" + r2s},
-      {"integer_array2d", ""},
-      {"localIndex_array2d", ""},
-      {"globalIndex_array2d", ""},
-      {"real32_array2d", ""},
-      {"real64_array2d", ""},
-      {"r1_array2d", ""},
-      {"r2_array2d", ""},
-      {"r2Sym_array2d", ""},
-      {"integer_array3d", ""},
-      {"localIndex_array3d", ""},
-      {"globalIndex_array3d", ""},
-      {"real32_array3d", ""},
-      {"real64_array3d", ""},
+      {"integer_array", constructArrayRegex(ri, 1)},
+      {"localIndex_array", constructArrayRegex(ri, 1)},
+      {"globalIndex_array", constructArrayRegex(ri, 1)},
+      {"real32_array", constructArrayRegex(rr, 1)},
+      {"real64_array", constructArrayRegex(rr, 1)},
+      {"r1_array", constructArrayRegex(r1, 1)},
+      {"r2_array", constructArrayRegex(r2, 1)},
+      {"r2Sym_array", constructArrayRegex(r2s, 1)},
+      {"integer_array2d", constructArrayRegex(ri, 2)},
+      {"localIndex_array2d", constructArrayRegex(ri, 2)},
+      {"globalIndex_array2d", constructArrayRegex(ri, 2)},
+      {"real32_array2d", constructArrayRegex(rr, 2)},
+      {"real64_array2d", constructArrayRegex(rr, 2)},
+      {"r1_array2d", constructArrayRegex(r1, 2)},
+      {"r2_array2d", constructArrayRegex(r2, 2)},
+      {"r2Sym_array2d", constructArrayRegex(r2s, 2)},
+      {"integer_array3d", constructArrayRegex(ri, 3)},
+      {"localIndex_array3d", constructArrayRegex(ri, 3)},
+      {"globalIndex_array3d", constructArrayRegex(ri, 3)},
+      {"real32_array3d", constructArrayRegex(rr, 3)},
+      {"real64_array3d", constructArrayRegex(rr, 3)},
       {"string", rs},
-      {"string_array", "((" + rs + ",? )*)?" + rs},
+      {"string_array", constructArrayRegex(rs, 1)},
       {"mapPair", rs},
-      {"mapPair_array", "((" + rs + ",? )*)?" + rs}
+      {"mapPair_array", constructArrayRegex(rs, 1)}
     };
 
 public:
