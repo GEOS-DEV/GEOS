@@ -632,21 +632,22 @@ private:
 
     // Define the component regexes:
     // Regex to match an unsigned int (123, etc.)
-    std::string ru = "\\d+";
+    std::string ru = "[\\d]+";
 
     // Regex to match an signed int (-123, 455, +789, etc.)
-    std::string ri = "[+-]?\\d+";
+    std::string ri = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
     // Explanation of parts:
-    // [+-]?\\d*  matches an optional +/- at the beginning, any numbers preceding the decimal
-    // (\\d\\.?|\\.\\d) matches the decimal region of the number (0, 1., 2.3, .4)
-    // \\d*  matches any number of numbers following the decimal
-    // ([eE][-+]?\\d+|)  matches an optional scientific notation number
-    std::string rr = "[+-]?\\d*(\\d\\.?|\\.\\d)\\d*([eE][-+]?\\d+|)";
+    // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
+    // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
+    // [\\d]*  matches any number of numbers following the decimal
+    // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
+    // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
+    std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
     
     // Regex to match a string that does not contain the characters  ,{} 
-    std::string rs = "[^,\\{\\}]+";
+    std::string rs = "[^,\\{\\}]*";
 
     // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
     // These are identical aside from the number of repetitions in the curly brackets
