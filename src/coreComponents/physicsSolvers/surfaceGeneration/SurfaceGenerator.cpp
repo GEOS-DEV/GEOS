@@ -2701,7 +2701,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList();
   array1d<R1Tensor> const & X = nodeManager.referencePosition();
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
-  const arrayView1d<integer>& isNodeGhost = nodeManager.GhostRank();
+  // const arrayView1d<integer>& isNodeGhost = nodeManager.GhostRank();
 
   arrayView2d<localIndex> const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
@@ -2793,7 +2793,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
     {
       for (localIndex const nodeIndex : pinchedNodeID)
       {
-        if (isNodeGhost[nodeIndex] < 0)
+//        if (isNodeGhost[nodeIndex] < 0)
         {
           R1Tensor nodeDisconnectForce;
           R1Tensor nodePosition = X[nodeIndex];

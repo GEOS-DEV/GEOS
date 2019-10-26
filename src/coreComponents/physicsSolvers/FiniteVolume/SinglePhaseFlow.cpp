@@ -1064,6 +1064,9 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     }
   });
 
+//  std::cout << "        The fluid  residual on this rank is  " << localResidualNorm[0] << "  normalized with  "
+//               << localResidualNorm[1] + m_fluxEstimate << std::endl;
+
   // compute global residual norm
   real64 globalResidualNorm[2] = {0,0};
   MpiWrapper::allReduce( localResidualNorm,
@@ -1071,7 +1074,9 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
                          2,
                          MPI_SUM,
                          MPI_COMM_GEOSX);
-
+  
+//  MPI_Barrier(MPI_COMM_GEOSX);
+//  GEOS_LOG_RANK_0("      Global fluid residual " << globalResidualNorm[0] << " scaled by  " <<   globalResidualNorm[1] + m_fluxEstimate );
   return sqrt(globalResidualNorm[0]) / ( globalResidualNorm[1] + m_fluxEstimate );
 }
 
@@ -1095,7 +1100,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
       std::cout<<"Pressure - Presolution"<<std::endl;
       for( localIndex a=0 ; a<pressure.size(0) ; ++a )
       {
-        std::cout<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
       }
     }
 
@@ -1110,7 +1115,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
       std::cout<<"Pressure - Postsolution"<<std::endl;
       for( localIndex a=0 ; a<pressure.size(0) ; ++a )
       {
-        std::cout<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
+        std::cout<<MpiWrapper::Comm_rank(MPI_COMM_GEOSX)<<" "<<a<<", "<<pressure[a]<<" + "<<dp[a]<<std::endl;
       }
     }
 

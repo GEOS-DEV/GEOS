@@ -394,7 +394,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
         // if line search failed, then break out of the main Newton loop. Timestep will be cut.
         if( !lineSearchSuccess )
-        {
+        {         
+          if( m_verboseLevel >= 1 )
+          {
+            GEOS_LOG_RANK_0 ( "The Line search failed!" );
+          }
           break;
         }
       }
@@ -421,11 +425,15 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // break out of outer loop
       break;
     }
-    else
+    else    
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
-    }
+      if( m_verboseLevel >= 1 )
+          {
+            GEOS_LOG_RANK_0 (  "New dt = " <<  stepDt );
+          }
+    }    
   }
 
   if( !isConverged )

@@ -12,16 +12,16 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="1"
+      verboseLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
       <SystemSolverParameters
         maxIterNewton="50"
-        newtonTol="1e-5"
-        krylovTol="1.0e-4"
+        newtonTol="1e-6"
+        krylovTol="1.0e-8"
         verbosityFlag="0"
-        maxLineSearchCuts="20"
+        maxLineSearchCuts="5"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -128,12 +128,12 @@
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
-    <!-- PeriodicEvent 
+    <PeriodicEvent 
       name="solverApplications1"
       beginTime="20.0"
       endTime="100.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" /-->
+      target="/Solvers/hydrofracture" />
 
     <PeriodicEvent name="outputs"
                    timeFrequency="0.5"

@@ -6,21 +6,21 @@
   <Solvers
     gravityVector="0.0,0.0,-0.0"
     >
-  
     <Hydrofracture 
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="1"
+      verboseLevel="2"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
       <SystemSolverParameters
-        maxIterNewton="50"
-        newtonTol="1e-5"
+        maxIterNewton="100"
+        newtonTol="1e-6"
+        krylovTol="1.0e-8"
         verbosityFlag="0"
-        maxLineSearchCuts="10"
+        maxLineSearchCuts="5"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -51,7 +51,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
-      inputFluxEstimate="1"
+      inputFluxEstimate="1.0"
       >
       <SystemSolverParameters 
         name="SystemSolverParameters"
@@ -79,53 +79,53 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{-180, -40, 40, 180}"
-                  yCoords="{0, 100, 180}"
+                  xCoords="{0, 2}"
+                  yCoords="{-1, 1}"
                   zCoords="{0, 1}"
-                  nx="{50, 80, 50}"
-                  ny="{100, 40}"
-                  nz="{2}"
+                  nx="{2}"
+                  ny="{2}"
+                  nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
   <Geometry>
     <Box name="fracture" 
          xMin="-0.01,  -0.01, -0.01"
-         xMax=" 0.01,   4.01,  1.01"/>
+         xMax=" 2.01,   0.01,  1.01"/>
     <Box name="source"
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  1.01, 1.01"/>
+         xMax=" 1.01,  0.01, 1.01"/>
     <Box name="core"
          xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  100.01, 1.01"/>
+         xMax=" 100.01,  0.01, 1.01"/>
   </Geometry>
 
 
-  <Events maxTime="100.0">
+  <Events maxTime="0.5">
   
-    <!-- SoloEvent 
+    <SoloEvent 
       name="initialPlot"
       target="/Outputs/siloOutput"
-      /-->
+      />
 
     <SoloEvent 
       name="preFracture"
       target="/Solvers/SurfaceGen"
       />
-  
-    <!-- SoloEvent 
+
+    <SoloEvent 
       name="preFracturePlot"
       target="/Outputs/siloOutput"
-      /-->
+      />
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="20.0"
+      endTime="10.0"
       forceDt="0.5"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/lagsolve" />
 
     <PeriodicEvent 
       name="solverApplications1"
@@ -134,11 +134,8 @@
       forceDt="1.0"
       target="/Solvers/hydrofracture" />
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="2"
+                   timeFrequency="0.5"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
@@ -203,7 +200,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 0.1e-3}" 
+        values      = "{  0.01e-3, 0.1e-3}" 
         />
     </Contact>
   </Constitutive>
@@ -244,12 +241,20 @@
                scale="1.0e-4"/-->
 
                
-    <FieldSpecification name="yconstraint"
+    <FieldSpecification name="ypos"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="1"
-               scale="0.0"
-               setNames="{yneg, ypos}"/>
+               scale="0.1"
+               setNames="{ypos}"/>
+
+    <FieldSpecification name="yneg"
+               objectPath="nodeManager"
+               fieldName="TotalDisplacement"
+               component="1"
+               scale="-0.1"
+               setNames="{yneg}"/>
+
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
