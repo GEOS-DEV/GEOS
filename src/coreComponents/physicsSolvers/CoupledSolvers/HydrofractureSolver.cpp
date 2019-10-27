@@ -658,7 +658,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 	  // get managers
 	  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 	  NodeManager * const nodeManager = mesh->getNodeManager();
-	  ElementRegionManager * const elemManager = mesh->getElemManager();
 
 	  //string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
 	  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
@@ -666,6 +665,8 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 	  arrayView1d<globalIndex> const &
 	   dispDofNumber =  nodeManager->getReference<globalIndex_array>( dispDofKey );
 
+#if 0
+	  ElementRegionManager * const elemManager = mesh->getElemManager();
 	  elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
 	  {
 	    localIndex const numElems = elementSubRegion->size();
@@ -695,9 +696,24 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
         	//m_permutationMatrix1.insert(col, row, 1);
         }
       });
+    m_permutationMatrix0.close();
+    m_permutationMatrix0.set(1);
+#else
 
-	  m_permutationMatrix0.close();
-	  m_permutationMatrix0.set(1);
+	  for( localIndex a=0 ; a<nodeManager->size() ; ++a )
+	  {
+	    for( int d=0 ; d<3 ; ++d )
+	    {
+        globalIndex const rowIndex = nodeManager->m_localToGlobalMap[a]*3 + d;
+	      globalIndex const columnIndex = dispDofNumber[a] + d;
+
+	      m_permutationMatrix0.insert(rowIndex, columnIndex, 1.0);
+	    }
+	  }
+    m_permutationMatrix0.close();
+    m_permutationMatrix0.set(1);
+#endif
+
 
 	  //m_permutationMatrix1.close();
 
@@ -716,22 +732,15 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
 	  permutedRhs.close();
 
-	  GEOS_LOG_RANK_0("***********************************************************");
-	  GEOS_LOG_RANK_0("residual0");
-	  GEOS_LOG_RANK_0("***********************************************************");
-	  permutedRhs.print(std::cout);
-	  std::cout<<std::endl;
-	  MPI_Barrier(MPI_COMM_GEOSX);
-	  std::cout<<std::endl;
-    MPI_Barrier(MPI_COMM_GEOSX);
-
+//	  GEOS_LOG_RANK_0("***********************************************************");
+//	  GEOS_LOG_RANK_0("residual0");
+//	  GEOS_LOG_RANK_0("***********************************************************");
+//	  permutedRhs.print(std::cout);
+//
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    GEOS_LOG_RANK_0("residual1");
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    m_flowSolver->getSystemRhs().print(std::cout);
-//	  MPI_Barrier(MPI_COMM_GEOSX);
-//    std::cout<<std::endl;
-//    MPI_Barrier(MPI_COMM_GEOSX);
   }
 
   AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, &(m_solidSolver->getSystemRhs()) );
@@ -740,6 +749,31 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
   if( this->m_verboseLevel == 2 )
   {
+    ParallelMatrix const & stiffness00 = m_solidSolver->getSystemMatrix();
+    ParallelMatrix temp;
+    ParallelMatrix permutedStiffness00;
+    temp.createWithLocalSize( stiffness00.localRows(),
+                                             stiffness00.localCols(),
+                                             24,
+                                             MPI_COMM_GEOSX );
+
+    permutedStiffness00.createWithLocalSize( stiffness00.localRows(),
+                                             stiffness00.localCols(),
+                                             24,
+                                             MPI_COMM_GEOSX );
+
+    stiffness00.multiply( false, m_permutationMatrix0, true, temp, false );
+    temp.close();
+    m_permutationMatrix0.multiply( false, temp, false, permutedStiffness00, false );
+    permutedStiffness00.close();
+    permutedStiffness00.unwrappedPointer()->MakeDataContiguous();
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix00");
+    GEOS_LOG_RANK_0("***********************************************************");
+    permutedStiffness00.print(std::cout);
+
+
 	  ParallelVector permutedRhs;
 	  ParallelVector const & rhs = m_solidSolver->getSystemRhs();
 
@@ -753,16 +787,12 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 	  GEOS_LOG_RANK_0("residual0 - Post Coupling");
 	  GEOS_LOG_RANK_0("***********************************************************");
 	  permutedRhs.print(std::cout);
-	  std::cout<<std::endl;
-	  MPI_Barrier(MPI_COMM_GEOSX);
 
-//  GEOS_LOG_RANK_0("***********************************************************");
-//  GEOS_LOG_RANK_0("residual1 - Post Coupling");
-//  GEOS_LOG_RANK_0("***********************************************************");
-//  m_flowSolver->getSystemRhs().print(std::cout);
-//  MPI_Barrier(MPI_COMM_GEOSX);
-//  std::cout<<std::endl;
-//  MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("residual1 - Post Coupling");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_flowSolver->getSystemRhs().print(std::cout);
   }
 
 }
@@ -984,9 +1014,9 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           R1Tensor nodalForce(Nbar);
           nodalForce *= nodalForceMag;
 
-          std::cout << "rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << "faceElement " << kfe << std::endl;
-          std::cout << "fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
-          std::cout << "nodalForce " << nodalForce << std::endl;
+          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
+          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
+          std::cout << "    nodalForce " << nodalForce << std::endl;
           for( localIndex kf=0 ; kf<2 ; ++kf )
           {
             localIndex const faceIndex = elemsToFaces[kfe][kf];
@@ -1898,7 +1928,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
-//  if( this->m_verboseLevel == 20 )
+  if( this->m_verboseLevel == 20 )
   {
 
 	ParallelVector permutedSol;
@@ -1917,22 +1947,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 //	std::cout<<std::endl;
 //	MPI_Barrier(MPI_COMM_GEOSX);
 //
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("solution0");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    permutedSol.print(std::cout);
-//	  std::cout<<std::endl;
-//    MPI_Barrier(MPI_COMM_GEOSX);
-//    std::cout<<std::endl;
-//    MPI_Barrier(MPI_COMM_GEOSX);
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("solution0");
+    GEOS_LOG_RANK_0("***********************************************************");
+    permutedSol.print(std::cout);
 
 
-//
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("solution1");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    p_solution[1]->Print(std::cout);
-//    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("solution1");
+    GEOS_LOG_RANK_0("***********************************************************");
+    p_solution[1]->Print(std::cout);
   }
 }
 

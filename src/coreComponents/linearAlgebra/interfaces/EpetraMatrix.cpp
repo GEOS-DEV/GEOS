@@ -575,6 +575,31 @@ void EpetraMatrix::print( std::ostream & os ) const
   {
     m_matrix->Print( os );
   }
+  int const size = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
+  if( size > 1 )
+  {
+//    int send=0;
+//    int recv=0;
+//    int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+//    MPI_Status recvStatus;
+//    if( rank==0 )
+//    {
+//      os<<std::flush;
+//      MPI_Send( &send, 1, MPI_INT, rank+1, rank+1, MPI_COMM_GEOSX );
+//    }
+//    else
+//    {
+//      MPI_Recv( &recv, 1, MPI_INT, rank-1,rank, MPI_COMM_GEOSX, &recvStatus );
+//      os<<std::flush;
+//      if( rank!=(size-1) )
+//      {
+//        MPI_Send( &send, 1, MPI_INT, rank+1, rank+1, MPI_COMM_GEOSX );
+//      }
+//    }
+    MpiWrapper::Barrier(MPI_COMM_GEOSX);
+  }
+
+
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

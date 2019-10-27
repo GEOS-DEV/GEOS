@@ -614,8 +614,6 @@ public:
 
   //@}
 
-private:
-
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
@@ -624,6 +622,9 @@ private:
                  bool const transB,
                  EpetraMatrix & C,
                  bool const closeResult ) const;
+private:
+
+
 
   /**
    * Boolean value, true if the matrix had been finalized, false if not.
