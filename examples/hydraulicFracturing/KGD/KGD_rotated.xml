@@ -64,7 +64,7 @@
     
     <SurfaceGenerator
       name="SurfaceGen"
-      verboseLevel="1"
+      verboseLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"

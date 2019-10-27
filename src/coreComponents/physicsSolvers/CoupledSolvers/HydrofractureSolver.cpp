@@ -768,10 +768,10 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
     permutedStiffness00.close();
     permutedStiffness00.unwrappedPointer()->MakeDataContiguous();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix00");
-    GEOS_LOG_RANK_0("***********************************************************");
-    permutedStiffness00.print(std::cout);
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("matrix00");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    permutedStiffness00.print(std::cout);
 
 
 	  ParallelVector permutedRhs;
@@ -783,16 +783,16 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 
 	  permutedRhs.close();
 
-	  GEOS_LOG_RANK_0("***********************************************************");
-	  GEOS_LOG_RANK_0("residual0 - Post Coupling");
-	  GEOS_LOG_RANK_0("***********************************************************");
-	  permutedRhs.print(std::cout);
-
-
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual1 - Post Coupling");
-    GEOS_LOG_RANK_0("***********************************************************");
-    m_flowSolver->getSystemRhs().print(std::cout);
+//	  GEOS_LOG_RANK_0("***********************************************************");
+//	  GEOS_LOG_RANK_0("residual0 - Post Coupling");
+//	  GEOS_LOG_RANK_0("***********************************************************");
+//	  permutedRhs.print(std::cout);
+//
+//
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("residual1 - Post Coupling");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    m_flowSolver->getSystemRhs().print(std::cout);
   }
 
 }
@@ -836,18 +836,27 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    m_matrix01.print(std::cout);
 //    MPI_Barrier(MPI_COMM_GEOSX);
-//
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("matrix10");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    m_matrix10.print(std::cout);
-//    MPI_Barrier(MPI_COMM_GEOSX);
-//
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    GEOS_LOG_RANK_0("matrix11");
-//    GEOS_LOG_RANK_0("***********************************************************");
-//    m_flowSolver->getSystemMatrix().print(std::cout);
-//    MPI_Barrier(MPI_COMM_GEOSX);
+
+    ParallelMatrix permuted10;
+    permuted10.createWithLocalSize( m_matrix10.localRows(),
+                              m_matrix10.localCols(),
+                              24,
+                              MPI_COMM_GEOSX );
+
+    m_matrix10.multiply( false, m_permutationMatrix0, true, permuted10, false );
+    permuted10.close();
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix10");
+    GEOS_LOG_RANK_0("***********************************************************");
+    permuted10.print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
+
+    GEOS_LOG_RANK_0("***********************************************************");
+    GEOS_LOG_RANK_0("matrix11");
+    GEOS_LOG_RANK_0("***********************************************************");
+    m_flowSolver->getSystemMatrix().print(std::cout);
+    MPI_Barrier(MPI_COMM_GEOSX);
 
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    GEOS_LOG_RANK_0("dResidual/dAperture");
@@ -871,17 +880,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 //      GEOS_LOG_RANK_0("residual0 - BC");
 //      GEOS_LOG_RANK_0("***********************************************************");
 //      permutedRhs.print(std::cout);
-//      MPI_Barrier(MPI_COMM_GEOSX);
-//      std::cout<<std::endl;
-//      MPI_Barrier(MPI_COMM_GEOSX);
 //
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    GEOS_LOG_RANK_0("residual1 - BC");
 //    GEOS_LOG_RANK_0("***********************************************************");
 //    m_flowSolver->getSystemRhs().print(std::cout);
-//    MPI_Barrier(MPI_COMM_GEOSX);
-//    std::cout<<std::endl;
-//    MPI_Barrier(MPI_COMM_GEOSX);
   }
 
   if( verboseLevel() >= 3 )
@@ -1014,9 +1017,9 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
           R1Tensor nodalForce(Nbar);
           nodalForce *= nodalForceMag;
 
-          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
-          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
-          std::cout << "    nodalForce " << nodalForce << std::endl;
+//          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
+//          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
+//          std::cout << "    nodalForce " << nodalForce << std::endl;
           for( localIndex kf=0 ; kf<2 ; ++kf )
           {
             localIndex const faceIndex = elemsToFaces[kfe][kf];
@@ -1119,10 +1122,10 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
     {
       //if (elemGhostRank[ei] < 0)
       {
-//        GEOS_LOG_RANK( "ei = "<<ei );
         globalIndex const elemDOF = presDofNumber[ei];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(elemsToFaces[ei][0]);
         real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
+
 
         globalIndex nodeDOF[8*3];
 
@@ -1135,6 +1138,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
         // Accumulation derivative
         if (elemGhostRank[ei] < 0)
         {
+          //GEOS_LOG_RANK( "dAccumulationResidualdAperture("<<ei<<") = "<<dAccumulationResidualdAperture );
           for( localIndex kf=0 ; kf<2 ; ++kf )
           {
             for( localIndex a=0 ; a<numNodesPerFace ; ++a )
@@ -1163,7 +1167,7 @@ AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * cons
         {
           real64 dRdAper = values[kfe2];
           localIndex const ei2 = columns[kfe2];
-//          GEOS_LOG_RANK(dRdAper);
+//          GEOS_LOG_RANK( "dRdAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
 
           for( localIndex kf=0 ; kf<2 ; ++kf )
           {
@@ -1928,7 +1932,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     p_matrix[0][0]->RightScale(*scaling[0][COL]);
   }
 
-  if( this->m_verboseLevel == 20 )
+  if( this->m_verboseLevel == 2 )
   {
 
 	ParallelVector permutedSol;
@@ -1947,17 +1951,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
 //	std::cout<<std::endl;
 //	MPI_Barrier(MPI_COMM_GEOSX);
 //
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution0");
-    GEOS_LOG_RANK_0("***********************************************************");
-    permutedSol.print(std::cout);
-
-
-
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution1");
-    GEOS_LOG_RANK_0("***********************************************************");
-    p_solution[1]->Print(std::cout);
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("solution0");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    permutedSol.print(std::cout);
+//
+//
+//
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    GEOS_LOG_RANK_0("solution1");
+//    GEOS_LOG_RANK_0("***********************************************************");
+//    p_solution[1]->Print(std::cout);
   }
 }
 

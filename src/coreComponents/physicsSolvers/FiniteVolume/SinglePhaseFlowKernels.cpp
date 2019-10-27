@@ -242,6 +242,23 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
+//  {
+//    localIndex const numRows = dR_dAper.numRows();
+//    for( localIndex ei=0 ; ei<numRows ; ++ei )
+//    {
+//      localIndex const numColumns = dR_dAper.numNonZeros(ei);
+//      arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
+//      arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
+//
+//      for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+//      {
+//        real64 dRdAper = values[kfe2];
+//        localIndex const ei2 = columns[kfe2];
+//        GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+//      }
+//    }
+//  }
+
   forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize(iconn);
@@ -306,6 +323,13 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                                          jacobian,
                                          residual );
 
+//    for( localIndex a=0 ;a<numFluxElems ; ++a )
+//    {
+//      for( localIndex b=0 ; b<stencilSize ; ++b )
+//      {
+//        GEOS_LOG_RANK("dFlux_dAper("<<localRowIndices[a]<<", "<<localColIndices[b]<<") = "<<dFlux_dAper(a,b) );
+//      }
+//    }
     dR_dAper.add( localRowIndices.data(),
                   localColIndices.data(),
                   dFlux_dAper.data(),
@@ -313,6 +337,22 @@ Launch<FaceElementStencil>( FaceElementStencil const & stencil,
                   stencilSize );
 
   } );
+
+//  localIndex const numRows = dR_dAper.numRows();
+//  for( localIndex ei=0 ; ei<numRows ; ++ei )
+//  {
+//    localIndex const numColumns = dR_dAper.numNonZeros(ei);
+//    arraySlice1d<localIndex const> const & columns = dR_dAper.getColumns( ei );
+//    arraySlice1d<real64 const> const & values = dR_dAper.getEntries( ei );
+//
+//    for( localIndex kfe2=0 ; kfe2<numColumns ; ++kfe2 )
+//    {
+//      real64 dRdAper = values[kfe2];
+//      localIndex const ei2 = columns[kfe2];
+//      GEOS_LOG_RANK( "dR_dAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+//    }
+//  }
+
 }
 
 
