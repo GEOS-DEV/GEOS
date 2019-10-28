@@ -57,7 +57,7 @@ def RadiusScatterPlot( field ):
     AddOperator("Threshold", 0)
     ThresholdAtts = ThresholdAttributes()
     ThresholdAtts.outputMeshType = 0
-    ThresholdAtts.listedVarNames = ("CellData/elementAperture", "CellData/ghostRank")
+    ThresholdAtts.listedVarNames = ("AllElementsData/elementAperture", "AllElementsData/ghostRank")
     ThresholdAtts.zonePortions = (1, 1)
     ThresholdAtts.lowerBounds = (1.0e-6, -1e+37)
     ThresholdAtts.upperBounds = (1e+37, -1)
@@ -96,12 +96,12 @@ print "opened database"
 header   = [['      time', '  pressure', '  aperture', '      area']]
 timehist = []
 
-AddPlot("Pseudocolor", "CellData/elementArea", 1, 1)
+AddPlot("Pseudocolor", "AllElementsData/elementArea", 1, 1)
 AddOperator("Threshold", 1)
 ThresholdAtts = ThresholdAttributes()
 ThresholdAtts.outputMeshType = 0
 ThresholdAtts.boundsInputType = 0
-ThresholdAtts.listedVarNames = ("CellData/ghostRank")
+ThresholdAtts.listedVarNames = ("AllElementsData/ghostRank")
 ThresholdAtts.zonePortions = (1)
 ThresholdAtts.lowerBounds = (-1e+37)
 ThresholdAtts.upperBounds = (-1)
@@ -117,8 +117,8 @@ for state in range(TimeSliderGetNStates()):
     SetTimeSliderState(state)
     SetQueryFloatFormat("%g")
     time = Query("Time")[:-1].split(' ')[-1]
-    injectionPressure = ZonePick(coord=(0.5, 0.5, 0.0), vars=("CellData/pressure"))['CellData/pressure']
-    injectionAperture = ZonePick(coord=(0.5, 0.5, 0.0), vars=("CellData/elementAperture"))['CellData/elementAperture']
+    injectionPressure = ZonePick(coord=(0.5, 0.5, 0.0), vars=("AllElementsData/pressure"))['AllElementsData/pressure']
+    injectionAperture = ZonePick(coord=(0.5, 0.5, 0.0), vars=("AllElementsData/elementAperture"))['AllElementsData/elementAperture']
     fractureArea = Query("Variable Sum").split(' ')[-1]
     timehist.append([float(time), float(injectionPressure), float(injectionAperture), float(fractureArea)])
 
@@ -130,10 +130,10 @@ DefineScalarExpression("node_radius", "cylindrical_radius(MeshLevel)")
 DefineScalarExpression("face_radius", "recenter(node_radius, \"zonal\")")
 
 DeleteActivePlots()
-RadiusScatterPlot("CellData/elementAperture")
+RadiusScatterPlot("AllElementsData/elementAperture")
 SaveWindowPlot( outputroot+"_aperture", 1 )
 DeleteActivePlots()
-RadiusScatterPlot("CellData/pressure")
+RadiusScatterPlot("AllElementsData/pressure")
 SaveWindowPlot( outputroot+"_pressure", 1 )
 DeleteActivePlots()
 

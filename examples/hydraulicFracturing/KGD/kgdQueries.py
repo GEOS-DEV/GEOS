@@ -112,8 +112,7 @@ SetOperatorOptions(ThresholdAtts, 1)
 DrawPlots()
 
 
-# for state in range(TimeSliderGetNStates()):
-for state in range(10):  
+for state in range(TimeSliderGetNStates()):
     print "processing state ", state
     SetTimeSliderState(state)
     SetQueryFloatFormat("%g")
