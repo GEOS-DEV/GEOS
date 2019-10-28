@@ -209,6 +209,11 @@ public:
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
+  template< typename LAI >
+  void ZeroSystemRowsForBoundaryCondition( set<localIndex> const & targetSet,
+                                           arrayView1d<globalIndex const> const & dofMap,
+                                           typename LAI::ParallelMatrix & matrix ) const;
+
   struct viewKeyStruct
   {
     constexpr static auto setNamesString = "setNames";
@@ -629,5 +634,18 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   }
 }
 
+template< typename LAI >
+void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( set<localIndex> const & targetSet,
+                                                                 arrayView1d<globalIndex const> const & dofMap,
+                                                                 typename LAI::ParallelMatrix & matrix ) const
+
+{
+  integer const component = GetComponent();
+  for( auto a : targetSet )
+  {
+    globalIndex const dof = dofMap[a]+component;
+    matrix.clearRow( dof, 0.0 );
+  }
+}
 }
 #endif
