@@ -355,7 +355,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
             real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
             stencilWeightedElementCenterToConnectorCenter[0] = c2fDistance / sqrt( Dot( cellToFaceVec, faceConormal ) );
-            stencilWeightedElementCenterToConnectorCenter[1] = 0 ;
+            stencilWeightedElementCenterToConnectorCenter[1] = 0;
 
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
             stencilCellsRegionIndex[0] = er;

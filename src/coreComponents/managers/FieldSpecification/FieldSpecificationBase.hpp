@@ -396,8 +396,12 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
   string const & functionName = getReference<string>( viewKeyStruct::functionNameString );
   NewFunctionManager * functionManager = NewFunctionManager::Instance();
 
-  // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  int mytargetSetNumber = targetSet.size();
+  int totalTargetSetNumber;
+
+  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+
+  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
   if( functionName.empty() )
   {
@@ -415,7 +419,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
 
     if( function->isFunctionOfTime()==2 )
     {
-      real64 value = m_scale * function->Evaluate( &time );
+      real64 value = m_scale * function->Evaluate( &time ) * dt;
       forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
@@ -430,7 +434,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( LvArray::ArrayView< T, N, lo
       forall_in_range< POLICY >( 0, targetSet.size(), GEOSX_HOST_DEVICE_LAMBDA( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
-        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale * resultView[i] * dt );
       });
     }
   }
@@ -583,7 +587,12 @@ ApplyBoundaryConditionToSystem( set<localIndex> const & targetSet,
   real64_array rhsContribution( targetSet.size() );
 
   // TODO: not correct in parallel, need to compute global size of a set
-  real64 const setSizeFactor = ( normalizeBySetSize && !targetSet.empty() ) ? 1.0/targetSet.size() : 1.0;
+  int mytargetSetNumber = targetSet.size();
+  int totalTargetSetNumber;
+
+  MPI_Allreduce(&mytargetSetNumber, &totalTargetSetNumber, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+
+  real64 const setSizeFactor = ( normalizeBySetSize && (totalTargetSetNumber!= 0) ) ? 1.0/totalTargetSetNumber : 1.0;
 
   if( functionName.empty() )
   {

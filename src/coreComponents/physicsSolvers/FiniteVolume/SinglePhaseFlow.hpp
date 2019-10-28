@@ -223,6 +223,16 @@ public:
                                   DomainPartition * const domain,
                                   DofManager const * const dofManager);
 
+  /**
+   * @brief assemble the flux terms for all cells and then apply flux BC in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  void CalculateAndApplyMassFlux( real64 const time_n,
+                                  real64 const dt,
+								  DomainPartition * const domain ) override;
 
   /**@}*/
 
@@ -238,6 +248,15 @@ public:
    */
   void UpdateFluidModel( Group * const dataGroup ) const;
 
+  /**
+   * @brief Function to update all constitutive state and dependent variables in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  void UpdateEOS( real64 const time_n,
+				  real64 const dt,
+                  DomainPartition * const domain ) override;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

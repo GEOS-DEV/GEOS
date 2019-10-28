@@ -906,16 +906,17 @@ struct FluxKernel
         std::cout<< "\n Fracture mass transfer between " << stencilElementIndices[k[0]] << " and " << stencilElementIndices[k[1]]
 				 << " = " << mob[ei_up] * weight * potDif * dt ;
 
-        real64 const maxApertureForCriticalTime = 1e-2;
+        // TODO: need to read this from input file
+        real64 const maxPermeabilityAperture = 4e-3;
 
         real64 const edgeLength = 12 * stencilWeightedElementCenterToConnectorCenter[k[0]] * stencilWeights[k[0]];
 
-        real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxApertureForCriticalTime)
-                                            + stencilWeightedElementCenterToConnectorCenter[k[1]] * std::min(aperture[stencilElementIndices[k[1]]], maxApertureForCriticalTime);
+        real64 const areaAlongFlowDirection = stencilWeightedElementCenterToConnectorCenter[k[0]] * std::min(aperture[stencilElementIndices[k[0]]], maxPermeabilityAperture)
+                                            + stencilWeightedElementCenterToConnectorCenter[k[1]] * std::min(aperture[stencilElementIndices[k[1]]], maxPermeabilityAperture);
 
         real64 weightedSum = edgeLength * areaAlongFlowDirection * sumOfWeights /
-                            ( stencilWeights[k[0]] * std::min(aperTerm[k[0]], pow(maxApertureForCriticalTime, 3)) *
-                              stencilWeights[k[1]] * std::min(aperTerm[k[1]], pow(maxApertureForCriticalTime, 3)) );
+                            ( stencilWeights[k[0]] * std::min(aperTerm[k[0]], pow(maxPermeabilityAperture, 3)) *
+                              stencilWeights[k[1]] * std::min(aperTerm[k[1]], pow(maxPermeabilityAperture, 3)) );
 
         std::cout << "\n Fracture flux: dens=" << dens[ei[0]][0] << ", mob[ei_up]=" << mob[ei_up] << ", total compressibility=" << totalCompressibility[ei_up]
 			      << ", viscosity =" << dens[ei_up][0] / mob[ei_up] ;

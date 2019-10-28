@@ -344,46 +344,13 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
   return dtReturn;
 }
 
-real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
-                                      real64 const& dt,
-                                      const int GEOSX_UNUSED_ARG( cycleNumber ),
-                                      DomainPartition * const domain )
+void SinglePhaseFlow::UpdateEOS( real64 const time_n,
+								 real64 const dt,
+								 DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager);
-
-  // apply mass flux boundary condition in the explicit solver
-  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
-
-  fsManager->Apply( time_n, domain, "ElementRegions", "FLUX",
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
-  {
-    fs->ApplyFieldValue<FieldSpecificationSubtract>( lset,
-                                                      true,
-                                                      time_n,
-                                                      dt,
-                                                      subRegion,
-                                                      viewKeyStruct::massString );
-
-  } );
-
-  // synchronize element fields
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-
-  std::map<string, string_array> fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::massString );
-
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
-
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  // update density from mass and then pressure
 
   if (m_poroElasticFlag)
   {
@@ -404,10 +371,14 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
 			dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
 			dPres[ei] = pres[ei];
 			fluid->PointInverseUpdate( pres[ei], ei, 0);
+			if (poro[ei] > 0.999999 )
+				  pres[ei] = pres[ei] * m_relaxationCoefficient + dPres[ei] * (1 - m_relaxationCoefficient);
+		//	pres[ei] = std::max(pres[ei], 0.0);
+			if (pres[ei] < 0) std::cout << "\n----------------- Alert: pressure < 0 ----------------";
 			dPres[ei] = pres[ei] - dPres[ei];
 
-			std::cout << "\n Fluid Update in poroElastic: ei = " << ei << ", old dens = " << dens[ei][0] << ", poro= " << poro[ei]
-					  << ", mass = " << mass[ei] << ", new pres = " << pres[ei] << ", dPres= " << dPres[ei] << "\n";
+			std::cout << "\n Fluid Update in poroElastic: ei = " << ei << ", old dens = " << dens[ei][0] << ", mass = " << mass[ei]
+					  << ", poro= " << poro[ei] << ", vol = " << vol[ei] << ", new pres = " << pres[ei] << ", dPres= " << dPres[ei] << "\n";
 		} );
 	} );
   }
@@ -474,6 +445,7 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   }
 
   // apply pressure boundary condition in the explicit solver
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
   fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
                     [&]( FieldSpecificationBase const * const fs,
                          string const &,
@@ -504,6 +476,20 @@ real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
   } );
 
   std::cout << "\n *************************************** \n ";
+
+}
+
+real64 SinglePhaseFlow::ExplicitStep( real64 const& time_n,
+                                      real64 const& dt,
+                                      const int GEOSX_UNUSED_ARG( cycleNumber ),
+                                      DomainPartition * const domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  CalculateAndApplyMassFlux( time_n, dt, domain );
+
+  UpdateEOS( time_n, dt, domain );
+
   return dt;
 }
 
@@ -518,13 +504,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
   static int setFlowSolverTimeStep = 0;
   if( setFlowSolverTimeStep == 0 )
   {
-//	mesh->getElemManager()->
-//		forElementSubRegionsComplete<CellElementSubRegion>( m_targetRegions,
-//																	 [&] ( localIndex er,
-//																		   localIndex esr,
-//																		   ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-//																		   CellElementSubRegion * subRegion )
-
     applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
 								   ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
 								   ElementSubRegionBase * const subRegion )
@@ -554,31 +533,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
 		std::cout << "\n Fluid Initialization: ei = " << ei << ", mass = " << mass[ei] << ", dens = " << dens[ei][0] << ", poro= " << poro[ei] << ", pres= " << pres[ei] << "\n";
       } );
     } );
-
-//    mesh->getElemManager()->
-//        forElementSubRegionsComplete<FaceElementSubRegion>( m_targetRegions,
-//                                                                     [&] ( localIndex er,
-//                                                                           localIndex esr,
-//                                                                           ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-//																		   FaceElementSubRegion * subRegion )
-//    {
-//        UpdateState( subRegion );
-//
-//        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-//        arrayView1d<real64> const & vol  = m_volume[er][esr];
-//        arrayView1d<real64> const & mass = m_mass[er][esr];
-//
-//        forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-//        {
-//          mass[ei] = dens[ei][0] * vol[ei];
-//  		std::cout << "\n Fluid Initialization: ei = " << ei << ", mass = " << mass[ei] << ", dens = " << dens[ei][0] << ", poro= " << poro[ei] << "\n";
-//
-//        } );
-//
-//    	CompressibleSinglePhaseFluid * const fluid =  dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
-//        m_totalCompressibility[er][esr] =  fluid->compressibility();
-//    } );
-
   }
 
 //  // TODO: update cell, boundary and fracture stencils
@@ -1057,6 +1011,44 @@ void SinglePhaseFlow::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_ARG( 
                         &m_mass,
                         &m_maxStableDt);
   });
+}
+
+void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
+                                                 real64 const dt,
+					                             DomainPartition * const domain )
+{
+
+  AssembleFluxTermsExplicit( time_n, dt, domain, &m_dofManager );
+
+  // apply mass flux boundary condition
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationSubtract>( lset,
+                                                      true,
+                                                      time_n + dt,
+                                                      dt,
+                                                      subRegion,
+                                                      viewKeyStruct::massString );
+
+  } );
+
+  // synchronize element fields
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  std::map<string, string_array> fieldNames;
+  fieldNames["elems"].push_back( viewKeyStruct::massString );
+
+  array1d<NeighborCommunicator> & comms =
+    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+
+  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 }
 
 void

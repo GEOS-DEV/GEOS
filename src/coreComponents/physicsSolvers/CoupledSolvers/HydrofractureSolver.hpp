@@ -159,6 +159,7 @@ public:
 
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
+    constexpr static auto contactStressString = "contactStress";
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
