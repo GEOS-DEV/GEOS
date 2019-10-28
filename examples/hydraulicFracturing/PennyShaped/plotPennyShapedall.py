@@ -52,7 +52,7 @@ for i in range(0,numFiles):
 
     labels.append(prefix[i])
 
-    Radius[i] = Area[i]
+    Radius[i] = (Area[i]*4/math.pi)**0.5
 
 #labels[0] = "GEOS Results $K_{IC}=2.0e6$, $\mu=0.001$"
 #labels[1] = "GEOS Results $K_{IC}/10$"
@@ -61,7 +61,7 @@ for i in range(0,numFiles):
 endTime = t_sim[0][-1]
 time = np.arange(0,endTime+1,0.2)
 radTimes = np.array([t_sim[0][-1]])
-hfsolns = HydrofactureSolutions.KGDSolutions()
+hfsolns = HydrofactureSolutions.PennySolutions()
 solns = hfsolns.Solutions( mu, E, q, KI, time, radTimes, x_source )
 
 rho       = solns[0]
@@ -122,7 +122,7 @@ plt.ylabel('Pressure(@L=0.5m) \n (MPa)', multialignment='center')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([min(t_sim[0]), max(t_sim[0]) ])
 #plt.yticks(np.arange(0.3, 1.01, 0.1))
-plt.ylim([ 0.0  , 1.5 ])
+plt.ylim([ 0.0  , 4 ])
 
 
 
@@ -137,7 +137,7 @@ for i in range(0,numFiles):
 plt.plot(solns[0],w_viscous[0]*1000,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],w_tough[0]*1000,'k-', label='$\mu$ => 0' )
 #plt.xlabel('Radius (m)')
-plt.ylabel('Aperture(t=100s) \n (mm)', multialignment='center')
+plt.ylabel('Aperture(t=200s) \n (mm)', multialignment='center')
 #plt.legend(loc='upper right')
 plt.xlim([0, 1 ])
 #plt.ylim([ 0.0  , 2.0 ])
@@ -151,7 +151,7 @@ for i in range(0,numFiles):
 plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],p_tough[0]/1.0e6,'k-', label='$\mu$ => 0' )
 plt.xlabel('Length Coordinate') 
-plt.ylabel('Pressure(t=100s) \n (MPa)', multialignment='center')
+plt.ylabel('Pressure(t=200s) \n (MPa)', multialignment='center')
 plt.xlim([0, 1 ])
 #plt.yticks(np.arange(-0.2, 0.501, 0.1))
 #plt.ylim([ -0.3 , 0.31 ])
