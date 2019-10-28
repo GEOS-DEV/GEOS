@@ -12,7 +12,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
-      verboseLevel="2"
+      verboseLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >

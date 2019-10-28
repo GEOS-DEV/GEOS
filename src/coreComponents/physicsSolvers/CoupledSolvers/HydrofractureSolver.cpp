@@ -28,6 +28,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -468,6 +469,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
+  std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
+  derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
   {
 
     localIndex numRows = -1;
@@ -477,8 +480,6 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
       numRows = elementSubRegion->size();
       numCols = elementSubRegion->size();
     });
-    std::unique_ptr<CRSMatrix<real64,localIndex,localIndex> > &
-    derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
 
     derivativeFluxResidual_dAperture = std::make_unique<CRSMatrix<real64,localIndex,localIndex>>( numRows, numCols );
 
@@ -500,8 +501,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
 
   }
-  CRSMatrixView<real64,localIndex,localIndex const> const &
-  derivativeFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+//  CRSMatrixView<real64,localIndex,localIndex const> const &
+//  derivativeFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
 
 
 
@@ -559,7 +560,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 
   fluxApprox->forStencils<FaceElementStencil>( [&]( FaceElementStencil const & stencil )
   {
-    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+//    forall_in_range<serialPolicy>( 0, stencil.size(), GEOSX_LAMBDA ( localIndex iconn )
+    for( localIndex iconn=0 ; iconn<stencil.size() ; ++iconn)
     {
       localIndex const numFluxElems = stencil.stencilSize(iconn);
       typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -569,8 +571,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
       FaceElementSubRegion const * const
       elementSubRegion = elemManager->GetRegion(seri[iconn][0])->GetSubRegion<FaceElementSubRegion>(sesri[iconn][0]);
 
-//      GEOS_LOG_RANK("numLocal, numGhost: "<<elementSubRegion->size()-elementSubRegion->GetNumberOfGhosts()<<", "<<elementSubRegion->GetNumberOfGhosts());
-//      GEOS_LOG_RANK("numRows, numCols: "<<derivativeFluxResidual_dAperture.numRows()<<", "<<derivativeFluxResidual_dAperture.numColumns());
+//      GEOS_LOG_RANK("connector, numLocal, numGhost: "<<iconn<<", "<<elementSubRegion->size()-elementSubRegion->GetNumberOfGhosts()<<", "<<elementSubRegion->GetNumberOfGhosts());
+//      GEOS_LOG_RANK("connector, numRows, numCols: "<<iconn<<", "<<derivativeFluxResidual_dAperture->numRows()<<", "<<derivativeFluxResidual_dAperture->numColumns());
 
       array1d<array1d<localIndex > > const & elemsToNodes = elementSubRegion->nodeList();
 
@@ -581,10 +583,11 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
       for( localIndex k0=0 ; k0<numFluxElems ; ++k0 )
       {
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+
         for( localIndex k1=0 ; k1<numFluxElems ; ++k1 )
         {
-//          GEOS_LOG_RANK("ei0, ei1: "<<sei[iconn][k0]<<", "<<sei[iconn][k1]);
-          derivativeFluxResidual_dAperture.insertNonZero( sei[iconn][k0],sei[iconn][k1], 0.0 );
+//          GEOS_LOG_RANK("ei0, ei1, nonZeroCapacitys: "<<sei[iconn][k0]<<", "<<sei[iconn][k1]<<", "<<derivativeFluxResidual_dAperture->nonZeroCapacity(sei[iconn][k0]));
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0],sei[iconn][k1], 0.0 );
 
           localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
           array1d<globalIndex> activeDisplacementDOF(3 * numNodesPerElement);
@@ -606,7 +609,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                              activeDisplacementDOF.size() );
         }
       }
-    });
+    }//);
 
   });
 
@@ -812,6 +815,38 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                           m_solidSolver->getSystemMatrix(),
                                           m_solidSolver->getSystemRhs() );
 
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+
+  FieldSpecificationManager const * const fsManager = FieldSpecificationManager::get();
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  arrayView1d<globalIndex const> const & dispDofNumber = nodeManager->getReference<globalIndex_array>( dispDofKey );
+  arrayView1d<integer const> const & nodeGhostRank = nodeManager->GhostRank();
+
+  fsManager->Apply( time + dt,
+                     domain,
+                     "nodeManager",
+                     keys::TotalDisplacement,
+                     [&]( FieldSpecificationBase const * const bc,
+                          string const &,
+                          set<localIndex> const & targetSet,
+                          Group * const ,
+                          string const  )
+  {
+    set<localIndex> localSet;
+    for( auto const & a : targetSet )
+    {
+      if( nodeGhostRank[a]<0 )
+      {
+        localSet.insert(a);
+      }
+    }
+    bc->ZeroSystemRowsForBoundaryCondition<LAInterface>( localSet,
+                                                         dispDofNumber,
+                                                         m_matrix01 );
+  } );
+
+
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
                                          domain,
@@ -819,7 +854,35 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                          m_flowSolver->getSystemMatrix(),
                                          m_flowSolver->getSystemRhs() );
 
+  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
+  fsManager->Apply( time + dt,
+                    domain,
+                    "ElementRegions",
+                    FlowSolverBase::viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( presDofKey );
+    arrayView1d<integer const> const & ghostRank = subRegion->group_cast<ObjectManagerBase*>()->GhostRank();
+
+    set<localIndex> localSet;
+    for( auto const & a : lset )
+    {
+      if( ghostRank[a]<0 )
+      {
+        localSet.insert(a);
+      }
+    }
+
+    fs->ZeroSystemRowsForBoundaryCondition<LAInterface>( localSet,
+                                                         dofNumber,
+                                                         m_matrix10 );
+  });
 //  std::cout.precision(7);
 //  std::cout.setf(std::ios_base::scientific);
 
@@ -976,6 +1039,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
   matrix01->open();
   matrix01->zero();
+  rhs0->open();
 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
@@ -1060,6 +1124,7 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
 
   rhs0->close();
   matrix01->close();
+  rhs0->close();
 
 }
 
