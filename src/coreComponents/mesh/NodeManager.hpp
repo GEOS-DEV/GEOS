@@ -52,9 +52,11 @@ class NodeManager : public ObjectManagerBase
 {
 public:
 
+  //START_SPHINX_INCLUDE_01
   using EdgeMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
   using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
   using ElemMapType = OrderedVariableToManyElementRelation;
+  //END_SPHINX_INCLUDE_01
 
   /**
    * @brief main constructor for NodeManager Objects
@@ -206,7 +208,8 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d<localIndex const> const & packList ) const;
 
-   /// reference position of the nodes
+  //START_SPHINX_INCLUDE_02
+  /// reference position of the nodes
   array1d<R1Tensor> m_referencePosition;
 
   /// nodeToEdge relation
@@ -217,6 +220,7 @@ private:
 
   /// nodeToElement relation
   ElemMapType m_toElements;
+  //END_SPHINX_INCLUDE_02
 
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToEdges;
   map< localIndex, set<globalIndex> > m_unmappedGlobalIndicesInToFaces;
