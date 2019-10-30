@@ -581,15 +581,15 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
     LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
-                                                m_solidSolver->getSystemMatrix().localRows(),
-                                                m_solidSolver->getSystemMatrix().localCols(),
+                                                m_solidSolver->getSystemMatrix().globalRows(),
+                                                m_solidSolver->getSystemMatrix().globalCols(),
                                                 3,
                                                 m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
                                                 m_permutationMatrix0);
 
     LAIHelperFunctions::CreatePermutationMatrix(elemManager,
-                                                m_flowSolver->getSystemMatrix().localRows(),
-                                                m_flowSolver->getSystemMatrix().localCols(),
+                                                m_flowSolver->getSystemMatrix().globalRows(),
+                                                m_flowSolver->getSystemMatrix().globalCols(),
                                                 1,
                                                 m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
                                                 m_permutationMatrix1);

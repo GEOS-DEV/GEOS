@@ -39,7 +39,7 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   arrayView1d<globalIndex> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
 
@@ -63,7 +63,7 @@ void CreatePermutationMatrix(NodeManager* const nodeManager,
 void CreatePermutationMatrix(ElementRegionManager* const elemManager,
                              localIndex const nRows,
                              localIndex const nCols,
-                             int const nDofPerNode,
+                             int const nDofPerCell,
                              string const DofKey,
                              ParallelMatrix & permutationMatrix)
 {
@@ -75,7 +75,7 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
    */
 
   // Create permuation matrix based on size provided.
-  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+  permutationMatrix.createWithGlobalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
   {
@@ -87,10 +87,10 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
     {
       if (DofNumber[k] >= 0)
       {
-        for( int d=0 ; d<nDofPerNode ; ++d )
+        for( int d=0 ; d<nDofPerCell ; ++d )
         {
-          globalIndex const rowIndex    = k * nDofPerNode + d;
-          globalIndex const columnIndex = DofNumber[k]*nDofPerNode + d;
+          globalIndex const rowIndex    = k * nDofPerCell + d;
+          globalIndex const columnIndex = DofNumber[k]*nDofPerCell + d;
 
           permutationMatrix.insert(rowIndex, columnIndex, 1.0);
         }
