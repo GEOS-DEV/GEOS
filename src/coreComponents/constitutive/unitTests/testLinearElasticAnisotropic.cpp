@@ -207,8 +207,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   ConstitutiveManager constitutiveManager("constitutive",nullptr);
 
   string const inputStream =
-  "<?xml version=\"1.0\" ?>"
-  "<Constitutive xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+  "<Constitutive>"
   "  <LinearElasticAnisotropic name=\"granite\""
   "                            defaultDensity=\"2700\""
   "                            c11=\"1.0e10\" c12=\"1.1e9\"  c13=\"1.2e9\"  c14=\"1.3e9\" c15=\"1.4e9\" c16=\"1.5e9\""

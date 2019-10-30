@@ -19,7 +19,7 @@
 #include "RestartOutput.hpp"
 #include "fileIO/silo/SiloFile.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/Functions/NewFunctionManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
@@ -58,12 +58,12 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
   sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
 
   problemManager->prepareToWrite();
-  NewFunctionManager::Instance()->prepareToWrite();
+  FunctionManager::Instance()->prepareToWrite();
   FieldSpecificationManager::get()->prepareToWrite();
   int const numFiles = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   SidreWrapper::writeTree( numFiles, fileName, "sidre_hdf5", MPI_COMM_GEOSX );
   problemManager->finishWriting();
-  NewFunctionManager::Instance()->finishWriting();
+  FunctionManager::Instance()->finishWriting();
   FieldSpecificationManager::get()->finishWriting();
 #endif
 }
