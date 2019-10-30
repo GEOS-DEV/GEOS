@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/NodeManager.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -38,23 +39,28 @@ namespace LAIHelperFunctions
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreateNodalUnknownPermutationMatrix(NodeManager* const nodeManager,
-                                         localIndex const nRows,
-                                         localIndex const nCols,
-                                         int const nDofPerNode,
-                                         string const DofKey,
-                                         ParallelMatrix & permutationMatrix);
+void CreatePermutationMatrix(NodeManager* const nodeManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const DofKey,
+                             ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
- * @param[in]  nodeManager
+ * @param[in]  elementRegionManager
  * @param[in]  nRows
  * @param[in]  nCols
  * @param[in]  nDofPerCell
  * @param[in]  DofKey
  * @param[out] permutationMatrix
  */
-void CreateCellUnknownPermutationMatrix();
+void CreatePermutationMatrix(ElementRegionManager* const elemManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const DofKey,
+                             ParallelMatrix & permutationMatrix);
 
 /**
  * Create a permuation matrix for a given nodal variable.
@@ -87,6 +93,21 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
 ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                              ParallelMatrix const & permuationMatrixLeft,
                              ParallelMatrix const & permutationMatrixRight);
+
+
+void PrintPermutedVector(ParallelVector const & vector,
+                         ParallelMatrix const & permuationMatrix,
+                         std::ostream & os);
+
+
+void PrintPermutedMatrix(ParallelMatrix const & matrix,
+                         ParallelMatrix const & permutationMatrix,
+                         std::ostream & os);
+
+void PrintPermutedMatrix(ParallelMatrix const & matrix,
+                         ParallelMatrix const & permutationMatrixLeft,
+                         ParallelMatrix const & permutationMatrixRight,
+                         std::ostream & os);
 
 
 } // LAIHelperFunctions namespace
