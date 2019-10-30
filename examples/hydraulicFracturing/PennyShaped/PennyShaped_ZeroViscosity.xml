@@ -24,7 +24,7 @@
         maxIterNewton="50"
         newtonTol="1e-5"
         verbosityFlag="0"
-        maxLineSearchCuts="10"
+        maxLineSearchCuts="20"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -55,7 +55,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
-      inputFluxEstimate="1"
+      inputFluxEstimate="2.65"
       >
       <SystemSolverParameters 
         name="SystemSolverParameters"
@@ -74,7 +74,7 @@
       targetRegions="{Region2}"
       nodeBasedSIF="1"
       solidMaterialName="rock"
-      rockToughness="5e6"
+      rockToughness="3e6"
       >
     </SurfaceGenerator>
     

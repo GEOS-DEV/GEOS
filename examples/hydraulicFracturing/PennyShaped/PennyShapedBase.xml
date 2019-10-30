@@ -14,6 +14,18 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
+                  xCoords="{0, 60, 100}"
+                  yCoords="{0, 60, 100}"
+                  zCoords="{-50, -10, 10, 50}"
+                  nx="{60, 10}"
+                  ny="{60, 10}"
+                  nz="{10, 20, 10}"
+                  cellBlockNames="{cb1}"/>
+  </Mesh>
+
+  <!--Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
                   xCoords="{0, 10}"
                   yCoords="{0, 10}"
                   zCoords="{-10, 10}"
@@ -21,7 +33,7 @@
                   ny="{10}"
                   nz="{10}"
                   cellBlockNames="{cb1}"/>
-  </Mesh>
+  </Mesh-->
 
   <Geometry>
     <Cylinder name="fracture" point1="0.0, 0.0, -0.1" point2="0.0, 0.0, 0.1" radius="2.5"/>
@@ -56,22 +68,43 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
+      endTime="1.0"
+      forceDt="0.05"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="1.0"
+      endTime="3.0"
+      forceDt="0.1"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications2"
+      beginTime="3.0"
+      endTime="5.0"
+      forceDt="0.2"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications3"
+      beginTime="5.0"
       endTime="20.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 
-      name="solverApplications1"
+      name="solverApplications4"
       beginTime="20.0"
-      endTime="100.0"
-      forceDt="1.0"
+      endTime="50.0"
+      forceDt="1"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="2"
+                   timeFrequency="1"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
