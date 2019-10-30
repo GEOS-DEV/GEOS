@@ -19,40 +19,86 @@
 
 #include "LAIHelperFunctions.hpp"
 
-
 namespace geosx
 {
 namespace LAIHelperFunctions
 {
 
-void CreateNodalUnknownPermutationMatrix(NodeManager* const nodeManager,
-                                         localIndex const nRows,
-                                         localIndex const nCols,
-                                         int const nDofPerNode,
-                                         string const DofKey,
-                                         ParallelMatrix & permutationMatrix)
+void CreatePermutationMatrix(NodeManager* const nodeManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const DofKey,
+                             ParallelMatrix & permutationMatrix)
 {
-  // Before outputting anything I build the permutation matrix
+  /* Crates a permutation matrix for a given nodal variable specified by the DofKey. It consider that nDofPerNode
+   * dofs are associated with each node (e.g., nDofPerNode = 3 for the displacement).
+   *
+   * The permutation matrix maps from the dofs ordering set by the DOFManager to the ordering based on the global
+   * indexes of the nodes.
+   */
+
+  // Create permuation matrix based on size provided.
   permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
 
   arrayView1d<globalIndex> const &  DofNumber =  nodeManager->getReference<globalIndex_array>( DofKey );
 
   for( localIndex a=0 ; a<nodeManager->size() ; ++a )
       {
-        for( int d=0 ; d<nDofPerNode ; ++d )
+        if (DofNumber[a] >= 0)
         {
-          globalIndex const rowIndex = nodeManager->m_localToGlobalMap[a]*nDofPerNode + d;
-          globalIndex const columnIndex = DofNumber[a] + d;
+          for( int d=0 ; d<nDofPerNode ; ++d )
+          {
+            globalIndex const rowIndex    = nodeManager->m_localToGlobalMap[a]*nDofPerNode + d;
+            globalIndex const columnIndex = DofNumber[a] + d;
 
-          permutationMatrix.insert(rowIndex, columnIndex, 1.0);
+            permutationMatrix.insert(rowIndex, columnIndex, 1.0);
+          }
         }
       }
   permutationMatrix.close();
   permutationMatrix.set(1);
 }
 
-void CreateCellUnknownPermutationMatrix()
+void CreatePermutationMatrix(ElementRegionManager* const elemManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const DofKey,
+                             ParallelMatrix & permutationMatrix)
 {
+  /* Crates a permutation matrix for a given cell centered variable specified by the DofKey. It consider that nDofPerNode
+   * dofs are associated with each node (e.g., nDofPerNode = 3 for the displacement).
+   *
+   * The permutation matrix maps from the dofs ordering set by the DOFManager to the ordering based on the global
+   * indexes of the cells.
+   */
+
+  // Create permuation matrix based on size provided.
+  permutationMatrix.createWithLocalSize(nRows, nCols, 1, MPI_COMM_GEOSX);
+
+  elemManager->forElementSubRegions([&]( ElementSubRegionBase const * const elementSubRegion )
+  {
+    localIndex const numElems = elementSubRegion->size();
+    arrayView1d<globalIndex> const &
+    DofNumber = elementSubRegion->getReference< array1d<globalIndex> >( DofKey );
+
+    for( localIndex k=0 ; k<numElems ; ++k )
+    {
+      if (DofNumber[k] >= 0)
+      {
+        for( int d=0 ; d<nDofPerNode ; ++d )
+        {
+          globalIndex const rowIndex    = k * nDofPerNode + d;
+          globalIndex const columnIndex = DofNumber[k]*nDofPerNode + d;
+
+          permutationMatrix.insert(rowIndex, columnIndex, 1.0);
+        }
+      }
+    }
+  });
+  permutationMatrix.close();
+  permutationMatrix.set(1);
 }
 
 ParallelVector PermuteVector(ParallelVector const & vector,
@@ -70,14 +116,14 @@ ParallelVector PermuteVector(ParallelVector const & vector,
 }
 
 /*
- *  permutedMatrix = permutationMatrixLeft * matrix * permutationMatrix^T;
+ *  permutedMatrix = permutationMatrix * matrix * permutationMatrix^T;
  */
 ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                              ParallelMatrix const & permutationMatrix)
 {
   ParallelMatrix temp;
   ParallelMatrix permutedMatrix;
-
+  // The value 24 is hardcoded and should probably be changed (It s fine for displacement).
   temp.createWithLocalSize( matrix.localRows(),
                             matrix.localCols(),
                             24,
@@ -88,11 +134,8 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                                       24,
                                       MPI_COMM_GEOSX );
 
-  matrix.multiply( false, permutationMatrix, true, temp, false );
-  temp.close();
-  permutationMatrix.multiply( false, temp, false, permutedMatrix, false );
-  permutedMatrix.close();
-  // permutedMatrix.unwrappedPointer()->MakeDataContiguous();
+  permutationMatrix.multiply(matrix, temp, true);
+  permutationMatrix.rightMultiplyTranspose(temp, permutedMatrix, true);
 
   return permutedMatrix;
 }
@@ -118,14 +161,38 @@ ParallelMatrix PermuteMatrix(ParallelMatrix const & matrix,
                                       24,
                                       MPI_COMM_GEOSX );
 
-  matrix.multiply( false, permutationMatrixRight, true, temp, false );
-  temp.close();
-  permutationMatrixLeft.multiply( false, temp, false, permutedMatrix, false );
-  permutedMatrix.close();
-  // permutedMatrix.unwrappedPointer()->MakeDataContiguous();
+  permutationMatrixLeft.multiply( matrix, temp, true );
+  permutationMatrixRight.rightMultiplyTranspose( temp, permutedMatrix, true );
 
   return permutedMatrix;
 }
+
+void PrintPermutedVector(ParallelVector const & vector,
+                         ParallelMatrix const & permuationMatrix,
+                         std::ostream & os )
+{
+  ParallelVector permutedVector = PermuteVector(vector, permuationMatrix);
+  permutedVector.print(os);
+}
+
+void PrintPermutedMatrix(ParallelMatrix const & matrix,
+                         ParallelMatrix const & permutationMatrix,
+                         std::ostream & os)
+{
+  ParallelMatrix permutedMatrix = PermuteMatrix(matrix, permutationMatrix);
+  permutedMatrix.print(os);
+}
+
+void PrintPermutedMatrix(ParallelMatrix const & matrix,
+                         ParallelMatrix const & permutationMatrixLeft,
+                         ParallelMatrix const & permutationMatrixRight,
+                         std::ostream & os)
+
+{
+  ParallelMatrix permutedMatrix = PermuteMatrix(matrix, permutationMatrixLeft, permutationMatrixRight);
+  permutedMatrix.print(os);
+}
+
 
 
 } // namespace LAIHelperFunctions

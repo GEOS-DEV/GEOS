@@ -413,9 +413,27 @@ public:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-  void multiplyTranspose( EpetraMatrix const & src,
-                          EpetraMatrix & dst,
-                          bool const closeResult = true ) const;
+  void leftMultiplyTranspose( EpetraMatrix const & src,
+                              EpetraMatrix & dst,
+                              bool const closeResult = true ) const;
+
+  /**
+     * @brief Matrix/Matrix transpose multiplication.
+     *
+     * Compute <tt>B * this^T = C<tt>.
+     *
+     * \param src Input matrix (B).
+     * \param dst Output matrix (C).
+     * \param closeResult whether to close @p dst for additional entries.
+     *
+     * Note that the output matrix C should have the same
+     * row-map as this.  If close() has already been called
+     * on C, then C's sparsity pattern must already contain
+     * the nonzero entries produced by the product this*B.
+     */
+    void rightMultiplyTranspose( EpetraMatrix const & src,
+                                 EpetraMatrix & dst,
+                                 bool const closeResult = true ) const;
 
 
   /**
@@ -610,16 +628,15 @@ public:
 
   //@}
 
-  /**
-   * @brief Perform a matrix matrix product with Parallel Matrix
-   */
-  void multiply( bool const transA,
-                 EpetraMatrix const & B,
-                 bool const transB,
-                 EpetraMatrix & C,
-                 bool const closeResult ) const;
-
 private:
+  /**
+     * @brief Perform a matrix matrix product with Parallel Matrix
+     */
+    void multiply( bool const transA,
+                   EpetraMatrix const & B,
+                   bool const transB,
+                   EpetraMatrix & C,
+                   bool const closeResult ) const;
 
   /**
    * Boolean value, true if the matrix had been finalized, false if not.
