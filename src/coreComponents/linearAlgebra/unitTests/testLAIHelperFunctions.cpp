@@ -177,11 +177,11 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
       {
 
         localIndex index = dofNumber(a) + d;
-        real64  Value = a * 3 + d;
-        // std::cout<< "dof " << index << "value = " << Value << std::endl;
-        nodalVariable.add(index, Value);
-        index =  a * 3 + d;
-        expectedPermutedVector.add(index, Value);
+        real64  Value = nodeManager->m_localToGlobalMap[a] * 3 + d;
+        //std::cout << "node " << a <<  " dof " << index << " value = " << Value << std::endl;
+        nodalVariable.set(index, Value);
+        index =  nodeManager->m_localToGlobalMap[a] * 3 + d;
+        expectedPermutedVector.set(index, Value);
       }
     }
   }
@@ -200,15 +200,17 @@ TEST_F(LAIHelperFunctionsTest, Test_NodalVectorPermutation)
   // permutationMatrix.print(std::cout);
   ParallelVector permutedVector = LAIHelperFunctions::PermuteVector(nodalVariable, permutationMatrix);
 
-//  nodalVariable.print(std::cout);
-//  permutedVector.print(std::cout);
+  //expectedPermutedVector.print(std::cout);
+  //nodalVariable.print(std::cout);
+  //permutedVector.print(std::cout);
 
   permutedVector.axpy(-1, expectedPermutedVector);
 
   real64 vectorNorm = permutedVector.norm1();
   real64 tolerance  = 1e-10;
 
-  EXPECT_TRUE (vectorNorm < tolerance);
+  EXPECT_LT( vectorNorm, tolerance );
+
 }
 
 TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
@@ -246,11 +248,11 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
         if (dofNumber[k] >= 0 && isGhost[k] < 0 )
         {
             globalIndex index = dofNumber[k];
-            real64 Value = k;
-            cellCenteredVariable.add(index, Value);
-            index = k;
-            Value = k;
-            expectedPermutedVector.add(index, Value);
+            real64 Value = elementSubRegion->m_localToGlobalMap[k];
+            cellCenteredVariable.set(index, Value);
+            index = elementSubRegion->m_localToGlobalMap[k];
+            Value = elementSubRegion->m_localToGlobalMap[k];
+            expectedPermutedVector.set(index, Value);
         }
       }
     });
@@ -275,7 +277,8 @@ TEST_F(LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation)
   real64 vectorNorm = permutedVector.norm1();
   real64 tolerance  = 1e-10;
 
-  EXPECT_TRUE (vectorNorm < tolerance);
+  EXPECT_LT( vectorNorm, tolerance );
+
 }
 
 /**
