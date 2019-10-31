@@ -89,7 +89,7 @@ void CreatePermutationMatrix(ElementRegionManager* const elemManager,
       {
         for( int d=0 ; d<nDofPerCell ; ++d )
         {
-          globalIndex const rowIndex    = k * nDofPerCell + d;
+          globalIndex const rowIndex    = elementSubRegion->m_localToGlobalMap[k] * nDofPerCell + d;
           globalIndex const columnIndex = DofNumber[k]*nDofPerCell + d;
 
           permutationMatrix.insert(rowIndex, columnIndex, 1.0);
