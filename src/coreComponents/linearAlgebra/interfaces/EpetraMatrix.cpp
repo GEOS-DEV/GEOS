@@ -343,9 +343,9 @@ void EpetraMatrix::multiply( EpetraMatrix const & src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product this^T * src = dst.
-void EpetraMatrix::leftMultiplyTranspose( geosx::EpetraMatrix const & src,
-                                      geosx::EpetraMatrix & dst,
-                                      bool const closeResult ) const
+void EpetraMatrix::leftMultiplyTranspose( EpetraMatrix const & src,
+                                          EpetraMatrix & dst,
+                                          bool const closeResult ) const
 {
   this->multiply( true, src, false, dst, closeResult );
 }
@@ -354,9 +354,9 @@ void EpetraMatrix::leftMultiplyTranspose( geosx::EpetraMatrix const & src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product src * this^T = dst.
-void EpetraMatrix::rightMultiplyTranspose(EpetraMatrix const & src,
-                                          EpetraMatrix & dst,
-                                          bool const closeResult ) const
+void EpetraMatrix::rightMultiplyTranspose( EpetraMatrix const & src,
+                                           EpetraMatrix & dst,
+                                           bool const closeResult ) const
 {
   src.multiply( false, *this, true, dst, closeResult );
 }
