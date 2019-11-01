@@ -36,12 +36,12 @@ TEST( testDefaultValue, testScalar )
 
 TEST( testDefaultValue, testArray )
 {
-  using array1 = array_decl< double, 1 >;
-  using array2 = array_decl< double, 2 >;
-  using array3 = array_decl< double, 3 >;
-  using array4 = array_decl< int, 1 >;
-  using array5 = array_decl< long int, 1 >;
-  using array6 = array_decl< long long int, 1 >;
+  using array1 = Array< double, 1 >;
+  using array2 = Array< double, 2 >;
+  using array3 = Array< double, 3 >;
+  using array4 = Array< int, 1 >;
+  using array5 = Array< long int, 1 >;
+  using array6 = Array< long long int, 1 >;
   EXPECT_TRUE( DefaultValue< array1 >::has_default_value==true );
   EXPECT_TRUE( DefaultValue< array2 >::has_default_value==true );
   EXPECT_TRUE( DefaultValue< array3 >::has_default_value==true );

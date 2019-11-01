@@ -67,9 +67,9 @@ void checkDerivative( arraySlice1d< real64 const > const & valueEps,
 }
 
 template<int DIM, typename ... Args>
-void checkDerivative( array_slice< real64 const, DIM > const & valueEps,
-                      array_slice< real64 const, DIM > const & value,
-                      array_slice< real64 const, DIM > const & deriv,
+void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
+                      ArraySlice< real64 const, DIM > const & value,
+                      ArraySlice< real64 const, DIM > const & deriv,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
@@ -88,9 +88,9 @@ void checkDerivative( array_slice< real64 const, DIM > const & valueEps,
 }
 
 template< int DIM, typename ... Args >
-void checkDerivative( array_slice< real64 const, DIM > const & valueEps,
-                      array_slice< real64 const, DIM > const & value,
-                      array_slice< real64 const, DIM > const & deriv,
+void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
+                      ArraySlice< real64 const, DIM > const & value,
+                      ArraySlice< real64 const, DIM > const & deriv,
                       real64 const eps,
                       real64 const relTol,
                       string const & name,
