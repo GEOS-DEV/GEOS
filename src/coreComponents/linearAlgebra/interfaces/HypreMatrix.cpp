@@ -567,6 +567,51 @@ void HypreMatrix::insert( array1d<globalIndex> const & rowIndices,
              values );
 }
 
+void HypreMatrix::add( globalIndex const * rowIndices,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const numRows,
+                       localIndex const numCols )
+{
+  for( globalIndex i = 0 ; i < numRows ; ++i )
+  {
+    this->add( rowIndices[i],
+               colIndices,
+               values + numCols * i,
+               numCols );
+  }
+}
+
+void HypreMatrix::set( globalIndex const * rowIndices,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const numRows,
+                       localIndex const numCols )
+{
+  for( globalIndex i = 0 ; i < numRows ; ++i )
+  {
+    this->set( rowIndices[i],
+               colIndices,
+               values + numCols * i,
+               numCols );
+  }
+}
+
+void HypreMatrix::insert( globalIndex const * rowIndices,
+                       globalIndex const * colIndices,
+                       real64 const * values,
+                       localIndex const numRows,
+                       localIndex const numCols )
+{
+  for( globalIndex i = 0 ; i < numRows ; ++i )
+  {
+    this->insert( rowIndices[i],
+                  colIndices,
+                  values + numCols * i,
+                  numCols );
+  }
+}
+
 // -------------------------
 // Linear Algebra
 // -------------------------
@@ -611,6 +656,8 @@ void HypreMatrix::multiply( HypreMatrix const & src,
   {
     dst.open();
   }
+
+  std::cout << "\n\n\n\n*********** MERDA --- HYPRE **********************\n\n\n\n";
 
 }
 
@@ -878,6 +925,36 @@ void HypreMatrix::getRowCopy( globalIndex globalRow,
                                  values.data() );
 }
 
+real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
+{
+  GEOS_ASSERT_MSG( m_is_pattern_fixed == true,
+                   "matrix sparsity pattern not created" );
+  GEOS_ASSERT_MSG( this->ilower() <= globalRow &&
+                   globalRow < this->iupper(),
+                   std::string("Row ") +
+                   std::to_string(globalRow) +
+                   std::string(" not on processor ") +
+                   std::to_string( MpiWrapper::Comm_rank( hypre_IJMatrixComm(m_ij_mat) ) ) );
+
+  // Get local row index
+  HYPRE_Int localRow = integer_conversion<HYPRE_Int>(globalRow - this->ilower());
+
+  // Get diagonal block
+  hypre_CSRMatrix * prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int *       IA       = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int *       JA       = hypre_CSRMatrixJ( prt_CSR );
+  double *          ptr_data = hypre_CSRMatrixData( prt_CSR );
+
+  for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
+  {
+    if ( JA[j] == globalRow )
+    {
+      return ptr_data[j];
+    }
+  }
+
+  return 0.0;
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Clear row
@@ -945,6 +1022,24 @@ HYPRE_IJMatrix * HypreMatrix::unwrappedPointer()
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getLocalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a global row index to local row index
+localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
+{
+  return integer_conversion<localIndex>( index - this->ilower() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// getGlobalRowID
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Map a local row index to global row index
+globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
+{
+  return this->ilower() + integer_conversion<globalIndex>( index );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Get number of global rows.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Accessor for the number of global rows
@@ -962,6 +1057,26 @@ globalIndex HypreMatrix::globalRows() const
 globalIndex HypreMatrix::globalCols() const
 {
   return hypre_IJMatrixGlobalNumCols(m_ij_mat);
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get number of local rows.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+localIndex HypreMatrix::localRows() const
+{
+  return integer_conversion<localIndex>( this->iupper() -
+                                         this->ilower() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get number of local columns.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+localIndex HypreMatrix::localCols() const
+{
+  return integer_conversion<localIndex>( this->jupper() -
+                                         this->jlower() );
 }
 
 //
@@ -997,26 +1112,82 @@ globalIndex HypreMatrix::iupper() const
   return integer_conversion<globalIndex>( iupper + 1);
 }
 
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Print to terminal.
-//// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-//// Wrapper to print the trilinos output of the matrix
-//void EpetraMatrix::print() const
-//{
-//  if( m_matrix.get() != nullptr )
-//  {
-//    std::cout << *m_matrix << std::endl;
-//  }
-//}
+//
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the lower index owned by processor.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Accessor for the index of the first global row
+globalIndex HypreMatrix::jlower() const
+{
+  HYPRE_Int ilower, iupper, jlower, jupper;
+
+  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                               &ilower,
+                               &iupper,
+                               &jlower,
+                               &jupper );
+  return integer_conversion<globalIndex>( jlower );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get the upper index owned by processor.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Accessor for the index of the last global row
+globalIndex HypreMatrix::jupper() const
+{
+  HYPRE_Int ilower, iupper, jlower, jupper;
+
+  HYPRE_IJMatrixGetLocalRange( m_ij_mat,
+                               &ilower,
+                               &iupper,
+                               &jlower,
+                               &jupper );
+  return integer_conversion<globalIndex>( jupper + 1);
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Get number of local nonzeros.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Accessor for the number of local nonzeros
+localIndex HypreMatrix::localNonzeros() const
+{
+  hypre_CSRMatrix * prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
+
+  hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
+  HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
+
+  return integer_conversion<localIndex>(diag_nnz + offdiag_nnz);
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Print to terminal.
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Wrapper to print the trilinos output of the matrix
+void HypreMatrix::print( std::ostream & os ) const
+{
+  GEOS_ERROR_IF( !m_is_ready_to_use,
+                 "matrix appears to be empty (not created) or not finalized" );
+  if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_mat ) ) == 0 )
+  {
+    os << "Hypre interface: no output on screen available/n";
+    os << "                 use write method";
+  }
+}
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Write to matlab-compatible file
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Note: EpetraExt also supports a MatrixMarket format as well
-void HypreMatrix::write( string const & filename ) const
-                         {
+void HypreMatrix::write( string const & filename,
+                         bool const mtxFormat ) const
+{
   GEOS_ERROR_IF( !m_is_ready_to_use,
                  "matrix appears to be empty (not created) or not finalized" );
+  if (mtxFormat)
+  {
+    std::cout << "MatrixMarket not available for HypreMtrix, default used\n";
+  }
   HYPRE_IJMatrixPrint( m_ij_mat, filename.c_str() );
 }
 
@@ -1081,6 +1252,13 @@ real64 HypreMatrix::normFrobenius() const
 bool HypreMatrix::isAssembled() const
 {
   return m_is_pattern_fixed;
+}
+
+std::ostream & operator<<( std::ostream & os,
+                           HypreMatrix const & matrix )
+{
+  matrix.print( os );
+  return os;
 }
 
 }// end geosx namespace

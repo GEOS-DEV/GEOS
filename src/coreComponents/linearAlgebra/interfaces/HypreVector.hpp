@@ -398,12 +398,13 @@ public:
   /**
    * @brief Print the vector in Trilinos format to the terminal.
    */
-  void print() const;
+  void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Write the vector to file in HYPRE format
    */
-  void write(string const & filename) const;
+  void write(string const & filename,
+             bool const mtxFormat = true ) const;
 
   //@}
 
@@ -420,13 +421,13 @@ private:
   HYPRE_ParVector m_par_vector = nullptr;
 };
 
-///**
-// * @brief Stream insertion operator for EpetraVector
-// * @param os the output stream
-// * @param vec the vector to be printed
-// * @return reference to the output stream
-// */
-//std::ostream & operator<<( std::ostream & os, EpetraVector const & vec );
+/**
+ * @brief Stream insertion operator for EpetraVector
+ * @param os the output stream
+ * @param vec the vector to be printed
+ * @return reference to the output stream
+ */
+std::ostream & operator<<( std::ostream & os, HypreVector const & vec );
 
 }// end geosx namespace
 

@@ -560,20 +560,29 @@ real64 HypreVector::normInf() const
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Print vector to the std::cout in Trilinos format.
 
-void HypreVector::print() const
+void HypreVector::print( std::ostream & os ) const
 {
   GEOS_ERROR_IF( m_ij_vector == nullptr,
-                 "Vector appears to be empty (not created)" );
-  GEOS_ERROR( "not yet implemented" );
+                 "matrix appears to be empty (not created) or not finalized" );
+  if ( MpiWrapper::Comm_rank( hypre_IJMatrixComm( m_ij_vector ) ) == 0 )
+  {
+    os << "Hypre interface: no output on screen available/n";
+    os << "                 use write method";
+  }
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Write to file in HYPRE format
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
-void HypreVector::write( string const & filename ) const
+void HypreVector::write( string const & filename,
+                         bool const mtxFormat ) const
                          {
   GEOS_ERROR_IF( m_ij_vector == nullptr,
                  "vector appears to be empty (not created)" );
+  if (mtxFormat)
+  {
+    std::cout << "MatrixMarket not available for HypreMtrix, default used\n";
+  }
   HYPRE_IJVectorPrint( m_ij_vector, filename.c_str() );
 }
 
@@ -720,6 +729,12 @@ globalIndex HypreVector::iupper() const
   return hypre_ParVectorLastIndex(m_par_vector) + 1;
 }
 
+std::ostream & operator<<( std::ostream & os,
+                           HypreVector const & vec )
+{
+  vec.print( os );
+  return os;
+}
 
 } // end geosx
 

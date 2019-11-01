@@ -320,6 +320,57 @@ public:
                array1d<globalIndex> const & colIndices,
                array2d<real64> const & values);
 
+  /**
+   * @brief Add dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void add( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols );
+
+  /**
+   * @brief Set dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void set( globalIndex const * rowIndices,
+            globalIndex const * colIndices,
+            real64 const * values,
+            localIndex const numRows,
+            localIndex const numCols );
+
+  /**
+   * @brief Insert dense matrix.
+   *
+   * \param rowIndices Global row indices.
+   * \param colIndices Global col indices
+   * \param values Dense local matrix of values.
+   * \param numRows Number of row indices.
+   * \param numCols Number of column indices.
+   *
+   * @note Row major layout assumed in values
+   */
+  void insert( globalIndex const * rowIndices,
+               globalIndex const * colIndices,
+               real64 const * values,
+               localIndex const numRows,
+               localIndex const numCols );
+
   //@}
 
   //! @name Linear Algebra Methods
@@ -461,6 +512,13 @@ public:
                    array1d<real64> & values) const;
 
   /**
+   * @brief get diagonal element value on a given row
+   * @param globalRow global row index
+   * @return value of diagonal element on the row
+   */
+  real64 getDiagValue( globalIndex globalRow ) const;
+
+  /**
    * @brief Returns a pointer to the underlying HYPRE_IJMatrix object.
    */
   HYPRE_IJMatrix const * unwrappedPointer() const;
@@ -488,14 +546,46 @@ public:
   globalIndex globalCols() const;
 
   /**
+ * @brief Return the local number of columns on each processor
+ */
+  localIndex localRows() const;
+
+  /**
+   * @brief Return the local number of columns on each processor
+   */
+  localIndex localCols() const;
+
+
+
+
+  /**
    * @brief Returns the index of the first global row owned by that processor.
    */
   globalIndex ilower() const;
 
   /**
-   * @brief Returns the index of the last global row owned by that processor.
+   * @brief Returns the next index after last global row owned by that processor.
+   *
+   * @note The intention is for [ilower; iupper) to be used as a half-open index range
    */
   globalIndex iupper() const;
+
+  /**
+   * @brief Returns the index of the first global col owned by that processor.
+   */
+  globalIndex jlower() const;
+
+  /**
+   * @brief Returns the next index after last global col owned by that processor.
+   *
+   * @note The intention is for [jlower; jupper) to be used as a half-open index range
+   */
+  globalIndex jupper() const;
+
+  /**
+   * @brief Returns the number of nonzeros in the local portion of the matrix
+   */
+  localIndex localNonzeros() const;
 
 //  /**
 //   * @brief Returns the infinity norm of the matrix.
@@ -518,17 +608,28 @@ public:
   bool isAssembled() const;
   //@}
 
-//  //! @name I/O Methods
-//  //@{
-//  /**
-//   * @brief Print the matrix in Trilinos format to the terminal.
-//   */
-//  void print() const;
+  //! @name I/O Methods
+  //@{
+  /**
+   * @brief Print the matrix in Trilinos format to the terminal.
+   */
+  void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Write the matrix to filename in a HYPRE format.
    */
-  void write(string const & filename) const;
+  void write(string const & filename,
+             bool const mtxFormat = true ) const;
+
+  /**
+   * @brief Map a global row index to local row index
+   */
+  localIndex getLocalRowID( globalIndex const index ) const;
+
+  /**
+   * @brief Map a local row index to global row index
+   */
+  globalIndex getGlobalRowID( localIndex const index ) const;
 
   //@}
 
@@ -574,6 +675,15 @@ private:
 //   */
 //  std::unique_ptr<Epetra_Map> m_dst_map = nullptr;
 };
+
+/**
+ * @brief Stream insertion operator for EpetraMatrix
+ * @param os the output stream
+ * @param matrix the matrix to be printed
+ * @return reference to the output stream
+ */
+std::ostream & operator<<( std::ostream & os,
+                           HypreMatrix const & matrix );
 
 } // namespace geosx
 
