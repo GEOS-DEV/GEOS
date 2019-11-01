@@ -26,7 +26,7 @@
 #include "Macros.hpp"
 #include "Logger.hpp"
 #include "Array.hpp"
-#include "StackArrayWrapper.hpp"
+#include "StackBuffer.hpp"
 #include "SortedArray.hpp"
 #include "ArrayOfArrays.hpp"
 #include "ArrayOfSets.hpp"
@@ -132,17 +132,23 @@ using buffer_type = std::vector< buffer_unit_type >;
 
 //***** BEGIN ARRAY TYPEDEFS *****
 
-template< typename T, int NDIM, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex >;
+template< typename T,
+          int NDIM,
+          typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
+          template< typename ... > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
-template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
-using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+template< typename T,
+          int NDIM,
+          int UNIT_STRIDE_DIM = NDIM - 1,
+          template< typename ... > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
 template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
 using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
 
 template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using StackArray = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
+using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZE >;
 
 template< typename T >
 using array1d = Array< T, 1 >;
