@@ -129,7 +129,12 @@ public:
    */
   ///@{
 
-  static void Barrier( MPI_Comm ) {};
+  static void Barrier( MPI_Comm const & (comm)=MPI_COMM_GEOSX)
+  {
+  #ifdef GEOSX_USE_MPI
+    MPI_Barrier( comm );
+  #endif
+  }
 
 //  static int Bcast( void * buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
 
@@ -142,7 +147,7 @@ public:
 
   static int Comm_free( MPI_Comm * comm );
 
-  inline static int Comm_rank( MPI_Comm const & MPI_PARAM(comm) )
+  inline static int Comm_rank( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX )
   {
     int rank = 0;
   #ifdef GEOSX_USE_MPI
@@ -151,7 +156,7 @@ public:
     return rank;
   }
 
-  inline static int Comm_size( MPI_Comm const & MPI_PARAM(comm) )
+  inline static int Comm_size( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX )
   {
     int size = 1;
 #ifdef GEOSX_USE_MPI
@@ -390,6 +395,7 @@ public:
 };
 
 template<> inline MPI_Datatype MpiWrapper::getMpiType< char >()           { return MPI_CHAR; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< signed char >()    { return MPI_SIGNED_CHAR; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< float >()          { return MPI_FLOAT; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< double >()         { return MPI_DOUBLE; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< int >()            { return MPI_INT; }
@@ -520,6 +526,20 @@ void MpiWrapper::Broadcast( T & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const mpiType = getMpiType< T >();
   MPI_Bcast( &value, 1, mpiType, srcRank, MPI_COMM_GEOSX );
+#endif
+}
+
+template<>
+inline
+void MpiWrapper::Broadcast<std::string>( std::string & MPI_PARAM( value ), int MPI_PARAM( srcRank ) )
+{
+#ifdef GEOSX_USE_MPI
+  int size = value.size();
+  Broadcast( size, srcRank );
+
+  value.resize( size );
+
+  MPI_Bcast( const_cast< char * >( value.data() ), size, getMpiType< char >(), srcRank, MPI_COMM_GEOSX );
 #endif
 }
 

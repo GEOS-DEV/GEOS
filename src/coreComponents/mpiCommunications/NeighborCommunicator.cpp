@@ -45,10 +45,10 @@ NeighborCommunicator::NeighborCommunicator():
 //{
 //}
 
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              MPI_Request& sendRequest,
-                                             char * const receiveBuffer,
+                                             buffer_unit_type * const receiveBuffer,
                                              int const receiveSize,
                                              MPI_Request& receiveRequest,
                                              int const commID,
@@ -56,7 +56,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MpiWrapper::iSend( const_cast<char*>(sendBuffer),
+  MpiWrapper::iSend( const_cast<buffer_unit_type*>(sendBuffer),
              sendSize,
              m_neighborRank,
              sendTag,
@@ -153,7 +153,7 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              int const commID,
                                              MPI_Comm mpiComm )

@@ -35,7 +35,7 @@ namespace bufferOps
  */
 template< bool DO_PACKING, typename T >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Pack( char * & buffer, T const & var )
+Pack( buffer_unit_type * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
   static_if( DO_PACKING )
@@ -54,7 +54,7 @@ Pack( char * & buffer, T const & var )
  */
 template< typename T >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Unpack( char const * & buffer, T & var )
+Unpack( buffer_unit_type const * & buffer, T & var )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
   memcpy( &var, buffer, sizeOfUnpackedChars );
@@ -65,7 +65,7 @@ Unpack( char const * & buffer, T & var )
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
+Pack( buffer_unit_type * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
@@ -83,7 +83,7 @@ Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 
 template< typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
+Unpack( buffer_unit_type const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -101,7 +101,7 @@ Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expected
 
 
 template< bool DO_PACKING >
-localIndex Pack( char * & buffer, const std::string & var )
+localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
 {
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
@@ -118,13 +118,13 @@ localIndex Pack( char * & buffer, const std::string & var )
 }
 
 
-inline localIndex Unpack( char const * & buffer, string & var )
+inline localIndex Unpack( buffer_unit_type const * & buffer, string & var )
 {
   string::size_type stringsize = 0;
   localIndex sizeOfUnpackedChars = Unpack( buffer, stringsize );
 
   var.resize( stringsize );
-  var.assign( buffer, stringsize );
+  var.assign( reinterpret_cast< char const * >( buffer ), stringsize );
   buffer += stringsize;
   sizeOfUnpackedChars += stringsize;
 
@@ -134,7 +134,7 @@ inline localIndex Unpack( char const * & buffer, string & var )
 
 template< bool DO_PACKING, typename T >
 typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
-Pack( char * & buffer, T const & var )
+Pack( buffer_unit_type * & buffer, T const & var )
 {
   localIndex sizeOfPackedChars = 0;
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.Data(), var.Length());
@@ -144,7 +144,7 @@ Pack( char * & buffer, T const & var )
 
 template< typename T >
 typename std::enable_if< traits::is_tensorT< T >, localIndex >::type
-Unpack( char const * & buffer, T & var )
+Unpack( buffer_unit_type const * & buffer, T & var )
 {
   localIndex sizeOfUnpackedChars = 0;
   real64 * const pVar = var.Data();
@@ -156,7 +156,7 @@ Unpack( char const * & buffer, T & var )
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
-Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
+Pack( buffer_unit_type * & buffer, T const * const restrict var, INDEX_TYPE const length )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
@@ -171,7 +171,7 @@ Pack( char * & buffer, T const * const restrict var, INDEX_TYPE const length )
 
 template< typename T, typename INDEX_TYPE >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
-Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
+Unpack( buffer_unit_type const * & buffer, T * const restrict var, INDEX_TYPE const expectedLength )
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -191,7 +191,7 @@ Unpack( char const * & buffer, T * const restrict var, INDEX_TYPE const expected
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       T const * const restrict var,
       arraySlice1d< INDEX_TYPE const, UNIT_STRIDE_DIM > const & indices,
       INDEX_TYPE const length )
@@ -209,7 +209,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         T * const restrict var,
         arraySlice1d< INDEX_TYPE const > const & indices,
         INDEX_TYPE & length )
@@ -227,7 +227,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arraySlice1d< T const > const & var,
       INDEX_TYPE const length )
 {
@@ -252,7 +252,7 @@ Pack( char * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arraySlice1d< T const, UNIT_STRIDE_DIM > const & var,
       INDEX_TYPE const length )
 {
@@ -269,7 +269,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
 typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
         INDEX_TYPE const expectedLength )
 {
@@ -295,7 +295,7 @@ Unpack( char const * & buffer,
 
 template< typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM >
 typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T, UNIT_STRIDE_DIM > const & var,
         INDEX_TYPE const expectedLength )
 {
@@ -317,7 +317,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM0, int UNIT_STRIDE_DIM1 >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arraySlice1d< T const, UNIT_STRIDE_DIM0 > const & var,
       arraySlice1d< INDEX_TYPE const, UNIT_STRIDE_DIM1 > const & indices,
       INDEX_TYPE const length )
@@ -335,7 +335,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE, int UNIT_STRIDE_DIM0, int UNIT_STRIDE_DIM1 >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< T, UNIT_STRIDE_DIM0 > const & var,
         arraySlice1d< INDEX_TYPE const, UNIT_STRIDE_DIM1 > const & indices,
         INDEX_TYPE & length )
@@ -354,7 +354,7 @@ Unpack( char const * & buffer,
 
 
 template< bool DO_PACKING, typename T >
-localIndex Pack( char * & buffer, set< T > const & var )
+localIndex Pack( buffer_unit_type * & buffer, set< T > const & var )
 {
   const localIndex length = integer_conversion< localIndex >( var.size());
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
@@ -369,7 +369,7 @@ localIndex Pack( char * & buffer, set< T > const & var )
 
 
 template< typename T >
-localIndex Unpack( char const * & buffer, set< T > & var )
+localIndex Unpack( buffer_unit_type const * & buffer, set< T > & var )
 {
   var.clear();
 
@@ -387,7 +387,7 @@ localIndex Unpack( char const * & buffer, set< T > & var )
 }
 
 template< bool DO_PACKING, int UNIT_STRIDE_DIM >
-localIndex Pack( char * & buffer,
+localIndex Pack( buffer_unit_type * & buffer,
                  set< localIndex > const & var,
                  set< globalIndex > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const, UNIT_STRIDE_DIM > const & localToGlobal )
@@ -412,7 +412,7 @@ localIndex Pack( char * & buffer,
 
 template< typename SORTED >
 inline
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    set< localIndex > & var,
                    set< globalIndex > & unmappedGlobalIndices,
                    mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
@@ -445,7 +445,7 @@ localIndex Unpack( char const * & buffer,
 
 template< typename SORTED >
 inline
-localIndex Unpack( char const * & buffer,
+localIndex Unpack( buffer_unit_type const * & buffer,
                    ArrayOfSets< localIndex > & var,
                    localIndex const setIndex,
                    set< globalIndex > & unmappedGlobalIndices,
@@ -480,7 +480,7 @@ localIndex Unpack( char const * & buffer,
 
 
 template< bool DO_PACKING >
-localIndex Pack( char * & buffer,
+localIndex Pack( buffer_unit_type * & buffer,
                  set< localIndex > const & var,
                  arrayView1d< localIndex const > const & packList,
                  set< globalIndex > const & unmappedGlobalIndices,
@@ -518,8 +518,8 @@ localIndex Pack( char * & buffer,
 
 
 template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > >::value, localIndex >::type
-Pack( char * & buffer,
+typename std::enable_if< is_packable< T >, localIndex >::type
+Pack( buffer_unit_type * & buffer,
       LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.dims(), NDIM );
@@ -534,8 +534,8 @@ Pack( char * & buffer,
 
 
 template< typename T, int NDIM, typename PERMUTATION, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > >::value, localIndex >::type
-Unpack( char const * & buffer, LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > & var )
+typename std::enable_if< is_packable< T >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer, LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE > & var )
 {
   INDEX_TYPE dims[NDIM];
   localIndex sizeOfUnpackedChars = Unpack( buffer, dims, NDIM );
@@ -558,8 +558,8 @@ Unpack( char const * & buffer, LvArray::Array< T, NDIM, PERMUTATION, INDEX_TYPE 
 
 
 template< bool DO_PACKING, typename T, int NDIM, int UNIT_STRIDE_DIM, typename T_indices, typename INDEX_TYPE >
-typename std::enable_if< bufferOps::is_packable_array< LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > >::value, localIndex >::type
-Pack( char * & buffer,
+typename std::enable_if< is_packable< T >, localIndex >::type
+Pack( buffer_unit_type * & buffer,
       LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > const & var,
       const T_indices & indices )
 {
@@ -576,7 +576,7 @@ Pack( char * & buffer,
 
 template< typename T, int NDIM, int UNIT_STRIDE_DIM, typename T_indices, typename INDEX_TYPE >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, INDEX_TYPE > & var,
         const T_indices & indices )
 {
@@ -600,7 +600,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var )
 {
   localIndex sizeOfPackedChars = 0;
@@ -618,7 +618,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         LvArray::ArrayOfArrays< T, INDEX_TYPE > & var )
 {
   localIndex sizeOfUnpackedChars = 0;
@@ -639,7 +639,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       LvArray::ArrayOfSets< T, INDEX_TYPE > const & var )
 {
   localIndex sizeOfPackedChars = 0;
@@ -656,7 +656,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         LvArray::ArrayOfSets< T, INDEX_TYPE > & var )
 {
   LvArray::ArrayOfArrays< T, INDEX_TYPE > varAsArray;
@@ -669,7 +669,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename T, typename INDEX_TYPE, typename T_indices >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       LvArray::ArrayOfArrays< T, INDEX_TYPE > const & var,
       T_indices const & indices )
 {
@@ -688,7 +688,7 @@ Pack( char * & buffer,
 
 template< typename T, typename INDEX_TYPE, typename T_indices >
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         LvArray::ArrayOfArrays< T, INDEX_TYPE > & var,
         T_indices const & indices )
 {
@@ -713,7 +713,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, int UNIT_STRIDE_DIM >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & var,
       globalIndex const * const unmappedGlobalIndices,
       localIndex const length,
@@ -747,7 +747,7 @@ Pack( char * & buffer,
 template< typename SORTED >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         localIndex_array & var,
         array1d< globalIndex > & unmappedGlobalIndices,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
@@ -788,7 +788,7 @@ Unpack( char const * & buffer,
 template< typename SORTED >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< localIndex > & var,
         localIndex const subArrayIndex,
         array1d< globalIndex > & unmappedGlobalIndices,
@@ -830,7 +830,7 @@ Unpack( char const * & buffer,
 template< typename SORTED, int UNIT_STRIDE_DIM >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< localIndex, UNIT_STRIDE_DIM > const & var,
         array1d< globalIndex > & unmappedGlobalIndices,
         localIndex const expectedLength,
@@ -877,7 +877,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const & var,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
@@ -908,7 +908,7 @@ Pack( char * & buffer,
 template< typename SORTED0, typename SORTED1 >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arrayView1d< localIndex > & var,
         array1d< localIndex > const & indices,
         mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap,
@@ -956,7 +956,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename SORTED >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arrayView1d< localIndex_array const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
@@ -992,7 +992,7 @@ Pack( char * & buffer,
 template< typename SORTED0, typename SORTED1, typename SORTED2 >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arrayView1d< localIndex_array > & var,
         array1d< localIndex > & indices,
         mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
@@ -1043,7 +1043,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename SORTED >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       ArrayOfArraysView< localIndex const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
@@ -1078,7 +1078,7 @@ Pack( char * & buffer,
 
 template< bool DO_PACKING, typename SORTED >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       ArrayOfArraysView< localIndex const > const & var,
       mapBase< localIndex, SortedArray< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
@@ -1114,7 +1114,7 @@ Pack( char * & buffer,
 template< typename SORTED0, typename SORTED1, typename SORTED2 >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< localIndex > & var,
         array1d< localIndex > & indices,
         mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
@@ -1166,7 +1166,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename SORTED >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arrayView1d< set< localIndex > const > const & var,
       mapBase< localIndex, set< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
@@ -1201,7 +1201,7 @@ Pack( char * & buffer,
 template< typename SORTED0, typename SORTED1, typename SORTED2 >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arrayView1d< set< localIndex > > & var,
         localIndex_array & indices,
         mapBase< localIndex, set< globalIndex >, SORTED0 > & unmappedGlobalIndices,
@@ -1253,7 +1253,7 @@ Unpack( char const * & buffer,
 template< typename SORTED0, typename SORTED1, typename SORTED2 >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         ArrayOfSets< localIndex > & var,
         localIndex_array & indices,
         mapBase< localIndex, SortedArray< globalIndex >, SORTED0 > & unmappedGlobalIndices,
@@ -1306,7 +1306,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, int UNIT_STRIDE_DIM0, int UNIT_STRIDE_DIM1 >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arrayView2d< localIndex const, UNIT_STRIDE_DIM0 > const & var,
       arrayView1d< localIndex > const & indices,
       arraySlice1d< globalIndex const, UNIT_STRIDE_DIM1 > const & localToGlobalMap )
@@ -1326,7 +1326,7 @@ Pack( char * & buffer,
 template< typename SORTED, int UNIT_STRIDE_DIM >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arrayView2d< localIndex, UNIT_STRIDE_DIM > const & var,
         array1d< localIndex > & indices,
         mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
@@ -1371,7 +1371,7 @@ Unpack( char const * & buffer,
 
 template< bool DO_PACKING, typename SORTED, int UNIT_STRIDE_DIM0 >
 localIndex
-Pack( char * & buffer,
+Pack( buffer_unit_type * & buffer,
       arrayView2d< localIndex const, UNIT_STRIDE_DIM0 > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
@@ -1408,7 +1408,7 @@ Pack( char * & buffer,
 template< typename SORTED0, typename SORTED1, typename SORTED2, int UNIT_STRIDE_DIM >
 inline
 localIndex
-Unpack( char const * & buffer,
+Unpack( buffer_unit_type const * & buffer,
         arrayView2d< localIndex, UNIT_STRIDE_DIM > const & var,
         localIndex_array & indices,
         mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
@@ -1463,14 +1463,14 @@ Unpack( char const * & buffer,
 }
 
 
-template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename SORTED >
-typename std::enable_if< bufferOps::is_packable_map< mapBase< T_KEY, T_VAL, SORTED > >::value, localIndex >::type
-Pack( char * & buffer, mapBase< T_KEY, T_VAL, SORTED > const & var )
+template< bool DO_PACKING, typename MAP_TYPE >
+typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+Pack( buffer_unit_type * & buffer, MAP_TYPE const & var )
 {
-  const typename mapBase< T_KEY, T_VAL, SORTED >::size_type length = var.size();
+  const typename MAP_TYPE::size_type length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename mapBase< T_KEY, T_VAL, SORTED >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename MAP_TYPE::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second );
@@ -1480,38 +1480,37 @@ Pack( char * & buffer, mapBase< T_KEY, T_VAL, SORTED > const & var )
 }
 
 
-template< typename T_KEY, typename T_VAL, typename SORTED >
-typename std::enable_if< bufferOps::is_packable_map< mapBase< T_KEY, T_VAL, SORTED > >::value, localIndex >::type
-Unpack( char const * & buffer, mapBase< T_KEY, T_VAL, SORTED > & map )
+template< typename MAP_TYPE >
+typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map )
 {
   map.clear();
-  typename mapBase< T_KEY, T_VAL, SORTED >::size_type map_length;
+  typename MAP_TYPE::size_type map_length;
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  for( typename mapBase< T_KEY, T_VAL, SORTED >::size_type a=0 ; a<map_length ; ++a )
+  for( typename MAP_TYPE::size_type a=0 ; a<map_length ; ++a )
   {
-    T_KEY key;
-    T_VAL value;
+    typename MAP_TYPE::key_type key;
+    typename MAP_TYPE::mapped_type value;
     sizeOfUnpackedChars += Unpack( buffer, key );
     sizeOfUnpackedChars += Unpack( buffer, value );
 
-    map[key] = std::move( value );
+    map[ key ] = std::move( value );
   }
 
   return sizeOfUnpackedChars;
 }
 
 
-template< bool DO_PACKING, typename T_KEY, typename T_VAL, typename SORTED, typename T_INDICES >
-typename std::enable_if< bufferOps::is_packable_map< mapBase< T_KEY, T_VAL, SORTED > >::value && bufferOps::is_packable_by_index< T_VAL >::value,
-                         localIndex >::type
-Pack( char * & buffer, mapBase< T_KEY, T_VAL, SORTED > const & var, T_INDICES const & packIndices )
+template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
+typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packIndices )
 {
-  const typename mapBase< T_KEY, T_VAL, SORTED >::size_type length = var.size();
+  typename MAP_TYPE::size_type const length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename mapBase< T_KEY, T_VAL, SORTED >::const_iterator i=var.begin() ; i!=var.end() ; ++i )
+  for( typename MAP_TYPE::const_iterator i=var.begin() ; i!=var.end() ; ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second, packIndices );
@@ -1521,20 +1520,19 @@ Pack( char * & buffer, mapBase< T_KEY, T_VAL, SORTED > const & var, T_INDICES co
 }
 
 
-template< typename T_KEY, typename T_VAL, typename SORTED, typename T_INDICES >
-typename std::enable_if< bufferOps::is_packable_map< mapBase< T_KEY, T_VAL, SORTED > >::value && bufferOps::is_packable_by_index< T_VAL >::value,
-                         localIndex >::type
-Unpack( char const * & buffer, mapBase< T_KEY, T_VAL, SORTED > & map, T_INDICES const & unpackIndices )
+template< typename MAP_TYPE, typename T_INDICES >
+typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unpackIndices )
 {
   map.clear();
-  typename mapBase< T_KEY, T_VAL, SORTED >::size_type map_length;
+  typename MAP_TYPE::size_type map_length;
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  for( typename mapBase< T_KEY, T_VAL, SORTED >::size_type a=0 ; a<map_length ; ++a )
+  for( typename MAP_TYPE::size_type a=0 ; a<map_length ; ++a )
   {
-    T_KEY key;
-    T_VAL value;
+    typename MAP_TYPE::key_type key;
+    typename MAP_TYPE::mapped_type value;
     sizeOfUnpackedChars += Unpack( buffer, key );
     sizeOfUnpackedChars += Unpack( buffer, value, unpackIndices );
 
@@ -1547,7 +1545,7 @@ Unpack( char const * & buffer, mapBase< T_KEY, T_VAL, SORTED > & map, T_INDICES 
 
 template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
 localIndex
-Pack( char * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
+Pack( buffer_unit_type * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, var.first );
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.second );
@@ -1557,7 +1555,7 @@ Pack( char * & buffer, std::pair< T_FIRST, T_SECOND > const & var )
 
 template< typename T_FIRST, typename T_SECOND >
 localIndex
-Unpack( char const * & buffer, std::pair< T_FIRST, T_SECOND > & var )
+Unpack( buffer_unit_type const * & buffer, std::pair< T_FIRST, T_SECOND > & var )
 {
   localIndex sizeOfUnpackedChars = Unpack( buffer, var.first );
   sizeOfUnpackedChars += Unpack( buffer, var.second );

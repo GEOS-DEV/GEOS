@@ -133,7 +133,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 
   // extract data views from both fluids
 #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-  FLUID->getReference<array_decl<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+  FLUID->getReference<Array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
 
   CompositionalVarContainer<1> phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),

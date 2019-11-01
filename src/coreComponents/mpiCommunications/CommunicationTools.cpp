@@ -236,8 +236,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   // object to receive the neighbor data
   // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
   // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the object.
-    std::vector<map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > > >
-    neighborCompositionObjects( neighbors.size() );
+  std::vector<map<globalIndex, std::vector<std::pair<std::vector<globalIndex>, globalIndex> > > >
+  neighborCompositionObjects( neighbors.size() );
 
 
     for( int count=0 ; count<neighbors.size() ; ++count )
@@ -580,6 +580,7 @@ void CommunicationTools::FindGhosts( MeshLevel * const meshLevel,
       subRegion->FixUpDownMaps(false);
     }
   }
+
 
   CommunicationTools::releaseCommID( commID );
 }
