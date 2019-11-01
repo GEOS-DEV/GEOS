@@ -177,6 +177,9 @@ private:
   ParallelMatrix m_matrix01;
   ParallelMatrix m_matrix10;
 
+  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
+  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
+
   integer m_maxNumResolves;
 
 };
