@@ -127,9 +127,9 @@ The date (YYYY-MM-DD) is appended to the tag name so the client code (i.e. GEOSX
 For the OSX builds, we build a tarball of the TPLs and save them a remote location.
 The client (GEOSX again) will select the version it needs by defining the `TPL_OSX_TRAVIS_BUILD_NUMBER` environment variable in the `.travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ file.
 An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
-Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ to install open-mpi in particular.
-To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_URL variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_).
-To avoid any inconsistency, GEOSX should also use the same hash.
+Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ (to install open-mpi in particular).
+To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_) and stored in a `brew_hash.txt` file at the root folder of the TPLs.
+It is therefore possible for GEOSX to build against the same revision of brew packages.
 
 It must be mentionned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
 Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
