@@ -40,9 +40,9 @@ char** global_argv;
 template<int DIM>
 struct TestReservoirVarContainer
 {
-  array_slice<real64,DIM> value; // variable value
-  array_slice<real64,DIM> dPres; // derivative w.r.t. pressure
-  array_slice<real64,DIM> dRate; // derivative w.r.t. rate
+  ArraySlice<real64,DIM> value; // variable value
+  ArraySlice<real64,DIM> dPres; // derivative w.r.t. pressure
+  ArraySlice<real64,DIM> dRate; // derivative w.r.t. rate
 };
 
 template<typename LAMBDA>

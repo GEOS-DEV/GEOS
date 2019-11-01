@@ -489,8 +489,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elementManager = *(mesh->getElemManager());
 
-  std::vector<std::set<localIndex> > nodesToRupturedFaces;
-  std::vector<std::set<localIndex> > edgesToRupturedFaces;
+  std::vector< std::set< localIndex > > nodesToRupturedFaces;
+  std::vector< std::set< localIndex > > edgesToRupturedFaces;
 
   ArrayOfArraysView<localIndex> const & nodeToElementMap = nodeManager.elementList();
   ArrayOfArraysView<localIndex const> const & faceToNodeMap = faceManager.nodeList();
@@ -2419,7 +2419,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
     }
 
     // faceToElement
-    std::vector<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
+    std::vector< std::set< std::pair< CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
@@ -2437,7 +2437,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
             for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
             {
               const localIndex faceID = elemsToFaces( k, a );
-              inverseElemsToFaces[faceID].insert( elem );
+              inverseElemsToFaces[ faceID ].insert( elem );
 
   //            if( parentFaceIndex[faceID] != -1 )
   //            {
@@ -4109,8 +4109,8 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager & GEOSX_UNUSED_ARG( elementManager ),
-                                                std::vector<std::set<localIndex> >& nodesToRupturedFaces,
-                                                std::vector<std::set<localIndex> >& edgesToRupturedFaces )
+                                                std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                                                std::vector< std::set< localIndex > > & edgesToRupturedFaces )
 {
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();

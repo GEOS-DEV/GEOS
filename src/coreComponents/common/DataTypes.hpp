@@ -35,9 +35,6 @@
 // TPL includes
 #include <camp/camp.hpp>
 
-#ifdef GEOSX_USE_ATK
-  #include <axom/sidre/core/SidreTypes.hpp>
-#endif
 
 // System includes
 #ifdef GEOSX_USE_MPI
@@ -55,6 +52,12 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <set>
+
+/// macro definition to specify whether or not to use dynamic_cast
+#ifndef USE_DYNAMIC_CASTING
+  #define USE_DYNAMIC_CASTING 1
+#endif
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -62,6 +65,31 @@
 namespace geosx
 {
 
+template< typename NEW_TYPE, typename EXISTING_TYPE >
+NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
+{
+  static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
+
+#if USE_DYNAMIC_CASTING
+  NEW_TYPE const newVal = dynamic_cast< NEW_TYPE >( val );
+#else
+  NEW_TYPE const newVal = static_cast< NEW_TYPE >( val );
+#endif
+
+  return newVal;
+}
+
+template< typename NEW_TYPE, typename EXISTING_TYPE >
+NEW_TYPE dynamicCast( EXISTING_TYPE & val )
+{
+  static_assert( std::is_reference< NEW_TYPE >::value, "NEW_TYPE must be a reference." );
+
+  using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
+  POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
+  GEOS_ERROR_IF( ptr == nullptr, "Cast failed." );
+
+  return *ptr;
+}
 
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
@@ -99,82 +127,82 @@ using real64_ptr        = ptr< real64 >;
 using real64_const_ptr  = const_ptr< real64 >;
 
 
-using buffer_unit_type = char;
+using buffer_unit_type = signed char;
 using buffer_type = std::vector< buffer_unit_type >;
 
 //***** BEGIN ARRAY TYPEDEFS *****
 
 template< typename T, int NDIM, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using array_decl = LvArray::Array< T, NDIM, PERMUTATION, localIndex >;
+using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex >;
 
 template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
-using array_view = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
 
 template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
-using array_slice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
 
 template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using stack_array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
+using StackArray = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::StackArrayWrapper< T, MAXSIZE > >;
 
 template< typename T >
-using array1d = array_decl< T, 1 >;
+using array1d = Array< T, 1 >;
 
 template< typename T >
-using arrayView1d = array_view< T, 1 >;
+using arrayView1d = ArrayView< T, 1 >;
 
 template< typename T, int UNIT_STRIDE_DIM = 0 >
-using arraySlice1d = array_slice< T, 1, UNIT_STRIDE_DIM >;
+using arraySlice1d = ArraySlice< T, 1, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
-using stackArray1d = stack_array< T, 1, MAXSIZE >;
+using stackArray1d = StackArray< T, 1, MAXSIZE >;
 
 template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
-using array2d = array_decl< T, 2, PERMUTATION >;
+using array2d = Array< T, 2, PERMUTATION >;
 
 template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arrayView2d = array_view< T, 2, UNIT_STRIDE_DIM >;
+using arrayView2d = ArrayView< T, 2, UNIT_STRIDE_DIM >;
 
 template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arraySlice2d = array_slice< T, 2, UNIT_STRIDE_DIM >;
+using arraySlice2d = ArraySlice< T, 2, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
-using stackArray2d = stack_array< T, 2, MAXSIZE >;
+using stackArray2d = StackArray< T, 2, MAXSIZE >;
 
-template< typename T >
-using array3d = array_decl< T, 3 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
+using array3d = Array< T, 3, PERMUTATION >;
 
-template< typename T >
-using arrayView3d = array_view< T, 3 >;
+template< typename T, int UNIT_STRIDE_DIM=2 >
+using arrayView3d = ArrayView< T, 3, UNIT_STRIDE_DIM >;
 
-template< typename T >
-using arraySlice3d = array_slice< T, 3 >;
-
-template< typename T, int MAXSIZE >
-using stackArray3d = stack_array< T, 3, MAXSIZE >;
-
-template< typename T >
-using array4d = array_decl< T, 4 >;
-
-template< typename T >
-using arrayView4d = array_view< T, 4 >;
-
-template< typename T >
-using arraySlice4d = array_slice< T, 4 >;
+template< typename T, int UNIT_STRIDE_DIM=2 >
+using arraySlice3d = ArraySlice< T, 3, UNIT_STRIDE_DIM >;
 
 template< typename T, int MAXSIZE >
-using stackArray4d = stack_array< T, 4, MAXSIZE >;
+using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 template< typename T >
-using array5d = array_decl< T, 5 >;
+using array4d = Array< T, 4 >;
 
 template< typename T >
-using arrayView5d = array_view< T, 5 >;
+using arrayView4d = ArrayView< T, 4 >;
 
 template< typename T >
-using arraySlice5d = array_slice< T, 5 >;
+using arraySlice4d = ArraySlice< T, 4 >;
 
 template< typename T, int MAXSIZE >
-using stackArray5d = stack_array< T, 5, MAXSIZE >;
+using stackArray4d = StackArray< T, 4, MAXSIZE >;
+
+template< typename T >
+using array5d = Array< T, 5 >;
+
+template< typename T >
+using arrayView5d = ArrayView< T, 5 >;
+
+template< typename T >
+using arraySlice5d = ArraySlice< T, 5 >;
+
+template< typename T, int MAXSIZE >
+using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
 template< typename T >
 using set = LvArray::SortedArray< T, localIndex >;
@@ -542,68 +570,6 @@ public:
       return TypeIDs::none_id;
     }
   }
-
-#ifdef GEOSX_USE_ATK
-
-  static axom::sidre::TypeID toSidreType( std::type_index typeIndex )
-  {
-    const axom::sidre::TypeID integer_id = axom::sidre::detail::SidreTT< integer >::id;
-    const axom::sidre::TypeID localIndex_id = axom::sidre::detail::SidreTT< localIndex >::id;
-
-    /* We can't use SidreTT<globalIndex>::id here because that returns NO_TYPE_ID.
-     * This is due to a mismatch between globalIndex (long long int) and std::int64_t */
-    const axom::sidre::TypeID globalIndex_id = axom::sidre::detail::SidreTT< axom::int64 >::id;
-
-    const axom::sidre::TypeID real32_id = axom::sidre::detail::SidreTT< real32 >::id;
-    const axom::sidre::TypeID real64_id = axom::sidre::detail::SidreTT< real64 >::id;
-    const axom::sidre::TypeID char_id = axom::sidre::TypeID::UINT8_ID;
-
-    const std::unordered_map< std::type_index, axom::sidre::TypeID > sidre_types =
-    {
-      { std::type_index( typeid(integer)), integer_id },
-      { std::type_index( typeid(localIndex)), localIndex_id },
-      { std::type_index( typeid(globalIndex)), globalIndex_id },
-      { std::type_index( typeid(real32)), real32_id },
-      { std::type_index( typeid(real64)), real64_id },
-      { std::type_index( typeid(R1Tensor)), real64_id },
-      { std::type_index( typeid(R2Tensor)), real64_id },
-      { std::type_index( typeid(R2SymTensor)), real64_id },
-      { std::type_index( typeid(char)), char_id }
-    };
-
-    auto it = sidre_types.find( typeIndex );
-    if( it == sidre_types.end())
-    {
-      return axom::sidre::TypeID::NO_TYPE_ID;
-    }
-    return it->second;
-  }
-
-  static localIndex getSidreSize( std::type_index typeIndex )
-  {
-    const std::unordered_map< std::type_index, localIndex > sidre_sizes =
-    {
-      { std::type_index( typeid(integer)), sizeof(integer) },
-      { std::type_index( typeid(localIndex)), sizeof(localIndex) },
-      { std::type_index( typeid(globalIndex)), sizeof(globalIndex) },
-      { std::type_index( typeid(real32)), sizeof(real32) },
-      { std::type_index( typeid(real64)), sizeof(real64) },
-      { std::type_index( typeid(R1Tensor)), sizeof(real64) },
-      { std::type_index( typeid(R2Tensor)), sizeof(real64) },
-      { std::type_index( typeid(R2SymTensor)), sizeof(real64) },
-      { std::type_index( typeid(char)), sizeof(char) }
-    };
-
-    auto it = sidre_sizes.find( typeIndex );
-    if( it == sidre_sizes.end())
-    {
-      GEOS_ERROR( "Unsupported type of with type index name: " << typeIndex.name());
-    }
-    return it->second;
-  }
-
-#endif /* GEOSX_USE_ATK */
-
 
   // Matching regex for data types in xml
   class typeRegex

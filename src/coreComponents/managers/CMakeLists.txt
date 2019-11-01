@@ -13,7 +13,6 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
-    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -46,7 +45,6 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
-    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp

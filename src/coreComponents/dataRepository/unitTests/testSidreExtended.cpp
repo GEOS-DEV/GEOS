@@ -14,13 +14,10 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
+#include "managers/initialization.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/SidreWrapper.hpp"
 #include "dataRepository/Wrapper.hpp"
-#include "Logger.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
-
-#include <gtest/gtest.h>
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -33,7 +30,6 @@ namespace geosx
 namespace dataRepository
 {
 
-#ifdef GEOSX_USE_ATK
 template< typename T >
 Wrapper< array1d< T > > * createArrayView( Group * parent, const string & name,
                                            int sfp, const array1d< T > & data )
@@ -42,12 +38,10 @@ Wrapper< array1d< T > > * createArrayView( Group * parent, const string & name,
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
-  localIndex expected_size = data.size() * sizeof(T);
   view->resize( data.size());
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), data.size());
-  EXPECT_EQ( view->byteSize(), expected_size );
 
   /* Set the data */
   array1d< T > & view_data = view->reference();
@@ -83,7 +77,6 @@ Wrapper< array2d< T > > * createArray2dView( Group * parent, const string & name
   view->setSizedFromParent( sfp );
 
   /* Resize the array */
-  localIndex expected_size = data.size() * sizeof(T);
   localIndex dims[2];
   dims[0] = data.size( 0 );
   dims[1] = data.size( 1 );
@@ -93,7 +86,6 @@ Wrapper< array2d< T > > * createArray2dView( Group * parent, const string & name
   EXPECT_EQ( view->size( 0 ), data.size( 0 ));
   EXPECT_EQ( view->size( 1 ), data.size( 1 ));
   EXPECT_EQ( view->size(), data.size());
-  EXPECT_EQ( view->byteSize(), expected_size );
 
   /* Set the data */
   array2d< T > & view_data = view->reference();
@@ -143,9 +135,7 @@ Wrapper< set< T > > * createSetView( Group * parent, const string & name,
   view->reference().insert( data.values(), data.size());
 
   /* Check that the Wrapper size and byteSize return the proper values */
-  localIndex expected_size = data.size() * sizeof(T);
   EXPECT_EQ( view->size(), data.size());
-  EXPECT_EQ( view->byteSize(), expected_size );
 
   /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( view->dataPtr(), view->reference().values());
@@ -173,14 +163,11 @@ Wrapper< string > * createStringView( Group * parent, const string & name,
   Wrapper< string > * view = parent->registerWrapper< string >( name );
   view->setSizedFromParent( sfp );
 
-  localIndex expected_size = static_cast< localIndex >(str.size()) * sizeof(char);
-
   /* Set the data */
   view->reference() = str;
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( static_cast< uint >(view->size()), str.size());
-  EXPECT_EQ( view->byteSize(), expected_size );
 
   /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( view->dataPtr(), view->reference().c_str());
@@ -202,11 +189,9 @@ Wrapper< string_array > * createStringArrayView( Group * parent, const string & 
   Wrapper< string_array > * view = parent->registerWrapper< string_array >( name );
   view->setSizedFromParent( sfp );
 
-  unsigned long expected_size = arr.size() * sizeof(string);
   view->resize( static_cast< localIndex >(arr.size()));
 
   EXPECT_EQ( static_cast< uint >(view->size()), arr.size());
-  EXPECT_EQ( view->byteSize(), expected_size );
 
   string_array & view_data = view->reference();
   for( localIndex i = 0 ; i < arr.size() ; ++i )
@@ -242,7 +227,6 @@ Wrapper< T > * createScalarView( Group * parent, const string & name,
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), 1 );
-  EXPECT_EQ( view->byteSize(), sizeof(T));
 
   /* Check that the Wrapper dataPtr points to the right thing */
   EXPECT_EQ( *(view->dataPtr()), value );
@@ -261,10 +245,8 @@ void checkScalarView( const Wrapper< T > * view, int sfp, const T value ) {
 TEST( testSidreExtended, testSidreExtended )
 {
   const string path = "test_sidre_extended";
-  const string protocol = "sidre_hdf5";
   const int group_size = 44;
   int sfp = 55;
-  axom::sidre::DataStore & ds = SidreWrapper::dataStore();
 
   /* Create a new Group directly below the sidre::DataStore root. */
   Group * root = new Group( std::string( "data" ), nullptr );
@@ -447,17 +429,15 @@ TEST( testSidreExtended, testSidreExtended )
 
   /* Save the sidre tree */
   root->prepareToWrite();
-  SidreWrapper::writeTree( 1, path, protocol, MPI_COMM_WORLD );
+  writeTree( path );
   root->finishWriting();
 
   /* Delete geos tree and reset sidre tree. */
   delete root;
-  ds.destroyAllAttributes();
-  ds.destroyAllBuffers();
-  ds.getRoot()->destroyGroups();
+  rootConduitNode.reset();
 
   /* Restore the sidre tree */
-  SidreWrapper::reconstructTree( path + ".root", protocol, MPI_COMM_WORLD );
+  loadTree( path );
   root = new Group( std::string( "data" ), nullptr );
 
   /* Create dual GEOS tree. Groups automatically register with the associated sidre::View. */
@@ -485,9 +465,7 @@ TEST( testSidreExtended, testSidreExtended )
 
 
   /* Load the data */
-  root->prepareToRead();
-  SidreWrapper::loadExternalData( path + ".root", MPI_COMM_WORLD );
-  root->finishReading();
+  root->loadFromConduit();
 
   /* Group sizes should have carried over. */
   EXPECT_EQ( root->size(), group_size );
@@ -512,11 +490,8 @@ TEST( testSidreExtended, testSidreExtended )
   checkArray2dView( view_real642d_new, view_real642d_sfp, view_real642d_arr );
   checkArray2dView( view_r1t2d_new, view_r1t2d_sfp, view_r1t2d_arr );
 
-
   delete root;
 }
-
-#endif /* GEOSX_USE_ATK */
 
 } /* end namespace dataRepository */
 } /* end namespace geosx */
@@ -524,18 +499,13 @@ TEST( testSidreExtended, testSidreExtended )
 
 int main( int argc, char * argv[] )
 {
-  geosx::MpiWrapper::Init( &argc, &argv );
-#ifdef GEOSX_USE_MPI
-  logger::InitializeLogger( MPI_COMM_WORLD );
-#else
-  logger::InitializeLogger();
-#endif
-
-  int result = 0;
   testing::InitGoogleTest( &argc, argv );
-  result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-  geosx::MpiWrapper::Finalize();
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
   return result;
 }
