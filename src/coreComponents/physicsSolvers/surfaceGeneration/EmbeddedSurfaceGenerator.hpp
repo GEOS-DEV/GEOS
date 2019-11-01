@@ -30,14 +30,14 @@
 namespace geosx
 {
 
-struct ModifiedObjectLists
-{
-  std::set<localIndex> newNodes;
-  std::set<localIndex> newEdges;
-  std::set<localIndex> newFaces;
-  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
-};
+//struct ModifiedObjectLists
+//{
+//  std::set<localIndex> newNodes;
+//  std::set<localIndex> newEdges;
+//  std::set<localIndex> newFaces;
+//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
+//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+//};
 
 
 class SpatialPartition;

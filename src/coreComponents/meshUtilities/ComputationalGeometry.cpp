@@ -75,7 +75,7 @@ real64 ComputeSurfaceArea(array1d<R1Tensor const> const & points,
 
   array1d<R1Tensor> pointsReordered = orderPointsCCW(points, numPoints, normal);
 
-  real64 surfaceArea;
+  real64 surfaceArea = 0.0;
   R1Tensor v1,v2;
   const R1Tensor& x0 = pointsReordered[0];
 
