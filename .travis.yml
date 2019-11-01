@@ -5,8 +5,8 @@ env:
   - DO_BUILD=yes
   - DO_TEST=yes
   - CMAKE_EXTRA_FLAGS="-DENABLE_WARNINGS=On -DENABLE_TBB=On -DBLT_CXX_STD=c++14 -DENABLE_WARNINGS_AS_ERRORS=ON"
-  - DOCKER_DATE=2019-09-22
-  - TPL_OSX_TRAVIS_BUILD_NUMBER=187
+  - DOCKER_DATE=2019-11-01
+  - TPL_OSX_TRAVIS_BUILD_NUMBER=207
 matrix:
   include:
   - os: osx
@@ -82,7 +82,8 @@ before_script:
       docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/geosx/geosx_repo geosx/compiler:$IMG-$DOCKER_DATE  chown -R geosx /home/geosx;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew install openmpi;
+      BREW_URL=https://raw.github.com/Homebrew/homebrew-core/1e1370e0fddf2970695ab2e3b12ed5f24eb71819;
+      brew install ${BREW_URL}/Formula/open-mpi.rb;
       cd ..;
       mkdir thirdPartyLibs;
       cd thirdPartyLibs;
