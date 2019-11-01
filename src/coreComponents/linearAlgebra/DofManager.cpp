@@ -1276,7 +1276,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
     // Diagonal block
     ParallelMatrix const * const connLocPattDistr = m_sparsityPattern( rowFieldIndex, rowFieldIndex ).first.get();
 
-    connLocPattDistr->multiplyTranspose( *connLocPattDistr, pattern, closePattern );
+    connLocPattDistr->leftMultiplyTranspose( *connLocPattDistr, pattern, closePattern );
   }
   else
   {
@@ -1297,7 +1297,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
         CL2 = m_sparsityPattern( colFieldIndex, rowFieldIndex ).first.get();
       }
 
-      CL1->multiplyTranspose( *CL2, pattern, closePattern );
+      CL1->leftMultiplyTranspose( *CL2, pattern, closePattern );
     }
     else
     {
