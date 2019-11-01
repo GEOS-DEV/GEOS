@@ -16,90 +16,88 @@
  * @file SidreWrapper.cpp
  */
 
+// Source includes
 #include "SidreWrapper.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
+#include "fileIO/utils/utils.hpp"
 
-#include <string>
-#include <cstdio>
-
+// TPL includes
+#include <conduit_relay.hpp>
+#include <axom/core/utilities/FileUtilities.hpp>
+#include <fmt/fmt.hpp>
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-#ifdef GEOSX_USE_ATK
-using namespace axom::sidre;
-#endif
+conduit::Node rootConduitNode;
 
-SidreWrapper::SidreWrapper()
-{}
 
-SidreWrapper::~SidreWrapper()
-{}
-
-#ifdef GEOSX_USE_ATK
-DataStore & SidreWrapper::dataStore()
+std::string writeRootNode( std::string const & rootPath )
 {
-  static DataStore datastore;
-  return datastore;
-}
-#endif
+  std::string rootDirName, rootFileName;
+  splitPath( rootPath, rootDirName, rootFileName );
 
-
-/* Write out a restart file. */
-void SidreWrapper::writeTree( int MPI_PARAM( num_files ),
-                              const std::string & path,
-                              const std::string & protocol,
-                              MPI_Comm MPI_PARAM( comm ) )
-{
-#ifdef GEOSX_USE_ATK
-  GEOSX_MARK_FUNCTION;
-#ifdef GEOSX_USE_MPI
-  axom::sidre::IOManager ioManager( comm );
-  ioManager.write( SidreWrapper::dataStore().getRoot(), num_files, path, protocol );
-#else
-  SidreWrapper::dataStore().getRoot()->save( path, protocol );
-#endif
-#endif
-}
-
-
-void SidreWrapper::reconstructTree( const std::string & root_path,
-                                    const std::string & protocol,
-                                    MPI_Comm MPI_PARAM( comm ) )
-{
-#ifdef GEOSX_USE_ATK
-  GEOSX_MARK_FUNCTION;
-  if( !SidreWrapper::dataStore().hasAttribute( "__sizedFromParent__" ))
+  if( MpiWrapper::Comm_rank() == 0 )
   {
-    SidreWrapper::dataStore().createAttributeScalar( "__sizedFromParent__", -1 );
+    conduit::Node root;
+    root[ "number_of_files" ] = MpiWrapper::Comm_size();
+    root[ "file_pattern" ] = rootFileName + "/rank_%07d.hdf5";
+
+    conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
+
+    axom::utilities::filesystem::makeDirsForPath( rootPath );
   }
 
-#ifdef GEOSX_USE_MPI
-  axom::sidre::IOManager ioManager( comm );
-  ioManager.read( SidreWrapper::dataStore().getRoot(), root_path, protocol );
-#else
-  SidreWrapper::dataStore().getRoot()->load( root_path, protocol );
-#endif
-#endif
+  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+
+  return fmt::sprintf( rootPath + "/rank_%07d.hdf5", MpiWrapper::Comm_rank() );
 }
 
 
-/* Load sidre external data. */
-void SidreWrapper::loadExternalData( const std::string & root_path,
-                                     MPI_Comm MPI_PARAM( comm ) )
+std::string readRootNode( std::string const & rootPath )
 {
-#ifdef GEOSX_USE_ATK
-  GEOSX_MARK_FUNCTION;
-#ifdef GEOSX_USE_MPI
+  std::string rankFilePattern;
+  if( MpiWrapper::Comm_rank() == 0 )
+  {
+    conduit::Node node;
+    conduit::relay::io::load( rootPath + ".root", "hdf5", node );
 
-  axom::sidre::IOManager ioManager( comm );
-  ioManager.loadExternalData( SidreWrapper::dataStore().getRoot(), root_path );
-#else
-  SidreWrapper::dataStore().getRoot()->loadExternalData( root_path );
-#endif
-#endif
+    int const nFiles = node.fetch_child( "number_of_files" ).value();
+    GEOS_ERROR_IF_NE( nFiles, MpiWrapper::Comm_size() );
+
+    std::string const filePattern = node.fetch_child( "file_pattern" ).as_string();
+
+    std::string rootDirName, rootFileName;
+    splitPath( rootPath, rootDirName, rootFileName );
+
+    rankFilePattern = rootDirName + "/" + filePattern;
+    GEOS_LOG_RANK_VAR( rankFilePattern );
+  }
+
+  MpiWrapper::Broadcast( rankFilePattern, 0 );
+  return fmt::sprintf( rankFilePattern, MpiWrapper::Comm_rank() );
+}
+
+/* Write out a restart file. */
+void writeTree( std::string const & path )
+{
+  GEOSX_MARK_FUNCTION;
+
+  std::string const filePathForRank = writeRootNode( path );
+  GEOS_LOG_RANK( "Writing out restart file at " << filePathForRank );
+  conduit::relay::io::save( rootConduitNode, filePathForRank, "hdf5" );
+}
+
+
+void loadTree( std::string const & path )
+{
+  GEOSX_MARK_FUNCTION;
+  std::string const filePathForRank = readRootNode( path );
+  GEOS_LOG_RANK( "Reading in restart file at " << filePathForRank );
+  conduit::relay::io::load( filePathForRank, "hdf5", rootConduitNode );
 }
 
 } /* end namespace dataRepository */

@@ -115,29 +115,40 @@ TEST(FieldSpecification, Recursive)
 
   reg1->GetSubRegion("reg1tet")->registerWrapper< array1d<real64> >( "field3" );
 
-  auto set0hex = reg0->GetSubRegion("reg0hex")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
-  set0hex->resize(nbHexReg0);
-  for(localIndex i = 0; i < set0hex->size() ; i++)
+  localIndex_set & set0hex = reg0->GetSubRegion("reg0hex")
+                                 ->GetGroup("sets")
+                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->reference();
+  for(localIndex i = 0; i < nbHexReg0 ; i++)
   {
-    set0hex->dataPtr()[i]=i;
+    set0hex.insert( i );
   }
-  auto set0tet = reg0->GetSubRegion("reg0tet")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
-  set0tet->resize(nbTetReg0);
-  for(localIndex i = 0; i < set0tet->size() ; i++)
+
+  localIndex_set & set0tet = reg0->GetSubRegion("reg0tet")
+                                 ->GetGroup("sets")
+                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->reference();
+  for(localIndex i = 0; i < nbTetReg0 ; i++)
   {
-    set0tet->dataPtr()[i] = i;
+    set0tet.insert( i );
   }
-  auto set1hex = reg1->GetSubRegion("reg1hex")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
-  set1hex->resize(nbHexReg1);
-  for(localIndex i = 0; i < set1hex->size() ; i++)
+
+  localIndex_set & set1hex = reg1->GetSubRegion("reg1hex")
+                                 ->GetGroup("sets")
+                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->reference();
+  for(localIndex i = 0; i < nbHexReg1 ; i++)
   {
-    set1hex->dataPtr()[i] = i;
+    set1hex.insert( i );
   }
-  auto set1tet = reg1->GetSubRegion("reg1tet")->GetGroup("sets")->registerWrapper<localIndex_set>( std::string("all") );
-  set1tet->resize(nbTetReg1);
-  for(localIndex i = 0; i < set1tet->size() ; i++)
+
+  localIndex_set & set1tet = reg1->GetSubRegion("reg1tet")
+                                 ->GetGroup("sets")
+                                 ->registerWrapper<localIndex_set>( std::string("all") )
+                                 ->reference();
+  for(localIndex i = 0; i < nbTetReg1 ; i++)
   {
-    set1tet->dataPtr()[i] = i;
+    set1tet.insert( i );
   }
 
   RegisterAndApplyField(domain.get(), "field0", "ElementRegions", 1.);
