@@ -18,6 +18,7 @@
 
 #include "ObjectManagerBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -751,9 +752,8 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
   //return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
 }
 
-void ObjectManagerBase::SetReceiveLists(  )
+void ObjectManagerBase::SetReceiveLists()
 {
-
   map<int,localIndex_array>  receiveIndices;
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -770,7 +770,6 @@ void ObjectManagerBase::SetReceiveLists(  )
     localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
     nodeAdjacencyList = iter->second;
   }
-
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,

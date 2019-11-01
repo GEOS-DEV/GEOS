@@ -23,7 +23,7 @@ namespace detail
 {
 
 template<typename T, int NDIM>
-void setArrayElement( array_view<T, NDIM> const & arr,
+void setArrayElement( ArrayView<T, NDIM> const & arr,
                       localIndex const dstIndex,
                       localIndex const srcIndex,
                       T const * const data )
@@ -53,10 +53,10 @@ template<>
 struct AccessorHelper<false>
 {
   template<int NDIM, typename T>
-  using ElementAccessor = array_decl<T, NDIM>;
+  using ElementAccessor = Array<T, NDIM>;
 
   template<int NDIM, typename T>
-  using MaterialAccessor = array_decl<T, NDIM>;
+  using MaterialAccessor = Array<T, NDIM>;
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>
@@ -114,10 +114,10 @@ template<>
 struct AccessorHelper<true>
 {
   template<int NDIM, typename T>
-  using ElementAccessor = ElementRegionManager::ElementViewAccessor<array_decl<T, NDIM>>;
+  using ElementAccessor = ElementRegionManager::ElementViewAccessor<Array<T, NDIM>>;
 
   template<int NDIM, typename T>
-  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor<array_decl<T, NDIM>>;
+  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor<Array<T, NDIM>>;
 
   template<int NDIM, typename T, typename... DIMS >
   static ElementAccessor<NDIM, T>

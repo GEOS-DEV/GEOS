@@ -912,14 +912,10 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
-void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
+void ProblemManager::ReadRestartOverwrite()
 {
-#ifdef GEOSX_USE_ATK
-  this->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
-  this->finishReading();
-  this->postRestartInitializationRecursive( GetGroup<DomainPartition>(keys::domain) );
-#endif
+  this->loadFromConduit();
+  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
 
 

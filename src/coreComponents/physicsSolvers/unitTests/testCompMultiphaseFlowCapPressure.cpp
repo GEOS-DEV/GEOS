@@ -36,9 +36,9 @@ char** global_argv;
 template<int DIM>
 struct TestCompositionalVarContainer
 {
-  array_slice<real64,DIM>   value; // variable value
-  array_slice<real64,DIM>   dPres; // derivative w.r.t. pressure
-  array_slice<real64,DIM+1> dComp; // derivative w.r.t. composition
+  ArraySlice<real64,DIM>   value; // variable value
+  ArraySlice<real64,DIM>   dPres; // derivative w.r.t. pressure
+  ArraySlice<real64,DIM+1> dComp; // derivative w.r.t. composition
 };
 
 template<typename LAMBDA>
