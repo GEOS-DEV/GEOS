@@ -189,7 +189,7 @@ template< typename T >
 constexpr bool is_set = is_instantiation_of_v< LvArray::SortedArray, T >;
 
 template< typename T >
-constexpr bool is_array = LvArray::detail::is_array< T >::value;
+constexpr bool is_array = LvArray::isArray< T >;
 
 template< typename T >
 constexpr bool is_tensorT = is_instance_of_v< R1Tensor, T > ||
