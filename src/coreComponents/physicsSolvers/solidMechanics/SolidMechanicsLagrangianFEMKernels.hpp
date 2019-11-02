@@ -198,8 +198,7 @@ struct ExplicitKernel
           arrayView1d<R1Tensor const> const & u,
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
-          arrayView2d<real64> const & meanStress,
-          arrayView2d<R2SymTensor> const & devStress,
+          arrayView2d<R2SymTensor> const & stress,
           real64 const dt )
   {
     forall_in_set<serialPolicy>( elementList.values(),
@@ -247,10 +246,7 @@ struct ExplicitKernel
 
         constitutiveRelation->StateUpdatePoint( k, q, Dadt, Rot, 0);
 
-        R2SymTensor TotalStress = devStress[k][q];
-        TotalStress.PlusIdentity( meanStress[k][q] );
-
-        Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        Integrate<NUM_NODES_PER_ELEM>( stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
       }//quadrature loop
 
 
@@ -269,8 +265,7 @@ struct ExplicitKernel
                              localIndex const numQuadraturePoints,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView2d<real64 const> const & meanStress,
-                             arrayView2d<R2SymTensor const> const & devStress,
+                             arrayView2d<R2SymTensor const> const & stress,
                              R1Tensor & force )
   {
     GEOSX_MARK_FUNCTION;
@@ -279,17 +274,17 @@ struct ExplicitKernel
     //Compute Quadrature
     for ( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+      real64 const * const restrict p_stress = stress[ k ][ q ].Data();
 
-      force[ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-      force[ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-      force[ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                      p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+      force[ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ] ) ) * detJ[ k ][ q ];
+      force[ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                      dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ] ) ) * detJ[ k ][ q ];
+      force[ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                      p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                      dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ] ) ) * detJ[ k ][ q ];
     }//quadrature loop
 
     return 0;
@@ -301,8 +296,7 @@ struct ExplicitKernel
                              arrayView1d<localIndex const> const & targetNodeInElemList,
                              arrayView3d< R1Tensor const> const & dNdX,
                              arrayView2d<real64 const> const & detJ,
-                             arrayView2d<real64 const> const & meanStress,
-                             arrayView2d<R2SymTensor const> const & devStress,
+                             arrayView2d<R2SymTensor const> const & stress,
                              arrayView1d< R1Tensor > const & force )
   {
    GEOSX_MARK_FUNCTION;
@@ -316,19 +310,19 @@ struct ExplicitKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        real64 const * const restrict p_devStress = devStress[ k ][ q ].Data();
+        real64 const * const restrict p_stress = stress[ k ][ q ].Data();
 
         localIndex const a = targetNodeInElemList[ i ];
 
-        force[i][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-        force[i][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
-                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_devStress[ 2 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-        force[i][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
-                           p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
-                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_devStress[ 5 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
+        force[i][ 0 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 0 ] * ( p_stress[ 0 ]  ) ) * detJ[ k ][ q ];
+        force[i][ 1 ] -= ( p_stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ] +
+                           dNdX[ k ][ q ][ a ][ 1 ] * ( p_stress[ 2 ]  ) ) * detJ[ k ][ q ];
+        force[i][ 2 ] -= ( p_stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ] +
+                           p_stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ] +
+                           dNdX[ k ][ q ][ a ][ 2 ] * ( p_stress[ 5 ]  ) ) * detJ[ k ][ q ];
       }//quadrature loop
     });
 
