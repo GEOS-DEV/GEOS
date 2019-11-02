@@ -2735,14 +2735,9 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d<real64> > const bulkModulus =
       elementManager.ConstructFullMaterialViewAccessor< array1d<real64>, arrayView1d<real64> >( "BulkModulus", constitutiveManager);
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
-  meanStress = elementManager.ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
-                                                                                     constitutiveManager);
-
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
   NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(keys::numericalMethodsManager);
@@ -2836,8 +2831,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                            numQuadraturePoints,
                                            dNdX[er][esr],
                                            detJ[er][esr],
-                                           meanStress[er][esr][m_solidMaterialFullIndex],
-                                           devStress[er][esr][m_solidMaterialFullIndex],
+                                           stress[er][esr][m_solidMaterialFullIndex],
                                            temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
@@ -3561,8 +3555,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                      constitutiveManager);
 
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
+  stress = elementManager.ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                             arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
                                                                                          constitutiveManager);
 
 
@@ -3648,8 +3642,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                        numQuadraturePoints,
                                        dNdX[er][esr],
                                        detJ[er][esr],
-                                       meanStress[er][esr][m_solidMaterialFullIndex],
-                                       devStress[er][esr][m_solidMaterialFullIndex],
+                                       stress[er][esr][m_solidMaterialFullIndex],
                                        temp );
 
             temp *= youngsModulus;
