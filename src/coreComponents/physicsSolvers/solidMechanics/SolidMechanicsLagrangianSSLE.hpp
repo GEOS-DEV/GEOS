@@ -58,8 +58,7 @@ public:
                                arrayView1d<R1Tensor const> const & u,
                                arrayView1d<R1Tensor const> const & vel,
                                arrayView1d<R1Tensor> const & acc,
-                               arrayView2d<real64> const & meanStress,
-                               arrayView2d<R2SymTensor> const & devStress,
+                               arrayView2d<R2SymTensor> const & stress,
                                real64 const dt ) const override
   {
     using ExplicitKernel = SolidMechanicsLagrangianSSLEKernels::ExplicitKernel;
@@ -74,8 +73,7 @@ public:
                                                         u,
                                                         vel,
                                                         acc,
-                                                        meanStress,
-                                                        devStress,
+                                                        stress,
                                                         dt );
   }
 
