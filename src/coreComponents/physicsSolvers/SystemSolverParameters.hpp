@@ -96,6 +96,7 @@ public:
   real64  lineSearchCutFactor() const         { return m_lineSearchCutFactor; }
   integer allowNonConverged() const           { return m_allowNonConverged; }
   integer maxSubSteps() const                 { return m_maxSubSteps; }
+  integer & numdtAttempts()                   { return m_numdtAttempts;}
 
 
   integer m_verbose;
@@ -124,7 +125,7 @@ public:
   integer m_allowNonConverged;
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
-
+  integer m_numdtAttempts; // number of times that the time-step had to be cut.
 
 };
 

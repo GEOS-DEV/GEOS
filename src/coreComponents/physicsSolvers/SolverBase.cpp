@@ -196,6 +196,15 @@ void SolverBase::Execute( real64 const time_n,
                                           dtRemaining,
                                           cycleNumber,
                                           domain->group_cast<DomainPartition *>() );
+    /*
+     * Matteo: I would modify here the strategy to choose the next dt and somehow pass
+     * the info to the event manager for the next solve cycle.
+     * Let us check convergence history of previous solve:
+     * - number of nonlinear iter.
+     * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
+     *
+     * */
+
     dtRemaining -= dtAccepted;
 
     if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
@@ -335,6 +344,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
   real64 const dtCutFactor = solverParams->timeStepCutFactor();
 
   bool const allowNonConverged = solverParams->allowNonConverged() > 0;
+
+  integer & dt Attempt = solverParams->numdtAttempts();
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
