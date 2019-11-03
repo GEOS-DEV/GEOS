@@ -82,7 +82,7 @@ public:
                     localIndex const connectorIndex ) override final;
 
   void add( localIndex const numPts,
-	    real64 const * const edgeToFaceDownDistances,
+	    R1Tensor const * const cellCenterToEdgeCenter,
 	    localIndex const connectorIndex );  
 
   virtual localIndex size() const  override final
@@ -92,12 +92,12 @@ public:
   { return m_elementRegionIndices.sizeOfArray(index); }
 
 
-  ArrayOfArraysView< real64 const > const & getEdgeToFaceDownDistances() const
-  { return m_edgeToFaceDownDistances; }
+  ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
+  { return m_cellCenterToEdgeCenters; }
   
 private:
 
-  ArrayOfArrays<real64> m_edgeToFaceDownDistances;
+  ArrayOfArrays<R1Tensor> m_cellCenterToEdgeCenters;
 
 
 };

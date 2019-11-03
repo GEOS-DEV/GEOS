@@ -50,7 +50,7 @@ public:
 
   // *** ParticleFluidBase-specific interface
 
-  virtual void PointUpdate(real64 const & concentration, localIndex const k) = 0;
+  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & ComponentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) = 0;
 
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration ) = 0;
 
@@ -58,17 +58,20 @@ public:
 
   virtual void BatchUpdateMob( arrayView1d<real64 const> const & concentration, arrayView1d<real64 const> const &aperture) = 0;
   
- 
+  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
+  
   // *** Data repository keys
 
   struct viewKeyStruct
   {
 
-    static constexpr auto settlingFactorString    = "settlingFactor";    
-    static constexpr auto dSettlingFactor_dConcString  = "dSettlingFactor_dConc";
+    static constexpr auto settlingFactorString    = "settlingFactor";
+    static constexpr auto dSettlingFactor_dPressureString  = "dSettlingFactor_dPressure";    
+    static constexpr auto dSettlingFactor_dProppantConcentrationString  = "dSettlingFactor_dProppantConcentration";
+    static constexpr auto dSettlingFactor_dComponentConcentrationString  = "dSettlingFactor_dComponentConcentration";    
 
     static constexpr auto collisionFactorString    = "collisionFactor";    
-    static constexpr auto dCollisionFactor_dConcString  = "dCollisionFactor_dConc";        
+    static constexpr auto dCollisionFactor_dProppantConcentrationString  = "dCollisionFactor_dProppantConcentration";        
 
     static constexpr auto maxProppantConcentrationString    = "maxProppantConcentration";
 
@@ -81,10 +84,12 @@ public:
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey settlingFactor  = { settlingFactorString };
-    ViewKey dSettlingFactor_dConc = { dSettlingFactor_dConcString };
+    ViewKey dSettlingFactor_dPressure = { dSettlingFactor_dPressureString };
+    ViewKey dSettlingFactor_dProppantConcentration = { dSettlingFactor_dProppantConcentrationString };
+    ViewKey dSettlingFactor_dComponentConcentration = { dSettlingFactor_dComponentConcentrationString };    
 
     ViewKey collisionFactor  = { collisionFactorString };
-    ViewKey collisionFactor_dConc = { dCollisionFactor_dConcString };
+    ViewKey collisionFactor_dProppantConcentration = { dCollisionFactor_dProppantConcentrationString };
 
     ViewKey maxProppantConcentration   = { maxProppantConcentrationString };
 
@@ -99,10 +104,12 @@ protected:
   virtual void PostProcessInput() override;
 
   array1d<real64> m_settlingFactor;
-  array1d<real64> m_dSettlingFactor_dConc;
+  array1d<real64> m_dSettlingFactor_dPressure;
+  array1d<real64> m_dSettlingFactor_dProppantConcentration;
+  array2d<real64> m_dSettlingFactor_dComponentConcentration;  
 
   array1d<real64> m_collisionFactor;
-  array1d<real64> m_dCollisionFactor_dConc;   
+  array1d<real64> m_dCollisionFactor_dProppantConcentration;   
 
   array1d<bool> m_isProppantMobile;
   array1d<real64> m_proppantPackPermeability;  

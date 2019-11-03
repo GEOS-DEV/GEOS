@@ -42,6 +42,14 @@ class ParticleFluid : public ParticleFluidBase
 {
 public:
 
+  enum class ParticleSettlingModel
+  {
+    Stokes,
+    Intermediate
+  };
+
+  static ParticleSettlingModel stringToParticleSettlingModel( string const & str );
+  
   ParticleFluid( std::string const & name, Group * const parent );
 
   virtual ~ParticleFluid() override;
@@ -61,8 +69,8 @@ public:
 
   // *** ParticleFluid interface
 
-  virtual void PointUpdate(real64 const & concentration, localIndex const k) override;
-
+  virtual void PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k) override; 
+  
   virtual void BatchUpdate( arrayView1d<real64 const> const & concentration) override;
 
   virtual void PointUpdateMob(real64 const & concentration, real64 const & aperture, localIndex const k) override;
@@ -76,18 +84,18 @@ public:
 
     static constexpr auto fluidViscosityString    = "fluidViscosity";
     static constexpr auto proppantDiameterString    = "proppantDiameter";    
-    static constexpr auto fluidDensityString    = "fluidDensity";
     static constexpr auto proppantDensityString    = "proppantDensity";
     static constexpr auto hinderedSettlingCoefficientString    = "hinderedSettlingCoefficient";
     static constexpr auto collisionAlphaString    = "collisionAlpha";
     static constexpr auto slipConcentrationString    = "slipConcentration";    
     static constexpr auto collisionBetaString    = "collisionBeta";
     static constexpr auto bridgingFactorString    = "bridgingFactor";
-    static constexpr auto sphericityString    = "sphericity";        
+    static constexpr auto sphericityString    = "sphericity";
+
+    static constexpr auto particleSettlingModelString    = "particleSettlingModel";            
 
     dataRepository::ViewKey fluidViscosity    = { fluidViscosityString    };
     dataRepository::ViewKey proppantDiameter    = { proppantDiameterString };
-    dataRepository::ViewKey fluidDensity    = { fluidDensityString    };
     dataRepository::ViewKey proppantDensity   = { proppantDensityString };
     dataRepository::ViewKey hinderedSettlingCoefficient  = { hinderedSettlingCoefficientString };
     dataRepository::ViewKey collisionAlpha   = { collisionAlphaString };
@@ -95,7 +103,9 @@ public:
     dataRepository::ViewKey collisionBeta   = { collisionBetaString };
 
     dataRepository::ViewKey bridgingFactor   = { bridgingFactorString };
-    dataRepository::ViewKey sphericity   = { sphericityString };        
+    dataRepository::ViewKey sphericity   = { sphericityString };
+
+    dataRepository::ViewKey particleSettlingModel   = { particleSettlingModelString };            
 
   } viewKeysParticleFluid;
 
@@ -105,27 +115,36 @@ protected:
 
 private:
 
-  void Compute( real64 const & concentration,
-		real64 & settlingFactor,
-		real64 & dSettlingFactor_dConc,
-		real64 & collisionFactor,
-		real64 & dCollisionFactor_dConc ) const;
+  void Compute( localIndex const NC,
+                real64 const & proppantConcentration,
+                arraySlice1d<real64 const> const & componentConcentration,
+                arraySlice1d<real64 const> const & nIndex,
+                arraySlice1d<real64 const> const & KIndex,
+                real64 const & fluidDensity,
+                real64 const & dFluidDensity_dPressure,
+                arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                real64 & settlingFactor,
+                real64 & dSettlingFactor_dPressure,
+                real64 & dSettlingFactor_dProppantConcentration,
+                arraySlice1d<real64> & dSettlingFactor_dComponentConcentration,
+                real64 & collisionFactor,
+                real64 & dCollisionFactor_dProppantConcentration ) const;
 
   void ComputeMob( real64 const & concentration,
 		   real64 const & aperture,		
 		   bool & isProppantMobile,
 		   real64 & proppantPackPermeability ) const;
-  
-  
-  real64 m_fluidDensity;
+
+
+  string m_particleSettlingModelString;
+
+  ParticleSettlingModel m_particleSettlingModel;
   
   real64 m_proppantDensity;  
 
   real64 m_fluidViscosity;
   
   real64 m_proppantDiameter;  
-
-  real64 m_singleParticleSettlingVelocity;
 
   real64 m_hinderedSettlingCoefficient;
 
@@ -142,7 +161,6 @@ private:
   real64 m_packPermeabilityCoef;
 
   real64 m_bridgingAperture;  
-  
   
 };
 

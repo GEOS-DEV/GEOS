@@ -260,7 +260,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
   stackArray1d<localIndex, maxElems> stencilCellsIndex;
   stackArray1d<real64, maxElems> stencilWeights;
 
-  stackArray1d<real64, maxElems> stencilEdgeToFaceDownDistances;  
+  stackArray1d<R1Tensor, maxElems> stencilCellCenterToEdgeCenters;    
   
   arrayView1d<integer const> const & edgeGhostRank = edgeManager->GhostRank();
 
@@ -279,7 +279,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
       stencilCellsSubRegionIndex.resize(numElems);
       stencilCellsIndex.resize(numElems);
       stencilWeights.resize(numElems);
-      stencilEdgeToFaceDownDistances.resize(numElems);
+
+      stencilCellCenterToEdgeCenters.resize(numElems);
       
       // get edge geometry
       R1Tensor edgeCenter, edgeLength;
@@ -304,8 +305,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
 
-        stencilEdgeToFaceDownDistances[kfe] =  -Dot(cellCenterToEdgeCenter, unitGravityVector) * edgeLength.L2_Norm() / cellCenterToEdgeCenter.L2_Norm();
-
+        stencilCellCenterToEdgeCenters[kfe] = cellCenterToEdgeCenter;
+        
       }
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
@@ -316,7 +317,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition const & do
                            fci );
 
       fractureStencil.add( numElems,
-                           stencilEdgeToFaceDownDistances.data(),
+                           stencilCellCenterToEdgeCenters.data(),
                            fci );      
       
     }

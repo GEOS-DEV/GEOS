@@ -66,6 +66,8 @@ public:
     static constexpr auto doLineSearchString   = "doLineSearch";    
     static constexpr auto maxSubStepsString         = "maxSubSteps";
     static constexpr auto minNumNewtonIterationsString   = "minNumberOfNewtonIterations";    
+
+    static constexpr auto maxIterNewtonConvergenceCheckString  = "maxIterNewtonConvergenceCheck";
     
   } viewKeys;
 
@@ -100,7 +102,9 @@ public:
   integer doLineSearch() const           { return m_doLineSearch; }  
   integer maxSubSteps() const                 { return m_maxSubSteps; }
 
-  integer minNumNewtonIterations() const           { return m_minNumNewtonIterations; }  
+  integer minNumNewtonIterations() const           { return m_minNumNewtonIterations; }
+
+  integer maxIterNewtonConvergenceCheck() const           { return m_maxIterNewtonConvergenceCheck; }    
   
 
   integer m_verbose;
@@ -132,6 +136,7 @@ public:
   integer m_maxSubSteps;
   integer m_maxIters = 1000;
 
+  integer m_maxIterNewtonConvergenceCheck;
 
 };
 

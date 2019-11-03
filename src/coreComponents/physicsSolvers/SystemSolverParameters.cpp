@@ -174,6 +174,10 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setApplyDefaultValue(0)->
     setDescription("verbosity level");
 
+  registerWrapper(viewKeysStruct::maxIterNewtonConvergenceCheckString, &m_maxIterNewtonConvergenceCheck, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->    
+    setDescription("verbosity level");  
 
 }
 

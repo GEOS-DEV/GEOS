@@ -17,6 +17,7 @@
  */
 
 #include "SinglePhaseFlow.hpp"
+#include "ProppantTransport.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -25,12 +26,15 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Fluid/SlurryFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "physicsSolvers/FiniteVolume/SinglePhaseFlowKernels.hpp"
+
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -69,6 +73,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityString )->setPlotLevel(PlotLevel::LEVEL_1);
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::porosityOldString );
       subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
+
     });
 
     elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
@@ -87,6 +92,7 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::densityOldString );
         subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::aperture0String )->
           setDefaultValue( region->getDefaultAperture() );
+
       });
     });
 
@@ -101,22 +107,68 @@ void SinglePhaseFlow::RegisterDataOnMesh(Group * const MeshBodies)
   }
 }
 
-void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
+  
+template<>
+void SinglePhaseFlow::UpdateFluidProperty<true>(Group * const dataGroup) const
 {
   GEOSX_MARK_FUNCTION;
-
-  SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
 
   arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
 
-  // TODO replace with batch update (need up-to-date pressure and temperature fields)
+  SlurryFluidBase * const fluid = GetConstitutiveModel<SlurryFluidBase>( dataGroup, m_fluidName );
+
+  arrayView1d<R1Tensor const> const & shearRate = dataGroup->getReference< array1d<R1Tensor> >( ProppantTransport::viewKeyStruct::shearRateString );
+      
+  arrayView1d<real64 const> const & proppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::proppantConcentrationString );
+
+  arrayView1d<real64 const> const & dProppantConcentration = dataGroup->getReference<array1d<real64>>( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );      
+
+  arrayView2d<real64 const> const & componentConcentration = dataGroup->getReference<array2d<real64>>( ProppantTransport::viewKeyStruct::componentConcentrationString );      
+      
   forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
-  {
+  {                                  
+    fluid->PointUpdate( pres[a] + dPres[a], proppantConcentration[a] + dProppantConcentration[a],  componentConcentration[a], shearRate[a].L2_Norm(), a, 0 );
+  });
+}
+
+
+template<>
+void SinglePhaseFlow::UpdateFluidProperty<false>(Group * const dataGroup) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  arrayView1d<real64 const> const & pres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::pressureString );
+  arrayView1d<real64 const> const & dPres = dataGroup->getReference< array1d<real64> >( viewKeyStruct::deltaPressureString );
+
+  SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
+
+  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  {                                      
     fluid->PointUpdate( pres[a] + dPres[a], a, 0 );
   });
-  //fluid->BatchUpdate( pres, temp, compFrac );
+
 }
+
+void SinglePhaseFlow::UpdateFluidModel(Group * const dataGroup) const
+{
+
+  GEOSX_MARK_FUNCTION;
+
+  if(m_flowProppantTransportFlag)
+    {
+  
+      UpdateFluidProperty<true>( dataGroup );
+
+    }
+  else
+    {
+
+      UpdateFluidProperty<false>( dataGroup );
+
+    }
+}
+
 
 void SinglePhaseFlow::UpdateSolidModel(Group * const dataGroup) const
 {
@@ -133,6 +185,7 @@ void SinglePhaseFlow::UpdateSolidModel(Group * const dataGroup) const
   });
 }
 
+template<class FLUIDBASE>  
 void SinglePhaseFlow::UpdateMobility( Group * const dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -145,21 +198,19 @@ void SinglePhaseFlow::UpdateMobility( Group * const dataGroup ) const
   arrayView1d<real64> const & dMob_dPres =
     dataGroup->getReference< array1d<real64> >( viewKeyStruct::dMobility_dPressureString );
 
-  // input
-
-  SingleFluidBase * const fluid = GetConstitutiveModel<SingleFluidBase>( dataGroup, m_fluidName );
+  FLUIDBASE * const fluid = GetConstitutiveModel<FLUIDBASE>( dataGroup, m_fluidName );      
 
   arrayView2d<real64 const> const & dens =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString );
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::densityString );
 
   arrayView2d<real64 const> const & dDens_dPres =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString );
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
 
   arrayView2d<real64 const> const & visc =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString );
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::viscosityString );
 
   arrayView2d<real64 const> const & dVisc_dPres =
-    fluid->getReference< array2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString );
+    fluid->template getReference< array2d<real64> >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
   MobilityKernel::Launch( 0, dataGroup->size(),
                           dens,
@@ -168,6 +219,7 @@ void SinglePhaseFlow::UpdateMobility( Group * const dataGroup ) const
                           dVisc_dPres,
                           mob,
                           dMob_dPres );
+
 }
 
 
@@ -177,7 +229,11 @@ void SinglePhaseFlow::UpdateState( Group * dataGroup ) const
 
   UpdateFluidModel( dataGroup );
   UpdateSolidModel( dataGroup );
-  UpdateMobility( dataGroup );
+
+  if(m_flowProppantTransportFlag)
+    UpdateMobility<SlurryFluidBase>( dataGroup );
+  else
+    UpdateMobility<SingleFluidBase>( dataGroup );    
 }
 
 void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
@@ -189,7 +245,7 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
   DomainPartition * domain = rootGroup->GetGroup<DomainPartition>(keys::domain);
   MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  //  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map<string, string_array > fieldNames;
@@ -199,7 +255,8 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
     domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
+  //  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  
   ResetViews( domain );
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
@@ -210,12 +267,13 @@ void SinglePhaseFlow::InitializePostInitialConditions_PreSubGroups( Group * cons
                                  ElementSubRegionBase * const subRegion )
   {
 
+    /*
     real64 const defaultDensity = constitutiveManager->GetConstitutiveRelation( m_fluidIndex )->
                                   getWrapper< array2d<real64> >( SingleFluidBase::viewKeyStruct::densityString )->
                                   getDefaultValue();
     subRegion->getWrapper< array1d<real64> >( viewKeyStruct::densityOldString )->
       setDefaultValue( defaultDensity );
-
+    */
 
     UpdateState( subRegion );
 
@@ -257,11 +315,22 @@ real64 SinglePhaseFlow::SolverStep( real64 const& time_n,
 
   real64 dt_return;
 
+  if(cycleNumber == 0) {
+
+    FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
+
+    boundaryConditionManager->ApplyInitialConditions( domain );
+
+  }
+  
   // setup dof numbers and linear system
   if( !m_coupledWellsFlag )
   {
     SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
   }
+
+
+  
 
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
@@ -300,14 +369,16 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     arrayView1d<real64> const & poroOld = m_porosityOld[er][esr];
 
     // This should fix NaN density in newly created fracture elements
-    //UpdateState( subRegion );
+    UpdateState( subRegion );
 
     forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
     {
+
       dPres[ei] = 0.0;
       dVol[ei] = 0.0;
       densOld[ei] = dens[ei][0];
       poroOld[ei] = poro[ei];
+
     } );
   } );
 
@@ -327,7 +398,8 @@ void SinglePhaseFlow::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n
     } );
 
 
-    UpdateMobility( subRegion );
+    //    UpdateMobility( subRegion );
+    UpdateState( subRegion );    
   } );
 }
 
@@ -455,8 +527,6 @@ void SinglePhaseFlow::AccumulationLaunch( localIndex const er,
   arrayView1d<real64 const> const & totalMeanStress    = m_poroElasticFlag ? m_totalMeanStress[er][esr]           : poroOld;
   arrayView1d<real64 const> const & bulkModulus        = m_poroElasticFlag ? m_bulkModulus[er][esr][m_solidIndex] : poroOld;
   real64 const & biotCoefficient                       = m_poroElasticFlag ? m_biotCoefficient[er][esr][m_solidIndex] : 0;
-
-
 
   forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
   {
@@ -1096,6 +1166,7 @@ void SinglePhaseFlow::ApplySystemSolution( DofManager const & dofManager,
   {
     UpdateState( subRegion );
   } );
+
 }
 
 void SinglePhaseFlow::SolveSystem( DofManager const & dofManager,
@@ -1171,19 +1242,40 @@ void SinglePhaseFlow::ResetViews( DomainPartition * const domain )
   m_porosity =
     elemManager->ConstructViewAccessor< array1d<real64>, arrayView1d<real64> >( viewKeyStruct::porosityString );
 
-  m_density =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::densityString,
-                                                                                           constitutiveManager );
-  m_dDens_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                           constitutiveManager );
-  m_viscosity =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString,
-                                                                                           constitutiveManager );
-  m_dVisc_dPres =
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                           constitutiveManager );
+  if(m_flowProppantTransportFlag)
+    {
+  
+      m_density =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::densityString,
+                                                                                               constitutiveManager );
+      m_dDens_dPres =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                                               constitutiveManager );
+      m_viscosity =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::viscosityString,
+                                                                                               constitutiveManager );
+      m_dVisc_dPres =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                                               constitutiveManager );
+    }
+  else
+    {
 
+      m_density =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::densityString,
+                                                                                               constitutiveManager );
+      m_dDens_dPres =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                                               constitutiveManager );
+      m_viscosity =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::viscosityString,
+                                                                                               constitutiveManager );
+      m_dVisc_dPres =
+        elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                                           constitutiveManager );
+    }
+
+      
   if (m_poroElasticFlag)
   {
     // TODO where are these strings defined?

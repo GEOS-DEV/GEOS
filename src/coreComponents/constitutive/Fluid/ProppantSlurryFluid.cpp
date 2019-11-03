@@ -44,20 +44,10 @@ ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * cons
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference proppant density");
 
-    registerWrapper( viewKeyStruct::referenceFluidDensityString, &m_referenceFluidDensity, false )->
-    setApplyDefaultValue(1000.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Reference fluid density");
-
   registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
     setApplyDefaultValue(1e5)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference pressure");
-
-  registerWrapper( viewKeyStruct::referenceProppantVolumeFractionString, &m_referenceProppantVolumeFraction, false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Reference proppant volume fraction");  
 
   registerWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
     setApplyDefaultValue(1000.0)->
@@ -69,10 +59,10 @@ ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * cons
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Reference fluid viscosity");
 
-  registerWrapper( viewKeyStruct::maxProppantVolumeFractionString, &m_maxProppantVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
     setApplyDefaultValue(0.6)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum proppant volume fraction");  
+    setDescription("Maximum proppant concentration");
 
 }
 
@@ -84,8 +74,8 @@ void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::Group * cons
   SlurryFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
 
   m_density = m_referenceDensity;
-  m_fluidDensity = m_referenceFluidDensity;  
   m_viscosity = m_referenceViscosity;
+
 }
 
 void
@@ -100,15 +90,12 @@ ProppantSlurryFluid::DeliverClone( string const & name,
   SlurryFluidBase::DeliverClone( name, parent, clone );
   ProppantSlurryFluid * const newConstitutiveRelation = dynamic_cast<ProppantSlurryFluid *>(clone.get());
 
-
   newConstitutiveRelation->m_compressibility      = this->m_compressibility;
   newConstitutiveRelation->m_referenceProppantDensity        = this->m_referenceProppantDensity;
-  newConstitutiveRelation->m_referenceFluidDensity        = this->m_referenceFluidDensity;  
   newConstitutiveRelation->m_referencePressure    = this->m_referencePressure;
-  newConstitutiveRelation->m_referenceProppantVolumeFraction    = this->m_referenceProppantVolumeFraction;  
   newConstitutiveRelation->m_referenceDensity     = this->m_referenceDensity;
   newConstitutiveRelation->m_referenceViscosity   = this->m_referenceViscosity;
-  newConstitutiveRelation->m_maxProppantVolumeFraction   = this->m_maxProppantVolumeFraction;
+  newConstitutiveRelation->m_maxProppantConcentration   = this->m_maxProppantConcentration;
 
 }
 
@@ -119,69 +106,223 @@ void ProppantSlurryFluid::PostProcessInput()
   GEOS_ERROR_IF( m_compressibility < 0.0, "An invalid value of fluid compressibility ("
                                           << m_compressibility << ") is specified" );
 
-  GEOS_ERROR_IF( m_referenceProppantDensity <= 0.0, "An invalid value of proppant density is specified" );
-
   GEOS_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density (" << m_compressibility << ") is specified" );
 
   GEOS_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity is specified" );
 
-  GEOS_ERROR_IF( m_maxProppantVolumeFraction <= 0.0 || m_maxProppantVolumeFraction > 1.0, "An invalid value of maximum proppant volume fraction is specified" );  
+  GEOS_ERROR_IF( m_maxProppantConcentration <= 0.0 || m_maxProppantConcentration > 1.0, "An invalid value of maximum proppant volume fraction is specified" );
 
-  real64 dRho_dP, dRho_dC;
-  real64 dVisc_dP, dVisc_dC;
-  real64 dFluidRho_dP;
-  
-  Compute( m_referencePressure, m_referenceProppantVolumeFraction, m_referenceDensity, m_referenceFluidDensity, dRho_dP, dRho_dC, dFluidRho_dP, m_referenceViscosity, dVisc_dP, dVisc_dC );
-  this->getWrapper< array2d<real64> >(viewKeyStruct::dDens_dPresString)->setDefaultValue( dRho_dP );
-  this->getWrapper< array2d<real64> >(viewKeyStruct::dDens_dConcString)->setDefaultValue( dRho_dC );
-  
-  this->getWrapper< array2d<real64> >(viewKeyStruct::dVisc_dPresString)->setDefaultValue( dVisc_dP );
-  this->getWrapper< array2d<real64> >(viewKeyStruct::dVisc_dConcString)->setDefaultValue( dVisc_dC );
-  
 }
 
-void ProppantSlurryFluid::BatchUpdate(arrayView1d<real64 const> const &, arrayView1d<real64 const> const &)
+  void ProppantSlurryFluid::BatchUpdate(arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( pressure ), arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( proppantConcentration ),  arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( componentConcentration ), arrayView1d<real64 const> const & GEOSX_UNUSED_ARG( shearRate ))
 {
 
 }
 
-void ProppantSlurryFluid::PointUpdate( real64 const & pressure, real64 const & concentration, localIndex const k, localIndex const q )
+  void ProppantSlurryFluid::PointUpdate(real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, real64 const & shearRate, localIndex const k, localIndex const q)
+
 {
-  Compute( pressure, concentration, m_density[k][q], m_fluidDensity[k][q], m_dDens_dPres[k][q], m_dDens_dConc[k][q], m_dFluidDens_dPres[k][q], m_viscosity[k][q], m_dVisc_dPres[k][q], m_dVisc_dConc[k][q]);
+
+  localIndex const NC = numFluidComponents();
+
+  ComputeFluidDensity( NC, pressure, componentConcentration, m_fluidDensity[k][q], m_dFluidDens_dPres[k][q], m_dFluidDens_dCompConc[k][q]);
+  
+  Compute( NC, pressure, proppantConcentration, componentConcentration, shearRate, m_fluidDensity[k][q], m_dFluidDens_dPres[k][q], m_dFluidDens_dCompConc[k][q], m_density[k][q], m_dDens_dPres[k][q], m_dDens_dProppantConc[k][q], m_dDens_dCompConc[k][q], m_viscosity[k][q], m_dVisc_dPres[k][q], m_dVisc_dProppantConc[k][q], m_dVisc_dCompConc[k][q]);
 
 }
 
-void ProppantSlurryFluid::Compute( real64 const & pressure,
-				   real64 const & concentration,
-				   real64 & density,
-				   real64 & fluidDensity,
-				   real64 & dDens_dPres,
-				   real64 & dDens_dConc,
-				   real64 & dFluidDens_dPres,
-				   real64 & viscosity,
-				   real64 & dVisc_dPres,
-				   real64 & dVisc_dConc ) const
+void ProppantSlurryFluid::PointUpdateFluidDensity(real64 const & pressure, arraySlice1d<real64 const> const & componentConcentration, localIndex const k, localIndex const q )
 {
 
+  localIndex const NC = numFluidComponents();
+  
+  ComputeFluidDensity( NC, pressure, componentConcentration, m_fluidDensity[k][q], m_dFluidDens_dPres[k][q], m_dFluidDens_dCompConc[k][q]);
+
+}
+
+
+void ProppantSlurryFluid::ComputeFluidDensity( localIndex const NC,
+                                               real64 const & pressure,
+                                               arraySlice1d<real64 const> const & componentConcentration,
+                                               real64 & fluidDensity,
+                                               real64 & dFluidDensity_dPressure,
+                                               arraySlice1d<real64> & dFluidDensity_dComponentConcentration) const                                   
+{
+
+  real64 fluidConcentration = 1.0;
+  
   // density
 
-  fluidDensity = m_referenceDensity * exp(m_compressibility * (pressure - m_referencePressure));
+  real64 waterDensity = m_referenceDensity * exp(m_compressibility * (pressure - m_referencePressure));
 
-  dFluidDens_dPres = m_compressibility * fluidDensity;
+  real64 dWaterDensity_dPres = m_compressibility * waterDensity;
+
+  fluidDensity = 0.0;
+
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      fluidDensity += componentConcentration[c] * m_defaultDensity[c];
+      dFluidDensity_dComponentConcentration[c] = m_defaultDensity[c];
+
+      fluidConcentration -= componentConcentration[c];
+      
+    }
+
+  fluidDensity += fluidConcentration * waterDensity;
+
+  dFluidDensity_dPressure = fluidConcentration * dWaterDensity_dPres;
+
   
-  density = (1.0 - concentration) * fluidDensity + concentration *   m_referenceProppantDensity;
+}
 
-  dDens_dPres = (1.0 - concentration) * dFluidDens_dPres;
 
-  dDens_dConc = -fluidDensity + m_referenceProppantDensity;
+void ProppantSlurryFluid::Compute( localIndex const NC,
+                                   real64 const & GEOSX_UNUSED_ARG( pressure ),
+                                   real64 const & proppantConcentration,
+                                   arraySlice1d<real64 const> const & componentConcentration,
+                                   real64 const & shearRate,
+                                   real64 const & fluidDensity,
+                                   real64 const & dFluidDensity_dPressure,
+                                   arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,                                   
+                                   real64 & density,
+                                   real64 & dDensity_dPressure,
+                                   real64 & dDensity_dProppantConcentration,                        
+                                   arraySlice1d<real64> & dDensity_dComponentConcentration,
+                                   real64 & viscosity,
+                                   real64 & dViscosity_dPressure,
+                                   real64 & dViscosity_dProppantConcentration,                        
+                                   arraySlice1d<real64> & dViscosity_dComponentConcentration ) const
 
-  // Stokes-Einstein model
+{
 
-  viscosity = m_referenceViscosity * (1.0 + 2.5 * concentration);
+  real64 fluidConcentration = 1.0;
+  
+  for(localIndex c = 0; c < NC; ++c)
+    {
 
-  dVisc_dPres = 0.0;
-  dVisc_dConc = m_referenceViscosity * 2.5;
+      fluidConcentration -= componentConcentration[c];
+      
+    }
 
+  density = (1.0 - proppantConcentration) * fluidDensity + proppantConcentration * m_referenceProppantDensity;
+
+  dDensity_dPressure = (1.0 - proppantConcentration) * dFluidDensity_dPressure;
+
+  dDensity_dProppantConcentration = -fluidDensity + m_referenceProppantDensity;
+
+  for(localIndex c = 0; c < NC; ++c)
+    {    
+
+      dDensity_dComponentConcentration[c] = (1.0 - proppantConcentration) * dFluidDensity_dComponentConcentration[c];
+
+    }  
+      
+  real64 nIndex = NC > 0 ? 0.0 : 1.0;
+  real64 K = NC > 0 ? 0.0 : m_referenceViscosity;  
+
+  array1d<real64> dNIndex_dC(NC);
+  array1d<real64> dK_dC(NC);  
+
+  for(localIndex c = 0; c < NC; ++c)
+    {    
+  
+      nIndex +=  componentConcentration[c] * m_nIndices[c] / (1.0 - fluidConcentration);
+      K +=  componentConcentration[c] * m_Ks[c] / (1.0 - fluidConcentration);      
+      dNIndex_dC[c] = m_nIndices[c] / (1.0 - fluidConcentration);
+      dK_dC[c] = m_Ks[c] / (1.0 - fluidConcentration);      
+
+    }
+      
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      dNIndex_dC[c] -= nIndex / (1.0 - fluidConcentration);
+      dK_dC[c] -= K / (1.0 - fluidConcentration);      
+
+    }
+
+  real64 fluidViscosity = 0.0;
+
+  array1d<real64> dFluidViscosity_dC(NC);
+
+  bool isNewtonian = (nIndex == 1.0 || shearRate < 1e-5 || K == 0.0 || nIndex == 0.0) ? 1 : 0;
+
+  
+  if(isNewtonian)
+    {
+
+      fluidViscosity = m_referenceViscosity; 
+
+      for(localIndex c = 0; c < NC; ++c)
+        {
+          
+          dFluidViscosity_dC[c] = 0.0;
+
+        }
+    }
+  else if(nIndex > 1.0)
+    {
+
+
+      fluidViscosity = m_referenceViscosity * (1.0 + K / m_referenceViscosity * pow(shearRate, nIndex - 1.0)); 
+
+      for(localIndex c = 0; c < NC; ++c)
+        {
+          
+          dFluidViscosity_dC[c] = dK_dC[c] * pow(shearRate, nIndex - 1.0) + K * log(shearRate) * pow(shearRate, nIndex - 1.0) * dNIndex_dC[c];
+
+        }
+
+    }
+  else 
+    {
+
+      fluidViscosity = m_referenceViscosity / (1.0 + m_referenceViscosity / K * pow(shearRate, 1.0 - nIndex)); 
+
+      for(localIndex c = 0; c < NC; ++c)
+        {
+          
+          dFluidViscosity_dC[c] = fluidViscosity * m_referenceViscosity * pow(shearRate, 1.0 - nIndex) * (log(shearRate) * dNIndex_dC[c] / K + dK_dC[c] / K / K);
+        }
+
+    }
+
+
+  real64 coef = 0.0;
+  
+  if(isNewtonian)
+    {
+
+      viscosity = fluidViscosity * pow(1.0 + 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration), 2.0);
+
+      
+      dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration * m_maxProppantConcentration / (m_maxProppantConcentration - proppantConcentration) / (m_maxProppantConcentration - proppantConcentration); 
+
+      for(localIndex c = 0; c < NC; ++c) 
+        dViscosity_dComponentConcentration[c] = 0.0;
+
+    }          
+  else
+    {
+
+      coef = 0.75 * (exp(1.5 * nIndex) - 1.0) * exp(-(1.0 - nIndex) * shearRate / 1000.0);
+      
+      viscosity = fluidViscosity * pow(1.0 +  coef * 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration), 2.0);
+
+      dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + coef * 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration * m_maxProppantConcentration / (m_maxProppantConcentration - proppantConcentration) / (m_maxProppantConcentration - proppantConcentration);
+
+      for(localIndex c = 0; c < NC; ++c)
+        {
+          
+          dViscosity_dComponentConcentration[c] = dFluidViscosity_dC[c] * pow(1.0 +  coef * 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration), 2.0) + fluidViscosity * 2.0 * (1.0 + coef * 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration)) * 1.25 *  proppantConcentration / (1.0 - proppantConcentration / m_maxProppantConcentration) * (0.75 * (exp(1.5 * nIndex) * 1.5 * dNIndex_dC[c]) * exp(-(1.0 - nIndex) * shearRate / 1000.0) + (exp(1.5 * nIndex) - 1.0) * exp(-(1.0 - nIndex) * shearRate / 1000.0) * shearRate / 1000.0 * dNIndex_dC[c]);
+      
+        }
+
+    }
+
+  dViscosity_dPressure = 0.0;
+  
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSlurryFluid, std::string const &, Group * const )

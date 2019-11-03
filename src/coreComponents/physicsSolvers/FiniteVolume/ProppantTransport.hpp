@@ -89,6 +89,11 @@ public:
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
+  void PreStepUpdate( real64 const& time_n,
+                      real64 const& dt,
+                      integer const cycleNumber,
+                      DomainPartition * domain );  
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -177,57 +182,50 @@ public:
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
 
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_ProppantTransport" ;
-
     static constexpr auto proppantNameString      = "proppantName";
     static constexpr auto proppantIndexString      = "proppantIndex";
     
-
     // primary solution field
-    static constexpr auto pressureString      = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
-
     static constexpr auto proppantConcentrationString      = "proppantConcentration";
     static constexpr auto deltaProppantConcentrationString      = "deltaProppantConcentration";    
-    
-    static constexpr auto deltaVolumeString = "deltaVolume";
 
+    static constexpr auto componentConcentrationString      = "componentConcentration";
+    static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";    
+
+    static constexpr auto updatedComponentConcentrationString      = "updatedComponentConcentration";
+    
     // these are used to store last converged time step values
-    static constexpr auto densityString   = "oldDensity";
     static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
+    static constexpr auto oldComponentConcentrationString  = "oldComponentConcentration";    
     static constexpr auto slipVelocityString   = "slipVelocity";
     
-
-    static constexpr auto porosityString  = "porosity";
-
     static constexpr auto updatePermeabilityString  = "updatePermeability";
-    static constexpr auto updateProppantMobilityString  = "updateProppantMobility";        
+    static constexpr auto updateProppantMobilityString  = "updateProppantMobility";
+
+    static constexpr auto shearRateString  = "shearRate";    
 
     using ViewKey = dataRepository::ViewKey;
 
-    // dof numbering
-    ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-
     // primary solution field
-    ViewKey pressure      = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-
     ViewKey proppantConcentration      = { proppantConcentrationString };
     ViewKey deltaProppantConcentration = { deltaProppantConcentrationString };
+
+    ViewKey componentConcentration      = { componentConcentrationString };
+    ViewKey deltaComponentConcentration = { deltaComponentConcentrationString };    
     
-    ViewKey deltaVolume   = { deltaVolumeString };
+    ViewKey updatedComponentConcentration      = { updatedComponentConcentrationString };
 
-    ViewKey density      = { densityString };
+    
     ViewKey oldProppantConcentration    = { oldProppantConcentrationString };
-
-    ViewKey porosity     = { porosityString };
+    ViewKey oldComponentConcentration    = { oldComponentConcentrationString };
+    
 
     ViewKey proppantName      = { proppantNameString };
     ViewKey proppantIndex      = { proppantIndexString };
 
     ViewKey updatePermeability = { updatePermeabilityString };
     ViewKey updateProppantMobility = { updateProppantMobilityString };
-    
+
     
   } viewKeysProppantTransport;
 
@@ -241,6 +239,8 @@ public:
   groupKeyStruct & groupKeys() { return groupKeysProppantTransport; }
   groupKeyStruct const & groupKeys() const { return groupKeysProppantTransport; }
 
+  static constexpr localIndex MAX_NUM_COMPONENTS = 3;
+  
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
@@ -270,51 +270,55 @@ private:
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantConcentration;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaProppantConcentration;  
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaProppantConcentration;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaVolume;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_componentConcentration;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_deltaComponentConcentration;    
 
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_updatedComponentConcentration;
 
+  ElementRegionManager::ElementViewAccessor<arrayView1d<R1Tensor>> m_shearRate;
+  
   /// views into backup fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_densityOld;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_proppantConcentrationOld;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_componentConcentrationOld;  
 
   /// views into material fields
 
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_density;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDensity_dPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDensity_dProppantConcentration;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dDensity_dComponentConcentration;
+  
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_fluidDensity;  
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dDens_dConc;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dFluidDens_dPres;    
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dFluidDensity_dPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dFluidDensity_dComponentConcentration;      
 
   ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_viscosity;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dVisc_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dVisc_dConc;
-
-  static constexpr localIndex MAX_NUM_COMPONENTS = 2;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dViscosity_dPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dViscosity_dProppantConcentration;
+  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dViscosity_dComponentConcentration;  
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_settlingFactor;
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dSettlingFactor_dConc;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dSettlingFactor_dPressure;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dSettlingFactor_dProppantConcentration;
+  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dSettlingFactor_dComponentConcentration;  
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_collisionFactor;
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dCollisionFactor_dConc;
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_dCollisionFactor_dProppantConcentration;
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<bool>> m_isProppantMobile;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_proppantPackPermeability;          
+  ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_proppantPackPermeability;
 
   string m_proppantName;
   localIndex m_proppantIndex;  
   integer m_updatePermeability;
   integer m_updateProppantMobility;  
+  integer m_numComponents;
 
-  //Below is not used in ProppantTransport model
-  
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosity;
-  
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
+  R1Tensor m_downVector;
   
 };
 

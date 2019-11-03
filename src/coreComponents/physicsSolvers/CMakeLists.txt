@@ -7,6 +7,7 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
+     CoupledSolvers/FlowProppantTransportSolver.hpp     
      CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
      CoupledSolvers/ReservoirSolver.hpp
@@ -36,6 +37,7 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      SystemSolverParameters.cpp
+     CoupledSolvers/FlowProppantTransportSolver.cpp          
      CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
      CoupledSolvers/ReservoirSolver.cpp

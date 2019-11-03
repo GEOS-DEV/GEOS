@@ -210,7 +210,11 @@ public:
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
+
   void UpdateFluidModel( Group * const dataGroup ) const;
+
+  template<bool ISPROPPANT>
+  void UpdateFluidProperty( Group * const dataGroup ) const;  
 
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -287,6 +291,7 @@ private:
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
+  template<class FLUIDBASE>  
   void UpdateMobility( Group * const dataGroup ) const;
 
 

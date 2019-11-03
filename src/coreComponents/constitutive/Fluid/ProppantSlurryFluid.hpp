@@ -61,21 +61,37 @@ public:
 
   // *** ProppantSlurryFluid interface
 
-  virtual void PointUpdate( real64 const & pressure, real64 const & concentration, localIndex const k, localIndex const q ) override;
+  virtual void PointUpdate( real64 const & pressure, real64 const & proppantConcentration, arraySlice1d<real64 const> const & Componentconcentration, real64 const & shearRate, localIndex const k, localIndex const q ) override;
 
-  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & concentration) override;
+  virtual void PointUpdateFluidDensity( real64 const & pressure, arraySlice1d<real64 const> const & Componentconcentration, localIndex const k, localIndex const q ) override;  
 
-  virtual void Compute( real64 const & pressure,
-			real64 const & concentration,			
-                        real64 & density,
-                        real64 & fluidDensity,			
-                        real64 & dDensity_dPressure,
-                        real64 & dDensity_dConcentration,
-                        real64 & dFluidDensity_dPressure,
-                        real64 & viscosity,
-                        real64 & dViscosity_dPressure,			
-                        real64 & dViscosity_dConcentration ) const override;
+  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & proppantConcentration,  arrayView2d<real64 const> const & componentConcentration, arrayView1d<real64 const> const & shearRate) override;
 
+  void Compute( localIndex const NC,
+                real64 const & pressure,
+                real64 const & proppantConcentration,
+                arraySlice1d<real64 const> const & componentConcentration,
+                real64 const & shearRate,
+                real64 const & fluidDensity,
+                real64 const & dFluidDensity_dPressure,
+                arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                real64 & density,
+                real64 & dDensity_dPressure,
+                real64 & dDensity_dProppantConcentration,
+                arraySlice1d<real64> & dDensity_dComponentConcentration,
+                real64 & viscosity,
+                real64 & dViscosity_dPressure,
+                real64 & dViscosity_dProppantConcentration,
+                arraySlice1d<real64> & dViscosity_dConcentration ) const;
+
+  void ComputeFluidDensity( localIndex const NC,
+                            real64 const & pressure,
+                            arraySlice1d<real64 const> const & componentConcentration,
+                            real64 & fluidDensity,
+                            real64 & dFluidDensity_dPressure,
+                            arraySlice1d<real64> & dFluidDensity_dComponentConcentration) const;
+  
+  
   // *** Data repository keys
 
   struct viewKeyStruct : public SlurryFluidBase::viewKeyStruct
@@ -83,21 +99,19 @@ public:
     static constexpr auto compressibilityString    = "compressibility";
     static constexpr auto referencePressureString  = "referencePressure";
     static constexpr auto referenceDensityString   = "referenceDensity";
+
     static constexpr auto referenceProppantDensityString   = "referenceProppantDensity";
-    static constexpr auto referenceFluidDensityString   = "referenceFluidDensity";    
-    static constexpr auto maxProppantVolumeFractionString   = "maxProppantVolumeFraction";    
+
+    static constexpr auto maxProppantConcentrationString   = "maxProppantConcentration";    
     static constexpr auto referenceViscosityString = "referenceViscosity";
-    static constexpr auto referenceProppantVolumeFractionString   = "referenceProppantVolumeFraction";        
 
     dataRepository::ViewKey compressibility    = { compressibilityString    };
     dataRepository::ViewKey referencePressure  = { referencePressureString  };
     dataRepository::ViewKey referenceDensity   = { referenceDensityString   };
     dataRepository::ViewKey referenceViscosity = { referenceViscosityString };
-    dataRepository::ViewKey maxProppantVolumeFraction = { maxProppantVolumeFractionString };    
+    dataRepository::ViewKey maxProppantConcentration = { maxProppantConcentrationString };    
     dataRepository::ViewKey referenceProppantDensity = { referenceProppantDensityString };
-    dataRepository::ViewKey referenceFluidDensity = { referenceFluidDensityString };
-    dataRepository::ViewKey referenceProppantVolumeFraction = { referenceProppantVolumeFractionString };        
-    
+
   } viewKeysProppantSlurryFluid;
 
 protected:
@@ -109,17 +123,13 @@ private:
 
   real64 m_referenceProppantDensity;
 
-  real64 m_referenceFluidDensity;  
-
   real64 m_referencePressure;
 
   real64 m_referenceDensity;
 
   real64 m_referenceViscosity;
 
-  real64 m_maxProppantVolumeFraction;
-
-  real64 m_referenceProppantVolumeFraction;    
+  real64 m_maxProppantConcentration;
 
 };
 

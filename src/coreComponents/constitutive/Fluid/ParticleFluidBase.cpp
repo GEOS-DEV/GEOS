@@ -35,10 +35,12 @@ ParticleFluidBase::ParticleFluidBase( std::string const & name, Group * const pa
 {
 
   registerWrapper( viewKeyStruct::settlingFactorString, &m_settlingFactor, false );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dConcString, &m_dSettlingFactor_dConc, false );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dPressureString, &m_dSettlingFactor_dPressure, false );
+  registerWrapper( viewKeyStruct::dSettlingFactor_dProppantConcentrationString, &m_dSettlingFactor_dProppantConcentration, false );
+    registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString, &m_dSettlingFactor_dComponentConcentration, false );  
 
   registerWrapper( viewKeyStruct::collisionFactorString, &m_collisionFactor, false );
-  registerWrapper( viewKeyStruct::dCollisionFactor_dConcString, &m_dCollisionFactor_dConc, false );
+  registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString, &m_dCollisionFactor_dProppantConcentration, false );
 
   registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
     setApplyDefaultValue(0.6)->
@@ -71,10 +73,12 @@ void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
   this->resize( parent->size() );
 
   m_settlingFactor.resize( parent->size());
-  m_dSettlingFactor_dConc.resize( parent->size());
+  m_dSettlingFactor_dPressure.resize( parent->size());
+  m_dSettlingFactor_dProppantConcentration.resize( parent->size());
+  m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS);  
 
   m_collisionFactor.resize( parent->size());
-  m_dCollisionFactor_dConc.resize( parent->size());
+  m_dCollisionFactor_dProppantConcentration.resize( parent->size());
 
   m_isProppantMobile.resize( parent->size());  
   m_proppantPackPermeability.resize( parent->size());  
@@ -93,10 +97,12 @@ ParticleFluidBase::DeliverClone( string const & name,
   ParticleFluidBase * const newConstitutiveRelation = dynamic_cast<ParticleFluidBase *>(clone.get());
 
   newConstitutiveRelation->m_settlingFactor = m_settlingFactor;
-  newConstitutiveRelation->m_dSettlingFactor_dConc = m_dSettlingFactor_dConc;
+  newConstitutiveRelation->m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
+  newConstitutiveRelation->m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
+  newConstitutiveRelation->m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;  
 
   newConstitutiveRelation->m_collisionFactor = m_collisionFactor;
-  newConstitutiveRelation->m_dCollisionFactor_dConc = m_dCollisionFactor_dConc;  
+  newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;  
 
   newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
 

@@ -34,25 +34,37 @@ SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent
   : ConstitutiveBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for density.");
+  registerWrapper( viewKeyStruct::componentNamesString, &m_componentNames, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("List of fluid component names");
 
-  registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Default value for viscosity.");
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Default value for density.");  
+
+  registerWrapper( viewKeyStruct::flowBehaviorIndexString, &m_nIndices, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Flow behavior index");
+
+  registerWrapper( viewKeyStruct::flowConsistencyIndexString, &m_Ks, false )->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Flow consistency index");      
 
   registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDens_dPres, false );
+  registerWrapper( viewKeyStruct::dDens_dProppantConcString, &m_dDens_dProppantConc, false );
+  registerWrapper( viewKeyStruct::dDens_dCompConcString, &m_dDens_dCompConc, false );  
+
 
   registerWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dFluidDens_dPresString, &m_dFluidDens_dPres, false );
+  registerWrapper( viewKeyStruct::dFluidDens_dCompConcString, &m_dFluidDens_dCompConc, false );    
 
-  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDens_dPres, false );
-  registerWrapper( viewKeyStruct::dDens_dConcString, &m_dDens_dConc, false );
-  registerWrapper( viewKeyStruct::dFluidDens_dPresString, &m_dFluidDens_dPres, false );  
-
+  
   registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dVisc_dPresString, &m_dVisc_dPres, false );
-  registerWrapper( viewKeyStruct::dVisc_dConcString, &m_dVisc_dConc, false );
+  registerWrapper( viewKeyStruct::dVisc_dProppantConcString, &m_dVisc_dProppantConc, false );
+  registerWrapper( viewKeyStruct::dVisc_dCompConcString, &m_dVisc_dCompConc, false );  
   
 }
 
@@ -61,11 +73,29 @@ SlurryFluidBase::~SlurryFluidBase() = default;
 void SlurryFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
-  this->getWrapper< array2d<real64> >(viewKeyStruct::densityString)->setApplyDefaultValue(m_defaultDensity);
-  this->getWrapper< array2d<real64> >(viewKeyStruct::viscosityString)->setApplyDefaultValue(m_defaultViscosity);
 
+  localIndex const NC = numFluidComponents();
+
+  GEOS_ERROR_IF( m_defaultDensity.size() != NC, "The number of flow behavior indices is not the same as the component number" );
+  
+  GEOS_ERROR_IF( m_nIndices.size() != NC, "The number of flow behavior indices is not the same as the component number" );
+
+  GEOS_ERROR_IF( m_Ks.size() != NC, "The number of flow consistency indices is not the same as the component number" );  
+  
 }
 
+localIndex SlurryFluidBase::numFluidComponents() const
+{
+  return integer_conversion<localIndex>(m_componentNames.size());
+}
+
+string const & SlurryFluidBase::componentName(localIndex ic) const
+{
+  GEOS_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
+  return m_componentNames[ic];
+}
+
+  
 void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -73,16 +103,21 @@ void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
 
   this->resize( parent->size() );
 
-  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_fluidDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );  
-  m_dDens_dPres.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dDens_dConc.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dFluidDens_dPres.resize( parent->size(), numConstitutivePointsPerParentIndex );  
+  localIndex const NC = numFluidComponents();
   
+  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dDens_dPres.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dDens_dProppantConc.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dDens_dCompConc.resize( parent->size(), numConstitutivePointsPerParentIndex, NC );  
 
+  m_fluidDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dFluidDens_dPres.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dFluidDens_dCompConc.resize( parent->size(), numConstitutivePointsPerParentIndex , NC );  
+  
   m_viscosity.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dVisc_dPres.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dVisc_dConc.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dVisc_dProppantConc.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dVisc_dCompConc.resize( parent->size(), numConstitutivePointsPerParentIndex, NC );  
   
 }
 
@@ -97,16 +132,27 @@ SlurryFluidBase::DeliverClone( string const & name,
   ConstitutiveBase::DeliverClone( name, parent, clone );
   SlurryFluidBase * const newConstitutiveRelation = dynamic_cast<SlurryFluidBase *>(clone.get());
 
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation->m_defaultViscosity = m_defaultViscosity;
+  newConstitutiveRelation->m_componentNames  = this->m_componentNames;
+
+  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;  
+
   newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_fluidDensity = m_fluidDensity;  
-  newConstitutiveRelation->m_viscosity = m_viscosity;
   newConstitutiveRelation->m_dDens_dPres = m_dDens_dPres;
-  newConstitutiveRelation->m_dDens_dConc = m_dDens_dConc;
-  newConstitutiveRelation->m_dFluidDens_dPres = m_dFluidDens_dPres;  
+  newConstitutiveRelation->m_dDens_dProppantConc = m_dDens_dProppantConc;
+  newConstitutiveRelation->m_dDens_dCompConc = m_dDens_dCompConc;  
+
+  newConstitutiveRelation->m_fluidDensity = m_fluidDensity;  
+  newConstitutiveRelation->m_dFluidDens_dPres = m_dFluidDens_dPres;
+  newConstitutiveRelation->m_dFluidDens_dCompConc = m_dFluidDens_dCompConc;
+
+  newConstitutiveRelation->m_viscosity = m_viscosity;
   newConstitutiveRelation->m_dVisc_dPres = m_dVisc_dPres;
-  newConstitutiveRelation->m_dVisc_dConc = m_dVisc_dConc;  
+  newConstitutiveRelation->m_dVisc_dProppantConc = m_dVisc_dProppantConc;
+  newConstitutiveRelation->m_dVisc_dCompConc = m_dVisc_dCompConc;    
+
+  newConstitutiveRelation->m_nIndices   = this->m_nIndices;
+  newConstitutiveRelation->m_Ks   = this->m_Ks;  
+  
 }
 } //namespace constitutive
 

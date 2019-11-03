@@ -31,15 +31,31 @@ using namespace cxx_utilities;
 namespace constitutive
 {
 
+ParticleFluid::ParticleSettlingModel ParticleFluid::stringToParticleSettlingModel( string const & str )
+{
+  if (str == "Stokes")
+  {
+    return ParticleFluid::ParticleSettlingModel::Stokes;
+  }
+  else if (str == "Intermediate")
+  {
+    return ParticleFluid::ParticleSettlingModel::Intermediate;
+  }
+  else
+  {
+    GEOS_ERROR("Unrecognized particle settling velocity model: " << str);
+  }
+  return ParticleFluid::ParticleSettlingModel::Stokes;
+}
+  
 ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::fluidDensityString, &m_fluidDensity, false )->
-    setApplyDefaultValue(1000.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Fluid density");
-
+  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModelString, false )->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Particle settling velocity model");        
+  
   registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->
     setApplyDefaultValue(1400.0)->
     setInputFlag(InputFlags::OPTIONAL)->
@@ -83,7 +99,7 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::sphericityString, &m_sphericity, false )->
     setApplyDefaultValue(1.0)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Sphericity");        
+    setDescription("Sphericity");
 
 }
 
@@ -108,11 +124,10 @@ ParticleFluid::DeliverClone( string const & name,
   ParticleFluidBase::DeliverClone( name, parent, clone );
   ParticleFluid * const newConstitutiveRelation = dynamic_cast<ParticleFluid *>(clone.get());
 
-  newConstitutiveRelation->m_fluidDensity     = this->m_fluidDensity;
   newConstitutiveRelation->m_proppantDensity  = this->m_proppantDensity;
   newConstitutiveRelation->m_fluidViscosity   = this->m_fluidViscosity;
   newConstitutiveRelation->m_proppantDiameter = this->m_proppantDiameter;
-  newConstitutiveRelation->m_singleParticleSettlingVelocity = this->m_singleParticleSettlingVelocity;
+
   newConstitutiveRelation->m_hinderedSettlingCoefficient = this->m_hinderedSettlingCoefficient;
   newConstitutiveRelation->m_collisionAlpha = this->m_collisionAlpha;
   newConstitutiveRelation->m_slipConcentration = this->m_slipConcentration;
@@ -120,6 +135,9 @@ ParticleFluid::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_bridgingFactor = this->m_bridgingFactor;
   newConstitutiveRelation->m_sphericity = this->m_sphericity;
+
+  newConstitutiveRelation->m_particleSettlingModelString = this->m_particleSettlingModelString;
+  newConstitutiveRelation->m_particleSettlingModel = this->m_particleSettlingModel;    
   
 }
 
@@ -127,11 +145,11 @@ void ParticleFluid::PostProcessInput()
 {
   ParticleFluidBase::PostProcessInput();
 
-  m_singleParticleSettlingVelocity = 9.81 * (m_proppantDensity - m_fluidDensity ) * m_proppantDiameter * m_proppantDiameter / (18.0 * m_fluidViscosity);
-
   m_packPermeabilityCoef = pow(m_sphericity * m_proppantDiameter, 2.0) / 180.0;
 
   m_bridgingAperture = m_bridgingFactor * m_proppantDiameter;
+
+  m_particleSettlingModel = stringToParticleSettlingModel(m_particleSettlingModelString);
   
 }
 
@@ -139,10 +157,12 @@ void ParticleFluid::BatchUpdate( arrayView1d<real64 const> const & )
 {
 
 }
-  
-void ParticleFluid::PointUpdate( real64 const & concentration, localIndex const k)
+
+
+void ParticleFluid::PointUpdate(localIndex const NC, real64 const & proppantConcentration, arraySlice1d<real64 const> const & componentConcentration, arraySlice1d<real64 const> const & nIndex, arraySlice1d<real64 const> const & KIndex, real64 const &fluidDensity, real64 const &dFluidDensity_dPressure, arraySlice1d<real64 const> const &dFluidDensity_dComponentConcentration, localIndex const k)  
 {
-  Compute( concentration, m_settlingFactor[k], m_dSettlingFactor_dConc[k], m_collisionFactor[k], m_dCollisionFactor_dConc[k]);
+
+  Compute( NC, proppantConcentration, componentConcentration, nIndex, KIndex, fluidDensity, dFluidDensity_dPressure, dFluidDensity_dComponentConcentration, m_settlingFactor[k], m_dSettlingFactor_dPressure[k], m_dSettlingFactor_dProppantConcentration[k], m_dSettlingFactor_dComponentConcentration[k], m_collisionFactor[k], m_dCollisionFactor_dProppantConcentration[k]);
 
 }
 
@@ -157,45 +177,147 @@ void ParticleFluid::PointUpdateMob( real64 const & concentration, real64 const &
 
 }  
 
-void ParticleFluid::Compute( real64 const & concentration,
-			     real64 & settlingFactor,
-			     real64 & dSettlingFactor_dConc,
-			     real64 & collisionFactor,
-			     real64 & dCollisionFactor_dConc ) const
+void ParticleFluid::Compute( localIndex const NC,
+                             real64 const & proppantConcentration,
+                             arraySlice1d<real64 const> const & componentConcentration,
+                             arraySlice1d<real64 const> const & nIndices,
+                             arraySlice1d<real64 const> const & Ks,
+                             real64 const & fluidDensity,
+                             real64 const & dFluidDensity_dPressure,
+                             arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
+                             real64 & settlingFactor,
+                             real64 & dSettlingFactor_dPressure,
+                             real64 & dSettlingFactor_dProppantConcentration,
+                             arraySlice1d<real64> & dSettlingFactor_dComponentConcentration,                               
+                             real64 & collisionFactor,
+                             real64 & dCollisionFactor_dProppantConcentration ) const
 {
 
+  real64 singleParticleSettlingVelocity = 0.0;
+  real64 dSingleParticleSettlingVelocity_dPressure = 0.0;
+  array1d<real64> dSingleParticleSettlingVelocity_dComponentConcentration(NC);
+  
+  real64 fluidConcentration = 1.0;
+  
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      fluidConcentration -= componentConcentration[c];
+      
+    }
+  
+  real64 nIndex = NC > 0 ? 0.0 : 1.0;
+  real64 K = 0.0;  
+
+  array1d<real64> dNIndex_dC(NC);
+  array1d<real64> dK_dC(NC);  
+
+  for(localIndex c = 0; c < NC; ++c)
+    {    
+  
+      nIndex +=  componentConcentration[c] * nIndices[c] / (1.0 - fluidConcentration);
+      K +=  componentConcentration[c] * Ks[c] / (1.0 - fluidConcentration);      
+      dNIndex_dC[c] = nIndices[c] / (1.0 - fluidConcentration);
+      dK_dC[c] = Ks[c] / (1.0 - fluidConcentration);      
+
+    }
+      
+  for(localIndex c = 0; c < NC; ++c)
+    {
+
+      dNIndex_dC[c] -= nIndex / (1.0 - fluidConcentration);
+      dK_dC[c] -= K / (1.0 - fluidConcentration);      
+
+    }
+
+  bool isNewtonian = (nIndex == 1.0 || nIndex == 0.0) ? 1 : 0;  
+
+  switch (m_particleSettlingModel)
+  {
+    case ParticleSettlingModel::Stokes:
+      if(isNewtonian)
+        {
+
+          singleParticleSettlingVelocity = 9.81 * (m_proppantDensity - fluidDensity ) * m_proppantDiameter * m_proppantDiameter / (18.0 * m_fluidViscosity);
+
+          dSingleParticleSettlingVelocity_dPressure = -9.81 * dFluidDensity_dPressure * m_proppantDiameter * m_proppantDiameter / (18.0 * m_fluidViscosity); 
+
+
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dSingleParticleSettlingVelocity_dComponentConcentration[c] = -9.81 * dFluidDensity_dComponentConcentration[c] * m_proppantDiameter * m_proppantDiameter / (18.0 * m_fluidViscosity);
+
+            }
+
+        }
+      else
+        {
+
+          singleParticleSettlingVelocity = pow(9.81 * (m_proppantDensity - fluidDensity ) * m_proppantDiameter /18.0 * K, 1.0 / nIndex) * m_proppantDiameter;
+
+          dSingleParticleSettlingVelocity_dPressure = -singleParticleSettlingVelocity * (1.0 / nIndex) / (m_proppantDensity - fluidDensity ) * dFluidDensity_dPressure;  
+          
+          for(localIndex c = 0; c < NC; ++c)
+            {
+
+              dSingleParticleSettlingVelocity_dComponentConcentration[c] = singleParticleSettlingVelocity * (1.0 / nIndex * (-dFluidDensity_dComponentConcentration[c] / (m_proppantDensity - fluidDensity) + dK_dC[c] / K) - log(9.81 * (m_proppantDensity - fluidDensity ) * m_proppantDiameter /18.0 * K) / nIndex / nIndex * dNIndex_dC[c]);
+
+            }
+
+        }          
+      break;
+    case ParticleSettlingModel::Intermediate:
+      
+      singleParticleSettlingVelocity = 20.34 * pow(m_proppantDensity - fluidDensity, 0.71) * pow(m_proppantDiameter, 1.14) / pow(fluidDensity, 0.29) / pow(m_fluidViscosity, 0.43);
+    
+      break;
+    default:
+      GEOS_ERROR("Particle settling model type not supported");
+  }
+
+      
   settlingFactor = 0.0;
 
-  dSettlingFactor_dConc = 0.0;
+  dSettlingFactor_dProppantConcentration = 0.0;
 
   collisionFactor = 0.0;
 
-  dCollisionFactor_dConc = 0.0;
+  dCollisionFactor_dProppantConcentration = 0.0;
 
-  if(concentration >= 0.0 && concentration < m_maxProppantConcentration)
+  if(proppantConcentration >= 0.0 && proppantConcentration < m_maxProppantConcentration)
     {
 
       // settlingFactor
       // Stokes + hindered settling model
       
-      settlingFactor = m_singleParticleSettlingVelocity * exp(-m_hinderedSettlingCoefficient * concentration);
+      settlingFactor = singleParticleSettlingVelocity * exp(-m_hinderedSettlingCoefficient * proppantConcentration);
 
-      dSettlingFactor_dConc = -m_hinderedSettlingCoefficient * settlingFactor;
-  
+      dSettlingFactor_dPressure = dSingleParticleSettlingVelocity_dPressure * exp(-m_hinderedSettlingCoefficient * proppantConcentration);      
+
+      dSettlingFactor_dProppantConcentration = -m_hinderedSettlingCoefficient * settlingFactor;
+
+      for(localIndex c = 0; c < NC; ++c)
+        {
+
+          dSettlingFactor_dComponentConcentration[c] = dSingleParticleSettlingVelocity_dComponentConcentration[c] * exp(-m_hinderedSettlingCoefficient * proppantConcentration);      
+
+        }
+      
       // collisionFactor
       // Collision model (We need to check the other models)
       if (m_isCollisionalSlip)
         {
-          real64 lambda = m_collisionAlpha - pow(fabs(concentration - m_slipConcentration), m_collisionBeta);
+          real64 lambda = m_collisionAlpha - pow(fabs(proppantConcentration - m_slipConcentration), m_collisionBeta);
 
-          real64 dLambda_dC = -m_collisionBeta * pow(fabs(concentration - m_slipConcentration), m_collisionBeta - 1.0);
+          real64 dLambda_dC = -m_collisionBeta * pow(fabs(proppantConcentration - m_slipConcentration), m_collisionBeta - 1.0);
 
-          if(concentration < m_slipConcentration)
+          if(proppantConcentration < m_slipConcentration)
             dLambda_dC = -dLambda_dC;
 
-          collisionFactor = (lambda - 1.0) / (1.0 - concentration);
+          collisionFactor = (lambda - 1.0) / (1.0 - proppantConcentration);
 
-          dCollisionFactor_dConc = (dLambda_dC  + collisionFactor) / (1.0 - concentration);
+          dCollisionFactor_dProppantConcentration = (dLambda_dC  + collisionFactor) / (1.0 - proppantConcentration);
         }
 
     }
