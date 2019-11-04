@@ -181,7 +181,10 @@ public:
   string_array & getMaterialList() {return m_materialList;}
   string_array const & getMaterialList() const {return m_materialList;}
 
-protected:
+  template< typename CONSTITUTIVE_TYPE >
+  string_array getConstitutiveNames() const ;
+
+  protected:
 
 private:
 
@@ -197,7 +200,20 @@ private:
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
-
+template< typename CONSTITUTIVE_TYPE >
+string_array ElementRegionBase::getConstitutiveNames() const
+{
+  string_array rval;
+  for( string const & matName : m_materialList )
+  {
+    Group const * const matModel = this->GetSubRegion(0)->GetConstitutiveModels()->GetGroup( matName );
+    if( matModel->group_cast<CONSTITUTIVE_TYPE const *>() != nullptr )
+    {
+      rval.push_back( matName );
+    }
+  }
+  return rval;
+}
 
 }
 
