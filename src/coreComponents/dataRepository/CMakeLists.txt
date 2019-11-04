@@ -13,7 +13,7 @@ set(dataRepository_headers
     ObjectCatalog.hpp 
     ReferenceWrapper.hpp
     RestartFlags.hpp
-    SidreWrapper.hpp
+    ConduitRestart.hpp
     WrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
@@ -25,7 +25,7 @@ set(dataRepository_headers
 #
 set(dataRepository_sources
     Group.cpp
-    SidreWrapper.cpp
+    ConduitRestart.cpp
     Wrapper.cpp
     WrapperBase.cpp
     xmlWrapper.cpp

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SidreWrapper.hpp
+ * @file ConduitRestart.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_
-#define GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_
+#ifndef GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_
+#define GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_
 
 // Source includes
 #include "common/GeosxConfig.hpp"
@@ -92,4 +92,4 @@ void loadTree( std::string const & path );
 } // namespace dataRepository
 } // namespace geosx
 
-#endif /* GEOSX_DATAREPOSITORY_SIDREWRAPPER_HPP_ */
+#endif /* GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_ */
