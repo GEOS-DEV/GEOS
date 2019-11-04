@@ -87,7 +87,7 @@ def generate_test_xml_files(root_dir):
     <PeriodicEvent name="restarts"
                    timeFrequency="1e4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -122,7 +122,7 @@ def generate_test_xml_files(root_dir):
   
   <Outputs>
     <Silo name="siloOutput"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 """
 

@@ -46,7 +46,6 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
                             real64 const GEOSX_UNUSED_ARG( eventProgress ),
                             Group * domain)
 {
-#ifdef GEOSX_USE_ATK
   GEOSX_MARK_FUNCTION;
 
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
@@ -60,13 +59,10 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_ARG( time_n ),
   problemManager->prepareToWrite();
   FunctionManager::Instance()->prepareToWrite();
   FieldSpecificationManager::get()->prepareToWrite();
-  int numFiles;
-  MPI_Comm_size( MPI_COMM_GEOSX, &numFiles );
   writeTree( fileName );
   problemManager->finishWriting();
   FunctionManager::Instance()->finishWriting();
   FieldSpecificationManager::get()->finishWriting();
-#endif
 }
 
 

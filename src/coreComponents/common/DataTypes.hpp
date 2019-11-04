@@ -135,13 +135,13 @@ using buffer_type = std::vector< buffer_unit_type >;
 template< typename T,
           int NDIM,
           typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
-          template< typename ... > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
 using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
 
 template< typename T,
           int NDIM,
           int UNIT_STRIDE_DIM = NDIM - 1,
-          template< typename ... > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
+          template< typename > class DATA_VECTOR_TYPE=LvArray::ChaiBuffer >
 using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
 
 template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >

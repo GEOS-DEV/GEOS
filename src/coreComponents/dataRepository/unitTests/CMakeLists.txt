@@ -5,8 +5,8 @@
 set( dataRepository_tests
      testDefaultValue.cpp
      testObjectCatalog.cpp
-     testSidreBasic.cpp
-     testSidreExtended.cpp
+     testRestartBasic.cpp
+     testRestartExtended.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
      testBufferOps.cpp
