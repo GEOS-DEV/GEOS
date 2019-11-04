@@ -33,7 +33,7 @@
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "mesh/MeshBody.hpp"
 #include "wells/InternalWellGenerator.hpp"
@@ -511,7 +511,8 @@ void ProblemManager::GenerateDocumentation()
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels(domain);
-    RegisterDataOnMeshRecursive(domain->getMeshBodies());
+
+    RegisterDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
