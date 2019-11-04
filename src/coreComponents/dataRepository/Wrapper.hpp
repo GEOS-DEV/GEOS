@@ -136,28 +136,6 @@ public:
   }
 
   /**
-   * Copy Constructor
-   * @param source source for the copy
-   */
-  Wrapper( Wrapper const & source ):
-    WrapperBase( "copy_constructor_test", nullptr ),
-    m_ownsData( source.m_ownsData ),
-    m_data( source.m_data ),
-    m_default( source.m_default )
-  {}
-
-  /**
-   * Move Constructor
-   * @param source source to be moved
-   */
-  Wrapper( Wrapper && source ):
-    WrapperBase( source ),
-    m_ownsData( source.m_ownsData ),
-    m_data( std::move( source.m_data ) ),
-    m_default( source.m_default )
-  {}
-
-  /**
    * Copy Assignment Operator
    * @param source rhs
    * @return *this
@@ -380,78 +358,9 @@ public:
     return unpackedSize;
   }
 
-
-
-  /// @cond DO_NOT_DOCUMENT
-  struct empty_wrapper
-  {
-    template< class U = T >
-    static typename std::enable_if< traits::has_empty_method< U >, bool >::type
-    empty( Wrapper< T > const * parent )
-    {
-      return parent->m_data->empty();
-    }
-    template< class U = T >
-    static typename std::enable_if< !traits::has_empty_method< U >, bool >::type
-    empty( Wrapper< T > const * parent )
-    {
-      return parent;
-    }
-  };/// @endcond DO_NOT_DOCUMENT
-  virtual bool empty() const override final
-  {
-    return empty_wrapper::empty( this );
-  }
-
   virtual localIndex size() const override final
   {
     return wrapperHelpers::size( *m_data );
-  }
-
-
-  /// @cond DO_NOT_DOCUMENT
-  struct num_dimensions_wrapper
-  {
-    HAS_MEMBER_FUNCTION( numDimensions, int, const, , )
-
-    template< class U = T >
-    static typename std::enable_if< has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( Wrapper< T > const * parent )
-    { return static_cast< int >(parent->m_data->numDimensions()); }
-
-    template< class U = T >
-    static typename std::enable_if< !has_memberfunction_numDimensions< U >::value, int >::type
-    numDimensions( Wrapper< T > const * GEOSX_UNUSED_ARG( parent ) )
-    { return 1; }
-  };/// @endcond DO_NOT_DOCUMENT
-  virtual int numDimensions() const override final
-  {
-    return num_dimensions_wrapper::numDimensions( this );
-  }
-
-  /// @cond DO_NOT_DOCUMENT
-  struct dimension_size_wrapper
-  {
-    template< class U = T >
-    static typename std::enable_if< traits::has_dimension_size_method< U >, localIndex >::type
-    size( Wrapper< T > const * const parent, int const i )
-    { return integer_conversion< localIndex >( parent->m_data->size( i )); }
-
-    template< class U = T >
-    static typename std::enable_if< !traits::has_dimension_size_method< U >, localIndex >::type
-    size( Wrapper< T > const * const parent, int const i )
-    {
-      if( i != 0 )
-      {
-        GEOS_ERROR( "Data is only 1D" );
-        return 0;
-      }
-      return parent->size();
-    }
-  };/// @endcond DO_NOT_DOCUMENT
-  virtual localIndex size( int const i ) const override final
-  {
-    return dimension_size_wrapper::size( this, i );
   }
 
   virtual void resize( int ndims, localIndex const * const dims ) override final
@@ -479,15 +388,6 @@ public:
 
   HAS_MEMBER_FUNCTION( capacity, std::size_t, const, , )
   CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, capacity, std::size_t, const )
-
-  HAS_MEMBER_FUNCTION( max_size, std::size_t, const, , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, max_size, std::size_t, const )
-
-  HAS_MEMBER_FUNCTION( clear, void, , , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, clear, void, )
-
-  HAS_MEMBER_FUNCTION( insert, void, , , )
-  CONDITIONAL_VIRTUAL_FUNCTION0( Wrapper< T >, insert, void, )
 
   virtual void resize( localIndex const newSize ) override final
   {
@@ -683,78 +583,9 @@ public:
   virtual void move( chai::ExecutionSpace space, bool touch ) override
   { return move_wrapper::move( *m_data, space, touch ); }
 
-
-  /**
-   * @brief function to get the size of T
-   * @return size of T
-   */
-  template< class U = T >
-  typename std::enable_if< traits::has_alias_value_type< U >, size_t >::type
-  sizeOfValueType() const
-  {
-    return sizeof(typename T::value_type);
-  }
-
-  /**
-   * @brief function to get the size of T
-   * @return size of T
-   */
-  template< class U = T >
-  typename std::enable_if< !traits::has_alias_value_type< U >, size_t >::type
-  sizeOfValueType() const
-  {
-    return sizeof(T);
-  }
-
-  virtual size_t sizeOfType() const override final
-  {
-    return sizeOfValueType();
-  }
-
-  /**
-   * @brief case for if U::value_type exists. Returns the size of an element of dataPtr
-   * @return size of T::value_type
-   */
-  template< class U = T >
-  typename std::enable_if< traits::has_alias_value_type< U >, localIndex >::type
-  elementSize() const
-  {
-    return sizeof(typename T::value_type);
-  }
-
-  /**
-   * @brief case for if U::value_type doesn't exists. Returns the size of an element of dataPtr
-   * @return size of T::value_type
-   */
-  template< class U = T >
-  typename std::enable_if< !traits::has_alias_value_type< U >, localIndex >::type
-  elementSize() const
-  {
-    return sizeof(T);
-  }
-
-
-  /// case for if U::value_type exists. Returns the typeid of an element of dataPtr
-  template< class U = T >
-  typename std::enable_if< traits::has_alias_value_type< U >, const std::type_info & >::type
-  elementTypeID() const
-  {
-    return typeid(typename T::value_type);
-  }
-
-
-  /// case for if U::value_type doesn't exists. Returns the typeid of an element of dataPtr
-  template< class U = T >
-  typename std::enable_if< !traits::has_alias_value_type< U >, const std::type_info & >::type
-  elementTypeID() const
-  {
-    return typeid(T);
-  }
-
-
   /// @cond DO_NOT_DOCUMENT
 
-  /* Register the pointer to data with the associated sidre::View. */
+  /* Register the pointer to data with the associated conduit::Node. */
   void registerToWrite() override
   {
     getConduitNode().reset();
@@ -771,7 +602,7 @@ public:
     wrapperHelpers::pushDataToConduitNode( *m_data, getConduitNode() );
   }
 
-  /* Register the pointer to data with the associated sidre::View. */
+  /* Register the pointer to data with the associated conduit::Node. */
   void finishWriting() override
   {
     getConduitNode().reset();

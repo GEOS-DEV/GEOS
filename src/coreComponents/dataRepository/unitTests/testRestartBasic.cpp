@@ -17,7 +17,7 @@
 #include "managers/initialization.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
 // TPL includes
@@ -218,7 +218,7 @@ public:
 private:
   std::string const m_groupName = "root";
   std::string const m_wrapperName = "wrapper";
-  std::string const m_fileName = "testSidreBasic_SingleWrapperTest";
+  std::string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
   Group * m_group;
   int m_groupSize;

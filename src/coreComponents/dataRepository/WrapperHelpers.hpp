@@ -24,7 +24,7 @@
 // Source includes
 #include "BufferOps.hpp"
 #include "DefaultValue.hpp"
-#include "SidreWrapper.hpp"
+#include "ConduitRestart.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 #include "codingUtilities/GeosxTraits.hpp"
@@ -322,7 +322,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   node[ "__dimensions__" ].set( dimensionType, temp );
 
   // Create a copy of the permutation
-  std::array< camp::idx_t, NDIM > const perm = var.getPermutation();
+  constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   for( int i = 0 ; i < NDIM ; ++i )
   {
     temp[ i ] = perm[ i ];
@@ -351,11 +351,11 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   conduit::Node const & permutationNode = node.fetch_child( "__permutation__" );
   GEOS_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
-  std::array< camp::idx_t, NDIM > const permutation = var.getPermutation();
+  constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   camp::idx_t const * const permFromConduit = permutationNode.value();
   for( int i = 0 ; i < NDIM ; ++i )
   {
-    GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], permutation[ i ],
+    GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
                           "The permutation of the data in conduit and the provided Array don't match." );
   }
 

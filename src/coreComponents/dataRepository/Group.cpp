@@ -18,7 +18,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 
 namespace geosx
 {
