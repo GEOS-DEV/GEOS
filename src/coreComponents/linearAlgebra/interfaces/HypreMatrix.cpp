@@ -656,9 +656,6 @@ void HypreMatrix::multiply( HypreMatrix const & src,
   {
     dst.open();
   }
-
-  std::cout << "\n\n\n\n*********** MERDA --- HYPRE **********************\n\n\n\n";
-
 }
 
 // Perform the matrix-matrix product transpose(this) * src = dst.
@@ -693,7 +690,7 @@ void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
 
   dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
                                  src.m_parcsr_mat );
-std::cout << "YES-Tmult ************** \n";
+
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
 

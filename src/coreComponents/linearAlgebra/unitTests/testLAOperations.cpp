@@ -865,7 +865,7 @@ TEST( testLAOperations, testEpetraLAOperations )
 TEST( testLAOperations, testHypreLAOperations )
 {
 //  testVectorFunctions< HypreInterface >();
-  testMatrixFunctions< HypreInterface >();
+//  testMatrixFunctions< HypreInterface >();
 //  testInterfaceSolvers< HypreInterface >();
 //  testMatrixMatrixOperations< HypreInterface >();
 //  testRectangularMatrixOperations< HypreInterface >();
