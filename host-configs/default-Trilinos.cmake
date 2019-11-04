@@ -15,4 +15,3 @@ set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
-set(GEOSX_LA_INTERFACE "Hypre" CACHE STRING "" FORCE )

@@ -1267,16 +1267,24 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
   GEOS_ASSERT( rowFieldIndex >= 0 );
   GEOS_ASSERT( colFieldIndex >= 0 );
 
-  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
-                               m_fields[colFieldIndex].numLocalRows,
-                               1, MPI_COMM_GEOSX );
+//  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
+//                               m_fields[colFieldIndex].numLocalRows,
+//                               1, MPI_COMM_GEOSX );
 
   if( colFieldIndex == rowFieldIndex )
   {
     // Diagonal block
     ParallelMatrix const * const connLocPattDistr = m_sparsityPattern( rowFieldIndex, rowFieldIndex ).first.get();
+//    ParallelMatrix * connLocPattDistr = m_sparsityPattern( rowFieldIndex, rowFieldIndex ).first.get();
+connLocPattDistr->write("mat_1");
 
+//hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(*connLocPattDistr) ,
+//                            1 ,
+//                            1 ,
+//							"mat_1_mtx" );
     connLocPattDistr->multiplyTranspose( *connLocPattDistr, pattern, closePattern );
+std::cout << "YES-Dof ************** \n";
+GEOS_ERROR("STOP");
   }
   else
   {

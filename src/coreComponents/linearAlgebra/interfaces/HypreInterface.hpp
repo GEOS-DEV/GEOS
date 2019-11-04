@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_HYPREINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_HYPREINTERFACE_HPP_
 
-//#include "HypreSolver.hpp"
+#include "HypreSolver.hpp"
 #include "HypreMatrix.hpp"
 #include "HypreVector.hpp"
 
@@ -39,7 +39,7 @@ struct HypreInterface
 
   using ParallelMatrix = HypreMatrix;
   using ParallelVector = HypreVector;
-//  using LinearSolver   = HypreSolver;
+  using LinearSolver   = HypreSolver;
 
 };
 

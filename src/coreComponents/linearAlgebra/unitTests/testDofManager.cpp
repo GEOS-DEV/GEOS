@@ -193,6 +193,7 @@ TEST_F(DofManagerTest, TestFEM_partial)
   dofManager.close();
 
   ParallelMatrix pattern;
+
   dofManager.setSparsityPattern( pattern, "displacement", "displacement" );
 
   // Total number of nodes, sum of regions 1 and 3+4

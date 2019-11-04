@@ -416,7 +416,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           globalIndex const colIndex,
                           real64 const value )
 {
-  this->set( rowIndex,
+  this->add( rowIndex,
              colIndex,
              value );
 }
@@ -465,7 +465,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           real64 const * values,
                           localIndex size )
 {
-  this->set( rowIndex,
+  this->add( rowIndex,
              colIndices,
              values,
              size );
@@ -512,7 +512,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
                           array1d<globalIndex> const &colIndices,
                           array1d<real64> const &values )
 {
-  this->set( rowIndex,
+  this->add( rowIndex,
              colIndices,
              values );
 }
@@ -562,7 +562,7 @@ void HypreMatrix::insert( array1d<globalIndex> const & rowIndices,
                           array1d<globalIndex> const & colIndices,
                           array2d<real64> const & values )
 {
-  this->set( rowIndices,
+  this->add( rowIndices,
              colIndices,
              values );
 }
@@ -605,7 +605,7 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
 {
   for( globalIndex i = 0 ; i < numRows ; ++i )
   {
-    this->insert( rowIndices[i],
+    this->add( rowIndices[i],
                   colIndices,
                   values + numCols * i,
                   numCols );
@@ -672,9 +672,19 @@ void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
 
   // Compute product
   HYPRE_ParCSRMatrix dst_parcsr;
+
+  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(m_parcsr_mat) ,
+                              1 ,
+                              1 ,
+  							"mat_A_mtx" );
+  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(src.m_parcsr_mat) ,
+                              1 ,
+                              1 ,
+  							"mat_B_mtx" );
+
   dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
                                  src.m_parcsr_mat );
-
+std::cout << "YES-Tmult ************** \n";
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
 

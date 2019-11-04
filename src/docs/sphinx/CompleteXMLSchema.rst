@@ -245,13 +245,6 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
-.. _XML_Hydrofracture:
-
-Element: Hydrofracture
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture.rst
-
-
 .. _XML_Included:
 
 Element: Included
@@ -448,20 +441,6 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
 
 
-.. _XML_SolidMechanicsLagrangianSSLE:
-
-Element: SolidMechanicsLagrangianSSLE
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE.rst
-
-
-.. _XML_SolidMechanics_LagrangianFEM:
-
-Element: SolidMechanics_LagrangianFEM
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
-
-
 .. _XML_SoloEvent:
 
 Element: SoloEvent
@@ -481,13 +460,6 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
-
-
-.. _XML_SurfaceGenerator:
-
-Element: SurfaceGenerator
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator.rst
 
 
 .. _XML_SymbolicFunction:
@@ -809,13 +781,6 @@ Datastructure: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
 
 
-.. _DATASTRUCTURE_Hydrofracture:
-
-Datastructure: Hydrofracture
-============================
-.. include:: ../../coreComponents/fileIO/schema/docs/Hydrofracture_other.rst
-
-
 .. _DATASTRUCTURE_Included:
 
 Datastructure: Included
@@ -1026,20 +991,6 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
 
 
-.. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
-
-Datastructure: SolidMechanicsLagrangianSSLE
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsLagrangianSSLE_other.rst
-
-
-.. _DATASTRUCTURE_SolidMechanics_LagrangianFEM:
-
-Datastructure: SolidMechanics_LagrangianFEM
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
-
-
 .. _DATASTRUCTURE_SoloEvent:
 
 Datastructure: SoloEvent
@@ -1059,13 +1010,6 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
-
-
-.. _DATASTRUCTURE_SurfaceGenerator:
-
-Datastructure: SurfaceGenerator
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceGenerator_other.rst
 
 
 .. _DATASTRUCTURE_SymbolicFunction:

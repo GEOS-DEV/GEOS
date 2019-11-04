@@ -13,8 +13,8 @@ if(ENABLE_PVTPackage)
          testCompMultiphaseFlow.cpp
          testCompMultiphaseFlowCapPressure.cpp
          testReservoirSinglePhaseMSWells.cpp
-         testReservoirCompositionalMultiphaseMSWells.cpp
        )
+	 #testReservoirCompositionalMultiphaseMSWells.cpp
 endif()
 
 set( dependencyList geosx_core gtest axom )

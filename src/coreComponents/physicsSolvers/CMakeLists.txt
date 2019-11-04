@@ -7,7 +7,6 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
-     CoupledSolvers/HydrofractureSolver.hpp
      CoupledSolvers/PoroelasticSolver.hpp
      CoupledSolvers/ReservoirSolver.hpp
      SimpleSolvers/LaplaceFEM.hpp
@@ -21,11 +20,12 @@ set( physicsSolvers_headers
      Wells/CompositionalMultiphaseWell.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     surfaceGeneration/SurfaceGenerator.hpp
      src/DummySolver.hpp
-     solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
-     solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
      )
+     #surfaceGeneration/SurfaceGenerator.hpp
+     #CoupledSolvers/HydrofractureSolver.hpp
+     #solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
+     #solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
 
 #
 # Specify solver sources
@@ -34,7 +34,6 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      SystemSolverParameters.cpp
-     CoupledSolvers/HydrofractureSolver.cpp
      CoupledSolvers/PoroelasticSolver.cpp
      CoupledSolvers/ReservoirSolver.cpp
      SimpleSolvers/LaplaceFEM.cpp
@@ -46,11 +45,12 @@ set( physicsSolvers_sources
      Wells/WellSolverBase.cpp
      Wells/SinglePhaseWell.cpp
      Wells/CompositionalMultiphaseWell.cpp
-     solidMechanics/SolidMechanicsLagrangianFEM.cpp
-     solidMechanics/SolidMechanicsLagrangianSSLE.cpp
-     surfaceGeneration/SurfaceGenerator.cpp
      src/DummySolver.cpp
      )
+     #surfaceGeneration/SurfaceGenerator.cpp
+     #CoupledSolvers/HydrofractureSolver.cpp
+     #solidMechanics/SolidMechanicsLagrangianFEM.cpp
+     #solidMechanics/SolidMechanicsLagrangianSSLE.cpp
 
 set( dependencyList common constitutive dataRepository linearAlgebra )
 

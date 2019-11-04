@@ -263,6 +263,7 @@ void testVectorFunctions()
   {
     EXPECT_EQ( localVec[x.getLocalRowID( i )], x.get( i ) );
   }
+
 }
 /**
  * @function testMatrixFunctions
@@ -286,6 +287,8 @@ void testMatrixFunctions()
 
   std::cout << "*** Rank: " << rank << std::endl;
 
+if (true)
+{
   // Dummy vector and Matrix
   Vector dummy_vec;
   dummy_vec.createWithLocalSize( numranks*2, MPI_COMM_WORLD );
@@ -293,6 +296,7 @@ void testMatrixFunctions()
 //  dummy_mat.createWithLocalSize( 2, 2, MPI_COMM_WORLD );
 
   Matrix C;
+  Matrix D;
   {
   // Test matrix-matrix product: C = A*B
   Matrix A;
@@ -303,6 +307,7 @@ void testMatrixFunctions()
 
 
   A.multiply(B, C);
+  A.multiplyTranspose(A, D);
   }
 
 
@@ -310,11 +315,11 @@ void testMatrixFunctions()
   if ( MpiWrapper::Comm_rank(MPI_COMM_WORLD) == MpiWrapper::Comm_size(MPI_COMM_WORLD)-1)
   {
     std::cout << "Rank: " << MpiWrapper::Comm_rank(MPI_COMM_WORLD)
-              << " row: " << C.ilower()
-              << " row: " << C.iupper() - 1
+//              << " row: " << C.ilower()
+//              << " row: " << C.iupper() - 1
               << std::endl;
-    C.clearRow( C.ilower(), -1 );
-    C.clearRow( C.iupper() - 1 );
+//    C.clearRow( C.ilower(), -1 );
+//    C.clearRow( C.iupper() - 1 );
   }
   C.close();
 
@@ -325,20 +330,20 @@ void testMatrixFunctions()
 //  A.write("matrix_A");
 //  B.write("matrix_B");
   C.write("matrix_C");
+  D.write("matrix_D");
   hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(C) ,
                               0 ,
                               0 , "matrix_C_par" );
 
 
 //  D.write("matrix_D");
-
-
+}
 
 
 	  // Define some vectors, matrices
 	  Vector vec1, vec2, vec3;
 	  Matrix mat1, mat2, mat3, mat4;
-if (1)
+if (false)
 {
 	  mat1.createWithLocalSize( 2, 2, MPI_COMM_WORLD ); // 2*numranks x 2*numranks
 	  mat2.createWithGlobalSize( 2, 2, MPI_COMM_WORLD ); // 2x2
@@ -887,8 +892,10 @@ int main( int argc, char ** argv )
   setupLAI( dummy_argc, dummy_argv );
 
   int const result = RUN_ALL_TESTS();
-
+std::cout<<"PRESS key to continue\n";
+std::cin.get();
   geosx::basicCleanup();
-
+std::cout<<"PRESS key to continue\n";std::cin.get();
+std::cout<<"OK complete execution\n";
   return result;
 }

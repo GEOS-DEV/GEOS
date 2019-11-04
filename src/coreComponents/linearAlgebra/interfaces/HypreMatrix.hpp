@@ -535,6 +535,11 @@ public:
     return (HYPRE_ParCSRMatrix) m_parcsr_mat;
   }
 
+  operator hypre_ParCSRMatrix*() const
+  {
+	return (HYPRE_ParCSRMatrix) m_parcsr_mat;;
+  }
+
   /**
    * @brief Returns the number of global rows.
    */
