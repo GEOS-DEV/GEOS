@@ -193,6 +193,8 @@ void ParticleFluid::Compute( localIndex const NC,
                              real64 & dCollisionFactor_dProppantConcentration ) const
 {
 
+  static real64 eps = 1e-6;
+
   real64 singleParticleSettlingVelocity = 0.0;
   real64 dSingleParticleSettlingVelocity_dPressure = 0.0;
   array1d<real64> dSingleParticleSettlingVelocity_dComponentConcentration(NC);
@@ -230,7 +232,7 @@ void ParticleFluid::Compute( localIndex const NC,
 
     }
 
-  bool isNewtonian = (nIndex == 1.0 || nIndex == 0.0) ? 1 : 0;  
+  bool isNewtonian = (fabs(nIndex - 1.0) < eps || nIndex < eps) ? 1 : 0;  
 
   switch (m_particleSettlingModel)
   {

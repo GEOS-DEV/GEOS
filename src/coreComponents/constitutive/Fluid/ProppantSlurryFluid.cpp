@@ -196,7 +196,10 @@ void ProppantSlurryFluid::Compute( localIndex const NC,
 
 {
 
+  static real64 eps = 1e-6;
+  
   real64 fluidConcentration = 1.0;
+
   
   for(localIndex c = 0; c < NC; ++c)
     {
@@ -246,7 +249,7 @@ void ProppantSlurryFluid::Compute( localIndex const NC,
 
   array1d<real64> dFluidViscosity_dC(NC);
 
-  bool isNewtonian = (nIndex == 1.0 || shearRate < 1e-5 || K == 0.0 || nIndex == 0.0) ? 1 : 0;
+  bool isNewtonian = (fabs(nIndex - 1.0) < eps || shearRate < eps || K < eps || nIndex < eps) ? 1 : 0;
 
   
   if(isNewtonian)
