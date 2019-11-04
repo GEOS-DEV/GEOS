@@ -122,12 +122,15 @@ TEST( testGeosxTraits, has_resize_method )
   static_assert( has_resize_method< array1d< double > >, "Should be true." );
   static_assert( has_resize_method< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( has_resize_method< std::vector< int > >, "Should be true." );
+  static_assert( has_resize_method< ArrayOfArrays< int > >, "Should be true." );
+  static_assert( has_resize_method< ArrayOfSets< int > >, "Should be true." );
   
   static_assert( !has_resize_method< SortedArray< string > >, "Should be false." );
   static_assert( !has_resize_method< std::map< string, string > >, "Should be false." );
   static_assert( !has_resize_method< int >, "Should be false." );
   static_assert( !has_resize_method< double >, "Should be false." );
   static_assert( !has_resize_method< R2SymTensor >, "Should be false." );
+
 }
 
 TEST( testGeosxTraits, has_resize_default_method )

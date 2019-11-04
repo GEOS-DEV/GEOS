@@ -131,7 +131,7 @@ void DomainPartition::GenerateSets()
       {
         localIndex const numNodes = subRegion->numNodesPerElement( k );
 
-        localIndex elementInSet = true;;
+        localIndex elementInSet = true;
         for ( localIndex i = 0; i < numNodes; ++i )
         {
           if ( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )

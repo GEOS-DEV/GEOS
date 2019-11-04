@@ -62,13 +62,6 @@ public:
    */
   virtual ~WrapperBase();
 
-  /**
-   * @brief move operator
-   * @param[in] source
-   */
-  // WrapperBase( WrapperBase && source );
-
-
   virtual void CopyWrapperAttributes( WrapperBase const & source );
 
   /**
@@ -79,28 +72,10 @@ public:
 
 
   /**
-   * @brief function call T::empty()
-   * @return boolean true if T is empty, false if not.
-   */
-  virtual bool empty() const = 0;
-
-  /**
    * @brief function to call T::size()
    * @return result of T::size()
    */
   virtual localIndex size() const = 0;
-
-  /**
-   * @brief function to call T::numDimensions()
-   * @return result of T::numDimensions()
-   */
-  virtual int numDimensions() const = 0;
-
-  /**
-   * @brief function to call T::size(int)
-   * @return result of T::size(int)
-   */
-  virtual localIndex size( int i ) const = 0;
 
   /**
    * @brief function to call T::resize( num_dims, dims )
@@ -122,29 +97,18 @@ public:
   virtual std::size_t capacity() const = 0;
 
   /**
-   * @brief function to call T::max_size()
-   * @return result of T::max_size()
-   */
-  virtual std::size_t max_size() const = 0;
-
-  /**
-   * @brief function to call T::clear()
-   * @return result of T::clear()
-   */
-  virtual void clear() = 0;
-
-  /**
-   * @brief function to call T::insert()
-   * @return result of T::insert()
-   */
-  virtual void insert() = 0;
-
-  /**
    * @brief function to call T::resize(newsize)
    * @param[in] newsize parameter to pass to T::resize(newsize)
    * @return result of T::resize(newsize)
    */
   virtual void resize( localIndex newsize ) = 0;
+
+  /**
+   *
+   * @param sourceIndex
+   * @param destIndex
+   */
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
 
   /**
@@ -160,12 +124,6 @@ public:
                                                 Group * const parent ) = 0;
 
   virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
-
-  /**
-   *
-   * @return
-   */
-  virtual size_t sizeOfType() const = 0;
 
   /**
    *
@@ -189,13 +147,6 @@ public:
    * @brief function to call resize( newsize ) where newsize is taken from the parent Group
    */
   void resize();
-
-  /**
-   *
-   * @param sourceIndex
-   * @param destIndex
-   */
-  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   /**
    *
