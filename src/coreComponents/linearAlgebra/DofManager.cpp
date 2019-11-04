@@ -1267,9 +1267,9 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
   GEOS_ASSERT( rowFieldIndex >= 0 );
   GEOS_ASSERT( colFieldIndex >= 0 );
 
-//  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
-//                               m_fields[colFieldIndex].numLocalRows,
-//                               1, MPI_COMM_GEOSX );
+  pattern.createWithLocalSize( m_fields[rowFieldIndex].numLocalRows,
+                               m_fields[colFieldIndex].numLocalRows,
+                               1, MPI_COMM_GEOSX );
 
   if( colFieldIndex == rowFieldIndex )
   {
@@ -1284,7 +1284,12 @@ connLocPattDistr->write("mat_1");
 //							"mat_1_mtx" );
     connLocPattDistr->multiplyTranspose( *connLocPattDistr, pattern, closePattern );
 std::cout << "YES-Dof ************** \n";
-GEOS_ERROR("STOP");
+
+hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(pattern) ,
+                            1 ,
+                            1 ,
+              "pattern" );
+
   }
   else
   {
@@ -1723,12 +1728,14 @@ void DofManager::addCoupling( string const & rowFieldName,
   // Compute the CL matrices for row and col fields
   if( connectivity != Connectivity::None )
   {
+    std::cout << "primo makeConn\n";//td::cout << "num: " << m_fields[rowFieldIndex].numLocalRows << " " << numLocalConns << "\n";
     std::unique_ptr<ParallelMatrix> & rowConnLocPattern = m_sparsityPattern( rowFieldIndex, colFieldIndex ).first;
     rowConnLocPattern = std::make_unique<ParallelMatrix>();
     makeConnLocPattern( m_fields[rowFieldIndex], connectivity, regions, *rowConnLocPattern );
 
     std::unique_ptr<ParallelMatrix> & colConnLocPattern = m_sparsityPattern( rowFieldIndex, colFieldIndex ).second;
     colConnLocPattern = std::make_unique<ParallelMatrix>();
+    std::cout << "secondo makeConn\n";
     makeConnLocPattern( m_fields[colFieldIndex], connectivity, regions, *colConnLocPattern );
   }
 }
@@ -2020,7 +2027,7 @@ void DofManager::makeConnLocPattern( FieldDescription const & fieldDesc,
 
   LocalSparsityPattern<globalIndex, real64> localPattern;
   vectorOfPairsToCSR( entries, localPattern );
-
+std::cout << "num: " << fieldDesc.numLocalRows << " " << numLocalConns << "\n";
   localIndex const entriesPerRow = (numLocalConns > 0 ) ? (entries.size() / numLocalConns ) : 0;
   connLocPattern.createWithLocalSize( numLocalConns, fieldDesc.numLocalRows, entriesPerRow, MPI_COMM_GEOSX );
 

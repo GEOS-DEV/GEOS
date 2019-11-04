@@ -248,10 +248,10 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
                                        localIndex const maxEntriesPerRow,
                                        MPI_Comm const & comm )
 {
-  GEOS_ERROR_IF( localRows < 1,
-                 "local rows are lower than 1: less than one processor per row" );
-  GEOS_ERROR_IF( localCols < 1,
-                 "local columns are lower than 1: less than one processor per column" );
+  GEOS_ERROR_IF( localRows < 0,
+                 "local rows are lower than 0" );
+  GEOS_ERROR_IF( localCols < 0,
+                 "local columns are lower than 0" );
 
   int this_mpi_process;
   int n_mpi_process;
@@ -673,14 +673,23 @@ void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
   // Compute product
   HYPRE_ParCSRMatrix dst_parcsr;
 
-  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(m_parcsr_mat) ,
-                              1 ,
-                              1 ,
-  							"mat_A_mtx" );
-  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(src.m_parcsr_mat) ,
-                              1 ,
-                              1 ,
-  							"mat_B_mtx" );
+//  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(m_parcsr_mat) ,
+//                              1 ,
+//                              1 ,
+//  							"mat_A_mtx" );
+//  hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(src.m_parcsr_mat) ,
+//                              1 ,
+//                              1 ,
+//  							"mat_B_mtx" );
+
+  if ( hypre_IJMatrixRowPartitioning( m_ij_mat ) !=
+       hypre_IJMatrixColPartitioning( m_ij_mat ) )
+  {
+    if (!hypre_ParCSRMatrixCommPkg(m_parcsr_mat))
+    {
+      hypre_MatvecCommPkgCreate(m_parcsr_mat);
+    }
+  }
 
   dst_parcsr = hypre_ParTMatmul( m_parcsr_mat,
                                  src.m_parcsr_mat );
@@ -698,6 +707,11 @@ std::cout << "YES-Tmult ************** \n";
 
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
 {
+
+  if( m_ij_mat )
+  {
+    HYPRE_IJMatrixDestroy( m_ij_mat );
+  }
 
   hypre_IJMatrix *ijmatrix;
 

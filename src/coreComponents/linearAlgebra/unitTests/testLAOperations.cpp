@@ -287,6 +287,19 @@ void testMatrixFunctions()
 
   std::cout << "*** Rank: " << rank << std::endl;
 
+  HYPRE_IJMatrix matrix;
+  HYPRE_ParCSRMatrix parcsr_matrix, parcsr_ATxA;
+
+  HYPRE_IJMatrixRead( "mat_1", MPI_COMM_WORLD,
+                      HYPRE_PARCSR, &matrix );
+  HYPRE_IJMatrixGetObject(matrix, (void**) &parcsr_matrix);
+
+  parcsr_ATxA = hypre_ParTMatmul( parcsr_matrix,
+                                  parcsr_matrix );
+
+  HYPRE_IJMatrixDestroy(matrix);
+  hypre_ParCSRMatrixDestroy(parcsr_ATxA);
+
 if (true)
 {
   // Dummy vector and Matrix
