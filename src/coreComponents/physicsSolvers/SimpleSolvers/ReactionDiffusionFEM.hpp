@@ -1,4 +1,4 @@
-/*
+reactionDiffusion/*
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
  *
@@ -41,16 +41,16 @@ class FiniteElementBase;
 class DomainPartition;
 
 
-class LaplaceFEM : public SolverBase
+class ReactionDiffusionFEM : public SolverBase
 {
 public:
 
-  LaplaceFEM( const std::string& name,
+  ReactionDiffusionFEM( const std::string& name,
               ManagedGroup * const parent );
 
-  virtual ~LaplaceFEM() override;
+  virtual ~ReactionDiffusionFEM() override;
 
-  static string CatalogName() { return "LaplaceFEM"; }
+  static string CatalogName() { return "ReactionDiffusionFEM"; }
 
   virtual void RegisterDataOnMesh( ManagedGroup * const MeshBodies ) override final;
 
@@ -140,7 +140,7 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
     dataRepository::ViewKey fieldVarName = { "fieldName" };
 
-  } laplaceFEMViewKeys;
+  } reactionDiffusionFEMViewKeys;
 
   inline ParallelVector const * getSolution() const {
     return & m_solution;
@@ -158,7 +158,7 @@ private:
   string m_fieldName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
-  LaplaceFEM();
+  ReactionDiffusionFEM();
 
 };
 
