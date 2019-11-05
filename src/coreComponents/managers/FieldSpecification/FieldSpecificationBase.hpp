@@ -309,7 +309,17 @@ public:
     m_setNames.push_back( setName );
   }
 
+  void SetFluxFlag()
+  {
+    m_fluxFlag = 1;
+  }
 
+  bool GetFluxFlag() const
+  {
+    return m_fluxFlag;
+  }  
+
+  
 protected:
   void PostProcessInput() override final;
 
@@ -353,6 +363,7 @@ private:
   /// the name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
+  bool m_fluxFlag;
 
 };
 

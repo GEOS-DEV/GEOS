@@ -821,34 +821,8 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
 
   FieldSpecificationManager * fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
-  
-  fsManager->Apply( time_n + dt, domain, "ElementRegions", "FLUX",
-                    [&]( FieldSpecificationBase const * const fs,
-                    string const &,
-                    set<localIndex> const & lset,
-                    Group * subRegion,
-                    string const & ) -> void
-  {
-    arrayView1d<globalIndex const> const &
-    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
-                                                                            true,
-                                                                            time_n + dt,
-                                                                            dt,
-                                                                            subRegion,
-                                                                            dofNumber,
-                                                                            m_numDofPerCell,
-                                                                            matrix,
-                                                                            rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_ARG(a), localIndex const GEOSX_UNUSED_ARG(c) ) -> real64
-    {
-      return 0;
-    } );
-
-  } );
-
- fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::proppantConcentrationString,
+  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::proppantConcentrationString,
                     [&]( FieldSpecificationBase const * const fs,
                     string const &,
                     set<localIndex> const & lset,
@@ -865,20 +839,42 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
     arrayView1d<real64 const> const &
     dProppantConc = subRegion->getReference<array1d<real64> >( viewKeyStruct::deltaProppantConcentrationString );
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                              false,
-                                                                              time_n + dt,
-                                                                              subRegion,
-                                                                              dofNumber,
-                                                                              m_numDofPerCell,
-                                                                              matrix,
-                                                                              rhs,
-                                                                              [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG(c)) -> real64
-    {
-      return proppantConc[a] + dProppantConc[a];
-    });
-  
-  });
+    if(fs->GetFluxFlag())
+      {
+        
+        fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
+                                                                                true,
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                m_numDofPerCell,
+                                                                                matrix,
+                                                                                rhs,
+                                                                                [&]( localIndex const GEOSX_UNUSED_ARG(a), localIndex const GEOSX_UNUSED_ARG(c) ) -> real64
+        {
+          return 0;
+        } );
+      }
+    else
+      {
+        
+        fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
+                                                                                  false,
+                                                                                  time_n + dt,
+                                                                                  subRegion,
+                                                                                  dofNumber,
+                                                                                  m_numDofPerCell,
+                                                                                  matrix,
+                                                                                  rhs,
+                                                                                  [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG(c)) -> real64
+        {
+          return proppantConc[a] + dProppantConc[a];
+        });
+      }
+
+  } );
+      
 
  fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::componentConcentrationString,
                     [&]( FieldSpecificationBase const * const fs,
@@ -887,6 +883,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                     Group * subRegion,
                     string const & ) -> void
   {
+
 
     arrayView1d<globalIndex const> const &
     dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
@@ -897,21 +894,40 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
     arrayView2d<real64 const> const &
     dComponentConc = subRegion->getReference<array2d<real64> >( viewKeyStruct::deltaComponentConcentrationString );
 
-    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
-                                                                              false,
-                                                                              time_n + dt,
-                                                                              subRegion,
-                                                                              dofNumber,
-                                                                              m_numDofPerCell,
-                                                                              matrix,
-                                                                              rhs,
-                                                                              [&]( localIndex const a, localIndex const c ) -> real64
-    {
-      return componentConc[a][c-1] + dComponentConc[a][c-1];
-    });
-  
+    if(fs->GetFluxFlag())    
+      {
+        
+        fs->ApplyBoundaryConditionToSystem<FieldSpecificationAdd, LAInterface>( lset,
+                                                                                true,
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                m_numDofPerCell,
+                                                                                matrix,
+                                                                                rhs,
+                                                                                [&]( localIndex const GEOSX_UNUSED_ARG(a), localIndex const GEOSX_UNUSED_ARG(c) ) -> real64
+        {
+          return 0;
+        } );
+      }
+    else 
+      {
+        
+        fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
+                                                                                  false,
+                                                                                  time_n + dt,
+                                                                                  subRegion,
+                                                                                  dofNumber,
+                                                                                  m_numDofPerCell,
+                                                                                  matrix,
+                                                                                  rhs,
+                                                                                  [&]( localIndex const a, localIndex const c ) -> real64
+        {
+          return componentConc[a][c-1] + dComponentConc[a][c-1];
+        });
+      }
   });
-
  
 
   if( verboseLevel() >= 3 )
