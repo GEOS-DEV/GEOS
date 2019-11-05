@@ -227,24 +227,28 @@ void ProppantSlurryFluid::Compute( localIndex const NC,
   array1d<real64> dNIndex_dC(NC);
   array1d<real64> dK_dC(NC);  
 
-  for(localIndex c = 0; c < NC; ++c)
-    {    
-  
-      nIndex +=  componentConcentration[c] * m_nIndices[c] / (1.0 - fluidConcentration);
-      K +=  componentConcentration[c] * m_Ks[c] / (1.0 - fluidConcentration);      
-      dNIndex_dC[c] = m_nIndices[c] / (1.0 - fluidConcentration);
-      dK_dC[c] = m_Ks[c] / (1.0 - fluidConcentration);      
-
-    }
-      
-  for(localIndex c = 0; c < NC; ++c)
+  if(fluidConcentration < 1.0)
     {
+  
+      for(localIndex c = 0; c < NC; ++c)
+        {
+  
+          nIndex +=  componentConcentration[c] * m_nIndices[c] / (1.0 - fluidConcentration);
+          K +=  componentConcentration[c] * m_Ks[c] / (1.0 - fluidConcentration);      
+          dNIndex_dC[c] = m_nIndices[c] / (1.0 - fluidConcentration);
+          dK_dC[c] = m_Ks[c] / (1.0 - fluidConcentration);
 
-      dNIndex_dC[c] -= nIndex / (1.0 - fluidConcentration);
-      dK_dC[c] -= K / (1.0 - fluidConcentration);      
+        }
+      
+      for(localIndex c = 0; c < NC; ++c)
+        {
 
+          dNIndex_dC[c] -= nIndex / (1.0 - fluidConcentration);
+          dK_dC[c] -= K / (1.0 - fluidConcentration);      
+
+        }
     }
-
+  
   real64 fluidViscosity = 0.0;
 
   array1d<real64> dFluidViscosity_dC(NC);

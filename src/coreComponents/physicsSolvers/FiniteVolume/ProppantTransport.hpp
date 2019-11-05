@@ -81,7 +81,7 @@ public:
   static string CatalogName() { return "ProppantTransport"; }
 
   virtual void InitializePreSubGroups(Group * const rootGroup) override;
-
+  
   virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   virtual real64 SolverStep( real64 const& time_n,
@@ -178,6 +178,10 @@ public:
 
   /**@}*/
 
+  void ResizeFractureFields(  real64 const & time_n,
+                              real64 const & dt,
+                              DomainPartition * const domain);  
+  
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

@@ -743,7 +743,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                                                             1,
                                                                             matrix,
                                                                             rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_ARG( a ) ) -> real64
+                                                                            [&]( localIndex const GEOSX_UNUSED_ARG( a ), localIndex const GEOSX_UNUSED_ARG( c ) ) -> real64
     {
       return 0;
     } );
@@ -778,7 +778,7 @@ SinglePhaseFlow::ApplyBoundaryConditions( real64 const time_n,
                                                                               1,
                                                                               matrix,
                                                                               rhs,
-                                                                              [&]( localIndex const a ) -> real64
+                                                                              [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG( c ) ) -> real64
     {
       return pres[a] + dPres[a];
     });

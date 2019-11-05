@@ -110,6 +110,8 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   SinglePhaseFlow &
   flowSolver = *(this->getParent()->GetGroup(m_flowSolverName)->group_cast<SinglePhaseFlow*>());
 
+  proppantSolver.ResizeFractureFields(time_n, dt, domain);
+  
   if(cycleNumber == 0) {
 
     FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
@@ -117,7 +119,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
     boundaryConditionManager->ApplyInitialConditions( domain );
 
   }
-  
+
   flowSolver.SetupSystem( domain,
                           flowSolver.getDofManager(),
                           flowSolver.getSystemMatrix(),

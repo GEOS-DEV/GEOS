@@ -140,7 +140,43 @@ void ProppantTransport::InitializePreSubGroups(Group * const rootGroup)
   m_numComponents = fluid->numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;
 
+  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  localIndex const NC = m_numComponents;
+  
+  elemManager->forElementSubRegions<CellElementSubRegion>([&]( CellElementSubRegion * const subRegion )
+  {
+
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::componentConcentrationString).resizeDimension<1>(NC);
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::deltaComponentConcentrationString).resizeDimension<1>(NC);
+    
+  });
+
 }
+
+void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_ARG( time_n ),
+                                              real64 const & GEOSX_UNUSED_ARG( dt ),
+                                              DomainPartition * const domain)
+{
+
+  localIndex const NC = m_numComponents;  
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
+  {
+
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::componentConcentrationString).resizeDimension<1>(NC);
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::deltaComponentConcentrationString).resizeDimension<1>(NC);
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::updatedComponentConcentrationString).resizeDimension<1>(NC);
+    subRegion->template getReference< array2d<real64> >(viewKeyStruct::oldComponentConcentrationString).resizeDimension<1>(NC);    
+    
+  });
+
+} 
 
 void ProppantTransport::UpdateFluidModel(Group * const dataGroup)
 {
@@ -298,6 +334,7 @@ real64 ProppantTransport::SolverStep( real64 const& time_n,
 
   NodeManager const * const nodeManager = mesh->getNodeManager();
   FaceManager const * const faceManager = mesh->getFaceManager();
+
   
   real64 dt_return = dt;
 
@@ -423,13 +460,14 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time
                                            ParallelVector & GEOSX_UNUSED_ARG(rhs),
 					   ParallelVector & GEOSX_UNUSED_ARG(solution) )
 {
+
+  localIndex const NC = m_numComponents;  
+
   ResetViews( domain );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
 
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
-
-  localIndex const NC = m_numComponents;  
   
   applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
                                  ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
@@ -803,7 +841,7 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                                                                             m_numDofPerCell,
                                                                             matrix,
                                                                             rhs,
-                                                                            [&]( localIndex const GEOSX_UNUSED_ARG(a) ) -> real64
+                                                                            [&]( localIndex const GEOSX_UNUSED_ARG(a), localIndex const GEOSX_UNUSED_ARG(c) ) -> real64
     {
       return 0;
     } );
@@ -835,13 +873,46 @@ void ProppantTransport::ApplyBoundaryConditions(real64 const time_n,
                                                                               m_numDofPerCell,
                                                                               matrix,
                                                                               rhs,
-                                                                              [&]( localIndex const a ) -> real64
+                                                                              [&]( localIndex const a, localIndex const GEOSX_UNUSED_ARG(c)) -> real64
     {
       return proppantConc[a] + dProppantConc[a];
     });
   
   });
+
+ fsManager->Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::componentConcentrationString,
+                    [&]( FieldSpecificationBase const * const fs,
+                    string const &,
+                    set<localIndex> const & lset,
+                    Group * subRegion,
+                    string const & ) -> void
+  {
+
+    arrayView1d<globalIndex const> const &
+    dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
+
+    arrayView2d<real64 const> const &
+    componentConc = subRegion->getReference<array2d<real64> >( viewKeyStruct::componentConcentrationString );
+
+    arrayView2d<real64 const> const &
+    dComponentConc = subRegion->getReference<array2d<real64> >( viewKeyStruct::deltaComponentConcentrationString );
+
+    fs->ApplyBoundaryConditionToSystem<FieldSpecificationEqual, LAInterface>( lset,
+                                                                              false,
+                                                                              time_n + dt,
+                                                                              subRegion,
+                                                                              dofNumber,
+                                                                              m_numDofPerCell,
+                                                                              matrix,
+                                                                              rhs,
+                                                                              [&]( localIndex const a, localIndex const c ) -> real64
+    {
+      return componentConc[a][c-1] + dComponentConc[a][c-1];
+    });
   
+  });
+
+ 
 
   if( verboseLevel() >= 3 )
   {
