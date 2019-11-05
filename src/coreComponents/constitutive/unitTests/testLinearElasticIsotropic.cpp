@@ -79,9 +79,9 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (2.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G );
+    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
@@ -98,9 +98,9 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) ,  (2.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G );
+    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](1,1) ,  (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
@@ -117,9 +117,9 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
     cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) ,  (2.0/3.0*strain)*2*G );
+    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress[0][0](2,2) ,  (2.0/3.0*strain)*2*G + strain*K );
     ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
     ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
