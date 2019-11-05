@@ -160,12 +160,14 @@ public:
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
     constexpr static auto contactStressString = "contactStress";
+    constexpr static auto appliedFacePressureString = "appliedFacePressure";
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
+    static constexpr auto relaxationCoefficientString = "relaxationCoefficient";
   } HydrofractureSolverViewKeys;
 
 protected:
@@ -190,7 +192,7 @@ private:
   ParallelMatrix m_matrix10;
 
   integer m_maxNumResolves;
-
+  real64 m_relaxationCoefficient;
 };
 
 } /* namespace geosx */

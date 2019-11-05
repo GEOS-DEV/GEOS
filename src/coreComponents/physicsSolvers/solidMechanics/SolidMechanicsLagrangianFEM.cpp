@@ -504,6 +504,7 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
 
   FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
 
+  arrayView1d<real64 const> const & mass = nodes->getReference<array1d<real64>>(keys::Mass);
   array1d<R1Tensor> & velocityArray = nodes->getReference<array1d<R1Tensor>>(keys::Velocity);
   arrayView1d<R1Tensor> const & vel = velocityArray;
 
@@ -520,7 +521,7 @@ void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& 
   fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, this->getGravityVector(), dt/2 );
 
   fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -649,10 +650,31 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   } //Element Manager
 
-  // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
+  // apply traction BC
+  ApplyTractionBC_explicit( time_n + dt, domain );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+//  // apply acceleration BC
+//  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Acceleration );
+
+  // convert acceleration BC to force BC
+  fsManager->ApplyFieldValue( time_n + dt, domain, "nodeManager", keys::Acceleration,
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )->void
+    {
+      integer const component = bc->GetComponent();
+      forall_in_range< parallelDevicePolicy< 1024 > >(0, targetSet.size(),
+        GEOSX_DEVICE_LAMBDA( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          acc[a][component] *= mass[a];
+        }
+      );
+    }
+  );
+
+  // apply this over a set
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes );
+
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
   // HACK: Move velocity back to the CPU to be packed. It is not modified so we don't touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, false);
@@ -699,9 +721,9 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   } //Element Manager
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes );
 
-  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+  fsManager->ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
   // HACK: Move velocity back to the CPU to be unpacked. It is modified so we touch it.
   if (neighbors.size() > 0) velocityArray.move(chai::CPU, true);
@@ -862,6 +884,91 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                 nodeRHS[a] = result[kf] * faceArea[kf] / numNodes;
               }
               rhs.add( nodeDOF, nodeRHS );
+            }
+          }
+      }
+    }
+  });
+}
+
+void SolidMechanicsLagrangianFEM::ApplyTractionBC_explicit( real64 const time,
+                                                             DomainPartition * const domain)
+{
+  FieldSpecificationManager * const fsManager = FieldSpecificationManager::get();
+  NewFunctionManager * const functionManager = NewFunctionManager::Instance();
+
+  FaceManager * const faceManager = domain->getMeshBody(0)->getMeshLevel(0)->getFaceManager();
+  NodeManager * const nodeManager = domain->getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+
+  real64_array const & faceArea  = faceManager->getReference<real64_array>("faceArea");
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+
+  arrayView1d<R1Tensor> const & acc = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
+
+  arrayView1d<integer const> const & faceGhostRank = faceManager->GhostRank();
+  fsManager->Apply( time,
+                    domain,
+                    "faceManager",
+                    string("Traction"),
+                    [&]( FieldSpecificationBase const * const bc,
+                    string const &,
+                    set<localIndex> const & targetSet,
+                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
+                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
+  {
+    string const & functionName = bc->getReference<string>( FieldSpecificationBase::viewKeyStruct::functionNameString);
+
+    integer const component = bc->GetComponent();
+
+    if( functionName.empty() )
+    {
+      for( auto kf : targetSet )
+      {
+        if( faceGhostRank[kf] < 0 )
+        {
+          localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+          for( localIndex a=0 ; a<numNodes ; ++a )
+          {
+            acc[a][component] += bc->GetScale() * faceArea[kf] / numNodes;
+          }
+        }
+      }
+    }
+    else
+    {
+      FunctionBase const * const function  = functionManager->GetGroup<FunctionBase>(functionName);
+      assert( function!=nullptr);
+
+        if( function->isFunctionOfTime()==2 )
+        {
+          real64 value = bc->GetScale() * function->Evaluate( &time );
+          for( auto kf : targetSet )
+          {
+            if( faceGhostRank[kf] < 0 )
+            {
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                acc[a][component] += value * faceArea[kf] / numNodes;
+              }
+            }
+          }
+        }
+        else
+        {
+          real64_array result;
+          result.resize( targetSet.size() );
+          function->Evaluate( faceManager, time, targetSet, result );
+
+          for( auto kf : targetSet )
+          {
+            if( faceGhostRank[kf] < 0 )
+            {
+              localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+              for( localIndex a=0 ; a<numNodes ; ++a )
+              {
+                acc[a][component] += result[kf] * faceArea[kf] / numNodes;
+              }
             }
           }
       }

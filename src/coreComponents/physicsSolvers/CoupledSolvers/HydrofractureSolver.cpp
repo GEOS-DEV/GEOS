@@ -49,7 +49,8 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
   m_couplingTypeOption(),
   m_solidSolver(nullptr),
   m_flowSolver(nullptr),
-  m_maxNumResolves(10)
+  m_maxNumResolves(10),
+  m_relaxationCoefficient(1)
 {
   registerWrapper(viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0)->
     setInputFlag(InputFlags::REQUIRED)->
@@ -72,6 +73,10 @@ HydrofractureSolver::HydrofractureSolver( const std::string& name,
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. ");
 
+  registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient, 0)->
+	setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Relaxation Coefficient for applied fracture face pressure in Hydrofracture solver");
 }
 
 void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -91,7 +96,9 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 	  elemManager->forElementSubRegions<FaceElementSubRegion>( [&]( auto * const elementSubRegion ) -> void
 		{
 		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::contactStressString )->
-			setDescription("Contact Stress");
+			setDescription("Contact stress");
+		  elementSubRegion->template registerWrapper< array1d<real64> >( viewKeyStruct::appliedFacePressureString )->
+			setDescription("Applied fluid pressure on fracture faces");
 		});
 	}
 }
@@ -202,6 +209,25 @@ void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups(Group * c
   this->getParent()->GetGroup(m_flowSolverName)->group_cast<FlowSolverBase*>()->setPoroElasticCoupling();
   // Calculate initial total mean stress
   this->UpdateDeformationForCoupling(problemManager->GetGroup<DomainPartition>(keys::domain));
+
+  MeshLevel * const mesh = problemManager->GetGroup<DomainPartition>(keys::domain)->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
+  {
+    arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
+    arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
+    arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
+
+    forall_in_range<serialPolicy>( 0,
+                                 subRegion->size(),
+                                 GEOSX_LAMBDA ( localIndex const kfe )
+    {
+      if( ghostRank[kfe] < 0 )
+      {
+          appliedFacePressure[kfe] = fluidPressure[kfe];
+      }
+    });
+  });
 }
 
 HydrofractureSolver::~HydrofractureSolver()
@@ -357,7 +383,6 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
       arrayView1d<real64> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
 
-
       for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
       {
         localIndex const kf0 = elemsToFaces[kfe][0];
@@ -373,11 +398,11 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         // TODO this needs a proper contact based strategy for aperture
         aperture[kfe] = -Dot(temp,faceNormal[kf0]) / numNodesPerFace;
         contactStress[kfe] = std::max( - aperture[kfe] * contactRelation->stiffness(), 0.0 );
-        std::cout<< "\n\n Update face volume: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
+//        std::cout<< "\n\n Update fracture volume: kfe = " << kfe  <<", aper0 = "<<aperture[kfe]<<", contactStress = "<<contactStress[kfe];
 
         aperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
         deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
-        std::cout <<"\n                    Eff aperture=" << aperture[kfe] << ", area=" << area[kfe] << ", new volume =" << volume[kfe] << ", deltaVolume =" << deltaVolume[kfe] << "\n";
+//        std::cout <<"\n                    Eff aperture=" << aperture[kfe] << ", area=" << area[kfe] << ", frac volume =" << aperture[kfe] * area[kfe] << "\n";
       }
     });
   });
@@ -450,8 +475,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
         {
           totalMeanStress[er][esr][ei] = meanStress[er][esr][solidIndex][ei][0] - biotCoefficient[er][esr][solidIndex] * pres[er][esr][ei];
 
-          poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
-                                                   * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
+//          if ((pres[er][esr][ei] - dPres[er][esr][ei]) > 1e-10)
+//          poro[er][esr][ei] = poroOld[er][esr][ei] + (biotCoefficient[er][esr][solidIndex] - poroOld[er][esr][ei]) / bulkModulus[er][esr][solidIndex][ei]
+//                                                   * (totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] + dPres[er][esr][ei]);
 
           // update cell element deltaVoume
           R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
@@ -463,7 +489,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
           deltaVolume[er][esr][ei] = computationalGeometry::HexVolume(Xlocal) - volume[er][esr][ei];
 
-//          if (ei==0)
+////          if (ei==0)
 //          std::cout<< "\n Solid Update: cell dVol= "<< deltaVolume[er][esr][ei] <<", dPoro = "<< poro[er][esr][ei] - poroOld[er][esr][ei]
 //                    << "\n                new cell vol = "<< deltaVolume[er][esr][ei] + volume[er][esr][ei] << ", new porosity = "<< poro[er][esr][ei]
 //                    << "\n                totalMeanStress change = "<< totalMeanStress[er][esr][ei] - oldTotalMeanStress[er][esr][ei] << ", dPres[er][esr][ei] = "<< dPres[er][esr][ei] << std::endl;
@@ -612,35 +638,6 @@ real64 HydrofractureSolver::ExplicitStep( real64 const& time_n,
   this->ApplyContactAndPressureToFacesForExplicitSolver( domain );
 
   m_solidSolver->ExplicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
-
-//  MeshLevel * const meshLevel = domain->getMeshBody(0)->getMeshLevel(0);
-//  ElementRegionManager * const elemManager = meshLevel->getElemManager();
-//
-//  elemManager->forElementRegions<FaceElementRegion>([&]( FaceElementRegion * const faceElemRegion )
-//  {
-//    faceElemRegion->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )
-//    {
-//      arrayView1d<real64> const & volume = subRegion->getElementVolume();
-//      arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
-//
-//      for( localIndex kfe=0 ; kfe<subRegion->size() ; ++kfe )
-//      {
-//        volume[kfe] += deltaVolume[kfe];
-//      }
-//    });
-//  });
-
-//  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
-//  {
-//    arrayView1d<real64> const & volume = subRegion->getElementVolume();
-//    arrayView1d<real64> const & deltaVolume = subRegion->getReference<array1d<real64> >(FlowSolverBase::viewKeyStruct::deltaVolumeString);
-//
-//    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
-//    {
-//      volume[ei] += deltaVolume[ei];
-//    } );
-//  } );
 
   return dt;
 }
@@ -932,7 +929,8 @@ ApplyContactAndPressureToFacesForExplicitSolver( DomainPartition * const domain 
   elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion * const subRegion )->void
   {
       arrayView1d<real64 const> const & fluidPressure = subRegion->getReference<array1d<real64> >("pressure");
-      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+//      arrayView1d<real64 const> const & deltaFluidPressure = subRegion->getReference<array1d<real64> >("deltaPressure");
+      arrayView1d<real64> const & appliedFacePressure = subRegion->getReference<array1d<real64> >(viewKeyStruct::appliedFacePressureString);
       arrayView1d<real64 const> const & contactStress = subRegion->getReference<array1d<real64> >(viewKeyStruct::contactStressString);
       arrayView1d<integer const> const & ghostRank = subRegion->GhostRank();
       arrayView1d<real64> const & area = subRegion->getElementArea();
@@ -953,8 +951,9 @@ ApplyContactAndPressureToFacesForExplicitSolver( DomainPartition * const domain 
 
           real64 const Ja = area[kfe] / numNodesPerFace;
 
-          //  realT pressure = (1.0 - m_relaxationCoefficient)*appliedFacePressure[kf] + m_relaxationCoefficient*faceFluidPressure[kf];
-          real64 nodalForceMag = (contactStress[kfe] + fluidPressure[kfe] + deltaFluidPressure[kfe]) * Ja;
+          // In explicit solver, fluidPressure is already the pressure at time_n+1
+          appliedFacePressure[kfe] = m_relaxationCoefficient * fluidPressure[kfe] + (1.0 - m_relaxationCoefficient) * appliedFacePressure[kfe];
+          real64 nodalForceMag = (contactStress[kfe] + appliedFacePressure[kfe]) * Ja;
           R1Tensor nodalForce(Nbar);
           nodalForce *= nodalForceMag;
 

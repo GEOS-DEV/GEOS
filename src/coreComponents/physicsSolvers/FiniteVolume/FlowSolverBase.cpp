@@ -41,7 +41,8 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     m_poroElasticFlag(0),
     m_coupledWellsFlag(0),
     m_numDofPerCell(0),
-	m_relaxationCoefficient(1),
+    m_relaxationCoefficient(1),
+    m_injectionRelaxationCoefficient(1),
     m_timeIntegrationOptionString(),
     m_timeIntegrationOption(timeIntegrationOption::ImplicitTransient),
     m_elemGhostRank(),
@@ -76,7 +77,12 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::relaxationCoefficientString, &m_relaxationCoefficient,  false )->
 	setApplyDefaultValue(1)->
     setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Relaxation Coefficient for fracture pressure update in explicit flow solver");
+    setDescription("Relaxation Coefficient for mass flux in explicit flow solver");
+
+  this->registerWrapper( viewKeyStruct::injectionRelaxationCoefficientString, &m_injectionRelaxationCoefficient,  false )->
+	setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Relaxation Coefficient for injection BC in explicit flow solver");
 }
 
 void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )

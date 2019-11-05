@@ -57,6 +57,10 @@ public:
    */
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
 
+  virtual void PointUpdateViscosityExplicit( real64 const & pressure, localIndex const k, localIndex const q ) = 0;
+
+  virtual void PointUpdateDensityExplicit( real64 & pressure, localIndex const k, localIndex const q ) = 0;
+
   /**
    * @brief Perform an inverse single point constitutive update.
    * @param[out] pressure the pressure to be updated

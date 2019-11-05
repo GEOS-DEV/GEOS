@@ -57,7 +57,9 @@ namespace SolidMechanicsLagrangianFEMKernels
 #endif
 
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
+                            arrayView1d<real64 const> const & mass,
                             arrayView1d<R1Tensor> const & velocity,
+                            R1Tensor const & gravityVector,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
@@ -68,7 +70,7 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
     for (int j = 0; j < 3; ++j)
     {
       velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
-      acceleration[ i ][ j ] = 0;
+      acceleration[ i ][ j ] = gravityVector[ j ] * mass[ i ];
     } 
   });
 }
@@ -77,6 +79,7 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<real64 const> const & mass, 
                             arrayView1d<R1Tensor> const & velocity,
                             real64 const dt,
+                            real64 const massDamping,
                             LvArray::SortedArrayView<localIndex const, localIndex> const & indices )
 {
   GEOSX_MARK_FUNCTION;
@@ -87,7 +90,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
     {
-      acceleration[ a ][ j ] /= mass[ a ];
+      acceleration[ a ][ j ] -= massDamping * mass[ a ] * velocity[ a ][ j ];
+      acceleration[ a ][ j ] /= ( mass[ a ] * (1 + 0.5 * dt * massDamping ) );
       velocity[ a ][ j ] += dt * acceleration[ a ][ j ];
     }
   });
@@ -199,7 +203,7 @@ struct ExplicitKernel
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
           arrayView1d< real64 const > const & fluidPressure,
-          arrayView1d< real64 const > const & deltaFluidPressure,
+          arrayView1d< real64 const > const & GEOSX_UNUSED_ARG( deltaFluidPressure ) ,
           real64 const biotCoefficient,
           arrayView2d<real64> const & meanStress,
           arrayView2d<R2SymTensor> const & devStress,
@@ -263,12 +267,8 @@ struct ExplicitKernel
 
         if( !fluidPressure.empty() )
         {
-          TotalStress.PlusIdentity( - biotCoefficient * (fluidPressure[k] + deltaFluidPressure[k]) );
-//          if (q==0)
-//            std::cout << "\n eleID = " << k+1 << " , fluidPressure[k]=" << fluidPressure[k];
+          TotalStress.PlusIdentity( - biotCoefficient * ( fluidPressure[k]) );
         }
-//        if (q==0)
-//          std::cout << "\n eleID = " << k+1 << " : \n TotalStress=" << TotalStress;
 
         Integrate<NUM_NODES_PER_ELEM>( TotalStress, dNdX[k][q], detJ[k][q], detF, fInv, f_local );
 

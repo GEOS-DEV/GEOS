@@ -339,6 +339,8 @@ public:
                                      ParallelMatrix & matrix,
                                      ParallelVector & rhs );
 
+  void ApplyTractionBC_explicit( real64 const time,
+                                  DomainPartition * const domain);
 
   void ApplyTractionBC( real64 const time,
                         DofManager const & dofManager,

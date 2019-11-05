@@ -130,10 +130,10 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
                                           << m_compressibility << ") is specified" );
 
   GEOS_ERROR_IF( m_viscosibility < 0.0, "An invalid value of fluid viscosibility ("
-                                        << m_compressibility << ") is specified" );
+                                        << m_viscosibility << ") is specified" );
 
   GEOS_ERROR_IF( m_referenceDensity <= 0.0, "An invalid value of fluid reference density ("
-                                            << m_compressibility << ") is specified" );
+                                            << m_referenceDensity << ") is specified" );
 
   GEOS_ERROR_IF( m_referenceViscosity <= 0.0, "An invalid value of fluid reference viscosity ("
                                               << m_compressibility << ") is specified" );
@@ -151,11 +151,39 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
 {
   Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
+
+//  real64 pressureCap = 1e8;
+//  m_density[k][q] = pressure <= 0.5 * pressureCap ? m_referenceDensity / (1 - pressure * m_compressibility)
+//                                                  : m_referenceDensity / (1 - 0.5 * pressureCap * m_compressibility - (2.0 * pressure / pressureCap - 1.0) * (1.0 - 0.5 * pressureCap * m_compressibility));
+}
+
+void CompressibleSinglePhaseFluid::PointUpdateViscosityExplicit( real64 const & pressure, localIndex const k, localIndex const q )
+{
+  // In explicit solver, density is calculated from mass, not pressure
+  makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
+  {
+    Compute( pressure, m_viscosity[k][q], m_dViscosity_dPressure[k][q], relation );
+  } );
+}
+
+void CompressibleSinglePhaseFluid::PointUpdateDensityExplicit( real64 & pressure, localIndex const k, localIndex const q )
+{
+  makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
+  {
+    pressure = std::max(pressure, m_referencePressure);
+    Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], relation );
+  } );
 }
 
 void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, localIndex const k, localIndex const q )
 {
+  m_density[k][q] = std::max(m_density[k][q], m_referenceDensity);
   Compute( pressure, m_density[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
+
+//  real64 pressureCap = 1e8;
+//  pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
+//                                                        ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility
+//                                                        : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
 }
 
 void CompressibleSinglePhaseFluid::PointInverseUpdate( real64 & pressure, real64 const & mass, real64 const & volume, real64 const & poroRef, real64 const & totalCompressibility)

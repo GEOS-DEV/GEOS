@@ -100,6 +100,10 @@ public:
 
   /// call a user-provided function for each boundary stencil
   template<typename LAMBDA>
+  void forCellStencils(LAMBDA && lambda);
+
+  /// call a user-provided function for each boundary stencil
+  template<typename LAMBDA>
   void forCellStencils(LAMBDA && lambda) const;
 
   /// call a user-provided function for each boundary stencil
@@ -161,6 +165,16 @@ protected:
   real64 m_areaRelTol;
 
 };
+
+template<typename LAMBDA>
+void FluxApproximationBase::forCellStencils(LAMBDA && lambda)
+{
+//TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
+  this->forWrappers<CellElementStencilTPFA,FaceElementStencil>([&] (auto * wrapper) -> void
+  {
+    lambda(wrapper->reference());
+  });
+}
 
 template<typename LAMBDA>
 void FluxApproximationBase::forCellStencils(LAMBDA && lambda) const

@@ -220,7 +220,7 @@ public:
    */
   void AssembleFluxTermsExplicit( real64 const time_n,
                                   real64 const dt,
-                                  DomainPartition * const domain,
+                                  DomainPartition * domain,
                                   DofManager const * const dofManager);
 
   /**
@@ -267,6 +267,8 @@ public:
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
 
     static constexpr auto massString = "mass";
+    static constexpr auto injMassString = "injMass";
+    static constexpr auto injMass0String = "injMass0";
 
     // face fields
     static constexpr auto faceDensityString = "faceDensity";
@@ -348,12 +350,13 @@ private:
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_mobility;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_dMobility_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_injMass;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_injMass0;
 
   /// views into backup fields
 
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosityOld;
   ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_densityOld;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalCompressibility;
 
   /// views into material fields
 
@@ -373,6 +376,7 @@ private:
 
   ElementRegionManager::MaterialViewAccessor<arrayView1d<real64>> m_bulkModulus;
   ElementRegionManager::MaterialViewAccessor<real64> m_biotCoefficient;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_totalCompressibility;
 };
 
 
