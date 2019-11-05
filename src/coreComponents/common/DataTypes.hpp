@@ -619,11 +619,11 @@ private:
     //       be a simple type or a lower-dimensional array.  Sub-elements and
     //       axes are given as a comma-separated list enclosed in a curly brace.
     //       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
-    std::string constructArrayRegex(std::string subPattern, integer dimension)
+    std::string constructArrayRegex( std::string subPattern, integer dimension )
     {
-      if (dimension > 1)
+      if( dimension > 1 )
       {
-        subPattern = constructArrayRegex(subPattern, dimension-1);
+        subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
       std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
@@ -645,8 +645,8 @@ private:
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
     std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
-    
-    // Regex to match a string that does not contain the characters  ,{} 
+
+    // Regex to match a string that does not contain the characters  ,{}
     std::string rs = "[^,\\{\\}]*";
 
     // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
@@ -666,31 +666,31 @@ private:
       {"R1Tensor", r1},
       {"R2Tensor", r2},
       {"R2SymTensor", r2s},
-      {"integer_array", constructArrayRegex(ri, 1)},
-      {"localIndex_array", constructArrayRegex(ri, 1)},
-      {"globalIndex_array", constructArrayRegex(ri, 1)},
-      {"real32_array", constructArrayRegex(rr, 1)},
-      {"real64_array", constructArrayRegex(rr, 1)},
-      {"r1_array", constructArrayRegex(r1, 1)},
-      {"r2_array", constructArrayRegex(r2, 1)},
-      {"r2Sym_array", constructArrayRegex(r2s, 1)},
-      {"integer_array2d", constructArrayRegex(ri, 2)},
-      {"localIndex_array2d", constructArrayRegex(ri, 2)},
-      {"globalIndex_array2d", constructArrayRegex(ri, 2)},
-      {"real32_array2d", constructArrayRegex(rr, 2)},
-      {"real64_array2d", constructArrayRegex(rr, 2)},
-      {"r1_array2d", constructArrayRegex(r1, 2)},
-      {"r2_array2d", constructArrayRegex(r2, 2)},
-      {"r2Sym_array2d", constructArrayRegex(r2s, 2)},
-      {"integer_array3d", constructArrayRegex(ri, 3)},
-      {"localIndex_array3d", constructArrayRegex(ri, 3)},
-      {"globalIndex_array3d", constructArrayRegex(ri, 3)},
-      {"real32_array3d", constructArrayRegex(rr, 3)},
-      {"real64_array3d", constructArrayRegex(rr, 3)},
+      {"integer_array", constructArrayRegex( ri, 1 )},
+      {"localIndex_array", constructArrayRegex( ri, 1 )},
+      {"globalIndex_array", constructArrayRegex( ri, 1 )},
+      {"real32_array", constructArrayRegex( rr, 1 )},
+      {"real64_array", constructArrayRegex( rr, 1 )},
+      {"r1_array", constructArrayRegex( r1, 1 )},
+      {"r2_array", constructArrayRegex( r2, 1 )},
+      {"r2Sym_array", constructArrayRegex( r2s, 1 )},
+      {"integer_array2d", constructArrayRegex( ri, 2 )},
+      {"localIndex_array2d", constructArrayRegex( ri, 2 )},
+      {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
+      {"real32_array2d", constructArrayRegex( rr, 2 )},
+      {"real64_array2d", constructArrayRegex( rr, 2 )},
+      {"r1_array2d", constructArrayRegex( r1, 2 )},
+      {"r2_array2d", constructArrayRegex( r2, 2 )},
+      {"r2Sym_array2d", constructArrayRegex( r2s, 2 )},
+      {"integer_array3d", constructArrayRegex( ri, 3 )},
+      {"localIndex_array3d", constructArrayRegex( ri, 3 )},
+      {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
+      {"real32_array3d", constructArrayRegex( rr, 3 )},
+      {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
-      {"string_array", constructArrayRegex(rs, 1)},
+      {"string_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex(rs, 1)}
+      {"mapPair_array", constructArrayRegex( rs, 1 )}
     };
 
 public:
