@@ -360,15 +360,15 @@ public:
    */
   HYPRE_ParVector* getHypreParVectorPointer();
 
-//  operator HYPRE_IJVector()
-//  {
-//    return (HYPRE_IJVector) m_ij_vector;
-//  }
-//
-//  operator HYPRE_ParVector()
-//  {
-//    return (HYPRE_ParVector) m_par_vector;
-//  }
+  operator HYPRE_IJVector()
+  {
+    return (HYPRE_IJVector) m_ij_vector;
+  }
+
+  operator HYPRE_ParVector()
+  {
+    return (HYPRE_ParVector) m_par_vector;
+  }
 
   /**
    * Map a global row index to local row index

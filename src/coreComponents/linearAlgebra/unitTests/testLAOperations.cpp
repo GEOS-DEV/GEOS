@@ -32,6 +32,8 @@
 
 using namespace geosx;
 
+static real64 const machinePrecision = 20.0 * std::numeric_limits<real64>::epsilon();
+
 /*! @name Ctest tests.
  * @brief Runs similar testing functions using different Linear Algebra Interfaces (LAIs).
  */
@@ -654,7 +656,7 @@ void testInterfaceSolvers()
   using Vector = typename LAI::ParallelVector;
   using Solver = typename LAI::LinearSolver;
 
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  int rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
@@ -682,16 +684,24 @@ void testInterfaceSolvers()
 
   // Test dot product: r.b = b.b = N
   real64 dotTest = r.dot( b );
-  EXPECT_DOUBLE_EQ( dotTest, N );
+  EXPECT_NEAR( dotTest,
+               N,
+               N * machinePrecision );
 
   // Test various norms
   real64 norm1 = b.norm1();
   real64 norm2 = b.norm2();
   real64 normInf = b.normInf();
 
-  EXPECT_DOUBLE_EQ( norm1, N );
-  EXPECT_DOUBLE_EQ( norm2, n );
-  EXPECT_DOUBLE_EQ( normInf, 1. );
+  EXPECT_NEAR( norm1,
+               N,
+               N * machinePrecision );
+  EXPECT_NEAR( norm2,
+               n,
+               n * machinePrecision );
+  EXPECT_NEAR( normInf,
+               1.,
+               machinePrecision);
 
   // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
   // back from the solvers.
@@ -700,74 +710,76 @@ void testInterfaceSolvers()
   // Test the residual function by computing r = b - Ax = 0
   matrix.residual( x_true, b, r );
   real64 normRes = r.normInf();
-  EXPECT_DOUBLE_EQ( normRes, 0. );
+  EXPECT_NEAR( normRes,
+               0.,
+               machinePrecision);
 
   // Now create a solver parameter list and solver
   LinearSolverParameters parameters;
   Solver solver( parameters );
 
-  // Set basic options
-  parameters.verbosity = 0;
-  parameters.solverType = "cg";
-  parameters.krylov.tolerance = 1e-8;
-  parameters.krylov.maxIterations = 250;
-  parameters.preconditionerType = "amg";
-  parameters.amg.smootherType = "gaussSeidel";
-  parameters.amg.coarseType = "direct";
-
-  // Solve using the iterative solver and compare norms with true solution
-  solver.solve( matrix, x_comp, b );
-  real64 norm_comp = x_comp.norm2();
-  real64 norm_true = x_true.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
-
-  // We now do the same using a direct solver.
-  // Again the norm should be the norm of x. We use a tougher tolerance on the test
-  // compared to the iterative solution. This should be accurate to machine precision
-  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-  x_comp.zero();
-  parameters.solverType = "direct";
-  solver.solve( matrix, x_comp, b );
-  norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-12 );
-
-  // Option to write files (for direct comparison)
-  // matrix.write("matrix.dat");
-  // x_true.write("x_true.dat");
-  // x_comp.write("x_comp.dat");
-
-  // Try getting access to matrix entries
-
-  array1d<real64> col_values;
-  array1d<globalIndex> col_indices;
-
-  if( rank == 0 )
-  {
-    matrix.getRowCopy( 0, col_indices, col_values );
-    EXPECT_EQ( col_indices.size(), 3 );
-    matrix.getRowCopy( 1, col_indices, col_values );
-    EXPECT_EQ( col_indices.size(), 4 );
-    matrix.getRowCopy( n + 1, col_indices, col_values );
-    EXPECT_EQ( col_indices.size(), 5 );
-  }
-
-  // Try clearing rows and setting diagonal value
-
-  double diagValue = 100.0;
-  globalIndex firstRow = matrix.ilower();
-
-  matrix.clearRow( firstRow, diagValue );
-  matrix.close();
-
-  matrix.getRowCopy( firstRow, col_indices, col_values );
-  for( localIndex i = 0 ; i < col_indices.size() ; ++i )
-  {
-    if( firstRow == col_indices[i] )
-      EXPECT_DOUBLE_EQ( col_values[i], diagValue );
-    else
-      EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
-  }
-  EXPECT_DOUBLE_EQ( matrix.getDiagValue( firstRow ), diagValue );
+//  // Set basic options
+//  parameters.verbosity = 0;
+//  parameters.solverType = "cg";
+//  parameters.krylov.tolerance = 1e-8;
+//  parameters.krylov.maxIterations = 250;
+//  parameters.preconditionerType = "amg";
+//  parameters.amg.smootherType = "gaussSeidel";
+//  parameters.amg.coarseType = "direct";
+//
+//  // Solve using the iterative solver and compare norms with true solution
+//  solver.solve( matrix, x_comp, b );
+//  real64 norm_comp = x_comp.norm2();
+//  real64 norm_true = x_true.norm2();
+//  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
+//
+//  // We now do the same using a direct solver.
+//  // Again the norm should be the norm of x. We use a tougher tolerance on the test
+//  // compared to the iterative solution. This should be accurate to machine precision
+//  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
+//  x_comp.zero();
+//  parameters.solverType = "direct";
+//  solver.solve( matrix, x_comp, b );
+//  norm_comp = x_comp.norm2();
+//  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-12 );
+//
+//  // Option to write files (for direct comparison)
+//  // matrix.write("matrix.dat");
+//  // x_true.write("x_true.dat");
+//  // x_comp.write("x_comp.dat");
+//
+//  // Try getting access to matrix entries
+//
+//  array1d<real64> col_values;
+//  array1d<globalIndex> col_indices;
+//
+//  if( rank == 0 )
+//  {
+//    matrix.getRowCopy( 0, col_indices, col_values );
+//    EXPECT_EQ( col_indices.size(), 3 );
+//    matrix.getRowCopy( 1, col_indices, col_values );
+//    EXPECT_EQ( col_indices.size(), 4 );
+//    matrix.getRowCopy( n + 1, col_indices, col_values );
+//    EXPECT_EQ( col_indices.size(), 5 );
+//  }
+//
+//  // Try clearing rows and setting diagonal value
+//
+//  double diagValue = 100.0;
+//  globalIndex firstRow = matrix.ilower();
+//
+//  matrix.clearRow( firstRow, diagValue );
+//  matrix.close();
+//
+//  matrix.getRowCopy( firstRow, col_indices, col_values );
+//  for( localIndex i = 0 ; i < col_indices.size() ; ++i )
+//  {
+//    if( firstRow == col_indices[i] )
+//      EXPECT_DOUBLE_EQ( col_values[i], diagValue );
+//    else
+//      EXPECT_DOUBLE_EQ( col_values[i], 0.0 );
+//  }
+//  EXPECT_DOUBLE_EQ( matrix.getDiagValue( firstRow ), diagValue );
 }
 
 
@@ -866,7 +878,7 @@ TEST( testLAOperations, testHypreLAOperations )
 {
 //  testVectorFunctions< HypreInterface >();
 //  testMatrixFunctions< HypreInterface >();
-//  testInterfaceSolvers< HypreInterface >();
+  testInterfaceSolvers< HypreInterface >();
 //  testMatrixMatrixOperations< HypreInterface >();
 //  testRectangularMatrixOperations< HypreInterface >();
 }
@@ -905,10 +917,6 @@ int main( int argc, char ** argv )
   setupLAI( dummy_argc, dummy_argv );
 
   int const result = RUN_ALL_TESTS();
-std::cout<<"PRESS key to continue\n";
-std::cin.get();
   geosx::basicCleanup();
-std::cout<<"PRESS key to continue\n";std::cin.get();
-std::cout<<"OK complete execution\n";
   return result;
 }

@@ -1275,6 +1275,12 @@ bool HypreMatrix::isAssembled() const
   return m_is_pattern_fixed;
 }
 
+// Boolean indicator. True = matrix assembled and ready to be used.
+bool HypreMatrix::isClosed() const
+{
+  return m_is_ready_to_use;
+}
+
 std::ostream & operator<<( std::ostream & os,
                            HypreMatrix const & matrix )
 {

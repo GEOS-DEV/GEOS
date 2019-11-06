@@ -613,6 +613,12 @@ public:
   bool isAssembled() const;
   //@}
 
+  /**
+   * @brief Returns true is the matrix has been closed, false if not.
+   */
+  bool isClosed() const;
+  //@}
+
   //! @name I/O Methods
   //@{
   /**

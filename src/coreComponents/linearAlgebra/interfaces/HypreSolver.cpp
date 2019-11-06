@@ -29,6 +29,12 @@
 #include "linearAlgebra/interfaces/HypreVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+//#include <math.h>
+#include "_hypre_utilities.h"
+//#include "HYPRE_krylov.h"
+//#include "HYPRE.h"
+#include "_hypre_parcsr_ls.h"
+
 //#include <Epetra_Map.h>
 //#include <Epetra_FECrsGraph.h>
 //#include <Epetra_FECrsMatrix.h>
@@ -64,11 +70,12 @@ void HypreSolver::solve( HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs )
 {
-  GEOS_ASSERT_MSG( !mat.isAssembled(), "BAD");
-  GEOS_ASSERT_MSG( sol.unwrappedPointer() == nullptr, "BAD");
-  GEOS_ASSERT_MSG( rhs.unwrappedPointer() == nullptr, "BAD");
-  return;
-}
+  GEOS_ASSERT_MSG( mat.isClosed(),
+                   "Matrix has not been closed");
+  GEOS_ASSERT_MSG( sol.unwrappedPointer() == nullptr,
+                   "Invalid solution vector");
+  GEOS_ASSERT_MSG( rhs.unwrappedPointer() == nullptr,
+                   "Invalid right-hand side vector");
 
 //{
 //  if( m_parameters.scaling.useRowScaling )
@@ -86,50 +93,36 @@ void HypreSolver::solve( HypreMatrix & mat,
 //
 //  if( m_parameters.solverType == "direct" )
 //  {
-//    solve_direct( mat, sol, rhs );
+      solve_direct( mat, sol, rhs );
 //  }
 //  else
 //  {
 //    solve_krylov( mat, sol, rhs );
 //  }
-//}
-//
-//// ----------------------------
-//// Direct solver
-//// ----------------------------
-//
-//void TrilinosSolver::solve_direct( EpetraMatrix & mat,
-//                                   EpetraVector & sol,
-//                                   EpetraVector & rhs )
-//{
-//  // Create Epetra linear problem and instantiate solver.
-//  Epetra_LinearProblem problem( mat.unwrappedPointer(),
-//                                sol.unwrappedPointer(),
-//                                rhs.unwrappedPointer() );
-//
-//  // Instantiate the Amesos solver.
-//  Amesos_BaseSolver* solver;
-//  Amesos Factory;
-//
-//  // Select KLU solver (only one available as of 9/20/2018)
-//  solver = Factory.Create( "Klu", problem );
-//
-//  // Factorize the matrix
-//  solver->SymbolicFactorization();
-//  solver->NumericFactorization();
-//
-//  // Solve the system
-//  solver->Solve();
-//
-//  // Basic output
-//  if( m_parameters.verbosity > 0 )
-//  {
-//    solver->PrintStatus();
-//    solver->PrintTiming();
-//  }
-//}
-//
-//
+}
+
+// ----------------------------
+// Direct solver
+// ----------------------------
+
+void HypreSolver::solve_direct( HypreMatrix & mat,
+                                HypreVector & sol,
+                                HypreVector & rhs )
+{
+  // Instantiate solver (distributed SUPERLU).
+  HYPRE_Solver solver;
+
+  hypre_SLUDistSetup( &solver,
+                      HYPRE_ParCSRMatrix(mat),
+                      0 );
+  hypre_SLUDistSolve( &solver,
+                      HYPRE_ParVector( rhs ),
+                      HYPRE_ParVector( sol ) );
+  hypre_SLUDistDestroy( &solver );
+
+}
+
+
 //// ----------------------------
 //// Iterative solver
 //// ----------------------------
