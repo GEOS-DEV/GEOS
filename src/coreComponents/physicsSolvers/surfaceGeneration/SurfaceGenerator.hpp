@@ -122,7 +122,6 @@ public:
 
 protected:
 
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
   virtual void postRestartInitialization( Group * const domain ) override final;
 
@@ -511,6 +510,15 @@ private:
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
     constexpr static auto rockToughnessString = "rockToughness";
+    constexpr static auto K_IC_00String = "K_IC_00";
+    constexpr static auto K_IC_01String = "K_IC_01";
+    constexpr static auto K_IC_02String = "K_IC_02";
+    constexpr static auto K_IC_10String = "K_IC_10";
+    constexpr static auto K_IC_11String = "K_IC_11";
+    constexpr static auto K_IC_12String = "K_IC_12";
+    constexpr static auto K_IC_20String = "K_IC_20";
+    constexpr static auto K_IC_21String = "K_IC_21";
+    constexpr static auto K_IC_22String = "K_IC_22";
 
     //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";

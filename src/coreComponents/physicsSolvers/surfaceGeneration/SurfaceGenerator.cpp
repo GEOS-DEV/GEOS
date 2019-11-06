@@ -176,7 +176,7 @@ SurfaceGenerator::SurfaceGenerator( const std::string& name,
 //  m_maxTurnAngle(91.0),
   m_solidMaterialName(""),
   m_nodeBasedSIF(0),
-  m_rockToughness(1.0e99)
+  m_rockToughness(-1.0)
 {
   this->registerWrapper( viewKeyStruct::failCriterionString,
                              &this->m_failCriterion,
@@ -227,6 +227,37 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
     MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
+
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+    elemManager->forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion * const subRegion )
+    {
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_00String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_01String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_02String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_10String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_11String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_12String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_20String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_21String )->setDefaultValue(-1);
+      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_22String )->setDefaultValue(-1);
+    });
+
+    elemManager->forElementRegions<FaceElementRegion>( [&] ( FaceElementRegion * const region )
+    {
+      region->forElementSubRegions<FaceElementSubRegion>( [&]( FaceElementSubRegion * const subRegion )
+      {
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_00String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_01String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_02String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_10String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_11String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_12String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_20String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_21String )->setDefaultValue(-1);
+        subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::K_IC_22String )->setDefaultValue(-1);
+      });
+    });
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
@@ -293,11 +324,12 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setDescription("Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured");
 
     faceManager->registerWrapper<real64_array>(viewKeyStruct::SIFonFaceString)->
-      setApplyDefaultValue(0)->
+      setApplyDefaultValue(1)->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("SIF on the face");
 
     faceManager->registerWrapper<array1d<R1Tensor>>(viewKeyStruct::K_ICString)->
+        setApplyDefaultValue({1e99, 1e99,1e99})->
       setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
       setDescription("K_IC on the face");
 
@@ -314,26 +346,6 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void SurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
-{
-  DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
-  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
-  {
-    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
-    FaceManager * const faceManager = meshLevel->getFaceManager();
-
-    //TODO: roughness to KIC should be made a material constitutive relationship.
-    array1d<R1Tensor> & KIC = faceManager->getReference<r1_array>( "K_IC" );
-
-    for (localIndex kf=0 ; kf<faceManager->size() ; ++kf)
-    {
-      KIC[kf][0] = m_rockToughness;
-      KIC[kf][1] = m_rockToughness;
-      KIC[kf][2] = m_rockToughness;
-    }
-  }
-}
-
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup<DomainPartition>( dataRepository::keys::domain );
@@ -344,13 +356,13 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     arrayView1d<localIndex> & parentNodeIndex =
-      nodeManager->getReference<localIndex_array>( nodeManager->viewKeys.parentIndex );
+        nodeManager->getReference<localIndex_array>( nodeManager->viewKeys.parentIndex );
 
     arrayView1d<localIndex> & parentFaceIndex =
-      faceManager->getReference<localIndex_array>( faceManager->viewKeys.parentIndex );
+        faceManager->getReference<localIndex_array>( faceManager->viewKeys.parentIndex );
 
     arrayView1d<localIndex> & childFaceIndex =
-      faceManager->getReference<localIndex_array>( faceManager->viewKeys.childIndex );
+        faceManager->getReference<localIndex_array>( faceManager->viewKeys.childIndex );
 
     parentNodeIndex = -1;
     parentFaceIndex = -1;
@@ -366,6 +378,71 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     m_originalFacesToElemRegion = faceManager->elementRegionList();
     m_originalFacesToElemSubRegion = faceManager->elementSubRegionList();
     m_originalFacesToElemIndex = faceManager->elementList();
+  }
+
+  for( auto & mesh : domain->group_cast<DomainPartition *>()->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = Group::group_cast<MeshBody*>( mesh.second )->getMeshLevel( 0 );
+    FaceManager * const faceManager = meshLevel->getFaceManager();
+    ElementRegionManager * const elementManager = meshLevel->getElemManager();
+    arrayView1d<R1Tensor> const & faceNormals = faceManager->faceNormal();
+
+    //TODO: roughness to KIC should be made a material constitutive relationship.
+    array1d<R1Tensor> & KIC = faceManager->getReference<r1_array>( "K_IC" );
+
+    for (localIndex kf=0 ; kf<faceManager->size() ; ++kf)
+    {
+      if (m_rockToughness >= 0)
+      {
+        KIC[kf][0] = m_rockToughness;
+        KIC[kf][1] = m_rockToughness;
+        KIC[kf][2] = m_rockToughness;
+      }
+      else
+      {
+        arrayView2d<localIndex> const & faceToRegionMap = faceManager->elementRegionList();
+        arrayView2d<localIndex> const & faceToSubRegionMap = faceManager->elementSubRegionList();
+        arrayView2d<localIndex> const & faceToElementMap = faceManager->elementList();
+
+        for( localIndex k=0 ; k<faceToRegionMap.size(1) ; ++k )
+        {
+          localIndex const er = faceToRegionMap[kf][k];
+          localIndex const esr = faceToSubRegionMap[kf][k];
+          localIndex const ei = faceToElementMap[kf][k];
+
+          if( er != -1 &&  esr != -1 && ei != -1 )
+          {
+            CellElementSubRegion * elementSubRegion = elementManager->GetRegion( faceToRegionMap[kf][k] )->
+                GetSubRegion<CellElementSubRegion>( faceToSubRegionMap[kf][k] );
+            localIndex iEle = faceToElementMap[kf][k];
+
+            ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast<ElementRegionBase*>();
+            string const elementRegionName = elementRegion->getName();
+            //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
+            //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+
+            arrayView1d<real64 const> const & K_IC_00 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_00String );
+            arrayView1d<real64 const> const & K_IC_01 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_01String );
+            arrayView1d<real64 const> const & K_IC_02 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_02String );
+            arrayView1d<real64 const> const & K_IC_10 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_10String );
+            arrayView1d<real64 const> const & K_IC_11 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_11String );
+            arrayView1d<real64 const> const & K_IC_12 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_12String );
+            arrayView1d<real64 const> const & K_IC_20 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_20String );
+            arrayView1d<real64 const> const & K_IC_21 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_21String );
+            arrayView1d<real64 const> const & K_IC_22 = elementSubRegion->getReference< array1d<real64> >( viewKeyStruct::K_IC_22String );
+
+            R1Tensor k0;
+            k0[0] = K_IC_00[iEle]*faceNormals[kf][0] + K_IC_10[iEle]*faceNormals[kf][1] + K_IC_20[iEle]*faceNormals[kf][2];
+            k0[1] = K_IC_01[iEle]*faceNormals[kf][0] + K_IC_11[iEle]*faceNormals[kf][1] + K_IC_21[iEle]*faceNormals[kf][2];
+            k0[2] = K_IC_02[iEle]*faceNormals[kf][0] + K_IC_12[iEle]*faceNormals[kf][1] + K_IC_22[iEle]*faceNormals[kf][2];
+
+            KIC[kf][0] = std::min( std::fabs(k0[0]), std::fabs(KIC[kf][0]) );
+            KIC[kf][1] = std::min( std::fabs(k0[1]), std::fabs(KIC[kf][1]) );
+            KIC[kf][2] = std::min( std::fabs(k0[2]), std::fabs(KIC[kf][2]) );
+          }
+        }
+      }
+    }
   }
 }
 

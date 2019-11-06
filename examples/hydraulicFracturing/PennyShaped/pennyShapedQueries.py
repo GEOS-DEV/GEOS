@@ -126,7 +126,7 @@ SaveTimeHistory(outputroot + '_timehist.txt', timehist, header)
 print timehist
 
 
-DefineScalarExpression("node_radius", "cylindrical_radius(MeshLevel)")
+DefineScalarExpression("node_radius", "cylindrical_radius(AllElements)")
 DefineScalarExpression("face_radius", "recenter(node_radius, \"zonal\")")
 
 DeleteActivePlots()

@@ -14,12 +14,12 @@
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
-                  xCoords="{0, 60, 100}"
-                  yCoords="{0, 60, 100}"
-                  zCoords="{-50, -10, 10, 50}"
-                  nx="{60, 10}"
-                  ny="{60, 10}"
-                  nz="{10, 20, 10}"
+                  xCoords="{0, 60, 100, 500}"
+                  yCoords="{0, 60, 100, 500}"
+                  zCoords="{-250, -50, -10, 10, 50, 250}"
+                  nx="{60, 10, 8}"
+                  ny="{60, 10, 8}"
+                  nz="{4, 10, 20, 10, 4}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -42,7 +42,7 @@
          xMax=" 1.1,  1.1, 0.1"/>
     <Box name="core"  
          xMin="-0.1, -0.1, -0.1"
-         xMax="100.1, 100.1, 0.1" />
+         xMax="500.1, 500.1, 0.1" />
   </Geometry>
 
 
@@ -89,15 +89,15 @@
     <PeriodicEvent 
       name="solverApplications3"
       beginTime="5.0"
-      endTime="20.0"
-      forceDt="0.5"
+      endTime="10.0"
+      forceDt="0.2"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 
       name="solverApplications4"
-      beginTime="20.0"
+      beginTime="10.0"
       endTime="50.0"
-      forceDt="1"
+      forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
@@ -208,7 +208,7 @@
                
     <SourceFlux name="sourceTerm"
                 objectPath="ElementRegions/Fracture"
-                scale="-53.0"
+                scale="-26.5"
                 setNames="{source}"/>
   </FieldSpecifications>
 

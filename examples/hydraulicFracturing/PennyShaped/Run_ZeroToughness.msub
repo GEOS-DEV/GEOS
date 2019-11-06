@@ -2,7 +2,7 @@
 #MSUB -A hfts_pre
 #MSUB -l nodes=3
 #MSUB -l partition=quartz
-#MSUB -l walltime=3:00:00
+#MSUB -l walltime=4:00:00
 #MSUB -q pbatch
 #MSUB -m be
 #MSUB -V
