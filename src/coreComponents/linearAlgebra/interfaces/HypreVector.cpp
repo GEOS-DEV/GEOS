@@ -601,6 +601,7 @@ real64 HypreVector::get( globalIndex globalRow ) const
 
   real64 value;
   HYPRE_Int ierr;
+  GEOSX_UNUSED_VAR( ierr );
   ierr = HYPRE_IJVectorGetValues( m_ij_vector,
 	                              1,
 	    						  &globalRow,
@@ -621,6 +622,7 @@ void HypreVector::get( array1d<globalIndex> const & globalIndices,
                  "IJ_vector, more globalIndices required than available values" );
 
   HYPRE_Int ierr;
+  GEOSX_UNUSED_VAR( ierr );
   ierr = HYPRE_IJVectorGetValues( m_ij_vector,
                                   globalIndices.size(),
                                   globalIndices.data(),
