@@ -41,7 +41,7 @@ A ``MeshLevel`` contains several managers that handle the whole mesh data struct
 
 - ``NodeManager`` handles the nodes
 - ``EdgeManager`` handles the edges
-- ``FacetManager`` handles the facets
+- ``FaceManager`` handles the facets
 - ``ElementRegionManager`` handles the different regions and the polyhedra that compose them
 
 The NodeManager
