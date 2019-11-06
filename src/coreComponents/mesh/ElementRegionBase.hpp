@@ -105,6 +105,16 @@ public:
     return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
+  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
+  localIndex getNumberOfElements() const
+  {
+    localIndex numElem = 0;
+    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >([&]( Group const * cellBlock ) -> void
+    {
+      numElem += cellBlock->size();
+    });
+    return numElem;
+  }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
