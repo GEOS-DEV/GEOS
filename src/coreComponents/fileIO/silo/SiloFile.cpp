@@ -16,6 +16,22 @@
  * @file SiloFile.cpp
  */
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+
+#include "SiloFile.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "common/DataTypes.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/Fluid/SingleFluidBase.hpp"
+#include "constitutive/Fluid/MultiFluidBase.hpp"
+#include "managers/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "mesh/MeshBody.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -23,24 +39,7 @@
 #include <iterator>
 #include <sys/stat.h>
 
-#include "managers/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-
-#include "SiloFile.hpp"
-
-#include "common/DataTypes.hpp"
-
-#include "codingUtilities/Utilities.hpp"
-
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Fluid/SingleFluidBase.hpp"
-
-#include "mesh/MeshBody.hpp"
-
-#include "mpiCommunications/MpiWrapper.hpp"
 
 
 #if !defined(GEOSX_USE_MPI)
@@ -793,15 +792,13 @@ void SiloFile::WritePointMesh( string const & meshName,
 
 }
 
-template< typename CONSTITUTIVETYPE >
 void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const elemRegion,
                                              string const & meshName,
+                                             string_array const & regionMaterialList,
                                              int const cycleNumber,
                                              real64 const problemTime)
 {
   string const name = meshName + "_materials";
-
-  string_array regionMaterialList = elemRegion->template getConstitutiveNames<CONSTITUTIVETYPE>();
 
   int const nmat = regionMaterialList.size();
 
@@ -1646,7 +1643,9 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
       ++count;
     });
 
-
+    string_array const regionSolidMaterialList = elementRegion->getConstitutiveNames<constitutive::SolidBase>();
+    localIndex const numSolids = regionSolidMaterialList.size();
+    if( numSolids > 0 )
     {
       string const solidMeshName = meshName + "_Solid";
       WriteMeshObject( solidMeshName,
@@ -1664,13 +1663,14 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                        cycleNumber,
                        problemTime );
 
-      WriteMaterialMapsFullStorage<constitutive::SolidBase>( elementRegion,
-                                                             solidMeshName,
-                                                             cycleNumber,
-                                                             problemTime );
+      WriteMaterialMapsFullStorage( elementRegion,
+                                    solidMeshName,
+                                    regionSolidMaterialList,
+                                    cycleNumber,
+                                    problemTime );
 
       WriteGroupSilo( nodeManager,
-                      solidMeshName + "NodalFields",
+                      solidMeshName + "_NodalFields",
                       solidMeshName,
                       DB_NODECENT,
                       cycleNumber,
@@ -1687,7 +1687,15 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
 
     }
 
+    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
+    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
 
+    for( string const & matName : regionMultiPhaseFluidList )
+    {
+      regionFluidMaterialList.push_back(matName);
+    }
+    localIndex const numFluids = regionFluidMaterialList.size();
+    if( numFluids > 0 )
     {
       string const fluidMeshName = meshName + "_Fluid";
       WriteMeshObject( fluidMeshName,
@@ -1705,10 +1713,30 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                        cycleNumber,
                        problemTime );
 
-      WriteMaterialMapsFullStorage<constitutive::SingleFluidBase>( elementRegion,
-                                                                   fluidMeshName,
-                                                                   cycleNumber,
-                                                                   problemTime );
+      WriteMaterialMapsFullStorage( elementRegion,
+                                    fluidMeshName,
+                                    regionFluidMaterialList,
+                                    cycleNumber,
+                                    problemTime );
+
+      if( numSolids==0 )
+      {
+        WriteGroupSilo( nodeManager,
+                        fluidMeshName + "_NodalFields",
+                        fluidMeshName,
+                        DB_NODECENT,
+                        cycleNumber,
+                        problemTime,
+                        false,
+                        localIndex_array() );
+
+        WriteElementRegionSilo( elementRegion,
+                                fluidMeshName + "_ElementFields",
+                                fluidMeshName,
+                                cycleNumber,
+                                problemTime,
+                                false );
+      }
     }
   }
 }
@@ -2109,13 +2137,13 @@ void SiloFile::WritePolygonMeshObject(const std::string& meshName,
 
 template< typename OUTPUTTYPE >
 void SiloFile::WriteWrappersToSilo( string const & meshname,
-                                        const dataRepository::Group::wrapperMap & wrappers,
-                                        int const centering,
-                                        int const cycleNum,
-                                        real64 const problemTime,
-                                        bool const GEOSX_UNUSED_ARG( isRestart ),
-                                        string const & multiRoot,
-                                        const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
+                                    const dataRepository::Group::wrapperMap & wrappers,
+                                    int const centering,
+                                    int const cycleNum,
+                                    real64 const problemTime,
+                                    bool const GEOSX_UNUSED_ARG( isRestart ),
+                                    string const & multiRoot,
+                                    const localIndex_array& GEOSX_UNUSED_ARG( mask ) )
 {
 
   // iterate over all entries in the member map
@@ -2864,6 +2892,104 @@ void SiloFile::WriteMaterialDataField4d( string const & meshName,
                                       materialNames );
     }
   }
+}
+
+void SiloFile::WriteStressVarDefinition( string const & MatDir )
+{
+  for( int row=0 ; row<3 ; ++row )
+  {
+    for( int col=row ; col<3 ; ++col )
+    {
+      string const rowString = std::to_string(row);
+      string const colString = std::to_string(col);
+      string const expressionName = "/" + MatDir + "/sigma_" + rowString + colString;
+      const char * expObjName = expressionName.c_str();
+      const char * const names[1] = { expObjName } ;
+      int const types[1] = { DB_VARTYPE_SCALAR };
+      string const definition = "<"+MatDir+"/stress>["+rowString+"]["+colString+"]";
+      const char * const defns[1] = { definition.c_str() };
+      DBPutDefvars( m_dbBaseFilePtr,
+                    expObjName,
+                    1,
+                    names,
+                    types,
+                    defns,
+                    nullptr );
+    }
+  }
+
+
+  {
+    string const expressionName = "/" + MatDir + "/principalStress";
+    const char * expObjName = expressionName.c_str();
+    const char * const names[1] = { expObjName } ;
+    int const types[1] = { DB_VARTYPE_VECTOR };
+    string const definition = "eigenvalue(<"+MatDir+"/stress>)";
+    const char * const defns[1] = { definition.c_str() };
+    DBPutDefvars( m_dbBaseFilePtr,
+                  expObjName,
+                  1,
+                  names,
+                  types,
+                  defns,
+                  nullptr );
+  }
+
+  {
+    string const expressionName = "/" + MatDir + "/principalStressDirections";
+    const char * expObjName = expressionName.c_str();
+    const char * const names[1] = { expObjName } ;
+    int const types[1] = { DB_VARTYPE_TENSOR };
+    string const definition = "eigenvector(<"+MatDir+"/stress>)";
+    const char * const defns[1] = { definition.c_str() };
+    DBPutDefvars( m_dbBaseFilePtr,
+                  expObjName,
+                  1,
+                  names,
+                  types,
+                  defns,
+                  nullptr );
+  }
+
+  for( int i=0 ; i<3 ; ++i )
+  {
+    string const expressionName = "/" + MatDir + "/principalStressVector" + std::to_string(i);
+    const char * expObjName = expressionName.c_str();
+    const char * const names[1] = { expObjName } ;
+    int const types[1] = { DB_VARTYPE_VECTOR };
+    string const definition = "transpose(<"+MatDir+"/principalStressDirections>)[" + std::to_string(i) + "] * <"+ MatDir + "/principalStress>["+ std::to_string(i) + "]";
+    const char * const defns[1] = { definition.c_str() };
+    DBPutDefvars( m_dbBaseFilePtr,
+                  expObjName,
+                  1,
+                  names,
+                  types,
+                  defns,
+                  nullptr );
+  }
+
+}
+
+int SiloFile::GetMeshType( string const & meshName ) const
+{
+  int meshType = -1;
+  {
+    // in order to get mesh type, we might have to go up a few levels in the
+    // silo directory structure
+    // before we can find the mesh.
+    char pwd[256];
+    DBGetDir(m_dbFilePtr, pwd);
+    for( int i=0 ; i<3 ; ++i )
+    {
+      meshType = DBInqMeshtype(m_dbFilePtr,meshName.c_str());
+      if( meshType != -1 && meshType != 610 )
+        break;
+      else
+        DBSetDir(m_dbFilePtr,"..");
+    }
+    DBSetDir(m_dbFilePtr,pwd);
+  }
+  return meshType;
 }
 
 }
