@@ -15,14 +15,94 @@ with unstructured mesh data and a variety of element types.
 Mesh Data Structure
 ************************
 
-TODO: explain elementRegions and cellBlocks, and then refer to more extensive developer guide documentation.
+GEOSX proposes a hierarchical class structure to store the mesh. To illustrate it, we present a example
+of a model with two regions (Top and Bottom).
+
+.. image:: ../../../coreComponents/mesh/docs/model.png
+
+This model can be meshed with different types of polyhedra. Here, the model is meshed with pyramids,
+tetrahedra, hexahedra and wedges
+
+.. image:: ../../../coreComponents/mesh/docs/mesh_multi.png
+
+Them, the mesh can be partitioned into two ``DomainPartition``, not necessarily the same than the two regions
+(Top and Bottom).
+
+.. image:: ../../../coreComponents/mesh/docs/mesh_domain.png
+
+Each ``DomainPartition`` is handle by the ``DomainPartition`` class in GEOSX. Each MPI process will have its own 
+instance of a ``DomainPartition``.
+A ``DomainPartition`` can contain several ``MeshBody`` (used for defining independent physical bodied). A ``MeshBody``
+can contain several ``MeshLevel``
+(use for multi level computations). For the clarity of this example, we assume than there is only one
+``MeshBody`` and one ``MeshLevel``.
+
+A ``MeshLevel`` contains several managers that handle the whole mesh data structure.
+
+- ``NodeManager`` handles the nodes
+- ``EdgeManager`` handles the edges
+- ``FacetManager`` handles the facets
+- ``ElementRegionManager`` handles the different regions and the polyhedra that compose them
+
+The NodeManager
+===============
+
+The ``NodeManager`` contains all the informations relative to the nodes of the ``MeshLevel`` and of the
+``DomainPartition`` it belongs. Its size is equal to the number of nodes on this ``DomainPartition``/``MeshLevel``.
+
+The EdgeManager
+===============
+
+In GEOSX, one edge is defined as a segment between two nodes.
+The ``EdgeManager`` contains all the informations relative to the edges of the ``MeshLevel`` and of the
+``DomainPartition`` it belongs. Its size is equal to the number of edges on this ``DomainPartition``/``MeshLevel``.
+
+Next picture depicts the edges of the ``DomainPartition 1`` in the mesh.
+
+.. image:: ../../../coreComponents/mesh/docs/edges_domain1.png
+
+The FaceManager
+===============
+
+In GEOSX, one face is defined as the interface between two polyhedra. 
+The ``FaceManagers`` contains all the informations relative to the faces of the ``MeshLevel`` and of the
+``DomainPartitions`` it belongs. Its size is equal to the number of faces on this ``DomainPartition``/``MeshLevel``.
+
+The ElementRegionManager
+========================
+
+The ``ElementRegionManager`` handles the physical regions of the ``DomainPartition``/``MeshLevel`` it belongs, and
+its polyhedra. A physical region is called an ``ElementRegion`` in GEOSX. In the example presented
+above, the ``ElementRegionManager`` of one ``DomainPartition``/``MeshLevel`` manage two instances of ``ElementRegion`` (one corresponding to
+the Bottom region, and one corresponding to the Top region).
+
+The cell geometry is actually stored in the ``CellElementSubRegion``. An ``ElementRegion`` can contain
+several ``CellElementSubRegion``, usually, one for each element type. In the example, there is four
+distinct elements types (hexahedra, tetrahedra, wedges and pyramids). As a consequence, one ``ElementRegion``
+will contain four different ``CellElementSubRegion`` instances.
+
+Ghosting structure
+==================
+
+To ease the communication between the ``DomainPartition`` across the MPI processes, GEOSX compute ghost elements.
+
+.. image:: ../../../coreComponents/mesh/docs/split.png
+
+.. warning::
+  Asking for the size of the ``NodeManager``, ``EdgeManager``, ``FaceManager`` or a ``CellElementSubRegion``
+  will return the number of owned elements plus ghost elements.
+
+The complete mesh data structure is shown in the next picture.
+
+.. image:: ../../../coreComponents/mesh/docs/diag.png
+
 
 ************************
 Internal Mesh Generation
 ************************
 
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
-them into several regions.  The following is an example XML ``<mesh>`` block:
+them into several regions.  The following is an example XML ``<Mesh>`` block:
 
 .. code-block:: xml
 
@@ -44,8 +124,8 @@ them into several regions.  The following is an example XML ``<mesh>`` block:
 - ``yCoord`` List of ``y`` coordinates of the boundaries of the ``CellBlocks``
 - ``zCoord`` List of ``z`` coordinates of the boundaries of the ``CellBlocks``
 - ``nx`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
-- ``ny`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
-- ``nz`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
+- ``ny`` List containing the number of cells in ``y`` direction within the ``CellBlocks``
+- ``nz`` List containing the number of cells in ``z`` direction within the ``CellBlocks``
 - ``cellBlockNames`` List containing the names of the ``CellBlocks``
 
 The previous sample of XML file will generate a vertical beam with two ``CellBlocks``
@@ -102,7 +182,7 @@ The mesh block has the following syntax.
                          file="/path/to/the/mesh/file.msh"/>
   </Mesh>
 
-We strongly recommand to use absolute path to the mesh file.
+We strongly advice to use absolute path to the mesh file.
 
 GEOSX uses ``ElementRegions`` to support different physics, or to define different constitutive properties.
 An ``ElementRegion`` is defined as a set of ``CellBlocks``.
