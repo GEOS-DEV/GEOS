@@ -511,8 +511,7 @@ void ProblemManager::GenerateDocumentation()
     MeshManager * meshManager = this->GetGroup<MeshManager>(groupKeys.meshManager);
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels(domain);
-
-    RegisterDataOnMeshRecursive(nullptr);
+    RegisterDataOnMeshRecursive(domain->getMeshBodies());
 
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
