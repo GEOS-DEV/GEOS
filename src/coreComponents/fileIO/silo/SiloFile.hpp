@@ -260,9 +260,9 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
-  template< typename CONSTITUTIVETYPE >
   void WriteMaterialMapsFullStorage( ElementRegionBase const * const elementRegion,
                                      string const & meshName,
+                                     string_array const & regionMaterialList,
                                      int const cycleNumber,
                                      real64 const problemTime);
   /**
@@ -418,58 +418,14 @@ public:
                                    localIndex const matIndex,
                                    string const & fieldName );
 
-  void WriteStressVarDefinition( string const & MatDir )
-  {
-    for( int row=0 ; row<3 ; ++row )
-    {
-      for( int col=row ; col<3 ; ++col )
-      {
-        string const rowString = std::to_string(row);
-        string const colString = std::to_string(col);
-        string const expressionName = "/" + MatDir + "/sigma_" + rowString + colString;
-        const char * expObjName = expressionName.c_str();
-        const char * const names[1] = { expObjName } ;
-        int const types[1] = { DB_VARTYPE_SCALAR };
-        string const definition = "<"+MatDir+"/stress>["+rowString+"]["+colString+"]";
-        const char * const defns[1] = { definition.c_str() };
-        DBPutDefvars( m_dbBaseFilePtr,
-                      expObjName,
-                      1,
-                      names,
-                      types,
-                      defns,
-                      nullptr );
-      }
-    }
-
-  }
+  void WriteStressVarDefinition( string const & MatDir );
 
   /**
    * find the silo mesh type that we are attempting to reference
    * @param meshName the name of the mesh object we are attaching data to
    * @return integer that results from a call to DBInqMeshtype()
    */
-  int GetMeshType( string const & meshName ) const
-  {
-    int meshType = -1;
-    {
-      // in order to get mesh type, we might have to go up a few levels in the
-      // silo directory structure
-      // before we can find the mesh.
-      char pwd[256];
-      DBGetDir(m_dbFilePtr, pwd);
-      for( int i=0 ; i<3 ; ++i )
-      {
-        meshType = DBInqMeshtype(m_dbFilePtr,meshName.c_str());
-        if( meshType != -1 && meshType != 610 )
-          break;
-        else
-          DBSetDir(m_dbFilePtr,"..");
-      }
-      DBSetDir(m_dbFilePtr,pwd);
-    }
-    return meshType;
-  }
+  int GetMeshType( string const & meshName ) const;
 
   /**
    * write out a multi mesh or multivar object assocaited with a mesh or var object.
