@@ -666,9 +666,9 @@ void testInterfaceSolvers()
   Matrix matrix = compute2DLaplaceOperator<LAI>( MPI_COMM_WORLD, n );
 
   // Define some vectors
-  Vector x_true,
-      x_comp,
-      b;
+  Vector x_true;
+  Vector x_comp;
+  Vector b;
 
   x_true.createWithGlobalSize( N, MPI_COMM_WORLD );
   x_comp.createWithGlobalSize( N, MPI_COMM_WORLD );
@@ -718,31 +718,34 @@ void testInterfaceSolvers()
   LinearSolverParameters parameters;
   Solver solver( parameters );
 
-//  // Set basic options
-//  parameters.verbosity = 0;
-//  parameters.solverType = "cg";
-//  parameters.krylov.tolerance = 1e-8;
-//  parameters.krylov.maxIterations = 250;
-//  parameters.preconditionerType = "amg";
-//  parameters.amg.smootherType = "gaussSeidel";
-//  parameters.amg.coarseType = "direct";
+  // Set basic options
+  parameters.verbosity = 0;
+  parameters.solverType = "cg";
+  parameters.krylov.tolerance = 1e-8;
+  parameters.krylov.maxIterations = 250;
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
 //
 //  // Solve using the iterative solver and compare norms with true solution
-//  solver.solve( matrix, x_comp, b );
-//  real64 norm_comp = x_comp.norm2();
-//  real64 norm_true = x_true.norm2();
-//  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
-//
-//  // We now do the same using a direct solver.
-//  // Again the norm should be the norm of x. We use a tougher tolerance on the test
-//  // compared to the iterative solution. This should be accurate to machine precision
-//  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-//  x_comp.zero();
-//  parameters.solverType = "direct";
-//  solver.solve( matrix, x_comp, b );
-//  norm_comp = x_comp.norm2();
-//  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-12 );
-//
+  solver.solve( matrix, x_comp, b );
+  real64 norm_comp = x_comp.norm2();
+  real64 norm_true = x_true.norm2();
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
+
+  // We now do the same using a direct solver.
+  // Again the norm should be the norm of x. We use a tougher tolerance on the test
+  // compared to the iterative solution. This should be accurate to machine precision
+  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
+  x_comp.zero();
+  parameters.solverType = "direct";
+
+  solver.solve( matrix, x_comp, b );
+  norm_comp = x_comp.norm2();
+  EXPECT_NEAR( norm_comp,
+		       norm_true,
+			   norm_true * machinePrecision);
+
 //  // Option to write files (for direct comparison)
 //  // matrix.write("matrix.dat");
 //  // x_true.write("x_true.dat");

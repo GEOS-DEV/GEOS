@@ -31,7 +31,7 @@
 
 //#include <math.h>
 #include "_hypre_utilities.h"
-//#include "HYPRE_krylov.h"
+#include "krylov.h"
 //#include "HYPRE.h"
 #include "_hypre_parcsr_ls.h"
 
@@ -46,6 +46,9 @@
 // Put everything under the geosx namespace.
 namespace geosx
 {
+
+typedef HYPRE_Int (*HYPRE_PtrToDestroyFcn)(HYPRE_Solver);
+static int counter = -1;
 
 // ----------------------------
 // Constructors
@@ -72,9 +75,9 @@ void HypreSolver::solve( HypreMatrix & mat,
 {
   GEOS_ASSERT_MSG( mat.isClosed(),
                    "Matrix has not been closed");
-  GEOS_ASSERT_MSG( sol.unwrappedPointer() == nullptr,
+  GEOS_ASSERT_MSG( sol.unwrappedPointer() != nullptr,
                    "Invalid solution vector");
-  GEOS_ASSERT_MSG( rhs.unwrappedPointer() == nullptr,
+  GEOS_ASSERT_MSG( rhs.unwrappedPointer() != nullptr,
                    "Invalid right-hand side vector");
 
 //{
@@ -90,15 +93,15 @@ void HypreSolver::solve( HypreMatrix & mat,
 //    Epetra_MultiVector tmp( *rhs_ptr );
 //    rhs_ptr->Multiply( 1.0, scaling, tmp, 0.0 );
 //  }
-//
-//  if( m_parameters.solverType == "direct" )
-//  {
-      solve_direct( mat, sol, rhs );
-//  }
-//  else
-//  {
-//    solve_krylov( mat, sol, rhs );
-//  }
+
+  if( m_parameters.solverType == "direct" )
+  {
+    solve_direct( mat, sol, rhs );
+  }
+  else
+  {
+    solve_krylov( mat, sol, rhs );
+  }
 }
 
 // ----------------------------
@@ -109,128 +112,221 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs )
 {
-  // Instantiate solver (distributed SUPERLU).
+  // Instantiate solver
   HYPRE_Solver solver;
 
   hypre_SLUDistSetup( &solver,
                       HYPRE_ParCSRMatrix(mat),
                       0 );
-  hypre_SLUDistSolve( &solver,
+  std::cout << "Setup: DONE\n";
+  hypre_SLUDistSolve( solver,
                       HYPRE_ParVector( rhs ),
                       HYPRE_ParVector( sol ) );
-  hypre_SLUDistDestroy( &solver );
+  hypre_SLUDistDestroy( solver );
 
 }
 
 
-//// ----------------------------
-//// Iterative solver
-//// ----------------------------
-//
-//void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
-//                                   EpetraVector & sol,
-//                                   EpetraVector & rhs )
-//{
-//  // Create Epetra linear problem.
-//  Epetra_LinearProblem problem( mat.unwrappedPointer(),
-//                                sol.unwrappedPointer(),
-//                                rhs.unwrappedPointer() );
-//
-//  // Instantiate the AztecOO solver.
-//  AztecOO solver( problem );
-//
-//  // Choose the solver type
-//  if( m_parameters.solverType == "gmres" )
-//  {
-//    solver.SetAztecOption( AZ_solver, AZ_gmres );
-//    solver.SetAztecOption( AZ_kspace, m_parameters.krylov.maxRestart );
-//  }
-//  else if( m_parameters.solverType == "bicgstab" )
-//  {
-//    solver.SetAztecOption( AZ_solver, AZ_bicgstab );
-//  }
-//  else if( m_parameters.solverType == "cg" )
-//  {
-//    solver.SetAztecOption( AZ_solver, AZ_cg );
-//  }
-//  else
-//    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
-//
-//  // Create a null pointer to an ML amg preconditioner
-//  std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
-//
-//  // Choose the preconditioner type
-//  if( m_parameters.preconditionerType == "none" )
-//  {
+// ----------------------------
+// Iterative solver
+// ----------------------------
+
+void HypreSolver::solve_krylov( HypreMatrix & mat,
+                                HypreVector & sol,
+								                HypreVector & rhs )
+{
+
+  // Instantiate preconditioner and solver
+  HYPRE_Solver precond;
+  HYPRE_Solver solver;
+
+  // Get MPI communicator
+  MPI_Comm comm = hypre_IJMatrixComm( HYPRE_IJMatrix(mat) );
+
+
+  // Setup the preconditioner
+  HYPRE_Int (*precondSetupFunction)( HYPRE_Solver,
+                                     HYPRE_Matrix,
+                                     HYPRE_Vector,
+                                     HYPRE_Vector );
+  HYPRE_Int (*precondApplyFunction)( HYPRE_Solver,
+                                     HYPRE_Matrix,
+                                     HYPRE_Vector,
+                                     HYPRE_Vector );
+  HYPRE_Int (*precondDestroyFunction)( HYPRE_Solver );
+
+
+  if( m_parameters.preconditionerType == "none" )
+  {
+    GEOS_ERROR( "precond none: Not implemented yet" );
 //    solver.SetAztecOption( AZ_precond, AZ_none );
-//  }
-//  else if( m_parameters.preconditionerType == "jacobi" )
-//  {
+  }
+  else if( m_parameters.preconditionerType == "jacobi" )
+  {
 //    solver.SetAztecOption( AZ_precond, AZ_Jacobi );
-//  }
-//  else if( m_parameters.preconditionerType == "ilu" )
-//  {
+    GEOS_ERROR( "precond Jacobi: Not implemented yet" );
+  }
+  else if( m_parameters.preconditionerType == "ilu" )
+  {
 //    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
 //    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
 //    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilu );
 //    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
-//  }
-//  else if( m_parameters.preconditionerType == "icc" )
-//  {
+    GEOS_ERROR( "precond ilu: Not implemented yet" );
+  }
+  else if( m_parameters.preconditionerType == "icc" )
+  {
 //    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
 //    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
 //    solver.SetAztecOption( AZ_subdomain_solve, AZ_icc );
 //    solver.SetAztecOption( AZ_graph_fill, m_parameters.ilu.fill );
-//  }
-//  else if( m_parameters.preconditionerType == "ilut" )
-//  {
-//    solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
-//    solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
-//    solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
-//    solver.SetAztecParam( AZ_ilut_fill, (m_parameters.ilu.fill>0 ? real64( m_parameters.ilu.fill ) : 1.0));
-//  }
-//  else if( m_parameters.preconditionerType == "amg" )
-//  {
-//    Teuchos::ParameterList list;
+    GEOS_ERROR( "precond icc: Not implemented yet" );
+  }
+  else if( m_parameters.preconditionerType == "ilut" )
+  {
+
+    std::cout <<      " solver:" << m_parameters.solverType << "\n";
+    std::cout <<      "precond:" << m_parameters.preconditionerType << "\n";
+    std::cout << "ilut_droptol:" << m_parameters.ilu.threshold << "\n";
+    std::cout << "ilut_fill_in:" << m_parameters.ilu.fill << "\n";
+
+    counter += 1;
+    std::string fname = std::string("matrix_pilut")+std::to_string(counter);
+
+    hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(mat),
+                            1,
+                  1,
+                  fname.data() );
+
+    HYPRE_ParCSRPilutCreate(comm, &precond);
+
+    if (m_parameters.ilu.threshold >= 0 )
+    {
+        HYPRE_ParCSRPilutSetDropTolerance( precond,
+                                           m_parameters.ilu.threshold );
+    }
+    if (m_parameters.ilu.fill >= 0 )
+    {
+      HYPRE_ParCSRPilutSetFactorRowSize( precond,
+                                         m_parameters.ilu.fill );
+    }
+
+    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSolve;
+    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ParCSRPilutSetup;
+    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ParCSRPilutDestroy;
+//    HYPRE_BoomerAMGCreate(&precond);
+//    HYPRE_BoomerAMGSetPrintLevel(precond, 1); /* print amg solution info */
+//    HYPRE_BoomerAMGSetCoarsenType(precond, 6);
+//    HYPRE_BoomerAMGSetOldDefault(precond);
+//    HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
+//    HYPRE_BoomerAMGSetNumSweeps(precond, 1);
+//    HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
+//    HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
 //
-//    if( m_parameters.amg.isSymmetric )
-//      ML_Epetra::SetDefaults( "SA", list );
-//    else
-//      ML_Epetra::SetDefaults( "NSSA", list );
-//
-//    std::map<string, string> translate; // maps GEOSX to ML syntax
-//
-//    translate.insert( std::make_pair( "V", "MGV" ));
-//    translate.insert( std::make_pair( "W", "MGW" ));
-//    translate.insert( std::make_pair( "direct", "Amesos-KLU" ));
-//    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
-//    translate.insert( std::make_pair( "blockJacobi", "block Jacobi" ));
-//    translate.insert( std::make_pair( "gaussSeidel", "Gauss-Seidel" ));
-//    translate.insert( std::make_pair( "blockGaussSeidel", "block Gauss-Seidel" ));
-//    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
-//    translate.insert( std::make_pair( "ilu", "ILU" ));
-//    translate.insert( std::make_pair( "ilut", "ILUT" ));
-//
-//    list.set( "ML output", m_parameters.verbosity );
-//    list.set( "max levels", m_parameters.amg.maxLevels );
-//    list.set( "aggregation: type", "Uncoupled" );
-//    list.set( "PDE equations", m_parameters.dofsPerNode );
-//    list.set( "smoother: sweeps", m_parameters.amg.numSweeps );
-//    list.set( "prec type", translate[m_parameters.amg.cycleType] );
-//    list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
-//    list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
-//
-//    //TODO: add user-defined null space / rigid body mode support
-//    //list.set("null space: type","pre-computed");
-//    //list.set("null space: vectors",&rigid_body_modes[0]);
-//    //list.set("null space: dimension", n_rbm);
-//
-//    ml_preconditioner.reset( new ML_Epetra::MultiLevelPreconditioner( *mat.unwrappedPointer(), list ));
-//    solver.SetPrecOperator( ml_preconditioner.get() );
-//  }
-//  else
-//    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
-//
+//    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
+//    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup;
+//    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_BoomerAMGDestroy;
+  }
+  else if( m_parameters.preconditionerType == "amg" )
+  {
+    HYPRE_BoomerAMGCreate(&precond);
+    HYPRE_BoomerAMGSetPrintLevel(precond, 1); /* print amg solution info */
+    HYPRE_BoomerAMGSetCoarsenType(precond, 6);
+    HYPRE_BoomerAMGSetOldDefault(precond);
+    HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
+    HYPRE_BoomerAMGSetNumSweeps(precond, 1);
+    HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
+    HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
+
+    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
+    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup;
+    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_BoomerAMGDestroy;
+  }
+  else
+  {
+    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+  }
+
+  // Choose the solver type - set parameters - solve
+  if( m_parameters.solverType == "gmres" )
+  {
+
+    HYPRE_ParCSRGMRESCreate( comm, &solver);
+    HYPRE_GMRESSetMaxIter(solver, m_parameters.krylov.maxIterations);
+    HYPRE_GMRESSetKDim(solver, m_parameters.krylov.maxRestart);
+    HYPRE_GMRESSetTol(solver, m_parameters.krylov.tolerance);
+
+    // Default for now
+    HYPRE_GMRESSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_GMRESSetLogging(solver, 1); /* needed to get run info later */
+
+    // Set the preconditioner
+    HYPRE_GMRESSetPrecond( solver,
+                           precondApplyFunction,
+                           precondSetupFunction,
+                           precond );
+
+    // Setup
+    HYPRE_ParCSRGMRESSetup( solver,
+                          HYPRE_ParCSRMatrix(mat),
+                          HYPRE_ParVector( rhs ),
+                          HYPRE_ParVector( sol ));
+
+    // Solve
+    HYPRE_ParCSRGMRESSolve( solver,
+                          HYPRE_ParCSRMatrix(mat),
+                          HYPRE_ParVector( rhs ),
+                          HYPRE_ParVector( sol ));
+
+
+    /* Destroy solver and preconditioner */
+    HYPRE_ParCSRGMRESDestroy(solver);
+  }
+  else if( m_parameters.solverType == "bicgstab" )
+  {
+//    solver.SetAztecOption( AZ_solver, AZ_bicgstab );
+  }
+  else if( m_parameters.solverType == "cg" )
+  {
+    HYPRE_ParCSRPCGCreate( comm, &solver);
+    HYPRE_PCGSetMaxIter(solver, m_parameters.krylov.maxIterations);
+    HYPRE_PCGSetTol(solver, m_parameters.krylov.tolerance);
+
+    // Default for now
+    HYPRE_PCGSetPrintLevel(solver, 2); /* prints out the iteration info */
+    HYPRE_PCGSetLogging(solver, 1); /* needed to get run info later */
+    HYPRE_PCGSetTwoNorm(solver, 1); /* use the two norm as the stopping criteria */
+
+    // Set the preconditioner
+    HYPRE_PCGSetPrecond( solver,
+                         precondApplyFunction,
+                         precondSetupFunction,
+                         precond);
+
+    // Setup
+    HYPRE_ParCSRPCGSetup( solver,
+                          HYPRE_ParCSRMatrix(mat),
+                          HYPRE_ParVector( rhs ),
+                          HYPRE_ParVector( sol ));
+
+    // Solve
+    HYPRE_ParCSRPCGSolve( solver,
+                          HYPRE_ParCSRMatrix(mat),
+                          HYPRE_ParVector( rhs ),
+                          HYPRE_ParVector( sol ));
+
+
+    /* Destroy solver and preconditioner */
+    HYPRE_ParCSRPCGDestroy(solver);
+  }
+  else
+  {
+    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+  }
+
+  // Destroy preconditioner
+  precondDestroyFunction(precond);
+
 //  // Ask for a convergence normalized by the right hand side
 //  solver.SetAztecOption( AZ_conv, AZ_rhs );
 //
@@ -249,12 +345,15 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
 //    solver.SetAztecOption( AZ_output, AZ_none );
 //  }
 //
-//  // Actually solve
+  // Actually solve
+
+
+
 //  solver.Iterate( m_parameters.krylov.maxIterations,
 //                  m_parameters.krylov.tolerance );
 //
 //  //TODO: should we return performance feedback to have GEOSX pretty print details?:
 //  //      i.e. iterations to convergence, residual reduction, etc.
-//}
+}
 
 } // end geosx namespace

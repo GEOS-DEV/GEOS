@@ -966,14 +966,16 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   HYPRE_Int *       JA       = hypre_CSRMatrixJ( prt_CSR );
   double *          ptr_data = hypre_CSRMatrixData( prt_CSR );
 
+  std::cout << "\n\n Getting diagonal value: ";
   for( HYPRE_Int j = IA[localRow] ; j < IA[localRow + 1] ; ++j )
   {
     if ( JA[j] == globalRow )
     {
+      std::cout << "FOUND -> " << ptr_data[j] << "\n";
       return ptr_data[j];
     }
   }
-
+  std::cout << "NOT FOUND -> 0 ------------------- \n";
   return 0.0;
 }
 
@@ -1209,7 +1211,11 @@ void HypreMatrix::write( string const & filename,
   {
     std::cout << "MatrixMarket not available for HypreMtrix, default used\n";
   }
-  HYPRE_IJMatrixPrint( m_ij_mat, filename.c_str() );
+//  HYPRE_IJMatrixPrint( m_ij_mat, filename.c_str() );
+  hypre_ParCSRMatrixPrintIJ( m_parcsr_mat,
+                             1,
+                             1,
+                             filename.c_str() );
 }
 
 //// """""""""""""""""""""""""""""""""""""""""""""""""""""""""

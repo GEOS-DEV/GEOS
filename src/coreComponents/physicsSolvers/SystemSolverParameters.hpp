@@ -75,7 +75,7 @@ public:
   real64 krylovTol() const                    { return m_krylovTol; }
   integer  numKrylovIter() const              { return m_numKrylovIter; }
   integer  kspace() const                     { return m_kspace; }
-  real64 ilut_fill() const                    { return m_ilut_fill; }
+  integer ilut_fill() const                    { return m_ilut_fill; }
   real64 ilut_drop() const                    { return m_ilut_drop; }
   integer   useMLPrecond() const              { return m_useMLPrecond; }
   integer   useInnerSolver() const            { return m_useInnerSolver; }
@@ -103,7 +103,7 @@ public:
   real64  m_krylovTol;
   integer m_numKrylovIter;
   integer m_kspace;
-  real64  m_ilut_fill;
+  integer  m_ilut_fill;
   real64  m_ilut_drop;
   integer m_useMLPrecond;
   integer m_useInnerSolver;

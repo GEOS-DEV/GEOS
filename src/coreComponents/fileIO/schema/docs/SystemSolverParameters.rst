@@ -4,8 +4,8 @@
 Name                Type    Default Description                                             
 =================== ======= ======= ======================================================= 
 allowNonConverged   integer 0       Allow non-converged solution to be accepted             
-ilut_drop           real64  0       (no description available)                              
-ilut_fill           real64  3       (no description available)                              
+ilut_drop           real64  0.01    (no description available)                              
+ilut_fill           integer 10      (no description available)                              
 krylovTol           real64  1e-06   Allowable tolerance for krylov solve                    
 kspace              integer 0       (no description available)                              
 lineSearchCutFactor real64  0.5     Line search cut factor                                  

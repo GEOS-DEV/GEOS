@@ -42,6 +42,8 @@
 namespace geosx
 {
 
+static int counter = -1;
+
 // ----------------------------
 // Constructors
 // ----------------------------
@@ -185,6 +187,13 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
+
+    counter += 1;
+      std::string fname = std::string("matrix_trilIlut")+std::to_string(counter);
+
+
+    mat.write(fname, true);
+
     solver.SetAztecOption( AZ_precond, AZ_dom_decomp );
     solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap );
     solver.SetAztecOption( AZ_subdomain_solve, AZ_ilut );
