@@ -207,6 +207,10 @@ public:
    */
   string const & phaseName( localIndex ip ) const;
 
+  string_array const & getPhaseNames( ) const
+  { return m_phaseNames; }
+
+
   /**
    * @brief Get the mass flag.
    * @return boolean value indicating whether the model is using mass-based quantities (as opposed to mole-based)

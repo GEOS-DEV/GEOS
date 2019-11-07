@@ -31,6 +31,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "physicsSolvers/FiniteVolume/CompositionalMultiphaseFlow.hpp"
 
 #include <iostream>
 #include <string>
@@ -792,87 +793,231 @@ void SiloFile::WritePointMesh( string const & meshName,
 
 }
 
-void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const elemRegion,
-                                             string const & meshName,
-                                             string_array const & regionMaterialList,
-                                             int const cycleNumber,
-                                             real64 const problemTime)
+template< typename CONSTITUTIVE_TYPE >
+void SiloFile::SetupDBMaterial( ElementRegionBase const * const elemRegion,
+                                string_array const & regionMaterialList,
+                                int & nmat,
+                                int & ndims,
+                                array1d<int> & dims,
+                                int & mixlen,
+                                array1d<int> & matnos,
+                                array1d<string> & materialNameStrings,
+                                array1d<char const*> & materialNames,
+                                array1d<int> & matlist,
+                                array1d<int> & mix_zone,
+                                array1d<int> & mix_mat,
+                                array1d<int> & mix_next,
+                                array1d<real64> & mix_vf )
+{
+  matnos.resize(nmat);
+  materialNameStrings.resize(nmat);
+  materialNames.resize(nmat+1);
+  materialNames.back() = nullptr;
+
+  dims.resize(ndims);
+
+  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
+  {
+    matnos[matIndex] = matIndex;
+    materialNameStrings[matIndex] = regionMaterialList[matIndex];
+    materialNames[matIndex] = materialNameStrings[matIndex].c_str();
+  }
+
+  dims[0] = 0;
+  elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
+  {
+    if( nmat > 1 )
+    {
+      mixlen += subRegion->size() * nmat;
+    }
+    dims[0] += subRegion->size();
+  });
+
+  matlist.resize( dims[0] );
+  mix_zone.resize( mixlen );
+  mix_mat.resize( mixlen );
+  mix_next.resize( mixlen );
+  mix_vf.resize( mixlen );
+
+  int elemCount = 0;
+  int mixCount = 0;
+
+  if( nmat > 0)
+  {
+    elemRegion->forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
+    {
+      if( nmat == 1 )
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = 0;
+        }
+      }
+      else
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = -(mixCount+1);
+          for( localIndex a=0 ; a<nmat ; ++a )
+          {
+            mix_zone[mixCount] = k;
+            mix_mat[mixCount] = a;
+            mix_vf[mixCount] = 1.0/nmat;
+            if( a == nmat-1 )
+            {
+              mix_next[mixCount] = 0;
+            }
+            else
+            {
+              mix_next[mixCount] = mixCount+2;
+            }
+            ++mixCount;
+          }
+        }
+      }
+    });
+  }
+}
+
+template<>
+void
+SiloFile::
+SetupDBMaterial<constitutive::MultiFluidBase>( ElementRegionBase const * const elemRegion,
+                                               string_array const & regionMaterialList,
+                                               int & nmat,
+                                               int & ndims,
+                                               array1d<int> & dims,
+                                               int & mixlen,
+                                               array1d<int> & matnos,
+                                               array1d<string> & materialNameStrings,
+                                               array1d<char const*> & materialNames,
+                                               array1d<int> & matlist,
+                                               array1d<int> & mix_zone,
+                                               array1d<int> & mix_mat,
+                                               array1d<int> & mix_next,
+                                               array1d<real64> & mix_vf )
+{
+  constitutive::MultiFluidBase const * const
+  multiFluid = elemRegion->GetSubRegion(0)->GetConstitutiveModels()->GetGroup<constitutive::MultiFluidBase>( regionMaterialList[0] );
+  string_array const phaseNames = multiFluid->getPhaseNames();
+  nmat = phaseNames.size();
+
+  matnos.resize(nmat);
+  materialNameStrings.resize(nmat);
+  materialNames.resize(nmat+1);
+  materialNames.back() = nullptr;
+
+  dims.resize(ndims);
+
+  for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
+  {
+    matnos[matIndex] = matIndex;
+    materialNameStrings[matIndex] = phaseNames[matIndex];
+    materialNames[matIndex] = materialNameStrings[matIndex].c_str();
+  }
+
+  dims[0] = 0;
+  elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
+  {
+    if( nmat > 1 )
+    {
+      mixlen += subRegion->size() * nmat;
+    }
+    dims[0] += subRegion->size();
+  });
+
+  matlist.resize( dims[0] );
+  mix_zone.resize( mixlen );
+  mix_mat.resize( mixlen );
+  mix_next.resize( mixlen );
+  mix_vf.resize( mixlen );
+
+  int elemCount = 0;
+  int mixCount = 0;
+
+  if( nmat > 0)
+  {
+    elemRegion->forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
+    {
+      arrayView2d<real64 const> const &
+      phaseFraction = subRegion->getReference<array2d<real64>>( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
+
+      if( nmat == 1 )
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = 0;
+        }
+      }
+      else
+      {
+        for( localIndex k = 0 ; k < subRegion->size() ; ++k )
+        {
+          matlist[elemCount++] = -(mixCount+1);
+          for( localIndex a=0 ; a<nmat ; ++a )
+          {
+            mix_zone[mixCount] = k;
+            mix_mat[mixCount] = a;
+            mix_vf[mixCount] = phaseFraction(k,a);
+            if( a == nmat-1 )
+            {
+              mix_next[mixCount] = 0;
+            }
+            else
+            {
+              mix_next[mixCount] = mixCount+2;
+            }
+            ++mixCount;
+          }
+        }
+      }
+    });
+  }
+}
+
+
+
+template< typename CONSTITUTIVE_TYPE >
+void SiloFile::WriteMaterialsInRegion( ElementRegionBase const * const elemRegion,
+                                       string const & meshName,
+                                       string_array const & regionMaterialList,
+                                       int const cycleNumber,
+                                       real64 const problemTime)
 {
   string const name = meshName + "_materials";
 
-  int const nmat = regionMaterialList.size();
+  int nmat = regionMaterialList.size();
 
   if( nmat > 0 )
   {
-    array1d<int> matnos(nmat);
-    std::vector<string> materialNameStrings(nmat);
-    array1d<char const*> materialNames(nmat+1);
-    materialNames.back() = nullptr;
-
-    for( int matIndex=0 ; matIndex<nmat ; ++matIndex )
-    {
-      matnos[matIndex] = matIndex;
-      materialNameStrings[matIndex] = regionMaterialList[matIndex];
-      materialNames[matIndex] = materialNameStrings[matIndex].c_str();
-    }
+    array1d<int> matnos;
+    array1d<string> materialNameStrings;
+    array1d<char const*> materialNames;
 
     int ndims = 1;
-    int dims = 0;
+    array1d<int> dims;
     int mixlen=0;
 
-    elemRegion->forElementSubRegions([&]( ElementSubRegionBase const * const subRegion )
-    {
-      if( nmat > 1 )
-      {
-        mixlen += subRegion->size() * nmat;
-      }
-      dims += subRegion->size();
-    });
+    array1d<int> matlist;
+    array1d<int> mix_zone;
+    array1d<int> mix_mat;
+    array1d<int> mix_next;
+    array1d<real64> mix_vf;
 
-    array1d<integer> matlist( dims );
-    array1d<integer> mix_zone( mixlen );
-    array1d<integer> mix_mat( mixlen );
-    array1d<integer> mix_next( mixlen );
-    array1d<real64> mix_vf( mixlen );
-
-    int elemCount = 0;
-    int mixCount = 0;
-
-    if( nmat > 0)
-    {
-      elemRegion->forElementSubRegions( [&]( ElementSubRegionBase const * const subRegion )
-      {
-        if( nmat == 1 )
-        {
-          for( localIndex k = 0 ; k < subRegion->size() ; ++k )
-          {
-            matlist[elemCount++] = 0;
-          }
-        }
-        else
-        {
-          for( localIndex k = 0 ; k < subRegion->size() ; ++k )
-          {
-            matlist[elemCount++] = -(mixCount+1);
-            for( localIndex a=0 ; a<nmat ; ++a )
-            {
-              mix_zone[mixCount] = k;
-              mix_mat[mixCount] = a;
-              mix_vf[mixCount] = 1.0/nmat;
-              if( a == nmat-1 )
-              {
-                mix_next[mixCount] = 0;
-              }
-              else
-              {
-                mix_next[mixCount] = mixCount+2;
-              }
-              ++mixCount;
-            }
-          }
-        }
-      });
-    }
+    SetupDBMaterial<CONSTITUTIVE_TYPE>( elemRegion,
+                                        regionMaterialList,
+                                        nmat,
+                                        ndims,
+                                        dims,
+                                        mixlen,
+                                        matnos,
+                                        materialNameStrings,
+                                        materialNames,
+                                        matlist,
+                                        mix_zone,
+                                        mix_mat,
+                                        mix_next,
+                                        mix_vf );
 
     {
       DBoptlist* optlist = DBMakeOptlist(3);
@@ -886,7 +1031,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
                      nmat,
                      matnos.data(),
                      matlist.data(),
-                     &dims,
+                     dims.data(),
                      ndims,
                      mix_next.data(),
                      mix_mat.data(),
@@ -975,7 +1120,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
     }
 
     std::set<std::pair<string, WrapperBase const *>> fieldNames;
-    for( localIndex matI=0 ; matI<nmat ; ++matI )
+    for( localIndex matI=0 ; matI<regionMaterialList.size() ; ++matI )
     {
       Group const * const
       constitutiveModel = elemRegion->GetSubRegion(0)->GetConstitutiveModels()->GetGroup(regionMaterialList[matI]);
@@ -1021,7 +1166,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
                                                        cycleNumber,
                                                        problemTime,
                                                        rootDirectory,
-                                                       regionMaterialList );
+                                                       materialNameStrings );
       }
       if (fieldName.second->get_typeid() == typeid( array3d<real64>))
       {
@@ -1032,19 +1177,20 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const * const ele
                                                  cycleNumber,
                                                  problemTime,
                                                  rootDirectory,
-                                                 regionMaterialList );
+                                                 regionMaterialList[0],
+                                                 materialNameStrings );
       }
-      if (fieldName.second->get_typeid() == typeid( array4d<real64>))
-      {
-        WriteMaterialDataField4d<real64,real64>( meshName,
-                                                 fieldName.first,
-                                                 elemRegion,
-                                                 DB_ZONECENT,
-                                                 cycleNumber,
-                                                 problemTime,
-                                                 rootDirectory,
-                                                 regionMaterialList );
-      }
+//      if (fieldName.second->get_typeid() == typeid( array4d<real64>))
+//      {
+//        WriteMaterialDataField4d<real64,real64>( meshName,
+//                                                 fieldName.first,
+//                                                 elemRegion,
+//                                                 DB_ZONECENT,
+//                                                 cycleNumber,
+//                                                 problemTime,
+//                                                 rootDirectory,
+//                                                 regionMaterialList );
+//      }
 
     }
 
@@ -1663,11 +1809,11 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                        cycleNumber,
                        problemTime );
 
-      WriteMaterialMapsFullStorage( elementRegion,
-                                    solidMeshName,
-                                    regionSolidMaterialList,
-                                    cycleNumber,
-                                    problemTime );
+      WriteMaterialsInRegion<constitutive::SolidBase>( elementRegion,
+                                                       solidMeshName,
+                                                       regionSolidMaterialList,
+                                                       cycleNumber,
+                                                       problemTime );
 
       WriteGroupSilo( nodeManager,
                       solidMeshName + "_NodalFields",
@@ -1687,15 +1833,13 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
 
     }
 
-    string_array regionFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
-    string_array regionMultiPhaseFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
+    string_array regionSingleFluidMaterialList = elementRegion->getConstitutiveNames<constitutive::SingleFluidBase>();
+    string_array regionMultiFluidFluidList = elementRegion->getConstitutiveNames<constitutive::MultiFluidBase>();
 
-    for( string const & matName : regionMultiPhaseFluidList )
-    {
-      regionFluidMaterialList.push_back(matName);
-    }
-    localIndex const numFluids = regionFluidMaterialList.size();
-    if( numFluids > 0 )
+    localIndex const numSingleFluids = regionSingleFluidMaterialList.size();
+    localIndex const numMultiFluids = regionMultiFluidFluidList.size();
+
+    if( ( numSingleFluids + numMultiFluids ) > 0 )
     {
       string const fluidMeshName = meshName + "_Fluid";
       WriteMeshObject( fluidMeshName,
@@ -1713,11 +1857,6 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                        cycleNumber,
                        problemTime );
 
-      WriteMaterialMapsFullStorage( elementRegion,
-                                    fluidMeshName,
-                                    regionFluidMaterialList,
-                                    cycleNumber,
-                                    problemTime );
 
       if( numSolids==0 )
       {
@@ -1736,6 +1875,24 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
                                 cycleNumber,
                                 problemTime,
                                 false );
+      }
+
+      if( numSingleFluids > 0 )
+      {
+        WriteMaterialsInRegion<constitutive::SingleFluidBase>( elementRegion,
+                                                               fluidMeshName,
+                                                               regionSingleFluidMaterialList,
+                                                               cycleNumber,
+                                                               problemTime );
+
+      }
+      else
+      {
+        WriteMaterialsInRegion<constitutive::MultiFluidBase>( elementRegion,
+                                                              fluidMeshName,
+                                                              regionMultiFluidFluidList,
+                                                              cycleNumber,
+                                                              problemTime );
       }
     }
   }
@@ -2751,6 +2908,7 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
                                          int const cycleNumber,
                                          real64 const problemTime,
                                          string const & multiRoot,
+                                         string const & multiMaterialName,
                                          string_array const & materialNames )
 {
   localIndex const numSubRegions = elemRegion->numSubRegions();
@@ -2760,51 +2918,47 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
   array1d< array1d< arrayView2d<TYPE const> > > fieldView( numSubRegions );
 
   // resize the container and find the maximum size along 3rd dimension across sub-region data
-  localIndex nvar = 0;
   elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                              ElementSubRegionBase const * const subRegion )
   {
+    arrayView3d<TYPE> const &
+    fieldData = subRegion->GetConstitutiveModels()->GetGroup(multiMaterialName)->getReference<array3d<TYPE>>(fieldName);
+
     fieldCopy[esr].resize( numMat );
     fieldView[esr].resize( numMat );
     for( localIndex matIndex = 0 ; matIndex<numMat ; ++matIndex )
     {
-      arrayView3d<TYPE> const &
-      fieldData = subRegion->GetConstitutiveModels()->GetGroup(materialNames[matIndex])->getReference<array3d<TYPE>>(fieldName);
       if (fieldData.size() > 0)
       {
         fieldCopy[esr][matIndex].resize( fieldData.size(0), fieldData.size(1) );
-        nvar = std::max( nvar, fieldData.size(2) );
       }
       fieldView[esr][matIndex] = fieldCopy[esr][matIndex];
     }
   });
 
   // loop over variables and copy into the container
-  for (localIndex ivar = 0; ivar < nvar; ++ivar)
-  {
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr,
                                                ElementSubRegionBase const * const subRegion )
     {
+      arrayView3d<TYPE> const &
+      fieldData = subRegion->GetConstitutiveModels()->GetGroup(multiMaterialName)->getReference<array3d<TYPE>>(fieldName);
+
       for (localIndex matIndex = 0; matIndex < numMat; ++matIndex )
       {
-        arrayView3d<TYPE const> const &
-        fieldData = subRegion->GetConstitutiveModels()->GetGroup(materialNames[matIndex])->getReference<array3d<TYPE>>(fieldName);
-
-        if (fieldData.size() > 0 && ivar < fieldData.size(2))
+        if (fieldData.size() > 0 )
         {
-          arrayView2d<TYPE> & fieldCopyData = fieldCopy[esr][matIndex];
           for (localIndex ei = 0; ei < fieldData.size(0); ++ei)
           {
             for (localIndex q = 0; q < fieldData.size(1); ++q)
             {
-              fieldCopyData[ei][q] = fieldData[ei][q][ivar];
+              fieldCopy[esr][matIndex](ei,q) = fieldData(ei,q,matIndex);
             }
           }
         }
       }
     });
     WriteMaterialDataField<real64>( meshName,
-                                    fieldName + "_" + std::to_string(ivar),
+                                    fieldName,
                                     fieldView,
                                     elemRegion,
                                     centering,
@@ -2812,7 +2966,6 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
                                     problemTime,
                                     multiRoot,
                                     materialNames );
-  }
 }
 
 

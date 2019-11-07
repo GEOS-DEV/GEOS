@@ -40,7 +40,7 @@
   </Geometry>
 
 
-  <Events maxTime="2e9">
+  <Events maxTime="1e9">
 
     <PeriodicEvent name="outputs"
                    timeFrequency="1e8"

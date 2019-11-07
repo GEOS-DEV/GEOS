@@ -92,6 +92,9 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
+
+  virtual void setOutputVariableGroupings( map< string, string > & variableGrouping );
+
   struct viewKeyStruct
   {
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";

@@ -260,11 +260,29 @@ public:
                      int const cycleNumber,
                      real64 const problemTime);
 
-  void WriteMaterialMapsFullStorage( ElementRegionBase const * const elementRegion,
-                                     string const & meshName,
-                                     string_array const & regionMaterialList,
-                                     int const cycleNumber,
-                                     real64 const problemTime);
+  template< typename CONSTITUTIVE_TYPE = constitutive::ConstitutiveBase >
+  void WriteMaterialsInRegion( ElementRegionBase const * const elementRegion,
+                               string const & meshName,
+                               string_array const & regionMaterialList,
+                               int const cycleNumber,
+                               real64 const problemTime);
+
+  template< typename CONSTITUTIVE_TYPE >
+  void SetupDBMaterial( ElementRegionBase const * const elemRegion,
+                        string_array const & regionMaterialList,
+                        int & nmat,
+                        int & ndims,
+                        array1d<int> & dims,
+                        int & mixlen,
+                        array1d<int> & matnos,
+                        array1d<string> & materialNameStrings,
+                        array1d<char const*> & materialNames,
+                        array1d<int> & matlist,
+                        array1d<int> & mix_zone,
+                        array1d<int> & mix_mat,
+                        array1d<int> & mix_next,
+                        array1d<real64> & mix_vf );
+
   /**
    *
    * @param group the group that holds the data to be written to the silo file
@@ -401,6 +419,7 @@ public:
                                  int const cycleNumber,
                                  real64 const problemTime,
                                  string const & multiRoot,
+                                 string const & multiMaterialName,
                                  string_array const & materialNames );
 
   template<typename OUTTYPE, typename TYPE>
