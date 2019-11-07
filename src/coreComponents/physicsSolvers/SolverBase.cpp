@@ -185,10 +185,14 @@ void SolverBase::Execute( real64 const time_n,
                           Group * const domain )
 {
   GEOSX_MARK_FUNCTION;
-  real64 dtRemaining = dt;
+  real64 dtRemaining = min(m_nextDt, dt);
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer const maxSubSteps = solverParams->maxSubSteps();
+  integer & dtAttempt = solverParams->numdtAttempts();
+  integer & newtonIter = solverParams->numNewtonIterations();
+  integer const maxNewtonIter = solverParams->maxIterNewton();
+  real64 nextdt;
 
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
@@ -202,10 +206,10 @@ void SolverBase::Execute( real64 const time_n,
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
      * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
-     *
      * */
 
     dtRemaining -= dtAccepted;
+    nextdt = std::min(dtAccepted, dtRemaining);
 
     if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
     {
@@ -216,6 +220,23 @@ void SolverBase::Execute( real64 const time_n,
   }
 
   GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
+
+  if (subStep == 0)
+  {
+    if (newtonIter <  0.2 * maxNewtonIter )
+    {
+       // Easy convergence, let's double the time-step.
+       m_nextDt = 2*dt;
+    }else if (newtonIter >  0.7 * maxNewtonIter)
+	{
+      // Tough convergence let us make the time-step smaller.
+       m_nextDt = dt/2;
+	}
+  }else
+  {
+	  // If you had to chop the time-step next time start with the chopped time-step value.
+       m_nextDt = dt;
+  }
 }
 
 
@@ -345,14 +366,14 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   bool const allowNonConverged = solverParams->allowNonConverged() > 0;
 
-  integer & dt Attempt = solverParams->numdtAttempts();
+  integer & dtAttempt = solverParams->numdtAttempts();
 
   // a flag to denote whether we have converged
   integer isConverged = 0;
 
   // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
   // required.
-  for( int dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
+  for(dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )

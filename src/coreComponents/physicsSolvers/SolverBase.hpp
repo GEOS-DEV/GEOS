@@ -452,6 +452,12 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain );
 
+
+  /*
+   * Returns the requirement for the next time-step to the event executing the solver.
+   */
+  virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_ARG( time ) ) override final
+		  {return m_nextDt;};
   /**@}*/
 
 
@@ -551,6 +557,7 @@ protected:
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
+  real64 m_nextDt;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
