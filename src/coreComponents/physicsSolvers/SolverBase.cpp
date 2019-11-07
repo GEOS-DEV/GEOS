@@ -189,27 +189,23 @@ void SolverBase::Execute( real64 const time_n,
 
   SystemSolverParameters * const solverParams = getSystemSolverParameters();
   integer const maxSubSteps = solverParams->maxSubSteps();
-  integer & dtAttempt = solverParams->numdtAttempts();
   integer & newtonIter = solverParams->numNewtonIterations();
   integer const maxNewtonIter = solverParams->maxIterNewton();
-  real64 nextdt;
-
-  for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
+  real64 nextDt;
+  integer subStep = 0;
+  for( ; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
-                                          dtRemaining,
+                                          nextDt,
                                           cycleNumber,
                                           domain->group_cast<DomainPartition *>() );
     /*
-     * Matteo: I would modify here the strategy to choose the next dt and somehow pass
-     * the info to the event manager for the next solve cycle.
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
      * - if the time-step was chopped. Then we can add some heuristics to choose next dt.
      * */
-
     dtRemaining -= dtAccepted;
-    nextdt = std::min(dtAccepted, dtRemaining);
+    nextDt = std::min(dtAccepted, dtRemaining);
 
     if( m_verboseLevel >= 1 && dtRemaining > 0.0 )
     {
@@ -221,6 +217,11 @@ void SolverBase::Execute( real64 const time_n,
 
   GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
 
+  /* What to do with the next time-step?
+   * - keep the same one.
+   * - chop it
+   * - double it
+   */
   if (subStep == 0)
   {
     if (newtonIter <  0.2 * maxNewtonIter )
@@ -229,13 +230,18 @@ void SolverBase::Execute( real64 const time_n,
        m_nextDt = 2*dt;
     }else if (newtonIter >  0.7 * maxNewtonIter)
 	{
-      // Tough convergence let us make the time-step smaller.
+      // Tough convergence let us make the time-step smaller!
        m_nextDt = dt/2;
 	}
   }else
   {
 	  // If you had to chop the time-step next time start with the chopped time-step value.
-       m_nextDt = dt;
+       m_nextDt = nextDt;
+  }
+
+  if( m_verboseLevel >= 1 )
+  {
+	  GEOS_LOG_RANK_0( getName() << ": Next time-step size required = " << m_nextDt);
   }
 }
 
