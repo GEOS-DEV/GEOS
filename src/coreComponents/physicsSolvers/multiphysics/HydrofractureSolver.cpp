@@ -126,7 +126,7 @@ void HydrofractureSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOSX_ERROR("invalid coupling type option");
   }
 
 }
@@ -344,13 +344,13 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //
 ////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
 ////    {
-////      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+////      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 ////      break;
 ////    }
 //
 //    if (getLogLevel() >= 1)
 //    {
-//      GEOS_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+//      GEOSX_LOG_RANK_0( "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 //    }
 //
 //    // call assemble to fill the matrix and the rhs
@@ -372,7 +372,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_ARG( 
 //    if( m_flowSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() &&
 //        m_solidSolver->CalculateResidualNorm( getLinearSystemRepository(), domain ) < solverParams->newtonTol() )
 //    {
-//      GEOS_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+//      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 //      break;
 //    }
 //
@@ -599,40 +599,40 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                 m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString ),
                                                 m_permutationMatrix1);
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix00");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix00");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix01");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix01");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix10");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix10");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("matrix11");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("matrix11");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual0");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("residual0");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("residual1");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("residual1");
+    GEOSX_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
     MpiWrapper::Barrier();
   }
@@ -645,32 +645,32 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     {
       string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemMatrix().write( filename, true );
-      GEOS_LOG_RANK_0( "matrix00: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
     }
     {
       string filename = "matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix01.write( filename, true );
-      GEOS_LOG_RANK_0( "matrix01: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
     {
       string filename = "matrix10_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix10.write( filename, true );
-      GEOS_LOG_RANK_0( "matrix10: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix10: written to " << filename );
     }
     {
       string filename = "matrix11_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_flowSolver->getSystemMatrix().write( filename, true );
-      GEOS_LOG_RANK_0( "matrix11: written to " << filename );
+      GEOSX_LOG_RANK_0( "matrix11: written to " << filename );
     }
     {
       string filename = "residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemRhs().write( filename, true );
-      GEOS_LOG_RANK_0( "residual0: written to " << filename );
+      GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
     {
       string filename = "residual1_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_flowSolver->getSystemRhs().write( filename, true );
-      GEOS_LOG_RANK_0( "residual1: written to " << filename );
+      GEOSX_LOG_RANK_0( "residual1: written to " << filename );
     }
   }
 
@@ -690,7 +690,7 @@ CalculateResidualNorm( DomainPartition const * const domain,
                                                                      m_solidSolver->getDofManager(),
                                                                      m_solidSolver->getSystemRhs() );
 
-  GEOS_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
+  GEOSX_LOG_RANK_0("residuals for fluid, solid: "<<fluidResidual<<", "<<solidResidual);
 
   return fluidResidual + solidResidual;
 }
@@ -1627,15 +1627,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
   if( getLogLevel() == 2 )
   {
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution0");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("solution0");
+    GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[0]->Print(std::cout);
     MpiWrapper::Barrier();
 
-    GEOS_LOG_RANK_0("***********************************************************");
-    GEOS_LOG_RANK_0("solution1");
-    GEOS_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0("solution1");
+    GEOSX_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
     MpiWrapper::Barrier();
   }

@@ -19,14 +19,17 @@
 #ifndef GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_XMLWRAPPER_HPP_
 
-#include <algorithm>
-#include <sstream>
-
-#include "pugixml.hpp"
-
+// Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "ArrayUtilities.hpp"
+#include "cxx-utilities/src/ArrayUtilities.hpp"
+
+// TPL includes
+#include <pugixml.hpp>
+
+// System includes
+#include <algorithm>
+#include <sstream>
 
 namespace geosx
 {
@@ -231,7 +234,7 @@ void xmlWrapper::ReadAttributeAsType( T & rval,
 {
   pugi::xml_attribute xmlatt = targetNode.attribute( name.c_str() );
 
-  GEOS_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
+  GEOSX_ERROR_IF( xmlatt.empty() && required, "Input variable " + name + " is required in " + targetNode.path() );
 
   // parse the string/attribute into a value
   StringToInputVariable( rval, xmlatt.value() );

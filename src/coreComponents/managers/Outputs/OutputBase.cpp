@@ -73,7 +73,7 @@ void OutputBase::SetupDirectoryStructure()
     {
       string cmd = "mkdir -p " + slaveDirectory;
       int ret = std::system(cmd.c_str());
-      GEOS_ERROR_IF(ret != 0, "Command '" << cmd << "' exited with code " << std::to_string(ret));
+      GEOSX_ERROR_IF(ret != 0, "Command '" << cmd << "' exited with code " << std::to_string(ret));
     }
   }
 }

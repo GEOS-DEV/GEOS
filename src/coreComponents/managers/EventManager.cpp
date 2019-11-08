@@ -80,7 +80,7 @@ EventManager::~EventManager()
 
 Group * EventManager::CreateChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
+  GEOSX_LOG_RANK_0("Adding Event: " << childKey << ", " << childName);
   std::unique_ptr<EventBase> event = EventBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup<EventBase>( childName, std::move(event) );
 }
@@ -119,7 +119,7 @@ void EventManager::Run(dataRepository::Group * domain)
   // Inform user if it appears this is a mid-loop restart
   if ((m_currentSubEvent > 0))
   {
-    GEOS_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
+    GEOSX_LOG_RANK_0("The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point.");
   }
 
   // Run problem
@@ -148,7 +148,7 @@ void EventManager::Run(dataRepository::Group * domain)
 #endif
     }
 
-    GEOS_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
+    GEOSX_LOG_RANK_0("Time: " << m_time << "s, dt:" << m_dt << "s, Cycle: " << m_cycle);
 
     // Execute 
     for ( ; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent)
@@ -160,7 +160,7 @@ void EventManager::Run(dataRepository::Group * domain)
       integer eventForecast = subEvent->GetForecast();
 
       // Print debug information for logLevel >= 1 
-      GEOS_LOG_LEVEL_RANK_0(1, "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
+      GEOSX_LOG_LEVEL_RANK_0(1, "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" << eventForecast);
 
       // Execute, signal events
       if (eventForecast == 1)
@@ -186,7 +186,7 @@ void EventManager::Run(dataRepository::Group * domain)
   }
 
   // Cleanup
-  GEOS_LOG_RANK_0("Cleaning up events");
+  GEOSX_LOG_RANK_0("Cleaning up events");
   
   this->forSubGroups<EventBase>([&]( EventBase * subEvent ) -> void
   {
