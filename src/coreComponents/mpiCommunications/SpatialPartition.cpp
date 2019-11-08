@@ -335,7 +335,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+      GEOSX_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }

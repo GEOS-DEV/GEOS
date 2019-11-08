@@ -16,8 +16,8 @@
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
-#include "IntegerConversion.hpp"
+#include "codingUtilities/traits.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 #include <type_traits>
 
@@ -88,8 +88,8 @@ Unpack( buffer_unit_type const * & buffer, T * const restrict var, INDEX_TYPE co
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                    expectedLength << " != " << length );
   GEOSX_DEBUG_VAR( expectedLength );
 
   memcpy( var, buffer, length * sizeof(T) );
@@ -176,8 +176,8 @@ Unpack( buffer_unit_type const * & buffer, T * const restrict var, INDEX_TYPE co
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                    expectedLength << " != " << length );
   GEOSX_DEBUG_VAR( expectedLength );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
@@ -277,8 +277,8 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
   GEOSX_DEBUG_VAR( expectedLength );
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                    expectedLength << " != " << length );
 
   T const * const restrict buffer_T = reinterpret_cast< T const * >( buffer );
   for( INDEX_TYPE i = 0 ; i < length ; ++i )
@@ -303,8 +303,8 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
   GEOSX_DEBUG_VAR( expectedLength );
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOSX_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
+                    expectedLength << " != " << length );
 
   for( INDEX_TYPE a=0 ; a<length ; ++a )
   {
@@ -547,8 +547,8 @@ Unpack( buffer_unit_type const * & buffer, LvArray::Array< T, NDIM, PERMUTATION,
 
   for( int i=0 ; i<NDIM ; ++i )
   {
-    GEOS_ASSERT_MSG( strides[i] == var.strides()[i], "Strides are inconsistent: " <<
-                     strides[i] << " != " << var.strides()[i] );
+    GEOSX_ASSERT_MSG( strides[i] == var.strides()[i], "Strides are inconsistent: " <<
+                      strides[i] << " != " << var.strides()[i] );
   }
 
   sizeOfUnpackedChars += Unpack( buffer, var.data(), var.size() );
@@ -585,8 +585,8 @@ Unpack( buffer_unit_type const * & buffer,
 
   for( int dim=0 ; dim<NDIM ; ++dim )
   {
-    GEOS_ASSERT_MSG( strides[dim] == var.strides()[dim], "Strides are inconsistent: " <<
-                     strides[dim] << " != " << var.strides()[dim] );
+    GEOSX_ASSERT_MSG( strides[dim] == var.strides()[dim], "Strides are inconsistent: " <<
+                      strides[dim] << " != " << var.strides()[dim] );
   }
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
@@ -662,7 +662,7 @@ Unpack( buffer_unit_type const * & buffer,
   LvArray::ArrayOfArrays< T, INDEX_TYPE > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
 
-  var.stealFrom( std::move( varAsArray ), sortedArrayManipulation::SORTED_UNIQUE );
+  var.stealFrom( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
 
   return sizeOfUnpackedChars;
 }
@@ -696,7 +696,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numUnpackedIndices;
   sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
 
-  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
+  GEOSX_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -841,7 +841,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex length;
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  GEOS_ASSERT_EQ( length, expectedLength );
+  GEOSX_ASSERT_EQ( length, expectedLength );
   GEOSX_DEBUG_VAR( expectedLength );
 
   unmappedGlobalIndices.resize( length );
@@ -919,9 +919,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   for( localIndex a=0 ; a<indices.size() ; ++a )
   {
@@ -930,9 +930,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1004,9 +1004,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1018,9 +1018,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1126,9 +1126,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1140,9 +1140,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does not equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1214,9 +1214,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1229,9 +1229,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1266,9 +1266,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1281,9 +1281,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1337,9 +1337,9 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1351,9 +1351,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {
@@ -1420,9 +1420,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOSX_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
+                  "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
+                                                                     "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1434,9 +1434,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOSX_ERROR_IF( li!=globalToLocalMap.at( gi ),
+                      "global index "<<gi<<" unpacked from buffer does equal the lookup "
+                                     <<li<<" for localIndex "<<li<<" on this rank" );
     }
     else
     {

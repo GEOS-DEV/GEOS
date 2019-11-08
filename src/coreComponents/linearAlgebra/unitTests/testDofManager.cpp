@@ -45,7 +45,7 @@ do \
 { \
   if( COND ) \
   { \
-    GEOS_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
+    GEOSX_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
                   "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
     GTEST_SKIP(); \
   } \
@@ -123,9 +123,9 @@ protected:
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
     if (!xmlResult)
     {
-      GEOS_LOG_RANK_0("XML parsed with errors!");
-      GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-      GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+      GEOSX_LOG_RANK_0("XML parsed with errors!");
+      GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
+      GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
     }
 
     int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
@@ -832,12 +832,12 @@ TEST_F(DofManagerTest, TestWithTimes)
 
   int mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
-  GEOS_LOG_RANK( "numGlobalDofs = " << dofManager.numGlobalDofs() );
-  GEOS_LOG_RANK( "numGlobalDofs(displacement) = " << dofManager.numGlobalDofs( "displacement" ) );
-  GEOS_LOG_RANK( "numGlobalDofs(pressure) = " << dofManager.numGlobalDofs( "pressure" ) );
-  GEOS_LOG_RANK( "numLocalDofs = " << dofManager.numLocalDofs() );
-  GEOS_LOG_RANK( "numLocalDofs(displacement) = " << dofManager.numLocalDofs( "displacement" ) );
-  GEOS_LOG_RANK( "numLocalDofs(pressure) = " << dofManager.numLocalDofs( "pressure" ) );
+  GEOSX_LOG_RANK( "numGlobalDofs = " << dofManager.numGlobalDofs() );
+  GEOSX_LOG_RANK( "numGlobalDofs(displacement) = " << dofManager.numGlobalDofs( "displacement" ) );
+  GEOSX_LOG_RANK( "numGlobalDofs(pressure) = " << dofManager.numGlobalDofs( "pressure" ) );
+  GEOSX_LOG_RANK( "numLocalDofs = " << dofManager.numLocalDofs() );
+  GEOSX_LOG_RANK( "numLocalDofs(displacement) = " << dofManager.numLocalDofs( "displacement" ) );
+  GEOSX_LOG_RANK( "numLocalDofs(pressure) = " << dofManager.numLocalDofs( "pressure" ) );
 
   dofManager.printConnectivityMatrix();
 

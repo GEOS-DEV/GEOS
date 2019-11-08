@@ -22,16 +22,16 @@
 // Source inclues
 #include "WrapperHelpers.hpp"
 #include "KeyNames.hpp"
-#include "IntegerConversion.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 #include "common/DataTypes.hpp"
-#include "SFINAE_Macros.hpp"
-#include "Macros.hpp"
+#include "codingUtilities/SFINAE_Macros.hpp"
+#include "cxx-utilities/src/Macros.hpp"
 #include "BufferOps.hpp"
 #include "RestartFlags.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
-#include "cxx-utilities/src/src/StringUtilities.hpp"
+#include "cxx-utilities/src/StringUtilities.hpp"
 #include "WrapperBase.hpp"
 
 // System includes
@@ -86,7 +86,7 @@ public:
       this->setSizedFromParent( 0 );
     }
 
-    setUserCallBack();
+    setName();
   }
 
   /**
@@ -108,7 +108,7 @@ public:
       this->setSizedFromParent( 0 );
     }
 
-    setUserCallBack();
+    setName();
   }
 
   /**
@@ -132,7 +132,7 @@ public:
       this->setSizedFromParent( 0 );
     }
 
-    setUserCallBack();
+    setName();
   }
 
   /**
@@ -346,7 +346,7 @@ public:
     localIndex unpackedSize = 0;
     string name;
     unpackedSize += bufferOps::Unpack( buffer, name );
-    GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+    GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
     unpackedSize += bufferOps::Unpack( buffer, *m_data );
     return unpackedSize;
   }
@@ -360,7 +360,7 @@ public:
       {
         string name;
         unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOS_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+        GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
         unpackedSize += bufferOps::Unpack( buffer, *m_data, unpackIndices );
       }
     }
@@ -664,9 +664,24 @@ public:
     return this;
   }
 
-  ///@}
+  HAS_MEMBER_FUNCTION( setName,
+                       void,
+                       ,
+                       std::string const &,
+                       "" )
 
-  /// @cond DO_NOT_DOCUMENT
+  template< class U = T >
+  typename std::enable_if< has_memberfunction_setName< U >::value, void >::type
+  setName()
+  {
+    std::string const path = getConduitNode().path();
+    m_data->setName( path );
+  }
+
+  template< class U = T >
+  typename std::enable_if< !has_memberfunction_setName< U >::value, void >::type
+  setName()
+  {}
 
   /* Register the pointer to data with the associated conduit::Node. */
   void registerToWrite() override
@@ -790,8 +805,8 @@ public:
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
-    TV_ttf_add_row( "m_data", totalview::typeName< T >().c_str(), m_data );
-    TV_ttf_add_row( "m_default", totalview::typeName< DefaultValue< T > >().c_str(), &m_default );
+    TV_ttf_add_row( "m_data", cxx_utilities::demangle< T >().c_str(), m_data );
+    TV_ttf_add_row( "m_default", cxx_utilities::demangle< DefaultValue< T > >().c_str(), &m_default );
     return 0;
   }
 //  void tvTemplateInstantiation();

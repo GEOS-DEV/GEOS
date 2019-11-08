@@ -19,8 +19,9 @@
 #ifndef GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 #define GEOSX_DATAREPOSITORY_DEFAULTVALUE_HPP_
 
+// Source includes
 #include "common/DataTypes.hpp"
-#include "SFINAE_Macros.hpp"
+#include "codingUtilities/traits.hpp"
 
 namespace geosx
 {
@@ -95,8 +96,6 @@ struct Helper< T, typename std::enable_if< is_defaultable< T >::value >::type >
   value_type value = value_type();
 };
 
-HAS_ALIAS( value_type )
-
 /**
  * @struct Helper
  * @tparam T type to check
@@ -107,8 +106,8 @@ HAS_ALIAS( value_type )
  * containers.
  */
 template< typename T >
-struct Helper< T, typename std::enable_if< has_alias_value_type< T >::value &&
-                                           ( is_defaultable< typename T::value_type >::value) >::type >
+struct Helper< T, typename std::enable_if_t< traits::has_alias_value_type< T > &&
+                                             is_defaultable< typename T::value_type >::value > >
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = true;

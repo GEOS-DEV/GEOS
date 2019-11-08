@@ -13,7 +13,7 @@
  */
 
 // Source includes
-#include "codingUtilities/GeosxTraits.hpp"
+#include "codingUtilities/traits.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>

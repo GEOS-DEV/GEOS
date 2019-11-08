@@ -76,7 +76,7 @@ SingleFluidBase::DeliverClone( string const & name,
                                Group * const parent,
                                std::unique_ptr<ConstitutiveBase> & clone ) const
 {
-  GEOS_ERROR_IF( !clone, "clone not allocated" );
+  GEOSX_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
   SingleFluidBase * const newConstitutiveRelation = dynamic_cast<SingleFluidBase *>(clone.get());

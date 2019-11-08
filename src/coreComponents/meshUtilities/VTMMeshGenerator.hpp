@@ -144,7 +144,7 @@ private:
       {
         if (fabs(m_nElemBias[i][block]) >= 1)
         {
-          GEOS_ERROR("Mesh bias must between -1 and 1!");
+          GEOSX_ERROR("Mesh bias must between -1 and 1!");
         }
 
         realT len = max -  min;

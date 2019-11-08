@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 #define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 
 namespace geosx
 {
@@ -70,7 +70,7 @@ inline InputFlags IntToInputFlag( int const val )
     }
     default:
     {
-      GEOS_ERROR( "Invalid integer conversion to InputFlag" );
+      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
     }
   }
   return rval;

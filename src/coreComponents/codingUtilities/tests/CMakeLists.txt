@@ -6,7 +6,7 @@ set(testSources
     testGeosxTraits.cpp
    )
 
-set(dependencyList gtest codingUtilities)
+set(dependencyList gtest codingUtilities raja)
 
 #
 # Add gtest C++ based tests

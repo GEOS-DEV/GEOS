@@ -451,7 +451,7 @@ localIndex PetscVector::getLocalRowID( globalIndex const index ) const
 {
   PetscInt low, high;
   VecGetOwnershipRange( m_vec, &low, &high );
-  GEOS_ERROR_IF( index < low || high <= index, "getLocalRowID: processor does not own global row index" );
+  GEOSX_ERROR_IF( index < low || high <= index, "getLocalRowID: processor does not own global row index" );
   return index - low;
 }
 

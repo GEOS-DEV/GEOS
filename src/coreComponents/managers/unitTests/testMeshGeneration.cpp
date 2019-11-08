@@ -66,10 +66,10 @@ protected:
     m_edgeManager = problemManager->getDomainPartition()->getMeshBody(0)->getMeshLevel(0)->getEdgeManager();
 
     ElementRegionManager * const elemManager = problemManager->getDomainPartition()->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    GEOS_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
+    GEOSX_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
 
     ElementRegionBase * const elemRegion = elemManager->GetRegion( 0 );
-    GEOS_ERROR_IF_NE_MSG( elemRegion->GetSubRegions().size(), 1, "Only one subregion should exist." );
+    GEOSX_ERROR_IF_NE_MSG( elemRegion->GetSubRegions().size(), 1, "Only one subregion should exist." );
 
     m_subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( 0 );
   }
@@ -105,9 +105,9 @@ protected:
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
     if (!xmlResult)
     {
-      GEOS_LOG_RANK_0("XML parsed with errors!");
-      GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-      GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+      GEOSX_LOG_RANK_0("XML parsed with errors!");
+      GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
+      GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
     }
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
@@ -211,7 +211,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
   arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & nodeMap = m_subRegion->nodeList();
-  GEOS_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
+  GEOSX_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;
   for ( localIndex i = 0; i < numElemsInX; ++i )
@@ -294,7 +294,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
   ArrayOfSetsView< localIndex const > const & nodeToFaceMap = m_nodeManager->faceList();
 
-  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   array1d< localIndex > faceNodesFromElem( 4 );
   array1d< localIndex > faceNodesFromFace( 4 );
@@ -348,7 +348,7 @@ TEST_F( MeshGenerationTest, faceElementMaps )
   arrayView2d< localIndex const > const & elementToFaceMap = m_subRegion->faceList();
   arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
 
-  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex const elemIDOffset[6] = { -elem_dJ, -1, -elem_dI, elem_dI, elem_dJ, 1 };
 
@@ -420,7 +420,7 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
   ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = m_nodeManager->edgeList();
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
 
-  GEOS_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
+  GEOSX_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
 
   localIndex nodeID = 0;
   for ( localIndex i = 0; i < numNodesInX; ++i )
@@ -476,7 +476,7 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = m_edgeManager->faceList();
 
-  GEOS_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
+  GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
   localIndex elemID = 0;
   for ( localIndex i = 0; i < numElemsInX; ++i )

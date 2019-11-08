@@ -201,7 +201,7 @@ private:
 
       if ( m_useBias && ( !isZero(m_nElemBias[i][block]) ) & (m_nElems[i][block]>1))
       {
-        GEOS_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
+        GEOSX_ERROR_IF(fabs(m_nElemBias[i][block]) >= 1, "Mesh bias must between -1 and 1!");
 
         realT len = max -  min;
         realT xmean = len / m_nElems[i][block];

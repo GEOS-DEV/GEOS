@@ -110,7 +110,7 @@ void TableFunction::parse_file( array1d<T> & target, string const & filename, ch
   }
   else
   {
-    GEOS_ERROR("Could not read input file!");
+    GEOSX_ERROR("Could not read input file!");
   }
 }
 void TableFunction::InitializeFunction()
@@ -167,7 +167,7 @@ void TableFunction::reInitializeFunction()
   }
 
   // Error checking
-  GEOS_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!");
+  GEOSX_ERROR_IF( increment != m_values.size(), "Table dimensions do not match!");
 
   // Build a quick map to help with linear interpolation
   m_numCorners = static_cast<localIndex>(pow(2, m_dimensions));

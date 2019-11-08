@@ -88,7 +88,7 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
+    GEOSX_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)"); \
@@ -103,18 +103,18 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
   m_satScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
+    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_satScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
+    GEOSX_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
 
-    GEOS_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
+    GEOSX_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
   }
 
-  GEOS_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOSX_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
 }
 
 

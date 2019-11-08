@@ -733,15 +733,10 @@ int main( int argc, char ** argv )
   ::testing::InitGoogleTest( &argc, argv );
 
   // Avoid setting up signal handlers, due to mysterious ML FPE crashes
-  //geosx::basicSetup( argc, argv );
   setupMPI( argc, argv );
+  setupLogger();
   setupOpenMP();
   setupMKL();
-#ifdef GEOSX_USE_MPI
-  logger::InitializeLogger( MPI_COMM_GEOSX );
-#else
-  logger::InitializeLogger( );
-#endif
   // Don't pass real cmd parameters from ctest, PETSc goes crazy otherwise
   int dummy_argc = 0;
   char ** dummy_argv = nullptr;

@@ -12,11 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
-
-#include "Array.hpp"
+// Source includes
 #include "dataRepository/DefaultValue.hpp"
 
+// TPL includes
+#include <gtest/gtest.h>
+
+// System includes
 #include <functional>
 #include <string>
 #include <typeindex>

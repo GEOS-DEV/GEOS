@@ -2373,11 +2373,11 @@ void SiloFile::WriteDataField( string const & meshName,
     {
       if( err < -1 )
       {
-        GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
+        GEOSX_ERROR("unhandled case in SiloFile::WriteDataField A\n");
       }
       else
       {
-        GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+        GEOSX_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
       }
     }
   }
@@ -2409,7 +2409,7 @@ void SiloFile::WriteDataField( string const & meshName,
     }
     else
     {
-      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
 
@@ -2696,11 +2696,11 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     {
       if( err < -1 )
       {
-        GEOS_ERROR("unhandled case in SiloFile::WriteDataField A\n");
+        GEOSX_ERROR("unhandled case in SiloFile::WriteDataField A\n");
       }
       else
       {
-        GEOS_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
+        GEOSX_ERROR("unhandled failure in adding variable during SiloFile::WriteDataField\n");
       }
     }
   }
@@ -2732,7 +2732,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     }
     else
     {
-      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX(vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

@@ -1045,7 +1045,7 @@ void performance_test()
       multiplicationTime += end - start;
     }
 
-    GEOS_LOG(std::setiosflags(std::ios::scientific) << std::setprecision(5) <<
+    GEOSX_LOG(std::setiosflags(std::ios::scientific) << std::setprecision(5) <<
              "size = " << size << ",\tniter : " << nIter << ",\ttime : " << multiplicationTime.count() <<
              ",\tscaled time : " << multiplicationTime.count() / (size * size * size));
   }
