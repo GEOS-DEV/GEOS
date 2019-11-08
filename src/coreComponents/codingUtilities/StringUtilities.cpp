@@ -225,7 +225,7 @@ bool ReplaceParameters(std::string& lineStr, const std::map<std::string,std::str
         ++itrB;
       }
 
-      GEOS_ERROR("Error: Undefined model parameter: " << paramName << ".");
+      GEOSX_ERROR("Error: Undefined model parameter: " << paramName << ".");
     }
 
     const std::string& replaceStr = itr->second;

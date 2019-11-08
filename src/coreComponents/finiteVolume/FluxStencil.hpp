@@ -124,7 +124,7 @@ void FluxStencil<INDEX, WEIGHT>::add( localIndex const numPts,
                                       WEIGHT const * const weights,
                                       localIndex const connectorIndex )
 {
-  GEOS_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
 
   stackArray1d<Entry, MAX_STENCIL_SIZE> entries(numPts);
   for (localIndex i = 0; i < numPts; ++i)

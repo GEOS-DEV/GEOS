@@ -122,20 +122,20 @@ void MultiFluidBase::PostProcessInput()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-  GEOS_ERROR_IF( NC == 0, "MultiFluidBase: No fluid components specified" );
+  GEOSX_ERROR_IF( NC == 0, "MultiFluidBase: No fluid components specified" );
 
-  GEOS_ERROR_IF( NC > MAX_NUM_COMPONENTS,
+  GEOSX_ERROR_IF( NC > MAX_NUM_COMPONENTS,
                  "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS );
 
-  GEOS_ERROR_IF( NP == 0, "MultiFluidBase: No fluid phases specified" );
+  GEOSX_ERROR_IF( NP == 0, "MultiFluidBase: No fluid phases specified" );
 
-  GEOS_ERROR_IF( NP > MAX_NUM_PHASES,
+  GEOSX_ERROR_IF( NP > MAX_NUM_PHASES,
                  "MultiFluidBase: Number of fluid phases exceeds the maximum of " << MAX_NUM_PHASES );
 
 #define MULTIFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "MultiFluidBase: invalid number of entries in " \
+    GEOSX_ERROR( "MultiFluidBase: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)" ); \
@@ -155,7 +155,7 @@ localIndex MultiFluidBase::numFluidComponents() const
 
 string const & MultiFluidBase::componentName(localIndex ic) const
 {
-  GEOS_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
+  GEOSX_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
   return m_componentNames[ic];
 }
 
@@ -166,7 +166,7 @@ localIndex MultiFluidBase::numFluidPhases() const
 
 string const & MultiFluidBase::phaseName(localIndex ip) const
 {
-  GEOS_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
+  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
   return m_phaseNames[ip];
 }
 

@@ -102,7 +102,7 @@ template< typename T1, typename T2, typename SORTED >
 T2& stlMapLookup( mapBase<T1,T2, SORTED>& Map, const T1& key )
 {
   typename mapBase<T1, T2, SORTED>::iterator MapIter = Map.find( key );
-  GEOS_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
+  GEOSX_ERROR_IF(MapIter==Map.end(), "Key not found: " << key);
   return MapIter->second;
 }
 

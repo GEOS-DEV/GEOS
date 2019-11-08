@@ -82,7 +82,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
@@ -212,14 +212,14 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "");
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "");
 
   for( localIndex a=0 ; a<packList.size() ; ++a )
   {
     localIndex index = packList[a];
     localIndex numSubIndicesUnpacked;
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
-    GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
+    GEOSX_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size(1), "");
 
     for( localIndex b=0 ; b<numSubIndicesUnpacked ; ++b )
     {

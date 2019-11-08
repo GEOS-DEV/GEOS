@@ -44,7 +44,7 @@ int main( int argc, char *argv[] )
   std::string restartFileName;
   bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
   if (restart) {
-    GEOS_LOG_RANK_0("Loading restart file " << restartFileName);
+    GEOSX_LOG_RANK_0("Loading restart file " << restartFileName);
     dataRepository::loadTree( restartFileName );
   }
 
@@ -68,7 +68,7 @@ int main( int argc, char *argv[] )
     }
 
     MpiWrapper::Barrier(MPI_COMM_GEOSX);
-    GEOS_LOG_RANK_0("Running simulation");
+    GEOSX_LOG_RANK_0("Running simulation");
 
     gettimeofday(&tim, nullptr);
     const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
@@ -78,7 +78,7 @@ int main( int argc, char *argv[] )
     gettimeofday(&tim, nullptr);
     const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-    GEOS_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
+    GEOSX_LOG_RANK_0("\ninit time = " << std::setprecision(5) << t_initialize-t_start <<
                     "s, run time = " << t_run-t_initialize << "s");
   }
   

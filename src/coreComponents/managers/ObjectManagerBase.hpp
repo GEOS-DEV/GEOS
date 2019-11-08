@@ -207,7 +207,7 @@ public:
   {
     for( auto index : indicesToSend )
     {
-      GEOS_ERROR_IF( m_ghostRank[index] >= 0,
+      GEOSX_ERROR_IF( m_ghostRank[index] >= 0,
                      "trying to set ghostRank of non-locally owned index: "
                      "m_ghostRank[" << index << "]=" << m_ghostRank[index] );
       m_ghostRank[index] = -1;
@@ -410,10 +410,10 @@ void ObjectManagerBase::FixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
+      GEOSX_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set");
     }
   }
-  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
+  GEOSX_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used");
   unmappedIndices.clear();
 }
 

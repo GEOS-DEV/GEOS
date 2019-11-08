@@ -17,7 +17,8 @@
 
 #include "common/DataTypes.hpp"
 
-//using namespace geosx;
+namespace geosx
+{
 
 namespace detail
 {
@@ -196,5 +197,7 @@ struct AccessorHelper<true>
     return acc;
   }
 };
+
+} // namespace geosx
 
 #endif //GEOSX_TESTFLOWKERNELHELPERS_HPP

@@ -120,7 +120,7 @@ void CompositionalMultiphaseFluid::PostProcessInput()
 #define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
+    GEOSX_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)"); \
@@ -160,7 +160,7 @@ void CompositionalMultiphaseFluid::createFluid()
   for (localIndex ip = 0; ip < NP; ++ip)
   {
     auto it = PVTPackage_eosDict.find( m_equationsOfState[ip] );
-    GEOS_ERROR_IF( it == PVTPackage_eosDict.end(), "Invalid eos name: " << m_equationsOfState[ip] );
+    GEOSX_ERROR_IF( it == PVTPackage_eosDict.end(), "Invalid eos name: " << m_equationsOfState[ip] );
     eos[ip] = it->second;
   }
 

@@ -16,25 +16,25 @@
 #include <string>
 #include <iostream>
 
-#include "Logger.hpp"
+#include "common/Logger.hpp"
 #include "Base.hpp"
 #include "Derived1.hpp"
 using namespace cxx_utilities;
 
 int main( int argc, char *argv[] )
 {
-  GEOS_LOG( "EXECUTING MAIN" );
+  GEOSX_LOG( "EXECUTING MAIN" );
   int junk = 1;
   double junk2 = 3.14;
   double junk3 = 2*3.14;
   Parameter param;
 
 
-  GEOS_LOG( "Attempting to create a Derived1 object" );
+  GEOSX_LOG( "Attempting to create a Derived1 object" );
   std::unique_ptr<Base> derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2, param );
-  GEOS_LOG( "Attempting to create a Derived2 object" );
+  GEOSX_LOG( "Attempting to create a Derived2 object" );
   std::unique_ptr<Base> derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk3, param );
 
   Base::CatalogInterface::catalog_cast<Derived1>( *(derived2.get()));
-  GEOS_LOG( "EXITING MAIN" );
+  GEOSX_LOG( "EXITING MAIN" );
 }

@@ -50,7 +50,7 @@ BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
   }
   else
   {
-    GEOS_ERROR("Unrecognized black-oil fluid type: " << str);
+    GEOSX_ERROR("Unrecognized black-oil fluid type: " << str);
   }
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
 }
@@ -117,7 +117,7 @@ void BlackOilFluid::PostProcessInput()
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "BlackOilFluid: invalid number of entries in " \
+    GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)" ); \
@@ -170,7 +170,7 @@ void BlackOilFluid::createFluid()
       m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
       break;
     default:
-      GEOS_ERROR("Unknown fluid type");
+      GEOSX_ERROR("Unknown fluid type");
   }
 }
 

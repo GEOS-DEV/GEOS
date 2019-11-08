@@ -92,7 +92,7 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
   if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
   { \
-    GEOS_ERROR( "BrooksCoreyCapillaryPressure: invalid number of entries in " \
+    GEOSX_ERROR( "BrooksCoreyCapillaryPressure: invalid number of entries in " \
                 << (attr) << " attribute (" \
                 << (data).size() << "given, " \
                 << (expected) << " expected)"); \
@@ -107,25 +107,25 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
   m_volFracScale = 1.0;
   for (localIndex ip = 0; ip < NP; ++ip)
   {
-    GEOS_ERROR_IF( (m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0),
+    GEOSX_ERROR_IF( (m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0),
                    "BrooksCoreyCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 1.0)
+    GEOSX_ERROR_IF(    (m_phaseCapPressureExponentInv[ip] < 1.0)
                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip] );
 
-    GEOS_ERROR_IF(    (m_phaseEntryPressure[ip] < 0.0)
+    GEOSX_ERROR_IF(    (m_phaseEntryPressure[ip] < 0.0)
                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid entry pressure: " << m_phaseEntryPressure[ip] );
 
-    GEOS_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
+    GEOSX_ERROR_IF(    (m_capPressureEpsilon < 0.0 || m_capPressureEpsilon > 0.2)
                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
                    "BrooksCoreyCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon );
 
   }
 
-  GEOS_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
+  GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
 }
 
 

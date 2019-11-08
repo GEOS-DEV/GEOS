@@ -20,8 +20,8 @@
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
-#include "codingUtilities/GeosxTraits.hpp"
-#include "IntegerConversion.hpp"
+#include "codingUtilities/traits.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 #include <type_traits>
 
@@ -501,7 +501,7 @@ template< bool DO_PACKING, typename T >
 typename std::enable_if< !is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
 }
 
@@ -510,7 +510,7 @@ template< typename T >
 typename std::enable_if< !is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOSX_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
 }
 
@@ -520,7 +520,7 @@ typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOSX_UNUSED_ARG( buffer ), T const & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
 }
 
@@ -530,7 +530,7 @@ typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOSX_UNUSED_ARG( buffer ), T & GEOSX_UNUSED_ARG( var ), T_INDICES const & GEOSX_UNUSED_ARG( indices ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOSX_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
   return 0;
 }
 

@@ -104,7 +104,7 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       topo = ElementTypes::HEXES;
       break;
     default:
-      GEOS_ERROR("There is no default case");
+      GEOSX_ERROR("There is no default case");
       break;
     }
 
@@ -152,10 +152,10 @@ void MesquiteRelaxer::RelaxMesh( PhysicalDomainT& domain )
       MesquiteRelaxer::RunSteepestDescent(topo,num_iter,patch);
       break;
     case SolverTypes::BOUNDARY:
-      GEOS_LOG_RANK("Not Implemented yet");
+      GEOSX_LOG_RANK("Not Implemented yet");
       return;
     default:
-      GEOS_LOG_RANK("There is no default case");
+      GEOSX_LOG_RANK("There is no default case");
       break;
     }
   }
@@ -211,7 +211,7 @@ void MesquiteRelaxer::ConstructMesh( unsigned long num_nod,
     type=HEXAHEDRON;
     break;
   default:
-    GEOS_ERROR("invalid topo");
+    GEOSX_ERROR("invalid topo");
   }
   ;
 

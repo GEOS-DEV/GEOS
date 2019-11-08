@@ -19,7 +19,7 @@
 #include "CellElementRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/src/SparsityPattern.hpp"
+#include "cxx-utilities/src/SparsityPattern.hpp"
 
 #include "metis.h"
 
@@ -49,7 +49,7 @@ void CellElementRegion::GenerateMesh( Group const * const cellBlocks )
   {
     CellElementSubRegion * subRegion = elementSubRegions->RegisterGroup<CellElementSubRegion>(cellBlockName);
     CellBlock const * source = cellBlocks->GetGroup<CellBlock>( subRegion->getName() );
-    GEOS_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
+    GEOSX_ERROR_IF(source == nullptr, "Cell block named " + subRegion->getName() + " does not exist");
     subRegion->CopyFromCellBlock( source );
   }
 }
@@ -80,7 +80,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   });
   // Number of aggregate computation
   localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
-  GEOS_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
+  GEOSX_LOG_RANK_0("Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
