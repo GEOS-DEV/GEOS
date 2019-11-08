@@ -48,7 +48,6 @@ namespace geosx
 {
 
 typedef HYPRE_Int (*HYPRE_PtrToDestroyFcn)(HYPRE_Solver);
-static int counter = -1;
 
 // ----------------------------
 // Constructors
@@ -184,20 +183,6 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
-
-    std::cout <<      " solver:" << m_parameters.solverType << "\n";
-    std::cout <<      "precond:" << m_parameters.preconditionerType << "\n";
-    std::cout << "ilut_droptol:" << m_parameters.ilu.threshold << "\n";
-    std::cout << "ilut_fill_in:" << m_parameters.ilu.fill << "\n";
-
-    counter += 1;
-    std::string fname = std::string("matrix_pilut")+std::to_string(counter);
-
-    hypre_ParCSRMatrixPrintIJ ( HYPRE_ParCSRMatrix(mat),
-                            1,
-                  1,
-                  fname.data() );
-
     HYPRE_ParCSRPilutCreate(comm, &precond);
 
     if (m_parameters.ilu.threshold >= 0 )

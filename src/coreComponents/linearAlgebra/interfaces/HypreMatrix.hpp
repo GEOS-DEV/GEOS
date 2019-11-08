@@ -138,6 +138,12 @@ public:
    */
   void set( real64 const value );
 
+  /**
+   * @brief Reset the object
+   *
+   */
+  void reset();
+
 
   /**
    * @brief Reinitialize the matrix.

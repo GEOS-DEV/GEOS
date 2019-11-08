@@ -587,7 +587,7 @@
 		<!--ilut_drop => (no description available)-->
 		<xsd:attribute name="ilut_drop" type="real64" default="0.01" />
 		<!--ilut_fill => (no description available)-->
-		<xsd:attribute name="ilut_fill" type="integer" default="10" />
+		<xsd:attribute name="ilut_fill" type="integer" default="3" />
 		<!--krylovTol => Allowable tolerance for krylov solve-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--kspace => (no description available)-->

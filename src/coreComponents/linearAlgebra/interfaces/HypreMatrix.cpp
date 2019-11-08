@@ -66,8 +66,10 @@ HypreMatrix::HypreMatrix( HypreMatrix const &src )
 {
   GEOS_ERROR_IF( src.unwrappedPointer() == nullptr,
                  "Input matrix looks empty" );
-  GEOS_ERROR_IF( m_is_ready_to_use,
+  GEOS_ERROR_IF( src.isAssembled(),
                  "Input matrix hasn't been closed before copy" );
+
+  this->reset();
 
   MPI_Comm comm = hypre_IJVectorComm( *src.unwrappedPointer() );
   HYPRE_Int ilower, iupper, jlower, jupper;
@@ -136,8 +138,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const &src )
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 HypreMatrix::~HypreMatrix()
 {
-  if( m_ij_mat )
-    HYPRE_IJMatrixDestroy( m_ij_mat );
+  this->reset();
 }
 
 // -----------------------------
@@ -168,6 +169,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalSize,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
+  this->reset();
   this->createWithGlobalSize( globalSize,
                               globalSize,
                               maxEntriesPerRow,
@@ -180,6 +182,8 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
                                         localIndex const maxEntriesPerRow,
                                         MPI_Comm const & comm )
 {
+  this->reset();
+
   int this_mpi_process;
   int n_mpi_process;
   MPI_Comm_rank( comm, &this_mpi_process );
@@ -237,6 +241,7 @@ void HypreMatrix::createWithLocalSize( localIndex const localSize,
                                        localIndex const maxEntriesPerRow,
                                        MPI_Comm const & comm )
 {
+  this->reset();
   this->createWithLocalSize( localSize,
                              localSize,
                              maxEntriesPerRow,
@@ -252,6 +257,7 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
                  "local rows are lower than 0" );
   GEOS_ERROR_IF( localCols < 0,
                  "local columns are lower than 0" );
+  this->reset();
 
   int this_mpi_process;
   int n_mpi_process;
@@ -315,6 +321,21 @@ void HypreMatrix::set( real64 const value )
   HYPRE_IJMatrixSetConstantValues( m_ij_mat, value );
 }
 
+
+/**
+ * @brief Reset the object
+ *
+ */
+void HypreMatrix::reset()
+{
+  if( m_ij_mat )
+  {
+    HYPRE_IJMatrixDestroy( m_ij_mat );
+  }
+  m_is_pattern_fixed = false;
+  m_is_ready_to_use = false;
+}
+
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Reinitialize.
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -328,7 +349,8 @@ void HypreMatrix::zero()
     this->open();
     m_is_ready_to_use = false;
   }
-  HYPRE_IJMatrixSetConstantValues( m_ij_mat, 0.0 );
+  hypre_IJMatrixSetConstantValuesParCSR( m_ij_mat, 0.0 );
+  this->close();
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -705,10 +727,7 @@ void HypreMatrix::multiplyTranspose( HypreMatrix const & src,
 void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix &parCSRMatrix )
 {
 
-  if( m_ij_mat )
-  {
-    HYPRE_IJMatrixDestroy( m_ij_mat );
-  }
+  this->reset();
 
   hypre_IJMatrix *ijmatrix;
 
@@ -971,11 +990,9 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   {
     if ( JA[j] == globalRow )
     {
-      std::cout << "FOUND -> " << ptr_data[j] << "\n";
       return ptr_data[j];
     }
   }
-  std::cout << "NOT FOUND -> 0 ------------------- \n";
   return 0.0;
 }
 

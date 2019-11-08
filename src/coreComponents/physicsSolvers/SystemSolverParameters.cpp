@@ -72,7 +72,7 @@ SystemSolverParameters::SystemSolverParameters( std::string const & name,
     setDescription("");
 
   registerWrapper(viewKeysStruct::ilut_fillString, &m_ilut_fill, false )->
-    setApplyDefaultValue(10)->
+    setApplyDefaultValue(3)->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("");
 
