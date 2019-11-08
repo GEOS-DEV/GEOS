@@ -295,7 +295,7 @@ protected:
 
     solver = problemManager->GetPhysicsSolverManager().GetGroup<ReservoirSolver>( "reservoirSystem" );
 
-    GEOS_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
+    GEOSX_ERROR_IF( solver == nullptr, "ReservoirSystem not found" );
 
   }
 

@@ -57,7 +57,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     ######################################################
     if (CMAKE_BUILD_TYPE MATCHES "Debug")
         set(ENABLE_ARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE)
-        add_definitions(-DAXOM_DEBUG)
     endif()
 endif()
 

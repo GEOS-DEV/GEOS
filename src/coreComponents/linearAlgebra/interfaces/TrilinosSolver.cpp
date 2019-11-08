@@ -155,7 +155,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     solver.SetAztecOption( AZ_solver, AZ_cg );
   }
   else
-    GEOS_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr<ML_Epetra::MultiLevelPreconditioner> ml_preconditioner;
@@ -230,7 +230,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     solver.SetPrecOperator( ml_preconditioner.get() );
   }
   else
-    GEOS_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
 
   // Ask for a convergence normalized by the right hand side
   solver.SetAztecOption( AZ_conv, AZ_rhs );

@@ -178,7 +178,7 @@ public:
     }
     else
     {
-        GEOS_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
+        GEOSX_ERROR("GEOX does not support cells with " << m_numNodesPerElement << " nodes");
     }
   }
 

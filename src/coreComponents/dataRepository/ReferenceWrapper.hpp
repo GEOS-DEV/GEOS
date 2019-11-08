@@ -19,7 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
 #define GEOSX_DATAREPOSITORY_REFERENCEWRAPPER_HPP_
 
-#include "SFINAE_Macros.hpp"
+// System includes
 #include <type_traits>
 
 namespace geosx
