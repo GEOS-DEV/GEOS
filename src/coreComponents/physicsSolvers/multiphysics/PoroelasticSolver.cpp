@@ -135,7 +135,7 @@ void PoroelasticSolver::PostProcessInput()
   }
   else
   {
-    GEOS_ERROR("invalid coupling type option");
+    GEOSX_ERROR("invalid coupling type option");
   }
 
 }
@@ -184,7 +184,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
-    GEOS_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
+    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented");
   }
   return dtReturn;
 }
@@ -354,7 +354,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
       ResetStateToBeginningOfStep( domain );
     }
     
-    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
     
     dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
@@ -374,11 +374,11 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const& time_n,
 
     if (fluidSolver.getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0)
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
     }
 
-    GEOS_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
     solidSolver.ResetStressToBeginningOfStep(domain);
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,

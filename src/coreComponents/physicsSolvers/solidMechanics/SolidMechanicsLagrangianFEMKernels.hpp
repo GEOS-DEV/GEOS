@@ -387,7 +387,7 @@ struct ImplicitKernel
           ParallelMatrix * const GEOSX_UNUSED_ARG( matrix ),
           ParallelVector * const GEOSX_UNUSED_ARG( rhs ) )
   {
-    GEOS_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
+    GEOSX_ERROR("SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented");
     return 0;
   }
 
