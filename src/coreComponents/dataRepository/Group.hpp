@@ -28,24 +28,17 @@
 
 #include <iostream>
 
-#ifndef USE_DYNAMIC_CASTING
-/// macro definition to specify whether or not to use dynamic_cast
-#define USE_DYNAMIC_CASTING 1;
-#endif
-
 #ifndef NOCHARTOSTRING_KEYLOOKUP
 /// macro definition to enable/disable char * lookups
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
 
-/* Forward declaration of axom::sidre::Group */
-namespace axom
+// Forward declaration of conduit::Node
+namespace conduit
 {
-namespace sidre
-{
-class Group;
+class Node;
 }
-}
+
 
 /**
  * namespace to encapsulate GEOSX
@@ -109,7 +102,8 @@ public:
 
 
   Group() = delete;
-  Group( Group const & source ) = delete;
+  Group( Group const & ) = delete;
+  Group( Group const && ) = delete;
   Group & operator=( Group const & ) = delete;
   Group & operator=( Group && ) = delete;
 
@@ -203,11 +197,7 @@ public:
   template< typename T >
   static T group_cast( Group * group )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< T >( group );
-#else
-    return static_cast< T >( group );
-#endif
+    return dynamicCast< T >( group );
   }
 
   /**
@@ -219,11 +209,7 @@ public:
   template< typename T >
   static T group_cast( Group const * group )
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< T >( group );
-#else
-    return static_cast< T >( group );
-#endif
+    return dynamicCast< T >( group );
   }
 
   /**
@@ -234,11 +220,7 @@ public:
   template< typename T >
   T group_cast()
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< T >( this );
-#else
-    return static_cast< T >( this );
-#endif
+    return dynamicCast< T >( this );
   }
 
   /**
@@ -249,11 +231,7 @@ public:
   template< typename T >
   T group_cast() const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< T >( this );
-#else
-    return static_cast< T >( this );
-#endif
+    return dynamicCast< T >( this );
   }
 
   //START_SPHINX_INCLUDE_GET_GROUP
@@ -866,11 +844,7 @@ public:
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const * getWrapper( LOOKUP_TYPE const & index ) const
   {
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< Wrapper< T > const * >( (m_wrappers[index]) );
-#else
-    return static_cast< Wrapper< T > const * >( (m_wrappers[index]) );
-#endif
+    return dynamicCast< Wrapper< T > const * >( m_wrappers[index] );
   }
 
   template< typename T, typename LOOKUP_TYPE >
@@ -925,11 +899,7 @@ public:
       GEOS_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
     }
 
-#ifdef USE_DYNAMIC_CASTING
-    return dynamic_cast< T const & >( wrapper->reference() );
-#else
-    return static_cast< T const & >( wrapper->reference() );
-#endif
+    return dynamicCast< T const & >( wrapper->reference() );
   }
 
 
@@ -1005,39 +975,15 @@ public:
     return m_size;
   }
 
-  axom::sidre::Group * getSidreGroup()
+  conduit::Node & getConduitNode()
   {
-#ifdef GEOSX_USE_ATK
-    return m_sidreGroup;
-#else
-    return nullptr;
-#endif
+    return m_conduitNode;
   }
 
-  axom::sidre::Group const * getSidreGroup() const
-  {
-#ifdef GEOSX_USE_ATK
-    return m_sidreGroup;
-#else
-    return nullptr;
-#endif
-  }
-
-  static axom::sidre::Group * setSidreGroup( string const & name,
-                                             Group * const parent );
 
   Group * getParent()             { return m_parent; }
   Group const * getParent() const { return m_parent; }
 
-  Group * setParent( Group * const parent )
-  {
-    m_parent = parent;
-#ifdef GEOSX_USE_ATK
-    m_sidreGroup = m_parent->getSidreGroup();
-#endif
-
-    return m_parent;
-  }
 
   localIndex getIndexInParent() const
   {
@@ -1065,11 +1011,9 @@ public:
 
   void prepareToWrite();
 
-  void finishWriting() const;
+  void finishWriting();
 
-  void prepareToRead();
-
-  void finishReading();
+  void loadFromConduit();
 
   void postRestartInitializationRecursive( Group * const domain );
 
@@ -1163,11 +1107,8 @@ private:
                                 ///< subsequently all wrappers in this group
   InputFlags m_input_flags;     ///< Input flag for this group
 
-#ifdef GEOSX_USE_ATK
-  /// Pointer to the sidre group that mirrors this group
-  axom::sidre::Group * m_sidreGroup;
-#endif
-
+  /// Reference to the conduit::Node that mirrors this group
+  conduit::Node & m_conduitNode;
 
 };
 
@@ -1180,11 +1121,7 @@ template< typename T >
 T * Group::RegisterGroup( std::string const & name,
                           std::unique_ptr< Group > newObject )
 {
-#ifdef USE_DYNAMIC_CASTING
-  return dynamic_cast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
-#else
-  return static_cast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
-#endif
+  return dynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
 }
 
 
@@ -1193,11 +1130,7 @@ T * Group::RegisterGroup( std::string const & name,
                           T * newObject,
                           bool const takeOwnership )
 {
-#ifdef USE_DYNAMIC_CASTING
-  return dynamic_cast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
-#else
-  return static_cast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
-#endif
+  return dynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
 }
 
 
@@ -1214,7 +1147,7 @@ Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
     *rkey = m_wrappers.getIndex( name );
   }
   Wrapper< TBASE > * const rval = getWrapper< TBASE >( name );
-  if( rval->sizedFromParent() == 1 && rval->shouldResize())
+  if( rval->sizedFromParent() == 1 )
   {
     rval->resize( this->size());
   }
@@ -1260,7 +1193,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );
-  if( rval->sizedFromParent() == 1 && rval->shouldResize())
+  if( rval->sizedFromParent() == 1 )
   {
     rval->resize( this->size());
   }

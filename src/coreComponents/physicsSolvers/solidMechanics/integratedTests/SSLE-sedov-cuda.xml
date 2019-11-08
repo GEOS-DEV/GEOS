@@ -31,7 +31,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 
@@ -84,7 +84,7 @@
   </FieldSpecifications>
   
   <Outputs>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
   <Geometry>

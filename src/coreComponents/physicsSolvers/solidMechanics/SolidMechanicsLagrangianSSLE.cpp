@@ -85,7 +85,7 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(dataRepository::keys::detJ);
 
-      arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>

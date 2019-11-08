@@ -137,7 +137,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="5e5"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -230,7 +230,7 @@
 
   <Outputs>
       <Silo name="siloOutput"/>
-      <Restart name="sidreRestart"/>
+      <Restart name="restartOutput"/>
   </Outputs>
 
 </Problem>

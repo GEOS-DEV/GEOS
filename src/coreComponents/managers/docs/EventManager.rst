@@ -112,7 +112,7 @@ For example, consider the following Events block:
     <PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
   </Events>
 
 In this case, the events solverApplications_a and solverApplications_b point target physics events.  The eventCounter, eventProgress pairs will be: outputs (0, 0.0), solverApplications_a (1, 0.0), solverApplications_b (2, 0.5), and restarts (3, 1.0).  These values are supplied to the target events via their Execute methods for use.  For example, for the name of a silo output file will have the format: "%s_%06d%02d" % (name, cycle, eventCounter), and the time listed in the file will be ``time = time + dt*eventProgress``

@@ -27,6 +27,7 @@ namespace geosx
 WellElementSubRegion::WellElementSubRegion( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_wellControlsName(""),
+  m_toNodesRelation(),
   m_topWellElementIndex( -1 ),
   m_perforationData( groupKeyStruct::perforationDataString, this ),
   m_topRank( -1 )
@@ -223,7 +224,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
                                                       set<globalIndex>            & localElems,
                                                       arrayView1d<integer>        & elemStatusGlobal ) const
 {
-  array1d< array1d<globalIndex> const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
+  arrayView1d< arrayView1d< globalIndex const > const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
 
   // we are going to make sure that the partitioning is good, 
   // well element per well element, starting from the bottom of the well
@@ -319,9 +320,9 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
                                                          set<globalIndex>            & boundaryNodes ) const
 {
   // get the well connectivity
-  arrayView1d<globalIndex const>        const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
-  array1d< array1d<globalIndex> const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
-  arrayView2d<globalIndex const>        const & elemToNodesGlobal = wellGeometry.GetElemToNodesMap();
+  arrayView1d< globalIndex const >                      const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
+  arrayView1d< arrayView1d< globalIndex const > const > const & prevElemIdsGlobal = wellGeometry.GetPrevElemIndices();
+  arrayView2d< globalIndex const >                      const & elemToNodesGlobal = wellGeometry.GetElemToNodesMap();
 
   // loop over the local elements and collect the local and boundary nodes
   for (globalIndex currGlobal : localElems)
@@ -336,13 +337,13 @@ void WellElementSubRegion::CollectLocalAndBoundaryNodes( InternalWellGenerator c
     localIndex const nextGlobal = 
       integer_conversion<localIndex>( nextElemIdGlobal[ integer_conversion<localIndex>(currGlobal) ] );
 
-    // if the next well elem is not local, add the node in betweem curr and next to boundaryNodes
+    // if the next well elem is not local, add the node in between curr and next to boundaryNodes
     if (nextGlobal >= 0 && !localElems.contains( nextGlobal ))
     {
       boundaryNodes.insert( inodeTopGlobal );
     } 
 
-    // if the prev well elem is not local, add the node in betweem curr and prev to boundaryNodes (relevant for branches)
+    // if the prev well elem is not local, add the node in between curr and prev to boundaryNodes (relevant for branches)
     for (localIndex iwelem = 0; iwelem < prevElemIdsGlobal[currGlobal].size(); ++iwelem)
     {
       globalIndex const prevGlobal = prevElemIdsGlobal[currGlobal][iwelem];
@@ -573,7 +574,7 @@ localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
   localIndex packedSize = 0;
 
   packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                         nodeList().Base(),
+                                         nodeList().Base().toViewConst(),
                                          m_unmappedGlobalIndicesInNodelist,
                                          packList,
                                          this->m_localToGlobalMap,
@@ -590,7 +591,7 @@ localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
   localIndex unPackedSize = 0;
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base(),
+                                     nodeList().Base().toView(),
                                      packList,
                                      m_unmappedGlobalIndicesInNodelist,
                                      this->m_globalToLocalMap,

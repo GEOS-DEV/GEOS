@@ -69,6 +69,7 @@ struct Helper
 {
   /// attribute to indicate whether type \p T has a default value
   static constexpr bool has_default_value = false;
+  using value_type = void;
 };
 
 /**
