@@ -41,13 +41,12 @@
 
 
   <Events maxTime="2e9">
-<!--
 
     <PeriodicEvent name="outputs"
                    timeFrequency="1e8"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
--->
+
 
     <PeriodicEvent name="solverApplications1"
                    forceDt="1e6"
