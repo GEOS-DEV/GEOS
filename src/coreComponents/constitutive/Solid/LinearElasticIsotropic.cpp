@@ -88,9 +88,7 @@ LinearElasticIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_density = m_density;
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
-
-  newConstitutiveRelation->m_meanStress = m_meanStress;
-  newConstitutiveRelation->m_deviatorStress = m_deviatorStress;
+  newConstitutiveRelation->m_stress = m_stress;
 }
 
 void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -189,17 +187,18 @@ void LinearElasticIsotropic::StateUpdatePoint( localIndex const k,
                                                R2Tensor const & Rot,
                                                integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
-  real64 volumeStrain = D.Trace();
-  m_meanStress[k][q] += volumeStrain * m_bulkModulus[k];
+  real64 meanStresIncrement = D.Trace();
 
   R2SymTensor temp = D;
-  temp.PlusIdentity( -volumeStrain / 3.0 );
+  temp.PlusIdentity( -meanStresIncrement / 3.0 );
   temp *= 2.0 * m_shearModulus[k];
-  m_deviatorStress[k][q] += temp;
+  meanStresIncrement *= m_bulkModulus[k];
+  temp.PlusIdentity( meanStresIncrement );
 
+  m_stress[k][q] += temp;
 
-  temp.QijAjkQlk( m_deviatorStress[k][q], Rot );
-  m_deviatorStress[k][q] = temp;
+  temp.QijAjkQlk( m_stress[k][q], Rot );
+  m_stress[k][q] = temp;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )

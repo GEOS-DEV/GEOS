@@ -530,18 +530,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
-  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
-                                                                                     constitutiveManager);
-
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
-                                                                                         constitutiveManager);
+  stress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                           arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+                                                                                       constitutiveManager);
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
@@ -572,8 +567,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
 
     }); //Element Region
@@ -617,8 +611,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
     }); //Element Region
 
