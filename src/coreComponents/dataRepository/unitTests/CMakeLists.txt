@@ -12,7 +12,8 @@ set( dataRepository_tests
      testBufferOps.cpp
    )
 
-set( dependencyList geosx_core gtest)
+set( dependencyList geosx_core cxx-utilities gtest)
+
 #
 # Add gtest C++ based tests
 #
