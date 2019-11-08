@@ -907,52 +907,52 @@ AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
                                    subRegion->size(),
                                    GEOSX_LAMBDA ( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
+        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+        Nbar -= faceNormal[elemsToFaces[kfe][1]];
+        Nbar.Normalize();
+
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
+
+        globalIndex rowDOF[24];
+        real64 nodeRHS[24];
+        stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
+        globalIndex colDOF = faceElementDofNumber[kfe];
+
+
+        real64 const Ja = area[kfe] / numNodesPerFace;
+
+        //          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
+        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
+        R1Tensor nodalForce(Nbar);
+        nodalForce *= nodalForceMag;
+
+        //          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
+        //          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
+        //          std::cout << "    nodalForce " << nodalForce << std::endl;
+        for( localIndex kf=0 ; kf<2 ; ++kf )
         {
-          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-          Nbar -= faceNormal[elemsToFaces[kfe][1]];
-          Nbar.Normalize();
-
-          localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
-
-          globalIndex rowDOF[24];
-          real64 nodeRHS[24];
-          stackArray2d<real64, 12*12> dRdP(numNodesPerFace*3, 1);
-          globalIndex colDOF = faceElementDofNumber[kfe];
+          localIndex const faceIndex = elemsToFaces[kfe][kf];
 
 
-          real64 const Ja = area[kfe] / numNodesPerFace;
-
-//          std::cout<<"fluidPressure["<<kfe<<"] = "<<fluidPressure[kfe]+deltaFluidPressure[kfe]<<std::endl;
-          real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
-          R1Tensor nodalForce(Nbar);
-          nodalForce *= nodalForceMag;
-
-//          std::cout << "    rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << ", faceElement " << kfe << std::endl;
-//          std::cout << "    fluid pressure " << fluidPressure[kfe]+deltaFluidPressure[kfe] << std::endl;
-//          std::cout << "    nodalForce " << nodalForce << std::endl;
-          for( localIndex kf=0 ; kf<2 ; ++kf )
+          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
           {
-            localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-
-            for( localIndex a=0 ; a<numNodesPerFace ; ++a )
+            for( int i=0 ; i<3 ; ++i )
             {
+              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
+              nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
+              fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
 
-              for( int i=0 ; i<3 ; ++i )
-              {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap(faceIndex, a)] + i;
-                nodeRHS[3*a+i] = - nodalForce[i] * pow(-1,kf);
-                fext[faceToNodeMap(faceIndex, a)][i] += - nodalForce[i] * pow(-1,kf);
+              dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
+              // this is for debugging
+              //                if (dispDofNumber[faceToNodeMap(faceIndex, a)] == 0 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 6 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 12 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 18)
+              //                  std::cout << "rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << "DOF index " << dispDofNumber[faceToNodeMap(faceIndex, a)] + i << " contribution " << nodeRHS[3*a+i] << std::endl;
 
-                dRdP(3*a+i,0) = - Ja * Nbar[i] * pow(-1,kf);
-                // this is for debugging
-//                if (dispDofNumber[faceToNodeMap(faceIndex, a)] == 0 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 6 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 12 || dispDofNumber[faceToNodeMap(faceIndex, a)] == 18)
-//                  std::cout << "rank " << MpiWrapper::Comm_rank(MPI_COMM_GEOSX) << "DOF index " << dispDofNumber[faceToNodeMap(faceIndex, a)] + i << " contribution " << nodeRHS[3*a+i] << std::endl;
-
-              }
             }
+          }
+          if( ghostRank[kfe] < 0 )
+          {
 
             rhs0->add( rowDOF,
                        nodeRHS,
