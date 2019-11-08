@@ -41,26 +41,6 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-inline void LinearElasticIsotropic_Kernel(R2SymTensor & Dadt, R2SymTensor & TotalStress, R2Tensor & Rot,
-                                          localIndex i, real64 bulkModulus, real64 shearModulus,
-                                          arrayView1d<real64> & meanStress,
-                                          arrayView1d<R2SymTensor> & devStress)
-{
-  real64 volumeStrain = Dadt.Trace();
-  TotalStress = Dadt; 
-
-  meanStress[i] += volumeStrain * bulkModulus;
-  TotalStress *= 2.0 * shearModulus;
-
-  devStress[i] += TotalStress;
-  
-  TotalStress.QijAjkQlk(devStress[i],Rot);
-  devStress[i] = TotalStress;
-  
-  TotalStress.PlusIdentity(meanStress[i]);
-  
-}
-
 SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string& name,
                                                           Group * const parent ):
   SolverBase( name, parent ),
@@ -813,21 +793,22 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
   Group * const nodeManager = mesh->getNodeManager();
 
+  arrayView1d<R1Tensor const> const & v_n = nodeManager->getReference<array1d<R1Tensor>>(keys::Velocity);
+  arrayView1d<R1Tensor> const & uhat  = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
+  arrayView1d<R1Tensor> const & disp = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    arrayView1d<R1Tensor> const& v_n = nodeManager->getReference<array1d<R1Tensor>>(keys::Velocity);
-    arrayView1d<R1Tensor> const& a_n = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
-    arrayView1d<R1Tensor>& vtilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.vTilde);
-    arrayView1d<R1Tensor>& uhatTilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.uhatTilde);
-
-    arrayView1d<R1Tensor>& uhat  = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-    arrayView1d<R1Tensor>& disp = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
+    arrayView1d<R1Tensor const> const & a_n = nodeManager->getReference<array1d<R1Tensor>>(keys::Acceleration);
+    arrayView1d<R1Tensor> const & vtilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.vTilde);
+    arrayView1d<R1Tensor> const & uhatTilde   = nodeManager->getReference<array1d<R1Tensor>>(solidMechanicsViewKeys.uhatTilde);
 
     localIndex const numNodes = nodeManager->size();
     real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
     real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
-    for( localIndex a = 0 ; a < numNodes ; ++a )
+    RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                        GEOSX_LAMBDA ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
@@ -836,35 +817,31 @@ ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
         uhat[a][i] = uhatTilde[a][i];
         disp[a][i] += uhatTilde[a][i];
       }
-    }
+    } );
   }
   else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic  )
   {
-
-    arrayView1d<R1Tensor>& uhat = nodeManager->getReference<array1d<R1Tensor>>(keys::IncrementalDisplacement);
-    integer const useVelocityEstimateForQS = this->getReference<integer>(solidMechanicsViewKeys.useVelocityEstimateForQS);
     localIndex const numNodes = nodeManager->size();
 
-    if( useVelocityEstimateForQS==1 )
+    if( m_useVelocityEstimateForQS==1 )
     {
-      arrayView1d<R1Tensor> const& v_n = nodeManager->getReference<array1d<R1Tensor>>(keys::Velocity);
-      arrayView1d<R1Tensor>& disp = nodeManager->getReference<array1d<R1Tensor>>(keys::TotalDisplacement);
-
-      for( localIndex a = 0 ; a < numNodes ; ++a )
+      RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                          GEOSX_LAMBDA ( localIndex const a )
       {
         for( int i=0 ; i<3 ; ++i )
         {
           uhat[a][i] = v_n[a][i] * dt;
           disp[a][i] += uhat[a][i];
         }
-      }
+      } );
     }
     else
     {
-      for( localIndex a = 0 ; a < numNodes ; ++a )
+      RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                          GEOSX_LAMBDA ( localIndex const a )
       {
         uhat[a] = 0.0;
-      }
+      } );
     }
   }
 }
@@ -877,37 +854,37 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   Group * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
-  r1_array& v_n = nodeManager->getReference<r1_array>(keys::Velocity);
-  r1_array& uhat  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
+  arrayView1d< R1Tensor > const & v_n = nodeManager->getReference<r1_array>(keys::Velocity);
+  arrayView1d< R1Tensor const > const & uhat  = nodeManager->getReference<r1_array>(keys::IncrementalDisplacement);
 
   if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    r1_array& a_n = nodeManager->getReference<r1_array>(keys::Acceleration);
-    r1_array& vtilde    = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.vTilde);
-    r1_array& uhatTilde = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.uhatTilde);
+    arrayView1d< R1Tensor > const & a_n = nodeManager->getReference<r1_array>(keys::Acceleration);
+    arrayView1d< R1Tensor const > const & vtilde    = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.vTilde);
+    arrayView1d< R1Tensor const > const & uhatTilde = nodeManager->getReference<r1_array>(solidMechanicsViewKeys.uhatTilde);
     real64 const newmarkGamma = this->getReference<real64>(solidMechanicsViewKeys.newmarkGamma);
     real64 const newmarkBeta = this->getReference<real64>(solidMechanicsViewKeys.newmarkBeta);
 
-    for( auto a = 0 ; a < numNodes ; ++a )
+    RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                        GEOSX_LAMBDA ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
-        //        real64 a_np1 = 4.0 / (dt*dt) * ( uhat[a][i] - uhatTilde[a][i]
-        // );
         a_n[a][i] = 1.0 / ( newmarkBeta * dt*dt) * ( uhat[a][i] - uhatTilde[a][i] );
         v_n[a][i] = vtilde[a][i] + newmarkGamma * a_n[a][i] * dt;
       }
-    }
+    } );
   }
   else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic && dt > 0.0)
   {
-    for( auto a = 0 ; a < numNodes ; ++a )
+    RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                        GEOSX_LAMBDA ( localIndex const a )
     {
       for( int i=0 ; i<3 ; ++i )
       {
         v_n[a][i] = uhat[a][i] / dt;
       }
-    }
+    } );
   }
 }
 

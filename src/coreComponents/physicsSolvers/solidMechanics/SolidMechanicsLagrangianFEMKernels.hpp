@@ -48,28 +48,20 @@ enum class timeIntegrationOption : int
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(__CUDACC__)
-  using KERNEL_POLICY = RAJA::cuda_exec< 256 >;
-#elif defined(GEOSX_USE_OPENMP)
-  using KERNEL_POLICY = RAJA::omp_parallel_for_exec;
-#else
-  using KERNEL_POLICY = RAJA::loop_exec;
-#endif
-
 inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
                             arrayView1d<R1Tensor> const & velocity,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, acceleration.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
       velocity[ i ][ j ] += dt * acceleration[ i ][ j ];
       acceleration[ i ][ j ] = 0;
-    } 
+    }
   });
 }
 
@@ -81,8 +73,8 @@ inline void velocityUpdate( arrayView1d<R1Tensor> const & acceleration,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, indices.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     localIndex const a = indices[ i ];
     for (int j = 0; j < 3; ++j)
@@ -100,8 +92,8 @@ inline void displacementUpdate( arrayView1d<R1Tensor const> const & velocity,
 {
   GEOSX_MARK_FUNCTION;
 
-  RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
-                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
+  RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, velocity.size() ),
+                                               GEOSX_DEVICE_LAMBDA ( localIndex const i )
   {
     for (int j = 0; j < 3; ++j)
     {
@@ -301,9 +293,8 @@ struct ExplicitKernel
   {
    GEOSX_MARK_FUNCTION;
 
-    // RAJA::kernel<KERNEL_POLICY>( RAJA::make_tuple( RAJA::TypedRangeSegment<localIndex>( 0, elementList.size() ) ),
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   GEOSX_DEVICE_LAMBDA ( localIndex const i )
+    RAJA::forall< parallelDevicePolicy< 256 > >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                                 GEOSX_DEVICE_LAMBDA ( localIndex const i )
     {
       localIndex const k = elementList[ i ];
 

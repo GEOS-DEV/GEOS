@@ -71,12 +71,10 @@ NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
   static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
 
 #if USE_DYNAMIC_CASTING
-  NEW_TYPE const newVal = dynamic_cast< NEW_TYPE >( val );
+  return dynamic_cast< NEW_TYPE >( val );
 #else
-  NEW_TYPE const newVal = static_cast< NEW_TYPE >( val );
+  return static_cast< NEW_TYPE >( val );
 #endif
-
-  return newVal;
 }
 
 template< typename NEW_TYPE, typename EXISTING_TYPE >
