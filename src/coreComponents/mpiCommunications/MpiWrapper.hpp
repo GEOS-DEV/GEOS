@@ -129,7 +129,7 @@ public:
    */
   ///@{
 
-  static void Barrier( MPI_Comm const & (comm)=MPI_COMM_GEOSX)
+  static void Barrier( MPI_Comm const & MPI_PARAM(comm)=MPI_COMM_GEOSX)
   {
   #ifdef GEOSX_USE_MPI
     MPI_Barrier( comm );

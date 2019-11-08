@@ -1,7 +1,7 @@
-set(CONFIG_NAME "toss_3_x86_64_ib-clang@6.0.0" CACHE PATH "")
+set(CONFIG_NAME "toss_3_x86_64_ib-clang@9.0.0" CACHE PATH "")
 
-set(CMAKE_C_COMPILER /usr/tce/packages/clang/clang-6.0.0/bin/clang CACHE PATH "")
-set(CMAKE_CXX_COMPILER /usr/tce/packages/clang/clang-6.0.0/bin/clang++ CACHE PATH "")
+set(CMAKE_C_COMPILER /usr/tce/packages/clang/clang-9.0.0/bin/clang CACHE PATH "")
+set(CMAKE_CXX_COMPILER /usr/tce/packages/clang/clang-9.0.0/bin/clang++ CACHE PATH "")
 set(CMAKE_Fortran_COMPILER /usr/tce/packages/gcc/gcc-4.9.3/bin/gfortran CACHE PATH "")
 
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
@@ -11,7 +11,7 @@ set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE
 set(ENABLE_FORTRAN OFF CACHE BOOL "")
 set(ENABLE_MPI ON CACHE BOOL "")
 
-set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-clang-6.0.0 CACHE PATH "")
+set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-clang-9.0.0 CACHE PATH "")
 set(MPI_C_COMPILER       ${MPI_HOME}/bin/mpicc   CACHE PATH "")
 set(MPI_CXX_COMPILER     ${MPI_HOME}/bin/mpicxx  CACHE PATH "")
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
@@ -19,12 +19,11 @@ set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC              /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
-set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOS/geosx/thirdPartyLibs/ CACHE PATH "")
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
+set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "")
+set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/11-11-19/install-${CONFIG_NAME}-release CACHE PATH "")
 
 set(SPHINX_EXECUTABLE /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/bin/sphinx-build CACHE PATH "")
-set(UNCRUSTIFY_EXECUTABLE ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify CACHE PATH "")
-set(DOXYGEN_EXECUTABLE /usr/gapps/GEOS/geosx/thirdPartyLibs/doxygen/bin/doxygen CACHE PATH "")
+set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_ROOT_DIR}/doxygen/bin/doxygen CACHE PATH "")
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "")
 
