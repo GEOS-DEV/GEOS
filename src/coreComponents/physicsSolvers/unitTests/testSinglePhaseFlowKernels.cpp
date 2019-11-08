@@ -97,12 +97,6 @@ TEST( SinglePhaseFlowKernels, accumulation )
   }
 }
 
-template<typename T, int NDIM>
-using Array = LvArray::Array<T, NDIM, localIndex>;
-
-template<typename T, int NDIM>
-using ArrayView = LvArray::ArrayView<T, NDIM, localIndex>;
-
 template<localIndex stencilSize>
 void computeFlux( arraySlice1d<real64 const> const & weight,
                   real64 const * pres,

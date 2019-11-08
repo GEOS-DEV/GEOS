@@ -33,7 +33,7 @@
 #include "fileIO/utils/utils.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "meshUtilities/SimpleGeometricObjects/SimpleGeometricObjectBase.hpp"
-#include "dataRepository/SidreWrapper.hpp"
+#include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "mesh/MeshBody.hpp"
 #include "wells/InternalWellGenerator.hpp"
@@ -512,7 +512,7 @@ void ProblemManager::GenerateDocumentation()
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels(domain);
 
-    RegisterDataOnMeshRecursive(nullptr);
+    RegisterDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
     SchemaUtilities::ConvertDocumentationToSchema(schemaName.c_str(), this, 0);
@@ -913,14 +913,10 @@ void ProblemManager::ApplyInitialConditions()
 
 }
 
-void ProblemManager::ReadRestartOverwrite( const std::string& restartFileName )
+void ProblemManager::ReadRestartOverwrite()
 {
-#ifdef GEOSX_USE_ATK
-  this->prepareToRead();
-  SidreWrapper::loadExternalData(restartFileName, MPI_COMM_GEOSX);
-  this->finishReading();
-  this->postRestartInitializationRecursive( GetGroup<DomainPartition>(keys::domain) );
-#endif
+  this->loadFromConduit();
+  this->postRestartInitializationRecursive( GetGroup< DomainPartition >( keys::domain ) );
 }
 
 

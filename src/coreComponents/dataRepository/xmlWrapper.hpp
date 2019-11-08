@@ -109,7 +109,7 @@ public:
   static void StringToInputVariable( R1Tensor & target, string value );
 
   template< typename T, int NDIM >
-  static void StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string value );
+  static void StringToInputVariable( Array< T, NDIM > & array, string value );
   ///@}
 
 
@@ -171,7 +171,7 @@ void xmlWrapper::StringToInputVariable( T & target, string inputValue )
 }
 
 template< typename T, int NDIM >
-void xmlWrapper::StringToInputVariable( LvArray::Array< T, NDIM, localIndex > & array, string valueString )
+void xmlWrapper::StringToInputVariable( Array< T, NDIM > & array, string valueString )
 {
   cxx_utilities::stringToArray( array, valueString );
 }

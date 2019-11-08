@@ -489,8 +489,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elementManager = *(mesh->getElemManager());
 
-  array1d<std::set<localIndex> > nodesToRupturedFaces;
-  array1d<std::set<localIndex> > edgesToRupturedFaces;
+  std::vector< std::set< localIndex > > nodesToRupturedFaces;
+  std::vector< std::set< localIndex > > edgesToRupturedFaces;
 
   ArrayOfArraysView<localIndex> const & nodeToElementMap = nodeManager.elementList();
   ArrayOfArraysView<localIndex const> const & faceToNodeMap = faceManager.nodeList();
@@ -758,8 +758,8 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
                                     EdgeManager & edgeManager,
                                     FaceManager & faceManager,
                                     ElementRegionManager & elemManager,
-                                    arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                    arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                                    std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                    std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                                     ElementRegionManager & elementManager,
                                     ModifiedObjectLists& modifiedObjects,
                                     const bool GEOSX_UNUSED_ARG( prefrac ) )
@@ -818,8 +818,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            const EdgeManager & edgeManager,
                                            const FaceManager & faceManager,
                                            ElementRegionManager & elemManager,
-                                           const arrayView1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                           const arrayView1d<std::set<localIndex> >& edgesToRupturedFaces,
+                                           const std::vector<std::set<localIndex> >& nodesToRupturedFaces,
+                                           const std::vector<std::set<localIndex> >& edgesToRupturedFaces,
                                            std::set<localIndex>& separationPathFaces,
                                            map<localIndex, int>& edgeLocations,
                                            map<localIndex, int>& faceLocations,
@@ -1506,8 +1506,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                         FaceManager & faceManager,
                                         ElementRegionManager & elementManager,
                                         ModifiedObjectLists& modifiedObjects,
-                                        arrayView1d<std::set<localIndex> >& GEOSX_UNUSED_ARG( nodesToRupturedFaces ),
-                                        arrayView1d<std::set<localIndex> >& GEOSX_UNUSED_ARG( edgesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( nodesToRupturedFaces ),
+                                        std::vector<std::set<localIndex> >& GEOSX_UNUSED_ARG( edgesToRupturedFaces ),
                                         const std::set<localIndex>& separationPathFaces,
                                         const map<localIndex, int>& edgeLocations,
                                         const map<localIndex, int>& faceLocations,
@@ -1823,7 +1823,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       modifiedObjects.modifiedElements[{regionIndex,subRegionIndex}].insert( elemIndex );
 
 
-      arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
       if( verboseLevel() > 1 )
@@ -2175,7 +2175,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
       CellElementSubRegion& elemSubRegion = *(elem.first);
       const localIndex elemIndex = elem.second;
 
-      arrayView2d<localIndex> & elemsToNodes = elemSubRegion.nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elemSubRegion.nodeList();
       arrayView2d<localIndex> & elemsToFaces = elemSubRegion.faceList();
 
 
@@ -2249,7 +2249,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
   if( verboseLevel() > 2 )
   {
     // nodeToEdge
-    array1d<std::set<localIndex> > inverseEdgesToNodes( nodeManager.size() );
+    std::vector<std::set<localIndex> > inverseEdgesToNodes( nodeManager.size() );
 
     for( localIndex ke=0 ; ke<edgeManager.size() ; ++ke )
     {
@@ -2287,7 +2287,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
   if( verboseLevel() > 2 )
   {
     // nodeToFace
-    array1d<std::set<localIndex> > inverseFacesToNodes( nodeManager.size() );
+    std::vector<std::set<localIndex> > inverseFacesToNodes( nodeManager.size() );
     for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
     {
       for( localIndex const b : faceToNodeMap.getIterableArray(kf) )
@@ -2322,7 +2322,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
     // nodeToElement
-    array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToNodes( nodeManager.size() );
+    std::vector<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToNodes( nodeManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
@@ -2331,7 +2331,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
         CellElementSubRegion const * const subRegion = elemRegion.GetSubRegion<CellElementSubRegion>( esr );
         if( subRegion != nullptr )
         {
-          arrayView2d<localIndex> const & elemsToNodes = subRegion->nodeList();
+          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = subRegion->nodeList();
           for( localIndex k=0 ; k<subRegion->size() ; ++k )
           {
             std::pair<CellElementSubRegion const *, localIndex > elem = std::make_pair( subRegion, k );
@@ -2390,7 +2390,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
 
 
     // edgeToFace
-    array1d<std::set<localIndex> > inverseFacesToEdges( edgeManager.size() );
+    std::vector<std::set<localIndex> > inverseFacesToEdges( edgeManager.size() );
     for( localIndex kf=0 ; kf<faceManager.size() ; ++kf )
     {
       for( localIndex const b : faceToEdgeMap.getIterableArray( kf ) )
@@ -2419,7 +2419,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
     }
 
     // faceToElement
-    array1d<std::set<std::pair<CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
+    std::vector< std::set< std::pair< CellElementSubRegion const *, localIndex > > > inverseElemsToFaces( faceManager.size() );
     for( localIndex er=0 ; er<elementManager.numRegions() ; ++er )
     {
       ElementRegionBase const & elemRegion = *(elementManager.GetRegion( er ));
@@ -2437,7 +2437,7 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_ARG( n
             for( localIndex a=0 ; a<elemsToFaces.size( 1 ) ; ++a )
             {
               const localIndex faceID = elemsToFaces( k, a );
-              inverseElemsToFaces[faceID].insert( elem );
+              inverseElemsToFaces[ faceID ].insert( elem );
 
   //            if( parentFaceIndex[faceID] != -1 )
   //            {
@@ -2809,7 +2809,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             string const elementRegionName = elementRegion->getName();
             localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
             localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-            arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+            arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
 
             xEle = elementSubRegion->getElementCenter()[iEle];
 
@@ -2820,7 +2820,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
             for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
             {
-              if (elementsToNodes[iEle][n] == nodeIndex)
+              if (elementsToNodes(iEle, n) == nodeIndex)
               {
                 R1Tensor temp;
                 xEle = elementSubRegion->getElementCenter()[iEle];
@@ -3627,10 +3627,10 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
         realT youngsModulus = 9 * K * G / ( 3 * K + G );
         realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
-        arrayView2d<localIndex> & elementsToNodes = elementSubRegion->nodeList();
+        arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elementsToNodes = elementSubRegion->nodeList();
         for (localIndex n=0 ; n<elementsToNodes.size( 1 ) ; ++n)
         {
-          if (elementsToNodes[iEle][n] == nodeID)
+          if (elementsToNodes(iEle, n) == nodeID)
           {
             R1Tensor temp;
             xEle = elementSubRegion->getElementCenter()[iEle]; //For C3D6 element type, elementsToNodes map may include repeated indices and the following may run multiple times for the same element.
@@ -4102,8 +4102,8 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager & GEOSX_UNUSED_ARG( elementManager ),
-                                                array1d<std::set<localIndex> >& nodesToRupturedFaces,
-                                                array1d<std::set<localIndex> >& edgesToRupturedFaces )
+                                                std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                                                std::vector< std::set< localIndex > > & edgesToRupturedFaces )
 {
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();

@@ -45,10 +45,10 @@ NeighborCommunicator::NeighborCommunicator():
 //{
 //}
 
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              MPI_Request& sendRequest,
-                                             char * const receiveBuffer,
+                                             buffer_unit_type * const receiveBuffer,
                                              int const receiveSize,
                                              MPI_Request& receiveRequest,
                                              int const commID,
@@ -56,7 +56,7 @@ void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
 {
   int const sendTag = CommTag( Rank(), m_neighborRank, commID );
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MpiWrapper::iSend( const_cast<char*>(sendBuffer),
+  MpiWrapper::iSend( const_cast<buffer_unit_type*>(sendBuffer),
              sendSize,
              m_neighborRank,
              sendTag,
@@ -153,7 +153,7 @@ void NeighborCommunicator::MPI_iSendReceive( int const commID,
                     mpiComm );
 }
 
-void NeighborCommunicator::MPI_iSendReceive( char const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              int const commID,
                                              MPI_Comm mpiComm )
@@ -456,22 +456,22 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
   int bufferSize = 0;
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        nodeGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        nodeGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         nodeGhostsToReceive.size(),
-                                        nodeManager.m_localToGlobalMap );
+                                        nodeManager.m_localToGlobalMap.toSliceConst() );
 
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        edgeGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        edgeGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         edgeGhostsToReceive.size(),
-                                        edgeManager.m_localToGlobalMap );
+                                        edgeManager.m_localToGlobalMap.toSliceConst() );
 
   bufferSize += bufferOps::Pack<false>( sendBufferPtr,
-                                        faceGhostsToReceive,
-                                        array1d<globalIndex>(),
+                                        faceGhostsToReceive.toSliceConst(),
+                                        nullptr,
                                         faceGhostsToReceive.size(),
-                                        faceManager.m_localToGlobalMap );
+                                        faceManager.m_localToGlobalMap.toSliceConst() );
 
   for( localIndex er=0 ; er<elemManager.numRegions() ; ++er )
   {
@@ -480,10 +480,10 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
                                                 ElementSubRegionBase const * const subRegion )
     {
       bufferSize+= bufferOps::Pack<false>( sendBufferPtr,
-                                           elementGhostToReceive[er][esr],
-                                           array1d<globalIndex>(),
+                                           elementGhostToReceive[er][esr].toSliceConst(),
+                                           nullptr,
                                            elementGhostToReceive[er][esr].size(),
-                                           subRegion->m_localToGlobalMap );
+                                           subRegion->m_localToGlobalMap.toSliceConst() );
     });
   }
 
@@ -491,22 +491,22 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
 
   int packedSize = 0;
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       nodeGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       nodeGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        nodeGhostsToReceive.size(),
-                                       nodeManager.m_localToGlobalMap );
+                                       nodeManager.m_localToGlobalMap.toSliceConst() );
 
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       edgeGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       edgeGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        edgeGhostsToReceive.size(),
-                                       edgeManager.m_localToGlobalMap );
+                                       edgeManager.m_localToGlobalMap.toSliceConst() );
 
   packedSize += bufferOps::Pack<true>( sendBufferPtr,
-                                       faceGhostsToReceive,
-                                       array1d<globalIndex>(),
+                                       faceGhostsToReceive.toSliceConst(),
+                                       nullptr,
                                        faceGhostsToReceive.size(),
-                                       faceManager.m_localToGlobalMap );
+                                       faceManager.m_localToGlobalMap.toSliceConst() );
 
 
 
@@ -516,10 +516,10 @@ void NeighborCommunicator::RebuildSyncLists( MeshLevel * const mesh,
     elemRegion->forElementSubRegionsIndex([&]( localIndex const esr, ElementSubRegionBase const * const subRegion )
     {
       packedSize+= bufferOps::Pack<true>( sendBufferPtr,
-                                          elementGhostToReceive[er][esr],
-                                          array1d<globalIndex>(),
+                                          elementGhostToReceive[er][esr].toSliceConst(),
+                                          nullptr,
                                           elementGhostToReceive[er][esr].size(),
-                                          subRegion->m_localToGlobalMap );
+                                          subRegion->m_localToGlobalMap.toSliceConst() );
     });
   }
 

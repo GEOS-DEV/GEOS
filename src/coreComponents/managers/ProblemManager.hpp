@@ -97,7 +97,7 @@ public:
   void RunSimulation();
 
 
-  void ReadRestartOverwrite( const std::string& restartFileName );
+  void ReadRestartOverwrite();
 
   void ApplyInitialConditions();
 

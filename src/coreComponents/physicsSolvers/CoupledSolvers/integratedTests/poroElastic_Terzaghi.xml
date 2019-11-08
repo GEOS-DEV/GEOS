@@ -85,7 +85,7 @@
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -223,7 +223,7 @@
 
   <Outputs>
       <Silo name="siloOutput"/>
-      <Restart name="sidreRestart"/>
+      <Restart name="restartOutput"/>
     <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
   </Outputs>
 

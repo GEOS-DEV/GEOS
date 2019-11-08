@@ -68,7 +68,7 @@ XML Units:
     <PeriodicEvent name="restarts"
                    timeFrequency="1e4"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -103,7 +103,7 @@ XML Units:
   
   <Outputs>
     <Silo name="siloOutput"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 <FieldSpecifications>

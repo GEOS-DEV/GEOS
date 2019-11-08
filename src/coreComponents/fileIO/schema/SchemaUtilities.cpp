@@ -87,11 +87,11 @@ void SchemaUtilities::BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
     restrictionNode.append_attribute("base") = "xsd:string";
     xmlWrapper::xmlNode patternNode = restrictionNode.append_child("xsd:pattern");
 
-    // Default regex to string
+    // Handle the default regex 
     if( regex->second.empty())
     {
-      GEOS_WARNING("schema regex not defined for " << regex->first << "...  Defaulting to limited string");
-      patternNode.append_attribute("value") = "[a-zA-Z0-9_,\\(\\)+-/\\* \\n]*";
+      GEOS_WARNING("schema regex not defined for " << regex->first);
+      patternNode.append_attribute("value") = "(?s).*";
     }
     else
     {

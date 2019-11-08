@@ -252,23 +252,23 @@ public:
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array2d<localIndex> const & downmap );
+                          arrayView2d<localIndex const> const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array2d< localIndex const > const & downmap );
+                          arrayView2d< localIndex const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           array1d<set<localIndex> > & upmap,
-                          array1d< array1d<localIndex > > const & downmap );
+                          arrayView1d< arrayView1d<localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-                          array1d< array1d<localIndex> > const & downmap );
+                          arrayView1d< arrayView1d< localIndex const > const > const & downmap );
 
   static void CleanUpMap( std::set<localIndex> const & targetIndices,
                           ArrayOfSetsView< localIndex > const & upmap,
-ArrayOfArraysView< localIndex const > const & downmap );
+                          ArrayOfArraysView< localIndex const > const & downmap );
 
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices );
 
