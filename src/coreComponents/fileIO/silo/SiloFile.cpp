@@ -1576,8 +1576,8 @@ void SiloFile::WriteElementMesh( ElementRegionBase const * const elementRegion,
     array1d<integer> shapesize(numElementShapes);
     array1d<char> ghostZoneFlag;
 
-    array1d<FixedOneToManyRelation> elementToNodeMap;
-    elementToNodeMap.resize( numElementShapes );
+
+    std::vector<FixedOneToManyRelation> elementToNodeMap( numElementShapes );
 
     int count = 0;
 
