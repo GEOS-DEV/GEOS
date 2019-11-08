@@ -37,9 +37,9 @@ char** global_argv;
 template<int DIM>
 struct TestCompositionalVarContainer
 {
-  array_slice<real64,DIM>   value; // variable value
-  array_slice<real64,DIM>   dPres; // derivative w.r.t. pressure
-  array_slice<real64,DIM+1> dComp; // derivative w.r.t. composition
+  ArraySlice<real64,DIM>   value; // variable value
+  ArraySlice<real64,DIM>   dPres; // derivative w.r.t. pressure
+  ArraySlice<real64,DIM+1> dComp; // derivative w.r.t. composition
 };
 
 template<typename LAMBDA>
@@ -253,8 +253,14 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow * solver,
         auto dZ_dRho = invertLayout( dCompFrac_dCompDens[ei], NC, NC );
         string var = "compDens[" + components[jc] + "]";
 
-        checkDerivative( compFrac[ei], compFracOrig[ei], dZ_dRho[jc], dCompDens[ei][jc], relTol,
-                         "compFrac", var, components );
+        checkDerivative( compFrac[ei].toSliceConst(),
+                         compFracOrig[ei].toSliceConst(),
+                         dZ_dRho[jc].toSliceConst(),
+                         dCompDens[ei][jc],
+                         relTol,
+                         "compFrac",
+                         var,
+                         components );
       }
     }
   } );
@@ -336,8 +342,14 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
       {
         SCOPED_TRACE( "Element " + std::to_string(ei) );
 
-        checkDerivative( phaseVolFrac[ei], phaseVolFracOrig[ei], dPhaseVolFrac_dPres[ei], dPres[ei], relTol,
-                         "phaseVolFrac", "Pres", phases );
+        checkDerivative( phaseVolFrac[ei].toSliceConst(),
+                         phaseVolFracOrig[ei].toSliceConst(),
+                         dPhaseVolFrac_dPres[ei].toSliceConst(),
+                         dPres[ei],
+                         relTol,
+                         "phaseVolFrac",
+                         "Pres",
+                         phases );
       }
     }
 
@@ -365,8 +377,14 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow * 
         auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei], NP, NC );
         string var = "compDens[" + components[jc] + "]";
 
-        checkDerivative( phaseVolFrac[ei], phaseVolFracOrig[ei], dS_dRho[jc], dCompDens[ei][jc], relTol,
-                         "phaseVolFrac", var, phases );
+        checkDerivative( phaseVolFrac[ei].toSliceConst(),
+                         phaseVolFracOrig[ei].toSliceConst(),
+                         dS_dRho[jc].toSliceConst(),
+                         dCompDens[ei][jc],
+                         relTol,
+                         "phaseVolFrac",
+                         var,
+                         phases );
       }
     }
   } );
@@ -447,8 +465,14 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
       {
         SCOPED_TRACE( "Element " + std::to_string(ei) );
 
-        checkDerivative( phaseMob[ei], phaseVolFracOrig[ei], dPhaseMob_dPres[ei], dPres[ei], relTol,
-                         "phaseVolFrac", "Pres", phases );
+        checkDerivative( phaseMob[ei].toSliceConst(),
+                         phaseVolFracOrig[ei].toSliceConst(),
+                         dPhaseMob_dPres[ei].toSliceConst(),
+                         dPres[ei],
+                         relTol,
+                         "phaseVolFrac",
+                         "Pres",
+                         phases );
       }
     }
 
@@ -476,8 +500,14 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow * solver
         auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei], NP, NC );
         string var = "compDens[" + components[jc] + "]";
 
-        checkDerivative( phaseMob[ei], phaseVolFracOrig[ei], dS_dRho[jc], dCompDens[ei][jc], relTol,
-                         "phaseMob", var, phases );
+        checkDerivative( phaseMob[ei].toSliceConst(),
+                         phaseVolFracOrig[ei].toSliceConst(),
+                         dS_dRho[jc].toSliceConst(),
+                         dCompDens[ei][jc],
+                         relTol,
+                         "phaseMob",
+                         var,
+                         phases );
       }
     }
   } );

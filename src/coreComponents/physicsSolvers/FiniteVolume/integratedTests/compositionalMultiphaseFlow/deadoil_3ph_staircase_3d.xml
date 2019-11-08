@@ -41,13 +41,12 @@
 
 
   <Events maxTime="2e9">
-<!--
 
     <PeriodicEvent name="outputs"
                    timeFrequency="1e8"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
--->
+
 
     <PeriodicEvent name="solverApplications1"
                    forceDt="1e6"
@@ -69,7 +68,7 @@
     <PeriodicEvent name="restarts"
                    timeFrequency="1e9"
                    targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
   </Events>
 
@@ -246,6 +245,6 @@
 
   <Outputs>
     <Silo name="siloOutput"/>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 </Problem>

@@ -7,7 +7,7 @@ allowNonConverged   integer 0       Allow non-converged solution to be accepted
 ilut_drop           real64  0       (no description available)                              
 ilut_fill           real64  3       (no description available)                              
 krylovTol           real64  1e-06   Allowable tolerance for krylov solve                    
-kspace              integer 0       (no description available)                              
+kspace              integer 300     (no description available)                              
 lineSearchCutFactor real64  0.5     Line search cut factor                                  
 maxIterNewton       integer 5       Maximum number of Newton iterations                     
 maxLineSearchCuts   integer 4       Max number of line search cuts                          

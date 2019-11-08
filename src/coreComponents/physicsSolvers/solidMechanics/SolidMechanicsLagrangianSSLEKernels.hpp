@@ -45,18 +45,16 @@ struct StressCalculationKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
-          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & GEOSX_UNUSED_ARG( detJ ),
-          arrayView1d<R1Tensor const> const & u )
+          arrayView1d< R1Tensor const > const & u )
   {
     GEOSX_MARK_FUNCTION;
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    arrayView2d< R2SymTensor > const & devStress = constitutiveRelation->deviatorStress();
-
-    arrayView2d< real64 > const & meanStress = constitutiveRelation->meanStress();
+    arrayView2d< R2SymTensor > const & stress = constitutiveRelation->getStress();
 
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
@@ -78,8 +76,8 @@ struct StressCalculationKernel
       //Compute Quadrature
       for ( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        devStress[ k ][ q ] = 0.0;
-        real64 * const restrict p_stress = devStress[ k ][ q ].Data();
+        stress[ k ][ q ] = 0.0;
+        real64 * const restrict p_stress = stress[ k ][ q ].Data();
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
           real64 const v0_x_dNdXa0 = u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
@@ -93,14 +91,6 @@ struct StressCalculationKernel
           p_stress[ 3 ] += ( u_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ] ;
           p_stress[ 1 ] += ( u_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + u_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] ;
         }
-
-        real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 2 ] + p_stress[ 5 ] ) / 3.0;
-        meanStress[ k ][ q ] = dMeanStress;
-
-        p_stress[ 0 ] -= dMeanStress;
-        p_stress[ 2 ] -= dMeanStress;
-        p_stress[ 5 ] -= dMeanStress;
-
       }//quadrature loop
 
     });
@@ -136,14 +126,13 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & GEOSX_UNUSED_ARG( u ),
           arrayView1d<R1Tensor const> const & vel,
           arrayView1d<R1Tensor> const & acc,
-          arrayView2d<real64> const & meanStress,
-          arrayView2d<R2SymTensor> const & devStress,
+          arrayView2d<R2SymTensor> const & stress,
           real64 const dt )
   {
     GEOSX_MARK_FUNCTION;
@@ -188,32 +177,25 @@ struct ExplicitKernel
           p_stress[ 5 ] += ( v_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + v_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ] * dt;
         }
 
-        real64 const dMeanStress = ( p_stress[ 0 ] + p_stress[ 1 ] + p_stress[ 2 ] ) / 3.0;
-        meanStress[ k ][ q ] += dMeanStress;
-
-        p_stress[ 0 ] -= dMeanStress;
-        p_stress[ 1 ] -= dMeanStress;
-        p_stress[ 2 ] -= dMeanStress;
-
-        real64 * const restrict p_devStress = devStress[ k ][ q ].Data();
-        p_devStress[ 0 ] += p_stress[ 0 ];
-        p_devStress[ 2 ] += p_stress[ 1 ];
-        p_devStress[ 5 ] += p_stress[ 2 ];
-        p_devStress[ 4 ] += p_stress[ 3 ];
-        p_devStress[ 3 ] += p_stress[ 4 ];
-        p_devStress[ 1 ] += p_stress[ 5 ];
+        real64 * const restrict p_Stress = stress[ k ][ q ].Data();
+        p_Stress[ 0 ] += p_stress[ 0 ];
+        p_Stress[ 2 ] += p_stress[ 1 ];
+        p_Stress[ 5 ] += p_stress[ 2 ];
+        p_Stress[ 4 ] += p_stress[ 3 ];
+        p_Stress[ 3 ] += p_stress[ 4 ];
+        p_Stress[ 1 ] += p_stress[ 5 ];
 
         for ( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                          + p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                          + dNdX[ k ][ q ][ a ][ 0 ] * ( p_devStress[ 0 ] + meanStress[ k ][ q ] ) ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( p_devStress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                        + p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ]
-                        + dNdX[ k ][ q ][ a ][ 1 ] * (p_devStress[ 2 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( p_devStress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ]
-                        + p_devStress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ]
-                        + dNdX[ k ][ q ][ a ][ 2 ] * (p_devStress[ 5 ] + meanStress[ k ][ q ]) ) * detJ[ k ][ q ];
+          f_local[ a ][ 0 ] -= ( p_Stress[ 1 ] * dNdX[ k ][ q ][ a ][ 1 ]
+                               + p_Stress[ 3 ] * dNdX[ k ][ q ][ a ][ 2 ]
+                               + p_Stress[ 0 ] * dNdX[ k ][ q ][ a ][ 0 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( p_Stress[ 1 ] * dNdX[ k ][ q ][ a ][ 0 ]
+                               + p_Stress[ 4 ] * dNdX[ k ][ q ][ a ][ 2 ]
+                               + p_Stress[ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( p_Stress[ 3 ] * dNdX[ k ][ q ][ a ][ 0 ]
+                               + p_Stress[ 4 ] * dNdX[ k ][ q ][ a ][ 1 ]
+                               + p_Stress[ 5 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
         }
       }//quadrature loop
 
@@ -276,7 +258,7 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& detJ,
           FiniteElementBase const * const fe,
           arrayView1d< integer const > const & elemGhostRank,
-          arrayView2d< localIndex const > const & elemsToNodes,
+          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes,
           arrayView1d< globalIndex const > const & globalDofNumber,
           arrayView1d< R1Tensor const > const & disp,
           arrayView1d< R1Tensor const > const & uhat,

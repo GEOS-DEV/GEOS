@@ -16,12 +16,14 @@
  * @file VTKFile.cpp
  */
 
+// Source includes
 #include "VTKFile.hpp"
-#include <sys/stat.h>
-
 #include "dataRepository/Wrapper.hpp"
 #include "managers/DomainPartition.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
+// System includes
+#include <sys/stat.h>
 
 
 namespace geosx

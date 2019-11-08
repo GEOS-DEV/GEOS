@@ -1049,7 +1049,7 @@ real64 SinglePhaseFlow::CalculateResidualNorm( DomainPartition const * const dom
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d<real64 const> const & refPoro        = m_porosityRef[er][esr];
     arrayView1d<real64 const> const & volume         = m_volume[er][esr];
-    arrayView1d<real64 const> const & densOld       = m_densityOld[er][esr];
+    arrayView1d<real64 const> const & densOld        = m_densityOld[er][esr];
 
     localIndex const subRegionSize = subRegion->size();
     for ( localIndex a = 0; a < subRegionSize; ++a )

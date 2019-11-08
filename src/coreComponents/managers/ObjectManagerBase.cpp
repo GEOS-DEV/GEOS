@@ -18,6 +18,7 @@
 
 #include "ObjectManagerBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -751,9 +752,8 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
   //return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
 }
 
-void ObjectManagerBase::SetReceiveLists(  )
+void ObjectManagerBase::SetReceiveLists()
 {
-
   map<int,localIndex_array>  receiveIndices;
   for( localIndex a=0 ; a<size() ; ++a )
   {
@@ -770,7 +770,6 @@ void ObjectManagerBase::SetReceiveLists(  )
     localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
     nodeAdjacencyList = iter->second;
   }
-
 }
 
 integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
@@ -868,9 +867,9 @@ void ObjectManagerBase::SetMaxGlobalIndex()
                          MPI_COMM_GEOSX );
 }
 
-void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
-                                    array1d<set<localIndex> > & upmap,
-                                    array2d<localIndex> const & downmap )
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    array1d< set< localIndex > > & upmap,
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -900,7 +899,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array2d< localIndex const > const & downmap )
+                                    arrayView2d< localIndex const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {
@@ -934,7 +933,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
                                     array1d<set<localIndex> > & upmap,
-                                    array1d< array1d<localIndex> > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
@@ -964,7 +963,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
 void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
-                                    array1d< array1d< localIndex > > const & downmap )
+                                    arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( localIndex const targetIndex : targetIndices )
   {

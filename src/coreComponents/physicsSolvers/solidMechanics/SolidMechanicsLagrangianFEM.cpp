@@ -283,7 +283,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     elemRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr, CellElementSubRegion const * const elementSubRegion )
     {
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -365,7 +365,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
         + std::to_string(er) + "][" + std::to_string(esr) + "]" );
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       std::unique_ptr<FiniteElementBase>
       fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
@@ -534,18 +534,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
     }
   );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d<real64> >
-  meanStress = elemManager->ConstructFullMaterialViewAccessor< array2d<real64>,
-                                                               arrayView2d<real64> >("MeanStress",
-                                                                                     constitutiveManager);
-
   ElementRegionManager::MaterialViewAccessor< arrayView2d<R2SymTensor> > const
-  devStress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
-                                                              arrayView2d<R2SymTensor> >("DeviatorStress",
-                                                                                         constitutiveManager);
+  stress = elemManager->ConstructFullMaterialViewAccessor< array2d<R2SymTensor>,
+                                                           arrayView2d<R2SymTensor> >( SolidBase::viewKeyStruct::stressString,
+                                                                                       constitutiveManager);
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase> constitutiveRelations =
-    elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
+  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
@@ -560,7 +555,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -576,8 +571,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
 
     }); //Element Region
@@ -605,7 +599,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d<localIndex> const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes = elementSubRegion->nodeList();
 
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
@@ -621,8 +615,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const& time_n,
                                    u,
                                    vel,
                                    acc,
-                                   meanStress[er][esr][m_solidMaterialFullIndex],
-                                   devStress[er][esr][m_solidMaterialFullIndex],
+                                   stress[er][esr][m_solidMaterialFullIndex],
                                    dt );
     }); //Element Region
 
@@ -1054,7 +1047,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_ARG(
 
       arrayView2d<real64> const & detJ = elementSubRegion->getReference< array2d<real64> >(keys::detJ);
 
-      arrayView2d< localIndex > const & elemsToNodes = elementSubRegion->nodeList();
+      arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & elemsToNodes = elementSubRegion->nodeList();
       localIndex const numNodesPerElement = elemsToNodes.size(1);
 
       std::unique_ptr<FiniteElementBase>

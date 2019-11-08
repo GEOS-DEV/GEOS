@@ -16,13 +16,17 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+// Source includes
 #include "managers/initialization.hpp"
+#include "managers/ProblemManager.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
+
+// System includes
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
-#include "managers/ProblemManager.hpp"
 
 using namespace geosx;
 
@@ -42,7 +46,7 @@ int main( int argc, char *argv[] )
     bool restart = ProblemManager::ParseRestart( argc, argv, restartFileName );
     if (restart) {
       GEOS_LOG_RANK_0("Loading restart file " << restartFileName);
-      dataRepository::SidreWrapper::reconstructTree( restartFileName, "sidre_hdf5", MPI_COMM_GEOSX );
+      dataRepository::loadTree( restartFileName );
     }
 
     ProblemManager problemManager( "Problem", nullptr );
@@ -61,7 +65,7 @@ int main( int argc, char *argv[] )
       problemManager.ProblemSetup();
 
       if (restart) {
-        problemManager.ReadRestartOverwrite( restartFileName );
+        problemManager.ReadRestartOverwrite();
       }
 
       MpiWrapper::Barrier(MPI_COMM_GEOSX);

@@ -96,7 +96,7 @@
             name="restarts"
             timeFrequency="25000"
             targetExactTimestep="0"
-            target="/Outputs/sidreRestart" />
+            target="/Outputs/restartOutput" />
     </Events>
 
     <NumericalMethods>
@@ -213,7 +213,7 @@
             name="siloOutput"
             plotFileRoot="fractureMatrixFlow"
             plotLevel="1" />
-        <Restart name="sidreRestart" />
+        <Restart name="restartOutput" />
     </Outputs>
 
 
