@@ -86,8 +86,8 @@ public:
   class KernelWrapper
   {
   public:
-    KernelWrapper( arrayView1d<real64 const> const bulkModulus,
-                   arrayView1d<real64 const> const shearModulus ) :
+    KernelWrapper( arrayView1d<real64 const> const & bulkModulus,
+                   arrayView1d<real64 const> const & shearModulus ) :
       m_bulkModulus( bulkModulus ),
       m_shearModulus( shearModulus )
     {}

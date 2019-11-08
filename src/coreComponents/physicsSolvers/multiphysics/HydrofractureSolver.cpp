@@ -198,12 +198,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         {
           locallyFractured = 1;
         }
-        MPI_Allreduce( &locallyFractured,
-                       &globallyFractured,
-                       1,
-                       MPI_INT,
-                       MPI_MAX,
-                       MPI_COMM_GEOSX);
+        MpiWrapper::allReduce( &locallyFractured,
+                               &globallyFractured,
+                               1,
+                               MPI_MAX,
+                               MPI_COMM_GEOSX );
       }
       if( globallyFractured == 0 )
       {
@@ -598,38 +597,38 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     GEOS_LOG_RANK_0("matrix00");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix01");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
     m_matrix01.print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix10");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("matrix11");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual0");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("residual1");
     GEOS_LOG_RANK_0("***********************************************************");
     LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
   }
 
   if( verboseLevel() >= 3 )
@@ -1626,13 +1625,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_ARG( dofM
     GEOS_LOG_RANK_0("solution0");
     GEOS_LOG_RANK_0("***********************************************************");
     p_solution[0]->Print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
 
     GEOS_LOG_RANK_0("***********************************************************");
     GEOS_LOG_RANK_0("solution1");
     GEOS_LOG_RANK_0("***********************************************************");
     p_solution[1]->Print(std::cout);
-    MPI_Barrier(MPI_COMM_GEOSX);
+    MpiWrapper::Barrier();
   }
 }
 

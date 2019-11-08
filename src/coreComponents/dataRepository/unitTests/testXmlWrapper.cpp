@@ -148,9 +148,5 @@ int main( int argc, char * argv[] )
 
   logger::FinalizeLogger();
 
-#ifdef USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
-
   return result;
 }
