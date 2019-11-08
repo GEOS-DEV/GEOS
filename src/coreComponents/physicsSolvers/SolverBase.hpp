@@ -472,6 +472,7 @@ public:
     constexpr static auto verboseLevelString = "verboseLevel";
     constexpr static auto gravityVectorString = "gravityVector";
     constexpr static auto cflFactorString = "cflFactor";
+    constexpr static auto initialDtString = "initialDt";
     constexpr static auto maxStableDtString = "maxStableDt";
     static constexpr auto discretizationString = "discretization";
     constexpr static auto targetRegionsString = "targetRegions";

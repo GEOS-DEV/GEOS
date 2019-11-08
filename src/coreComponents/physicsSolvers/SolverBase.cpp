@@ -33,7 +33,7 @@ SolverBase::SolverBase( std::string const & name,
   m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
-  m_nextDt( 1e7 ),
+  m_nextDt( 1e99 ),
   m_dofManager( name )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -75,6 +75,9 @@ SolverBase::SolverBase( std::string const & name,
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
+  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Initial time-step value required by the solver." );
 }
 
 SolverBase::~SolverBase()
