@@ -192,7 +192,7 @@ struct ExplicitKernel
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView<localIndex const, localIndex> const & elementList,
-          arrayView2d<localIndex const> const & elemsToNodes,
+          arrayView2d<localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM> const & elemsToNodes,
           arrayView3d< R1Tensor const> const & dNdX,
           arrayView2d<real64 const> const & detJ,
           arrayView1d<R1Tensor const> const & u,
@@ -377,7 +377,7 @@ struct ImplicitKernel
           arrayView2d<real64 const > const& GEOSX_UNUSED_ARG( detJ ),
           FiniteElementBase const * const GEOSX_UNUSED_ARG( fe ),
           arrayView1d< integer const > const & GEOSX_UNUSED_ARG( elemGhostRank ),
-          arrayView2d< localIndex const > const & GEOSX_UNUSED_ARG( elemsToNodes ),
+          arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & GEOSX_UNUSED_ARG( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_ARG( globalDofNumber ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( disp ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_ARG( uhat ),

@@ -23,7 +23,7 @@
     that will cause it to be triggered at a time equal to a multiple of timeFrequency -->
     <PeriodicEvent name="periodic_c"
                    timeFrequency="5"
-                   target="/Outputs/sidreRestart"/>
+                   target="/Outputs/restartOutput"/>
 
     <!-- This event will execute every 3 cycles.  When it does, it will attempt to 
     execute each of its two sub-events -->
@@ -77,7 +77,7 @@
 
 
   <Outputs>
-    <Restart name="sidreRestart"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
 

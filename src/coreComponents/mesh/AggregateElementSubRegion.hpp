@@ -90,26 +90,6 @@ public:
     static constexpr auto fineElementsListString       = "fineElements";
   };
 
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex const> nodeList( localIndex const k ) const override
-  { 
-    return m_toNodesRelation[k];
-  }
-
-  /*!
-   * @brief returns the element to node relations.
-   * @details The aggregates are elements composed of 1 node.
-   * @param[in] k the index of the element.
-   */
-  virtual arraySlice1dRval<localIndex> nodeList( localIndex const k ) override
-  {
-    return m_toNodesRelation[k];
-  }
-
 private:
   /// The elements to nodes relation is one to one relation.
   NodeMapType  m_toNodesRelation;

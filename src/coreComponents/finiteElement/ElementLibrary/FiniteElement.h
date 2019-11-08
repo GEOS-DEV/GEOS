@@ -46,95 +46,84 @@ class FiniteElement : public FiniteElementBase
 {
 public:
 
+  /**
+   * Constructor.  Takes an interpolation basis and quadrature rule,
+   * and pre-computes all static finite element data.  Any data
+   * that depends on the mapped configuration of the element, however,
+   * is left uninitialized until reinit(...) is called.
+  */
   FiniteElement( BasisBase const & basis,
                  QuadratureBase const & quadrature,
-                 const int num_zero_energy_modes = 0 );
+                 const int num_zero_energy_modes = 0 ) :
+    FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
+  {
+    data.resize(n_q_points);
+    for(auto q=0 ; q<n_q_points ; ++q)
+    {
+      data[q].parent_q_point = quadrature.integration_point(q);
+      data[q].parent_q_weight = quadrature.integration_weight(q);
+
+      data[q].parent_values.resize(n_dofs);
+      data[q].parent_gradients.resize(n_dofs);
+      data[q].mapped_gradients.resize(n_dofs);
+
+      for(auto i=0 ; i<n_dofs ; ++i)
+      {
+        data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
+        data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
+      }
+    }
+  }
 
   ~FiniteElement() override
   {}
 
   static string CatalogName() { return "C3D8"; }
 
-  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points ) override;
+  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  { return reinitPrivate( X, mapped_support_points ); }
 
+  void reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  { return reinitPrivate( X, mapped_support_points ); }
+
+private:
+  /**
+   * Reinitialize the finite element basis on a particular element.
+   * We use the coordinates of the support points in real space to
+   * construct the forward mapping from the parent coordinate system.  The
+   * support points are assumed to follow a lexicographic ordering:
+   * On the parent element, we loop over the x-coordinate fastest,
+   * the y, then z (depending on the desired spatial dimension of the
+   * element).
+   */
+  template< int UNIT_STRIDE_DIM >
+  void reinitPrivate( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const, UNIT_STRIDE_DIM > const & mapped_support_points )
+  {
+    for(int q=0 ; q<n_q_points ; ++q)
+    {
+      R2TensorT<3> jacobian;
+      jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
+
+      for(int a=1 ; a<n_dofs ; ++a)
+      {
+        jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
+      }
+
+      if( dim==2 )
+      {
+        jacobian(2,2) = 1;
+      }
+
+      data[q].jacobian_determinant = jacobian.Inverse();
+
+      for(int i=0 ; i<n_dofs ; ++i)
+      {
+        data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
+      }
+    }
+  }
 };
 
-
-
-/**
- * Constructor.  Takes an interpolation basis and quadrature rule,
- * and pre-computes all static finite element data.  Any data
- * that depends on the mapped configuration of the element, however,
- * is left uninitialized until reinit(...) is called.
- */
-
-template <int dim>
-FiniteElement<dim> :: FiniteElement( BasisBase const & basis,
-                                     QuadratureBase const & quadrature,
-                                     const int num_zero_energy_modes ):
-  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
-{
-
-  data.resize(n_q_points);
-  for(auto q=0 ; q<n_q_points ; ++q)
-  {
-    data[q].parent_q_point = quadrature.integration_point(q);
-    data[q].parent_q_weight = quadrature.integration_weight(q);
-
-    data[q].parent_values.resize(n_dofs);
-    data[q].parent_gradients.resize(n_dofs);
-    data[q].mapped_gradients.resize(n_dofs);
-
-    for(auto i=0 ; i<n_dofs ; ++i)
-    {
-      data[q].parent_values[i]    = basis.value(i,data[q].parent_q_point);
-      data[q].parent_gradients[i] = basis.gradient(i,data[q].parent_q_point);
-    }
-  }
 }
-
-
-
-/**
- * Reinitialize the finite element basis on a particular element.
- * We use the coordinates of the support points in real space to
- * construct the forward mapping from the parent coordinate system.  The
- * support points are assumed to follow a lexicographic ordering:
- * On the parent element, we loop over the x-coordinate fastest,
- * the y, then z (depending on the desired spatial dimension of the
- * element).
- */
-
-template <int dim>
-void FiniteElement<dim> :: reinit( arrayView1d< R1Tensor const > const & X, arraySlice1d< localIndex const > const & mapped_support_points )
-{
-  for(int q=0 ; q<n_q_points ; ++q)
-  {
-    R2TensorT<3> jacobian;
-    jacobian.dyadic_ab( X[ mapped_support_points[0] ], data[q].parent_gradients[0] );
-
-    for(int a=1 ; a<n_dofs ; ++a)
-    {
-      jacobian.plus_dyadic_ab( X[ mapped_support_points[a] ], data[q].parent_gradients[a] );
-    }
-
-    if( dim==2 )
-    {
-      jacobian(2,2) = 1;
-    }
-
-    data[q].jacobian_determinant = jacobian.Inverse();
-
-    for(int i=0 ; i<n_dofs ; ++i)
-    {
-      data[q].mapped_gradients[i].AijBi( jacobian, data[q].parent_gradients[i] );
-    }
-  }
-}
-
-
-}
-
-
 
 #endif
