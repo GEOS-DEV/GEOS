@@ -84,8 +84,7 @@ protected:
     problemManager = new ProblemManager("Problem", nullptr);
 
     string const inputStream =
-    "<?xml version=\"1.0\" ?>"
-    "<Problem xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">"
+    "<Problem>"
     "  <Mesh>"
     "    <InternalMesh name=\"mesh1\""
     "                  elementTypes=\"{C3D8}\""
@@ -211,7 +210,7 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 
 TEST_F( MeshGenerationTest, elemToNodeMap )
 {
-  arrayView2d< localIndex const > const & nodeMap = m_subRegion->nodeList();
+  arrayView2d< localIndex const, CellBlock::NODE_MAP_UNIT_STRIDE_DIM > const & nodeMap = m_subRegion->nodeList();
   GEOS_ERROR_IF_NE( nodeMap.size( 1 ), 8 );
 
   localIndex elemID = 0;

@@ -353,11 +353,22 @@ void PetscSparseMatrix::multiply( PetscSparseMatrix const & src,
 // Matrix/matrix multiplication
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 // Perform the matrix-matrix product this^T * src = dst.
-void PetscSparseMatrix::multiplyTranspose( PetscSparseMatrix const & src,
-                                           PetscSparseMatrix & dst,
-                                           bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+void PetscSparseMatrix::leftMultiplyTranspose( PetscSparseMatrix const & src,
+                                               PetscSparseMatrix & dst,
+                                               bool const GEOSX_UNUSED_ARG( closeResult ) ) const
 {
   MatTransposeMatMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
+}
+
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Matrix/matrix multiplication
+// """""""""""""""""""""""""""""""""""""""""""""""""""""""""
+// Perform the matrix-matrix product src * this^T  = dst.
+void PetscSparseMatrix::rightMultiplyTranspose( PetscSparseMatrix const & src,
+                                                PetscSparseMatrix & dst,
+                                                bool const GEOSX_UNUSED_ARG( closeResult ) ) const
+{
+  MatMatTransposeMult( m_mat, src.getConstMat(), MAT_INITIAL_MATRIX, PETSC_DEFAULT, dst.unwrappedNonConstPointer() );
 }
 
 // """""""""""""""""""""""""""""""""""""""""""""""""""""""""

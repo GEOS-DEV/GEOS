@@ -329,21 +329,21 @@ struct MapHelperImpl
 {
 };
 
-template< typename T >
-struct MapHelperImpl< array2d<T> >
+template< typename T, typename PERMUTATION >
+struct MapHelperImpl< array2d<T, PERMUTATION> >
 {
-  static localIndex size0( array2d<T> const & map )
+  static localIndex size0( array2d<T, PERMUTATION> const & map )
   {
     return map.size( 0 );
   }
 
-  static localIndex size1( array2d<T> const & map,
+  static localIndex size1( array2d<T, PERMUTATION> const & map,
                            localIndex const GEOSX_UNUSED_ARG( i0 ) )
   {
     return map.size( 1 );
   }
 
-  static T const & value( array2d<T> const & map,
+  static T const & value( array2d<T, PERMUTATION> const & map,
                           localIndex const i0,
                           localIndex const i1 )
   {
@@ -1276,7 +1276,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
     // Diagonal block
     ParallelMatrix const * const connLocPattDistr = m_sparsityPattern( rowFieldIndex, rowFieldIndex ).first.get();
 
-    connLocPattDistr->multiplyTranspose( *connLocPattDistr, pattern, closePattern );
+    connLocPattDistr->leftMultiplyTranspose( *connLocPattDistr, pattern, closePattern );
   }
   else
   {
@@ -1297,7 +1297,7 @@ void DofManager::setSparsityPatternOneBlock( ParallelMatrix & pattern,
         CL2 = m_sparsityPattern( colFieldIndex, rowFieldIndex ).first.get();
       }
 
-      CL1->multiplyTranspose( *CL2, pattern, closePattern );
+      CL1->leftMultiplyTranspose( *CL2, pattern, closePattern );
     }
     else
     {
